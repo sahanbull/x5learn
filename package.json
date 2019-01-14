@@ -1,0 +1,48 @@
+{
+  "name": "x5learn",
+  "version": "1.0.0",
+  "description": "Web frontend for X5GON project",
+  "main": "app.js",
+  "scripts": {
+    "setup": "mkdir -p server/static/dist && ./node_modules/elm/bin/elm init",
+    "test": "./node_modules/elm/bin/elm-test",
+    "build:uncompressed:rm": "rimraf server/static/dist/**",
+    "build:uncompressed:cp": "copy uncompressed server/static/dist",
+    "build:uncompressed": "npm run build:uncompressed:rm && npm run build:uncompressed:cp",
+    "build:css:concat": "mkdir -p server/static/dist/css && concat -o server/static/dist/css/app.css src/css/style.css",
+    "build:css:minify": "cleancss -o server/static/dist/css/app.min.css server/static/dist/css/app.css && rimraf server/static/dist/css/app.css",
+    "build:css": "npm run build:css:concat && npm run build:css:minify",
+    "build:js:elm": "./node_modules/elm/bin/elm make --optimize --output server/static/dist/js/elm.js src/elm/Main.elm",
+    "build:js:elm-dev": "./node_modules/elm/bin/elm make --output server/static/dist/js/elm.js src/elm/Main.elm",
+    "build:js:concat": "mkdir -p server/static/dist/js && concat -o server/static/dist/js/app.js server/static/dist/js/elm.js src/js/port.js && rimraf server/static/dist/js/elm.js",
+    "build:js:minify": "uglifyjs -mco server/static/dist/js/app.min.js server/static/dist/js/app.js && rimraf server/static/dist/js/app.js",
+    "build:js": "npm run build:js:elm && npm run build:js:concat && npm run build:js:minify",
+    "build:js-dev": "npm run build:js:elm-dev && npm run build:js:concat && npm run build:js:minify",
+    "build:img:minify": "imagemin --out-dir=server/static/dist/img assets/img/**/*.{png,jpg,gif}",
+    "build:img": "npm run build:img:minify",
+    "build": "npm run build:uncompressed && npm run build:css && npm run build:js && npm run build:img"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stefankreitmayer/x5learn.git"
+  },
+  "keywords": [
+    "x5learn",
+    "elm"
+  ],
+  "author": "Stefan Kreitmayer",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/stefankreitmayer/x5learn/issues"
+  },
+  "homepage": "https://github.com/stefankreitmayer/x5learn#readme",
+  "dependencies": {
+    "clean-css-cli": "^4.2.1",
+    "concat": "^1.0.3",
+    "copy-dir-cli": "0.0.3",
+    "elm": "^0.19.0-bugfix2",
+    "imagemin-cli": "^4.0.0",
+    "rimraf": "^2.6.2",
+    "uglify-js": "^3.4.9"
+  }
+}

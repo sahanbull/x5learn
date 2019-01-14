@@ -1,0 +1,23 @@
+html, head, body {
+  margin: 0;
+  height: 100%;
+}
+
+body {
+  font-family: 'Trebuchet MS', 'Lucida Grande', 'Bitstream Vera Sans', 'Helvetica Neue', sans-serif;
+  color: #333;
+}
+
+h1, h2, h3, h4 {
+  font-weight: normal;
+}
+
+a {
+  color: #333;
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+a .light { color: #5FABDC; }
+a:hover .light { color: rgb(234,21,122); }

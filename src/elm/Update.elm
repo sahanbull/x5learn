@@ -28,3 +28,6 @@ update msg ({nav} as model) =
 
     NewUserFromSearch ->
       ( { model | userState = newUserFromSearch model.searchInputTyping |> Just }, Cmd.none )
+
+    ResizeBrowser x y ->
+      ( { model | windowWidth = x, windowHeight = y }, Cmd.none )

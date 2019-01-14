@@ -10,6 +10,8 @@ import Model exposing (..)
 import View.Shared exposing (..)
 import View.PageHeader exposing (viewPageHeader)
 import View.Pages.Landing exposing (viewPageLanding)
+import View.Pages.SearchResults exposing (viewPageSearchResults)
+
 import Update exposing (..)
 
 
@@ -34,15 +36,20 @@ view : Model -> Browser.Document Msg
 view model =
   let
       body =
-        viewPageLanding model
+        case model.userState of
+          Nothing ->
+            viewPageLanding model
+
+          Just userState ->
+            viewPageSearchResults model userState
 
       header =
         viewPageHeader model
 
       page =
         body
-        |> el [ inFront header, width fill, spacing 50, paddingTop pageHeaderHeight, pageBodyBackground, height fill ]
-        |> layout [ width fill ]
+        |> el [ width fill, spacing 50, pageBodyBackground, height (fill |> maximum (model.windowHeight - pageHeaderHeight)), scrollbarY ]
+        |> layout [ inFront header, paddingTop pageHeaderHeight, width fill ]
   in
       { title = "X5Learn"
       , body = [ page ]

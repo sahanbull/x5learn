@@ -24,7 +24,7 @@ update msg ({nav} as model) =
       ( { model | nav = { nav | url = url } }, Cmd.none )
 
     ChangeSearchText str ->
-      ( { model | searchText = str }, Cmd.none )
+      ( { model | searchInputTyping = str }, Cmd.none )
 
-    SubmitSearch ->
-      ( { model | searchText = "Submitted! (TODO)" }, Cmd.none )
+    NewUserFromSearch ->
+      ( { model | userState = newUserFromSearch model.searchInputTyping |> Just }, Cmd.none )

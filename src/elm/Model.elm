@@ -10,7 +10,8 @@ type alias Model =
   { nav : Nav
   , windowWidth : Int
   , windowHeight : Int
-  , searchText : String
+  , searchInputTyping : String
+  , userState : Maybe UserState
   }
 
 
@@ -26,10 +27,39 @@ type alias Nav =
   }
 
 
+type alias UserState =
+  { lastSearch : String
+  }
+
+
+type alias Oer =
+  { title : String
+  }
+
+
 initialModel : Nav -> Flags -> Model
 initialModel nav flags =
   { nav = nav
   , windowWidth = flags.windowWidth
   , windowHeight = flags.windowHeight
-  , searchText = ""
+  , searchInputTyping = ""
+  , userState = Nothing
   }
+
+
+newUserFromSearch str =
+  { lastSearch = str
+  }
+
+
+mockSearchResults =
+  [ Oer "A discussion about ML"
+  , Oer "PANEL: Experiences in research, teaching, and applications of ML"
+  , Oer "Interview with Tom Mitchell"
+  , Oer "Introduction to the Machine Learning over Text & Images - Autumn School by Eric Xing"
+  , Oer "What Semantic Web researchers need to know about Machine Learning?"
+  , Oer "Algorithmic Aspects of Machine Learning"
+  , Oer "Relations Betweeen Machine Learning Problems"
+  , Oer "Lecture 1 - The Motivation & Applications of Machine Learning"
+  , Oer "What can machine learning do for open education?"
+  ]

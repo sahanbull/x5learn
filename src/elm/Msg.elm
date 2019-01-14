@@ -9,7 +9,7 @@ type Msg
   = LinkClicked Browser.UrlRequest
   | UrlChanged Url.Url
   | ChangeSearchText String
-  | SubmitSearch
+  | NewUserFromSearch
 
 
 subscriptions : Model -> Sub Msg

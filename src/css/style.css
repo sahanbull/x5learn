@@ -21,3 +21,15 @@ a:hover {
 }
 a .light { color: #5FABDC; }
 a:hover .light { color: rgb(234,21,122); }
+
+
+.materialCard {
+  background: #fff;
+  border-radius: 2px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+}
+
+.materialCard:hover {
+  box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+}

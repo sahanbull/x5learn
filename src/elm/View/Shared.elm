@@ -73,7 +73,7 @@ navLink url label =
   link [] { url = url, label = label }
 
 
-wrap attrs str =
+wrapText attrs str =
   [ text str ] |> paragraph attrs
 
 
@@ -89,29 +89,33 @@ grey80 =
   grey 80
 
 
-grey160 =
-  grey 160
+lightGrey =
+  grey 238
 
 
 grey value =
   rgb255 value value value
 
 
-style propertyName value =
-  Html.Attributes.style propertyName value
-  |> htmlAttribute
+htmlClass name =
+  Html.Attributes.class name |> htmlAttribute
+
+
+whiteBackground =
+  Background.color white
 
 
 pageBodyBackground =
+  -- Background.color lightGrey
   Background.image <| imgPath "bg.jpg"
 
 
 imgPath str =
-  "static/dist/img/" ++ str
+  "/static/dist/img/" ++ str
 
 
 svgPath str =
-  "static/dist/img_svg/" ++ str ++ ".svg"
+  "/static/dist/img_svg/" ++ str ++ ".svg"
 
 
 onEnter : Msg -> Attribute Msg

@@ -7,6 +7,7 @@ import Html.Attributes
 import Element exposing (..)
 import Element.Input as Input exposing (button)
 import Element.Background as Background
+import Element.Font as Font
 
 import Model exposing (..)
 import View.Shared exposing (..)
@@ -15,11 +16,12 @@ import Msg exposing (..)
 
 import Json.Decode as Decode
 
+
 viewPageLanding : Model -> Element Msg
 viewPageLanding model =
   let
       title =
-        "Study anything. Anywhere. Free." |> text |> el [ primaryWhite, jumboText, centerX, centerY ] |> el [ width fill, height <| fillPortion 3 ]
+        "Study anything. Anywhere. Free." |> text |> el [ primaryWhite, Font.size 48, centerX, centerY ] |> el [ width fill, height <| fillPortion 3 ]
 
       searchSection =
         viewSearchWidget model.searchInputTyping

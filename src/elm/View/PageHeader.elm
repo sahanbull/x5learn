@@ -17,6 +17,5 @@ import Msg exposing (..)
 viewPageHeader : Model -> Element Msg
 viewPageHeader model =
   [ link [] { url = "/", label = image [ height (px 26) ] { src = imgPath "x5learn_logo.png", description = "X5Learn logo" } }
-  -- , navTextLink "/about" "About" |> el [ alignRight, mediumText ]
   ]
   |> row [ width fill, height (px pageHeaderHeight), spacing 20, paddingEach { allSidesZero | top = 0, left = 16 }, Background.color <| rgb 1 1 1, borderBottom 1, Border.color <| rgb 0.8 0.8 0.8 ]

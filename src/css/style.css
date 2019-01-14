@@ -3,9 +3,9 @@ html, head, body {
   height: 100%;
 }
 
-body {
-  font-family: 'Trebuchet MS', 'Lucida Grande', 'Bitstream Vera Sans', 'Helvetica Neue', sans-serif;
-  color: #333;
+body * {
+  font-family: 'Roboto', 'Trebuchet MS', 'Lucida Grande', 'Bitstream Vera Sans', 'Helvetica Neue', sans-serif !important;
+  color: rgba(0,0,0,0.87);
 }
 
 h1, h2, h3, h4 {
@@ -13,14 +13,12 @@ h1, h2, h3, h4 {
 }
 
 a {
-  color: #333;
+  color: rgba(0,0,0,0.87);
   text-decoration: none;
 }
 a:hover {
   text-decoration: underline;
 }
-a .light { color: #5FABDC; }
-a:hover .light { color: rgb(234,21,122); }
 
 
 .materialCard {
@@ -35,10 +33,10 @@ a:hover .light { color: rgb(234,21,122); }
 }
 
 .materialHoverZoomThumb {
-  background-size: 100% !important;
-  transition: all 0.2s !important;
+  background-size: 100%;
+  transition: all 0.2s;
 }
 
 .materialCard:hover .materialHoverZoomThumb {
-  background-size: 110% !important;
+  background-size: 110%;
 }

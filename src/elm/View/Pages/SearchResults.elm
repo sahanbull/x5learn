@@ -8,6 +8,7 @@ import Element exposing (..)
 import Element.Input as Input exposing (button)
 import Element.Background as Background
 import Element.Border as Border
+import Element.Font as Font
 
 import Model exposing (..)
 import View.Shared exposing (..)
@@ -35,14 +36,14 @@ viewSearchResult index oer =
         |> el [ width fill, height (px 175), Background.image <| imgPath ("mockthumb" ++ (index+1 |> String.fromInt) ++ ".jpg"), htmlClass "materialHoverZoomThumb" ]
 
       title =
-        oer.title |> wrapText [ mediumText, primaryDark ]
+        oer.title |> subheaderWrap []
 
       playIcon =
         image [ moveRight 260, moveDown 160, width (px 30) ] { src = (svgPath "playIcon"), description = "play icon" }
 
       bottomRow =
-        [ "videolectures.net" |> text |> el [ smallText, primaryDark ]
-        , "90 min" |> text |> el [ smallText, alignRight, primaryDark ]
+        [ "videolectures.net" |> captionNowrap []
+        , "90 min" |> captionNowrap [ alignRight ]
         ]
         |> row [ width fill, paddingXY 16 0, moveUp 26 ]
 

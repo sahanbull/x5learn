@@ -13,22 +13,6 @@ import Model exposing (..)
 import Msg exposing (..)
 
 
-jumboText =
-  Font.size 48
-
-
-largeText =
-  Font.size 24
-
-
-mediumText =
-  Font.size 18
-
-
-smallText =
-  Font.size 16
-
-
 primaryDark =
   Font.color <| rgba 0 0 0 0.87
 
@@ -75,6 +59,14 @@ navLink url label =
 
 wrapText attrs str =
   [ text str ] |> paragraph attrs
+
+
+captionNowrap attrs str =
+  text str |> el (attrs ++ [ Font.size 12 ])
+
+
+subheaderWrap attrs str =
+  [ text str ] |> paragraph (attrs ++ [ Font.size 16 ])
 
 
 white =

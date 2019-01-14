@@ -33,3 +33,12 @@ a:hover .light { color: rgb(234,21,122); }
 .materialCard:hover {
   box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
 }
+
+.materialHoverZoomThumb {
+  background-size: 100% !important;
+  transition: all 0.2s !important;
+}
+
+.materialCard:hover .materialHoverZoomThumb {
+  background-size: 110% !important;
+}

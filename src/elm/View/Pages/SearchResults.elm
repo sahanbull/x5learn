@@ -32,7 +32,7 @@ viewSearchResult index oer =
   let
       thumbnail =
         none
-        |> el [ width fill, height (px 175), Background.image <| imgPath ("mockthumb" ++ (index+1 |> String.fromInt) ++ ".jpg") ]
+        |> el [ width fill, height (px 175), Background.image <| imgPath ("mockthumb" ++ (index+1 |> String.fromInt) ++ ".jpg"), htmlClass "materialHoverZoomThumb" ]
 
       title =
         oer.title |> wrapText [ mediumText, primaryDark ]

@@ -1,5 +1,6 @@
 module View.Shared exposing (..)
 
+import Html
 import Html.Attributes
 import Html.Events
 
@@ -13,8 +14,12 @@ import Model exposing (..)
 import Msg exposing (..)
 
 
-primaryDark =
-  Font.color <| rgba 0 0 0 0.87
+materialDark =
+  rgba 0 0 0 0.87
+
+
+materialDarkAlpha =
+  alpha 0.87
 
 
 primaryWhite =
@@ -65,8 +70,20 @@ captionNowrap attrs str =
   text str |> el (attrs ++ [ Font.size 12 ])
 
 
+bodyWrap attrs str =
+  [ text str ] |> paragraph (attrs ++ [ Font.size 14 ])
+
+
+bodyNoWrap attrs str =
+  text str |> el (attrs ++ [ Font.size 14 ])
+
+
 subheaderWrap attrs str =
   [ text str ] |> paragraph (attrs ++ [ Font.size 16 ])
+
+
+headlineWrap attrs str =
+  [ text str ] |> paragraph (attrs ++ [ Font.size 24 ])
 
 
 white =
@@ -121,3 +138,13 @@ onEnter msg =
   in
       Html.Events.on "keydown" (Json.Decode.andThen isEnter Html.Events.keyCode)
       |> htmlAttribute
+
+
+onClickNoBubble : msg -> Attribute msg
+onClickNoBubble message =
+  Html.Events.custom "click" (Json.Decode.succeed { message = message, stopPropagation = True, preventDefault = True })
+  |> htmlAttribute
+
+
+hoverCircleBackground =
+  htmlClass "hoverCircleBackground"

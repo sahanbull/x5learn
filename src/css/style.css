@@ -33,10 +33,20 @@ a:hover {
 }
 
 .materialHoverZoomThumb {
-  background-size: 100%;
+  background-size: 100% !important;
   transition: all 0.2s;
 }
 
 .materialCard:hover .materialHoverZoomThumb {
-  background-size: 110%;
+  background-size: 110% !important;
+}
+
+.hoverCircleBackground img{
+  padding: 5px;
+}
+
+.hoverCircleBackground:hover img{
+  background: url(/static/dist/img_svg/circle.svg);
+  background-repeat: no-repeat;
+  background-size: cover;
 }

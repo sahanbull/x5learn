@@ -12,6 +12,8 @@ type Msg
   | ChangeSearchText String
   | NewUserFromSearch
   | ResizeBrowser Int Int
+  | InspectSearchResult UserState Oer
+  | UninspectSearchResult UserState
 
 
 subscriptions : Model -> Sub Msg

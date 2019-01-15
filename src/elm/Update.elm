@@ -31,3 +31,9 @@ update msg ({nav} as model) =
 
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y }, Cmd.none )
+
+    InspectSearchResult userState oer ->
+      ( { model | userState = Just { userState | inspectedSearchResult = Just oer } }, Cmd.none )
+
+    UninspectSearchResult userState ->
+      ( { model | userState = Just { userState | inspectedSearchResult = Nothing } }, Cmd.none )

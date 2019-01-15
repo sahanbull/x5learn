@@ -29,6 +29,7 @@ type alias Nav =
 
 type alias UserState =
   { lastSearch : String
+  , inspectedSearchResult : Maybe Oer
   }
 
 
@@ -49,6 +50,7 @@ initialModel nav flags =
 
 newUserFromSearch str =
   { lastSearch = str
+  , inspectedSearchResult = Nothing
   }
 
 

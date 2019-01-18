@@ -30,11 +30,13 @@ type alias Nav =
 type alias UserState =
   { lastSearch : String
   , inspectedSearchResult : Maybe Oer
+  , searchResults : Maybe (List Oer)
   }
 
 
 type alias Oer =
   { title : String
+  , hasVideo : Bool
   }
 
 
@@ -51,20 +53,8 @@ initialModel nav flags =
 newUserFromSearch str =
   { lastSearch = str
   , inspectedSearchResult = Nothing
+  , searchResults = Nothing
   }
-
-
-mockSearchResults =
-  [ Oer "A discussion about ML"
-  , Oer "PANEL: Experiences in research, teaching, and applications of ML"
-  , Oer "Interview with Tom Mitchell"
-  , Oer "Introduction to the Machine Learning over Text & Images - Autumn School by Eric Xing"
-  , Oer "What Semantic Web researchers need to know about Machine Learning?"
-  , Oer "Algorithmic Aspects of Machine Learning"
-  , Oer "Relations Betweeen Machine Learning Problems"
-  , Oer "Lecture 1 - The Motivation & Applications of Machine Learning"
-  , Oer "What can machine learning do for open education?"
-  ]
 
 
 modalHtmlId =

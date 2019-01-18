@@ -9,6 +9,7 @@ import Json.Encode as Encode
 import Model exposing (..)
 import Msg exposing (..)
 import Ports exposing (..)
+import OerSearch exposing (searchOers)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -29,7 +30,7 @@ update msg ({nav} as model) =
       ( { model | searchInputTyping = str }, Cmd.none )
 
     NewUserFromSearch ->
-      ( { model | userState = newUserFromSearch model.searchInputTyping |> Just }, Cmd.none )
+      ( { model | userState = newUserFromSearch model.searchInputTyping |> Just }, searchOers model.searchInputTyping )
 
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y }, Cmd.none )
@@ -50,3 +51,23 @@ update msg ({nav} as model) =
       --       Debug.log "wwwwww" (String.fromFloat w)
       -- in
       ( model , Cmd.none )
+
+    RequestOerSearch (Ok results) ->
+      ( { model | userState = model.userState |> updateUser (insertSearchResults results) }, Cmd.none )
+
+    RequestOerSearch (Err err) ->
+      ( model, Cmd.none )
+
+
+updateUser : (UserState -> UserState) -> Maybe UserState -> Maybe UserState
+updateUser transformFunction maybeUserState =
+  case maybeUserState of
+    Nothing ->
+      Nothing
+
+    Just userState ->
+      Just (userState |> transformFunction)
+
+
+insertSearchResults results userState =
+  { userState | searchResults = Just results }

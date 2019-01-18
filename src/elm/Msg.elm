@@ -4,6 +4,7 @@ import Browser
 import Browser.Events
 import Url
 import Json.Encode as Encode
+import Http
 
 import Geometry exposing (..)
 import Model exposing (..)
@@ -18,6 +19,7 @@ type Msg
   | InspectSearchResult UserState Oer
   | UninspectSearchResult UserState
   | TriggerAnim Encode.Value
+  | RequestOerSearch (Result Http.Error (List Oer))
 
 
 subscriptions : Model -> Sub Msg

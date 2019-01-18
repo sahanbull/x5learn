@@ -85,17 +85,23 @@ viewModal userState oer =
 
 
 viewSearchResults model userState modal =
-  mockSearchResults
-  |> List.indexedMap (viewSearchResult userState (List.isEmpty modal))
-  |> wrappedRow [ centerX, spacing 30, width (fill |> maximum 1100) ]
-  |> el ([ padding 20, spacing 20, width fill, height fill ] ++ modal)
+  case userState.searchResults of
+    Nothing ->
+      "loading..." |> text
+
+    Just oers ->
+      oers
+      |> List.indexedMap (viewSearchResult userState (List.isEmpty modal))
+      |> wrappedRow [ centerX, spacing 30, width (fill |> maximum 1100) ]
+      |> el ([ padding 20, spacing 20, width fill, height fill ] ++ modal)
 
 
 viewSearchResult userState isClickable index oer =
   let
       thumbnail =
         none
-        |> el [ width fill, height (px 175), Background.image <| imgPath ("mockthumb" ++ (index+1 |> String.fromInt) ++ ".jpg"), htmlClass "materialHoverZoomThumb" ]
+        |> el [ width fill, height (px 175), Background.color <| rgb255 80 80 80, htmlClass "materialHoverZoomThumb" ]
+        -- |> el [ width fill, height (px 175), Background.image <| imgPath ("mockthumb" ++ (index+1 |> String.fromInt) ++ ".jpg"), htmlClass "materialHoverZoomThumb" ]
 
       title =
         oer.title |> subheaderWrap [ height fill ]

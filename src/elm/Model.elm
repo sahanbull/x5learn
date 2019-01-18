@@ -65,3 +65,7 @@ mockSearchResults =
   , Oer "Lecture 1 - The Motivation & Applications of Machine Learning"
   , Oer "What can machine learning do for open education?"
   ]
+
+
+modalHtmlId =
+  "modalHtmlId"

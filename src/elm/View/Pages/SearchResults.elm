@@ -74,7 +74,7 @@ viewModal userState oer =
         , player
         , footer
         ]
-        |> column [ Background.color white, centerX, centerY, padding 16, spacing 16 ]
+        |> column [ Background.color white, centerX, centerY, padding 16, spacing 16, htmlId modalHtmlId ]
 
       scrim =
         none

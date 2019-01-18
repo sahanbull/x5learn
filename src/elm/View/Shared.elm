@@ -110,6 +110,10 @@ htmlClass name =
   Html.Attributes.class name |> htmlAttribute
 
 
+htmlId name =
+  Html.Attributes.id name |> htmlAttribute
+
+
 whiteBackground =
   Background.color white
 

@@ -5,13 +5,19 @@ import Browser.Navigation as Navigation
 import Url
 import Time exposing (Posix)
 import Element exposing (Color, rgb255)
+import Dict exposing (Dict)
+
 
 type alias Model =
   { nav : Nav
   , windowWidth : Int
   , windowHeight : Int
+  , currentTime : Posix
   , searchInputTyping : String
   , userState : Maybe UserState
+  , userMessage : Maybe String
+  , hoveringOerUrl : Maybe String
+  , timeOfLastMouseEnterOnCard : Posix
   }
 
 
@@ -35,8 +41,12 @@ type alias UserState =
 
 
 type alias Oer =
-  { title : String
-  , hasVideo : Bool
+  { url : String
+  , provider : String
+  , title : String
+  , description : String
+  , imageUrls : List String
+  , youtubeVideoVersions : Dict String String -- key: language, value: youtubeId
   }
 
 
@@ -45,9 +55,17 @@ initialModel nav flags =
   { nav = nav
   , windowWidth = flags.windowWidth
   , windowHeight = flags.windowHeight
+  , currentTime = initialTime
   , searchInputTyping = ""
   , userState = Nothing
+  , userMessage = Nothing
+  , hoveringOerUrl = Nothing
+  , timeOfLastMouseEnterOnCard = initialTime
   }
+
+
+initialTime =
+  Time.millisToPosix 0
 
 
 newUserFromSearch str =
@@ -55,6 +73,17 @@ newUserFromSearch str =
   , inspectedSearchResult = Nothing
   , searchResults = Nothing
   }
+
+
+hasVideo : Oer -> Bool
+hasVideo oer =
+  oer.youtubeVideoVersions |> Dict.isEmpty |> not
+
+
+getYoutubeId : Oer -> Maybe String
+getYoutubeId oer =
+  oer.youtubeVideoVersions
+  |> Dict.get "English"
 
 
 modalHtmlId =

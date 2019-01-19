@@ -17,6 +17,7 @@ function setupPorts(app){
 
   app.ports.inspectSearchResult.subscribe(function(modalId) {
     console.log('inspectSearchResult');
+    document.activeElement.blur();
     setTimeout(function(){
       var card = document.activeElement;
       var modal = document.getElementById(modalId);

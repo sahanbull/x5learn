@@ -90,6 +90,10 @@ white =
   rgb 1 1 1
 
 
+semiTransparentWhite =
+  rgba 1 1 1 0.5
+
+
 orange =
   rgb255 255 150 0
 
@@ -152,3 +156,17 @@ onClickNoBubble message =
 
 hoverCircleBackground =
   htmlClass "hoverCircleBackground"
+
+
+embedYoutubePlayer youtubeId =
+  Html.iframe
+  [ Html.Attributes.width 800
+  , Html.Attributes.height 500
+  , Html.Attributes.src ("https://www.youtube.com/embed/" ++ youtubeId)
+  , Html.Attributes.attribute "allowfullscreen" "allowfullscreen"
+  , Html.Attributes.attribute "frameborder" "0"
+  , Html.Attributes.attribute "enablejsapi" "1"
+  , Html.Attributes.id "youtube-video"
+  ] []
+  |> html
+  |> el [ paddingTop 5 ]

@@ -1,8 +1,11 @@
-module OerSearch exposing (..)
+module OerSearch exposing (searchOers)
 
 import Http exposing (expectStringResponse)
-import Json.Decode exposing (Value,map,map2,map3,map5,field,bool,int,float,string,list,dict,oneOf,maybe,nullable)
+import Json.Decode exposing (Value,map,map2,map3,map6,field,bool,int,float,string,list,dict,oneOf,maybe,nullable)
 import Json.Encode
+import Url
+import Url.Builder
+-- import Debug
 
 import Model exposing (..)
 
@@ -10,29 +13,41 @@ import Msg exposing (..)
 
 
 apiRoot =
-  "/api/v1/"
+  "api/v1"
 
 
 searchOers : String -> Cmd Msg
 searchOers searchText =
   let
-      encodedSearchText =
-        searchText |> String.split " " |> String.join "+"
+      encoded =
+        Url.Builder.absolute [ apiRoot, "search" ] [ Url.Builder.string "url" "https://platform.x5gon.org/materialUrl", Url.Builder.string "text" searchText ]
+        -- |> Debug.log "search encoded "
   in
       Http.get
-        { url = apiRoot ++ "search/?url=https://platform.x5gon.org/materialUrl&text=" ++ encodedSearchText
+        { url = encoded
         , expect = Http.expectJson RequestOerSearch searchResultsDecoder
         }
 
 
 searchResultsDecoder =
-  (list searchResultDecoder)
+  list searchResultDecoder
 
 
 searchResultDecoder =
-  map2 Oer
+  map6 Oer
+    (field "url" string)
+    (field "provider" string)
     (field "title" string)
-    (field "videoType" bool)
+    (field "description" string)
+    (field "imageUrls" (list string))
+    (field "youtubeVideoVersions" (dict string))
+
+-- X5GON
+-- searchResultDecoder =
+--   map3 Oer
+--     (field "title" string)
+--     (field "url" string)
+--     (field "videoType" bool)
 
 -- EXAMPLE JSON RESPONSE
 -- "url" : "http://videolectures.net/kdd2016_tran_mobile_phones/",

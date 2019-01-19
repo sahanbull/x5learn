@@ -5,6 +5,9 @@ import Browser.Navigation as Navigation
 import Url
 import Json.Decode as Decode
 import Json.Encode as Encode
+import Dict
+import Time exposing (Posix)
+import Debug
 
 import Model exposing (..)
 import Msg exposing (..)
@@ -56,7 +59,17 @@ update msg ({nav} as model) =
       ( { model | userState = model.userState |> updateUser (insertSearchResults results) }, Cmd.none )
 
     RequestOerSearch (Err err) ->
-      ( model, Cmd.none )
+      let
+          dummy =
+            err |> Debug.log "Error in RequestOerSearch"
+      in
+          ( { model | userMessage = Just "Error in RequestOerSearch" }, Cmd.none )
+
+    ClockTick currentTime ->
+      ( { model | currentTime = currentTime }, Cmd.none )
+
+    SetHover maybeUrl ->
+      ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
 
 
 updateUser : (UserState -> UserState) -> Maybe UserState -> Maybe UserState

@@ -35,13 +35,13 @@ init flags url key =
 view : Model -> Browser.Document Msg
 view model =
   let
-      body =
-        case model.userState of
+      (body, modal) =
+        case model.searchState of
           Nothing ->
-            viewPageLanding model
+            (viewPageLanding model, [])
 
-          Just userState ->
-            viewPageSearchResults model userState
+          Just searchState ->
+            viewPageSearchResults model searchState
 
       header =
         viewPageHeader model
@@ -49,7 +49,7 @@ view model =
       page =
         body
         |> el [ width fill, spacing 50, pageBodyBackground, height (fill |> maximum (model.windowHeight - pageHeaderHeight)), scrollbarY ]
-        |> layout [ inFront header, paddingTop pageHeaderHeight, width fill ]
+        |> layout ([ inFront header, paddingTop pageHeaderHeight, width fill ] ++ modal)
   in
       { title = "X5Learn"
       , body = [ page ]

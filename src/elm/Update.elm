@@ -33,16 +33,16 @@ update msg ({nav} as model) =
       ( { model | searchInputTyping = str }, Cmd.none )
 
     NewUserFromSearch ->
-      ( { model | userState = newUserFromSearch model.searchInputTyping |> Just }, searchOers model.searchInputTyping )
+      ( { model | searchState = newUserFromSearch model.searchInputTyping |> Just }, searchOers model.searchInputTyping )
 
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y }, Cmd.none )
 
-    InspectSearchResult userState oer ->
-      ( { model | userState = Just { userState | inspectedSearchResult = Just oer } }, inspectSearchResult modalHtmlId)
+    InspectSearchResult oer ->
+      ( model |> updateSearch (setInspectedSearchResult <| Just oer), inspectSearchResult modalHtmlId)
 
-    UninspectSearchResult userState ->
-      ( { model | userState = Just { userState | inspectedSearchResult = Nothing } }, Cmd.none )
+    UninspectSearchResult ->
+      ( model |> updateSearch (setInspectedSearchResult <| Nothing), inspectSearchResult modalHtmlId)
 
     TriggerAnim value ->
       -- let
@@ -56,7 +56,7 @@ update msg ({nav} as model) =
       ( model , Cmd.none )
 
     RequestOerSearch (Ok results) ->
-      ( { model | userState = model.userState |> updateUser (insertSearchResults results) }, Cmd.none )
+      ( model |> updateSearch (insertSearchResults results), Cmd.none )
 
     RequestOerSearch (Err err) ->
       let
@@ -72,15 +72,19 @@ update msg ({nav} as model) =
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
 
 
-updateUser : (UserState -> UserState) -> Maybe UserState -> Maybe UserState
-updateUser transformFunction maybeUserState =
-  case maybeUserState of
+updateSearch : (SearchState -> SearchState) -> Model -> Model
+updateSearch transformFunction model =
+  case model.searchState of
     Nothing ->
-      Nothing
+      model
 
-    Just userState ->
-      Just (userState |> transformFunction)
+    Just searchState ->
+      { model | searchState = Just (searchState |> transformFunction) }
 
 
-insertSearchResults results userState =
-  { userState | searchResults = Just results }
+insertSearchResults results searchState =
+  { searchState | searchResults = Just results }
+
+
+setInspectedSearchResult maybeOer searchState =
+  { searchState | inspectedSearchResult = maybeOer }

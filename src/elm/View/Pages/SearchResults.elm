@@ -20,28 +20,28 @@ import Msg exposing (..)
 
 import Json.Decode as Decode
 
-viewPageSearchResults : Model -> UserState -> Element Msg
-viewPageSearchResults model userState =
+viewPageSearchResults : Model -> SearchState -> (Element Msg, (List (Attribute Msg)))
+viewPageSearchResults model searchState =
   let
       modal =
-        case userState.inspectedSearchResult of
+        case searchState.inspectedSearchResult of
           Nothing ->
             []
 
           Just oer ->
-            [ inFront <| viewModal userState oer ]
+            [ inFront <| viewModal model searchState oer ]
   in
-      viewSearchResults model userState modal
+      (viewSearchResults model searchState (List.isEmpty modal), modal)
 
 
-viewModal userState oer =
+viewModal model searchState oer =
   let
       closeIcon =
         image [  materialDarkAlpha, hoverCircleBackground] { src = svgPath "close", description = "close" }
 
       header =
         [ oer.title |> headlineWrap []
-        , button [] { onPress = Just (UninspectSearchResult userState), label = closeIcon }
+        , button [] { onPress = Just UninspectSearchResult, label = closeIcon }
         ]
         |> row [ width fill, spacing 16 ]
 
@@ -86,29 +86,29 @@ viewModal userState oer =
         , description
         , footer
         ]
-        |> column [ width (fill |> maximum 832), Background.color white, centerX, centerY, padding 16, spacing 16, htmlId modalHtmlId ]
+        |> column [ width (fill |> maximum 752), Background.color white, centerX, centerY, padding 16, spacing 16, htmlId modalHtmlId ]
 
       scrim =
         none
-        |> el [ Background.color <| rgb 0 0 0, alpha 0.32, width fill, height fill, onClickNoBubble (UninspectSearchResult userState) ]
+        |> el [ Background.color <| rgb 0 0 0, alpha 0.32, width fill, height (fill |> maximum (model.windowHeight - pageHeaderHeight)), moveDown pageHeaderHeight, onClickNoBubble UninspectSearchResult ]
   in
       sheet
       |> el [ width fill, height fill, behindContent scrim ]
 
 
-viewSearchResults model userState modal =
-  case userState.searchResults of
+viewSearchResults model searchState clickEnabled =
+  case searchState.searchResults of
     Nothing ->
       "loading..." |> text
 
     Just oers ->
       oers
-      |> List.indexedMap (viewSearchResult model userState (List.isEmpty modal))
+      |> List.indexedMap (viewSearchResult model searchState clickEnabled)
       |> wrappedRow [ centerX, spacing 30, width (fill |> maximum 1100) ]
-      |> el ([ padding 20, spacing 20, width fill, height fill ] ++ modal)
+      |> el [ padding 20, spacing 20, width fill, height fill ]
 
 
-viewSearchResult model userState isClickable index oer =
+viewSearchResult model searchState clickEnabled index oer =
   let
       hovering =
         model.hoveringOerUrl == Just oer.url
@@ -211,8 +211,8 @@ viewSearchResult model userState isClickable index oer =
         ]
         |> column [ width (px 332), height (px 280), htmlClass "materialCard", inFront modalityIcon, onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing) ]
   in
-      if isClickable then
-        button [] { onPress = Just (InspectSearchResult userState oer), label = card }
+      if clickEnabled then
+        button [] { onPress = Just (InspectSearchResult oer), label = card }
       else
         button [] { onPress = Nothing, label = card }
 

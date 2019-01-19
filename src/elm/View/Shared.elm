@@ -160,8 +160,8 @@ hoverCircleBackground =
 
 embedYoutubePlayer youtubeId =
   Html.iframe
-  [ Html.Attributes.width 800
-  , Html.Attributes.height 500
+  [ Html.Attributes.width 720
+  , Html.Attributes.height 400
   , Html.Attributes.src ("https://www.youtube.com/embed/" ++ youtubeId)
   , Html.Attributes.attribute "allowfullscreen" "allowfullscreen"
   , Html.Attributes.attribute "frameborder" "0"

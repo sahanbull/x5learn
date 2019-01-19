@@ -18,8 +18,8 @@ type Msg
   | ChangeSearchText String
   | NewUserFromSearch
   | ResizeBrowser Int Int
-  | InspectSearchResult UserState Oer
-  | UninspectSearchResult UserState
+  | InspectSearchResult Oer
+  | UninspectSearchResult
   | TriggerAnim Encode.Value
   | RequestOerSearch (Result Http.Error (List Oer))
   | ClockTick Posix

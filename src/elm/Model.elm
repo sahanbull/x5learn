@@ -14,7 +14,7 @@ type alias Model =
   , windowHeight : Int
   , currentTime : Posix
   , searchInputTyping : String
-  , userState : Maybe UserState
+  , searchState : Maybe SearchState
   , userMessage : Maybe String
   , hoveringOerUrl : Maybe String
   , timeOfLastMouseEnterOnCard : Posix
@@ -33,7 +33,7 @@ type alias Nav =
   }
 
 
-type alias UserState =
+type alias SearchState =
   { lastSearch : String
   , inspectedSearchResult : Maybe Oer
   , searchResults : Maybe (List Oer)
@@ -57,7 +57,7 @@ initialModel nav flags =
   , windowHeight = flags.windowHeight
   , currentTime = initialTime
   , searchInputTyping = ""
-  , userState = Nothing
+  , searchState = Nothing
   , userMessage = Nothing
   , hoveringOerUrl = Nothing
   , timeOfLastMouseEnterOnCard = initialTime

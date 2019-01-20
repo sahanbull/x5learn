@@ -27,7 +27,7 @@ def search_results_from_local_experimental_unesco_csv(search_words):
     if unesco_data==[]:
         read_unesco_data()
     results = [ row for row in unesco_data if any_word_matches(search_words, row['title']) or any_word_matches(search_words, row['description']) ]
-    return jsonify(results[:12])
+    return jsonify(results[:18])
 
 
 def any_word_matches(words, text):
@@ -44,7 +44,8 @@ def read_unesco_data():
             row['youtubeVideoVersions'] = json.loads(row['youtubeVideoVersions'].replace("'", '"'))
             row['imageUrls'] = json.loads(row['imageUrls'].replace("'", '"'))
             row['provider'] = 'https://whc.unesco.org/'
-            unesco_data.append(row)
+            if row['url'] not in [ site['url'] for site in unesco_data ]:
+                unesco_data.append(row)
 
 
 # def search_results_from_x5gon_api(text):

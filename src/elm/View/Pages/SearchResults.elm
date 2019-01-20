@@ -99,7 +99,9 @@ viewModal model searchState oer =
 viewSearchResults model searchState clickEnabled =
   case searchState.searchResults of
     Nothing ->
-      "loading..." |> text
+      "loading..." |> wrapText [ primaryWhite, centerX, centerY ]
+      |> el [ centerX, height fill ]
+      |> el [ width fill, height fill ]
 
     Just oers ->
       oers
@@ -152,7 +154,8 @@ viewSearchResult model searchState clickEnabled index oer =
           head :: rest ->
             let
                 imageIndex =
-                  ((posixToMillis model.currentTime) - (posixToMillis model.timeOfLastMouseEnterOnCard)) // 2000 + 1
+                  ((posixToMillis model.currentTime) - (posixToMillis model.timeOfLastMouseEnterOnCard)) // 1700 + 1
+                  |> modBy (List.length oer.imageUrls)
 
                 currentImageUrl =
                   oer.imageUrls
@@ -177,7 +180,7 @@ viewSearchResult model searchState clickEnabled index oer =
                 |> upperImage [ preloadImage nextImageUrl, imageCounter <| (imageIndex+1 |> String.fromInt) ++ " / " ++ (oer.imageUrls |> List.length |> String.fromInt) ]
 
       title =
-        oer.title |> subheaderWrap [ height fill ]
+        oer.title |> subheaderWrap [ height (fill |> maximum 64), clipY ]
 
       modalityIcon =
         if hasVideo oer then

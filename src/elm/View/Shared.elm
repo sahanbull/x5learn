@@ -170,3 +170,12 @@ embedYoutubePlayer youtubeId =
   ] []
   |> html
   |> el [ paddingTop 5 ]
+
+
+dialogShadow =
+  Border.shadow
+    { offset = (0, 20)
+    , size = 0
+    , blur = 60
+    , color = rgba 0 0 0 0.6
+    }

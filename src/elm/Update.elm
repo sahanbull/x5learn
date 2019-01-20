@@ -6,8 +6,9 @@ import Url
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Dict
+import Set
 import Time exposing (Posix)
-import Debug
+-- import Debug
 
 import Model exposing (..)
 import Msg exposing (..)
@@ -29,6 +30,12 @@ update msg ({nav} as model) =
     UrlChanged url ->
       ( { model | nav = { nav | url = url } }, Cmd.none )
 
+    ClockTick time ->
+      ( { model | currentTime = time }, Cmd.none )
+
+    AnimationTick time ->
+      ( { model | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
+
     ChangeSearchText str ->
       ( { model | searchInputTyping = str }, Cmd.none )
 
@@ -39,34 +46,26 @@ update msg ({nav} as model) =
       ( { model | windowWidth = x, windowHeight = y }, Cmd.none )
 
     InspectSearchResult oer ->
-      ( model |> updateSearch (setInspectedSearchResult <| Just oer), inspectSearchResult modalHtmlId)
+      ( { model | animationsPending = model.animationsPending |> Set.insert modalId } |> updateSearch (setInspectedSearchResult <| Just oer), openModalAnimation modalId)
 
     UninspectSearchResult ->
-      ( model |> updateSearch (setInspectedSearchResult <| Nothing), inspectSearchResult modalHtmlId)
+      ( model |> updateSearch (setInspectedSearchResult <| Nothing), Cmd.none)
 
-    TriggerAnim value ->
-      -- let
-      --     w 
-      --       Decode.decodeValue value
-      --       |> Result.withDefault 12345
+    ModalAnimationStart animation ->
+      ( { model | modalAnimation = Just animation }, Cmd.none )
 
-      --     dummy =
-      --       Debug.log "wwwwww" (String.fromFloat w)
-      -- in
-      ( model , Cmd.none )
+    ModalAnimationStop dummy ->
+      ( { model | modalAnimation = Nothing, animationsPending = model.animationsPending |> Set.remove modalId }, Cmd.none )
 
     RequestOerSearch (Ok results) ->
       ( model |> updateSearch (insertSearchResults results), Cmd.none )
 
     RequestOerSearch (Err err) ->
-      let
-          dummy =
-            err |> Debug.log "Error in RequestOerSearch"
-      in
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestOerSearch"
+      -- in
           ( { model | userMessage = Just "Error in RequestOerSearch" }, Cmd.none )
-
-    ClockTick currentTime ->
-      ( { model | currentTime = currentTime }, Cmd.none )
 
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
@@ -88,3 +87,13 @@ insertSearchResults results searchState =
 
 setInspectedSearchResult maybeOer searchState =
   { searchState | inspectedSearchResult = maybeOer }
+
+
+incrementFrameCountInModalAnimation : Model -> Model
+incrementFrameCountInModalAnimation model =
+  case model.modalAnimation of
+    Nothing ->
+      model
+
+    Just animation ->
+      { model | modalAnimation = Just { animation | frameCount = animation.frameCount + 1 } }

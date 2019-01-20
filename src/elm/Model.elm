@@ -3,9 +3,12 @@ module Model exposing (..)
 import Browser
 import Browser.Navigation as Navigation
 import Url
-import Time exposing (Posix)
+import Time exposing (Posix, posixToMillis)
 import Element exposing (Color, rgb255)
 import Dict exposing (Dict)
+import Set exposing (Set)
+
+import Animation exposing (..)
 
 
 type alias Model =
@@ -18,6 +21,8 @@ type alias Model =
   , userMessage : Maybe String
   , hoveringOerUrl : Maybe String
   , timeOfLastMouseEnterOnCard : Posix
+  , modalAnimation : Maybe BoxAnimation
+  , animationsPending : Set String
   }
 
 
@@ -50,6 +55,12 @@ type alias Oer =
   }
 
 
+type AnimationStatus
+  = Inactive
+  | Prestart
+  | Started
+
+
 initialModel : Nav -> Flags -> Model
 initialModel nav flags =
   { nav = nav
@@ -61,6 +72,8 @@ initialModel nav flags =
   , userMessage = Nothing
   , hoveringOerUrl = Nothing
   , timeOfLastMouseEnterOnCard = initialTime
+  , modalAnimation = Nothing
+  , animationsPending = Set.empty
   }
 
 
@@ -86,5 +99,23 @@ getYoutubeId oer =
   |> Dict.get "English"
 
 
-modalHtmlId =
-  "modalHtmlId"
+modalId =
+  "modalId"
+
+
+millisSince : Model -> Posix -> Int
+millisSince model pastPointInTime =
+  (posixToMillis model.currentTime) - (posixToMillis pastPointInTime)
+
+
+modalAnimationStatus : Model -> AnimationStatus
+modalAnimationStatus model =
+  if model.animationsPending |> Set.member modalId then
+    case model.modalAnimation of
+      Nothing ->
+        Prestart
+
+      Just _ ->
+        Started
+  else
+    Inactive

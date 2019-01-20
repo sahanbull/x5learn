@@ -1,8 +1,8 @@
 module View.Pages.SearchResults exposing (viewPageSearchResults)
 
-import Time exposing (posixToMillis)
 import Url
 import Dict
+import Set
 
 import Html.Attributes
 
@@ -14,6 +14,7 @@ import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Element.Font as Font
 
 import Model exposing (..)
+import Animation exposing (..)
 import View.Shared exposing (..)
 
 import Msg exposing (..)
@@ -80,20 +81,51 @@ viewModal model searchState oer =
         ]
         |> row [ spacing 20, alignRight ]
 
+      hideWhileOpening =
+        alpha <| if model.animationsPending |> Set.member modalId then 0.01 else 1
+
       sheet =
         [ header
         , player
         , description
         , footer
         ]
-        |> column [ width (fill |> maximum 752), Background.color white, centerX, centerY, padding 16, spacing 16, htmlId modalHtmlId ]
+        |> column [ width (fill |> maximum 752), Background.color white, centerX, centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow ]
+
+      animatingBox =
+        case model.modalAnimation of
+          Nothing ->
+            none
+
+          Just animation ->
+            let
+                (box, opacity) =
+                  if animation.frameCount > 1 then
+                    (animation.end, 5/((toFloat animation.frameCount)+5))
+                  else
+                    (interpolateBoxes animation.start animation.end, 0)
+            in
+                none
+                |> el [ whiteBackground, width (box.sx |> round |> px), height (box.sy |> round |> px), moveRight box.x, moveDown box.y, htmlClass "modalAnimation", alpha opacity, Border.rounded 5 ]
 
       scrim =
-        none
-        |> el [ Background.color <| rgb 0 0 0, alpha 0.32, width fill, height (fill |> maximum (model.windowHeight - pageHeaderHeight)), moveDown pageHeaderHeight, onClickNoBubble UninspectSearchResult ]
+        let
+            opacity =
+              case modalAnimationStatus model of
+                Inactive ->
+                  0.32
+
+                Prestart ->
+                  0
+
+                Started ->
+                  0.32
+        in
+            none
+            |> el [ Background.color <| rgba 0 0 0 opacity, width fill, height (fill |> maximum (model.windowHeight - pageHeaderHeight)), moveDown pageHeaderHeight, onClickNoBubble UninspectSearchResult, htmlClass "modalScrim" ]
   in
       sheet
-      |> el [ width fill, height fill, behindContent scrim ]
+      |> el [ width fill, height fill, behindContent scrim, inFront animatingBox ]
 
 
 viewSearchResults model searchState clickEnabled =
@@ -154,7 +186,7 @@ viewSearchResult model searchState clickEnabled index oer =
           head :: rest ->
             let
                 imageIndex =
-                  ((posixToMillis model.currentTime) - (posixToMillis model.timeOfLastMouseEnterOnCard)) // 1700 + 1
+                  (millisSince model model.timeOfLastMouseEnterOnCard) // 1500 + 1
                   |> modBy (List.length oer.imageUrls)
 
                 currentImageUrl =

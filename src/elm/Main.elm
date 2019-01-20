@@ -9,8 +9,10 @@ import Msg exposing (..)
 import Model exposing (..)
 import View.Shared exposing (..)
 import View.PageHeader exposing (viewPageHeader)
-import View.Pages.Landing exposing (viewPageLanding)
-import View.Pages.SearchResults exposing (viewPageSearchResults)
+import View.NavigationDrawer exposing (..)
+import View.Pages.Home exposing (viewHomePage)
+import View.Pages.Search exposing (viewSearchPage)
+import View.Pages.Bookmarks exposing (viewBookmarksPage)
 
 import Update exposing (..)
 
@@ -36,12 +38,17 @@ view : Model -> Browser.Document Msg
 view model =
   let
       (body, modal) =
-        case model.searchState of
-          Nothing ->
-            (viewPageLanding model, [])
+        case model.nav.url.path of
+          "/bookmarks" ->
+            viewBookmarksPage model |> withNavigationDrawer model
 
-          Just searchState ->
-            viewPageSearchResults model searchState
+          _ ->
+            case model.searchState of
+              Nothing ->
+                (viewHomePage model, [])
+
+              Just searchState ->
+                viewSearchPage model searchState |> withNavigationDrawer model
 
       header =
         viewPageHeader model

@@ -1,4 +1,4 @@
-module View.Pages.SearchResults exposing (viewPageSearchResults)
+module View.Pages.Search exposing (viewSearchPage)
 
 import Url
 import Dict
@@ -21,8 +21,9 @@ import Msg exposing (..)
 
 import Json.Decode as Decode
 
-viewPageSearchResults : Model -> SearchState -> (Element Msg, (List (Attribute Msg)))
-viewPageSearchResults model searchState =
+
+viewSearchPage : Model -> SearchState -> PageWithModal
+viewSearchPage model searchState =
   let
       modal =
         case searchState.inspectedSearchResult of
@@ -33,7 +34,6 @@ viewPageSearchResults model searchState =
             [ inFront <| viewModal model searchState oer ]
   in
       (viewSearchResults model searchState (List.isEmpty modal), modal)
-
 
 viewModal model searchState oer =
   let
@@ -75,9 +75,9 @@ viewModal model searchState oer =
         |> row [ alignLeft, width fill ]
 
       actions =
-        [ footerButton <| image [ materialDarkAlpha ] { src = svgPath "share", description = "share icon" }
-        , footerButton <| image [ materialDarkAlpha ] { src = svgPath "bookmark_outline", description = "bookmark icon" }
-        , footerButton <| image [ materialDarkAlpha ] { src = svgPath "more_vert", description = "more icon" }
+        [ footerButton <| svgIcon "share"
+        , footerButton <| svgIcon "bookmark_outline"
+        , footerButton <| svgIcon "more_vert"
         ]
         |> row [ spacing 20, alignRight ]
 
@@ -90,7 +90,7 @@ viewModal model searchState oer =
         , description
         , footer
         ]
-        |> column [ width (fill |> maximum 752), Background.color white, centerX, centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow ]
+        |> column [ width (fill |> maximum 752), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow ]
 
       animatingBox =
         case model.modalAnimation of
@@ -122,7 +122,7 @@ viewModal model searchState oer =
                   0.32
         in
             none
-            |> el [ Background.color <| rgba 0 0 0 opacity, width fill, height (fill |> maximum (model.windowHeight - pageHeaderHeight)), moveDown pageHeaderHeight, onClickNoBubble UninspectSearchResult, htmlClass "modalScrim" ]
+            |> el [ Background.color <| rgba 0 0 0 opacity, width (model.windowWidth - navigationDrawerWidth |> px), height (fill |> maximum (model.windowHeight - pageHeaderHeight)), moveDown pageHeaderHeight, moveRight navigationDrawerWidth, onClickNoBubble UninspectSearchResult, htmlClass "modalScrim" ]
   in
       sheet
       |> el [ width fill, height fill, behindContent scrim, inFront animatingBox ]

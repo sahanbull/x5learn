@@ -8,10 +8,14 @@ import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
+import Element.Input as Input exposing (button)
 import Json.Decode
 
 import Model exposing (..)
 import Msg exposing (..)
+
+
+type alias PageWithModal = (Element Msg, List (Attribute Msg))
 
 
 materialDark =
@@ -75,7 +79,7 @@ bodyWrap attrs str =
 
 
 bodyNoWrap attrs str =
-  text str |> el (attrs ++ [ Font.size 14 ])
+  text str |> el ([ Font.size 14, Font.color materialDark ] ++ attrs)
 
 
 subheaderWrap attrs str =
@@ -123,7 +127,6 @@ whiteBackground =
 
 
 pageBodyBackground =
-  -- Background.color lightGrey
   Background.image <| imgPath "bg.jpg"
 
 
@@ -179,3 +182,27 @@ dialogShadow =
     , blur = 60
     , color = rgba 0 0 0 0.6
     }
+
+
+linkTo attrs url label =
+  link attrs { url = url, label = label }
+
+
+viewSearchWidget widthAttr placeholder searchInputTyping =
+  let
+      icon =
+        image [ alpha 0.5 ] { src = (svgPath "search"), description = "search icon" }
+
+      submitButton =
+        button [ moveLeft 34, moveDown 12 ] { onPress = Just NewUserFromSearch, label = icon }
+  in
+      Input.text [ width fill, Input.focusedOnLoad, onEnter NewUserFromSearch ] { onChange = ChangeSearchText, text = searchInputTyping, placeholder = Just (placeholder |> text |> Input.placeholder []), label = Input.labelHidden "search" }
+      |> el [ width widthAttr, centerX, onRight submitButton ]
+
+
+svgIcon stub=
+  image [ materialDarkAlpha ] { src = svgPath stub, description = "" }
+
+
+navigationDrawerWidth =
+  260

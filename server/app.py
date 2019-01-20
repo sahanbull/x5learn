@@ -16,6 +16,10 @@ unesco_data = []
 def home():
     return render_template('home.html')
 
+@app.route("/bookmarks")
+def bookmarks():
+    return render_template('home.html')
+
 @app.route("/api/v1/search/", methods=['GET'])
 def search():
     text = request.args['text']

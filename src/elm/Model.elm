@@ -119,3 +119,7 @@ modalAnimationStatus model =
         Started
   else
     Inactive
+
+
+currentUrlMatches model url =
+  url == model.nav.url.path

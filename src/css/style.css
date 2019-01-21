@@ -61,3 +61,16 @@ a:hover {
   transition: all 0.5s ease-out;
 }
 
+
+
+/* temporary patch to hide ugly frames in videolectures.net thumbnails */
+
+.materialHoverZoomThumb-videolectures {
+  background-size: 106% !important;
+  transition: all 0.2s;
+}
+
+.materialCard:hover .materialHoverZoomThumb-videolectures {
+  background-size: 110% !important;
+}
+

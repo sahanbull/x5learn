@@ -65,7 +65,7 @@ update msg ({nav} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestOerSearch"
       -- in
-          ( { model | userMessage = Just "Error in RequestOerSearch" }, Cmd.none )
+      ( { model | userMessage = Just "There was a problem with the search data" }, Cmd.none )
 
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )

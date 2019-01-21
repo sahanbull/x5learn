@@ -149,7 +149,7 @@ viewSearchResult model searchState clickEnabled index oer =
 
       upperImage attrs url =
         none
-        |> el ([ width fill, height (px 175), Background.image <| url, htmlClass "materialHoverZoomThumb" ] ++ attrs)
+        |> el ([ width fill, height (px 175), Background.image <| url, htmlClass (if isFromVideoLecturesNet oer then "materialHoverZoomThumb-videolectures" else "materialHoverZoomThumb") ] ++ attrs)
 
       imageCounter txt =
         txt
@@ -229,10 +229,20 @@ viewSearchResult model searchState clickEnabled index oer =
         --     image [ moveRight 280, moveDown 160, width (px 30) ] { src = svgPath stub, description = "play icon" }
 
       bottomRow =
-        [ oer.provider |> domainOnly |> captionNowrap []
-        -- , "90 min" |> captionNowrap [ alignRight ]
-        ]
-        |> row [ width fill ]
+        let
+            content =
+              if oer.duration=="" then
+                [ oer.provider |> domainOnly |> captionNowrap []
+                , oer.date |> captionNowrap [ alignRight ]
+                ]
+              else
+                [ oer.date |> captionNowrap []
+                , oer.provider |> domainOnly |> captionNowrap [ centerX ]
+                , oer.duration |> captionNowrap [ alignRight ]
+                ]
+        in
+            content
+            |> row [ width fill ]
 
       info =
         [ title

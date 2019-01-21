@@ -34,6 +34,10 @@ x5color =
   Font.color <| rgb255 82 134 148
 
 
+greyText =
+  Font.color <| grey 160
+
+
 pageHeaderHeight =
   40
 
@@ -205,4 +209,4 @@ svgIcon stub=
 
 
 navigationDrawerWidth =
-  260
+  230

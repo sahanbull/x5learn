@@ -1,7 +1,7 @@
 module OerSearch exposing (searchOers)
 
 import Http exposing (expectStringResponse)
-import Json.Decode exposing (Value,map,map2,map3,map6,field,bool,int,float,string,list,dict,oneOf,maybe,nullable)
+import Json.Decode exposing (Value,map,map2,map3,map8,field,bool,int,float,string,list,dict,oneOf,maybe,nullable)
 import Json.Encode
 import Url
 import Url.Builder
@@ -34,10 +34,12 @@ searchResultsDecoder =
 
 
 searchResultDecoder =
-  map6 Oer
+  map8 Oer
     (field "url" string)
     (field "provider" string)
+    (field "date" string)
     (field "title" string)
+    (field "duration" string)
     (field "description" string)
     (field "imageUrls" (list string))
     (field "youtubeVideoVersions" (dict string))

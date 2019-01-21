@@ -32,11 +32,19 @@ withNavigationDrawer model (pageContent, modal) =
             |> row ([ width fill, padding 12, spacing 30, Border.rounded 4 ] ++ background)
             |> linkTo [ width fill ] url
 
+      navButtons =
+        [ navButton "/bookmarks" "nav_bookmarks" "Bookmarks"
+        , navButton "/radar" "nav_radar" "Radar"
+        , navButton "/notes" "nav_notes" "Notes"
+        , navButton "/peers" "nav_peers" "Peers"
+        ]
+        |> column [ width fill, spacing 10 ]
+
       drawer =
         [ model.searchInputTyping |> viewSearchWidget fill "Search"
-        , navButton "/bookmarks" "nav_bookmarks" "Bookmarks"
+        , navButtons
         ]
-        |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 5, spacing 10, whiteBackground ]
+        |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 14, spacing 30, whiteBackground ]
 
       page =
         [ drawer

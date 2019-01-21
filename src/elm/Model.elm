@@ -48,7 +48,9 @@ type alias SearchState =
 type alias Oer =
   { url : String
   , provider : String
+  , date : String
   , title : String
+  , duration : String
   , description : String
   , imageUrls : List String
   , youtubeVideoVersions : Dict String String -- key: language, value: youtubeId
@@ -90,7 +92,7 @@ newUserFromSearch str =
 
 hasVideo : Oer -> Bool
 hasVideo oer =
-  oer.youtubeVideoVersions |> Dict.isEmpty |> not
+  (oer.youtubeVideoVersions |> Dict.isEmpty |> not) || (isFromVideoLecturesNet oer)
 
 
 getYoutubeId : Oer -> Maybe String
@@ -123,3 +125,7 @@ modalAnimationStatus model =
 
 currentUrlMatches model url =
   url == model.nav.url.path
+
+
+isFromVideoLecturesNet oer =
+  String.startsWith "http://videolectures.net/" oer.url

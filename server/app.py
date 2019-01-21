@@ -9,8 +9,9 @@ import csv
 
 app = Flask( __name__ )
 
-unesco_data = []
-
+csv_data = []
+csv_path = '/Users/stefan/x5/data/unesco.csv'
+# csv_path = '/Users/stefan/x5/data/videolectures_music.csv'
 
 @app.route("/")
 def home():
@@ -20,17 +21,29 @@ def home():
 def bookmarks():
     return render_template('home.html')
 
+@app.route("/interests")
+def interests():
+    return render_template('home.html')
+
+@app.route("/notes")
+def notes():
+    return render_template('home.html')
+
+@app.route("/peers")
+def peers():
+    return render_template('home.html')
+
 @app.route("/api/v1/search/", methods=['GET'])
 def search():
     text = request.args['text']
     # return search_results_from_x5gon_api(text)
-    return search_results_from_local_experimental_unesco_csv(text.lower().split())
+    return search_results_from_local_experimental_csv(text.lower().split())
 
 
-def search_results_from_local_experimental_unesco_csv(search_words):
-    if unesco_data==[]:
-        read_unesco_data()
-    results = [ row for row in unesco_data if any_word_matches(search_words, row['title']) or any_word_matches(search_words, row['description']) ]
+def search_results_from_local_experimental_csv(search_words):
+    if csv_data==[]:
+        read_csv_data()
+    results = [ row for row in csv_data if any_word_matches(search_words, row['title']) or any_word_matches(search_words, row['description']) ]
     return jsonify(results[:18])
 
 
@@ -41,15 +54,17 @@ def any_word_matches(words, text):
     return False
 
 
-def read_unesco_data():
-    print('reading unesco_data')
-    with open('/Users/stefan/x5/data/unesco.csv', newline='') as f:
+def read_csv_data():
+    print('using local data:', csv_path)
+    with open(csv_path, newline='') as f:
         for row in csv.DictReader(f, delimiter='\t'):
+            if row['url'] in [ r['url'] for r in csv_data ]:
+                continue
             row['youtubeVideoVersions'] = json.loads(row['youtubeVideoVersions'].replace("'", '"'))
             row['imageUrls'] = json.loads(row['imageUrls'].replace("'", '"'))
-            row['provider'] = 'https://whc.unesco.org/'
-            if row['url'] not in [ site['url'] for site in unesco_data ]:
-                unesco_data.append(row)
+            row['date'] = row['date'] if 'date' in row else ''
+            row['duration'] = row['duration'] if 'duration' in row else ''
+            csv_data.append(row)
 
 
 # def search_results_from_x5gon_api(text):

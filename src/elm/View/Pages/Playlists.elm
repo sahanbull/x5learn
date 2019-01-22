@@ -1,4 +1,4 @@
-module View.Pages.Bookmarks exposing (viewBookmarksPage)
+module View.Pages.Playlists exposing (viewPlaylistsPage)
 
 import Url
 import Dict
@@ -22,10 +22,10 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
-viewBookmarksPage : Model -> PageWithModal
-viewBookmarksPage model =
+viewPlaylistsPage : Model -> PageWithModal
+viewPlaylistsPage model =
   let
       modal =
         []
   in
-      ("Bookmarks page goes here" |> text, modal)
+      ("Playlists page goes here" |> text, modal)

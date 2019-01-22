@@ -12,7 +12,7 @@ import View.PageHeader exposing (viewPageHeader)
 import View.NavigationDrawer exposing (..)
 import View.Pages.Home exposing (viewHomePage)
 import View.Pages.Search exposing (viewSearchPage)
-import View.Pages.Bookmarks exposing (viewBookmarksPage)
+import View.Pages.Playlists exposing (viewPlaylistsPage)
 
 import Update exposing (..)
 
@@ -39,8 +39,8 @@ view model =
   let
       (body, modal) =
         case model.nav.url.path of
-          "/bookmarks" ->
-            viewBookmarksPage model |> withNavigationDrawer model
+          "/playlists" ->
+            viewPlaylistsPage model |> withNavigationDrawer model
 
           _ ->
             case model.searchState of

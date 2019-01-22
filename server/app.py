@@ -17,8 +17,8 @@ csv_path = '/Users/stefan/x5/data/unesco.csv'
 def home():
     return render_template('home.html')
 
-@app.route("/bookmarks")
-def bookmarks():
+@app.route("/playlists")
+def playlists():
     return render_template('home.html')
 
 @app.route("/interests")

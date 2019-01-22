@@ -198,9 +198,9 @@ viewSearchWidget widthAttr placeholder searchInputTyping =
         image [ alpha 0.5 ] { src = (svgPath "search"), description = "search icon" }
 
       submitButton =
-        button [ moveLeft 34, moveDown 12 ] { onPress = Just NewUserFromSearch, label = icon }
+        button [ moveLeft 34, moveDown 12 ] { onPress = Just NewSearch, label = icon }
   in
-      Input.text [ width fill, Input.focusedOnLoad, onEnter NewUserFromSearch ] { onChange = ChangeSearchText, text = searchInputTyping, placeholder = Just (placeholder |> text |> Input.placeholder []), label = Input.labelHidden "search" }
+      Input.text [ width fill, Input.focusedOnLoad, onEnter NewSearch ] { onChange = ChangeSearchText, text = searchInputTyping, placeholder = Just (placeholder |> text |> Input.placeholder []), label = Input.labelHidden "search" }
       |> el [ width widthAttr, centerX, onRight submitButton ]
 
 
@@ -210,3 +210,14 @@ svgIcon stub=
 
 navigationDrawerWidth =
   230
+
+
+actionButton svgIconStub str onPress =
+  let
+      label =
+        [ image [ alpha 0.5 ] { src = svgPath svgIconStub, description = "" }
+        , str |> bodyNoWrap [ width fill ]
+        ]
+        |> row [ width fill, padding 12, spacing 3, Border.rounded 4 ]
+  in
+      button [] { onPress = onPress, label = label }

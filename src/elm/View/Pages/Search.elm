@@ -26,68 +26,49 @@ viewSearchPage : Model -> SearchState -> PageWithModal
 viewSearchPage model searchState =
   let
       modal =
-        case searchState.inspectedSearchResult of
+        case model.inspectorState of
           Nothing ->
             []
 
-          Just oer ->
-            [ inFront <| viewModal model searchState oer ]
+          Just inspectorState ->
+            [ inFront <| viewModal model inspectorState ]
   in
       (viewSearchResults model searchState (List.isEmpty modal), modal)
 
-viewModal model searchState oer =
+
+viewModal : Model -> InspectorState -> Element Msg
+viewModal model ({oer} as inspectorState) =
   let
       closeIcon =
         image [  materialDarkAlpha, hoverCircleBackground] { src = svgPath "close", description = "close" }
 
+      (headerContent, bodyContent, footerContent) =
+        case inspectorState.activeMenu of
+          Nothing ->
+            inspectorContentDefault model inspectorState oer
+
+          Just SaveToPlaylistMenu ->
+            inspectorContentSaveToPlaylist model inspectorState oer
+
       header =
-        [ oer.title |> headlineWrap []
+        [ headerContent
         , button [] { onPress = Just UninspectSearchResult, label = closeIcon }
         ]
         |> row [ width fill, spacing 16 ]
 
-      player =
-        case getYoutubeId oer of
-          Nothing ->
-            none
-
-          Just youtubeId ->
-            embedYoutubePlayer youtubeId
-
-      description =
-        oer.description
-        |> bodyWrap []
-
-      footerButton label =
-        button [ hoverCircleBackground ] { onPress = Nothing, label = label }
-
       footer =
-        [ newTabLink [] { url = oer.url, label = providerLink }
-        , none |> el [ width fill ]
-        , actions
-        ]
+        footerContent
         |> row [ spacing 20, width fill ]
-
-      providerLink =
-        [  oer.provider |> bodyNoWrap [ alignLeft]
-        , image [ alignLeft, materialDarkAlpha, width (px 20) ] { src = svgPath "navigate_next", description = "external link" }
-        ]
-        |> row [ alignLeft, width fill ]
-
-      actions =
-        [ footerButton <| svgIcon "share"
-        , footerButton <| svgIcon "bookmark_outline"
-        , footerButton <| svgIcon "more_vert"
-        ]
-        |> row [ spacing 20, alignRight ]
 
       hideWhileOpening =
         alpha <| if model.animationsPending |> Set.member modalId then 0.01 else 1
 
+      body =
+        bodyContent
+
       sheet =
         [ header
-        , player
-        , description
+        , body
         , footer
         ]
         |> column [ width (fill |> maximum 752), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow ]
@@ -273,3 +254,78 @@ selectByIndex index fallback elements =
 domainOnly : String -> String
 domainOnly url =
   url |> String.split "//" |> List.drop 1 |> List.head |> Maybe.withDefault url |> String.split "/" |> List.head |> Maybe.withDefault url
+
+
+inspectorContentDefault model inspectorState oer =
+  let
+      header =
+        oer.title |> headlineWrap []
+
+      player =
+        case getYoutubeId oer of
+          Nothing ->
+            none
+
+          Just youtubeId ->
+            embedYoutubePlayer youtubeId
+
+      description =
+        oer.description
+        |> bodyWrap []
+
+      body =
+        [ player
+        , description
+        ]
+        |> column [ spacing 16 ]
+
+      footer =
+        [ newTabLink [] { url = oer.url, label = providerLink }
+        , none |> el [ width fill ]
+        , actionButtons
+        ]
+
+      footerButton label =
+        button [ hoverCircleBackground ] { onPress = Nothing, label = label }
+
+      providerLink =
+        [  oer.provider |> bodyNoWrap [ alignLeft]
+        , image [ alignLeft, materialDarkAlpha, width (px 20) ] { src = svgPath "navigate_next", description = "external link" }
+        ]
+        |> row [ alignLeft, width fill ]
+
+      actionButtons =
+        [ actionButton "share" "SHARE" Nothing
+        , actionButton "playlist_add" "SAVE" <| Just <| OpenSaveToPlaylistMenu inspectorState
+        , footerButton <| svgIcon "more_vert"
+        ]
+        |> row [ spacing 20, alignRight ]
+  in
+      (header, body, footer)
+
+
+inspectorContentSaveToPlaylist model inspectorState oer =
+  let
+      header =
+        "Save to..." |> headlineWrap []
+
+      footer =
+        [ actionButton "add" "Create new playlist" <| Nothing ]
+
+      playlistButton : Playlist -> Element Msg
+      playlistButton playlist =
+        let
+            (icon, action) =
+              if isInPlaylist oer playlist then
+                ("checkbox_ticked", RemoveFromPlaylist)
+              else
+                ("checkbox_unticked", AddToPlaylist)
+        in
+            actionButton icon playlist.title <| Just <| action playlist oer
+
+      body =
+        model.playlists
+        |> List.map playlistButton
+        |> row [ spacing 10 ]
+  in
+      (header, body, footer)

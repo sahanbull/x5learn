@@ -19,7 +19,7 @@ type Msg
   | ClockTick Posix
   | AnimationTick Posix
   | ChangeSearchText String
-  | NewUserFromSearch
+  | NewSearch
   | ResizeBrowser Int Int
   | InspectSearchResult Oer
   | UninspectSearchResult
@@ -27,6 +27,9 @@ type Msg
   | ModalAnimationStop Int
   | RequestOerSearch (Result Http.Error (List Oer))
   | SetHover (Maybe String)
+  | OpenSaveToPlaylistMenu InspectorState
+  | AddToPlaylist Playlist Oer
+  | RemoveFromPlaylist Playlist Oer
 
 
 subscriptions : Model -> Sub Msg

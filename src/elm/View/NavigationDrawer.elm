@@ -33,7 +33,7 @@ withNavigationDrawer model (pageContent, modal) =
             |> linkTo [ width fill ] url
 
       navButtons =
-        [ navButton "/bookmarks" "nav_bookmarks" "Bookmarks"
+        [ navButton "/playlists" "nav_playlists" "Playlists"
         , navButton "/radar" "nav_radar" "Radar"
         , navButton "/notes" "nav_notes" "Notes"
         , navButton "/peers" "nav_peers" "Peers"

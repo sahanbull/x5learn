@@ -39,17 +39,17 @@ update msg ({nav} as model) =
     ChangeSearchText str ->
       ( { model | searchInputTyping = str }, Cmd.none )
 
-    NewUserFromSearch ->
-      ( { model | searchState = newUserFromSearch model.searchInputTyping |> Just }, searchOers model.searchInputTyping )
+    NewSearch ->
+      ( { model | searchState = newSearch model.searchInputTyping |> Just }, searchOers model.searchInputTyping )
 
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y }, Cmd.none )
 
     InspectSearchResult oer ->
-      ( { model | animationsPending = model.animationsPending |> Set.insert modalId } |> updateSearch (setInspectedSearchResult <| Just oer), openModalAnimation modalId)
+      ( { model | inspectorState = Just <| newInspectorState oer, animationsPending = model.animationsPending |> Set.insert modalId }, openModalAnimation modalId)
 
     UninspectSearchResult ->
-      ( model |> updateSearch (setInspectedSearchResult <| Nothing), Cmd.none)
+      ( { model | inspectorState = Nothing}, Cmd.none)
 
     ModalAnimationStart animation ->
       ( { model | modalAnimation = Just animation }, Cmd.none )
@@ -70,6 +70,15 @@ update msg ({nav} as model) =
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
 
+    OpenSaveToPlaylistMenu inspectorState ->
+      ( { model | inspectorState = Just { inspectorState | activeMenu = Just SaveToPlaylistMenu } }, Cmd.none )
+
+    AddToPlaylist playlist oer ->
+      ( { model | playlists = model.playlists |> List.map (\p -> if p.title==playlist.title then { p | oers = oer :: p.oers } else p)}, Cmd.none )
+
+    RemoveFromPlaylist playlist oer ->
+      ( { model | playlists = model.playlists |> List.map (\p -> if p.title==playlist.title then { p | oers = p.oers |> List.filter (\o -> o.url /= oer.url) } else p)}, Cmd.none )
+
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model
 updateSearch transformFunction model =
@@ -83,10 +92,6 @@ updateSearch transformFunction model =
 
 insertSearchResults results searchState =
   { searchState | searchResults = Just results }
-
-
-setInspectedSearchResult maybeOer searchState =
-  { searchState | inspectedSearchResult = maybeOer }
 
 
 incrementFrameCountInModalAnimation : Model -> Model

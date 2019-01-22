@@ -18,11 +18,13 @@ type alias Model =
   , currentTime : Posix
   , searchInputTyping : String
   , searchState : Maybe SearchState
+  , inspectorState : Maybe InspectorState
   , userMessage : Maybe String
   , hoveringOerUrl : Maybe String
   , timeOfLastMouseEnterOnCard : Posix
   , modalAnimation : Maybe BoxAnimation
   , animationsPending : Set String
+  , playlists : List Playlist
   }
 
 
@@ -40,8 +42,13 @@ type alias Nav =
 
 type alias SearchState =
   { lastSearch : String
-  , inspectedSearchResult : Maybe Oer
   , searchResults : Maybe (List Oer)
+  }
+
+
+type alias InspectorState =
+  { oer : Oer
+  , activeMenu : Maybe SearchStateMenu
   }
 
 
@@ -57,10 +64,20 @@ type alias Oer =
   }
 
 
+type alias Playlist =
+  { title : String
+  , oers : List Oer
+  }
+
+
 type AnimationStatus
   = Inactive
   | Prestart
   | Started
+
+
+type SearchStateMenu
+  = SaveToPlaylistMenu
 
 
 initialModel : Nav -> Flags -> Model
@@ -71,11 +88,13 @@ initialModel nav flags =
   , currentTime = initialTime
   , searchInputTyping = ""
   , searchState = Nothing
+  , inspectorState = Nothing
   , userMessage = Nothing
   , hoveringOerUrl = Nothing
   , timeOfLastMouseEnterOnCard = initialTime
   , modalAnimation = Nothing
   , animationsPending = Set.empty
+  , playlists = [ Playlist "Watch later" [] ]
   }
 
 
@@ -83,11 +102,15 @@ initialTime =
   Time.millisToPosix 0
 
 
-newUserFromSearch str =
+newSearch str =
   { lastSearch = str
-  , inspectedSearchResult = Nothing
   , searchResults = Nothing
   }
+
+
+newInspectorState : Oer -> InspectorState
+newInspectorState oer =
+  InspectorState oer Nothing
 
 
 hasVideo : Oer -> Bool
@@ -129,3 +152,8 @@ currentUrlMatches model url =
 
 isFromVideoLecturesNet oer =
   String.startsWith "http://videolectures.net/" oer.url
+
+
+isInPlaylist : Oer -> Playlist -> Bool
+isInPlaylist oer playlist =
+  List.member oer playlist.oers

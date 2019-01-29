@@ -243,19 +243,6 @@ viewSearchResult model searchState clickEnabled index oer =
         button [] { onPress = Nothing, label = card }
 
 
-selectByIndex : Int -> a -> List a -> a
-selectByIndex index fallback elements =
-  elements
-  |> List.drop (index |> modBy (List.length elements))
-  |> List.head
-  |> Maybe.withDefault fallback
-
-
-domainOnly : String -> String
-domainOnly url =
-  url |> String.split "//" |> List.drop 1 |> List.head |> Maybe.withDefault url |> String.split "/" |> List.head |> Maybe.withDefault url
-
-
 inspectorContentDefault model inspectorState oer =
   let
       header =
@@ -307,7 +294,7 @@ inspectorContentDefault model inspectorState oer =
 inspectorContentSaveToPlaylist model inspectorState oer =
   let
       header =
-        "Save to..." |> headlineWrap []
+        "Save to..." |> headlineWrap [ paddingXY 14 0 ]
 
       footer =
         [ actionButton "add" "Create new playlist" <| Nothing ]
@@ -326,6 +313,6 @@ inspectorContentSaveToPlaylist model inspectorState oer =
       body =
         model.playlists
         |> List.map playlistButton
-        |> row [ spacing 10 ]
+        |> column [ spacing 10 ]
   in
       (header, body, footer)

@@ -221,3 +221,16 @@ actionButton svgIconStub str onPress =
         |> row [ width fill, padding 12, spacing 3, Border.rounded 4 ]
   in
       button [] { onPress = onPress, label = label }
+
+
+selectByIndex : Int -> a -> List a -> a
+selectByIndex index fallback elements =
+  elements
+  |> List.drop (index |> modBy (List.length elements))
+  |> List.head
+  |> Maybe.withDefault fallback
+
+
+domainOnly : String -> String
+domainOnly url =
+  url |> String.split "//" |> List.drop 1 |> List.head |> Maybe.withDefault url |> String.split "/" |> List.head |> Maybe.withDefault url

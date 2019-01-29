@@ -94,12 +94,21 @@ initialModel nav flags =
   , timeOfLastMouseEnterOnCard = initialTime
   , modalAnimation = Nothing
   , animationsPending = Set.empty
-  , playlists = [ Playlist "Watch later" [] ]
+  , playlists = initialPlaylists
   }
 
 
 initialTime =
   Time.millisToPosix 0
+
+
+initialPlaylists =
+  [ Playlist "Statistics" []
+  , Playlist "Python" []
+  , Playlist "Fun stuff" []
+  , Playlist "Machine learning in Music" []
+  , Playlist "Shared with Alice" []
+  ]
 
 
 newSearch str =

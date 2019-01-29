@@ -39,7 +39,7 @@ view model =
   let
       (body, modal) =
         case model.nav.url.path of
-          "/playlists" ->
+          "/bookmarks" ->
             viewPlaylistsPage model |> withNavigationDrawer model
 
           _ ->

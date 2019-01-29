@@ -10,19 +10,27 @@ import csv
 app = Flask( __name__ )
 
 csv_data = []
-csv_path = '/Users/stefan/x5/data/unesco.csv'
-# csv_path = '/Users/stefan/x5/data/videolectures_music.csv'
+# csv_path = '/Users/stefan/x5/data/unesco.csv'
+csv_path = '/Users/stefan/x5/data/videolectures_music.csv'
 
 @app.route("/")
 def home():
     return render_template('home.html')
 
-@app.route("/playlists")
-def playlists():
+@app.route("/next_steps")
+def next_steps():
     return render_template('home.html')
 
-@app.route("/interests")
-def interests():
+@app.route("/routes")
+def routes():
+    return render_template('home.html')
+
+@app.route("/bookmarks")
+def bookmarks():
+    return render_template('home.html')
+
+@app.route("/history")
+def history():
     return render_template('home.html')
 
 @app.route("/notes")

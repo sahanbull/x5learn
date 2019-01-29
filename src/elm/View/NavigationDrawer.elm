@@ -26,15 +26,17 @@ withNavigationDrawer model (pageContent, modal) =
               else
                 []
         in
-            [ image [ width (px 20), alpha 0.5 ] { src = svgPath svgIconStub, description = "" }
+            [ image [ width (px 20), alpha 0.7 ] { src = svgPath svgIconStub, description = "" }
             , label |> bodyNoWrap [ width fill ]
             ]
             |> row ([ width fill, padding 12, spacing 30, Border.rounded 4 ] ++ background)
             |> linkTo [ width fill ] url
 
       navButtons =
-        [ navButton "/playlists" "nav_playlists" "Playlists"
-        , navButton "/radar" "nav_radar" "Radar"
+        [ navButton "/next_steps" "nav_next_steps" "Next Steps"
+        , navButton "/routes" "nav_routes" "Routes"
+        , navButton "/bookmarks" "nav_bookmarks" "Bookmarks"
+        , navButton "/history" "nav_history" "History"
         , navButton "/notes" "nav_notes" "Notes"
         , navButton "/peers" "nav_peers" "Peers"
         ]

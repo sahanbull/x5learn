@@ -70,14 +70,14 @@ update msg ({nav} as model) =
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
 
-    OpenSaveToPlaylistMenu inspectorState ->
-      ( { model | inspectorState = Just { inspectorState | activeMenu = Just SaveToPlaylistMenu } }, Cmd.none )
+    OpenSaveToBookmarklistMenu inspectorState ->
+      ( { model | inspectorState = Just { inspectorState | activeMenu = Just SaveToBookmarklistMenu } }, Cmd.none )
 
-    AddToPlaylist playlist oer ->
-      ( { model | playlists = model.playlists |> List.map (\p -> if p.title==playlist.title then { p | oers = oer :: p.oers } else p)}, Cmd.none )
+    AddToBookmarklist playlist oer ->
+      ( { model | bookmarklists = model.bookmarklists |> List.map (\p -> if p.title==playlist.title then { p | oers = oer :: p.oers } else p)}, Cmd.none )
 
-    RemoveFromPlaylist playlist oer ->
-      ( { model | playlists = model.playlists |> List.map (\p -> if p.title==playlist.title then { p | oers = p.oers |> List.filter (\o -> o.url /= oer.url) } else p)}, Cmd.none )
+    RemoveFromBookmarklist playlist oer ->
+      ( { model | bookmarklists = model.bookmarklists |> List.map (\p -> if p.title==playlist.title then { p | oers = p.oers |> List.filter (\o -> o.url /= oer.url) } else p)}, Cmd.none )
 
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model

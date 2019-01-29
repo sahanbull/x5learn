@@ -12,7 +12,7 @@ import View.PageHeader exposing (viewPageHeader)
 import View.NavigationDrawer exposing (..)
 import View.Pages.Home exposing (viewHomePage)
 import View.Pages.Search exposing (viewSearchPage)
-import View.Pages.Playlists exposing (viewPlaylistsPage)
+import View.Pages.Bookmarks exposing (viewBookmarksPage)
 import View.Pages.History exposing (viewHistoryPage)
 import View.Pages.NextSteps exposing (viewNextStepsPage)
 
@@ -45,7 +45,7 @@ view model =
             viewNextStepsPage model |> withNavigationDrawer model
 
           "/bookmarks" ->
-            viewPlaylistsPage model |> withNavigationDrawer model
+            viewBookmarksPage model |> withNavigationDrawer model
 
           "/history" ->
             viewHistoryPage model |> withNavigationDrawer model

@@ -103,10 +103,6 @@ white =
   rgb 1 1 1
 
 
-semiTransparentWhite =
-  rgba 1 1 1 0.5
-
-
 orange =
   rgb255 255 150 0
 
@@ -116,7 +112,12 @@ grey80 =
 
 
 transparentWhite =
-  rgba 1 1 1 0.32
+  -- rgba 1 1 1 0.32
+  rgba 1 1 1 0.4
+
+
+semiTransparentWhite =
+  rgba 1 1 1 0.95
 
 
 grey value =
@@ -376,3 +377,17 @@ viewOerCard model oer =
 
 cardWidth =
   332
+
+
+viewPlaylist model playlist =
+  if playlist.oers |> List.isEmpty then
+    none
+  else
+    [ playlist.title |> headlineWrap []
+    , playlist.oers |> List.map (viewOerCard model) |> row [ spacing 20 ]
+    ]
+    |> column [ spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ]
+
+
+milkyWhiteCenteredContainer =
+  el [ centerX, padding 20, Background.color semiTransparentWhite, Border.rounded 2 ]

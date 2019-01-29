@@ -47,8 +47,8 @@ viewModal model ({oer} as inspectorState) =
           Nothing ->
             inspectorContentDefault model inspectorState oer
 
-          Just SaveToPlaylistMenu ->
-            inspectorContentSaveToPlaylist model inspectorState oer
+          Just SaveToBookmarklistMenu ->
+            inspectorContentSaveToBookmarklist model inspectorState oer
 
       header =
         [ headerContent
@@ -283,7 +283,7 @@ inspectorContentDefault model inspectorState oer =
 
       actionButtons =
         [ actionButton "share" "SHARE" Nothing
-        , actionButton "playlist_add" "SAVE" <| Just <| OpenSaveToPlaylistMenu inspectorState
+        , actionButton "bookmarklist_add" "SAVE" <| Just <| OpenSaveToBookmarklistMenu inspectorState
         , footerButton <| svgIcon "more_vert"
         ]
         |> row [ spacing 20, alignRight ]
@@ -291,28 +291,28 @@ inspectorContentDefault model inspectorState oer =
       (header, body, footer)
 
 
-inspectorContentSaveToPlaylist model inspectorState oer =
+inspectorContentSaveToBookmarklist model inspectorState oer =
   let
       header =
         "Save to..." |> headlineWrap [ paddingXY 14 0 ]
 
       footer =
-        [ actionButton "add" "Create new playlist" <| Nothing ]
+        [ actionButton "add" "Create new list" <| Nothing ]
 
-      playlistButton : Playlist -> Element Msg
-      playlistButton playlist =
+      bookmarklistButton : Playlist -> Element Msg
+      bookmarklistButton playlist =
         let
             (icon, action) =
               if isInPlaylist oer playlist then
-                ("checkbox_ticked", RemoveFromPlaylist)
+                ("checkbox_ticked", RemoveFromBookmarklist)
               else
-                ("checkbox_unticked", AddToPlaylist)
+                ("checkbox_unticked", AddToBookmarklist)
         in
             actionButton icon playlist.title <| Just <| action playlist oer
 
       body =
-        model.playlists
-        |> List.map playlistButton
+        model.bookmarklists
+        |> List.map bookmarklistButton
         |> column [ spacing 10 ]
   in
       (header, body, footer)

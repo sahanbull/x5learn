@@ -24,7 +24,7 @@ type alias Model =
   , timeOfLastMouseEnterOnCard : Posix
   , modalAnimation : Maybe BoxAnimation
   , animationsPending : Set String
-  , playlists : List Playlist
+  , bookmarklists : List Playlist
   , viewedFragments : List Fragment
   }
 
@@ -85,7 +85,7 @@ type AnimationStatus
 
 
 type SearchStateMenu
-  = SaveToPlaylistMenu
+  = SaveToBookmarklistMenu
 
 
 initialModel : Nav -> Flags -> Model
@@ -102,7 +102,7 @@ initialModel nav flags =
   , timeOfLastMouseEnterOnCard = initialTime
   , modalAnimation = Nothing
   , animationsPending = Set.empty
-  , playlists = initialPlaylists
+  , bookmarklists = initialBookmarklists
   , viewedFragments = [ Fragment bishopBook.url 0.2 0.5, Fragment bishopBook.url 0.6 0.7 ]
   }
 
@@ -123,7 +123,7 @@ initialTime =
   Time.millisToPosix 0
 
 
-initialPlaylists =
+initialBookmarklists =
   [ Playlist "Statistics" []
   , Playlist "Python" []
   , Playlist "Fun stuff" []

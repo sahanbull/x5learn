@@ -1,4 +1,4 @@
-module View.Pages.NextSteps exposing (viewNextStepsPage)
+module View.Pages.Bookmarks exposing (viewBookmarksPage)
 
 import Url
 import Dict
@@ -22,21 +22,25 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
-viewNextStepsPage : Model -> PageWithModal
-viewNextStepsPage model =
+viewBookmarksPage : Model -> PageWithModal
+viewBookmarksPage model =
   let
       modal =
         []
 
       playlists =
-        [ Playlist "Continue reading" [ bishopBook ]
-        , Playlist "Videos similar to what you just read" []
-        ]
+        model.bookmarklists
+        |> List.map (viewPlaylist model)
+        |> List.filter (\playlist -> playlist /= none)
 
       page =
-        playlists
-        |> List.map (viewPlaylist model)
-        |> column [ width fill, height fill, spacing 50 ]
-        |> el [ padding 50, width fill ]
+        if playlists |> List.isEmpty then
+          "Your bookmarked items will appear here"
+          |> bodyWrap []
+          |> milkyWhiteCenteredContainer
+        else
+          playlists
+          |> column [ width fill, height fill, spacing 20 ]
+          |> el [ padding 50, width fill ]
   in
       (page, modal)

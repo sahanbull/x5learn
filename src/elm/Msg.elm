@@ -27,9 +27,9 @@ type Msg
   | ModalAnimationStop Int
   | RequestOerSearch (Result Http.Error (List Oer))
   | SetHover (Maybe String)
-  | OpenSaveToPlaylistMenu InspectorState
-  | AddToPlaylist Playlist Oer
-  | RemoveFromPlaylist Playlist Oer
+  | OpenSaveToBookmarklistMenu InspectorState
+  | AddToBookmarklist Playlist Oer
+  | RemoveFromBookmarklist Playlist Oer
 
 
 subscriptions : Model -> Sub Msg

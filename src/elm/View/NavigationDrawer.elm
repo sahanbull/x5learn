@@ -26,7 +26,7 @@ withNavigationDrawer model (pageContent, modal) =
               else
                 []
         in
-            [ image [ width (px 20), alpha 0.7 ] { src = svgPath svgIconStub, description = "" }
+            [ image [ width (px 20), alpha 0.66 ] { src = svgPath svgIconStub, description = "" }
             , label |> bodyNoWrap [ width fill ]
             ]
             |> row ([ width fill, padding 12, spacing 30, Border.rounded 4 ] ++ background)

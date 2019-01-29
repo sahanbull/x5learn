@@ -94,13 +94,13 @@ viewModal model ({oer} as inspectorState) =
             opacity =
               case modalAnimationStatus model of
                 Inactive ->
-                  0.32
+                  materialScrimAlpha
 
                 Prestart ->
                   0
 
                 Started ->
-                  0.32
+                  materialScrimAlpha
         in
             none
             |> el [ Background.color <| rgba 0 0 0 opacity, width (model.windowWidth - navigationDrawerWidth |> px), height (fill |> maximum (model.windowHeight - pageHeaderHeight)), moveDown pageHeaderHeight, moveRight navigationDrawerWidth, onClickNoBubble UninspectSearchResult, htmlClass "modalScrim" ]

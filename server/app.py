@@ -11,7 +11,8 @@ app = Flask( __name__ )
 
 csv_data = []
 # csv_path = '/Users/stefan/x5/data/unesco.csv'
-csv_path = '/Users/stefan/x5/data/videolectures_music.csv'
+# csv_path = '/Users/stefan/x5/data/videolectures_music.csv'
+csv_path = '/Users/stefan/x5/data/scenario_A_ng_bishop.csv'
 
 @app.route("/")
 def home():

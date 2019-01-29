@@ -13,6 +13,7 @@ import View.NavigationDrawer exposing (..)
 import View.Pages.Home exposing (viewHomePage)
 import View.Pages.Search exposing (viewSearchPage)
 import View.Pages.Playlists exposing (viewPlaylistsPage)
+import View.Pages.History exposing (viewHistoryPage)
 
 import Update exposing (..)
 
@@ -41,6 +42,9 @@ view model =
         case model.nav.url.path of
           "/bookmarks" ->
             viewPlaylistsPage model |> withNavigationDrawer model
+
+          "/history" ->
+            viewHistoryPage model |> withNavigationDrawer model
 
           _ ->
             case model.searchState of

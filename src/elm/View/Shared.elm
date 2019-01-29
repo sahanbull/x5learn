@@ -22,6 +22,10 @@ materialDark =
   rgba 0 0 0 0.87
 
 
+materialScrimBackground =
+  Background.color <| rgba 0 0 0 materialScrimAlpha
+
+
 materialDarkAlpha =
   alpha 0.87
 
@@ -234,3 +238,7 @@ selectByIndex index fallback elements =
 domainOnly : String -> String
 domainOnly url =
   url |> String.split "//" |> List.drop 1 |> List.head |> Maybe.withDefault url |> String.split "/" |> List.head |> Maybe.withDefault url
+
+
+materialScrimAlpha =
+  0.32

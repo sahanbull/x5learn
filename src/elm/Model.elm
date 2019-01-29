@@ -25,6 +25,7 @@ type alias Model =
   , modalAnimation : Maybe BoxAnimation
   , animationsPending : Set String
   , playlists : List Playlist
+  , viewedFragments : List Fragment
   }
 
 
@@ -64,6 +65,13 @@ type alias Oer =
   }
 
 
+type alias Fragment =
+  { url : String
+  , startPosition : Float -- from 0 to 1
+  , endPosition : Float
+  }
+
+
 type alias Playlist =
   { title : String
   , oers : List Oer
@@ -95,6 +103,19 @@ initialModel nav flags =
   , modalAnimation = Nothing
   , animationsPending = Set.empty
   , playlists = initialPlaylists
+  , viewedFragments = [ Fragment bishopBook.url 0.2 0.5, Fragment bishopBook.url 0.6 0.7 ]
+  }
+
+
+bishopBook =
+  { url = "https://www.microsoft.com/en-us/research/people/cmbishop/#!prml-book"
+  , provider = "https://www.microsoft.com"
+  , date = "2006"
+  , title = "Pattern Recognition and Machine Learning"
+  , duration = ""
+  , description = "This leading textbook provides a comprehensive introduction to the fields of pattern recognition and machine learning. It is aimed at advanced undergraduates or first-year PhD students, as well as researchers and practitioners. No previous knowledge of pattern recognition or machine learning concepts is assumed. This is the first machine learning textbook to include a comprehensive coverage of recent developments such as probabilistic graphical models and deterministic inference methods, and to emphasize a modern Bayesian perspective. It is suitable for courses on machine learning, statistics, computer science, signal processing, computer vision, data mining, and bioinformatics. This hard cover book has 738 pages in full colour, and there are 431 graded exercises (with solutions available below). Extensive support is provided for course instructors."
+  , imageUrls = [ "https://www.microsoft.com/en-us/research/wp-content/uploads/2016/06/Springer-Cover-Image-752x1024.jpg" ]
+  , youtubeVideoVersions = Dict.singleton "English" ""
   }
 
 

@@ -14,6 +14,7 @@ import View.Pages.Home exposing (viewHomePage)
 import View.Pages.Search exposing (viewSearchPage)
 import View.Pages.Playlists exposing (viewPlaylistsPage)
 import View.Pages.History exposing (viewHistoryPage)
+import View.Pages.NextSteps exposing (viewNextStepsPage)
 
 import Update exposing (..)
 
@@ -40,6 +41,9 @@ view model =
   let
       (body, modal) =
         case model.nav.url.path of
+          "/next_steps" ->
+            viewNextStepsPage model |> withNavigationDrawer model
+
           "/bookmarks" ->
             viewPlaylistsPage model |> withNavigationDrawer model
 

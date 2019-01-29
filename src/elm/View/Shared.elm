@@ -115,8 +115,8 @@ grey80 =
   grey 80
 
 
-lightGrey =
-  grey 238
+transparentWhite =
+  rgba 1 1 1 0.32
 
 
 grey value =

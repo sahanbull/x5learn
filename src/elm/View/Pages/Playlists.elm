@@ -41,7 +41,7 @@ viewPlaylist model playlist =
   [ playlist.title |> headlineWrap []
   , if playlist.oers |> List.isEmpty then "No bookmarks" |> bodyNoWrap [centerX] else playlist.oers |> List.map (viewOerCardInPlaylist model) |> row [ spacing 20 ]
   ]
-  |> column [ spacing 20, padding 20, width fill, Background.color lightGrey ]
+  |> column [ spacing 20, padding 20, width fill, Background.color transparentWhite ]
 
 
 viewOerCardInPlaylist model oer =

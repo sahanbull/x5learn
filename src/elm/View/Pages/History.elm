@@ -32,7 +32,7 @@ viewHistoryPage model =
       page =
         model.viewedFragments
         |> List.map (\fragment -> fragment.url)
-        |> List.Extra.unique -- TODO
+        |> List.Extra.unique
         |> List.map (viewOerCardInHistory model)
         |> List.map (el [ centerX ])
         |> column [ paddingTop 20, spacing 20, width fill, height fill ]

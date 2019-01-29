@@ -31,16 +31,17 @@ viewPlaylistsPage model =
       page =
         model.playlists
         |> List.map (viewPlaylist model)
-        |> column [ width fill, height fill ]
+        |> column [ width fill, height fill, spacing 20 ]
+        |> el [ padding 50, width fill ]
   in
       (page, modal)
 
 
 viewPlaylist model playlist =
   [ playlist.title |> headlineWrap []
-  , playlist.oers |> List.map (viewOerCardInPlaylist model) |> row [ spacing 20 ]
+  , if playlist.oers |> List.isEmpty then "No bookmarks" |> bodyNoWrap [centerX] else playlist.oers |> List.map (viewOerCardInPlaylist model) |> row [ spacing 20 ]
   ]
-  |> column [ spacing 20, padding 20, width fill ]
+  |> column [ spacing 20, padding 20, width fill, Background.color lightGrey ]
 
 
 viewOerCardInPlaylist model oer =

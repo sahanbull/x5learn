@@ -19,6 +19,9 @@ import Request exposing (..)
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg ({nav} as model) =
   case msg of
+    NoOp ->
+      (model, Cmd.none)
+
     LinkClicked urlRequest ->
       case urlRequest of
         Browser.Internal url ->
@@ -68,25 +71,38 @@ update msg ({nav} as model) =
 
     RequestOerSearch (Ok results) ->
       ( model |> updateSearch (insertSearchResults results), Cmd.none )
+      |> loadChunksIfNeeded
 
     RequestOerSearch (Err err) ->
       ( { model | userMessage = Just "There was a problem with the search data" }, Cmd.none )
 
     RequestNextSteps (Ok playlists) ->
       ( { model | nextSteps = Just playlists }, Cmd.none )
+      |> loadChunksIfNeeded
 
     RequestNextSteps (Err err) ->
       ( { model | userMessage = Just "There was a problem with the recommendations data" }, Cmd.none )
 
     RequestViewedFragments (Ok fragments) ->
       ( { model | viewedFragments = Just fragments }, Cmd.none )
+      |> loadChunksIfNeeded
 
     RequestViewedFragments (Err err) ->
       -- let
       --     dummy =
       --       err |> Debug.log "Error in RequestViewedFragments"
       -- in
-          ( { model | userMessage = Just "There was a problem with the history data" }, Cmd.none )
+      ( { model | userMessage = Just "There was a problem with the history data" }, Cmd.none )
+
+    RequestChunks (Ok chunks) ->
+      ( { model | oerChunks = model.oerChunks |> Dict.union chunks }, Cmd.none )
+
+    RequestChunks (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestChunks"
+      -- in
+      ( { model | userMessage = Just "There was a problem with the chunk data" }, Cmd.none )
 
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
@@ -99,6 +115,9 @@ update msg ({nav} as model) =
 
     RemoveFromBookmarklist playlist oer ->
       ( { model | bookmarklists = model.bookmarklists |> List.map (\p -> if p.title==playlist.title then { p | oers = p.oers |> List.filter (\o -> o.url /= oer.url) } else p)}, Cmd.none )
+
+    SetChunkPopover maybeTopics ->
+      ( { model | chunkPopover = maybeTopics }, Cmd.none )
 
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model
@@ -123,3 +142,28 @@ incrementFrameCountInModalAnimation model =
 
     Just animation ->
       { model | modalAnimation = Just { animation | frameCount = animation.frameCount + 1 } }
+
+
+loadChunksIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
+loadChunksIfNeeded (model, cmd) =
+  let
+      searchResults =
+        case model.searchState of
+          Nothing ->
+            []
+
+          Just searchState ->
+            searchState.searchResults
+            |> Maybe.withDefault []
+
+      missingUrls =
+        [ model.viewedFragments |> Maybe.withDefault [] |> List.map (\fragment -> fragment.oer)
+        , model.nextSteps |> Maybe.withDefault [] |> List.map (\playlist -> playlist.oers) |> List.concat
+        , searchResults
+        ]
+        |> List.concat
+        |> List.map (\oer -> oer.url)
+        |> Set.fromList
+        |> Set.filter (\url -> model.oerChunks |> Dict.member url |> not)
+  in
+      (model, (if Set.isEmpty missingUrls then Cmd.none else requestChunks (Set.toList missingUrls)))

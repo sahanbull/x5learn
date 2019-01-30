@@ -1,4 +1,4 @@
-module Request exposing (searchOers, requestNextSteps, requestViewedFragments)
+module Request exposing (searchOers, requestNextSteps, requestViewedFragments, requestChunks)
 
 import Http exposing (expectStringResponse)
 import Json.Decode exposing (Value,map,map2,map3,map8,field,bool,int,float,string,list,dict,oneOf,maybe,nullable)
@@ -52,8 +52,27 @@ requestViewedFragments =
         }
 
 
+requestChunks : List String -> Cmd Msg
+requestChunks urls =
+  let
+      encoded =
+        Url.Builder.absolute [ apiRoot, "chunks" ] [ Url.Builder.string "urls" (urls |> String.join ",")]
+  in
+      Http.get
+        { url = encoded
+        , expect = Http.expectJson RequestChunks (dict (list chunkDecoder))
+        }
+
+
 viewedFragmentsDecoder =
   list fragmentDecoder
+
+
+chunkDecoder =
+  map3 Chunk
+    (field "start" float)
+    (field "length" float)
+    (field "topics" (list string))
 
 
 fragmentDecoder =
@@ -71,7 +90,6 @@ playlistDecoder =
   map2 Playlist
     (field "title" string)
     (field "oers" (list oerDecoder))
-
 
 
 searchResultsDecoder =

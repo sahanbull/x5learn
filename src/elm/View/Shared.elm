@@ -1,5 +1,7 @@
 module View.Shared exposing (..)
 
+import Dict
+
 import Html
 import Html.Attributes
 import Html.Events
@@ -61,6 +63,10 @@ bigButtonPadding =
 
 borderBottom px =
   Border.widthEach { allSidesZero | bottom = px }
+
+
+borderLeft px =
+  Border.widthEach { allSidesZero | left = px }
 
 
 allSidesZero =
@@ -287,13 +293,41 @@ viewOerCard model oer =
             markers =
               fragments
               |> List.map (\{start,length} -> none |> el [ width (length |> pxFromFraction |> round |> px), height fill, Background.color <| rgb255 0 190 250, moveRight (start |> pxFromFraction) ] |> inFront)
-        in
-            case markers of
-              [] ->
-                el [ width fill, height (px 1), materialScrimBackground ] none
 
-              existingMarkers ->
-                el ([ width fill, height (px 16), materialScrimBackground, moveUp 16 ] ++ existingMarkers) none
+            chunkTrigger {length, topics} =
+              let
+                  popover =
+                    case model.chunkPopover of
+                      Nothing ->
+                        []
+
+                      Just highlightedTopics ->
+                        if topics == highlightedTopics then
+                          topics
+                          |> List.map (\topic -> topic |> bodyNoWrap [ paddingXY 10 5 ])
+                          |> column [ padding 5, Background.color white, moveDown 24, moveLeft 30, Border.color <| grey80, dialogShadow ]
+                          |> inFront
+                          |> List.singleton
+                        else
+                          []
+              in
+                  none
+                  |> el ([ width <| fillPortion (length * 100 |> round), height fill, borderLeft 1, Border.color <| rgba 0 0 0 0.32, onMouseEnter (SetChunkPopover <| Just topics) ] ++ popover)
+
+            chunkTriggers =
+              model.oerChunks
+              |> Dict.get oer.url
+              |> Maybe.withDefault []
+              |> List.map chunkTrigger
+              |> row [ width fill, height fill ]
+              |> inFront
+
+            underlay =
+              none
+              |> el ([ width fill, height (px 16), materialScrimBackground, moveUp 16, onMouseLeave (SetChunkPopover Nothing) ] ++ markers ++ [chunkTriggers])
+        in
+            underlay
+
 
       preloadImage url =
         url

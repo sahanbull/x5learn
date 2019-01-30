@@ -14,7 +14,8 @@ import Model exposing (..)
 import Ports
 
 type Msg
-  = LinkClicked Browser.UrlRequest
+  = NoOp
+  | LinkClicked Browser.UrlRequest
   | UrlChanged Url.Url
   | ClockTick Posix
   | AnimationTick Posix
@@ -28,10 +29,12 @@ type Msg
   | RequestOerSearch (Result Http.Error (List Oer))
   | RequestNextSteps (Result Http.Error (List Playlist))
   | RequestViewedFragments (Result Http.Error (List Fragment))
+  | RequestChunks (Result Http.Error (Dict String (List Chunk)))
   | SetHover (Maybe String)
   | OpenSaveToBookmarklistMenu InspectorState
   | AddToBookmarklist Playlist Oer
   | RemoveFromBookmarklist Playlist Oer
+  | SetChunkPopover (Maybe (List String))
 
 
 subscriptions : Model -> Sub Msg

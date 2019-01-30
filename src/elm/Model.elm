@@ -27,6 +27,8 @@ type alias Model =
   , bookmarklists : List Playlist
   , viewedFragments : Maybe (List Fragment)
   , nextSteps : Maybe (List Playlist)
+  , oerChunks : Dict String (List Chunk)
+  , chunkPopover : Maybe (List String)
   }
 
 
@@ -63,6 +65,13 @@ type alias Oer =
   , description : String
   , imageUrls : List String
   , youtubeVideoVersions : Dict String String -- key: language, value: youtubeId
+  }
+
+
+type alias Chunk =
+  { start : Float -- 0 to 1
+  , length : Float -- 0 to 1
+  , topics : List String
   }
 
 
@@ -106,6 +115,8 @@ initialModel nav flags =
   , bookmarklists = initialBookmarklists
   , viewedFragments = Nothing
   , nextSteps = Nothing
+  , oerChunks = Dict.empty
+  , chunkPopover = Nothing
   }
 
 

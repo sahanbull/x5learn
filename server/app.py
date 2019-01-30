@@ -11,7 +11,7 @@ import ast # parsing JSON with complex quotation https://stackoverflow.com/a/21
 app = Flask( __name__ )
 
 oer_csv_data = []
-youtube_wikichunks = {} # key = video_id, value = loaded csv file
+wikichunks = {} # key = video_id, value = loaded csv file
 bishop_wikichunks = []
 
 # oer_csv_path = '/Users/stefan/x5/data/unesco.csv'
@@ -71,11 +71,20 @@ def api_next_steps():
     return jsonify(playlists)
 
 
+@app.route("/api/v1/chunks/", methods=['GET'])
+def api_chunks():
+    ensure_csv_data_is_loaded()
+    urls = request.args['urls'].split(',')
+    lists = {}
+    for url in urls:
+        lists[url] = wikichunks[url]
+    return jsonify(lists)
+
+
 def ensure_csv_data_is_loaded():
     if oer_csv_data==[]:
         read_oer_csv_data()
-        read_youtube_wikifier_data()
-        read_bishop_wikifier_data()
+        read_wikifier_data()
 
 
 def bishop_book():
@@ -121,7 +130,6 @@ def read_oer_csv_data():
             youtube = json.loads(row['youtubeVideoVersions'].replace("'", '"'))
             if not youtube and re.search(r'youtu', url):
                 youtube = { 'English': url.split('v=')[1].split('&')[0] }
-            print(youtube)
             row['youtubeVideoVersions'] = youtube
             row['imageUrls'] = json.loads(row['imageUrls'].replace("'", '"'))
             row['date'] = row['date'] if 'date' in row else ''
@@ -129,7 +137,7 @@ def read_oer_csv_data():
             oer_csv_data.append(row)
 
 
-def read_youtube_wikifier_data():
+def read_wikifier_data():
     dir_path = youtube_wikichunks_csv_directory
     print('loading local wikifier data:', dir_path)
     for file in os.listdir(dir_path):
@@ -139,12 +147,16 @@ def read_youtube_wikifier_data():
             chunks = []
             for row in csv.DictReader(f, delimiter=','):
                 row['topics'] = ast.literal_eval(row['topics'])
+                row['start'] = float(row['start'])
+                row['length'] = float(row['length'])
                 row.pop('')
                 chunks.append(row)
-            youtube_wikichunks[video_id] = chunks
+        url = 'https://youtube.com/watch?v='+video_id
+        wikichunks[url] = chunks
+    wikichunks[bishop_book()['url']] = bishop_wikifier_data()
 
 
-def read_bishop_wikifier_data():
+def bishop_wikifier_data():
     print('loading local wikifier data:', bishop_wikichunks_csv_path)
     with open(bishop_wikichunks_csv_path, newline='') as f:
         chunks = []
@@ -155,7 +167,7 @@ def read_bishop_wikifier_data():
         for row in rows:
             chunk = {'start': float(row[''])/n_rows, 'length': 1.0/n_rows, 'topics': [ row['a0title'], row['a1title'], row['a2title'], row['a3title'], row['a4title'] ]}
             chunks.append(chunk)
-    bishop_wikichunks = chunks
+    return chunks
 
 
 def create_fragment(oer, start, length):

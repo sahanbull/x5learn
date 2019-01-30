@@ -16,6 +16,7 @@ import Element.Font as Font
 import Model exposing (..)
 import Animation exposing (..)
 import View.Shared exposing (..)
+import View.Inspector exposing (..)
 
 import Msg exposing (..)
 
@@ -25,9 +26,6 @@ import Json.Decode as Decode
 viewBookmarksPage : Model -> PageWithModal
 viewBookmarksPage model =
   let
-      modal =
-        []
-
       playlists =
         model.bookmarklists
         |> List.map (viewPlaylist model)
@@ -41,4 +39,4 @@ viewBookmarksPage model =
           |> column [ width fill, height fill, spacing 20 ]
           |> el [ padding 50, width fill ]
   in
-      (page, modal)
+      (page, viewInspectorModalOrEmpty model)

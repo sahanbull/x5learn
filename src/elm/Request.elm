@@ -1,4 +1,4 @@
-module OerSearch exposing (searchOers)
+module Request exposing (searchOers, requestNextSteps, requestViewedFragments)
 
 import Http exposing (expectStringResponse)
 import Json.Decode exposing (Value,map,map2,map3,map8,field,bool,int,float,string,list,dict,oneOf,maybe,nullable)
@@ -21,7 +21,6 @@ searchOers searchText =
   let
       encoded =
         Url.Builder.absolute [ apiRoot, "search" ] [ Url.Builder.string "url" "https://platform.x5gon.org/materialUrl", Url.Builder.string "text" searchText ]
-        -- |> Debug.log "search encoded "
   in
       Http.get
         { url = encoded
@@ -29,11 +28,57 @@ searchOers searchText =
         }
 
 
+requestNextSteps : Cmd Msg
+requestNextSteps =
+  let
+      encoded =
+        Url.Builder.absolute [ apiRoot, "next_steps" ] []
+  in
+      Http.get
+        { url = encoded
+        , expect = Http.expectJson RequestNextSteps nextStepsDecoder
+        }
+
+
+requestViewedFragments : Cmd Msg
+requestViewedFragments =
+  let
+      encoded =
+        Url.Builder.absolute [ apiRoot, "viewed_fragments" ] []
+  in
+      Http.get
+        { url = encoded
+        , expect = Http.expectJson RequestViewedFragments viewedFragmentsDecoder
+        }
+
+
+viewedFragmentsDecoder =
+  list fragmentDecoder
+
+
+fragmentDecoder =
+  map3 Fragment
+    (field "oer" oerDecoder)
+    (field "start" float)
+    (field "length" float)
+
+
+nextStepsDecoder =
+  list playlistDecoder
+
+
+playlistDecoder =
+  map2 Playlist
+    (field "title" string)
+    (field "oers" (list oerDecoder))
+
+
+
 searchResultsDecoder =
-  list searchResultDecoder
+  list oerDecoder
 
 
-searchResultDecoder =
+oerDecoder =
   map8 Oer
     (field "url" string)
     (field "provider" string)
@@ -45,7 +90,7 @@ searchResultDecoder =
     (field "youtubeVideoVersions" (dict string))
 
 -- X5GON
--- searchResultDecoder =
+-- oerDecoder =
 --   map3 Oer
 --     (field "title" string)
 --     (field "url" string)

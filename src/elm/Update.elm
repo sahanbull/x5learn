@@ -13,7 +13,7 @@ import Time exposing (Posix)
 import Model exposing (..)
 import Msg exposing (..)
 import Ports exposing (..)
-import OerSearch exposing (searchOers)
+import Request exposing (..)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -28,7 +28,16 @@ update msg ({nav} as model) =
           ( model, Navigation.load href )
 
     UrlChanged url ->
-      ( { model | nav = { nav | url = url } }, Cmd.none )
+      let
+          cmd =
+            if url.path == "/next_steps" then
+              requestNextSteps
+            else if url.path == "/history" then
+              requestViewedFragments
+            else
+              Cmd.none
+      in
+          ( { model | nav = { nav | url = url }, inspectorState = Nothing }, cmd )
 
     ClockTick time ->
       ( { model | currentTime = time }, Cmd.none )
@@ -61,11 +70,23 @@ update msg ({nav} as model) =
       ( model |> updateSearch (insertSearchResults results), Cmd.none )
 
     RequestOerSearch (Err err) ->
+      ( { model | userMessage = Just "There was a problem with the search data" }, Cmd.none )
+
+    RequestNextSteps (Ok playlists) ->
+      ( { model | nextSteps = Just playlists }, Cmd.none )
+
+    RequestNextSteps (Err err) ->
+      ( { model | userMessage = Just "There was a problem with the recommendations data" }, Cmd.none )
+
+    RequestViewedFragments (Ok fragments) ->
+      ( { model | viewedFragments = Just fragments }, Cmd.none )
+
+    RequestViewedFragments (Err err) ->
       -- let
       --     dummy =
-      --       err |> Debug.log "Error in RequestOerSearch"
+      --       err |> Debug.log "Error in RequestViewedFragments"
       -- in
-      ( { model | userMessage = Just "There was a problem with the search data" }, Cmd.none )
+          ( { model | userMessage = Just "There was a problem with the history data" }, Cmd.none )
 
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )

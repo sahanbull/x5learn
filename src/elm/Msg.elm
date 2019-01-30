@@ -26,6 +26,8 @@ type Msg
   | ModalAnimationStart BoxAnimation
   | ModalAnimationStop Int
   | RequestOerSearch (Result Http.Error (List Oer))
+  | RequestNextSteps (Result Http.Error (List Playlist))
+  | RequestViewedFragments (Result Http.Error (List Fragment))
   | SetHover (Maybe String)
   | OpenSaveToBookmarklistMenu InspectorState
   | AddToBookmarklist Playlist Oer

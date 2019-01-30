@@ -17,6 +17,7 @@ import Element.Font as Font
 import Model exposing (..)
 import Animation exposing (..)
 import View.Shared exposing (..)
+import View.Inspector exposing (..)
 
 import Msg exposing (..)
 
@@ -26,19 +27,22 @@ import Json.Decode as Decode
 viewHistoryPage : Model -> PageWithModal
 viewHistoryPage model =
   let
-      modal =
-        []
-
       page =
-        model.viewedFragments
-        |> List.map (\fragment -> fragment.url)
-        |> List.Extra.unique
-        |> List.map (viewOerCardInHistory model)
-        |> List.map (el [ centerX ])
-        |> column [ paddingTop 20, spacing 20, width fill, height fill ]
+        case model.viewedFragments of
+          Nothing ->
+            viewLoadingSpinner
+
+          Just fragmentsOrEmpty ->
+            case fragmentsOrEmpty of
+              [] ->
+                viewCenterNote "Your viewed items will appear here"
+
+              fragments ->
+                fragments
+                  |> List.map (\fragment -> fragment.oer)
+                  |> List.Extra.uniqueBy (\oer -> oer.url)
+                  |> List.map (viewOerCard model)
+                  |> List.map (el [ centerX ])
+                  |> column [ paddingTop 20, spacing 20, width fill, height fill ]
   in
-      (page, modal)
-
-
-viewOerCardInHistory model _ =
-  viewOerCard model bishopBook
+      (page, viewInspectorModalOrEmpty model)

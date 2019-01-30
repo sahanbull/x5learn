@@ -17,6 +17,7 @@ import View.Pages.History exposing (viewHistoryPage)
 import View.Pages.NextSteps exposing (viewNextStepsPage)
 
 import Update exposing (..)
+import Request exposing (..)
 
 
 main : Program Flags Model Msg
@@ -33,7 +34,12 @@ main =
 
 init : Flags -> Url.Url -> Navigation.Key -> ( Model, Cmd Msg )
 init flags url key =
-  ( initialModel (Nav url key) flags, Cmd.none )
+  let
+      (model, cmd) =
+        initialModel (Nav url key) flags
+        |> update (UrlChanged url) -- ensure that subpage-specific state is loaded when starting on a subpage
+  in
+      ( model, [ cmd, requestViewedFragments ] |> Cmd.batch )
 
 
 view : Model -> Browser.Document Msg

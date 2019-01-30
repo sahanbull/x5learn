@@ -35,9 +35,7 @@ viewBookmarksPage model =
 
       page =
         if playlists |> List.isEmpty then
-          "Your bookmarked items will appear here"
-          |> bodyWrap []
-          |> milkyWhiteCenteredContainer
+          viewCenterNote "Your bookmarked items will appear here"
         else
           playlists
           |> column [ width fill, height fill, spacing 20 ]

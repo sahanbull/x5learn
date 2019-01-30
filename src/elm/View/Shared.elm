@@ -276,15 +276,24 @@ viewOerCard model oer =
 
       fragmentsBar =
         let
+            fragments =
+              model.viewedFragments
+              |> Maybe.withDefault []
+              |> List.filter (\fragment -> fragment.oer == oer)
+
             pxFromFraction fraction =
               (cardWidth |> toFloat) * fraction
 
-            fragments =
-              model.viewedFragments
-              |> List.map (\{startPosition,endPosition} -> none |> el [ width (endPosition - startPosition |> pxFromFraction |> round |> px), height fill, Background.color <| rgb255 0 190 250, moveRight (startPosition |> pxFromFraction) ] |> inFront)
+            markers =
+              fragments
+              |> List.map (\{start,length} -> none |> el [ width (length |> pxFromFraction |> round |> px), height fill, Background.color <| rgb255 0 190 250, moveRight (start |> pxFromFraction) ] |> inFront)
         in
-            none
-            |> el ([ width fill, height (px 16), materialScrimBackground, moveUp 16 ] ++ fragments)
+            case markers of
+              [] ->
+                el [ width fill, height (px 1), materialScrimBackground ] none
+
+              existingMarkers ->
+                el ([ width fill, height (px 16), materialScrimBackground, moveUp 16 ] ++ existingMarkers) none
 
       preloadImage url =
         url
@@ -366,13 +375,34 @@ viewOerCard model oer =
         ]
         |> column [ padding 16, width fill, height fill, inFront fragmentsBar ]
 
+      closeButton =
+        if hovering then
+          button [ alignRight ] { onPress = Nothing, label = closeIcon }
+        else
+          none
+
+      widthOfCard =
+        width (px cardWidth)
+
+      heightOfCard =
+        height (px 280)
+
       card =
         [ (if hovering then carousel else thumbnail)
         , info
         ]
-        |> column [ width (px cardWidth), height (px 280), htmlClass "materialCard", inFront modalityIcon, onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing) ]
+        |> column [ widthOfCard, heightOfCard, htmlClass "materialCard", inFront modalityIcon, onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing) ]
+
+      onPress =
+        case model.inspectorState of
+          Nothing ->
+            Just (InspectSearchResult oer)
+
+          _ ->
+            Nothing
   in
-      button [] { onPress = Nothing, label = card }
+      none
+      |> el [ widthOfCard, heightOfCard, inFront <| button [] { onPress = onPress, label = card }, inFront closeButton ]
 
 
 cardWidth =
@@ -391,3 +421,19 @@ viewPlaylist model playlist =
 
 milkyWhiteCenteredContainer =
   el [ centerX, padding 20, Background.color semiTransparentWhite, Border.rounded 2 ]
+
+
+closeIcon =
+  image [  materialDarkAlpha, hoverCircleBackground] { src = svgPath "close", description = "close" }
+
+
+viewCenterNote str =
+  str
+  |> bodyWrap []
+  |> milkyWhiteCenteredContainer
+
+
+viewLoadingSpinner =
+  "loading..." |> wrapText [ primaryWhite, centerX, centerY ]
+  |> el [ centerX, height fill ]
+  |> el [ width fill, height fill ]

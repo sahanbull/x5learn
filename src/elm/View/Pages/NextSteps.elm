@@ -16,6 +16,7 @@ import Element.Font as Font
 import Model exposing (..)
 import Animation exposing (..)
 import View.Shared exposing (..)
+import View.Inspector exposing (..)
 
 import Msg exposing (..)
 
@@ -25,13 +26,8 @@ import Json.Decode as Decode
 viewNextStepsPage : Model -> PageWithModal
 viewNextStepsPage model =
   let
-      modal =
-        []
-
       playlists =
-        [ Playlist "Continue reading" [ bishopBook ]
-        , Playlist "Videos similar to what you just read" []
-        ]
+        model.nextSteps |> Maybe.withDefault []
 
       page =
         playlists
@@ -39,4 +35,4 @@ viewNextStepsPage model =
         |> column [ width fill, height fill, spacing 50 ]
         |> el [ padding 50, width fill ]
   in
-      (page, modal)
+      (page, viewInspectorModalOrEmpty model)

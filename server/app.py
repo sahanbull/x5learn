@@ -77,7 +77,7 @@ def api_chunks():
     urls = request.args['urls'].split(',')
     lists = {}
     for url in urls:
-        lists[url] = wikichunks[url]
+        lists[url] = wikichunks[url] if (url in wikichunks) else [{'start': 0, 'length': 1, 'topics': []}]
     return jsonify(lists)
 
 

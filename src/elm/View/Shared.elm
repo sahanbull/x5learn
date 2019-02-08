@@ -302,7 +302,7 @@ viewOerCard model oer =
                         []
 
                       Just highlightedTopics ->
-                        if topics == highlightedTopics then
+                        if topics == highlightedTopics && (topics |> List.isEmpty |> not) then
                           topics
                           |> List.map (\topic -> topic |> bodyNoWrap [ paddingXY 10 5 ])
                           |> column [ padding 5, Background.color white, moveDown 24, moveLeft 30, Border.color <| grey80, dialogShadow ]

@@ -45,6 +45,10 @@ greyText =
   Font.color <| grey 160
 
 
+greyTextDisabled =
+  Font.color <| grey 180
+
+
 pageHeaderHeight =
   40
 
@@ -55,6 +59,10 @@ paddingTop px =
 
 paddingBottom px =
   paddingEach { allSidesZero | bottom = px }
+
+
+paddingLeft px =
+  paddingEach { allSidesZero | left = px }
 
 
 bigButtonPadding =
@@ -111,6 +119,10 @@ white =
 
 orange =
   rgb255 255 150 0
+
+
+lightBlue =
+  rgb255 10 220 255
 
 
 grey80 =
@@ -294,25 +306,46 @@ viewOerCard model oer =
               fragments
               |> List.map (\{start,length} -> none |> el [ width (length |> pxFromFraction |> round |> px), height fill, Background.color <| rgb255 0 190 250, moveRight (start |> pxFromFraction) ] |> inFront)
 
-            chunkTrigger {length, topics} =
+            chunkTrigger chunk =
               let
-                  popover =
-                    case model.chunkPopover of
-                      Nothing ->
-                        []
+                  chunkMenu =
+                    ChunkOnCard oer chunk
 
-                      Just highlightedTopics ->
-                        if topics == highlightedTopics && (topics |> List.isEmpty |> not) then
-                          topics
-                          |> List.map (\topic -> topic |> bodyNoWrap [ paddingXY 10 5 ])
-                          |> column [ padding 5, Background.color white, moveDown 24, moveLeft 30, Border.color <| grey80, dialogShadow ]
+                  popmenu =
+                    if model.menuPath |> isHeadEqual chunkMenu then
+                      let
+                          actionsForTopic =
+                            [ "What is this?" |> menuButtonDisabled
+                            , "I know this well" |> menuButtonDisabled
+                            , "Test me later" |> menuButtonDisabled
+                            , "Test me now" |> menuButtonDisabled
+                            ]
+
+                          topicsSection =
+                            if chunk.topics |> List.isEmpty |> not then
+                              chunk.topics
+                              |> List.map (\topic -> menuButtonWithSubmenu model [ chunkMenu ] [ chunkMenu, TopicInChunkOnCard topic ] actionsForTopic topic)
+                              |> column [ width fill ]
+                              |> List.singleton
+                            else
+                              []
+                      in
+                          [ "Jump here" |> menuButtonDisabled
+                          ] ++ topicsSection
+                          |> menuColumn
                           |> inFront
                           |> List.singleton
-                        else
-                          []
+                    else
+                      []
+
+                  background =
+                    if popmenu == [] then
+                      []
+                    else
+                      [ Background.color <| lightBlue ]
               in
                   none
-                  |> el ([ width <| fillPortion (length * 100 |> round), height fill, borderLeft 1, Border.color <| rgba 0 0 0 0.32, onMouseEnter (SetChunkPopover <| Just topics) ] ++ popover)
+                  |> el ([ width <| fillPortion (chunk.length * 100 |> round), height fill, borderLeft 1, Border.color <| rgba 0 0 0 0.2, setMenuPathOnMouseEnter [ chunkMenu ] ] ++ background ++ popmenu)
 
             chunkTriggers =
               model.oerChunks
@@ -324,7 +357,7 @@ viewOerCard model oer =
 
             underlay =
               none
-              |> el ([ width fill, height (px 16), materialScrimBackground, moveUp 16, onMouseLeave (SetChunkPopover Nothing) ] ++ markers ++ [chunkTriggers])
+              |> el ([ width fill, height (px 16), materialScrimBackground, moveUp 16, setMenuPathOnMouseLeave [] ] ++ markers ++ [chunkTriggers])
         in
             underlay
 
@@ -375,7 +408,7 @@ viewOerCard model oer =
 
       modalityIcon =
         if hasVideo oer then
-          image [ moveRight 280, moveDown 160, width (px 30) ] { src = svgPath "playIcon", description = "play icon" }
+          image [ moveRight 280, moveUp 50, width (px 30) ] { src = svgPath "playIcon", description = "play icon" }
         else
           none
         -- let
@@ -407,7 +440,7 @@ viewOerCard model oer =
         [ title
         , bottomRow
         ]
-        |> column [ padding 16, width fill, height fill, inFront fragmentsBar ]
+        |> column [ padding 16, width fill, height fill, inFront modalityIcon, inFront fragmentsBar ]
 
       closeButton =
         if hovering then
@@ -425,7 +458,7 @@ viewOerCard model oer =
         [ (if hovering then carousel else thumbnail)
         , info
         ]
-        |> column [ widthOfCard, heightOfCard, htmlClass "materialCard", inFront modalityIcon, onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing) ]
+        |> column [ widthOfCard, heightOfCard, htmlClass "materialCard", onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing) ]
 
       onPress =
         case model.inspectorState of
@@ -471,3 +504,90 @@ viewLoadingSpinner =
   "loading..." |> wrapText [ primaryWhite, centerX, centerY ]
   |> el [ centerX, height fill ]
   |> el [ width fill, height fill ]
+
+
+menuButtonDisabled str =
+  let
+      label =
+        [ str |> bodyNoWrap [ width fill, greyTextDisabled ]
+        ]
+        |> row [ width fill, paddingXY 10 5, spacing 3 ]
+  in
+      button [] { onPress = Nothing, label = label }
+
+
+menuButtonWithSubmenu model parentMenuPath submenuPath submenuContents title =
+  let
+      label =
+        [ title |> bodyNoWrap [ width fill ]
+        , image [ alpha 0.5, alignRight ] { src = svgPath "arrow_right", description = "" }
+        ]
+        |> row [ width fill, paddingXY 10 5, spacing 10 ]
+
+      submenu =
+        if model.menuPath |> containsList submenuPath then
+          submenuContents
+          |> menuColumn
+          |> el [ moveUp 20, moveRight 35, elevate 4 ]
+          |> onRight
+          |> List.singleton
+        else
+          []
+  in
+      button ([ width fill, setMenuPathOnMouseEnter submenuPath, setMenuPathOnMouseLeave parentMenuPath ]++submenu) { onPress = Nothing, label = label }
+
+
+isHeadEqual : a -> List a -> Bool
+isHeadEqual element xs =
+  case List.head xs of
+    Nothing ->
+      False
+
+    Just x ->
+      x == element
+
+
+setMenuPathOnMouseEnter path =
+  onMouseEnter (SetPopMenuPath path)
+
+
+setMenuPathOnMouseLeave path =
+  onMouseLeave (SetPopMenuPath path)
+
+
+menuColumn =
+  column [ padding 5, Background.color white, moveDown 16, moveLeft 30, Border.rounded 2, Border.color <| grey80, dialogShadow ]
+
+
+ensureTail : a -> List a -> List a
+ensureTail element xs =
+  xs
+  |> cutBefore element
+  |> addToEnd element
+
+
+cutBefore : a -> List a -> List a
+cutBefore element xs =
+  if xs |> List.member element then
+    xs
+    |> List.reverse
+    |> List.drop 1
+    |> List.reverse
+    |> cutBefore element
+  else
+    xs
+
+
+addToEnd : a -> List a -> List a
+addToEnd element xs =
+    element :: (List.reverse xs) |> List.reverse
+
+
+containsList : List a -> List a -> Bool
+containsList xs ostensiblyLongerList =
+  xs
+  |> List.all (\x -> ostensiblyLongerList |> List.member x)
+
+
+elevate zIndex =
+  htmlAttribute <| Html.Attributes.attribute "z-index" (String.fromInt zIndex)

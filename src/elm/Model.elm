@@ -28,7 +28,7 @@ type alias Model =
   , viewedFragments : Maybe (List Fragment)
   , nextSteps : Maybe (List Playlist)
   , oerChunks : Dict String (List Chunk)
-  , chunkPopover : Maybe (List String)
+  , menuPath : List PopMenu
   }
 
 
@@ -75,6 +75,11 @@ type alias Chunk =
   }
 
 
+type PopMenu
+  = ChunkOnCard Oer Chunk
+  | TopicInChunkOnCard String
+
+
 type alias Fragment =
   { oer : Oer
   , start : Float -- 0 to 1
@@ -116,7 +121,7 @@ initialModel nav flags =
   , viewedFragments = Nothing
   , nextSteps = Nothing
   , oerChunks = Dict.empty
-  , chunkPopover = Nothing
+  , menuPath = []
   }
 
 

@@ -115,8 +115,8 @@ update msg ({nav} as model) =
     RemoveFromBookmarklist playlist oer ->
       ( { model | bookmarklists = model.bookmarklists |> List.map (\p -> if p.title==playlist.title then { p | oers = p.oers |> List.filter (\o -> o.url /= oer.url) } else p)}, Cmd.none )
 
-    SetChunkPopover maybeTopics ->
-      ( { model | chunkPopover = maybeTopics }, Cmd.none )
+    SetPopMenuPath path ->
+      ( { model | menuPath = path }, Cmd.none )
 
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model

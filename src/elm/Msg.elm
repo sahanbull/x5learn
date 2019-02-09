@@ -34,7 +34,7 @@ type Msg
   | OpenSaveToBookmarklistMenu InspectorState
   | AddToBookmarklist Playlist Oer
   | RemoveFromBookmarklist Playlist Oer
-  | SetChunkPopover (Maybe (List String))
+  | SetPopMenuPath (List PopMenu)
 
 
 subscriptions : Model -> Sub Msg

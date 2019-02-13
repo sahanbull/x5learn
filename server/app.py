@@ -16,7 +16,8 @@ bishop_wikichunks = []
 
 # oer_csv_path = '/Users/stefan/x5/data/unesco.csv'
 # oer_csv_path = '/Users/stefan/x5/data/videolectures_music.csv'
-oer_csv_path = '/Users/stefan/x5/data/ng_youtube_lectures.csv'
+# oer_csv_path = '/Users/stefan/x5/data/ng_youtube_lectures.csv'
+oer_csv_path = '/Users/stefan/x5/data/scenarios/scenario1.csv'
 
 youtube_wikichunks_csv_directory = '/Users/stefan/x5/data/wikified_youtube_videos/'
 bishop_wikichunks_csv_path = '/Users/stefan/x5/data/bishop_chunks_9000.csv'
@@ -29,8 +30,8 @@ def home():
 def next_steps():
     return render_template('home.html')
 
-@app.route("/routes")
-def routes():
+@app.route("/journeys")
+def journeys():
     return render_template('home.html')
 
 @app.route("/bookmarks")

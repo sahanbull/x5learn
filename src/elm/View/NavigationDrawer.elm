@@ -34,7 +34,7 @@ withNavigationDrawer model (pageContent, modal) =
 
       navButtons =
         [ navButton "/next_steps" "nav_next_steps" "Next Steps"
-        , navButton "/routes" "nav_routes" "Routes"
+        , navButton "/journeys" "nav_journeys" "Journeys"
         , navButton "/bookmarks" "nav_bookmarks" "Bookmarks"
         , navButton "/history" "nav_history" "History"
         , navButton "/notes" "nav_notes" "Notes"

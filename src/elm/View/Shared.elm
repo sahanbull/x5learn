@@ -29,6 +29,10 @@ materialScrimBackground =
   Background.color <| rgba 0 0 0 materialScrimAlpha
 
 
+superLightBackgorund =
+  Background.color <| rgb255 242 242 242
+
+
 materialDarkAlpha =
   alpha 0.87
 
@@ -317,8 +321,8 @@ viewOerCard model oer =
                           actionsForTopic =
                             [ "What is this?" |> menuButtonDisabled
                             , "I know this well" |> menuButtonDisabled
-                            , "Test me later" |> menuButtonDisabled
-                            , "Test me now" |> menuButtonDisabled
+                            -- , "Test me later" |> menuButtonDisabled
+                            -- , "Test me now" |> menuButtonDisabled
                             ]
 
                           topicsSection =
@@ -330,7 +334,7 @@ viewOerCard model oer =
                             else
                               []
                       in
-                          [ "Jump here" |> menuButtonDisabled
+                          [ "→ Jump here" |> menuButtonDisabled
                           ] ++ topicsSection
                           |> menuColumn
                           |> inFront
@@ -509,11 +513,12 @@ viewLoadingSpinner =
 menuButtonDisabled str =
   let
       label =
-        [ str |> bodyNoWrap [ width fill, greyTextDisabled ]
+        -- [ str |> bodyNoWrap [ width fill, greyTextDisabled ]
+        [ str |> bodyNoWrap [ width fill ]
         ]
         |> row [ width fill, paddingXY 10 5, spacing 3 ]
   in
-      button [] { onPress = Nothing, label = label }
+      button [ padding 5 ] { onPress = Nothing, label = label }
 
 
 menuButtonWithSubmenu model parentMenuPath submenuPath submenuContents title =
@@ -528,13 +533,19 @@ menuButtonWithSubmenu model parentMenuPath submenuPath submenuContents title =
         if model.menuPath |> containsList submenuPath then
           submenuContents
           |> menuColumn
-          |> el [ moveUp 20, moveRight 35, elevate 4 ]
+          |> el [ moveUp 20, moveRight 30, elevate 4 ]
           |> onRight
           |> List.singleton
         else
           []
+
+      background =
+        if submenu == [] then
+          []
+        else
+          [ superLightBackgorund ]
   in
-      button ([ width fill, setMenuPathOnMouseEnter submenuPath, setMenuPathOnMouseLeave parentMenuPath ]++submenu) { onPress = Nothing, label = label }
+      button ([ padding 5, width fill, setMenuPathOnMouseEnter submenuPath, setMenuPathOnMouseLeave parentMenuPath ]++submenu++background) { onPress = Nothing, label = label }
 
 
 isHeadEqual : a -> List a -> Bool
@@ -556,7 +567,7 @@ setMenuPathOnMouseLeave path =
 
 
 menuColumn =
-  column [ padding 5, Background.color white, moveDown 16, moveLeft 30, Border.rounded 2, Border.color <| grey80, dialogShadow ]
+  column [ Background.color white, moveDown 16, moveLeft 30, Border.rounded 4, Border.color <| grey80, dialogShadow ]
 
 
 ensureTail : a -> List a -> List a

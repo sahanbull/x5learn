@@ -21,8 +21,8 @@ viewHomePage : Model -> Element Msg
 viewHomePage model =
   let
       title =
-        "Easy entrance to deep ideas." |> text |> el [ primaryWhite, Font.size 48, centerX, centerY ] |> el [ width fill, height <| fillPortion 3 ]
-        -- "Study anything. Anywhere. Free." |> text |> el [ primaryWhite, Font.size 48, centerX, centerY ] |> el [ width fill, height <| fillPortion 3 ]
+        -- "Easy entrance to deep ideas." |> text |> el [ primaryWhite, Font.size 48, centerX, centerY ] |> el [ width fill, height <| fillPortion 3 ]
+        "Study anything. Anywhere. Free." |> text |> el [ primaryWhite, Font.size 48, centerX, centerY ] |> el [ width fill, height <| fillPortion 3 ]
 
       searchSection =
         model.searchInputTyping

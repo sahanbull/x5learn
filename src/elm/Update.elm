@@ -115,8 +115,20 @@ update msg ({nav} as model) =
     RemoveFromBookmarklist playlist oer ->
       ( { model | bookmarklists = model.bookmarklists |> List.map (\p -> if p.title==playlist.title then { p | oers = p.oers |> List.filter (\o -> o.url /= oer.url) } else p)}, Cmd.none )
 
-    SetPopMenuPath path ->
-      ( { model | menuPath = path }, Cmd.none )
+    SetPopup popup ->
+      ( { model | popup = popup }, if popup==Nothing then Cmd.none else determinePopupPosition popupTriggerId )
+
+    SetPopupPosition position ->
+      let
+          newPopup =
+            case model.popup of
+              Nothing ->
+                Nothing
+
+              Just popup ->
+                Just { popup | position = Just position }
+      in
+          ( { model | popup = newPopup }, Cmd.none )
 
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model

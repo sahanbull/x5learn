@@ -16,18 +16,23 @@ function setupPorts(app){
   // });
 
   app.ports.openModalAnimation.subscribe(function(modalId) {
-    startAnimationWhenModalIsReady(modalId)
+    startAnimationWhenModalIsReady(modalId, 100)
+  });
+  app.ports.determinePopupPosition.subscribe(function(popupTriggerId) {
+    determinePopupPosition(popupTriggerId, 100)
   });
 }
 
 
-function startAnimationWhenModalIsReady(modalId) {
+function startAnimationWhenModalIsReady(modalId, attempts) {
+  if(attempts<1) {
+    return
+  }
   if(window.document.getElementById(modalId)==null) {
     setTimeout(function() {
-      startAnimationWhenModalIsReady(modalId);
+      startAnimationWhenModalIsReady(modalId, attempts-1);
     }, 15);
-  }
-  else{
+  } else{
     var card = document.activeElement;
     var modal = document.getElementById(modalId);
     card.blur(); // remove the blue outline
@@ -36,5 +41,20 @@ function startAnimationWhenModalIsReady(modalId) {
       app.ports.modalAnimationStop.send(12345);
     }, 110);
     return;
+  }
+}
+
+function determinePopupPosition(popupTriggerId, attempts) {
+  if(attempts<1) {
+    return
+  }
+  var trigger = window.document.getElementById(popupTriggerId)
+  if(trigger==null) {
+    setTimeout(function() {
+      determinePopupPosition(popupTriggerId, attempts-1);
+    }, 15);
+  } else{
+    var rect = positionAndSize(trigger);
+    app.ports.setPopupPosition.send({x: rect.x, y: rect.y + 17});
   }
 }

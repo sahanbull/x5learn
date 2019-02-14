@@ -4,7 +4,6 @@ import Browser
 import Browser.Navigation as Navigation
 import Url
 import Time exposing (Posix, posixToMillis)
-import Element exposing (Color, rgb255)
 import Dict exposing (Dict)
 import Set exposing (Set)
 
@@ -28,7 +27,7 @@ type alias Model =
   , viewedFragments : Maybe (List Fragment)
   , nextSteps : Maybe (List Playlist)
   , oerChunks : Dict String (List Chunk)
-  , menuPath : List PopMenu
+  , popup : Maybe Popup
   }
 
 
@@ -75,11 +74,6 @@ type alias Chunk =
   }
 
 
-type PopMenu
-  = ChunkOnCard Oer Chunk
-  | TopicInChunkOnCard String
-
-
 type alias Fragment =
   { oer : Oer
   , start : Float -- 0 to 1
@@ -91,6 +85,20 @@ type alias Playlist =
   { title : String
   , oers : List Oer
   }
+
+
+type alias Popup =
+  { position : Maybe Point
+  , content : PopupContent
+  }
+
+type PopupContent
+  = ChunkMenu Oer Chunk
+
+
+type PopupElevation
+  = BehindModal
+  | InFrontOfModal
 
 
 type AnimationStatus
@@ -121,7 +129,7 @@ initialModel nav flags =
   , viewedFragments = Nothing
   , nextSteps = Nothing
   , oerChunks = Dict.empty
-  , menuPath = []
+  , popup = Nothing
   }
 
 
@@ -164,6 +172,10 @@ modalId =
   "modalId"
 
 
+popupTriggerId =
+  "x5popupTrigger"
+
+
 millisSince : Model -> Posix -> Int
 millisSince model pastPointInTime =
   (posixToMillis model.currentTime) - (posixToMillis pastPointInTime)
@@ -193,3 +205,20 @@ isFromVideoLecturesNet oer =
 isInPlaylist : Oer -> Playlist -> Bool
 isInPlaylist oer playlist =
   List.member oer playlist.oers
+
+
+popupElevation : PopupContent -> PopupElevation
+popupElevation popupContent =
+  case popupContent of
+    ChunkMenu _ _ ->
+      InFrontOfModal
+
+
+isPopupContentOpen : Model -> PopupContent -> Bool
+isPopupContentOpen model popupContent =
+  case model.popup of
+    Nothing ->
+      False
+
+    Just {content} ->
+      content == popupContent

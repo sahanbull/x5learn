@@ -34,7 +34,8 @@ type Msg
   | OpenSaveToBookmarklistMenu InspectorState
   | AddToBookmarklist Playlist Oer
   | RemoveFromBookmarklist Playlist Oer
-  | SetPopMenuPath (List PopMenu)
+  | SetPopup (Maybe Popup)
+  | SetPopupPosition Point
 
 
 subscriptions : Model -> Sub Msg
@@ -57,6 +58,7 @@ subscriptions model =
       ([ Browser.Events.onResize ResizeBrowser
       , Ports.modalAnimationStart ModalAnimationStart
       , Ports.modalAnimationStop ModalAnimationStop
+      , Ports.setPopupPosition SetPopupPosition
       , Time.every 500 ClockTick
       ] ++ anim)
       |> Sub.batch

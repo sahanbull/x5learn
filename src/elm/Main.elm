@@ -67,10 +67,33 @@ view model =
       header =
         viewPageHeader model
 
+      modalAndPopup =
+        case model.popup of
+          Nothing ->
+            modal
+
+          Just popup ->
+            case popup.position of
+              Nothing ->
+                modal
+
+              Just position ->
+                let
+                    popupLayer =
+                      "popup goes here" |> text |> el [ moveRight position.x, moveDown position.y ]
+                      |> inFront
+                in
+                    case popupElevation popup.content of
+                      BehindModal ->
+                        [ popupLayer ] ++ modal
+
+                      InFrontOfModal ->
+                        modal ++ [ popupLayer ]
+
       page =
         body
         |> el [ width fill, spacing 50, pageBodyBackground, height (fill |> maximum (model.windowHeight - pageHeaderHeight)), scrollbarY ]
-        |> layout ([ inFront header, paddingTop pageHeaderHeight, width fill ] ++ modal)
+        |> layout ([ inFront header, paddingTop pageHeaderHeight, width fill ] ++ modalAndPopup)
   in
       { title = "X5Learn"
       , body = [ page ]

@@ -312,56 +312,27 @@ viewOerCard model oer =
 
             chunkTrigger chunk =
               let
-                  chunkMenu =
-                    ChunkOnCard oer chunk
-
-                  popmenu =
-                    if model.menuPath |> isHeadEqual chunkMenu then
-                      let
-                          actionsForTopic =
-                            [ "What is this?" |> menuButtonDisabled
-                            , "I know this well" |> menuButtonDisabled
-                            -- , "Test me later" |> menuButtonDisabled
-                            -- , "Test me now" |> menuButtonDisabled
-                            ]
-
-                          topicsSection =
-                            if chunk.topics |> List.isEmpty |> not then
-                              chunk.topics
-                              |> List.map (\topic -> menuButtonWithSubmenu model [ chunkMenu ] [ chunkMenu, TopicInChunkOnCard topic ] actionsForTopic topic)
-                              |> column [ width fill ]
-                              |> List.singleton
-                            else
-                              []
-                      in
-                          [ "→ Jump here" |> menuButtonDisabled
-                          ] ++ topicsSection
-                          |> menuColumn
-                          |> inFront
-                          |> List.singleton
-                    else
-                      []
+                  popupContent =
+                    ChunkMenu oer chunk
 
                   background =
-                    if popmenu == [] then
-                      []
-                    else
-                      [ Background.color <| lightBlue ]
+                    if isPopupContentOpen model popupContent then [ Background.color <| lightBlue ] else []
               in
                   none
-                  |> el ([ width <| fillPortion (chunk.length * 100 |> round), height fill, borderLeft 1, Border.color <| rgba 0 0 0 0.2, setMenuPathOnMouseEnter [ chunkMenu ] ] ++ background ++ popmenu)
+                  |> el ([ width <| fillPortion (chunk.length * 100 |> round), height fill, borderLeft 1, Border.color <| rgba 0 0 0 0.2 ] ++ background ++ (popupHandler model popupContent))
 
-            chunkTriggers =
+            triggers =
               model.oerChunks
               |> Dict.get oer.url
               |> Maybe.withDefault []
               |> List.map chunkTrigger
               |> row [ width fill, height fill ]
               |> inFront
+              |> List.singleton
 
             underlay =
               none
-              |> el ([ width fill, height (px 16), materialScrimBackground, moveUp 16, setMenuPathOnMouseLeave [] ] ++ markers ++ [chunkTriggers])
+              |> el ([ width fill, height (px 16), materialScrimBackground, moveUp 16 ] ++ markers ++ triggers)
         in
             underlay
 
@@ -521,31 +492,31 @@ menuButtonDisabled str =
       button [ padding 5 ] { onPress = Nothing, label = label }
 
 
-menuButtonWithSubmenu model parentMenuPath submenuPath submenuContents title =
-  let
-      label =
-        [ title |> bodyNoWrap [ width fill ]
-        , image [ alpha 0.5, alignRight ] { src = svgPath "arrow_right", description = "" }
-        ]
-        |> row [ width fill, paddingXY 10 5, spacing 10 ]
+-- menuButtonWithSubmenu model parentPopup subpopup submenuContents title =
+--   let
+--       label =
+--         [ title |> bodyNoWrap [ width fill ]
+--         , image [ alpha 0.5, alignRight ] { src = svgPath "arrow_right", description = "" }
+--         ]
+--         |> row [ width fill, paddingXY 10 5, spacing 10 ]
 
-      submenu =
-        if model.menuPath |> containsList submenuPath then
-          submenuContents
-          |> menuColumn
-          |> el [ moveUp 20, moveRight 30, elevate 4 ]
-          |> onRight
-          |> List.singleton
-        else
-          []
+--       submenu =
+--         if model.activeMenuPath |> containsList subpopup then
+--           submenuContents
+--           |> menuColumn
+--           |> el [ moveUp 20, moveRight 30, elevate 4 ]
+--           |> onRight
+--           |> List.singleton
+--         else
+--           []
 
-      background =
-        if submenu == [] then
-          []
-        else
-          [ superLightBackgorund ]
-  in
-      button ([ padding 5, width fill, setMenuPathOnMouseEnter submenuPath, setMenuPathOnMouseLeave parentMenuPath ]++submenu++background) { onPress = Nothing, label = label }
+--       background =
+--         if submenu == [] then
+--           []
+--         else
+--           [ superLightBackgorund ]
+--   in
+--       button ([ padding 5, width fill ]++submenu++background) { onPress = Nothing, label = label }
 
 
 isHeadEqual : a -> List a -> Bool
@@ -556,14 +527,6 @@ isHeadEqual element xs =
 
     Just x ->
       x == element
-
-
-setMenuPathOnMouseEnter path =
-  onMouseEnter (SetPopMenuPath path)
-
-
-setMenuPathOnMouseLeave path =
-  onMouseLeave (SetPopMenuPath path)
 
 
 menuColumn =
@@ -602,3 +565,36 @@ containsList xs ostensiblyLongerList =
 
 elevate zIndex =
   htmlAttribute <| Html.Attributes.attribute "z-index" (String.fromInt zIndex)
+
+
+popupHandler : Model -> PopupContent -> List (Attribute Msg)
+popupHandler model popupContent =
+  if isPopupContentOpen model popupContent then
+    [ htmlId popupTriggerId
+    , onMouseLeave (SetPopup Nothing)
+    ]
+  else
+    [ onMouseEnter (SetPopup (Just { content = popupContent, position = Nothing })) ]
+
+
+-- popupMenuWhenHoveringOverChunk =
+--   let
+--       actionsForTopic =
+--         [ "What is this?" |> menuButtonDisabled
+--         , "I know this well" |> menuButtonDisabled
+--         -- , "Test me later" |> menuButtonDisabled
+--         -- , "Test me now" |> menuButtonDisabled
+--         ]
+
+--       topicsSection =
+--         if chunk.topics |> List.isEmpty |> not then
+--           chunk.topics
+--           |> List.map (\topic -> menuButtonWithSubmenu model [ chunkMenu ] [ chunkMenu, TopicInChunkOnCard topic ] actionsForTopic topic)
+--           |> column [ width fill ]
+--           |> List.singleton
+--         else
+--           []
+--   in
+--       [ "→ Jump here" |> menuButtonDisabled
+--       ] ++ topicsSection
+--       |> menuColumn

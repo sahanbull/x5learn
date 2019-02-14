@@ -3,6 +3,12 @@ module Animation exposing (..)
 import Time exposing (Posix)
 
 
+type alias Point =
+  { x : Float
+  , y : Float
+  }
+
+
 type alias Box =
   { x : Float
   , y : Float

@@ -47,11 +47,13 @@ withNavigationDrawer model (pageContent, modal) =
         , navButtons
         ]
         |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 14, spacing 30, whiteBackground ]
+        |> el [ height fill, width (px navigationDrawerWidth), paddingTop pageHeaderHeight ]
+        |> inFront
 
       page =
-        [ drawer
+        [ none |> el [ width (px navigationDrawerWidth) ]
         , pageContent
         ]
         |> row [ width fill, height fill ]
   in
-      (page, modal)
+      (page, modal ++ [ drawer ])

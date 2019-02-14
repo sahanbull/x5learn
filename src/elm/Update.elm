@@ -3,6 +3,7 @@ module Update exposing (update)
 import Browser
 import Browser.Navigation as Navigation
 import Url
+import Url.Builder
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Dict
@@ -69,7 +70,7 @@ update msg ({nav} as model) =
       ( { model | modalAnimation = Nothing, animationsPending = model.animationsPending |> Set.remove modalId }, Cmd.none )
 
     RequestOerSearch (Ok results) ->
-      ( model |> updateSearch (insertSearchResults results), Cmd.none )
+      ( model |> updateSearch (insertSearchResults results), Navigation.pushUrl nav.key "/search" )
       |> loadChunksIfNeeded
 
     RequestOerSearch (Err err) ->
@@ -144,7 +145,7 @@ incrementFrameCountInModalAnimation model =
 
 
 loadChunksIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
-loadChunksIfNeeded (model, cmd) =
+loadChunksIfNeeded (model, oldCmd) =
   let
       searchResults =
         case model.searchState of
@@ -164,5 +165,8 @@ loadChunksIfNeeded (model, cmd) =
         |> List.map (\oer -> oer.url)
         |> Set.fromList
         |> Set.filter (\url -> model.oerChunks |> Dict.member url |> not)
+
+      newCmd =
+        if Set.isEmpty missingUrls then Cmd.none else requestChunks (Set.toList missingUrls)
   in
-      (model, (if Set.isEmpty missingUrls then Cmd.none else requestChunks (Set.toList missingUrls)))
+      (model, [ oldCmd, newCmd ] |> Cmd.batch )

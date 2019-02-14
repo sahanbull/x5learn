@@ -487,10 +487,13 @@ viewPlaylist model playlist =
   if playlist.oers |> List.isEmpty then
     none
   else
-    [ playlist.title |> headlineWrap []
-    , playlist.oers |> List.map (viewOerCard model (Point 0 0)) |> row [ spacing 20 ]
-    ]
-    |> column [ spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ]
+    let
+        cards =
+          playlist.oers |> oerCardGrid model |> List.map inFront
+    in
+        [ playlist.title |> headlineWrap []
+        ]
+        |> column ([ height (px 380), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ cards)
 
 
 milkyWhiteCenteredContainer =
@@ -605,3 +608,20 @@ containsList xs ostensiblyLongerList =
 
 -- elevate zIndex =
 --   htmlAttribute <| Html.Attributes.attribute "z-index" (String.fromInt zIndex)
+
+
+oerCardGrid model oers =
+  let
+      cardAtIndex index oer =
+        let
+            x =
+              modBy 3 index
+
+            y =
+              index//3
+        in
+            viewOerCard model { x = x*370 + 180 |> toFloat, y = y*310 + 70 |> toFloat } oer
+  in
+      oers
+      |> List.indexedMap cardAtIndex
+      |> List.reverse -- Rendering the cards in reverse order so that popup menus (to the bottom and right) are rendered above the neighboring card, rather than below.

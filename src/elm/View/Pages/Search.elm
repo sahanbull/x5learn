@@ -47,20 +47,3 @@ viewSearchResults model searchState =
       in
           none
           |> el attrs
-
-
-oerCardGrid model oers =
-  let
-      cardAtIndex index oer =
-        let
-            x =
-              modBy 3 index
-
-            y =
-              index//3
-        in
-            viewOerCard model { x = x*400 |> toFloat, y = y*400 |> toFloat } oer
-  in
-      oers
-      |> List.indexedMap cardAtIndex
-      |> List.reverse -- Rendering the cards in reverse order so that popup menus (to the bottom and right) are rendered above the neighboring card, rather than below.

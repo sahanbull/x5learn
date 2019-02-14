@@ -41,7 +41,7 @@ viewHistoryPage model =
                 fragments
                   |> List.map (\fragment -> fragment.oer)
                   |> List.Extra.uniqueBy (\oer -> oer.url)
-                  |> List.map (viewOerCard model)
+                  |> List.map (viewOerCard model (Point 0 0))
                   |> List.map (el [ centerX ])
                   |> column [ paddingTop 20, spacing 20, width fill, height fill ]
   in

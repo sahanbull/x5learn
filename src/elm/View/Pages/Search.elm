@@ -36,7 +36,31 @@ viewSearchResults model searchState =
       viewLoadingSpinner
 
     Just oers ->
+      let
+          cards =
+            oers
+            |> oerCardGrid model
+            |> List.map inFront
+
+          attrs =
+            [ padding 20, spacing 20, width fill, height fill, Border.color orange ] ++ cards
+      in
+          none
+          |> el attrs
+
+
+oerCardGrid model oers =
+  let
+      cardAtIndex index oer =
+        let
+            x =
+              modBy 3 index
+
+            y =
+              index//3
+        in
+            viewOerCard model { x = x*400 |> toFloat, y = y*400 |> toFloat } oer
+  in
       oers
-      |> List.map (viewOerCard model)
-      |> wrappedRow [ centerX, spacing 30, width (fill |> maximum 1100) ]
-      |> el [ padding 20, spacing 20, width fill, height fill ]
+      |> List.indexedMap cardAtIndex
+      |> List.reverse -- Rendering the cards in reverse order so that popup menus (to the bottom and right) are rendered above the neighboring card, rather than below.

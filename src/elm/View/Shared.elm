@@ -16,6 +16,7 @@ import Json.Decode
 
 import Model exposing (..)
 import Msg exposing (..)
+import Animation exposing (..)
 
 
 type alias PageWithModal = (Element Msg, List (Attribute Msg))
@@ -268,7 +269,7 @@ materialScrimAlpha =
   0.32
 
 
-viewOerCard model oer =
+viewOerCard model position oer =
   let
       hovering =
         model.hoveringOerUrl == Just oer.url
@@ -364,7 +365,6 @@ viewOerCard model oer =
               |> el ([ width fill, height (px 16), materialScrimBackground, moveUp 16, setMenuPathOnMouseLeave [] ] ++ markers ++ [chunkTriggers])
         in
             underlay
-
 
       preloadImage url =
         url
@@ -471,9 +471,12 @@ viewOerCard model oer =
 
           _ ->
             Nothing
+
+      cardAttrs =
+        [ widthOfCard, heightOfCard, inFront <| button [] { onPress = onPress, label = card }, inFront closeButton, moveRight position.x, moveDown position.y ]
   in
       none
-      |> el [ widthOfCard, heightOfCard, inFront <| button [] { onPress = onPress, label = card }, inFront closeButton ]
+      |> el cardAttrs
 
 
 cardWidth =
@@ -485,7 +488,7 @@ viewPlaylist model playlist =
     none
   else
     [ playlist.title |> headlineWrap []
-    , playlist.oers |> List.map (viewOerCard model) |> row [ spacing 20 ]
+    , playlist.oers |> List.map (viewOerCard model (Point 0 0)) |> row [ spacing 20 ]
     ]
     |> column [ spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ]
 
@@ -533,7 +536,7 @@ menuButtonWithSubmenu model parentMenuPath submenuPath submenuContents title =
         if model.menuPath |> containsList submenuPath then
           submenuContents
           |> menuColumn
-          |> el [ moveUp 20, moveRight 30, elevate 4 ]
+          |> el [ moveUp 20, moveRight 30 ]
           |> onRight
           |> List.singleton
         else
@@ -600,5 +603,5 @@ containsList xs ostensiblyLongerList =
   |> List.all (\x -> ostensiblyLongerList |> List.member x)
 
 
-elevate zIndex =
-  htmlAttribute <| Html.Attributes.attribute "z-index" (String.fromInt zIndex)
+-- elevate zIndex =
+--   htmlAttribute <| Html.Attributes.attribute "z-index" (String.fromInt zIndex)

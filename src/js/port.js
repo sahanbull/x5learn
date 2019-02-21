@@ -18,6 +18,8 @@ function setupPorts(app){
   app.ports.openModalAnimation.subscribe(function(modalId) {
     startAnimationWhenModalIsReady(modalId)
   });
+
+  setupClickHandlers();
 }
 
 
@@ -37,4 +39,13 @@ function startAnimationWhenModalIsReady(modalId) {
     }, 110);
     return;
   }
+}
+
+
+function setupClickHandlers(){
+  document.addEventListener("click", function(e){
+    if(!e.target.closest('.PopupThatShouldCloseWhenTheUserClicksNextToIt')){
+      app.ports.closePopups.send(12345);
+    }
+  });
 }

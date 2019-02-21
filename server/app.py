@@ -3,6 +3,7 @@ import urllib
 import json
 import http.client
 from shutil import copyfile
+import sys
 import os
 import re
 import csv
@@ -11,16 +12,11 @@ import ast # parsing JSON with complex quotation https://stackoverflow.com/a/21
 app = Flask( __name__ )
 
 oer_csv_data = []
-wikichunks = {} # key = video_id, value = loaded csv file
-bishop_wikichunks = []
+stored_concept_names = {}
 
 # oer_csv_path = '/Users/stefan/x5/data/unesco.csv'
 # oer_csv_path = '/Users/stefan/x5/data/videolectures_music.csv'
-oer_csv_path = '/Users/stefan/x5/data/ng_youtube_lectures.csv'
-# oer_csv_path = '/Users/stefan/x5/data/scenario1/oers.csv'
-
-youtube_wikichunks_csv_directory = '/Users/stefan/x5/data/wikified_youtube_videos/'
-bishop_wikichunks_csv_path = '/Users/stefan/x5/data/bishop_chunks_9000.csv'
+oer_csv_path = '/Users/stefan/x5/data/scenario1/oers.csv'
 
 @app.route("/")
 def home():
@@ -54,6 +50,7 @@ def notes():
 def peers():
     return render_template('home.html')
 
+
 @app.route("/api/v1/search/", methods=['GET'])
 def api_search():
     ensure_csv_data_is_loaded()
@@ -64,8 +61,8 @@ def api_search():
 @app.route("/api/v1/viewed_fragments/", methods=['GET'])
 def api_viewed_fragments():
     ensure_csv_data_is_loaded()
-    start, length = bishop_book_chapter2()
-    fragments = [ create_fragment(bishop_book(), start, length) ]
+    start, length = (0.1, 0.1)
+    fragments = [ create_fragment(oer_csv_data[0], start, length) ]
     return jsonify(fragments)
 
 
@@ -76,42 +73,25 @@ def api_next_steps():
     return jsonify(playlists)
 
 
-@app.route("/api/v1/chunks/", methods=['GET'])
-def api_chunks():
+@app.route("/api/v1/concept_names/", methods=['GET'])
+def concept_names():
     ensure_csv_data_is_loaded()
-    urls = request.args['urls'].split(',')
-    lists = {}
-    for url in urls:
-        lists[url] = wikichunks[url] if (url in wikichunks) else [{'start': 0, 'length': 1, 'topics': []}]
-    return jsonify(lists)
+    concept_ids = request.args['ids'].split(',')
+    names = {}
+    for concept_id in concept_ids:
+        if concept_id in stored_concept_names:
+            names[concept_id] = stored_concept_names[concept_id]
+        else:
+            names[concept_id] = 'Concept not found'
+            print('Concept not found:', concept_id)
+    return jsonify(names)
 
 
 def ensure_csv_data_is_loaded():
     if oer_csv_data==[]:
         read_oer_csv_data()
-        read_wikifier_data()
+        read_concept_names_from_file()
 
-
-def bishop_book():
-    return { 'url': "https://www.microsoft.com/en-us/research/people/cmbishop/#!prml-book"
-    , 'provider': "https://www.microsoft.com"
-    , 'date': "2006"
-    , 'title': "Pattern Recognition and Machine Learning"
-    , 'duration': ""
-    , 'description': "This leading textbook provides a comprehensive introduction to the fields of pattern recognition and machine learning. It is aimed at advanced undergraduates or first-year PhD students, as well as researchers and practitioners. No previous knowledge of pattern recognition or machine learning concepts is assumed. This is the first machine learning textbook to include a comprehensive coverage of recent developments such as probabilistic graphical models and deterministic inference methods, and to emphasize a modern Bayesian perspective. It is suitable for courses on machine learning, statistics, computer science, signal processing, computer vision, data mining, and bioinformatics. This hard cover book has 738 pages in full colour, and there are 431 graded exercises (with solutions available below). Extensive support is provided for course instructors."
-    , 'imageUrls': [ "https://www.microsoft.com/en-us/research/wp-content/uploads/2016/06/Springer-Cover-Image-752x1024.jpg" ]
-    , 'youtubeVideoVersions': {}
-    }
-
-
-def bishop_book_chapter2():
-    # In the wikified book by Bishop, chunks 15-24 (out of 156) contain chapter 2 on probability distributions
-    first_chunk = 15
-    last_chunk = 24
-    n_total_chunks = 156
-    start = first_chunk / n_total_chunks
-    length = (last_chunk-first_chunk) / n_total_chunks
-    return (start, length)
 
 def search_results_from_local_experimental_csv(search_words):
     results = [ row for row in oer_csv_data if any_word_matches(search_words, row['title']) or any_word_matches(search_words, row['description']) ]
@@ -126,53 +106,31 @@ def any_word_matches(words, text):
 
 
 def read_oer_csv_data():
+    csv.field_size_limit(sys.maxsize)
     print('loading local OER data:', oer_csv_path)
     with open(oer_csv_path, newline='') as f:
         for row in csv.DictReader(f, delimiter='\t'):
             url = row['url']
             if url in [ r['url'] for r in oer_csv_data ]:
                 continue # omit duplicates
-            youtube = json.loads(row['youtubeVideoVersions'].replace("'", '"'))
-            if not youtube and re.search(r'youtu', url):
-                youtube = { 'English': url.split('v=')[1].split('&')[0] }
-            row['youtubeVideoVersions'] = youtube
-            row['imageUrls'] = json.loads(row['imageUrls'].replace("'", '"'))
-            row['date'] = row['date'] if 'date' in row else ''
-            row['duration'] = row['duration'] if 'duration' in row else ''
+            if not row['title']:
+                continue # omit incomplete items
+            row['images'] = json.loads(row['images'].replace("'", '"'))
+            row['date'] = row['date'].replace('Published on ', '') if 'date' in row else ''
+            row['duration'] = human_readable_time_from_ms(float(row['duration'])) if 'duration' in row else ''
             oer_csv_data.append(row)
 
 
-def read_wikifier_data():
-    dir_path = youtube_wikichunks_csv_directory
-    print('loading local wikifier data:', dir_path)
-    for file in os.listdir(dir_path):
-        filename = dir_path + os.fsdecode(file)
-        video_id = filename.split('/')[-1].split('.')[0]
-        with open(filename, newline='') as f:
-            chunks = []
-            for row in csv.DictReader(f, delimiter=','):
-                row['topics'] = ast.literal_eval(row['topics'])
-                row['start'] = float(row['start'])
-                row['length'] = float(row['length'])
-                row.pop('')
-                chunks.append(row)
-        url = 'https://youtube.com/watch?v='+video_id
-        wikichunks[url] = chunks
-    wikichunks[bishop_book()['url']] = bishop_wikifier_data()
+def read_concept_names_from_file():
+    global stored_concept_names
+    with open('/Users/stefan/x5/data/scenario1/wiki_id_title_mapping.json') as f:
+        stored_concept_names = json.load(f)
 
 
-def bishop_wikifier_data():
-    print('loading local wikifier data:', bishop_wikichunks_csv_path)
-    with open(bishop_wikichunks_csv_path, newline='') as f:
-        chunks = []
-        rows = []
-        for row in csv.DictReader(f, delimiter=','):
-            rows.append(row)
-        n_rows = len(rows)
-        for row in rows:
-            chunk = {'start': float(row[''])/n_rows, 'length': 1.0/n_rows, 'topics': [ row['a0title'], row['a1title'], row['a2title'], row['a3title'], row['a4title'] ]}
-            chunks.append(chunk)
-    return chunks
+def human_readable_time_from_ms(ms):
+    minutes = int(ms / 60000)
+    seconds = int(ms/1000 - minutes*60)
+    return str(minutes)+':'+str(seconds)
 
 
 def create_fragment(oer, start, length):
@@ -184,7 +142,7 @@ def create_playlist(title, oers):
 
 
 def recommend_next_steps():
-    return [ create_playlist("Continue reading", [bishop_book()]), create_playlist("Videos about Machine Learning", oer_csv_data[1:3]) ]
+    return [ create_playlist("Continue studying", oer_csv_data[50:53]), create_playlist("Videos about Machine Learning", oer_csv_data[1:3]) ]
 
 
 # def search_results_from_x5gon_api(text):

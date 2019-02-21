@@ -60,7 +60,7 @@ viewModal model ({oer} as inspectorState) =
         , body
         , footer
         ]
-        |> column [ onClickNoBubble NoOp, width (fill |> maximum 752), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow ]
+        |> column [ htmlClass "PopupThatShouldCloseWhenTheUserClicksNextToIt", width (fill |> maximum 752), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow ]
 
       animatingBox =
         case model.modalAnimation of
@@ -95,7 +95,7 @@ viewModal model ({oer} as inspectorState) =
             |> el [ Background.color <| rgba 0 0 0 opacity, width (model.windowWidth - navigationDrawerWidth |> px), height (fill |> maximum (model.windowHeight - pageHeaderHeight)), moveDown pageHeaderHeight, moveRight navigationDrawerWidth,  htmlClass "modalScrim" ]
   in
       sheet
-      |> el [ width fill, height fill, onClickNoBubble UninspectSearchResult, behindContent scrim, inFront animatingBox ]
+      |> el [ width fill, height fill, behindContent scrim, inFront animatingBox ]
 
 
 inspectorContentDefault model inspectorState oer =
@@ -122,7 +122,7 @@ inspectorContentDefault model inspectorState oer =
         |> column [ spacing 16 ]
 
       footer =
-        [ newTabLink [] { url = oer.url, label = providerLink }
+        [ providerLink
         , none |> el [ width fill ]
         , actionButtons
         ]
@@ -131,14 +131,18 @@ inspectorContentDefault model inspectorState oer =
         button [ hoverCircleBackground ] { onPress = Nothing, label = label }
 
       providerLink =
-        [  oer.provider |> bodyNoWrap [ alignLeft]
-        , image [ alignLeft, materialDarkAlpha, width (px 20) ] { src = svgPath "navigate_next", description = "external link" }
-        ]
-        |> row [ alignLeft, width fill ]
+        -- if inspectorState.providerLinkShown then
+          newTabLink [] { url = oer.url, label = oer.provider |> bodyNoWrap [] }
+        -- else
+        --   actionButton IconRight "navigate_next" oer.provider (Just <| ShowProviderLinkInInspector)
+        -- [ oer.provider |> bodyNoWrap [ alignLeft]
+        -- , image [ alignLeft, materialDarkAlpha, width (px 20) ] { src = svgPath "navigate_next", description = "external link" }
+        -- ]
+        -- |> row [ alignLeft, width fill, onClick UninspectSearchResult ]
 
       actionButtons =
-        [ actionButton "share" "SHARE" Nothing
-        , actionButton "bookmarklist_add" "SAVE" <| Just <| OpenSaveToBookmarklistMenu inspectorState
+        [ actionButton IconLeft "share" "SHARE" Nothing
+        , actionButton IconLeft "bookmarklist_add" "SAVE" <| Just <| OpenSaveToBookmarklistMenu inspectorState
         , footerButton <| svgIcon "more_vert"
         ]
         |> row [ spacing 20, alignRight ]
@@ -152,7 +156,7 @@ inspectorContentSaveToBookmarklist model inspectorState oer =
         "Save to..." |> headlineWrap [ paddingXY 14 0 ]
 
       footer =
-        [ actionButton "add" "Create new list" <| Nothing ]
+        [ actionButton IconLeft "add" "Create new list" <| Nothing ]
 
       bookmarklistButton : Playlist -> Element Msg
       bookmarklistButton playlist =
@@ -163,7 +167,7 @@ inspectorContentSaveToBookmarklist model inspectorState oer =
               else
                 ("checkbox_unticked", AddToBookmarklist)
         in
-            actionButton icon playlist.title <| Just <| action playlist oer
+            actionButton IconLeft icon playlist.title <| Just <| action playlist oer
 
       body =
         model.bookmarklists

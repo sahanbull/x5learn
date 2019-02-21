@@ -29,7 +29,7 @@ type Msg
   | RequestOerSearch (Result Http.Error (List Oer))
   | RequestNextSteps (Result Http.Error (List Playlist))
   | RequestViewedFragments (Result Http.Error (List Fragment))
-  | RequestChunks (Result Http.Error (Dict String (List Chunk)))
+  | RequestConceptNames (Result Http.Error (Dict String String))
   | SetHover (Maybe String)
   | OpenSaveToBookmarklistMenu InspectorState
   | AddToBookmarklist Playlist Oer
@@ -57,6 +57,7 @@ subscriptions model =
       ([ Browser.Events.onResize ResizeBrowser
       , Ports.modalAnimationStart ModalAnimationStart
       , Ports.modalAnimationStop ModalAnimationStop
+      , Ports.closePopups (\_ -> SetPopMenuPath [])
       , Time.every 500 ClockTick
       ] ++ anim)
       |> Sub.batch

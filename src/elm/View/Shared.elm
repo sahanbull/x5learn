@@ -21,6 +21,10 @@ import Animation exposing (..)
 
 type alias PageWithModal = (Element Msg, List (Attribute Msg))
 
+type IconPosition
+  = IconLeft
+  | IconRight
+
 
 materialDark =
   rgba 0 0 0 0.87
@@ -241,15 +245,23 @@ navigationDrawerWidth =
   230
 
 
-actionButton svgIconStub str onPress =
+actionButton iconPosition svgIconStub str onPress =
   let
+      icon =
+        image [ alpha 0.5 ] { src = svgPath svgIconStub, description = "" }
+
+      title =
+        str |> bodyNoWrap [ width fill ]
+
       label =
-        [ image [ alpha 0.5 ] { src = svgPath svgIconStub, description = "" }
-        , str |> bodyNoWrap [ width fill ]
-        ]
-        |> row [ width fill, padding 12, spacing 3, Border.rounded 4 ]
+        case iconPosition of
+          IconLeft ->
+            [ icon, title ]
+
+          IconRight ->
+            [ title, icon ]
   in
-      button [] { onPress = onPress, label = label }
+      button [] { onPress = onPress, label = label |> row [ width fill, padding 12, spacing 3, Border.rounded 4 ]}
 
 
 selectByIndex : Int -> a -> List a -> a
@@ -287,14 +299,14 @@ viewOerCard model position oer =
       thumbnail =
         let
             attrs =
-              case oer.imageUrls of
+              case oer.images of
                 first :: (second :: _) ->
                   [ preloadImage second ]
 
                 _ ->
                   if hovering then [] else []
         in
-            oer.imageUrls |> List.head |> Maybe.withDefault (imgPath "thumbnail_unavailable.jpg")
+            oer.images |> List.head |> Maybe.withDefault (imgPath "thumbnail_unavailable.jpg")
             |> upperImage attrs
 
       fragmentsBar =
@@ -319,24 +331,32 @@ viewOerCard model position oer =
                   popmenu =
                     if model.menuPath |> isHeadEqual chunkMenu then
                       let
-                          actionsForTopic =
+                          actionsForConcept =
                             [ "What is this?" |> menuButtonDisabled
-                            , "I know this well" |> menuButtonDisabled
+                            -- , "I have heard of this" |> menuButtonDisabled
+                            , "I know this!" |> menuButtonDisabled
+                            , "Add to interests" |> menuButtonDisabled
+                            -- , "I can explain this" |> menuButtonDisabled
+                            -- , "I have skills in this area" |> menuButtonDisabled
+                            -- , "I am interested" |> menuButtonDisabled
+                            -- , "This doesn't interest me" |> menuButtonDisabled
+                            -- [ "What is this?" |> menuButtonDisabled
+                            -- , "I know this well" |> menuButtonDisabled
                             -- , "Test me later" |> menuButtonDisabled
                             -- , "Test me now" |> menuButtonDisabled
                             ]
 
-                          topicsSection =
-                            if chunk.topics |> List.isEmpty |> not then
-                              chunk.topics
-                              |> List.map (\topic -> menuButtonWithSubmenu model [ chunkMenu ] [ chunkMenu, TopicInChunkOnCard topic ] actionsForTopic topic)
+                          conceptsSection =
+                            if chunk.concepts |> List.isEmpty |> not then
+                              chunk.concepts
+                              |> List.map (\concept -> menuButtonWithSubmenu model [ chunkMenu ] [ chunkMenu, ConceptInChunkOnCard concept ] actionsForConcept (model.conceptNames |> Dict.get concept |> Maybe.withDefault "..."))
                               |> column [ width fill ]
                               |> List.singleton
                             else
                               []
                       in
                           [ "→ Jump here" |> menuButtonDisabled
-                          ] ++ topicsSection
+                          ] ++ conceptsSection
                           |> menuColumn
                           |> inFront
                           |> List.singleton
@@ -353,9 +373,7 @@ viewOerCard model position oer =
                   |> el ([ width <| fillPortion (chunk.length * 100 |> round), height fill, borderLeft 1, Border.color <| rgba 0 0 0 0.2, setMenuPathOnMouseEnter [ chunkMenu ] ] ++ background ++ popmenu)
 
             chunkTriggers =
-              model.oerChunks
-              |> Dict.get oer.url
-              |> Maybe.withDefault []
+              oer.wikichunks
               |> List.map chunkTrigger
               |> row [ width fill, height fill ]
               |> inFront
@@ -372,7 +390,7 @@ viewOerCard model position oer =
         |> behindContent
 
       carousel =
-        case oer.imageUrls of
+        case oer.images of
           [] ->
             thumbnail
 
@@ -383,14 +401,14 @@ viewOerCard model position oer =
             let
                 imageIndex =
                   (millisSince model model.timeOfLastMouseEnterOnCard) // 1500 + 1
-                  |> modBy (List.length oer.imageUrls)
+                  |> modBy (List.length oer.images)
 
                 currentImageUrl =
-                  oer.imageUrls
+                  oer.images
                   |> selectByIndex imageIndex head
 
                 nextImageUrl =
-                  oer.imageUrls
+                  oer.images
                   |> selectByIndex (imageIndex+1) head
 
                 -- dot url =
@@ -398,14 +416,14 @@ viewOerCard model position oer =
                 --   |> el [ width (px 6), height (px 6), Border.rounded 3, Background.color <| if url==currentImageUrl then white else semiTransparentWhite ]
 
                 -- dotRow =
-                --   oer.imageUrls
+                --   oer.images
                 --   |> List.map dot
                 --   |> row [ spacing 5, moveDown 160, moveRight 16 ]
                 --   |> inFront
 
             in
                 currentImageUrl
-                |> upperImage [ preloadImage nextImageUrl, imageCounter <| (imageIndex+1 |> String.fromInt) ++ " / " ++ (oer.imageUrls |> List.length |> String.fromInt) ]
+                |> upperImage [ preloadImage nextImageUrl, imageCounter <| (imageIndex+1 |> String.fromInt) ++ " / " ++ (oer.images |> List.length |> String.fromInt) ]
 
       title =
         oer.title |> subheaderWrap [ height (fill |> maximum 64), clipY ]
@@ -447,9 +465,9 @@ viewOerCard model position oer =
         |> column [ padding 16, width fill, height fill, inFront modalityIcon, inFront fragmentsBar ]
 
       closeButton =
-        if hovering then
-          button [ alignRight ] { onPress = Nothing, label = closeIcon }
-        else
+        -- if hovering then
+        --   button [ alignRight ] { onPress = Nothing, label = closeIcon }
+        -- else
           none
 
       widthOfCard =
@@ -473,7 +491,7 @@ viewOerCard model position oer =
             Nothing
 
       cardAttrs =
-        [ widthOfCard, heightOfCard, inFront <| button [] { onPress = onPress, label = card }, inFront closeButton, moveRight position.x, moveDown position.y ]
+        [ htmlClass "PopupThatShouldCloseWhenTheUserClicksNextToIt", widthOfCard, heightOfCard, inFront <| button [] { onPress = onPress, label = card }, inFront closeButton, moveRight position.x, moveDown position.y ]
   in
       none
       |> el cardAttrs

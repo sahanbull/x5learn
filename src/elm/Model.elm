@@ -7,6 +7,7 @@ import Time exposing (Posix, posixToMillis)
 import Element exposing (Color, rgb255)
 import Dict exposing (Dict)
 import Set exposing (Set)
+import Regex
 
 import Animation exposing (..)
 
@@ -27,8 +28,9 @@ type alias Model =
   , bookmarklists : List Playlist
   , viewedFragments : Maybe (List Fragment)
   , nextSteps : Maybe (List Playlist)
-  , oerChunks : Dict String (List Chunk)
   , menuPath : List PopMenu
+  , conceptNames : Dict String String
+  , requestingConceptNames : Bool
   }
 
 
@@ -57,27 +59,28 @@ type alias InspectorState =
 
 
 type alias Oer =
-  { url : String
-  , provider : String
-  , date : String
-  , title : String
-  , duration : String
+  { date : String
   , description : String
-  , imageUrls : List String
-  , youtubeVideoVersions : Dict String String -- key: language, value: youtubeId
+  , duration : String
+  , images : List String
+  , provider : String
+  , title : String
+  , transcript : String
+  , url : String
+  , wikichunks : List Chunk
   }
 
 
 type alias Chunk =
   { start : Float -- 0 to 1
   , length : Float -- 0 to 1
-  , topics : List String
+  , concepts : List String
   }
 
 
 type PopMenu
   = ChunkOnCard Oer Chunk
-  | TopicInChunkOnCard String
+  | ConceptInChunkOnCard String
 
 
 type alias Fragment =
@@ -103,6 +106,12 @@ type SearchStateMenu
   = SaveToBookmarklistMenu
 
 
+type alias OerSearchResponse =
+  { oers : List Oer
+  , conceptNames : Dict String String
+  }
+
+
 initialModel : Nav -> Flags -> Model
 initialModel nav flags =
   { nav = nav
@@ -120,8 +129,9 @@ initialModel nav flags =
   , bookmarklists = initialBookmarklists
   , viewedFragments = Nothing
   , nextSteps = Nothing
-  , oerChunks = Dict.empty
   , menuPath = []
+  , conceptNames = Dict.empty
+  , requestingConceptNames = False
   }
 
 
@@ -151,13 +161,23 @@ newInspectorState oer =
 
 hasVideo : Oer -> Bool
 hasVideo oer =
-  (oer.youtubeVideoVersions |> Dict.isEmpty |> not) || (isFromVideoLecturesNet oer)
+  case getYoutubeId oer of
+    Nothing ->
+      isFromVideoLecturesNet oer
+
+    Just _ ->
+      True
 
 
 getYoutubeId : Oer -> Maybe String
 getYoutubeId oer =
-  oer.youtubeVideoVersions
-  |> Dict.get "English"
+  oer.url
+  |> String.split "="
+  |> List.drop 1
+  |> List.head
+  |> Maybe.withDefault ""
+  |> String.split "&"
+  |> List.head
 
 
 modalId =

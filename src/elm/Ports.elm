@@ -9,3 +9,4 @@ port copyClipboard : String -> Cmd msg
 port openModalAnimation : String -> Cmd msg
 port modalAnimationStart : (BoxAnimation -> msg) -> Sub msg
 port modalAnimationStop : (Int -> msg) -> Sub msg
+port closePopups : (Int -> msg) -> Sub msg

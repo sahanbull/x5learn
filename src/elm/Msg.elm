@@ -29,7 +29,7 @@ type Msg
   | RequestOerSearch (Result Http.Error (List Oer))
   | RequestNextSteps (Result Http.Error (List Playlist))
   | RequestViewedFragments (Result Http.Error (List Fragment))
-  | RequestConceptNames (Result Http.Error (Dict String String))
+  | RequestEntityLabels (Result Http.Error (Dict String String))
   | SetHover (Maybe String)
   | OpenSaveToBookmarklistMenu InspectorState
   | AddToBookmarklist Playlist Oer

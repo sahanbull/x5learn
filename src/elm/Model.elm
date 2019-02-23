@@ -29,8 +29,8 @@ type alias Model =
   , viewedFragments : Maybe (List Fragment)
   , nextSteps : Maybe (List Playlist)
   , menuPath : List PopMenu
-  , conceptNames : Dict String String
-  , requestingConceptNames : Bool
+  , entityLabels : Dict String String
+  , requestingEntityLabels : Bool
   }
 
 
@@ -74,13 +74,13 @@ type alias Oer =
 type alias Chunk =
   { start : Float -- 0 to 1
   , length : Float -- 0 to 1
-  , concepts : List String
+  , entities : List String
   }
 
 
 type PopMenu
   = ChunkOnCard Oer Chunk
-  | ConceptInChunkOnCard String
+  | EntityInChunkOnCard String
 
 
 type alias Fragment =
@@ -108,7 +108,7 @@ type SearchStateMenu
 
 type alias OerSearchResponse =
   { oers : List Oer
-  , conceptNames : Dict String String
+  , entityLabels : Dict String String
   }
 
 
@@ -130,8 +130,8 @@ initialModel nav flags =
   , viewedFragments = Nothing
   , nextSteps = Nothing
   , menuPath = []
-  , conceptNames = Dict.empty
-  , requestingConceptNames = False
+  , entityLabels = Dict.empty
+  , requestingEntityLabels = False
   }
 
 

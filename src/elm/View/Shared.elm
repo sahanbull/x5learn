@@ -331,7 +331,7 @@ viewOerCard model position oer =
                   popmenu =
                     if model.menuPath |> isHeadEqual chunkMenu then
                       let
-                          actionsForConcept =
+                          actionsForEntity =
                             [ "What is this?" |> menuButtonDisabled
                             -- , "I have heard of this" |> menuButtonDisabled
                             , "I know this!" |> menuButtonDisabled
@@ -346,17 +346,17 @@ viewOerCard model position oer =
                             -- , "Test me now" |> menuButtonDisabled
                             ]
 
-                          conceptsSection =
-                            if chunk.concepts |> List.isEmpty |> not then
-                              chunk.concepts
-                              |> List.map (\concept -> menuButtonWithSubmenu model [ chunkMenu ] [ chunkMenu, ConceptInChunkOnCard concept ] actionsForConcept (model.conceptNames |> Dict.get concept |> Maybe.withDefault "..."))
+                          entitiesSection =
+                            if chunk.entities |> List.isEmpty |> not then
+                              chunk.entities
+                              |> List.map (\entity -> menuButtonWithSubmenu model [ chunkMenu ] [ chunkMenu, EntityInChunkOnCard entity ] actionsForEntity (model.entityLabels |> Dict.get entity |> Maybe.withDefault "..."))
                               |> column [ width fill ]
                               |> List.singleton
                             else
                               []
                       in
                           [ "→ Jump here" |> menuButtonDisabled
-                          ] ++ conceptsSection
+                          ] ++ entitiesSection
                           |> menuColumn
                           |> inFront
                           |> List.singleton

@@ -1,4 +1,4 @@
-module Request exposing (searchOers, requestNextSteps, requestViewedFragments, requestConceptNames)
+module Request exposing (searchOers, requestNextSteps, requestViewedFragments, requestEntityLabels)
 
 import Http exposing (expectStringResponse)
 import Json.Decode exposing (Value,map,map2,map3,map8,field,bool,int,float,string,list,dict,oneOf,maybe,nullable)
@@ -52,15 +52,15 @@ requestViewedFragments =
         }
 
 
-requestConceptNames : List String -> Cmd Msg
-requestConceptNames conceptIds =
+requestEntityLabels : List String -> Cmd Msg
+requestEntityLabels entityIds =
   let
       encoded =
-        Url.Builder.absolute [ apiRoot, "entity_labels" ] [ Url.Builder.string "ids" (conceptIds |> String.join ",") ]
+        Url.Builder.absolute [ apiRoot, "entity_labels" ] [ Url.Builder.string "ids" (entityIds |> String.join ",") ]
   in
       Http.get
         { url = encoded
-        , expect = Http.expectJson RequestConceptNames (dict string)
+        , expect = Http.expectJson RequestEntityLabels (dict string)
         }
 
 
@@ -111,16 +111,16 @@ chunksDecoder =
 
       parseChunk str =
         let
-            (timeString, conceptsString) =
+            (timeString, entitiesString) =
               str |> splitStringInTwo ":"
 
             (start,length) =
               timeString |> splitStringInTwo ","
 
-            concepts =
-              conceptsString |> String.split ","
+            entities =
+              entitiesString |> String.split ","
         in
-            Chunk (start |> String.toFloat |> Maybe.withDefault 0) (length |> String.toFloat |> Maybe.withDefault 0) concepts
+            Chunk (start |> String.toFloat |> Maybe.withDefault 0) (length |> String.toFloat |> Maybe.withDefault 0) entities
   in
       map parseChunks string
 

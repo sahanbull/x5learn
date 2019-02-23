@@ -56,7 +56,7 @@ requestConceptNames : List String -> Cmd Msg
 requestConceptNames conceptIds =
   let
       encoded =
-        Url.Builder.absolute [ apiRoot, "concept_names" ] [ Url.Builder.string "ids" (conceptIds |> String.join ",") ]
+        Url.Builder.absolute [ apiRoot, "entity_labels" ] [ Url.Builder.string "ids" (conceptIds |> String.join ",") ]
   in
       Http.get
         { url = encoded

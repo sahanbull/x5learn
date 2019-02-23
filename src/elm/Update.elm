@@ -169,7 +169,7 @@ requestConceptNamesIfNeeded (oldModel, oldCmd) =
            oldModel.conceptNames
            |> Dict.filter (\_ name -> name=="")
            |> Dict.keys
-           |> List.take 500 -- what is a good number of concepts to request at a time?
+           |> List.take 50 -- 50 is the current limit according to https://www.wikidata.org/w/api.php?action=help&modules=wbgetentities
      in
          if List.isEmpty conceptIds then
            (oldModel, oldCmd)

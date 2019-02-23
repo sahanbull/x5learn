@@ -12,7 +12,6 @@ import ast # parsing JSON with complex quotation https://stackoverflow.com/a/21
 app = Flask( __name__ )
 
 oer_csv_data = []
-stored_concept_names = {}
 
 # oer_csv_path = '/Users/stefan/x5/data/unesco.csv'
 # oer_csv_path = '/Users/stefan/x5/data/videolectures_music.csv'
@@ -73,24 +72,27 @@ def api_next_steps():
     return jsonify(playlists)
 
 
-@app.route("/api/v1/concept_names/", methods=['GET'])
-def concept_names():
-    ensure_csv_data_is_loaded()
-    concept_ids = request.args['ids'].split(',')
+@app.route("/api/v1/entity_labels/", methods=['GET'])
+def entity_labels():
+    # ensure_csv_data_is_loaded()
+    entity_ids = request.args['ids'].split(',')
+    print(len(entity_ids))
     names = {}
-    for concept_id in concept_ids:
-        if concept_id in stored_concept_names:
-            names[concept_id] = stored_concept_names[concept_id]
-        else:
-            names[concept_id] = 'Concept not found'
-            print('Concept not found:', concept_id)
+
+    conn = http.client.HTTPSConnection("www.wikidata.org")
+    request_string = '/w/api.php?action=wbgetentities&props=labels&ids=' + '|'.join(entity_ids) + '&languages=en&format=json'
+    conn.request('GET', request_string)
+    response = conn.getresponse().read().decode("utf-8")
+    j = json.loads(response)
+    entities = j['entities']
+    for entity_id, value in entities.items():
+        names[entity_id] = value['labels']['en']['value']
     return jsonify(names)
 
 
 def ensure_csv_data_is_loaded():
     if oer_csv_data==[]:
         read_oer_csv_data()
-        read_concept_names_from_file()
 
 
 def search_results_from_local_experimental_csv(search_words):
@@ -119,12 +121,6 @@ def read_oer_csv_data():
             row['date'] = row['date'].replace('Published on ', '') if 'date' in row else ''
             row['duration'] = human_readable_time_from_ms(float(row['duration'])) if 'duration' in row else ''
             oer_csv_data.append(row)
-
-
-def read_concept_names_from_file():
-    global stored_concept_names
-    with open('/Users/stefan/x5/data/scenario1/wiki_id_title_mapping.json') as f:
-        stored_concept_names = json.load(f)
 
 
 def human_readable_time_from_ms(ms):

@@ -39,10 +39,13 @@ viewHistoryPage model =
 
               fragments ->
                 fragments
-                  |> List.map (\fragment -> fragment.oer)
-                  |> List.Extra.uniqueBy (\oer -> oer.url)
-                  |> List.map (viewOerCard model (Point 0 0))
-                  |> List.map (el [ centerX ])
-                  |> column [ paddingTop 20, spacing 20, width fill, height fill ]
+                  |> List.map .oer
+                  |> List.Extra.uniqueBy .url
+                  |> List.reverse
+                  |> Playlist "Watched recently"
+                  |> viewPlaylist model
+                  |> List.singleton
+                  |> column [ width fill, height fill, spacing 50 ]
+                  |> el [ padding 50, width fill ]
   in
       (page, viewInspectorModalOrEmpty model)

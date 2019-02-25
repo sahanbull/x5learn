@@ -11,7 +11,7 @@ import ast # parsing JSON with complex quotation https://stackoverflow.com/a/21
 
 app = Flask( __name__ )
 
-oer_csv_data = []
+loaded_oers = []
 
 # oer_csv_path = '/Users/stefan/x5/data/unesco.csv'
 # oer_csv_path = '/Users/stefan/x5/data/videolectures_music.csv'
@@ -52,31 +52,27 @@ def peers():
 
 @app.route("/api/v1/search/", methods=['GET'])
 def api_search():
-    ensure_csv_data_is_loaded()
+    setup_initial_data_if_needed()
     text = request.args['text']
     # return search_results_from_x5gon_api(text)
     return search_results_from_local_experimental_csv(text.lower().split())
 
 @app.route("/api/v1/viewed_fragments/", methods=['GET'])
 def api_viewed_fragments():
-    ensure_csv_data_is_loaded()
-    start, length = (0.1, 0.1)
-    fragments = [ create_fragment(oer_csv_data[0], start, length) ]
-    return jsonify(fragments)
+    setup_initial_data_if_needed()
+    return jsonify(dummy_user.viewed_fragments())
 
 
 @app.route("/api/v1/next_steps/", methods=['GET'])
 def api_next_steps():
-    ensure_csv_data_is_loaded()
-    playlists = recommend_next_steps()
+    setup_initial_data_if_needed()
+    playlists = dummy_user.recommended_next_steps()
     return jsonify(playlists)
 
 
 @app.route("/api/v1/entity_labels/", methods=['GET'])
-def entity_labels():
-    # ensure_csv_data_is_loaded()
+def api_entity_labels():
     entity_ids = request.args['ids'].split(',')
-    print(len(entity_ids))
     names = {}
 
     conn = http.client.HTTPSConnection("www.wikidata.org")
@@ -84,19 +80,48 @@ def entity_labels():
     conn.request('GET', request_string)
     response = conn.getresponse().read().decode("utf-8")
     j = json.loads(response)
-    entities = j['entities']
-    for entity_id, value in entities.items():
-        names[entity_id] = value['labels']['en']['value']
+    try:
+        entities = j['entities']
+        for entity_id, value in entities.items():
+            names[entity_id] = value['labels']['en']['value']
+    except KeyError:
+        print('Error trying to retrieve entity labels from wikidata. The server responded with:')
+        print(response)
+        print('We sent the following ids:', ','.join(entity_ids))
     return jsonify(names)
 
 
-def ensure_csv_data_is_loaded():
-    if oer_csv_data==[]:
+def setup_initial_data_if_needed():
+    if loaded_oers==[]:
         read_oer_csv_data()
+        setup_dummy_user()
+
+
+def setup_dummy_user():
+    global dummy_user
+    dummy_user = DummyUser()
+
+
+class DummyUser:
+    def __init__(self):
+        self.fragments = None
+
+    def viewed_fragments(self):
+        if not self.fragments:
+            print('creating viewed fragments')
+            self.fragments = [ create_fragment('Lecture 01 - The Learning Problem', 0, 1),
+                    create_fragment('Lecture 02 - Is Learning Feasible?', 0, 0.33) ]
+        return self.fragments
+
+    def recommended_next_steps(self):
+        return [ create_pathway("Continue studying", [ create_fragment('Lecture 02 - Is Learning Feasible?', 0.33, 1-0.33) ]),
+            create_pathway("20-minute sprint", [ create_fragment("S18.3 Hoeffding's Inequality", 0, 1) ]),
+            create_pathway("10-minute sprint", [ create_fragment('Lecture 02 - Is Learning Feasible?', 0.33, 10/76) ])
+            ]
 
 
 def search_results_from_local_experimental_csv(search_words):
-    results = [ row for row in oer_csv_data if any_word_matches(search_words, row['title']) or any_word_matches(search_words, row['description']) ]
+    results = [ row for row in loaded_oers if any_word_matches(search_words, row['title']) or any_word_matches(search_words, row['description']) ]
     return jsonify(results[:18])
 
 
@@ -113,14 +138,14 @@ def read_oer_csv_data():
     with open(oer_csv_path, newline='') as f:
         for row in csv.DictReader(f, delimiter='\t'):
             url = row['url']
-            if url in [ r['url'] for r in oer_csv_data ]:
+            if url in [ r['url'] for r in loaded_oers ]:
                 continue # omit duplicates
             if not row['title']:
                 continue # omit incomplete items
             row['images'] = json.loads(row['images'].replace("'", '"'))
             row['date'] = row['date'].replace('Published on ', '') if 'date' in row else ''
             row['duration'] = human_readable_time_from_ms(float(row['duration'])) if 'duration' in row else ''
-            oer_csv_data.append(row)
+            loaded_oers.append(row)
 
 
 def human_readable_time_from_ms(ms):
@@ -129,16 +154,20 @@ def human_readable_time_from_ms(ms):
     return str(minutes)+':'+str(seconds)
 
 
-def create_fragment(oer, start, length):
+def create_fragment(oer_title, start, length):
+    oer = find_oer_by_title(oer_title)
     return {'oer': oer, 'start': start, 'length': length}
 
 
-def create_playlist(title, oers):
-    return {'title': title, 'oers': oers}
+def create_pathway(rationale, fragments):
+    return {'rationale': rationale, 'fragments': fragments}
 
 
-def recommend_next_steps():
-    return [ create_playlist("Continue studying", oer_csv_data[50:53]), create_playlist("Videos about Machine Learning", oer_csv_data[1:3]) ]
+def find_oer_by_title(title):
+    try:
+        return [ row for row in loaded_oers if row['title']==title ][0]
+    except IndexError:
+        print('No OER was found with title', title)
 
 
 # def search_results_from_x5gon_api(text):

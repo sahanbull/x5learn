@@ -126,12 +126,16 @@ white =
   rgb 1 1 1
 
 
+yellow =
+  rgb255 245 220 0
+
+
 orange =
-  rgb255 255 150 0
+  rgb255 255 120 0
 
 
-lightBlue =
-  rgb255 10 220 255
+historyBlue =
+  rgb255 0 190 250
 
 
 grey80 =
@@ -200,7 +204,7 @@ hoverCircleBackground =
 
 embedYoutubePlayer youtubeId =
   Html.iframe
-  [ Html.Attributes.width 720
+  [ Html.Attributes.width playerWidth
   , Html.Attributes.height 400
   , Html.Attributes.src ("https://www.youtube.com/embed/" ++ youtubeId)
   , Html.Attributes.attribute "allowfullscreen" "allowfullscreen"
@@ -281,7 +285,8 @@ materialScrimAlpha =
   0.32
 
 
-viewOerCard model position oer =
+viewOerCard : Model -> List Fragment -> Point -> Oer -> Element Msg
+viewOerCard model recommendedFragments position oer =
   let
       hovering =
         model.hoveringOerUrl == Just oer.url
@@ -310,79 +315,7 @@ viewOerCard model position oer =
             |> upperImage attrs
 
       fragmentsBar =
-        let
-            fragments =
-              model.viewedFragments
-              |> Maybe.withDefault []
-              |> List.filter (\fragment -> fragment.oer == oer)
-
-            pxFromFraction fraction =
-              (cardWidth |> toFloat) * fraction
-
-            markers =
-              fragments
-              |> List.map (\{start,length} -> none |> el [ width (length |> pxFromFraction |> round |> px), height fill, Background.color <| rgb255 0 190 250, moveRight (start |> pxFromFraction) ] |> inFront)
-
-            chunkTrigger chunk =
-              let
-                  chunkMenu =
-                    ChunkOnCard oer chunk
-
-                  popmenu =
-                    if model.menuPath |> isHeadEqual chunkMenu then
-                      let
-                          actionsForEntity =
-                            [ "What is this?" |> menuButtonDisabled
-                            -- , "I have heard of this" |> menuButtonDisabled
-                            , "I know this!" |> menuButtonDisabled
-                            , "Add to interests" |> menuButtonDisabled
-                            -- , "I can explain this" |> menuButtonDisabled
-                            -- , "I have skills in this area" |> menuButtonDisabled
-                            -- , "I am interested" |> menuButtonDisabled
-                            -- , "This doesn't interest me" |> menuButtonDisabled
-                            -- [ "What is this?" |> menuButtonDisabled
-                            -- , "I know this well" |> menuButtonDisabled
-                            -- , "Test me later" |> menuButtonDisabled
-                            -- , "Test me now" |> menuButtonDisabled
-                            ]
-
-                          entitiesSection =
-                            if chunk.entities |> List.isEmpty |> not then
-                              chunk.entities
-                              |> List.map (\entity -> menuButtonWithSubmenu model [ chunkMenu ] [ chunkMenu, EntityInChunkOnCard entity ] actionsForEntity (model.entityLabels |> Dict.get entity |> Maybe.withDefault "..."))
-                              |> column [ width fill ]
-                              |> List.singleton
-                            else
-                              []
-                      in
-                          [ "→ Jump here" |> menuButtonDisabled
-                          ] ++ entitiesSection
-                          |> menuColumn
-                          |> inFront
-                          |> List.singleton
-                    else
-                      []
-
-                  background =
-                    if popmenu == [] then
-                      []
-                    else
-                      [ Background.color <| lightBlue ]
-              in
-                  none
-                  |> el ([ width <| fillPortion (chunk.length * 100 |> round), height fill, borderLeft 1, Border.color <| rgba 0 0 0 0.2, setMenuPathOnMouseEnter [ chunkMenu ] ] ++ background ++ popmenu)
-
-            chunkTriggers =
-              oer.wikichunks
-              |> List.map chunkTrigger
-              |> row [ width fill, height fill ]
-              |> inFront
-
-            underlay =
-              none
-              |> el ([ width fill, height (px 16), materialScrimBackground, moveUp 16, setMenuPathOnMouseLeave [] ] ++ markers ++ [chunkTriggers])
-        in
-            underlay
+        viewFragmentsBar model oer recommendedFragments cardWidth
 
       preloadImage url =
         url
@@ -501,17 +434,34 @@ cardWidth =
   332
 
 
+playerWidth =
+  720
+
+
 viewPlaylist model playlist =
   if playlist.oers |> List.isEmpty then
     none
   else
     let
-        cards =
-          playlist.oers |> oerCardGrid model |> List.map inFront
+        grid =
+          playlist.oers
+          |> oerCardGrid model []
+          |> List.map inFront
     in
         [ playlist.title |> headlineWrap []
         ]
-        |> column ([ height (px 380), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ cards)
+        |> column ([ height (px 380), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ grid)
+
+
+viewRecommendedPathwayAsPlaylist model pathway =
+    let
+        grid =
+          oerCardGrid model pathway.fragments (pathway.fragments |> List.map .oer)
+          |> List.map inFront
+    in
+        [ pathway.rationale |> headlineWrap []
+        ]
+        |> column ([ height (px 380), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ grid)
 
 
 milkyWhiteCenteredContainer =
@@ -628,7 +578,8 @@ containsList xs ostensiblyLongerList =
 --   htmlAttribute <| Html.Attributes.attribute "z-index" (String.fromInt zIndex)
 
 
-oerCardGrid model oers =
+oerCardGrid : Model -> List Fragment -> List Oer -> List (Element Msg)
+oerCardGrid model recommendedFragments oers =
   let
       cardAtIndex index oer =
         let
@@ -638,8 +589,91 @@ oerCardGrid model oers =
             y =
               index//3
         in
-            viewOerCard model { x = x*370 + 180 |> toFloat, y = y*310 + 70 |> toFloat } oer
+            viewOerCard model recommendedFragments { x = x*370 + 180 |> toFloat, y = y*310 + 70 |> toFloat } oer
   in
       oers
       |> List.indexedMap cardAtIndex
       |> List.reverse -- Rendering the cards in reverse order so that popup menus (to the bottom and right) are rendered above the neighboring card, rather than below.
+
+
+
+viewFragmentsBar model oer recommendedFragments barWidth =
+  let
+      markers =
+        [ fragmentMarkers (model.viewedFragments |> Maybe.withDefault []) historyBlue
+        , fragmentMarkers recommendedFragments yellow
+        ]
+        |> List.concat
+
+      fragmentMarkers fragments color =
+        fragments
+        |> List.filter (\fragment -> fragment.oer == oer)
+        |> List.map (\{start,length} -> none |> el [ width (length |> pxFromFraction |> round |> px), height fill, Background.color color, moveRight (start |> pxFromFraction) ] |> inFront)
+
+      pxFromFraction fraction =
+        (barWidth |> toFloat) * fraction
+
+      chunkTrigger chunk =
+        let
+            chunkMenu =
+              ChunkOnCard oer chunk
+
+            popmenu =
+              if model.menuPath |> isHeadEqual chunkMenu then
+                let
+                    actionsForEntity =
+                      -- [ "What is this?" |> menuButtonDisabled
+                      [ "Define" |> menuButtonDisabled
+                      -- , "I have heard of this" |> menuButtonDisabled
+                      , "Search" |> menuButtonDisabled
+                      -- , "I know this!" |> menuButtonDisabled
+                      -- , "Mark as grocked" |> menuButtonDisabled
+                      , "Add to my radar" |> menuButtonDisabled
+                      , "Mark as known" |> menuButtonDisabled
+                      -- , "I can explain this" |> menuButtonDisabled
+                      -- , "I have skills in this area" |> menuButtonDisabled
+                      -- , "I am interested" |> menuButtonDisabled
+                      -- , "This doesn't interest me" |> menuButtonDisabled
+                      -- [ "What is this?" |> menuButtonDisabled
+                      -- , "I know this well" |> menuButtonDisabled
+                      -- , "Test me later" |> menuButtonDisabled
+                      -- , "Test me now" |> menuButtonDisabled
+                      ]
+
+                    entitiesSection =
+                      if chunk.entities |> List.isEmpty |> not then
+                        chunk.entities
+                        |> List.map (\entity -> menuButtonWithSubmenu model [ chunkMenu ] [ chunkMenu, EntityInChunkOnCard entity ] actionsForEntity (model.entityLabels |> Dict.get entity |> Maybe.withDefault "..."))
+                        |> column [ width fill ]
+                        |> List.singleton
+                      else
+                        []
+                in
+                    [ "→ Jump here" |> menuButtonDisabled
+                    ] ++ entitiesSection
+                    |> menuColumn
+                    |> inFront
+                    |> List.singleton
+              else
+                []
+
+            background =
+              if popmenu == [] then
+                []
+              else
+                [ Background.color <| orange ]
+        in
+            none
+            |> el ([ width <| fillPortion (chunk.length * 100 |> round), height fill, borderLeft 1, Border.color <| rgba 0 0 0 0.2, setMenuPathOnMouseEnter [ chunkMenu ] ] ++ background ++ popmenu)
+
+      chunkTriggers =
+        oer.wikichunks
+        |> List.map chunkTrigger
+        |> row [ width fill, height fill ]
+        |> inFront
+
+      underlay =
+        none
+        |> el ([ width fill, height (px 16), materialScrimBackground, moveUp 16, setMenuPathOnMouseLeave [] ] ++ markers ++ [chunkTriggers])
+  in
+      underlay

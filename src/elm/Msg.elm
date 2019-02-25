@@ -27,7 +27,7 @@ type Msg
   | ModalAnimationStart BoxAnimation
   | ModalAnimationStop Int
   | RequestOerSearch (Result Http.Error (List Oer))
-  | RequestNextSteps (Result Http.Error (List Playlist))
+  | RequestNextSteps (Result Http.Error (List Pathway))
   | RequestViewedFragments (Result Http.Error (List Fragment))
   | RequestEntityLabels (Result Http.Error (Dict String String))
   | SetHover (Maybe String)

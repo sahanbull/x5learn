@@ -117,6 +117,7 @@ inspectorContentDefault model inspectorState oer =
 
       body =
         [ player
+        , viewFragmentsBar model oer [] playerWidth
         , description
         ]
         |> column [ spacing 16 ]

@@ -117,6 +117,7 @@ inspectorContentDefault model inspectorState oer =
 
       body =
         [ player
+        , viewFragmentsBar model oer (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth
         , description
         ]
         |> column [ spacing 16 ]

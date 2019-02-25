@@ -36,7 +36,7 @@ requestNextSteps =
   in
       Http.get
         { url = encoded
-        , expect = Http.expectJson RequestNextSteps nextStepsDecoder
+        , expect = Http.expectJson RequestNextSteps (list pathwayDecoder)
         }
 
 
@@ -48,7 +48,7 @@ requestViewedFragments =
   in
       Http.get
         { url = encoded
-        , expect = Http.expectJson RequestViewedFragments viewedFragmentsDecoder
+        , expect = Http.expectJson RequestViewedFragments (list fragmentDecoder)
         }
 
 
@@ -64,10 +64,6 @@ requestEntityLabels entityIds =
         }
 
 
-viewedFragmentsDecoder =
-  list fragmentDecoder
-
-
 fragmentDecoder =
   map3 Fragment
     (field "oer" oerDecoder)
@@ -75,8 +71,10 @@ fragmentDecoder =
     (field "length" float)
 
 
-nextStepsDecoder =
-  list playlistDecoder
+pathwayDecoder =
+  map2 Pathway
+    (field "rationale" string)
+    (field "fragments" (list fragmentDecoder))
 
 
 playlistDecoder =

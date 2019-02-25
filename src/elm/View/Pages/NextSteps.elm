@@ -26,13 +26,13 @@ import Json.Decode as Decode
 viewNextStepsPage : Model -> PageWithModal
 viewNextStepsPage model =
   let
-      playlists =
+      pathways =
         model.nextSteps |> Maybe.withDefault []
 
       page =
-        playlists
-        |> List.map (viewPlaylist model)
-        |> column [ width fill, height fill, spacing 50 ]
+        pathways
+        |> List.map (viewRecommendedPathwayAsPlaylist model)
+        |> column [ width fill, height fill, spacing 70 ]
         |> el [ padding 50, width fill ]
   in
       (page, viewInspectorModalOrEmpty model)

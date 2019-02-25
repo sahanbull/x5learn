@@ -79,16 +79,22 @@ update msg ({nav} as model) =
     RequestOerSearch (Err err) ->
       ( { model | userMessage = Just "There was a problem with the search data" }, Cmd.none )
 
-    RequestNextSteps (Ok playlists) ->
-      ( { model | nextSteps = Just playlists } |> includeEntityIds (playlists |> List.concatMap .oers), Cmd.none)
-      |> requestEntityLabelsIfNeeded
+    RequestNextSteps (Ok pathways) ->
+      let
+          oers =
+            pathways
+            |> List.concatMap .fragments
+            |> List.map .oer
+      in
+          ( { model | nextSteps = Just pathways } |> includeEntityIds oers, Cmd.none)
+          |> requestEntityLabelsIfNeeded
 
     RequestNextSteps (Err err) ->
       -- let
       --     dummy =
       --       err |> Debug.log "Error in RequestNextSteps"
       -- in
-          ( { model | userMessage = Just "There was a problem with the recommendations data" }, Cmd.none )
+      ( { model | userMessage = Just "There was a problem with the recommendations data" }, Cmd.none )
 
     RequestViewedFragments (Ok fragments) ->
       ( { model | viewedFragments = Just fragments } |> includeEntityIds (fragments |> List.map .oer), Cmd.none )
@@ -167,7 +173,7 @@ requestEntityLabelsIfNeeded (oldModel, oldCmd) =
 
          entityIds =
            oldModel.entityLabels
-           |> Dict.filter (\_ name -> name=="")
+           |> Dict.filter (\id label -> id/="" && label=="")
            |> Dict.keys
            |> List.take 50 -- 50 is the current limit according to https://www.wikidata.org/w/api.php?action=help&modules=wbgetentities
      in

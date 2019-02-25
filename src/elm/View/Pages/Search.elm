@@ -39,11 +39,11 @@ viewSearchResults model searchState =
       let
           cards =
             oers
-            |> oerCardGrid model
+            |> oerCardGrid model []
             |> List.map inFront
 
           attrs =
-            [ padding 20, spacing 20, width fill, height fill, Border.color orange ] ++ cards
+            [ padding 20, spacing 20, width fill, height fill ] ++ cards
       in
           none
           |> el attrs

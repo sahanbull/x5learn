@@ -8,6 +8,7 @@ import Element exposing (Color, rgb255)
 import Dict exposing (Dict)
 import Set exposing (Set)
 import Regex
+import List.Extra
 
 import Animation exposing (..)
 
@@ -27,7 +28,7 @@ type alias Model =
   , animationsPending : Set String
   , bookmarklists : List Playlist
   , viewedFragments : Maybe (List Fragment)
-  , nextSteps : Maybe (List Playlist)
+  , nextSteps : Maybe (List Pathway)
   , menuPath : List PopMenu
   , entityLabels : Dict String String
   , requestingEntityLabels : Bool
@@ -93,6 +94,12 @@ type alias Fragment =
 type alias Playlist =
   { title : String
   , oers : List Oer
+  }
+
+
+type alias Pathway =
+  { rationale : String
+  , fragments : List Fragment
   }
 
 

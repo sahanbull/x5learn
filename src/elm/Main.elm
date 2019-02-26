@@ -66,11 +66,12 @@ view model =
 
       header =
         viewPageHeader model
+        |> inFront
 
       page =
         body
         |> el [ width fill, spacing 50, pageBodyBackground, height (fill |> maximum (model.windowHeight - pageHeaderHeight)), scrollbarY ]
-        |> layout (modal ++ [ inFront header, paddingTop pageHeaderHeight, width fill ])
+        |> layout (modal ++ [ header, paddingTop pageHeaderHeight, width fill ])
   in
       { title = "X5Learn"
       , body = [ page ]

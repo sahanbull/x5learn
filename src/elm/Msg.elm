@@ -20,7 +20,7 @@ type Msg
   | ClockTick Posix
   | AnimationTick Posix
   | ChangeSearchText String
-  | NewSearch
+  | SubmitSearch
   | ResizeBrowser Int Int
   | InspectSearchResult Oer
   | UninspectSearchResult
@@ -29,12 +29,17 @@ type Msg
   | RequestOerSearch (Result Http.Error (List Oer))
   | RequestNextSteps (Result Http.Error (List Pathway))
   | RequestViewedFragments (Result Http.Error (List Fragment))
-  | RequestEntityLabels (Result Http.Error (Dict String String))
+  | RequestEntityLabels (Result Http.Error { labels : (Dict String String), descriptions : (Dict String String) })
   | SetHover (Maybe String)
   | OpenSaveToBookmarklistMenu InspectorState
   | AddToBookmarklist Playlist Oer
   | RemoveFromBookmarklist Playlist Oer
-  | SetPopMenuPath (List PopMenu)
+  | SetPopup Popup
+  | ClosePopup
+  | CloseInspector
+  | ShowFloatingDefinition String
+  | TriggerSearch String
+  -- | PopupWikiDefinition String
 
 
 subscriptions : Model -> Sub Msg
@@ -57,7 +62,8 @@ subscriptions model =
       ([ Browser.Events.onResize ResizeBrowser
       , Ports.modalAnimationStart ModalAnimationStart
       , Ports.modalAnimationStop ModalAnimationStop
-      , Ports.closePopups (\_ -> SetPopMenuPath [])
+      , Ports.closePopup (\_ -> ClosePopup)
+      , Ports.closeInspector (\_ -> CloseInspector)
       , Time.every 500 ClockTick
       ] ++ anim)
       |> Sub.batch

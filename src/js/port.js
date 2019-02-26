@@ -2,10 +2,14 @@
 
 
 function positionAndSize(el) {
-  var rect = el.getBoundingClientRect(),
-  scrollLeft = window.pageXOffset || document.documentElement.scrollLeft,
-  scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+  var rect = el.getBoundingClientRect(), scrollLeft = window.pageXOffset || document.documentElement.scrollLeft, scrollTop = window.pageYOffset || document.documentElement.scrollTop;
   return { x: rect.left + scrollLeft, y: rect.top + scrollTop, sx: el.offsetWidth, sy: el.offsetHeight }
+}
+
+
+function position(el) {
+  ps = positionAndSize(el);
+  return { x: ps.x, y: ps.y }
 }
 
 
@@ -44,8 +48,8 @@ function startAnimationWhenModalIsReady(modalId) {
 
 function setupClickHandlers(){
   document.addEventListener("click", function(e){
-    if(!e.target.closest('.PopupThatShouldCloseWhenTheUserClicksNextToIt')){
-      app.ports.closePopups.send(12345);
+    if(!e.target.closest('.InspectorAutoclose')){
+      app.ports.closeInspector.send(12345);
     }
   });
 }

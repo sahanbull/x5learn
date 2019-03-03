@@ -73,22 +73,32 @@ def api_next_steps():
 @app.route("/api/v1/entity_labels/", methods=['GET'])
 def api_entity_labels():
     entity_ids = request.args['ids'].split(',')
-    names = {}
-
+    labels = {}
+    descriptions = {}
     conn = http.client.HTTPSConnection("www.wikidata.org")
-    request_string = '/w/api.php?action=wbgetentities&props=labels&ids=' + '|'.join(entity_ids) + '&languages=en&format=json'
+    # request_string = '/w/api.php?action=wbgetentities&props=labels|descriptions|sitelinks&ids=' + '|'.join(entity_ids) + '&languages=en&sitefilter=enwiki&languagefallback=1&format=json'
+    request_string = '/w/api.php?action=wbgetentities&props=labels|descriptions&ids=' + '|'.join(entity_ids) + '&languages=en&sitefilter=enwiki&languagefallback=1&format=json'
     conn.request('GET', request_string)
     response = conn.getresponse().read().decode("utf-8")
     j = json.loads(response)
     try:
         entities = j['entities']
         for entity_id, value in entities.items():
-            names[entity_id] = value['labels']['en']['value']
+            try:
+                labels[entity_id] = value['labels']['en']['value']
+            except KeyError:
+                labels[entity_id] = '(Concept unavailable)'
+                print('WARNING: entity', entity_id, 'has no label.')
+            try:
+                descriptions[entity_id] = value['descriptions']['en']['value']
+                print('WARNING: entity', entity_id, 'has no description.')
+            except KeyError:
+                descriptions[entity_id] = '(Description unavailable)'
     except KeyError:
         print('Error trying to retrieve entity labels from wikidata. The server responded with:')
         print(response)
         print('We sent the following ids:', ','.join(entity_ids))
-    return jsonify(names)
+    return jsonify({'labels': labels, 'descriptions': descriptions})
 
 
 def setup_initial_data_if_needed():
@@ -109,8 +119,8 @@ class DummyUser:
     def viewed_fragments(self):
         if not self.fragments:
             print('creating viewed fragments')
-            self.fragments = [ create_fragment('Lecture 01 - The Learning Problem', 0, 1),
-                    create_fragment('Lecture 02 - Is Learning Feasible?', 0, 0.33) ]
+            # self.fragments = [ create_fragment('Lecture 01 - The Learning Problem', 0, 1), create_fragment('Lecture 02 - Is Learning Feasible?', 0, 0.33) ]
+            self.fragments = [ create_fragment('Lecture 02 - Is Learning Feasible?', 0, 0.33) ]
         return self.fragments
 
     def recommended_next_steps(self):
@@ -151,7 +161,7 @@ def read_oer_csv_data():
 def human_readable_time_from_ms(ms):
     minutes = int(ms / 60000)
     seconds = int(ms/1000 - minutes*60)
-    return str(minutes)+':'+str(seconds)
+    return str(minutes)+':'+str(seconds).rjust(2, '0')
 
 
 def create_fragment(oer_title, start, length):

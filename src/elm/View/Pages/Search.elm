@@ -15,6 +15,7 @@ import Element.Font as Font
 import Model exposing (..)
 import View.Shared exposing (..)
 import View.Inspector exposing (..)
+import View.Card exposing (..)
 
 import Msg exposing (..)
 
@@ -36,14 +37,5 @@ viewSearchResults model searchState =
       viewLoadingSpinner
 
     Just oers ->
-      let
-          cards =
-            oers
-            |> oerCardGrid model []
-            |> List.map inFront
-
-          attrs =
-            [ padding 20, spacing 20, width fill, height fill ] ++ cards
-      in
-          none
-          |> el attrs
+      Playlist "Search results" oers
+      |> viewPlaylist model

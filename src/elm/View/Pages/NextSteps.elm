@@ -16,6 +16,7 @@ import Element.Font as Font
 import Model exposing (..)
 import Animation exposing (..)
 import View.Shared exposing (..)
+import View.Card exposing (..)
 import View.Inspector exposing (..)
 
 import Msg exposing (..)
@@ -25,14 +26,16 @@ import Json.Decode as Decode
 
 viewNextStepsPage : Model -> PageWithModal
 viewNextStepsPage model =
-  let
-      pathways =
-        model.nextSteps |> Maybe.withDefault []
+  case model.nextSteps of
+    Nothing ->
+      (viewLoadingSpinner, [])
 
-      page =
-        pathways
-        |> List.map (viewRecommendedPathwayAsPlaylist model)
-        |> column [ width fill, height fill, spacing 70 ]
-        |> el [ padding 50, width fill ]
-  in
-      (page, viewInspectorModalOrEmpty model)
+    Just pathways ->
+      let
+          page =
+            pathways
+            |> List.map (viewPathway model)
+            |> column [ width fill, height fill, spacing 70 ]
+            |> el [ padding 50, width fill ]
+      in
+          (page, viewInspectorModalOrEmpty model)

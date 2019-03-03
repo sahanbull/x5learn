@@ -29,9 +29,12 @@ type alias Model =
   , bookmarklists : List Playlist
   , viewedFragments : Maybe (List Fragment)
   , nextSteps : Maybe (List Pathway)
-  , menuPath : List PopMenu
+  , popup : Maybe Popup
   , entityLabels : Dict String String
+  , entityDescriptions : Dict String String
   , requestingEntityLabels : Bool
+  , floatingDefinition : Maybe String
+  -- , requestingEntityDefinition : Bool
   }
 
 
@@ -55,7 +58,7 @@ type alias SearchState =
 
 type alias InspectorState =
   { oer : Oer
-  , activeMenu : Maybe SearchStateMenu
+  , activeMenu : Maybe InspectorMenu
   }
 
 
@@ -79,9 +82,13 @@ type alias Chunk =
   }
 
 
-type PopMenu
-  = ChunkOnCard Oer Chunk
-  | EntityInChunkOnCard String
+type Popup
+  = ChunkOnBar ChunkPopup
+
+
+type alias ChunkPopup = { barId : String, oer : Oer, chunk : Chunk, entityPopup : Maybe EntityPopup }
+
+type alias EntityPopup = { entityId : String, hoveringAction : Maybe String }
 
 
 type alias Fragment =
@@ -109,7 +116,7 @@ type AnimationStatus
   | Started
 
 
-type SearchStateMenu
+type InspectorMenu
   = SaveToBookmarklistMenu
 
 
@@ -136,9 +143,12 @@ initialModel nav flags =
   , bookmarklists = initialBookmarklists
   , viewedFragments = Nothing
   , nextSteps = Nothing
-  , menuPath = []
+  , popup = Nothing
   , entityLabels = Dict.empty
+  , entityDescriptions = Dict.empty
   , requestingEntityLabels = False
+  , floatingDefinition = Nothing
+  -- , requestingEntityDefinition = False
   }
 
 

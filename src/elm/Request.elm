@@ -56,12 +56,30 @@ requestEntityLabels : List String -> Cmd Msg
 requestEntityLabels entityIds =
   let
       encoded =
-        Url.Builder.absolute [ apiRoot, "entity_labels" ] [ Url.Builder.string "ids" (entityIds |> String.join ",") ]
+        Url.Builder.absolute [ apiRoot, "entity_labels/" ] [ Url.Builder.string "ids" (entityIds |> String.join ",") ]
   in
       Http.get
         { url = encoded
-        , expect = Http.expectJson RequestEntityLabels (dict string)
+        , expect = Http.expectJson RequestEntityLabels entityLabelsDecoder
         }
+
+
+entityLabelsDecoder =
+  map2 (\labels descriptions -> { labels = labels, descriptions = descriptions })
+  (field "labels" (dict string))
+  (field "descriptions" (dict string))
+
+
+-- requestEntityDefinition : String -> Cmd Msg
+-- requestEntityDefinition entityId =
+--   let
+--       encoded =
+--         Url.Builder.absolute [ apiRoot, "entity_definition" ] [ Url.Builder.string "id" entityId ]
+--   in
+--       Http.get
+--         { url = encoded
+--         , expect = Http.expectJson ReceiveEntityDefinition (dict string)
+--         }
 
 
 fragmentDecoder =

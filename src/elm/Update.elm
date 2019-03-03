@@ -10,7 +10,7 @@ import Dict
 import Set
 import Time exposing (Posix)
 
-import Debug
+import Debug exposing (log)
 
 import Model exposing (..)
 import Msg exposing (..)
@@ -27,10 +27,10 @@ update msg ({nav} as model) =
     LinkClicked urlRequest ->
       case urlRequest of
         Browser.Internal url ->
-          ( model, Navigation.pushUrl model.nav.key (Url.toString url) )
+          ( model |> closePopup, Navigation.pushUrl model.nav.key (Url.toString url) )
 
         Browser.External href ->
-          ( model, Navigation.load href )
+          ( model |> closePopup, Navigation.load href )
 
     UrlChanged url ->
       let
@@ -42,7 +42,7 @@ update msg ({nav} as model) =
             else
               Cmd.none
       in
-          ( { model | nav = { nav | url = url }, inspectorState = Nothing }, cmd )
+          ( { model | nav = { nav | url = url }, inspectorState = Nothing } |> closePopup, cmd )
 
     ClockTick time ->
       ( { model | currentTime = time }, Cmd.none)
@@ -52,16 +52,16 @@ update msg ({nav} as model) =
       ( { model | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
 
     ChangeSearchText str ->
-      ( { model | searchInputTyping = str }, Cmd.none )
+      ( { model | searchInputTyping = str } |> closePopup, Cmd.none )
 
-    NewSearch ->
-      ( { model | searchState = newSearch model.searchInputTyping |> Just }, searchOers model.searchInputTyping )
+    SubmitSearch ->
+      ( { model | searchState = newSearch model.searchInputTyping |> Just } |> closePopup, searchOers model.searchInputTyping )
 
     ResizeBrowser x y ->
-      ( { model | windowWidth = x, windowHeight = y }, Cmd.none )
+      ( { model | windowWidth = x, windowHeight = y } |> closePopup, Cmd.none )
 
     InspectSearchResult oer ->
-      ( { model | inspectorState = Just <| newInspectorState oer, animationsPending = model.animationsPending |> Set.insert modalId }, openModalAnimation modalId)
+      ( { model | inspectorState = Just <| newInspectorState oer, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation modalId)
 
     UninspectSearchResult ->
       ( { model | inspectorState = Nothing}, Cmd.none)
@@ -107,16 +107,34 @@ update msg ({nav} as model) =
       -- in
       ( { model | userMessage = Just "There was a problem with the history data" }, Cmd.none)
 
-    RequestEntityLabels (Ok incomingNames) ->
-      ( { model | entityLabels = model.entityLabels |> Dict.union incomingNames, requestingEntityLabels = False }, Cmd.none )
-      |> requestEntityLabelsIfNeeded
+    RequestEntityLabels (Ok {labels,descriptions}) ->
+      let
+          entityLabels =
+            model.entityLabels |> Dict.union labels
+
+          entityDescriptions =
+            model.entityDescriptions |> Dict.union descriptions
+      in
+          ( { model | entityLabels = entityLabels, entityDescriptions = entityDescriptions, requestingEntityLabels = False }, Cmd.none )
+          |> requestEntityLabelsIfNeeded
 
     RequestEntityLabels (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestViewedFragments"
-      -- in
-      ( { model | userMessage = Just "There was a problem with the wiki entity data", requestingEntityLabels = False }, Cmd.none )
+      let
+          dummy =
+            err |> Debug.log "Error in RequestEntityLabels"
+      in
+      ( { model | userMessage = Just "There was a problem with the wiki label data", requestingEntityLabels = False }, Cmd.none )
+
+    -- RequestEntityDefinition (Ok incomingDefinitions) ->
+    --   ( { model | entityDefinitions = model.entityDefinitions |> Dict.union incomingDefinitions, requestingEntityDefinition = False }, Cmd.none )
+    --   |> requestEntityLabelsIfNeeded
+
+    -- RequestEntityDefinition (Err err) ->
+    --   -- let
+    --   --     dummy =
+    --   --       err |> Debug.log "Error in RequestEntityDefinition"
+    --   -- in
+    --   ( { model | userMessage = Just "There was a problem with the wiki definition data", requestingEntityDefinition = False }, Cmd.none )
 
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
@@ -130,12 +148,23 @@ update msg ({nav} as model) =
     RemoveFromBookmarklist playlist oer ->
       ( { model | bookmarklists = model.bookmarklists |> List.map (\p -> if p.title==playlist.title then { p | oers = p.oers |> List.filter (\o -> o.url /= oer.url) } else p)}, Cmd.none )
 
-    SetPopMenuPath path ->
-      let
-          inspectorState =
-            if path==[] then Nothing else model.inspectorState
-      in
-          ( { model | menuPath = path, inspectorState = inspectorState }, Cmd.none )
+    SetPopup popup ->
+      ( { model | popup = Just popup } |> closeFloatingDefinition, Cmd.none)
+
+    ClosePopup ->
+      ( model |> closePopup, Cmd.none )
+
+    CloseInspector ->
+      ( { model | inspectorState = Nothing }, Cmd.none )
+
+    ShowFloatingDefinition entityId ->
+      ( { model | floatingDefinition = Just entityId }, Cmd.none )
+
+    TriggerSearch str ->
+      ( { model | searchInputTyping = str, searchState = newSearch model.searchInputTyping |> Just } |> closePopup, searchOers str)
+
+    -- ClickToRequestDefinition entityId ->
+    --   ( model, requestEntityDefinition entityId)
 
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model
@@ -194,3 +223,14 @@ includeEntityIds incomingOers model =
         |> Set.foldl (\entityId result -> if model.entityLabels |> Dict.member entityId then result else (result |> Dict.insert entityId "") ) model.entityLabels
   in
       { model | entityLabels = entityLabels }
+
+
+closePopup : Model -> Model
+closePopup model =
+  { model | popup = Nothing }
+  |> closeFloatingDefinition
+
+
+closeFloatingDefinition : Model -> Model
+closeFloatingDefinition model =
+  { model | floatingDefinition = Nothing }

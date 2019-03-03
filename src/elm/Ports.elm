@@ -3,10 +3,12 @@ port module Ports exposing (..)
 -- import Json.Encode as Encode
 import Json.Decode as Decode
 
-import Animation exposing (BoxAnimation)
+import Animation exposing (..)
 
 port copyClipboard : String -> Cmd msg
 port openModalAnimation : String -> Cmd msg
 port modalAnimationStart : (BoxAnimation -> msg) -> Sub msg
 port modalAnimationStop : (Int -> msg) -> Sub msg
-port closePopups : (Int -> msg) -> Sub msg
+port closePopup : (Int -> msg) -> Sub msg
+port closeInspector : (Int -> msg) -> Sub msg
+port popupTriggerPosition : (Point -> msg) -> Sub msg

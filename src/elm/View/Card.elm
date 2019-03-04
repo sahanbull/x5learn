@@ -7,6 +7,7 @@ import Element.Font as Font
 import Element.Input as Input exposing (button)
 import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Json.Decode
+import Dict exposing (Dict)
 
 
 import Model exposing (..)
@@ -183,6 +184,22 @@ viewOerCard model recommendedFragments position barId oer =
             content
             |> row [ width fill ]
 
+      tagCloud tagCloud =
+        tagCloud
+        |> List.indexedMap (\index entityId -> model.entityLabels |> Dict.get entityId |> Maybe.withDefault "(label missing)" |> wrapText [ Font.size (20-index), Font.color <| rgba 0 0 0 (0.8- ((toFloat index)/15)) ])
+        |> column [ padding 16, spacing 5, height (px 175) ]
+
+      hoverPreview =
+        if oer.url |> String.contains "youtu" then
+          case model.tagClouds |> Dict.get oer.url of
+            Nothing ->
+              carousel
+
+            Just tagCloud ->
+              tagCloud tagCloud
+        else
+          carousel
+
       info =
         [ title
         , bottomRow
@@ -202,7 +219,7 @@ viewOerCard model recommendedFragments position barId oer =
         height (px cardHeight)
 
       card =
-        [ (if hovering then carousel else thumbnail)
+        [ (if hovering then hoverPreview else thumbnail)
         , info
         ]
         |> column [ widthOfCard, heightOfCard, htmlClass "materialCard", onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing) ]

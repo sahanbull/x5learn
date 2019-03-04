@@ -9,6 +9,7 @@ import Json.Encode as Encode
 import Dict
 import Set
 import Time exposing (Posix)
+import List.Extra
 
 import Debug exposing (log)
 
@@ -221,8 +222,27 @@ includeEntityIds incomingOers model =
         |> List.concatMap .entities
         |> Set.fromList
         |> Set.foldl (\entityId result -> if model.entityLabels |> Dict.member entityId then result else (result |> Dict.insert entityId "") ) model.entityLabels
+
+      tagCloudFromOer oer =
+        let
+            uniqueEntities =
+              oer.wikichunks
+              |> List.concatMap .entities
+              |> Set.fromList
+              |> Set.toList
+        in
+            uniqueEntities
+            |> List.map (\entityId -> { id = entityId, nOccurrences = uniqueEntities |> List.Extra.elemIndices entityId |> List.length })
+            |> List.sortBy .nOccurrences
+            -- |> List.reverse
+            |> List.take 5
+            |> List.map .id
+
+      tagClouds =
+        incomingOers
+        |> List.foldl (\oer result -> if model.tagClouds |> Dict.member oer.url then result else (result |> Dict.insert oer.url (tagCloudFromOer oer))) model.tagClouds
   in
-      { model | entityLabels = entityLabels }
+      { model | entityLabels = entityLabels, tagClouds = tagClouds }
 
 
 closePopup : Model -> Model

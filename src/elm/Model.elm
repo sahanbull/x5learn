@@ -30,11 +30,9 @@ type alias Model =
   , viewedFragments : Maybe (List Fragment)
   , nextSteps : Maybe (List Pathway)
   , popup : Maybe Popup
-  , entityLabels : Dict String String
   , entityDescriptions : Dict String String
-  , requestingEntityLabels : Bool
+  , requestingEntityDescriptions : Bool
   , floatingDefinition : Maybe String
-  -- , requestingEntityDefinition : Bool
   , tagClouds : Dict String (List String)
   }
 
@@ -70,7 +68,6 @@ type alias Oer =
   , images : List String
   , provider : String
   , title : String
-  , transcript : String
   , url : String
   , wikichunks : List Chunk
   }
@@ -79,7 +76,14 @@ type alias Oer =
 type alias Chunk =
   { start : Float -- 0 to 1
   , length : Float -- 0 to 1
-  , entities : List String
+  , entities : List Entity
+  }
+
+
+type alias Entity =
+  { id : String
+  , title : String
+  , url : String
   }
 
 
@@ -121,12 +125,6 @@ type InspectorMenu
   = SaveToBookmarklistMenu
 
 
-type alias OerSearchResponse =
-  { oers : List Oer
-  , entityLabels : Dict String String
-  }
-
-
 initialModel : Nav -> Flags -> Model
 initialModel nav flags =
   { nav = nav
@@ -145,11 +143,9 @@ initialModel nav flags =
   , viewedFragments = Nothing
   , nextSteps = Nothing
   , popup = Nothing
-  , entityLabels = Dict.empty
   , entityDescriptions = Dict.empty
-  , requestingEntityLabels = False
+  , requestingEntityDescriptions = False
   , floatingDefinition = Nothing
-  -- , requestingEntityDefinition = False
   , tagClouds = Dict.empty
   }
 

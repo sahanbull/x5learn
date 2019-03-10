@@ -47,7 +47,7 @@ update msg ({nav} as model) =
 
     ClockTick time ->
       ( { model | currentTime = time }, Cmd.none)
-      |> requestEntityLabelsIfNeeded
+      |> requestEntityDescriptionsIfNeeded
 
     AnimationTick time ->
       ( { model | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
@@ -75,7 +75,7 @@ update msg ({nav} as model) =
 
     RequestOerSearch (Ok oers) ->
       ( model |> updateSearch (insertSearchResults oers) |> includeEntityIds oers, Navigation.pushUrl nav.key "/search" )
-      |> requestEntityLabelsIfNeeded
+      |> requestEntityDescriptionsIfNeeded
 
     RequestOerSearch (Err err) ->
       ( { model | userMessage = Just "There was a problem with the search data" }, Cmd.none )
@@ -88,7 +88,7 @@ update msg ({nav} as model) =
             |> List.map .oer
       in
           ( { model | nextSteps = Just pathways } |> includeEntityIds oers, Cmd.none)
-          |> requestEntityLabelsIfNeeded
+          |> requestEntityDescriptionsIfNeeded
 
     RequestNextSteps (Err err) ->
       -- let
@@ -99,7 +99,7 @@ update msg ({nav} as model) =
 
     RequestViewedFragments (Ok fragments) ->
       ( { model | viewedFragments = Just fragments } |> includeEntityIds (fragments |> List.map .oer), Cmd.none )
-      |> requestEntityLabelsIfNeeded
+      |> requestEntityDescriptionsIfNeeded
 
     RequestViewedFragments (Err err) ->
       -- let
@@ -108,34 +108,20 @@ update msg ({nav} as model) =
       -- in
       ( { model | userMessage = Just "There was a problem with the history data" }, Cmd.none)
 
-    RequestEntityLabels (Ok {labels,descriptions}) ->
+    RequestEntityDescriptions (Ok descriptions) ->
       let
-          entityLabels =
-            model.entityLabels |> Dict.union labels
-
           entityDescriptions =
             model.entityDescriptions |> Dict.union descriptions
       in
-          ( { model | entityLabels = entityLabels, entityDescriptions = entityDescriptions, requestingEntityLabels = False }, Cmd.none )
-          |> requestEntityLabelsIfNeeded
+          ( { model | entityDescriptions = entityDescriptions, requestingEntityDescriptions = False }, Cmd.none )
+          |> requestEntityDescriptionsIfNeeded
 
-    RequestEntityLabels (Err err) ->
+    RequestEntityDescriptions (Err err) ->
       let
           dummy =
-            err |> Debug.log "Error in RequestEntityLabels"
+            err |> Debug.log "Error in RequestEntityDescriptions"
       in
-      ( { model | userMessage = Just "There was a problem with the wiki label data", requestingEntityLabels = False }, Cmd.none )
-
-    -- RequestEntityDefinition (Ok incomingDefinitions) ->
-    --   ( { model | entityDefinitions = model.entityDefinitions |> Dict.union incomingDefinitions, requestingEntityDefinition = False }, Cmd.none )
-    --   |> requestEntityLabelsIfNeeded
-
-    -- RequestEntityDefinition (Err err) ->
-    --   -- let
-    --   --     dummy =
-    --   --       err |> Debug.log "Error in RequestEntityDefinition"
-    --   -- in
-    --   ( { model | userMessage = Just "There was a problem with the wiki definition data", requestingEntityDefinition = False }, Cmd.none )
+      ( { model | userMessage = Just "There was a problem with the wiki label data", requestingEntityDescriptions = False }, Cmd.none )
 
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
@@ -164,9 +150,6 @@ update msg ({nav} as model) =
     TriggerSearch str ->
       ( { model | searchInputTyping = str, searchState = newSearch model.searchInputTyping |> Just } |> closePopup, searchOers str)
 
-    -- ClickToRequestDefinition entityId ->
-    --   ( model, requestEntityDefinition entityId)
-
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model
 updateSearch transformFunction model =
@@ -192,59 +175,60 @@ incrementFrameCountInModalAnimation model =
       { model | modalAnimation = Just { animation | frameCount = animation.frameCount + 1 } }
 
 
-requestEntityLabelsIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
-requestEntityLabelsIfNeeded (oldModel, oldCmd) =
-  if oldModel.requestingEntityLabels then
+requestEntityDescriptionsIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
+requestEntityDescriptionsIfNeeded (oldModel, oldCmd) =
+  if oldModel.requestingEntityDescriptions then
     (oldModel, oldCmd)
   else
      let
          newModel =
-           { oldModel | requestingEntityLabels = True }
+           { oldModel | requestingEntityDescriptions = True }
 
-         entityIds =
-           oldModel.entityLabels
-           |> Dict.filter (\id label -> id/="" && label=="")
+         missingEntities =
+           oldModel.entityDescriptions
+           |> Dict.filter (\id description -> id/="" && description=="")
            |> Dict.keys
            |> List.take 50 -- 50 is the current limit according to https://www.wikidata.org/w/api.php?action=help&modules=wbgetentities
      in
-         if List.isEmpty entityIds then
+         if List.isEmpty missingEntities then
            (oldModel, oldCmd)
          else
-           (newModel, [ oldCmd, requestEntityLabels entityIds ] |> Cmd.batch)
+           (newModel, [ oldCmd, requestEntityDescriptions missingEntities ] |> Cmd.batch)
 
 
 includeEntityIds : List Oer -> Model -> Model
 includeEntityIds incomingOers model =
   let
-      entityLabels =
-        incomingOers
-        |> List.concatMap .wikichunks
-        |> List.concatMap .entities
-        |> Set.fromList
-        |> Set.foldl (\entityId result -> if model.entityLabels |> Dict.member entityId then result else (result |> Dict.insert entityId "") ) model.entityLabels
-
       tagCloudFromOer oer =
         let
-            uniqueEntities =
+            uniqueTitles =
               oer.wikichunks
               |> List.map .entities
               |> List.map (List.take (if List.length oer.wikichunks<8 then 5 else 1))
               |> List.concat
+              |> List.map .title
               |> Set.fromList
               |> Set.toList
         in
-            uniqueEntities
-            |> List.map (\entityId -> { id = entityId, nOccurrences = uniqueEntities |> List.Extra.elemIndices entityId |> List.length })
+            uniqueTitles
+            |> List.map (\title -> { title = title, nOccurrences = uniqueTitles |> List.Extra.elemIndices title |> List.length })
             |> List.sortBy .nOccurrences
             |> List.reverse
             |> List.take 5
-            |> List.map .id
+            |> List.map .title
 
       tagClouds =
         incomingOers
         |> List.foldl (\oer result -> if model.tagClouds |> Dict.member oer.url then result else (result |> Dict.insert oer.url (tagCloudFromOer oer))) model.tagClouds
+
+      entityDescriptions =
+        incomingOers
+        |> List.concatMap .wikichunks
+        |> List.concatMap .entities
+        |> List.map .id
+        |> List.foldl (\id result -> if model.entityDescriptions |> Dict.member id then result else (result |> Dict.insert id "")) model.entityDescriptions
   in
-      { model | entityLabels = entityLabels, tagClouds = tagClouds }
+      { model | tagClouds = tagClouds, entityDescriptions = entityDescriptions }
 
 
 closePopup : Model -> Model

@@ -54,6 +54,7 @@ def api_search():
     # return search_results_from_x5gon_api(text)
     return search_results_from_experimental_local_oer_data(text.lower().split())
 
+
 @app.route("/api/v1/viewed_fragments/", methods=['GET'])
 def api_viewed_fragments():
     setup_initial_data_if_needed()
@@ -67,14 +68,12 @@ def api_next_steps():
     return jsonify(playlists)
 
 
-@app.route("/api/v1/entity_labels/", methods=['GET'])
-def api_entity_labels():
+@app.route("/api/v1/entity_descriptions/", methods=['GET'])
+def api_entity_descriptions():
     entity_ids = request.args['ids'].split(',')
-    labels = {}
     descriptions = {}
     conn = http.client.HTTPSConnection("www.wikidata.org")
-    # request_string = '/w/api.php?action=wbgetentities&props=labels|descriptions|sitelinks&ids=' + '|'.join(entity_ids) + '&languages=en&sitefilter=enwiki&languagefallback=1&format=json'
-    request_string = '/w/api.php?action=wbgetentities&props=labels|descriptions&ids=' + '|'.join(entity_ids) + '&languages=en&sitefilter=enwiki&languagefallback=1&format=json'
+    request_string = '/w/api.php?action=wbgetentities&props=descriptions&ids=' + '|'.join(entity_ids) + '&languages=en&sitefilter=enwiki&languagefallback=1&format=json'
     conn.request('GET', request_string)
     response = conn.getresponse().read().decode("utf-8")
     j = json.loads(response)
@@ -82,20 +81,15 @@ def api_entity_labels():
         entities = j['entities']
         for entity_id, value in entities.items():
             try:
-                labels[entity_id] = value['labels']['en']['value']
-            except KeyError:
-                labels[entity_id] = '(Concept unavailable)'
-                print('WARNING: entity', entity_id, 'has no label.')
-            try:
                 descriptions[entity_id] = value['descriptions']['en']['value']
                 print('WARNING: entity', entity_id, 'has no description.')
             except KeyError:
                 descriptions[entity_id] = '(Description unavailable)'
     except KeyError:
-        print('Error trying to retrieve entity labels from wikidata. The server responded with:')
+        print('Error trying to retrieve entity descriptions from wikidata. The server responded with:')
         print(response)
         print('We sent the following ids:', ','.join(entity_ids))
-    return jsonify({'labels': labels, 'descriptions': descriptions})
+    return jsonify(descriptions)
 
 
 def setup_initial_data_if_needed():
@@ -161,6 +155,7 @@ def load_oers_from_csv_file():
             oer['images'] = json.loads(oer['images'].replace("'", '"'))
             oer['date'] = oer['date'].replace('Published on ', '') if 'date' in oer else ''
             oer['duration'] = human_readable_time_from_ms(float(oer['duration'])) if 'duration' in oer else ''
+            oer['wikichunks'] = oer['wikichunks'].replace(':', '$')
             videoid = oer['url'].split('v=')[1].split('&')[0]
             loaded_oers[videoid] = oer
     print('Done loading oers')
@@ -189,26 +184,32 @@ def load_wikichunks_from_json_files():
             json_chunks = oer['jsonchunks']
             last_chunk = json_chunks[-1]
             duration = last_chunk['start'] + last_chunk['length']
-            # if videoid=='PPDWaZPu7MU':
-            #     print(duration)
-            #     print(len(json_chunks))
-            #     print(json_chunks[3]['annotations']['annotation_data'][:5])
-            #     print(last_chunk['annotations']['annotation_data'][:5])
+            if videoid=='PPDWaZPu7MU':
+                print(duration)
+                print(len(json_chunks))
+                print(json_chunks[3]['annotations']['annotation_data'][:5])
+                print(last_chunk['annotations']['annotation_data'][:5])
             for j in json_chunks:
                 annotations = j['annotations']['annotation_data']
                 annotations = annotations[:7] # use the top ones, assuming they come sorted by pagerank
                 annotations = sorted(annotations, key=lambda a: a['cosine'], reverse=True)
-                concept_ids = [ a['wikiDataItemId'] for a in annotations if 'wikiDataItemId' in a ][:5]
-                chunks.append(encode_chunk(j['start'], j['length'], concept_ids, duration))
+                entities = []
+                for a in annotations:
+                    try:
+                        entities.append(a['wikiDataItemId']+'*'+a['title']+'*'+a['url'])
+                    except (NameError, TypeError):
+                        pass
+                entities = entities[:5]
+                chunks.append(encode_chunk(j['start'], j['length'], entities, duration))
             oer['wikichunks'] = '&'.join(chunks)
     print('______________')
     print('Done encoding wikichunks')
 
 
-def encode_chunk(start_second, length_seconds, concept_ids, duration):
+def encode_chunk(start_second, length_seconds, entities, duration):
     start = round(start_second / duration, 4)
     length = round(length_seconds / duration, 4)
-    return str(start)+','+str(length)+':'+','.join(concept_ids)
+    return str(start)+','+str(length)+'$'+','.join(entities)
 
 
 def human_readable_time_from_ms(ms):

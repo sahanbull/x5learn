@@ -1,4 +1,4 @@
-module Request exposing (searchOers, requestNextSteps, requestViewedFragments, requestEntityLabels)
+module Request exposing (searchOers, requestNextSteps, requestViewedFragments, requestEntityDescriptions)
 
 import Http exposing (expectStringResponse)
 import Json.Decode exposing (Value,map,map2,map3,map8,field,bool,int,float,string,list,dict,oneOf,maybe,nullable)
@@ -6,6 +6,8 @@ import Json.Decode.Extra exposing (andMap)
 import Json.Encode
 import Url
 import Url.Builder
+
+import Debug exposing (log)
 
 import Model exposing (..)
 
@@ -52,34 +54,16 @@ requestViewedFragments =
         }
 
 
-requestEntityLabels : List String -> Cmd Msg
-requestEntityLabels entityIds =
+requestEntityDescriptions : List String -> Cmd Msg
+requestEntityDescriptions entityIds =
   let
       encoded =
-        Url.Builder.absolute [ apiRoot, "entity_labels/" ] [ Url.Builder.string "ids" (entityIds |> String.join ",") ]
+        Url.Builder.absolute [ apiRoot, "entity_descriptions/" ] [ Url.Builder.string "ids" (entityIds |> String.join ",") ]
   in
       Http.get
         { url = encoded
-        , expect = Http.expectJson RequestEntityLabels entityLabelsDecoder
+        , expect = Http.expectJson RequestEntityDescriptions (dict string)
         }
-
-
-entityLabelsDecoder =
-  map2 (\labels descriptions -> { labels = labels, descriptions = descriptions })
-  (field "labels" (dict string))
-  (field "descriptions" (dict string))
-
-
--- requestEntityDefinition : String -> Cmd Msg
--- requestEntityDefinition entityId =
---   let
---       encoded =
---         Url.Builder.absolute [ apiRoot, "entity_definition" ] [ Url.Builder.string "id" entityId ]
---   in
---       Http.get
---         { url = encoded
---         , expect = Http.expectJson ReceiveEntityDefinition (dict string)
---         }
 
 
 fragmentDecoder =
@@ -113,7 +97,6 @@ oerDecoder =
   |> andMap (field "images" (list string))
   |> andMap (field "provider" string)
   |> andMap (field "title" string)
-  |> andMap (field "transcript" string)
   |> andMap (field "url" string)
   |> andMap (field "wikichunks" chunksDecoder)
 
@@ -128,14 +111,27 @@ chunksDecoder =
       parseChunk str =
         let
             (timeString, entitiesString) =
-              str |> splitStringInTwo ":"
+              str |> splitStringInTwo "$"
 
             (start,length) =
               timeString |> splitStringInTwo ","
 
             entities =
-              entitiesString |> String.split ","
-        in
+              entitiesString
+              |> String.split ","
+              |> List.map parseEntity
+
+            parseEntity id_title_url =
+              case id_title_url |> String.split "*" of
+                [id, title, url] ->
+                  Entity id title url
+
+                _ ->
+                  let
+                      dummy = id_title_url |> log "Error in parseEntity"
+                  in
+                      Entity "" "" "" -- shouldn't happen
+          in
             Chunk (start |> String.toFloat |> Maybe.withDefault 0) (length |> String.toFloat |> Maybe.withDefault 0) entities
   in
       map parseChunks string

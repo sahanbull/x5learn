@@ -421,45 +421,39 @@ viewChunkPopup model popup =
       |> el [ moveLeft 30, moveDown 16 ]
 
 
-viewEntityButton : Model -> ChunkPopup -> String -> Element Msg
-viewEntityButton model chunkPopup entityId =
-  case
-      model.entityLabels |> Dict.get entityId of
-        Nothing ->
-          none
+viewEntityButton : Model -> ChunkPopup -> Entity -> Element Msg
+viewEntityButton model chunkPopup entity =
+    let
+        label =
+          [ entity.title |> bodyNoWrap [ width fill ]
+          , image [ alpha 0.5, alignRight ] { src = svgPath "arrow_right", description = "" }
+          ]
+          |> row [ width fill, paddingXY 10 5, spacing 10 ]
 
-        Just entityLabel ->
-          let
-              label =
-                [ entityLabel |> bodyNoWrap [ width fill ]
-                , image [ alpha 0.5, alignRight ] { src = svgPath "arrow_right", description = "" }
-                ]
-                |> row [ width fill, paddingXY 10 5, spacing 10 ]
+        backgroundAndSubmenu =
+          case chunkPopup.entityPopup of
+            Nothing ->
+              []
 
-              backgroundAndSubmenu =
-                case chunkPopup.entityPopup of
-                  Nothing ->
-                    []
+            Just entityPopup ->
+              -- if chunkPopup.chunk == chunk && entityPopup.entityId == entityId then
+              if entityPopup.entityId == entity.id then
+                superLightBackgorund :: (viewEntityPopup model chunkPopup entityPopup entity.title)
+              else
+                []
 
-                  Just entityPopup ->
-                    -- if chunkPopup.chunk == chunk && entityPopup.entityId == entityId then
-                    if entityPopup.entityId == entityId then
-                      superLightBackgorund :: (viewEntityPopup model chunkPopup entityPopup entityLabel)
-                    else
-                      []
+        floatingDefinition =
+          case model.floatingDefinition of
+            Nothing ->
+              []
 
-              floatingDefinition =
-                case model.floatingDefinition of
-                  Nothing ->
-                    []
-
-                  Just id ->
-                    if id == entityId then
-                      [ viewFloatingDefinition model entityId ]
-                    else
-                      []
-          in
-              button ([ onClickNoBubble NoOp, padding 5, width fill, popupOnMouseEnter (ChunkOnBar { chunkPopup | entityPopup = Just { entityId = entityId, hoveringAction = Nothing } }) ] ++ backgroundAndSubmenu ++ floatingDefinition) { onPress = Nothing, label = label }
+            Just id ->
+              if id == entity.id then
+                [ viewFloatingDefinition model entity ]
+              else
+                []
+    in
+        button ([ onClickNoBubble NoOp, padding 5, width fill, popupOnMouseEnter (ChunkOnBar { chunkPopup | entityPopup = Just { entityId = entity.id, hoveringAction = Nothing } }) ] ++ backgroundAndSubmenu ++ floatingDefinition) { onPress = Nothing, label = label }
 
 
 viewEntityPopup model chunkPopup entityPopup entityTitle =
@@ -504,10 +498,10 @@ entityActionButton chunkPopup entityPopup (title, clickAction) =
   --     onHover :: popup
 
 
-viewFloatingDefinition model entityId =
+viewFloatingDefinition model entity =
   let
       blurb =
-        case model.entityDescriptions |> Dict.get entityId of
+        case model.entityDescriptions |> Dict.get entity.id of
           Nothing ->
             "(Description unavailable)"
             |> captionNowrap []
@@ -517,7 +511,7 @@ viewFloatingDefinition model entityId =
             |> bodyWrap [ Font.italic ]
 
       link =
-        newTabLink [] { url = "http://en.wikipedia.org", label = "Find on Wikipedia" |> bodyNoWrap [] }
+        newTabLink [] { url = entity.url, label = "Find on Wikipedia" |> bodyNoWrap [] }
         -- "(Wikidata)"
         -- |> bodyWrap [ alignRight ]
         -- |> el [ width fill, alignRight ]

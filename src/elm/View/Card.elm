@@ -9,7 +9,6 @@ import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Json.Decode
 import Dict exposing (Dict)
 
-
 import Model exposing (..)
 import View.Shared exposing (..)
 
@@ -186,7 +185,7 @@ viewOerCard model recommendedFragments position barId oer =
 
       tagCloudView tagCloud =
         tagCloud
-        |> List.indexedMap (\index entityId -> model.entityLabels |> Dict.get entityId |> Maybe.withDefault "(label missing)" |> wrapText [ Font.size (20-index), Font.color <| rgba 0 0 0 (0.8- ((toFloat index)/15)) ])
+        |> List.indexedMap (\index label -> label |> wrapText [ Font.size (20-index), Font.color <| rgba 0 0 0 (0.8- ((toFloat index)/15)) ])
         |> column [ padding 16, spacing 5, height (px 175) ]
 
       hoverPreview =

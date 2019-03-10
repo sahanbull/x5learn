@@ -227,14 +227,16 @@ includeEntityIds incomingOers model =
         let
             uniqueEntities =
               oer.wikichunks
-              |> List.concatMap .entities
+              |> List.map .entities
+              |> List.map (List.take (if List.length oer.wikichunks<8 then 5 else 1))
+              |> List.concat
               |> Set.fromList
               |> Set.toList
         in
             uniqueEntities
             |> List.map (\entityId -> { id = entityId, nOccurrences = uniqueEntities |> List.Extra.elemIndices entityId |> List.length })
             |> List.sortBy .nOccurrences
-            -- |> List.reverse
+            |> List.reverse
             |> List.take 5
             |> List.map .id
 

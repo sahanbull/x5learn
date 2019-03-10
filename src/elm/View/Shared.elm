@@ -391,17 +391,16 @@ viewFragmentsBar model oer recommendedFragments barWidth barId =
                 []
         in
             none
-            |> el ([ width <| fillPortion (chunk.length * 100 |> round), height fill, borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup )
+            |> el ([ width <| px <| floor <| chunk.length * (toFloat barWidth), height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup )
+            |> inFront
 
       chunkTriggers =
         oer.wikichunks
         |> List.map chunkTrigger
-        |> row [ width fill, height fill ]
-        |> inFront
 
       underlay =
         none
-        |> el ([ width fill, height (px 16), materialScrimBackground, moveUp 16 ] ++ markers ++ [chunkTriggers])
+        |> el ([ width fill, height (px 16), materialScrimBackground, moveUp 16 ] ++ markers ++ chunkTriggers)
   in
       underlay
 

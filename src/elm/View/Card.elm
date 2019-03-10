@@ -184,7 +184,7 @@ viewOerCard model recommendedFragments position barId oer =
             content
             |> row [ width fill ]
 
-      tagCloud tagCloud =
+      tagCloudView tagCloud =
         tagCloud
         |> List.indexedMap (\index entityId -> model.entityLabels |> Dict.get entityId |> Maybe.withDefault "(label missing)" |> wrapText [ Font.size (20-index), Font.color <| rgba 0 0 0 (0.8- ((toFloat index)/15)) ])
         |> column [ padding 16, spacing 5, height (px 175) ]
@@ -196,7 +196,7 @@ viewOerCard model recommendedFragments position barId oer =
               carousel
 
             Just tagCloud ->
-              tagCloud tagCloud
+              tagCloudView tagCloud
         else
           carousel
 

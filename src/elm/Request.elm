@@ -98,58 +98,21 @@ oerDecoder =
   |> andMap (field "provider" string)
   |> andMap (field "title" string)
   |> andMap (field "url" string)
-  |> andMap (field "wikichunks" chunksDecoder)
+  |> andMap (field "wikichunks" (list chunkDecoder))
 
 
-chunksDecoder =
-  let
-      parseChunks str =
-        str
-        |> String.split "&"
-        |> List.map parseChunk
-
-      parseChunk str =
-        let
-            (timeString, entitiesString) =
-              str |> splitStringInTwo "$"
-
-            (start,length) =
-              timeString |> splitStringInTwo ","
-
-            entities =
-              entitiesString
-              |> String.split ","
-              |> List.map parseEntity
-
-            parseEntity id_title_url =
-              case id_title_url |> String.split "*" of
-                [id, title, url] ->
-                  Entity id title url
-
-                _ ->
-                  let
-                      dummy = id_title_url |> log "Error in parseEntity"
-                  in
-                      Entity "" "" "" -- shouldn't happen
-          in
-            Chunk (start |> String.toFloat |> Maybe.withDefault 0) (length |> String.toFloat |> Maybe.withDefault 0) entities
-  in
-      map parseChunks string
+chunkDecoder =
+  map3 Chunk
+    (field "start" float)
+    (field "length" float)
+    (field "entities" (list entityDecoder))
 
 
-splitStringInTwo : String -> String -> (String, String)
-splitStringInTwo separator input =
-  let
-      sides =
-        input |> String.split separator
-
-      left =
-        sides |> List.head |> Maybe.withDefault ""
-
-      right =
-        sides |> List.drop 1 |> List.head |> Maybe.withDefault ""
-  in
-      (left, right)
+entityDecoder =
+  map3 Entity
+    (field "id" string)
+    (field "title" string)
+    (field "url" string)
 
 
 -- X5GON

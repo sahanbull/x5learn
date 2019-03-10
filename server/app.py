@@ -13,7 +13,6 @@ app = Flask( __name__ )
 
 loaded_oers = {}
 
-
 @app.route("/")
 def home():
     return render_template('home.html')
@@ -93,6 +92,7 @@ def api_entity_descriptions():
 
 
 def setup_initial_data_if_needed():
+    global loaded_oers
     if len(loaded_oers)==0:
         read_local_oer_data()
         setup_dummy_user()
@@ -122,12 +122,9 @@ class DummyUser:
 
 
 def search_results_from_experimental_local_oer_data(search_words):
-    results = [ oer for oer in loaded_oers.values() if any_word_matches(search_words, oer['title']) or any_word_matches(search_words, oer['description']) or any_word_matches(search_words, entity_ids_from_chunks(oer)) ]
+    # results = [ oer for oer in loaded_oers.values() if any_word_matches(search_words, oer['title']) or any_word_matches(search_words, oer['description']) or any_word_matches(search_words, entity_titles_from_chunks(oer)) ]
+    results = [ oer for oer in loaded_oers.values() if any_word_matches(search_words, oer['title']) or any_word_matches(search_words, oer['description']) ]
     return jsonify(results[:18])
-
-
-def entity_ids_from_chunks(oer):
-    return ' '.join(re.findall(r'Q\d+', oer['wikichunks']))
 
 
 def any_word_matches(words, text):
@@ -138,8 +135,12 @@ def any_word_matches(words, text):
 
 
 def read_local_oer_data():
+    global loaded_oers
     load_oers_from_csv_file()
     load_wikichunks_from_json_files()
+    print(len(loaded_oers), 'OERs loaded.')
+    loaded_oers = {k: v for k, v in loaded_oers.items() if 'wikichunks' in v}
+    print(len(loaded_oers), 'OERs left after removing those for which wikichunks data is missing.')
 
 
 def load_oers_from_csv_file():
@@ -155,13 +156,15 @@ def load_oers_from_csv_file():
             oer['images'] = json.loads(oer['images'].replace("'", '"'))
             oer['date'] = oer['date'].replace('Published on ', '') if 'date' in oer else ''
             oer['duration'] = human_readable_time_from_ms(float(oer['duration'])) if 'duration' in oer else ''
-            oer['wikichunks'] = oer['wikichunks'].replace(':', '$')
+            del oer['wikichunks'] # Use the new wikifier results instead (from the JSON files).
+            del oer['transcript'] # Delete in order to prevent unnecessary network load when serving OER to the frontend.
             videoid = oer['url'].split('v=')[1].split('&')[0]
             loaded_oers[videoid] = oer
     print('Done loading oers')
 
 
 def load_wikichunks_from_json_files():
+    chunkdata = {}
     print('Loading local wikichunk data...')
     dir_path = '/Users/stefan/x5/data/scenario1/youtube_enrichments/'
     (_, _, filenames) = next(os.walk(dir_path))
@@ -170,25 +173,22 @@ def load_wikichunks_from_json_files():
             for line in f:
                 chunk = json.loads(line)
                 oer = loaded_oers[chunk['videoid']]
-                if not 'jsonchunks' in oer:
-                    oer['jsonchunks'] = []
-                oer['jsonchunks'].append(chunk)
+                url = oer['url']
+                if not url in chunkdata:
+                    chunkdata[url] = []
+                chunkdata[url].append(chunk)
     print('Done loading wikichunks')
     print('______________')
     print('Encoding wikichunks')
     for videoid,oer in loaded_oers.items():
-        if not 'jsonchunks' in oer:
-            print('WARNING: oer has no jsonchunks', videoid)
+        url = oer['url']
+        if not url in chunkdata:
+            print('WARNING: oer has no JSON chunks', videoid)
         else:
+            json_chunks = chunkdata[url]
             chunks = []
-            json_chunks = oer['jsonchunks']
             last_chunk = json_chunks[-1]
             duration = last_chunk['start'] + last_chunk['length']
-            if videoid=='PPDWaZPu7MU':
-                print(duration)
-                print(len(json_chunks))
-                print(json_chunks[3]['annotations']['annotation_data'][:5])
-                print(last_chunk['annotations']['annotation_data'][:5])
             for j in json_chunks:
                 annotations = j['annotations']['annotation_data']
                 annotations = annotations[:7] # use the top ones, assuming they come sorted by pagerank
@@ -196,12 +196,12 @@ def load_wikichunks_from_json_files():
                 entities = []
                 for a in annotations:
                     try:
-                        entities.append(a['wikiDataItemId']+'*'+a['title']+'*'+a['url'])
+                        entities.append({'id': a['wikiDataItemId'], 'title': a['title'], 'url': a['url']})
                     except (NameError, TypeError):
                         pass
                 entities = entities[:5]
                 chunks.append(encode_chunk(j['start'], j['length'], entities, duration))
-            oer['wikichunks'] = '&'.join(chunks)
+            oer['wikichunks'] = chunks
     print('______________')
     print('Done encoding wikichunks')
 
@@ -209,7 +209,8 @@ def load_wikichunks_from_json_files():
 def encode_chunk(start_second, length_seconds, entities, duration):
     start = round(start_second / duration, 4)
     length = round(length_seconds / duration, 4)
-    return str(start)+','+str(length)+'$'+','.join(entities)
+    # return str(start)+','+str(length)+'$'+','.join(entities)
+    return {'start': start, 'length': length, 'entities': entities }
 
 
 def human_readable_time_from_ms(ms):

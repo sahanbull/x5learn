@@ -121,7 +121,7 @@ update msg ({nav} as model) =
           dummy =
             err |> Debug.log "Error in RequestEntityDescriptions"
       in
-      ( { model | userMessage = Just "There was a problem with the wiki label data", requestingEntityDescriptions = False }, Cmd.none )
+      ( { model | userMessage = Just "There was a problem with the wiki descriptions data", requestingEntityDescriptions = False }, Cmd.none )
 
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
@@ -199,24 +199,6 @@ requestEntityDescriptionsIfNeeded (oldModel, oldCmd) =
 includeEntityIds : List Oer -> Model -> Model
 includeEntityIds incomingOers model =
   let
-      tagCloudFromOer oer =
-        let
-            uniqueTitles =
-              oer.wikichunks
-              |> List.map .entities
-              |> List.map (List.take (if List.length oer.wikichunks<8 then 5 else 1))
-              |> List.concat
-              |> List.map .title
-              |> Set.fromList
-              |> Set.toList
-        in
-            uniqueTitles
-            |> List.map (\title -> { title = title, nOccurrences = uniqueTitles |> List.Extra.elemIndices title |> List.length })
-            |> List.sortBy .nOccurrences
-            |> List.reverse
-            |> List.take 5
-            |> List.map .title
-
       tagClouds =
         incomingOers
         |> List.foldl (\oer result -> if model.tagClouds |> Dict.member oer.url then result else (result |> Dict.insert oer.url (tagCloudFromOer oer))) model.tagClouds
@@ -229,6 +211,39 @@ includeEntityIds incomingOers model =
         |> List.foldl (\id result -> if model.entityDescriptions |> Dict.member id then result else (result |> Dict.insert id "")) model.entityDescriptions
   in
       { model | tagClouds = tagClouds, entityDescriptions = entityDescriptions }
+
+
+tagCloudFromOer : Oer -> List String
+tagCloudFromOer oer =
+  let
+      uniqueTitles : List String
+      uniqueTitles =
+        oer.wikichunks
+        |> List.concatMap .entities
+        |> List.map .title
+        |> Set.fromList
+        |> Set.toList
+
+      titleRankings : List { title : String, rank : Int }
+      titleRankings =
+        uniqueTitles
+        |> List.map (\title -> { title = title, rank = rankingForTitle title })
+
+
+      rankingForTitle : String -> Int
+      rankingForTitle title =
+        oer.wikichunks
+        |> List.concatMap .entities
+        |> List.map .title
+        |> List.filter ((==) title)
+        |> List.length
+        |> Debug.log "rankingForTitle"
+  in
+      titleRankings
+      |> List.sortBy .rank
+      |> List.map .title
+      |> List.reverse
+      |> List.take 5
 
 
 closePopup : Model -> Model

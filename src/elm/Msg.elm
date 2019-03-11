@@ -29,7 +29,7 @@ type Msg
   | RequestOerSearch (Result Http.Error (List Oer))
   | RequestNextSteps (Result Http.Error (List Pathway))
   | RequestViewedFragments (Result Http.Error (List Fragment))
-  | RequestEntityLabels (Result Http.Error { labels : (Dict String String), descriptions : (Dict String String) })
+  | RequestEntityDescriptions (Result Http.Error (Dict String String))
   | SetHover (Maybe String)
   | OpenSaveToBookmarklistMenu InspectorState
   | AddToBookmarklist Playlist Oer
@@ -39,7 +39,6 @@ type Msg
   | CloseInspector
   | ShowFloatingDefinition String
   | TriggerSearch String
-  -- | PopupWikiDefinition String
 
 
 subscriptions : Model -> Sub Msg

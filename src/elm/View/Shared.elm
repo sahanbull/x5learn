@@ -150,6 +150,10 @@ semiTransparentWhite =
   rgba 1 1 1 0.95
 
 
+semiTransparent =
+  alpha 0.5
+
+
 grey value =
   rgb255 value value value
 
@@ -232,7 +236,7 @@ linkTo attrs url label =
 viewSearchWidget widthAttr placeholder searchInputTyping =
   let
       icon =
-        image [ alpha 0.5 ] { src = (svgPath "search"), description = "search icon" }
+        image [ semiTransparent ] { src = (svgPath "search"), description = "search icon" }
 
       submitButton =
         button [ moveLeft 34, moveDown 12 ] { onPress = Just SubmitSearch, label = icon }
@@ -298,7 +302,7 @@ playerWidth =
 
 
 milkyWhiteCenteredContainer =
-  el [ centerX, padding 20, Background.color semiTransparentWhite, Border.rounded 2 ]
+  el [ centerX, centerY, padding 20, Background.color semiTransparentWhite, Border.rounded 2 ]
 
 
 closeIcon =

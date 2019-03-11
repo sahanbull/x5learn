@@ -18,7 +18,7 @@ import Msg exposing (..)
 withNavigationDrawer : Model -> PageWithModal -> PageWithModal
 withNavigationDrawer model (pageContent, modal) =
   let
-      navButton url svgIconStub label =
+      navButton enabled url svgIconStub label =
         let
             background =
               if currentUrlMatches model url then
@@ -30,15 +30,15 @@ withNavigationDrawer model (pageContent, modal) =
             , label |> bodyNoWrap [ width fill ]
             ]
             |> row ([ width fill, padding 12, spacing 30, Border.rounded 4 ] ++ background)
-            |> linkTo [ width fill ] url
+            |> if enabled then linkTo [ width fill ] url else el [ semiTransparent, htmlClass "CursorNotAllowed" ]
 
       navButtons =
-        [ navButton "/next_steps" "nav_next_steps" "Next Steps"
-        , navButton "/journeys" "nav_journeys" "Journeys"
-        , navButton "/bookmarks" "nav_bookmarks" "Bookmarks"
-        , navButton "/history" "nav_history" "History"
-        , navButton "/notes" "nav_notes" "Notes"
-        , navButton "/peers" "nav_peers" "Peers"
+        [ navButton False "/next_steps" "nav_next_steps" "Next Steps"
+        , navButton False "/journeys" "nav_journeys" "Journeys"
+        , navButton True "/bookmarks" "nav_bookmarks" "Bookmarks"
+        , navButton True "/history" "nav_history" "History"
+        , navButton False "/notes" "nav_notes" "Notes"
+        , navButton False "/peers" "nav_peers" "Peers"
         ]
         |> column [ width fill, spacing 10 ]
 

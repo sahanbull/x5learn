@@ -312,9 +312,7 @@ viewCenterNote str =
 
 
 viewLoadingSpinner =
-  "loading..." |> wrapText [ primaryWhite, centerX, centerY ]
-  |> el [ centerX, height fill ]
-  |> el [ width fill, height fill ]
+  "loading..." |> viewCenterNote
 
 
 menuButtonDisabled str =

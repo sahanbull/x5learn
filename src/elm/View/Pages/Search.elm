@@ -36,6 +36,11 @@ viewSearchResults model searchState =
     Nothing ->
       viewLoadingSpinner
 
+    Just [] ->
+      -- "Sorry, no results were found for \""++ searchState.lastSearch ++"\"" |> viewCenterNote
+      "Sorry, no results were found." |> viewCenterNote
+
     Just oers ->
-      Playlist "Search results" oers
+      -- Playlist ("Search results for \""++ searchState.lastSearch ++"\"") oers
+      Playlist ((oers |> List.length |> String.fromInt) ++ " results for \""++ searchState.lastSearch ++"\"") oers
       |> viewPlaylist model

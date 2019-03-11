@@ -7,8 +7,6 @@ import Json.Encode
 import Url
 import Url.Builder
 
-import Debug exposing (log)
-
 import Model exposing (..)
 
 import Msg exposing (..)

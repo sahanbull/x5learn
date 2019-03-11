@@ -11,7 +11,7 @@ import Set
 import Time exposing (Posix)
 import List.Extra
 
-import Debug exposing (log)
+-- import Debug exposing (log)
 
 import Model exposing (..)
 import Msg exposing (..)
@@ -117,10 +117,10 @@ update msg ({nav} as model) =
           |> requestEntityDescriptionsIfNeeded
 
     RequestEntityDescriptions (Err err) ->
-      let
-          dummy =
-            err |> Debug.log "Error in RequestEntityDescriptions"
-      in
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestEntityDescriptions"
+      -- in
       ( { model | userMessage = Just "There was a problem with the wiki descriptions data", requestingEntityDescriptions = False }, Cmd.none )
 
     SetHover maybeUrl ->
@@ -237,7 +237,6 @@ tagCloudFromOer oer =
         |> List.map .title
         |> List.filter ((==) title)
         |> List.length
-        |> Debug.log "rankingForTitle"
   in
       titleRankings
       |> List.sortBy .rank

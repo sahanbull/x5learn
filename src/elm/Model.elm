@@ -28,6 +28,7 @@ type alias Model =
   , animationsPending : Set String
   , bookmarklists : List Playlist
   , viewedFragments : Maybe (List Fragment)
+  , gains : Maybe (List Gain)
   , nextSteps : Maybe (List Pathway)
   , popup : Maybe Popup
   , entityDescriptions : Dict String String
@@ -95,6 +96,12 @@ type alias ChunkPopup = { barId : String, oer : Oer, chunk : Chunk, entityPopup 
 
 type alias EntityPopup = { entityId : String, hoveringAction : Maybe String }
 
+type alias Gain =
+  { title : String
+  , level : Float
+  , confidence : Float
+  }
+
 
 type alias Fragment =
   { oer : Oer
@@ -141,6 +148,7 @@ initialModel nav flags =
   , animationsPending = Set.empty
   , bookmarklists = initialBookmarklists
   , viewedFragments = Nothing
+  , gains = Nothing
   , nextSteps = Nothing
   , popup = Nothing
   , entityDescriptions = Dict.empty

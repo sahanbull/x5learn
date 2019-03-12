@@ -13,6 +13,7 @@ import View.NavigationDrawer exposing (..)
 import View.Pages.Home exposing (viewHomePage)
 import View.Pages.Search exposing (viewSearchPage)
 import View.Pages.Bookmarks exposing (viewBookmarksPage)
+import View.Pages.Gains exposing (viewGainsPage)
 import View.Pages.History exposing (viewHistoryPage)
 import View.Pages.NextSteps exposing (viewNextStepsPage)
 
@@ -49,6 +50,9 @@ view model =
         case model.nav.url.path of
           "/next_steps" ->
             viewNextStepsPage model |> withNavigationDrawer model
+
+          "/gains" ->
+            viewGainsPage model |> withNavigationDrawer model
 
           "/bookmarks" ->
             viewBookmarksPage model |> withNavigationDrawer model

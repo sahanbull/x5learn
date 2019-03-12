@@ -1,4 +1,4 @@
-module Request exposing (searchOers, requestNextSteps, requestViewedFragments, requestEntityDescriptions)
+module Request exposing (searchOers, requestNextSteps, requestViewedFragments, requestGains, requestEntityDescriptions)
 
 import Http exposing (expectStringResponse)
 import Json.Decode exposing (Value,map,map2,map3,map8,field,bool,int,float,string,list,dict,oneOf,maybe,nullable)
@@ -52,6 +52,18 @@ requestViewedFragments =
         }
 
 
+requestGains : Cmd Msg
+requestGains =
+  let
+      encoded =
+        Url.Builder.absolute [ apiRoot, "gains" ] []
+  in
+      Http.get
+        { url = encoded
+        , expect = Http.expectJson RequestGains (list gainDecoder)
+        }
+
+
 requestEntityDescriptions : List String -> Cmd Msg
 requestEntityDescriptions entityIds =
   let
@@ -62,6 +74,13 @@ requestEntityDescriptions entityIds =
         { url = encoded
         , expect = Http.expectJson RequestEntityDescriptions (dict string)
         }
+
+
+gainDecoder =
+  map3 Gain
+    (field "title" string)
+    (field "level" float)
+    (field "confidence" float)
 
 
 fragmentDecoder =

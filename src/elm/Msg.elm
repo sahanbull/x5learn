@@ -29,6 +29,7 @@ type Msg
   | RequestOerSearch (Result Http.Error (List Oer))
   | RequestNextSteps (Result Http.Error (List Pathway))
   | RequestViewedFragments (Result Http.Error (List Fragment))
+  | RequestGains (Result Http.Error (List Gain))
   | RequestEntityDescriptions (Result Http.Error (Dict String String))
   | SetHover (Maybe String)
   | OpenSaveToBookmarklistMenu InspectorState

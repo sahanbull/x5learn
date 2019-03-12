@@ -37,6 +37,7 @@ withNavigationDrawer model (pageContent, modal) =
         , navButton False "/journeys" "nav_journeys" "Journeys"
         , navButton True "/bookmarks" "nav_bookmarks" "Bookmarks"
         , navButton True "/history" "nav_history" "History"
+        , navButton True "/gains" "nav_gains" "Gains"
         , navButton False "/notes" "nav_notes" "Notes"
         , navButton False "/peers" "nav_peers" "Peers"
         ]

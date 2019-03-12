@@ -29,6 +29,10 @@ def next_steps():
 def journeys():
     return render_template('home.html')
 
+@app.route("/gains")
+def gains():
+    return render_template('home.html')
+
 @app.route("/bookmarks")
 def bookmarks():
     return render_template('home.html')
@@ -58,6 +62,12 @@ def api_search():
 def api_viewed_fragments():
     setup_initial_data_if_needed()
     return jsonify(dummy_user.viewed_fragments())
+
+
+@app.route("/api/v1/gains/", methods=['GET'])
+def api_gains():
+    setup_initial_data_if_needed()
+    return jsonify(dummy_user.gains())
 
 
 @app.route("/api/v1/next_steps/", methods=['GET'])
@@ -110,9 +120,24 @@ class DummyUser:
     def viewed_fragments(self):
         if not self.fragments:
             print('creating viewed fragments')
-            # self.fragments = [ create_fragment('Lecture 01 - The Learning Problem', 0, 1), create_fragment('Lecture 02 - Is Learning Feasible?', 0, 0.33) ]
-            self.fragments = [ create_fragment('Lecture 02 - Is Learning Feasible?', 0, 0.33) ]
+            self.fragments = [ create_fragment('Lecture 01 - The Learning Problem', 0, 1), create_fragment('Lecture 02 - Is Learning Feasible?', 0, 0.33) ]
+            # self.fragments = [ create_fragment('Lecture 02 - Is Learning Feasible?', 0, 0.33) ]
         return self.fragments
+
+    def gains(self):
+        fragments = self.viewed_fragments()
+        topics = {}
+        for fragment in fragments:
+            for chunk in fragment['oer']['wikichunks']:
+                for entity in chunk['entities']:
+                    title = entity['title']
+                    level = (topics[title]['level'] if title in topics else 0) + 1
+                    topics[title] = {'title': title, 'level': level, 'confidence': 0.1}
+        result = list(topics.values())
+        result.sort(key=lambda gain: gain['level'], reverse=True)
+        for r in result:
+            print(r)
+        return result
 
     def recommended_next_steps(self):
         return [ create_pathway("Continue studying", [ create_fragment('Lecture 02 - Is Learning Feasible?', 0.33, 1-0.33) ]),

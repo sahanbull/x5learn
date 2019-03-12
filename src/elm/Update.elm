@@ -40,6 +40,8 @@ update msg ({nav} as model) =
               requestNextSteps
             else if url.path == "/history" then
               requestViewedFragments
+            else if url.path == "/gains" then
+              requestGains
             else
               Cmd.none
       in
@@ -107,6 +109,16 @@ update msg ({nav} as model) =
       --       err |> Debug.log "Error in RequestViewedFragments"
       -- in
       ( { model | userMessage = Just "There was a problem with the history data" }, Cmd.none)
+
+    RequestGains (Ok gains) ->
+      ( { model | gains = Just gains }, Cmd.none )
+
+    RequestGains (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestGainsRequestViewedFragments"
+      -- in
+      ( { model | userMessage = Just "There was a problem with the gains data" }, Cmd.none)
 
     RequestEntityDescriptions (Ok descriptions) ->
       let

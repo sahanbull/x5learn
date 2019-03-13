@@ -60,7 +60,8 @@ view model =
           "/history" ->
             viewHistoryPage model |> withNavigationDrawer model
 
-          "/search" ->
+          -- "/search" ->
+          _ ->
             case model.searchState of
               Nothing ->
                 (viewHomePage model, [])
@@ -68,9 +69,9 @@ view model =
               Just searchState ->
                 viewSearchPage model searchState |> withNavigationDrawer model
 
-          _ ->
-            (viewCenterNote "Coming soon" |> List.singleton |> column [ width fill, height fill ], [])
-            |> withNavigationDrawer model
+          -- _ ->
+            -- (viewCenterNote "Coming soon" |> List.singleton |> column [ width fill, height fill ], [])
+            -- |> withNavigationDrawer model
 
       header =
         viewPageHeader model

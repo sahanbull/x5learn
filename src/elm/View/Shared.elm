@@ -393,7 +393,7 @@ viewFragmentsBar model oer recommendedFragments barWidth barId =
                 []
         in
             none
-            |> el ([ width <| px <| floor <| chunk.length * (toFloat barWidth), height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup )
+            |> el ([ width <| px <| floor <| chunk.length * (toFloat barWidth) + 1, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup )
             |> inFront
 
       chunkTriggers =

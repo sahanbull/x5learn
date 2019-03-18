@@ -402,7 +402,7 @@ viewFragmentsBar model oer recommendedFragments barWidth barId =
 
       underlay =
         none
-        |> el ([ width fill, height (px 16), materialScrimBackground, moveUp 16 ] ++ markers ++ chunkTriggers)
+        |> el ([ width fill, height (px fragmentsBarHeight), materialScrimBackground, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)
   in
       underlay
 
@@ -420,7 +420,7 @@ viewChunkPopup model popup =
   in
       entitiesSection
       |> menuColumn []
-      |> el [ moveLeft 30, moveDown 16 ]
+      |> el [ moveLeft 30, moveDown fragmentsBarHeight ]
 
 
 viewEntityButton : Model -> ChunkPopup -> Entity -> Element Msg
@@ -522,3 +522,6 @@ viewFloatingDefinition model entity =
       |> menuColumn [ width (px 240), padding 10, spacing 16 ]
       |> el [ width (fill |> maximum 200), moveDown 10, moveRight 80 ]
       |> onRight
+
+
+fragmentsBarHeight = 16

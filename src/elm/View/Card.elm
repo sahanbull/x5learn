@@ -83,9 +83,12 @@ viewOerCard model recommendedFragments position barId oer =
       hovering =
         model.hoveringOerUrl == Just oer.url
 
+      imageHeight =
+        175
+
       upperImage attrs url =
         none
-        |> el ([ width fill, height (px 175), Background.image <| url, htmlClass (if isFromVideoLecturesNet oer then "materialHoverZoomThumb-videolectures" else "materialHoverZoomThumb") ] ++ attrs)
+        |> el ([ width fill, height <| px <| imageHeight, Background.image <| url, htmlClass (if isFromVideoLecturesNet oer then "materialHoverZoomThumb-videolectures" else "materialHoverZoomThumb") ] ++ attrs)
 
       imageCounter txt =
         txt
@@ -185,8 +188,9 @@ viewOerCard model recommendedFragments position barId oer =
 
       tagCloudView tagCloud =
         tagCloud
-        |> List.indexedMap (\index label -> label |> wrapText [ Font.size (20-index), Font.color <| rgba 0 0 0 (0.8- ((toFloat index)/15)) ])
-        |> column [ padding 16, spacing 5, height (px 175) ]
+        |> List.indexedMap (\index label -> label |> wrapText [ Font.size (20-index), Font.color <| rgba 0 0 0 (0.8- ((toFloat index)/15)), height fill ])
+        |> column [ padding 16, spacing 6, height <| px <| imageHeight-16 ]
+        |> el [ paddingBottom 16 ]
 
       hoverPreview =
         if oer.url |> String.contains "youtu" then

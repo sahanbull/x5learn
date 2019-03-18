@@ -8,10 +8,13 @@ import os
 import re
 import csv
 import ast # parsing JSON with complex quotation https://stackoverflow.com/a/21154138
+from fuzzywuzzy import fuzz
 
 app = Flask( __name__ )
 
 loaded_oers = {}
+all_entity_titles = set([])
+
 
 @app.route("/")
 def home():
@@ -54,8 +57,14 @@ def peers():
 def api_search():
     setup_initial_data_if_needed()
     text = request.args['text']
-    # return search_results_from_x5gon_api(text)
     return search_results_from_experimental_local_oer_data(text.lower().split())
+
+
+@app.route("/api/v1/search_suggestions/", methods=['GET'])
+def api_search_suggestions():
+    setup_initial_data_if_needed()
+    text = request.args['text']
+    return search_suggestions(text.lower())
 
 
 @app.route("/api/v1/viewed_fragments/", methods=['GET'])
@@ -189,6 +198,7 @@ def load_oers_from_csv_file():
 
 
 def load_wikichunks_from_json_files():
+    global all_entity_titles
     chunkdata = {}
     print('Loading local wikichunk data...')
     dir_path = '/Users/stefan/x5/data/scenario1/youtube_enrichments/'
@@ -221,7 +231,9 @@ def load_wikichunks_from_json_files():
                 entities = []
                 for a in annotations:
                     try:
-                        entities.append({'id': a['wikiDataItemId'], 'title': a['title'], 'url': a['url']})
+                        entity_title = a['title']
+                        entities.append({'id': a['wikiDataItemId'], 'title': entity_title, 'url': a['url']})
+                        all_entity_titles.add(entity_title)
                     except (NameError, TypeError):
                         pass
                 entities = entities[:5]
@@ -234,7 +246,6 @@ def load_wikichunks_from_json_files():
 def encode_chunk(start_second, length_seconds, entities, duration):
     start = round(start_second / duration, 4)
     length = round(length_seconds / duration, 4)
-    # return str(start)+','+str(length)+'$'+','.join(entities)
     return {'start': start, 'length': length, 'entities': entities }
 
 
@@ -258,6 +269,12 @@ def find_oer_by_title(title):
         return [ oer for oer in loaded_oers.values() if oer['title']==title ][0]
     except IndexError:
         print('No OER was found with title', title)
+
+
+def search_suggestions(text):
+    setup_initial_data_if_needed()
+    matches = [ title for title in all_entity_titles if fuzz.partial_ratio(text, title) > 75 ]
+    return jsonify(matches[:5])
 
 
 # def search_results_from_x5gon_api(text):

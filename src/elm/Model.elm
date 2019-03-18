@@ -35,6 +35,7 @@ type alias Model =
   , requestingEntityDescriptions : Bool
   , floatingDefinition : Maybe String
   , tagClouds : Dict String (List String)
+  , searchSuggestions : List String
   }
 
 
@@ -155,6 +156,7 @@ initialModel nav flags =
   , requestingEntityDescriptions = False
   , floatingDefinition = Nothing
   , tagClouds = Dict.empty
+  , searchSuggestions = []
   }
 
 

@@ -55,10 +55,10 @@ update msg ({nav} as model) =
       ( { model | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
 
     ChangeSearchText str ->
-      ( { model | searchInputTyping = str } |> closePopup, Cmd.none )
+      ( { model | searchInputTyping = str } |> closePopup, if String.length str > 1 then requestSearchSuggestions str else Cmd.none)
 
-    SubmitSearch ->
-      ( { model | searchState = newSearch model.searchInputTyping |> Just } |> closePopup, searchOers model.searchInputTyping )
+    TriggerSearch str ->
+      ( { model | searchInputTyping = str, searchState = Just <| newSearch str, searchSuggestions = [] } |> closePopup, searchOers str)
 
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, Cmd.none )
@@ -135,6 +135,16 @@ update msg ({nav} as model) =
       -- in
       ( { model | userMessage = Just "There was a problem with the wiki descriptions data", requestingEntityDescriptions = False }, Cmd.none )
 
+    RequestSearchSuggestions (Ok suggestions) ->
+      ( { model | searchSuggestions = suggestions }, Cmd.none)
+
+    RequestSearchSuggestions (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestSearchSuggestions"
+      -- in
+      ( { model | userMessage = Just "There was a problem with the search suggestion" }, Cmd.none )
+
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
 
@@ -158,9 +168,6 @@ update msg ({nav} as model) =
 
     ShowFloatingDefinition entityId ->
       ( { model | floatingDefinition = Just entityId }, Cmd.none )
-
-    TriggerSearch str ->
-      ( { model | searchInputTyping = str, searchState = Just <| newSearch str } |> closePopup, searchOers str)
 
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model

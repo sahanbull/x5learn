@@ -1,4 +1,4 @@
-module Request exposing (searchOers, requestNextSteps, requestViewedFragments, requestGains, requestEntityDescriptions)
+module Request exposing (searchOers, requestNextSteps, requestViewedFragments, requestGains, requestEntityDescriptions, requestSearchSuggestions)
 
 import Http exposing (expectStringResponse)
 import Json.Decode exposing (Value,map,map2,map3,map8,field,bool,int,float,string,list,dict,oneOf,maybe,nullable)
@@ -20,7 +20,7 @@ searchOers : String -> Cmd Msg
 searchOers searchText =
   let
       encoded =
-        Url.Builder.absolute [ apiRoot, "search" ] [ Url.Builder.string "url" "https://platform.x5gon.org/materialUrl", Url.Builder.string "text" searchText ]
+        Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText ]
   in
       Http.get
         { url = encoded
@@ -28,11 +28,23 @@ searchOers searchText =
         }
 
 
+requestSearchSuggestions : String -> Cmd Msg
+requestSearchSuggestions searchText =
+  let
+      encoded =
+        Url.Builder.absolute [ apiRoot, "search_suggestions/" ] [ Url.Builder.string "text" searchText ]
+  in
+      Http.get
+        { url = encoded
+        , expect = Http.expectJson RequestSearchSuggestions (list string)
+        }
+
+
 requestNextSteps : Cmd Msg
 requestNextSteps =
   let
       encoded =
-        Url.Builder.absolute [ apiRoot, "next_steps" ] []
+        Url.Builder.absolute [ apiRoot, "next_steps/" ] []
   in
       Http.get
         { url = encoded
@@ -44,7 +56,7 @@ requestViewedFragments : Cmd Msg
 requestViewedFragments =
   let
       encoded =
-        Url.Builder.absolute [ apiRoot, "viewed_fragments" ] []
+        Url.Builder.absolute [ apiRoot, "viewed_fragments/" ] []
   in
       Http.get
         { url = encoded
@@ -56,7 +68,7 @@ requestGains : Cmd Msg
 requestGains =
   let
       encoded =
-        Url.Builder.absolute [ apiRoot, "gains" ] []
+        Url.Builder.absolute [ apiRoot, "gains/" ] []
   in
       Http.get
         { url = encoded

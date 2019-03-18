@@ -17,7 +17,6 @@ import Model exposing (..)
 import Msg exposing (..)
 import Animation exposing (..)
 
-
 type alias PageWithModal = (Element Msg, List (Attribute Msg))
 
 type IconPosition
@@ -233,16 +232,25 @@ linkTo attrs url label =
   link attrs { url = url, label = label }
 
 
-viewSearchWidget widthAttr placeholder searchInputTyping =
+viewSearchWidget model widthAttr placeholder searchInputTyping =
   let
       icon =
         image [ semiTransparent ] { src = (svgPath "search"), description = "search icon" }
+        |> el [ moveLeft 34, moveDown 12 ]
 
-      submitButton =
-        button [ moveLeft 34, moveDown 12 ] { onPress = Just SubmitSearch, label = icon }
+      searchField =
+        Input.text [ htmlId "SearchField", width fill, Input.focusedOnLoad, onEnter <| TriggerSearch searchInputTyping ] { onChange = ChangeSearchText, text = searchInputTyping, placeholder = Just (placeholder |> text |> Input.placeholder []), label = Input.labelHidden "search" }
+        |> el [ width widthAttr, onRight icon, centerX, below suggestions ]
+
+      suggestions =
+        if List.isEmpty model.searchSuggestions || String.length searchInputTyping < 2 then
+          none
+        else
+          model.searchSuggestions
+          |> List.map (\suggestion -> actionButtonWithoutIcon [ width fill, clipX ] suggestion (Just <| TriggerSearch suggestion))
+          |> menuColumn [ width fill ]
   in
-      Input.text [ htmlId "SearchField", width fill, Input.focusedOnLoad, onEnter SubmitSearch ] { onChange = ChangeSearchText, text = searchInputTyping, placeholder = Just (placeholder |> text |> Input.placeholder []), label = Input.labelHidden "search" }
-      |> el [ width widthAttr, centerX, onRight submitButton ]
+      searchField
 
 
 svgIcon stub=

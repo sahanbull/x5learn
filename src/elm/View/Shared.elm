@@ -241,7 +241,7 @@ viewSearchWidget widthAttr placeholder searchInputTyping =
       submitButton =
         button [ moveLeft 34, moveDown 12 ] { onPress = Just SubmitSearch, label = icon }
   in
-      Input.text [ width fill, Input.focusedOnLoad, onEnter SubmitSearch ] { onChange = ChangeSearchText, text = searchInputTyping, placeholder = Just (placeholder |> text |> Input.placeholder []), label = Input.labelHidden "search" }
+      Input.text [ htmlId "SearchField", width fill, Input.focusedOnLoad, onEnter SubmitSearch ] { onChange = ChangeSearchText, text = searchInputTyping, placeholder = Just (placeholder |> text |> Input.placeholder []), label = Input.labelHidden "search" }
       |> el [ width widthAttr, centerX, onRight submitButton ]
 
 

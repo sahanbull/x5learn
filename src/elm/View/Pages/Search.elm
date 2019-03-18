@@ -38,7 +38,7 @@ viewSearchResults model searchState =
 
     Just [] ->
       -- "Sorry, no results were found for \""++ searchState.lastSearch ++"\"" |> viewCenterNote
-      "Sorry, no results were found." |> viewCenterNote
+      "No results were found for \"" ++ searchState.lastSearch ++ "\"." |> viewCenterNote
 
     Just oers ->
       -- Playlist ("Search results for \""++ searchState.lastSearch ++"\"") oers

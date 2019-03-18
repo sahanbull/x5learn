@@ -23,6 +23,19 @@ function setupPorts(app){
     startAnimationWhenModalIsReady(modalId)
   });
 
+  app.ports.setBrowserFocus.subscribe(function(elementId) {
+    document.activeElement.blur();
+    if(elementId != ""){
+      setTimeout(function(){
+        try{
+          document.getElementById(elementId).focus();
+        } catch(err){
+          // ignore
+        }
+      }, 30);
+    }
+  });
+
   setupClickHandlers();
 }
 

@@ -76,7 +76,7 @@ update msg ({nav} as model) =
       ( { model | modalAnimation = Nothing, animationsPending = model.animationsPending |> Set.remove modalId }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
-      ( model |> updateSearch (insertSearchResults oers) |> includeEntityIds oers, Navigation.pushUrl nav.key "/search" )
+      ( model |> updateSearch (insertSearchResults oers) |> includeEntityIds oers, [ Navigation.pushUrl nav.key "/search", setBrowserFocus "SearchField" ] |> Cmd.batch )
       |> requestEntityDescriptionsIfNeeded
 
     RequestOerSearch (Err err) ->
@@ -160,7 +160,7 @@ update msg ({nav} as model) =
       ( { model | floatingDefinition = Just entityId }, Cmd.none )
 
     TriggerSearch str ->
-      ( { model | searchInputTyping = str, searchState = newSearch model.searchInputTyping |> Just } |> closePopup, searchOers str)
+      ( { model | searchInputTyping = str, searchState = Just <| newSearch str } |> closePopup, searchOers str)
 
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model

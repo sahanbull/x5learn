@@ -5,6 +5,7 @@ import Json.Decode as Decode
 
 import Animation exposing (..)
 
+port setBrowserFocus : String -> Cmd msg
 port copyClipboard : String -> Cmd msg
 port openModalAnimation : String -> Cmd msg
 port modalAnimationStart : (BoxAnimation -> msg) -> Sub msg

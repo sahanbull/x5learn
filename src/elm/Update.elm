@@ -136,7 +136,7 @@ update msg ({nav} as model) =
       ( { model | userMessage = Just "There was a problem with the wiki descriptions data", requestingEntityDescriptions = False }, Cmd.none )
 
     RequestSearchSuggestions (Ok suggestions) ->
-      ( { model | searchSuggestions = suggestions }, Cmd.none)
+      ( { model | searchSuggestions = suggestions, suggestionSelectionOnHoverEnabled = False }, Cmd.none)
 
     RequestSearchSuggestions (Err err) ->
       -- let
@@ -171,6 +171,12 @@ update msg ({nav} as model) =
 
     ClickedOnDocument ->
       ( { model | searchSuggestions = [] }, Cmd.none )
+
+    SelectSuggestion suggestion ->
+      ( { model | selectedSuggestion = suggestion, searchInputTyping = suggestion }, Cmd.none )
+
+    MouseMoved ->
+      ( { model | suggestionSelectionOnHoverEnabled = True }, Cmd.none )
 
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model

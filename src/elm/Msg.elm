@@ -41,6 +41,8 @@ type Msg
   | ShowFloatingDefinition String
   | TriggerSearch String
   | ClickedOnDocument
+  | SelectSuggestion String
+  | MouseMoved
 
 
 subscriptions : Model -> Sub Msg
@@ -66,6 +68,7 @@ subscriptions model =
       , Ports.closePopup (\_ -> ClosePopup)
       , Ports.closeInspector (\_ -> CloseInspector)
       , Ports.clickedOnDocument (\_ -> ClickedOnDocument)
+      , Ports.mouseMoved (\_ -> MouseMoved)
       , Time.every 500 ClockTick
       ] ++ anim)
       |> Sub.batch

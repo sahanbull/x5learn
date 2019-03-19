@@ -14,3 +14,4 @@ port closePopup : (Int -> msg) -> Sub msg
 port closeInspector : (Int -> msg) -> Sub msg
 port popupTriggerPosition : (Point -> msg) -> Sub msg
 port clickedOnDocument : (Int -> msg) -> Sub msg
+port mouseMoved : (Int -> msg) -> Sub msg

@@ -36,6 +36,8 @@ type alias Model =
   , floatingDefinition : Maybe String
   , tagClouds : Dict String (List String)
   , searchSuggestions : List String
+  , selectedSuggestion : String
+  , suggestionSelectionOnHoverEnabled : Bool
   }
 
 
@@ -157,6 +159,8 @@ initialModel nav flags =
   , floatingDefinition = Nothing
   , tagClouds = Dict.empty
   , searchSuggestions = []
+  , selectedSuggestion = ""
+  , suggestionSelectionOnHoverEnabled = True -- prevent accidental selection when user doesn't move the pointer but the menu appears on the pointer
   }
 
 

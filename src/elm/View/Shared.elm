@@ -242,12 +242,31 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
         Input.text [ htmlId "SearchField", width fill, Input.focusedOnLoad, onEnter <| TriggerSearch searchInputTyping ] { onChange = ChangeSearchText, text = searchInputTyping, placeholder = Just (placeholder |> text |> Input.placeholder []), label = Input.labelHidden "search" }
         |> el [ width widthAttr, onRight icon, centerX, below suggestions ]
 
+      suggestionButton str =
+        let
+            label =
+              str |> bodyNoWrap [ width fill, padding 12, spacing 3, Border.rounded 4 ]
+
+            background =
+              if str == model.selectedSuggestion then
+                [ superLightBackgorund ]
+              else
+                []
+
+            mouseEnterHandler =
+              if model.suggestionSelectionOnHoverEnabled then
+                [ onMouseEnter <| SelectSuggestion str ]
+              else
+                []
+        in
+            button ([ width fill, clipX ]++background++mouseEnterHandler) { onPress = Just <| TriggerSearch str, label = label }
+
       suggestions =
         if List.isEmpty model.searchSuggestions || String.length searchInputTyping < 2 then
           none
         else
           model.searchSuggestions
-          |> List.map (\suggestion -> actionButtonWithoutIcon [ width fill, clipX ] suggestion (Just <| TriggerSearch suggestion))
+          |> List.map (\suggestion -> suggestionButton suggestion)
           |> menuColumn [ width fill, scrollbarY ]
           |> el [ width fill, height <| px 196 ]
   in

@@ -9,7 +9,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input exposing (button)
-import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
+import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave, onFocus)
 import Json.Decode
 import Dict
 
@@ -259,7 +259,7 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
               else
                 []
         in
-            button ([ width fill, clipX ]++background++mouseEnterHandler) { onPress = Just <| TriggerSearch str, label = label }
+            button ([ width fill, clipX, onFocus <| SelectSuggestion str ]++background++mouseEnterHandler) { onPress = Just <| TriggerSearch str, label = label }
 
       suggestions =
         if List.isEmpty model.searchSuggestions || String.length searchInputTyping < 2 then

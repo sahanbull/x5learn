@@ -169,6 +169,9 @@ update msg ({nav} as model) =
     ShowFloatingDefinition entityId ->
       ( { model | floatingDefinition = Just entityId }, Cmd.none )
 
+    ClickedOnDocument ->
+      ( { model | searchSuggestions = [] }, Cmd.none )
+
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model
 updateSearch transformFunction model =

@@ -64,5 +64,6 @@ function setupClickHandlers(){
     if(!e.target.closest('.InspectorAutoclose')){
       app.ports.closeInspector.send(12345);
     }
+    app.ports.clickedOnDocument.send(12345);
   });
 }

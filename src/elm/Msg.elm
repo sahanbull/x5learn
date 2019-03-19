@@ -40,6 +40,7 @@ type Msg
   | CloseInspector
   | ShowFloatingDefinition String
   | TriggerSearch String
+  | ClickedOnDocument
 
 
 subscriptions : Model -> Sub Msg
@@ -64,6 +65,7 @@ subscriptions model =
       , Ports.modalAnimationStop ModalAnimationStop
       , Ports.closePopup (\_ -> ClosePopup)
       , Ports.closeInspector (\_ -> CloseInspector)
+      , Ports.clickedOnDocument (\_ -> ClickedOnDocument)
       , Time.every 500 ClockTick
       ] ++ anim)
       |> Sub.batch

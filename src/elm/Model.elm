@@ -38,6 +38,7 @@ type alias Model =
   , searchSuggestions : List String
   , selectedSuggestion : String
   , suggestionSelectionOnHoverEnabled : Bool
+  , timeOfLastSearch : Posix
   }
 
 
@@ -161,6 +162,7 @@ initialModel nav flags =
   , searchSuggestions = []
   , selectedSuggestion = ""
   , suggestionSelectionOnHoverEnabled = True -- prevent accidental selection when user doesn't move the pointer but the menu appears on the pointer
+  , timeOfLastSearch = initialTime
   }
 
 

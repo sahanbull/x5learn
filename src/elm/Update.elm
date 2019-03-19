@@ -58,7 +58,7 @@ update msg ({nav} as model) =
       ( { model | searchInputTyping = str } |> closePopup, if String.length str > 1 then requestSearchSuggestions str else Cmd.none)
 
     TriggerSearch str ->
-      ( { model | searchInputTyping = str, searchState = Just <| newSearch str, searchSuggestions = [] } |> closePopup, searchOers str)
+      ( { model | searchInputTyping = str, searchState = Just <| newSearch str, searchSuggestions = [], timeOfLastSearch = model.currentTime } |> closePopup, searchOers str)
 
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, Cmd.none )
@@ -136,7 +136,10 @@ update msg ({nav} as model) =
       ( { model | userMessage = Just "There was a problem with the wiki descriptions data", requestingEntityDescriptions = False }, Cmd.none )
 
     RequestSearchSuggestions (Ok suggestions) ->
-      ( { model | searchSuggestions = suggestions, suggestionSelectionOnHoverEnabled = False }, Cmd.none)
+      if (millisSince model model.timeOfLastSearch) < 2000 then
+        (model, Cmd.none)
+      else
+        ({ model | searchSuggestions = suggestions, suggestionSelectionOnHoverEnabled = False }, Cmd.none)
 
     RequestSearchSuggestions (Err err) ->
       -- let

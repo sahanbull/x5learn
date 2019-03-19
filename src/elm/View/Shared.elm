@@ -248,7 +248,8 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
         else
           model.searchSuggestions
           |> List.map (\suggestion -> actionButtonWithoutIcon [ width fill, clipX ] suggestion (Just <| TriggerSearch suggestion))
-          |> menuColumn [ width fill ]
+          |> menuColumn [ width fill, scrollbarY ]
+          |> el [ width fill, height <| px 196 ]
   in
       searchField
 
@@ -388,9 +389,25 @@ viewFragmentsBar model oer recommendedFragments barWidth barId =
                 Just (ChunkOnBar p) ->
                   barId == p.barId && chunk == p.chunk
 
+            containsSearchString =
+              case model.searchState of
+                Nothing ->
+                  False
+
+                Just searchState ->
+                  let
+                      searchStringLowercase =
+                        searchState.lastSearch |> String.toLower
+                  in
+                      chunk.entities
+                      |> List.map .title
+                      |> List.any (\title -> String.contains searchStringLowercase (title |> String.toLower))
+
             background =
               if isPopupOpen then
                 [ Background.color <| orange ]
+              else if containsSearchString then
+                [ Background.color <| yellow ]
               else
                 []
 

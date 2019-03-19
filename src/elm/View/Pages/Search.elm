@@ -42,5 +42,5 @@ viewSearchResults model searchState =
 
     Just oers ->
       -- Playlist ("Search results for \""++ searchState.lastSearch ++"\"") oers
-      Playlist ((oers |> List.length |> String.fromInt) ++ " results for \""++ searchState.lastSearch ++"\"") oers
+      Playlist ((oers |> List.length |> String.fromInt) ++ " result" ++ (if List.length oers == 1 then "" else "s") ++ " for \""++ searchState.lastSearch ++"\"") oers
       |> viewPlaylist model

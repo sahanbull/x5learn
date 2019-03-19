@@ -1,5 +1,7 @@
 // Helpers and interop between Elm and JavaScript
 
+var timeOfLastMouseMove = new Date().getTime();
+
 
 function positionAndSize(el) {
   var rect = el.getBoundingClientRect(), scrollLeft = window.pageXOffset || document.documentElement.scrollLeft, scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -21,6 +23,19 @@ function setupPorts(app){
 
   app.ports.openModalAnimation.subscribe(function(modalId) {
     startAnimationWhenModalIsReady(modalId)
+  });
+
+  app.ports.setBrowserFocus.subscribe(function(elementId) {
+    document.activeElement.blur();
+    if(elementId != ""){
+      setTimeout(function(){
+        try{
+          document.getElementById(elementId).focus();
+        } catch(err){
+          // ignore
+        }
+      }, 30);
+    }
   });
 
   setupClickHandlers();
@@ -51,5 +66,13 @@ function setupClickHandlers(){
     if(!e.target.closest('.InspectorAutoclose')){
       app.ports.closeInspector.send(12345);
     }
+    app.ports.clickedOnDocument.send(12345);
+  });
+  document.addEventListener("mousemove", function(e){
+    now = new Date().getTime();
+    if(now-timeOfLastMouseMove > 200){//no need to notify Elm of every mouse event. Only transmit the beginning of gestures.
+      app.ports.mouseMoved.send(12345);
+    }
+    timeOfLastMouseMove = now;
   });
 }

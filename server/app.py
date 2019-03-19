@@ -7,11 +7,14 @@ import sys
 import os
 import re
 import csv
-import ast # parsing JSON with complex quotation https://stackoverflow.com/a/21154138
+from fuzzywuzzy import fuzz
+from collections import defaultdict
 
 app = Flask( __name__ )
 
 loaded_oers = {}
+all_entity_titles = set([])
+
 
 @app.route("/")
 def home():
@@ -54,8 +57,14 @@ def peers():
 def api_search():
     setup_initial_data_if_needed()
     text = request.args['text']
-    # return search_results_from_x5gon_api(text)
-    return search_results_from_experimental_local_oer_data(text.lower().split())
+    return search_results_from_experimental_local_oer_data(text.lower().strip())
+
+
+@app.route("/api/v1/search_suggestions/", methods=['GET'])
+def api_search_suggestions():
+    setup_initial_data_if_needed()
+    text = request.args['text']
+    return search_suggestions(text.lower().strip())
 
 
 @app.route("/api/v1/viewed_fragments/", methods=['GET'])
@@ -91,8 +100,8 @@ def api_entity_descriptions():
         for entity_id, value in entities.items():
             try:
                 descriptions[entity_id] = value['descriptions']['en']['value']
-                print('WARNING: entity', entity_id, 'has no description.')
             except KeyError:
+                # print('WARNING: entity', entity_id, 'has no description.')
                 descriptions[entity_id] = '(Description unavailable)'
     except KeyError:
         print('Error trying to retrieve entity descriptions from wikidata. The server responded with:')
@@ -146,10 +155,23 @@ class DummyUser:
             ]
 
 
-def search_results_from_experimental_local_oer_data(search_words):
-    # results = [ oer for oer in loaded_oers.values() if any_word_matches(search_words, oer['title']) or any_word_matches(search_words, oer['description']) or any_word_matches(search_words, entity_titles_from_chunks(oer)) ]
-    results = [ oer for oer in loaded_oers.values() if any_word_matches(search_words, oer['title']) or any_word_matches(search_words, oer['description']) ]
-    return jsonify(results[:18])
+def search_results_from_experimental_local_oer_data(text):
+    max_results = 18
+    frequencies = defaultdict(int)
+    for video_id, oer in loaded_oers.items():
+        for chunk in oer['wikichunks']:
+            for entity in chunk['entities']:
+                if text == entity['title'].lower().strip():
+                    frequencies[video_id] += 1
+    # import pdb; pdb.set_trace()
+    results = [ loaded_oers[video_id] for video_id,freq in sorted(frequencies.items(), key=lambda k_v : k_v[1], reverse=True)[:max_results] ]
+    print(len(results), 'search results found based on wikichunks.')
+    # if len(results) < max_results:
+    #     search_words = text.split()
+    #     n = max_results-len(results)
+    #     print('Search: adding', n,'results by title and description')
+    #     results += [ oer for oer in loaded_oers.values() if any_word_matches(search_words, oer['title']) or any_word_matches(search_words, oer['description']) ][:n]
+    return jsonify(results)
 
 
 def any_word_matches(words, text):
@@ -166,6 +188,15 @@ def read_local_oer_data():
     print(len(loaded_oers), 'OERs loaded.')
     loaded_oers = {k: v for k, v in loaded_oers.items() if 'wikichunks' in v}
     print(len(loaded_oers), 'OERs left after removing those for which wikichunks data is missing.')
+    store_all_entity_titles()
+
+
+def store_all_entity_titles():
+    global all_entity_titles
+    for video_id, oer in loaded_oers.items():
+        for chunk in oer['wikichunks']:
+            for entity in chunk['entities']:
+                all_entity_titles.add(entity['title'])
 
 
 def load_oers_from_csv_file():
@@ -208,7 +239,8 @@ def load_wikichunks_from_json_files():
     for videoid,oer in loaded_oers.items():
         url = oer['url']
         if not url in chunkdata:
-            print('WARNING: oer has no JSON chunks', videoid)
+            # print('WARNING: oer has no JSON chunks', videoid)
+            pass
         else:
             json_chunks = chunkdata[url]
             chunks = []
@@ -234,7 +266,6 @@ def load_wikichunks_from_json_files():
 def encode_chunk(start_second, length_seconds, entities, duration):
     start = round(start_second / duration, 4)
     length = round(length_seconds / duration, 4)
-    # return str(start)+','+str(length)+'$'+','.join(entities)
     return {'start': start, 'length': length, 'entities': entities }
 
 
@@ -258,6 +289,17 @@ def find_oer_by_title(title):
         return [ oer for oer in loaded_oers.values() if oer['title']==title ][0]
     except IndexError:
         print('No OER was found with title', title)
+
+
+def search_suggestions(text):
+    setup_initial_data_if_needed()
+    matches = [ (title, fuzz.partial_ratio(text, title) + fuzz.ratio(text, title)) for title in all_entity_titles ]
+    matches = sorted(matches, key=lambda k_v: k_v[1], reverse=True)[:20]
+    print([ v for k,v in matches ])
+    matches = [ k for k,v in matches ]
+    # import pdb; pdb.set_trace()
+    print(matches)
+    return jsonify(matches)
 
 
 # def search_results_from_x5gon_api(text):

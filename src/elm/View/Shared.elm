@@ -9,14 +9,13 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input exposing (button)
-import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
+import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave, onFocus)
 import Json.Decode
 import Dict
 
 import Model exposing (..)
 import Msg exposing (..)
 import Animation exposing (..)
-
 
 type alias PageWithModal = (Element Msg, List (Attribute Msg))
 
@@ -233,16 +232,45 @@ linkTo attrs url label =
   link attrs { url = url, label = label }
 
 
-viewSearchWidget widthAttr placeholder searchInputTyping =
+viewSearchWidget model widthAttr placeholder searchInputTyping =
   let
       icon =
         image [ semiTransparent ] { src = (svgPath "search"), description = "search icon" }
+        |> el [ moveLeft 34, moveDown 12 ]
 
-      submitButton =
-        button [ moveLeft 34, moveDown 12 ] { onPress = Just SubmitSearch, label = icon }
+      searchField =
+        Input.text [ htmlId "SearchField", width fill, Input.focusedOnLoad, onEnter <| TriggerSearch searchInputTyping ] { onChange = ChangeSearchText, text = searchInputTyping, placeholder = Just (placeholder |> text |> Input.placeholder []), label = Input.labelHidden "search" }
+        |> el [ width widthAttr, onRight icon, centerX, below suggestions ]
+
+      suggestionButton str =
+        let
+            label =
+              str |> bodyNoWrap [ width fill, padding 12, spacing 3, Border.rounded 4 ]
+
+            background =
+              if str == model.selectedSuggestion then
+                [ superLightBackgorund ]
+              else
+                []
+
+            mouseEnterHandler =
+              if model.suggestionSelectionOnHoverEnabled then
+                [ onMouseEnter <| SelectSuggestion str ]
+              else
+                []
+        in
+            button ([ width fill, clipX, onFocus <| SelectSuggestion str ]++background++mouseEnterHandler) { onPress = Just <| TriggerSearch str, label = label }
+
+      suggestions =
+        if List.isEmpty model.searchSuggestions || String.length searchInputTyping < 2 then
+          none
+        else
+          model.searchSuggestions
+          |> List.map (\suggestion -> suggestionButton suggestion)
+          |> menuColumn [ width fill, scrollbarY ]
+          |> el [ width fill, height <| px 196 ]
   in
-      Input.text [ width fill, Input.focusedOnLoad, onEnter SubmitSearch ] { onChange = ChangeSearchText, text = searchInputTyping, placeholder = Just (placeholder |> text |> Input.placeholder []), label = Input.labelHidden "search" }
-      |> el [ width widthAttr, centerX, onRight submitButton ]
+      searchField
 
 
 svgIcon stub=
@@ -380,9 +408,25 @@ viewFragmentsBar model oer recommendedFragments barWidth barId =
                 Just (ChunkOnBar p) ->
                   barId == p.barId && chunk == p.chunk
 
+            containsSearchString =
+              case model.searchState of
+                Nothing ->
+                  False
+
+                Just searchState ->
+                  let
+                      searchStringLowercase =
+                        searchState.lastSearch |> String.toLower
+                  in
+                      chunk.entities
+                      |> List.map .title
+                      |> List.any (\title -> String.contains searchStringLowercase (title |> String.toLower))
+
             background =
               if isPopupOpen then
                 [ Background.color <| orange ]
+              else if containsSearchString then
+                [ Background.color <| yellow ]
               else
                 []
 

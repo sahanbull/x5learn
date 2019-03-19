@@ -78,3 +78,7 @@ a:hover {
 .CursorNotAllowed{
   cursor: not-allowed
 }
+
+#SearchField{
+  padding-right: 35px;
+}

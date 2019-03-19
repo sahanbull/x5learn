@@ -20,7 +20,6 @@ type Msg
   | ClockTick Posix
   | AnimationTick Posix
   | ChangeSearchText String
-  | SubmitSearch
   | ResizeBrowser Int Int
   | InspectSearchResult Oer
   | UninspectSearchResult
@@ -31,6 +30,7 @@ type Msg
   | RequestViewedFragments (Result Http.Error (List Fragment))
   | RequestGains (Result Http.Error (List Gain))
   | RequestEntityDescriptions (Result Http.Error (Dict String String))
+  | RequestSearchSuggestions (Result Http.Error (List String))
   | SetHover (Maybe String)
   | OpenSaveToBookmarklistMenu InspectorState
   | AddToBookmarklist Playlist Oer
@@ -40,6 +40,9 @@ type Msg
   | CloseInspector
   | ShowFloatingDefinition String
   | TriggerSearch String
+  | ClickedOnDocument
+  | SelectSuggestion String
+  | MouseMoved
 
 
 subscriptions : Model -> Sub Msg
@@ -64,6 +67,8 @@ subscriptions model =
       , Ports.modalAnimationStop ModalAnimationStop
       , Ports.closePopup (\_ -> ClosePopup)
       , Ports.closeInspector (\_ -> CloseInspector)
+      , Ports.clickedOnDocument (\_ -> ClickedOnDocument)
+      , Ports.mouseMoved (\_ -> MouseMoved)
       , Time.every 500 ClockTick
       ] ++ anim)
       |> Sub.batch

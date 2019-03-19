@@ -35,6 +35,10 @@ type alias Model =
   , requestingEntityDescriptions : Bool
   , floatingDefinition : Maybe String
   , tagClouds : Dict String (List String)
+  , searchSuggestions : List String
+  , selectedSuggestion : String
+  , suggestionSelectionOnHoverEnabled : Bool
+  , timeOfLastSearch : Posix
   }
 
 
@@ -155,6 +159,10 @@ initialModel nav flags =
   , requestingEntityDescriptions = False
   , floatingDefinition = Nothing
   , tagClouds = Dict.empty
+  , searchSuggestions = []
+  , selectedSuggestion = ""
+  , suggestionSelectionOnHoverEnabled = True -- prevent accidental selection when user doesn't move the pointer but the menu appears on the pointer
+  , timeOfLastSearch = initialTime
   }
 
 

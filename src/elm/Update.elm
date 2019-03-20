@@ -176,7 +176,7 @@ update msg ({nav} as model) =
       ( { model | searchSuggestions = [] }, Cmd.none )
 
     SelectSuggestion suggestion ->
-      ( { model | selectedSuggestion = suggestion, searchInputTyping = suggestion }, Cmd.none )
+      ( { model | selectedSuggestion = suggestion }, Cmd.none )
 
     MouseMoved ->
       ( { model | suggestionSelectionOnHoverEnabled = True }, Cmd.none )

@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-from server._config import ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_ROLE_NAME, ROLES
+from x5learn_server._config import ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_ROLE_NAME, ROLES
 
 engine = None
 db_session = None

@@ -1,4 +1,4 @@
-from server.db.database import Base
+from x5learn_server.db.database import Base
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy import Boolean, DateTime, Column, Integer, \

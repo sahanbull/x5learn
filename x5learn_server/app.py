@@ -104,7 +104,7 @@ def api_entity_descriptions():
                 # print('WARNING: entity', entity_id, 'has no description.')
                 descriptions[entity_id] = '(Description unavailable)'
     except KeyError:
-        print('Error trying to retrieve entity descriptions from wikidata. The server responded with:')
+        print('Error trying to retrieve entity descriptions from wikidata. The x5learn_server responded with:')
         print(response)
         print('We sent the following ids:', ','.join(entity_ids))
     return jsonify(descriptions)
@@ -323,7 +323,7 @@ def search_suggestions(text):
 #     return project_folder() + 'assets/img/' + image_filename(resource_url)
 
 # def thumbnail_local_path_2(resource_url):
-#     return project_folder() + 'server/static/dist/img/' + image_filename(resource_url)
+#     return project_folder() + 'x5learn_server/static/dist/img/' + image_filename(resource_url)
 
 # def thumbnail_url(resource_url):
 #     return 'dist/img/' + image_filename(resource_url)

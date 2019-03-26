@@ -1,15 +1,15 @@
 from flask import Flask
 from flask_security import SQLAlchemySessionUserDatastore, Security
 
-from db.database import get_or_create_session_db
+from server.db.database import get_or_create_session_db
 
 TEST_DB_URI = 'sqlite:////home/in4maniac/Documents/Code/x5gon_project/databases/x5learn_test.db'
 
 def test_initiate_login_table_and_admin_profile():
     get_or_create_session_db(TEST_DB_URI)
 
-    from models import UserLogin, Role
-    from db.database import db_session, initiate_login_table_and_admin_profile
+    from server.models import UserLogin, Role
+    from server.db.database import db_session, initiate_login_table_and_admin_profile
 
 
     app = Flask(__name__)

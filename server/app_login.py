@@ -3,14 +3,14 @@ from flask_mail import Mail
 from flask_security import Security, login_required, SQLAlchemySessionUserDatastore
 
 # instantiate the user management db classes
-from db.database import get_or_create_session_db
+from server.db.database import get_or_create_session_db
 from server._config import DB_ENGINE_URI
 
 get_or_create_session_db(DB_ENGINE_URI)
 
-from db.database import db_session
+from server.db.database import db_session
 
-from models import UserLogin, Role
+from server.models import UserLogin, Role
 
 # Create app
 app = Flask(__name__)
@@ -42,7 +42,7 @@ mail.init_app(app)
 # create database when starting the app
 @app.before_first_request
 def initiate_login_db():
-    from db.database import initiate_login_table_and_admin_profile
+    from server.db.database import initiate_login_table_and_admin_profile
     initiate_login_table_and_admin_profile(user_datastore)
 
 # Views

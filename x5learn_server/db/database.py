@@ -36,7 +36,7 @@ def init_db():
     global Base
     global engine
 
-    import models
+    import x5learn_server.models
     Base.metadata.create_all(bind=engine)
 
 

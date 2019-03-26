@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-from _config import ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_ROLE_NAME, ROLES
+from server._config import ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_ROLE_NAME, ROLES
 
 engine = None
 db_session = None
@@ -41,7 +41,6 @@ def init_db():
 
 
 def initiate_login_table_and_admin_profile(user_datastore):
-
     init_db()
 
     # create roles

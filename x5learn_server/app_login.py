@@ -47,6 +47,7 @@ def initiate_login_db():
 
 # Views
 @app.route('/')
+@login_required
 def home():
     return 'Here you go!'
 

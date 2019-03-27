@@ -30,7 +30,6 @@ app.config['SECURITY_CHANGEABLE'] = True
 app.config['SECURITY_CHANGE_URL'] = '/password_change'
 app.config['SECURITY_SEND_PASSWORD_CHANGE_EMAIL'] = False
 
-
 # Setup Flask-Security
 user_datastore = SQLAlchemySessionUserDatastore(db_session,
                                                 UserLogin, Role)
@@ -45,11 +44,13 @@ def initiate_login_db():
     from x5learn_server.db.database import initiate_login_table_and_admin_profile
     initiate_login_table_and_admin_profile(user_datastore)
 
+
 # Views
 @app.route('/')
 @login_required
 def home():
     return 'Here you go!'
 
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0', port=6000, debug=True)

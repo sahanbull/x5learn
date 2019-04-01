@@ -230,7 +230,7 @@ viewOerCard model recommendedFragments position barId oer =
       onPress =
         case model.inspectorState of
           Nothing ->
-            Just (InspectSearchResult oer)
+            Just (InspectSearchResult oer 0)
 
           _ ->
             Nothing

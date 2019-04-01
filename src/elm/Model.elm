@@ -62,6 +62,7 @@ type alias SearchState =
 
 type alias InspectorState =
   { oer : Oer
+  , fragmentStart : Float
   , activeMenu : Maybe InspectorMenu
   }
 
@@ -185,9 +186,9 @@ newSearch str =
   }
 
 
-newInspectorState : Oer -> InspectorState
-newInspectorState oer =
-  InspectorState oer Nothing
+newInspectorState : Oer -> Float -> InspectorState
+newInspectorState oer fragmentStart =
+  InspectorState oer fragmentStart Nothing
 
 
 hasVideo : Oer -> Bool
@@ -244,3 +245,28 @@ isFromVideoLecturesNet oer =
 isInPlaylist : Oer -> Playlist -> Bool
 isInPlaylist oer playlist =
   List.member oer playlist.oers
+
+
+durationInSecondsFromOer : Oer -> Int
+durationInSecondsFromOer {duration} =
+  let
+      parts =
+        duration
+        |> String.split ":"
+
+      minutes =
+        parts
+        |> List.head
+        |> Maybe.withDefault ""
+        |> String.toInt
+        |> Maybe.withDefault 0
+
+      seconds =
+        parts
+        |> List.drop 1
+        |> List.head
+        |> Maybe.withDefault ""
+        |> String.toInt
+        |> Maybe.withDefault 0
+  in
+      minutes * 60 + seconds

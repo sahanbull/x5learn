@@ -63,8 +63,8 @@ update msg ({nav} as model) =
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, Cmd.none )
 
-    InspectSearchResult oer ->
-      ( { model | inspectorState = Just <| newInspectorState oer, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation modalId)
+    InspectSearchResult oer fragmentStart ->
+      ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation modalId)
 
     UninspectSearchResult ->
       ( { model | inspectorState = Nothing}, Cmd.none)

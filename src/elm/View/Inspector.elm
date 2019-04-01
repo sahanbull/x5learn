@@ -109,7 +109,11 @@ inspectorContentDefault model inspectorState oer =
             none
 
           Just youtubeId ->
-            embedYoutubePlayer youtubeId
+            let
+                startTime =
+                  inspectorState.fragmentStart * (durationInSecondsFromOer oer |> toFloat) |> floor
+            in
+                embedYoutubePlayer youtubeId startTime
 
       description =
         oer.description

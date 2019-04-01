@@ -117,7 +117,9 @@ inspectorContentDefault model inspectorState oer =
 
       description =
         oer.description
-        |> bodyWrap []
+        |> String.split("\n")
+        |> List.map (bodyWrap [])
+        |> column [ spacing 7, height (shrink |> maximum 250), scrollbarY ]
 
       body =
         [ player

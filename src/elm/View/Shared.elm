@@ -516,10 +516,10 @@ viewEntityButton model chunkPopup entity =
 viewEntityPopup model chunkPopup entityPopup entityTitle =
   [ ("Define", ShowFloatingDefinition (entityPopup.entityId))
   , ("Search", TriggerSearch entityTitle)
-  , ("Share", ClosePopup)
-  , ("Bookmark", ClosePopup)
-  , ("Add to interests", ClosePopup)
-  , ("Mark as known", ClosePopup)
+  -- , ("Share", ClosePopup)
+  -- , ("Bookmark", ClosePopup)
+  -- , ("Add to interests", ClosePopup)
+  -- , ("Mark as known", ClosePopup)
   ]
   |> List.map (entityActionButton chunkPopup entityPopup)
   |> menuColumn []

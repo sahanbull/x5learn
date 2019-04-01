@@ -128,7 +128,7 @@ inspectorContentDefault model inspectorState oer =
       footer =
         [ providerLink
         , none |> el [ width fill ]
-        , actionButtons
+        -- , actionButtons
         ]
 
       fragmentsBar =
@@ -152,12 +152,12 @@ inspectorContentDefault model inspectorState oer =
         -- ]
         -- |> row [ alignLeft, width fill, onClick UninspectSearchResult ]
 
-      actionButtons =
-        [ actionButtonWithIcon IconLeft "share" "SHARE" Nothing
-        , actionButtonWithIcon IconLeft "bookmarklist_add" "SAVE" <| Just <| OpenSaveToBookmarklistMenu inspectorState
-        , footerButton <| svgIcon "more_vert"
-        ]
-        |> row [ spacing 20, alignRight ]
+      -- actionButtons =
+      --   [ actionButtonWithIcon IconLeft "share" "SHARE" Nothing
+      --   , actionButtonWithIcon IconLeft "bookmarklist_add" "SAVE" <| Just <| OpenSaveToBookmarklistMenu inspectorState
+      --   , footerButton <| svgIcon "more_vert"
+      --   ]
+      --   |> row [ spacing 20, alignRight ]
   in
       { header = header, body = body, footer = footer, fixed = fragmentsBar }
 

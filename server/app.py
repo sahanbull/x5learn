@@ -24,17 +24,17 @@ def home():
 def search():
     return render_template('home.html')
 
-@app.route("/next_steps")
-def next_steps():
-    return render_template('home.html')
+# @app.route("/next_steps")
+# def next_steps():
+#     return render_template('home.html')
 
-@app.route("/journeys")
-def journeys():
-    return render_template('home.html')
+# @app.route("/journeys")
+# def journeys():
+#     return render_template('home.html')
 
-@app.route("/gains")
-def gains():
-    return render_template('home.html')
+# @app.route("/gains")
+# def gains():
+#     return render_template('home.html')
 
 @app.route("/bookmarks")
 def bookmarks():
@@ -44,13 +44,13 @@ def bookmarks():
 def history():
     return render_template('home.html')
 
-@app.route("/notes")
-def notes():
-    return render_template('home.html')
+# @app.route("/notes")
+# def notes():
+#     return render_template('home.html')
 
-@app.route("/peers")
-def peers():
-    return render_template('home.html')
+# @app.route("/peers")
+# def peers():
+#     return render_template('home.html')
 
 
 @app.route("/api/v1/search/", methods=['GET'])

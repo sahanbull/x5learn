@@ -72,6 +72,10 @@ paddingLeft px =
   paddingEach { allSidesZero | left = px }
 
 
+paddingTRBL t r b l =
+  paddingEach { top = t, right = r, bottom = b, left = l }
+
+
 bigButtonPadding =
   paddingXY 13 10
 

@@ -38,7 +38,6 @@ type Msg
   | SetPopup Popup
   | ClosePopup
   | CloseInspector
-  | ShowFloatingDefinition String
   | TriggerSearch String
   | ClickedOnDocument
   | SelectSuggestion String

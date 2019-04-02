@@ -499,36 +499,31 @@ viewEntityButton model chunkPopup entity =
             Just entityPopup ->
               -- if chunkPopup.chunk == chunk && entityPopup.entityId == entityId then
               if entityPopup.entityId == entity.id then
-                superLightBackgorund :: (viewEntityPopup model chunkPopup entityPopup entity.title)
-              else
-                []
-
-        floatingDefinition =
-          case model.floatingDefinition of
-            Nothing ->
-              []
-
-            Just id ->
-              if id == entity.id then
-                [ viewFloatingDefinition model entity ]
+                superLightBackground :: (viewEntityPopup model chunkPopup entityPopup entity)
               else
                 []
     in
-        button ([ onClickNoBubble NoOp, padding 5, width fill, popupOnMouseEnter (ChunkOnBar { chunkPopup | entityPopup = Just { entityId = entity.id, hoveringAction = Nothing } }) ] ++ backgroundAndSubmenu ++ floatingDefinition) { onPress = Nothing, label = label }
+        button ([ padding 5, width fill, popupOnMouseEnter (ChunkOnBar { chunkPopup | entityPopup = Just { entityId = entity.id, hoveringAction = Nothing } }) ] ++ backgroundAndSubmenu) { onPress = Nothing, label = label }
 
 
-viewEntityPopup model chunkPopup entityPopup entityTitle =
-  [ ("Define", ShowFloatingDefinition (entityPopup.entityId))
-  , ("Search", TriggerSearch entityTitle)
-  -- , ("Share", ClosePopup)
-  -- , ("Bookmark", ClosePopup)
-  -- , ("Add to interests", ClosePopup)
-  -- , ("Mark as known", ClosePopup)
-  ]
-  |> List.map (entityActionButton chunkPopup entityPopup)
-  |> menuColumn []
-  |> (if isHoverMenuNearRightEdge model 300 then onLeft else onRight)
-  |> List.singleton
+viewEntityPopup model chunkPopup entityPopup entity =
+  let
+      actionButtons =
+        [ ("Search", TriggerSearch entity.title)
+        -- , ("Share", ClosePopup)
+        -- , ("Bookmark", ClosePopup)
+        -- , ("Add to interests", ClosePopup)
+        -- , ("Mark as known", ClosePopup)
+        ]
+        |> List.map (entityActionButton chunkPopup entityPopup)
+
+      items =
+        [ viewDefinition model entity ] ++ actionButtons
+  in
+      items
+      |> menuColumn []
+      |> (if isHoverMenuNearRightEdge model 300 then onLeft else onRight)
+      |> List.singleton
 
 
 entityActionButton chunkPopup entityPopup (title, clickAction) =
@@ -546,44 +541,28 @@ entityActionButton chunkPopup entityPopup (title, clickAction) =
         hoverAction :: ([ width fill ] ++ background)
   in
       actionButtonWithoutIcon attrs title (Just clickAction)
-  -- let
-      -- onHover =
-      --   popupOnMouseEnter <| ChunkOnBar { chunkPopup | entityPopup = Just { entityPopup | hoveringAction = True } }
-
-      -- popup =
-      --   if entityPopup.hoveringAction then
-      --     [ [ menuButtonDisabled "(Definition goes here)" ] |> menuColumn |> el [ moveUp 0, moveRight 0 ] |> onRight ]
-      --   else
-      --     []
-  -- in
-  --     onHover :: popup
 
 
-viewFloatingDefinition model entity =
+viewDefinition model entity =
   let
+      unavailable =
+        "(Description unavailable)"
+        |> captionNowrap []
+
       blurb =
         case model.entityDescriptions |> Dict.get entity.id of
           Nothing ->
-            "(Description unavailable)"
-            |> captionNowrap []
+            unavailable
 
           Just description ->
-            ("“" ++ description ++ "”")
-            |> bodyWrap [ Font.italic ]
-
-      link =
-        newTabLink [] { url = entity.url, label = "Find on Wikipedia" |> bodyNoWrap [] }
-        -- "(Wikidata)"
-        -- |> bodyWrap [ alignRight ]
-        -- |> el [ width fill, alignRight ]
-
-      widthInPx =
-        240
+            if description=="(Description unavailable)" then
+              unavailable
+            else
+              ("“" ++ description ++ "” (Wikidata)")
+              |> bodyWrap [ Font.italic ]
   in
-      [ blurb, link ]
-      |> menuColumn [ width (px widthInPx), padding 10, spacing 16 ]
-      |> el [ width (fill |> maximum 200), moveDown 10, moveRight <| if isHoverMenuNearRightEdge model 400 then -widthInPx else 80 ]
-      |> onRight
+      [ blurb ]
+      |> column [ padding 10, spacing 16, width (px 240) ]
 
 
 fragmentsBarHeight = 16

@@ -34,7 +34,6 @@ type alias Model =
   , popup : Maybe Popup
   , entityDescriptions : Dict String String
   , requestingEntityDescriptions : Bool
-  , floatingDefinition : Maybe String
   , tagClouds : Dict String (List String)
   , searchSuggestions : List String
   , selectedSuggestion : String
@@ -160,7 +159,6 @@ initialModel nav flags =
   , popup = Nothing
   , entityDescriptions = Dict.empty
   , requestingEntityDescriptions = False
-  , floatingDefinition = Nothing
   , tagClouds = Dict.empty
   , searchSuggestions = []
   , selectedSuggestion = ""

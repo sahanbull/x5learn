@@ -161,16 +161,13 @@ update msg ({nav} as model) =
       ( { model | bookmarklists = model.bookmarklists |> List.map (\p -> if p.title==playlist.title then { p | oers = p.oers |> List.filter (\o -> o.url /= oer.url) } else p)}, Cmd.none )
 
     SetPopup popup ->
-      ( { model | popup = Just popup } |> closeFloatingDefinition, Cmd.none)
+      ( { model | popup = Just popup }, Cmd.none)
 
     ClosePopup ->
       ( model |> closePopup, Cmd.none )
 
     CloseInspector ->
       ( { model | inspectorState = Nothing }, Cmd.none )
-
-    ShowFloatingDefinition entityId ->
-      ( { model | floatingDefinition = Just entityId }, Cmd.none )
 
     ClickedOnDocument ->
       ( { model | searchSuggestions = [] }, Cmd.none )
@@ -279,9 +276,3 @@ tagCloudFromOer oer =
 closePopup : Model -> Model
 closePopup model =
   { model | popup = Nothing }
-  |> closeFloatingDefinition
-
-
-closeFloatingDefinition : Model -> Model
-closeFloatingDefinition model =
-  { model | floatingDefinition = Nothing }

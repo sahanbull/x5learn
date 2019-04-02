@@ -17,6 +17,7 @@ type alias Model =
   { nav : Nav
   , windowWidth : Int
   , windowHeight : Int
+  , mousePositionXwhenOnChunkTrigger : Float
   , currentTime : Posix
   , searchInputTyping : String
   , searchState : Maybe SearchState
@@ -142,6 +143,7 @@ initialModel nav flags =
   { nav = nav
   , windowWidth = flags.windowWidth
   , windowHeight = flags.windowHeight
+  , mousePositionXwhenOnChunkTrigger = 0
   , currentTime = initialTime
   , searchInputTyping = ""
   , searchState = Nothing

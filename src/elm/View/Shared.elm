@@ -32,7 +32,7 @@ materialScrimBackground =
   Background.color <| rgba 0 0 0 materialScrimAlpha
 
 
-superLightBackgorund =
+superLightBackground =
   Background.color <| rgb255 242 242 242
 
 
@@ -256,7 +256,7 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
 
             background =
               if str == model.selectedSuggestion then
-                [ superLightBackgorund ]
+                [ superLightBackground ]
               else
                 []
 
@@ -538,7 +538,7 @@ entityActionButton chunkPopup entityPopup (title, clickAction) =
 
       background =
         if entityPopup.hoveringAction == Just title then
-          [ superLightBackgorund, width fill ]
+          [ superLightBackground, width fill ]
         else
           []
 

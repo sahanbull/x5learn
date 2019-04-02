@@ -178,8 +178,8 @@ update msg ({nav} as model) =
     SelectSuggestion suggestion ->
       ( { model | selectedSuggestion = suggestion }, Cmd.none )
 
-    MouseMoved ->
-      ( { model | suggestionSelectionOnHoverEnabled = True }, Cmd.none )
+    MouseOverChunkTrigger mousePositionX ->
+      ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX }, Cmd.none )
 
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model

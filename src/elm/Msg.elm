@@ -42,7 +42,7 @@ type Msg
   | TriggerSearch String
   | ClickedOnDocument
   | SelectSuggestion String
-  | MouseMoved
+  | MouseOverChunkTrigger Float
 
 
 subscriptions : Model -> Sub Msg
@@ -68,7 +68,7 @@ subscriptions model =
       , Ports.closePopup (\_ -> ClosePopup)
       , Ports.closeInspector (\_ -> CloseInspector)
       , Ports.clickedOnDocument (\_ -> ClickedOnDocument)
-      , Ports.mouseMoved (\_ -> MouseMoved)
+      , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
       , Time.every 500 ClockTick
       ] ++ anim)
       |> Sub.batch

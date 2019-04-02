@@ -38,7 +38,7 @@ function setupPorts(app){
     }
   });
 
-  setupClickHandlers();
+  setupEventHandlers();
 }
 
 
@@ -61,18 +61,18 @@ function startAnimationWhenModalIsReady(modalId) {
 }
 
 
-function setupClickHandlers(){
+function setupEventHandlers(){
   document.addEventListener("click", function(e){
     if(!e.target.closest('.InspectorAutoclose')){
       app.ports.closeInspector.send(12345);
     }
     app.ports.clickedOnDocument.send(12345);
   });
-  document.addEventListener("mousemove", function(e){
-    now = new Date().getTime();
-    if(now-timeOfLastMouseMove > 200){//no need to notify Elm of every mouse event. Only transmit the beginning of gestures.
-      app.ports.mouseMoved.send(12345);
+
+  document.addEventListener("mouseover", function(e){
+    element = event.target;
+    if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" ChunkTrigger ") > -1 ){
+      app.ports.mouseOverChunkTrigger.send(e.pageX);
     }
-    timeOfLastMouseMove = now;
   });
 }

@@ -448,7 +448,7 @@ viewFragmentsBar model oer recommendedFragments barWidth barId =
                   []
         in
             none
-            |> el ([ width <| px <| floor <| chunk.length * (toFloat barWidth) + 1, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler )
+            |> el ([ htmlClass "ChunkTrigger", width <| px <| floor <| chunk.length * (toFloat barWidth) + 1, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler )
             |> inFront
 
       chunkTriggers =
@@ -523,7 +523,7 @@ viewEntityPopup model chunkPopup entityPopup entityTitle =
   ]
   |> List.map (entityActionButton chunkPopup entityPopup)
   |> menuColumn []
-  |> onRight
+  |> (if isHoverMenuNearRightEdge model 300 then onLeft else onRight)
   |> List.singleton
 
 
@@ -572,11 +572,18 @@ viewFloatingDefinition model entity =
         -- "(Wikidata)"
         -- |> bodyWrap [ alignRight ]
         -- |> el [ width fill, alignRight ]
+
+      widthInPx =
+        240
   in
       [ blurb, link ]
-      |> menuColumn [ width (px 240), padding 10, spacing 16 ]
-      |> el [ width (fill |> maximum 200), moveDown 10, moveRight 80 ]
+      |> menuColumn [ width (px widthInPx), padding 10, spacing 16 ]
+      |> el [ width (fill |> maximum 200), moveDown 10, moveRight <| if isHoverMenuNearRightEdge model 400 then -widthInPx else 80 ]
       |> onRight
 
 
 fragmentsBarHeight = 16
+
+
+isHoverMenuNearRightEdge model margin =
+  model.mousePositionXwhenOnChunkTrigger > (toFloat model.windowWidth)-margin

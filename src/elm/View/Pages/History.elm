@@ -28,7 +28,7 @@ import Json.Decode as Decode
 viewHistoryPage : Model -> PageWithModal
 viewHistoryPage model =
   let
-      page =
+      content =
         case model.viewedFragments of
           Nothing ->
             viewLoadingSpinner
@@ -48,5 +48,8 @@ viewHistoryPage model =
                   |> List.singleton
                   |> column [ width fill, height fill, spacing 50 ]
                   |> el [ padding 50, width fill ]
+      page =
+        content
+        |> el [ width fill, paddingBottom 100 ]
   in
       (page, viewInspectorModalOrEmpty model)

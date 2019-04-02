@@ -74,7 +74,8 @@ viewPlaylist model playlist =
     in
         [ playlist.title |> headlineWrap []
         ]
-        |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ cards)
+        -- |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ cards)
+        |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
 
 
 viewOerCard : Model -> List Fragment -> Point -> String -> Oer -> Element Msg

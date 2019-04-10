@@ -104,7 +104,7 @@ inspectorContentDefault model inspectorState oer =
         oer.title |> headlineWrap []
 
       player =
-        case getYoutubeId oer of
+        case getYoutubeVideoId oer of
           Nothing ->
             none
 

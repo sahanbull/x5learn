@@ -21,9 +21,7 @@ function setupPorts(app){
   //   document.execCommand('copy');
   // });
 
-  app.ports.openModalAnimation.subscribe(function(modalId) {
-    startAnimationWhenModalIsReady(modalId)
-  });
+  app.ports.openModalAnimation.subscribe(startAnimationWhenModalIsReady);
 
   app.ports.setBrowserFocus.subscribe(function(elementId) {
     document.activeElement.blur();
@@ -42,10 +40,13 @@ function setupPorts(app){
 }
 
 
-function startAnimationWhenModalIsReady(modalId) {
+function startAnimationWhenModalIsReady(inspectorParams) {
+  console.log('inspectorParams:');
+  console.log(inspectorParams);
+  var modalId = inspectorParams.modalId;
   if(window.document.getElementById(modalId)==null) {
     setTimeout(function() {
-      startAnimationWhenModalIsReady(modalId);
+      startAnimationWhenModalIsReady(inspectorParams);
     }, 15);
   }
   else{
@@ -55,6 +56,9 @@ function startAnimationWhenModalIsReady(modalId) {
     app.ports.modalAnimationStart.send({frameCount: 0, start: positionAndSize(card), end: positionAndSize(modal)});
     setTimeout(function(){
       app.ports.modalAnimationStop.send(12345);
+      if(inspectorParams.videoId.length>0){
+        embedVideo(inspectorParams);
+      }
     }, 110);
     return;
   }

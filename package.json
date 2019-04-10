@@ -14,7 +14,7 @@
     "build:css": "npm run build:css:concat && npm run build:css:minify",
     "build:js:elm": "./node_modules/elm/bin/elm make --optimize --output server/static/dist/js/elm.js src/elm/Main.elm",
     "build:js:elm-dev": "./node_modules/elm/bin/elm make --output server/static/dist/js/elm.js src/elm/Main.elm",
-    "build:js:concat": "mkdir -p server/static/dist/js && concat -o server/static/dist/js/app.js server/static/dist/js/elm.js src/js/port.js && rimraf server/static/dist/js/elm.js",
+    "build:js:concat": "mkdir -p server/static/dist/js && concat -o server/static/dist/js/app.js server/static/dist/js/elm.js src/js/port.js src/js/youtube.js && rimraf server/static/dist/js/elm.js",
     "build:js:minify": "uglifyjs -mco server/static/dist/js/app.min.js server/static/dist/js/app.js && rimraf server/static/dist/js/app.js",
     "build:js": "npm run build:js:elm && npm run build:js:concat && npm run build:js:minify",
     "build:js-dev": "npm run build:js:elm-dev && npm run build:js:concat && npm run build:js:minify",

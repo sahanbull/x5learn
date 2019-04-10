@@ -210,20 +210,8 @@ hoverCircleBackground =
 
 
 embedYoutubePlayer youtubeId startTime =
-  Html.iframe
-  [ Html.Attributes.width playerWidth
-  , Html.Attributes.height 400
-  , Html.Attributes.src ("https://www.youtube.com/embed/" ++ youtubeId ++ "?rel=0&start=" ++ (String.fromInt startTime))
-  , Html.Attributes.attribute "allowfullscreen" "allowfullscreen"
-  , Html.Attributes.attribute "frameborder" "0"
-  -- , Html.Attributes.attribute "enablejsapi" "1"
-  -- , Html.Attributes.attribute "autoplay" "1"
-  -- , Html.Attributes.attribute "mute" "0"
-  -- , Html.Attributes.attribute "start" "10"
-  , Html.Attributes.id "youtube-video"
-  ] []
-  |> html
-  |> el [ paddingTop 5 ]
+  none
+  |> el [ htmlId "player", width (px playerWidth), height (px 390) ]
 
 
 dialogShadow =

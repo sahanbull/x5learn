@@ -193,7 +193,7 @@ newInspectorState oer fragmentStart =
 
 hasVideo : Oer -> Bool
 hasVideo oer =
-  case getYoutubeId oer of
+  case getYoutubeVideoId oer of
     Nothing ->
       isFromVideoLecturesNet oer
 
@@ -201,8 +201,8 @@ hasVideo oer =
       True
 
 
-getYoutubeId : Oer -> Maybe String
-getYoutubeId oer =
+getYoutubeVideoId : Oer -> Maybe String
+getYoutubeVideoId oer =
   oer.url
   |> String.split "="
   |> List.drop 1
@@ -213,7 +213,7 @@ getYoutubeId oer =
 
 
 modalId =
-  "modalId"
+  "inspectorModal"
 
 
 millisSince : Model -> Posix -> Int

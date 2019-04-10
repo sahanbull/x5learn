@@ -1,4 +1,4 @@
-module View.Card exposing (viewPathway, viewPlaylist)
+module View.Card exposing (viewPathway, viewOerGrid, cardHeight, viewOerCard)
 
 import Element exposing (..)
 import Element.Background as Background
@@ -45,7 +45,7 @@ viewPathway model pathway =
 
 
 
-viewPlaylist model playlist =
+viewOerGrid model playlist =
   if playlist.oers |> List.isEmpty then
     none
   else
@@ -72,9 +72,10 @@ viewPlaylist model playlist =
           |> List.reverse
           |> List.map inFront
     in
-        [ playlist.title |> headlineWrap []
+        [ playlist.title |> subheaderWrap [ primaryWhite ]
         ]
-        |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ cards)
+        -- |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ cards)
+        |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
 
 
 viewOerCard : Model -> List Fragment -> Point -> String -> Oer -> Element Msg
@@ -230,7 +231,7 @@ viewOerCard model recommendedFragments position barId oer =
       onPress =
         case model.inspectorState of
           Nothing ->
-            Just (InspectSearchResult oer)
+            Just (InspectSearchResult oer 0)
 
           _ ->
             Nothing

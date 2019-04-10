@@ -63,8 +63,15 @@ update msg ({nav} as model) =
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, Cmd.none )
 
-    InspectSearchResult oer ->
-      ( { model | inspectorState = Just <| newInspectorState oer, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation modalId)
+    InspectSearchResult oer fragmentStart ->
+      let
+          inspectorParams =
+            { modalId = modalId
+            , videoId = getYoutubeVideoId oer |> Maybe.withDefault ""
+            , fragmentStart = fragmentStart
+            }
+      in
+          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation inspectorParams)
 
     UninspectSearchResult ->
       ( { model | inspectorState = Nothing}, Cmd.none)
@@ -161,7 +168,7 @@ update msg ({nav} as model) =
       ( { model | bookmarklists = model.bookmarklists |> List.map (\p -> if p.title==playlist.title then { p | oers = p.oers |> List.filter (\o -> o.url /= oer.url) } else p)}, Cmd.none )
 
     SetPopup popup ->
-      ( { model | popup = Just popup } |> closeFloatingDefinition, Cmd.none)
+      ( { model | popup = Just popup }, Cmd.none)
 
     ClosePopup ->
       ( model |> closePopup, Cmd.none )
@@ -169,17 +176,17 @@ update msg ({nav} as model) =
     CloseInspector ->
       ( { model | inspectorState = Nothing }, Cmd.none )
 
-    ShowFloatingDefinition entityId ->
-      ( { model | floatingDefinition = Just entityId }, Cmd.none )
-
     ClickedOnDocument ->
       ( { model | searchSuggestions = [] }, Cmd.none )
 
     SelectSuggestion suggestion ->
       ( { model | selectedSuggestion = suggestion }, Cmd.none )
 
-    MouseMoved ->
-      ( { model | suggestionSelectionOnHoverEnabled = True }, Cmd.none )
+    MouseOverChunkTrigger mousePositionX ->
+      ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX }, Cmd.none )
+
+    YoutubeSeekTo fragmentStart ->
+      ( model, youtubeSeekTo fragmentStart)
 
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model
@@ -279,9 +286,3 @@ tagCloudFromOer oer =
 closePopup : Model -> Model
 closePopup model =
   { model | popup = Nothing }
-  |> closeFloatingDefinition
-
-
-closeFloatingDefinition : Model -> Model
-closeFloatingDefinition model =
-  { model | floatingDefinition = Nothing }

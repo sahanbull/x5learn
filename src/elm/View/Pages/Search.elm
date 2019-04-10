@@ -38,9 +38,10 @@ viewSearchResults model searchState =
 
     Just [] ->
       -- "Sorry, no results were found for \""++ searchState.lastSearch ++"\"" |> viewCenterNote
-      "No results were found for \"" ++ searchState.lastSearch ++ "\"." |> viewCenterNote
+      "No results were found for \"" ++ searchState.lastSearch ++ "\". Try using the topic suggestions." |> viewCenterNote
 
     Just oers ->
       -- Playlist ("Search results for \""++ searchState.lastSearch ++"\"") oers
       Playlist ((oers |> List.length |> String.fromInt) ++ " result" ++ (if List.length oers == 1 then "" else "s") ++ " for \""++ searchState.lastSearch ++"\"") oers
-      |> viewPlaylist model
+      |> viewOerGrid model
+      |> el [ width fill, paddingBottom 100 ]

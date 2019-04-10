@@ -32,7 +32,7 @@ materialScrimBackground =
   Background.color <| rgba 0 0 0 materialScrimAlpha
 
 
-superLightBackgorund =
+superLightBackground =
   Background.color <| rgb255 242 242 242
 
 
@@ -70,6 +70,10 @@ paddingBottom px =
 
 paddingLeft px =
   paddingEach { allSidesZero | left = px }
+
+
+paddingTRBL t r b l =
+  paddingEach { top = t, right = r, bottom = b, left = l }
 
 
 bigButtonPadding =
@@ -205,18 +209,9 @@ hoverCircleBackground =
   htmlClass "hoverCircleBackground"
 
 
-embedYoutubePlayer youtubeId =
-  Html.iframe
-  [ Html.Attributes.width playerWidth
-  , Html.Attributes.height 400
-  , Html.Attributes.src ("https://www.youtube.com/embed/" ++ youtubeId)
-  , Html.Attributes.attribute "allowfullscreen" "allowfullscreen"
-  , Html.Attributes.attribute "frameborder" "0"
-  , Html.Attributes.attribute "enablejsapi" "1"
-  , Html.Attributes.id "youtube-video"
-  ] []
-  |> html
-  |> el [ paddingTop 5 ]
+embedYoutubePlayer youtubeId startTime =
+  none
+  |> el [ htmlId "player", width (px playerWidth), height (px 410) ]
 
 
 dialogShadow =
@@ -249,7 +244,7 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
 
             background =
               if str == model.selectedSuggestion then
-                [ superLightBackgorund ]
+                [ superLightBackground ]
               else
                 []
 
@@ -435,9 +430,20 @@ viewFragmentsBar model oer recommendedFragments barWidth barId =
                  [ viewChunkPopup model chunkPopup |> inFront ]
               else
                 []
+
+            clickHandler =
+              case model.inspectorState of
+                Nothing ->
+                  [ onClickNoBubble <| InspectSearchResult oer chunk.start ]
+
+                _ ->
+                  if hasVideo oer then
+                    [ onClickNoBubble <| YoutubeSeekTo chunk.start ]
+                  else
+                    []
         in
             none
-            |> el ([ width <| px <| floor <| chunk.length * (toFloat barWidth) + 1, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup )
+            |> el ([ htmlClass "ChunkTrigger", width <| px <| floor <| chunk.length * (toFloat barWidth) + 1, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler )
             |> inFront
 
       chunkTriggers =
@@ -484,36 +490,31 @@ viewEntityButton model chunkPopup entity =
             Just entityPopup ->
               -- if chunkPopup.chunk == chunk && entityPopup.entityId == entityId then
               if entityPopup.entityId == entity.id then
-                superLightBackgorund :: (viewEntityPopup model chunkPopup entityPopup entity.title)
-              else
-                []
-
-        floatingDefinition =
-          case model.floatingDefinition of
-            Nothing ->
-              []
-
-            Just id ->
-              if id == entity.id then
-                [ viewFloatingDefinition model entity ]
+                superLightBackground :: (viewEntityPopup model chunkPopup entityPopup entity)
               else
                 []
     in
-        button ([ onClickNoBubble NoOp, padding 5, width fill, popupOnMouseEnter (ChunkOnBar { chunkPopup | entityPopup = Just { entityId = entity.id, hoveringAction = Nothing } }) ] ++ backgroundAndSubmenu ++ floatingDefinition) { onPress = Nothing, label = label }
+        button ([ padding 5, width fill, popupOnMouseEnter (ChunkOnBar { chunkPopup | entityPopup = Just { entityId = entity.id, hoveringAction = Nothing } }) ] ++ backgroundAndSubmenu) { onPress = Nothing, label = label }
 
 
-viewEntityPopup model chunkPopup entityPopup entityTitle =
-  [ ("Define", ShowFloatingDefinition (entityPopup.entityId))
-  , ("Search", TriggerSearch entityTitle)
-  , ("Share", ClosePopup)
-  , ("Bookmark", ClosePopup)
-  , ("Add to interests", ClosePopup)
-  , ("Mark as known", ClosePopup)
-  ]
-  |> List.map (entityActionButton chunkPopup entityPopup)
-  |> menuColumn []
-  |> onRight
-  |> List.singleton
+viewEntityPopup model chunkPopup entityPopup entity =
+  let
+      actionButtons =
+        [ ("Search", TriggerSearch entity.title)
+        -- , ("Share", ClosePopup)
+        -- , ("Bookmark", ClosePopup)
+        -- , ("Add to interests", ClosePopup)
+        -- , ("Mark as known", ClosePopup)
+        ]
+        |> List.map (entityActionButton chunkPopup entityPopup)
+
+      items =
+        [ viewDefinition model entity ] ++ actionButtons
+  in
+      items
+      |> menuColumn []
+      |> (if isHoverMenuNearRightEdge model 300 then onLeft else onRight)
+      |> List.singleton
 
 
 entityActionButton chunkPopup entityPopup (title, clickAction) =
@@ -523,7 +524,7 @@ entityActionButton chunkPopup entityPopup (title, clickAction) =
 
       background =
         if entityPopup.hoveringAction == Just title then
-          [ superLightBackgorund, width fill ]
+          [ superLightBackground, width fill ]
         else
           []
 
@@ -531,41 +532,32 @@ entityActionButton chunkPopup entityPopup (title, clickAction) =
         hoverAction :: ([ width fill ] ++ background)
   in
       actionButtonWithoutIcon attrs title (Just clickAction)
-  -- let
-      -- onHover =
-      --   popupOnMouseEnter <| ChunkOnBar { chunkPopup | entityPopup = Just { entityPopup | hoveringAction = True } }
-
-      -- popup =
-      --   if entityPopup.hoveringAction then
-      --     [ [ menuButtonDisabled "(Definition goes here)" ] |> menuColumn |> el [ moveUp 0, moveRight 0 ] |> onRight ]
-      --   else
-      --     []
-  -- in
-  --     onHover :: popup
 
 
-viewFloatingDefinition model entity =
+viewDefinition model entity =
   let
+      unavailable =
+        "(Description unavailable)"
+        |> captionNowrap []
+
       blurb =
         case model.entityDescriptions |> Dict.get entity.id of
           Nothing ->
-            "(Description unavailable)"
-            |> captionNowrap []
+            unavailable
 
           Just description ->
-            ("“" ++ description ++ "”")
-            |> bodyWrap [ Font.italic ]
-
-      link =
-        newTabLink [] { url = entity.url, label = "Find on Wikipedia" |> bodyNoWrap [] }
-        -- "(Wikidata)"
-        -- |> bodyWrap [ alignRight ]
-        -- |> el [ width fill, alignRight ]
+            if description=="(Description unavailable)" then
+              unavailable
+            else
+              ("“" ++ description ++ "” (Wikidata)")
+              |> bodyWrap [ Font.italic ]
   in
-      [ blurb, link ]
-      |> menuColumn [ width (px 240), padding 10, spacing 16 ]
-      |> el [ width (fill |> maximum 200), moveDown 10, moveRight 80 ]
-      |> onRight
+      [ blurb ]
+      |> column [ padding 10, spacing 16, width (px 240) ]
 
 
 fragmentsBarHeight = 16
+
+
+isHoverMenuNearRightEdge model margin =
+  model.mousePositionXwhenOnChunkTrigger > (toFloat model.windowWidth)-margin

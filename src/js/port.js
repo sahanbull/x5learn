@@ -21,9 +21,7 @@ function setupPorts(app){
   //   document.execCommand('copy');
   // });
 
-  app.ports.openModalAnimation.subscribe(function(modalId) {
-    startAnimationWhenModalIsReady(modalId)
-  });
+  app.ports.openModalAnimation.subscribe(startAnimationWhenModalIsReady);
 
   app.ports.setBrowserFocus.subscribe(function(elementId) {
     document.activeElement.blur();
@@ -38,14 +36,20 @@ function setupPorts(app){
     }
   });
 
-  setupClickHandlers();
+  app.ports.youtubeSeekTo.subscribe(function(fragmentStart) {
+    player.seekTo(fragmentStart * player.getDuration());
+    player.playVideo();
+  });
+
+  setupEventHandlers();
 }
 
 
-function startAnimationWhenModalIsReady(modalId) {
+function startAnimationWhenModalIsReady(inspectorParams) {
+  var modalId = inspectorParams.modalId;
   if(window.document.getElementById(modalId)==null) {
     setTimeout(function() {
-      startAnimationWhenModalIsReady(modalId);
+      startAnimationWhenModalIsReady(inspectorParams);
     }, 15);
   }
   else{
@@ -55,24 +59,27 @@ function startAnimationWhenModalIsReady(modalId) {
     app.ports.modalAnimationStart.send({frameCount: 0, start: positionAndSize(card), end: positionAndSize(modal)});
     setTimeout(function(){
       app.ports.modalAnimationStop.send(12345);
+      if(inspectorParams.videoId.length>0){
+        embedVideo(inspectorParams);
+      }
     }, 110);
     return;
   }
 }
 
 
-function setupClickHandlers(){
+function setupEventHandlers(){
   document.addEventListener("click", function(e){
     if(!e.target.closest('.InspectorAutoclose')){
       app.ports.closeInspector.send(12345);
     }
     app.ports.clickedOnDocument.send(12345);
   });
-  document.addEventListener("mousemove", function(e){
-    now = new Date().getTime();
-    if(now-timeOfLastMouseMove > 200){//no need to notify Elm of every mouse event. Only transmit the beginning of gestures.
-      app.ports.mouseMoved.send(12345);
+
+  document.addEventListener("mouseover", function(e){
+    element = event.target;
+    if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" ChunkTrigger ") > -1 ){
+      app.ports.mouseOverChunkTrigger.send(e.pageX);
     }
-    timeOfLastMouseMove = now;
   });
 }

@@ -104,16 +104,22 @@ inspectorContentDefault model inspectorState oer =
         oer.title |> headlineWrap []
 
       player =
-        case getYoutubeId oer of
+        case getYoutubeVideoId oer of
           Nothing ->
             none
 
           Just youtubeId ->
-            embedYoutubePlayer youtubeId
+            let
+                startTime =
+                  inspectorState.fragmentStart * (durationInSecondsFromOer oer |> toFloat) |> floor
+            in
+                embedYoutubePlayer youtubeId startTime
 
       description =
         oer.description
-        |> bodyWrap []
+        |> String.split("\n")
+        |> List.map (bodyWrap [])
+        |> column [ spacing 7, height (shrink |> maximum 250), scrollbarY ]
 
       body =
         [ player
@@ -124,7 +130,7 @@ inspectorContentDefault model inspectorState oer =
       footer =
         [ providerLink
         , none |> el [ width fill ]
-        , actionButtons
+        -- , actionButtons
         ]
 
       fragmentsBar =
@@ -148,12 +154,12 @@ inspectorContentDefault model inspectorState oer =
         -- ]
         -- |> row [ alignLeft, width fill, onClick UninspectSearchResult ]
 
-      actionButtons =
-        [ actionButtonWithIcon IconLeft "share" "SHARE" Nothing
-        , actionButtonWithIcon IconLeft "bookmarklist_add" "SAVE" <| Just <| OpenSaveToBookmarklistMenu inspectorState
-        , footerButton <| svgIcon "more_vert"
-        ]
-        |> row [ spacing 20, alignRight ]
+      -- actionButtons =
+      --   [ actionButtonWithIcon IconLeft "share" "SHARE" Nothing
+      --   , actionButtonWithIcon IconLeft "bookmarklist_add" "SAVE" <| Just <| OpenSaveToBookmarklistMenu inspectorState
+      --   , footerButton <| svgIcon "more_vert"
+      --   ]
+      --   |> row [ spacing 20, alignRight ]
   in
       { header = header, body = body, footer = footer, fixed = fragmentsBar }
 

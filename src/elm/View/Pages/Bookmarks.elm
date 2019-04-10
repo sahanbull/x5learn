@@ -29,7 +29,7 @@ viewBookmarksPage model =
   let
       playlists =
         model.bookmarklists
-        |> List.map (viewPlaylist model)
+        |> List.map (viewOerGrid model)
         |> List.filter (\playlist -> playlist /= none)
 
       page =

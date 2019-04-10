@@ -17,6 +17,7 @@ type alias Model =
   { nav : Nav
   , windowWidth : Int
   , windowHeight : Int
+  , mousePositionXwhenOnChunkTrigger : Float
   , currentTime : Posix
   , searchInputTyping : String
   , searchState : Maybe SearchState
@@ -33,7 +34,6 @@ type alias Model =
   , popup : Maybe Popup
   , entityDescriptions : Dict String String
   , requestingEntityDescriptions : Bool
-  , floatingDefinition : Maybe String
   , tagClouds : Dict String (List String)
   , searchSuggestions : List String
   , selectedSuggestion : String
@@ -62,6 +62,7 @@ type alias SearchState =
 
 type alias InspectorState =
   { oer : Oer
+  , fragmentStart : Float
   , activeMenu : Maybe InspectorMenu
   }
 
@@ -141,6 +142,7 @@ initialModel nav flags =
   { nav = nav
   , windowWidth = flags.windowWidth
   , windowHeight = flags.windowHeight
+  , mousePositionXwhenOnChunkTrigger = 0
   , currentTime = initialTime
   , searchInputTyping = ""
   , searchState = Nothing
@@ -157,7 +159,6 @@ initialModel nav flags =
   , popup = Nothing
   , entityDescriptions = Dict.empty
   , requestingEntityDescriptions = False
-  , floatingDefinition = Nothing
   , tagClouds = Dict.empty
   , searchSuggestions = []
   , selectedSuggestion = ""
@@ -185,14 +186,14 @@ newSearch str =
   }
 
 
-newInspectorState : Oer -> InspectorState
-newInspectorState oer =
-  InspectorState oer Nothing
+newInspectorState : Oer -> Float -> InspectorState
+newInspectorState oer fragmentStart =
+  InspectorState oer fragmentStart Nothing
 
 
 hasVideo : Oer -> Bool
 hasVideo oer =
-  case getYoutubeId oer of
+  case getYoutubeVideoId oer of
     Nothing ->
       isFromVideoLecturesNet oer
 
@@ -200,8 +201,8 @@ hasVideo oer =
       True
 
 
-getYoutubeId : Oer -> Maybe String
-getYoutubeId oer =
+getYoutubeVideoId : Oer -> Maybe String
+getYoutubeVideoId oer =
   oer.url
   |> String.split "="
   |> List.drop 1
@@ -212,7 +213,7 @@ getYoutubeId oer =
 
 
 modalId =
-  "modalId"
+  "inspectorModal"
 
 
 millisSince : Model -> Posix -> Int
@@ -244,3 +245,28 @@ isFromVideoLecturesNet oer =
 isInPlaylist : Oer -> Playlist -> Bool
 isInPlaylist oer playlist =
   List.member oer playlist.oers
+
+
+durationInSecondsFromOer : Oer -> Int
+durationInSecondsFromOer {duration} =
+  let
+      parts =
+        duration
+        |> String.split ":"
+
+      minutes =
+        parts
+        |> List.head
+        |> Maybe.withDefault ""
+        |> String.toInt
+        |> Maybe.withDefault 0
+
+      seconds =
+        parts
+        |> List.drop 1
+        |> List.head
+        |> Maybe.withDefault ""
+        |> String.toInt
+        |> Maybe.withDefault 0
+  in
+      minutes * 60 + seconds

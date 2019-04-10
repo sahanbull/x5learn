@@ -21,7 +21,7 @@ type Msg
   | AnimationTick Posix
   | ChangeSearchText String
   | ResizeBrowser Int Int
-  | InspectSearchResult Oer
+  | InspectSearchResult Oer Float
   | UninspectSearchResult
   | ModalAnimationStart BoxAnimation
   | ModalAnimationStop Int
@@ -38,11 +38,11 @@ type Msg
   | SetPopup Popup
   | ClosePopup
   | CloseInspector
-  | ShowFloatingDefinition String
   | TriggerSearch String
   | ClickedOnDocument
   | SelectSuggestion String
-  | MouseMoved
+  | MouseOverChunkTrigger Float
+  | YoutubeSeekTo Float
 
 
 subscriptions : Model -> Sub Msg
@@ -68,7 +68,7 @@ subscriptions model =
       , Ports.closePopup (\_ -> ClosePopup)
       , Ports.closeInspector (\_ -> CloseInspector)
       , Ports.clickedOnDocument (\_ -> ClickedOnDocument)
-      , Ports.mouseMoved (\_ -> MouseMoved)
+      , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
       , Time.every 500 ClockTick
       ] ++ anim)
       |> Sub.batch

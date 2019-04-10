@@ -1,6 +1,16 @@
-node_modules/
 package-lock.json
-elm-stuff/
-server/static/dist/
+
 __pycache__
+
+# Elm / JavaScript binaries
+node_modules/
+elm-stuff/
+
+# Compiled frontend assets
+server/static/dist/
+
+# OSX temporary files
 .DS_Store
+
+# Developer environment variables
+.env

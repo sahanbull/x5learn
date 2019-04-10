@@ -210,20 +210,8 @@ hoverCircleBackground =
 
 
 embedYoutubePlayer youtubeId startTime =
-  Html.iframe
-  [ Html.Attributes.width playerWidth
-  , Html.Attributes.height 400
-  , Html.Attributes.src ("https://www.youtube.com/embed/" ++ youtubeId ++ "?rel=0&start=" ++ (String.fromInt startTime))
-  , Html.Attributes.attribute "allowfullscreen" "allowfullscreen"
-  , Html.Attributes.attribute "frameborder" "0"
-  -- , Html.Attributes.attribute "enablejsapi" "1"
-  -- , Html.Attributes.attribute "autoplay" "1"
-  -- , Html.Attributes.attribute "mute" "0"
-  -- , Html.Attributes.attribute "start" "10"
-  , Html.Attributes.id "youtube-video"
-  ] []
-  |> html
-  |> el [ paddingTop 5 ]
+  none
+  |> el [ htmlId "player", width (px playerWidth), height (px 410) ]
 
 
 dialogShadow =
@@ -449,7 +437,10 @@ viewFragmentsBar model oer recommendedFragments barWidth barId =
                   [ onClickNoBubble <| InspectSearchResult oer chunk.start ]
 
                 _ ->
-                  []
+                  if hasVideo oer then
+                    [ onClickNoBubble <| YoutubeSeekTo chunk.start ]
+                  else
+                    []
         in
             none
             |> el ([ htmlClass "ChunkTrigger", width <| px <| floor <| chunk.length * (toFloat barWidth) + 1, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler )

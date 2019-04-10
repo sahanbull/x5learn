@@ -42,6 +42,7 @@ type Msg
   | ClickedOnDocument
   | SelectSuggestion String
   | MouseOverChunkTrigger Float
+  | YoutubeSeekTo Float
 
 
 subscriptions : Model -> Sub Msg

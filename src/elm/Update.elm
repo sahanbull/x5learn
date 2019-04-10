@@ -64,7 +64,14 @@ update msg ({nav} as model) =
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, Cmd.none )
 
     InspectSearchResult oer fragmentStart ->
-      ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation modalId)
+      let
+          inspectorParams =
+            { modalId = modalId
+            , videoId = getYoutubeVideoId oer |> Maybe.withDefault ""
+            , fragmentStart = fragmentStart
+            }
+      in
+          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation inspectorParams)
 
     UninspectSearchResult ->
       ( { model | inspectorState = Nothing}, Cmd.none)
@@ -177,6 +184,9 @@ update msg ({nav} as model) =
 
     MouseOverChunkTrigger mousePositionX ->
       ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX }, Cmd.none )
+
+    YoutubeSeekTo fragmentStart ->
+      ( model, youtubeSeekTo fragmentStart)
 
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model

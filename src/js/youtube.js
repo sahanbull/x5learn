@@ -2,7 +2,7 @@ loadYoutubeApiAsynchronously();
 
 
 var player;
-var playerStartSeconds;
+var playerFragmentStart;
 
 
 function loadYoutubeApiAsynchronously(){
@@ -21,8 +21,9 @@ function onYouTubeIframeAPIReady() {
 
 // The API will call this function when the video player is ready.
 function onPlayerReady(event) {
-  event.target.seekTo(playerStartSeconds);
-  event.target.playVideo();
+  player = event.target;
+  player.seekTo(playerFragmentStart * player.getDuration());
+  player.playVideo();
 }
 
 // The API calls this function when the player's state changes.
@@ -34,12 +35,11 @@ function onPlayerStateChange(event) {
 
 
 function embedVideo(inspectorParams){
-  playerStartSeconds = inspectorParams.startSeconds;
+  playerFragmentStart = inspectorParams.fragmentStart;
   player = new YT.Player('player', {
-    height: '390',
+    height: '400',
     width: '720',
     videoId: inspectorParams.videoId,
-    startSeconds: playerStartSeconds,
     events: {
       'onReady': onPlayerReady,
       'onStateChange': onPlayerStateChange

@@ -36,13 +36,16 @@ function setupPorts(app){
     }
   });
 
+  app.ports.youtubeSeekTo.subscribe(function(fragmentStart) {
+    player.seekTo(fragmentStart * player.getDuration());
+    player.playVideo();
+  });
+
   setupEventHandlers();
 }
 
 
 function startAnimationWhenModalIsReady(inspectorParams) {
-  console.log('inspectorParams:');
-  console.log(inspectorParams);
   var modalId = inspectorParams.modalId;
   if(window.document.getElementById(modalId)==null) {
     setTimeout(function() {

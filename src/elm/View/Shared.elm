@@ -211,7 +211,7 @@ hoverCircleBackground =
 
 embedYoutubePlayer youtubeId startTime =
   none
-  |> el [ htmlId "player", width (px playerWidth), height (px 390) ]
+  |> el [ htmlId "player", width (px playerWidth), height (px 410) ]
 
 
 dialogShadow =
@@ -437,7 +437,10 @@ viewFragmentsBar model oer recommendedFragments barWidth barId =
                   [ onClickNoBubble <| InspectSearchResult oer chunk.start ]
 
                 _ ->
-                  []
+                  if hasVideo oer then
+                    [ onClickNoBubble <| YoutubeSeekTo chunk.start ]
+                  else
+                    []
         in
             none
             |> el ([ htmlClass "ChunkTrigger", width <| px <| floor <| chunk.length * (toFloat barWidth) + 1, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler )

@@ -7,7 +7,7 @@ node_modules/
 elm-stuff/
 
 # Compiled frontend assets
-server/static/dist/
+x5learn_server/static/dist/
 
 # OSX temporary files
 .DS_Store

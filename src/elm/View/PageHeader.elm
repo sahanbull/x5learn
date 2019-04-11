@@ -7,6 +7,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
+import Element.Input as Input exposing (button)
 
 import Model exposing (..)
 
@@ -40,9 +41,7 @@ viewPageHeader model =
       loginLogoutSignup =
         case model.session of
           Just (LoggedIn username) ->
-            [ username |> captionNowrap [ alignRight ]
-            , link [ alignRight, paddingXY 15 10 ] { url = "/logout", label = "Log out" |> bodyNoWrap [] }
-            ]
+            [ viewUserMenu model username ]
 
           Just (Guest username) ->
             -- [ "(Guest ID "++username++")" |> captionNowrap [ alignRight ]
@@ -55,3 +54,30 @@ viewPageHeader model =
   in
       [ link [] { url = "/", label = image [ height (px 26) ] { src = imgPath "x5learn_logo.png", description = "X5Learn logo" } } ] ++ loginLogoutSignup
       |> row attrs
+
+
+viewUserMenu model username =
+  let
+      icon =
+        image [ alpha 0.5 ] { src = svgPath "user_default_avatar", description = "user menu" }
+
+      title =
+        "▾" |> captionNowrap [ Font.color grey80 ]
+
+      label =
+        [ icon, title ]
+
+      menu =
+        case model.popup of
+          Just UserMenu ->
+            [ username |> captionNowrap [ padding 15 ]
+            , link [ paddingXY 15 10 ] { url = "/logout", label = "Log out" |> bodyNoWrap [] }
+            ]
+            |> menuColumn [ width <| px 100, Background.color white, moveLeft 30 ]
+            |> below
+            |> List.singleton
+
+          _ ->
+            []
+  in
+      button ([ htmlClass "PopupAutoclose", alignRight ] ++ menu) { onPress = Just <| SetPopup UserMenu, label = label |> row [ width fill, paddingXY 12 3, spacing 5 ]}

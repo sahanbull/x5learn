@@ -38,7 +38,7 @@ init flags url key =
   let
       (model, cmd) =
         initialModel (Nav url key) flags
-        |> update (UrlChanged url) -- ensure that subpage-specific state is loaded when starting on a subpage
+        |> update (Initialized url) -- ensure that subpage-specific state is loaded when starting on a subpage
   in
       ( model, [ cmd, requestViewedFragments ] |> Cmd.batch )
 
@@ -47,31 +47,29 @@ view : Model -> Browser.Document Msg
 view model =
   let
       (body, modal) =
-        case model.nav.url.path of
-          "/next_steps" ->
-            viewNextStepsPage model |> withNavigationDrawer model
+        if model.session == Nothing then
+          (viewLoadingSpinner, [])
+        else
+          case model.nav.url.path of
+            "/next_steps" ->
+              viewNextStepsPage model |> withNavigationDrawer model
 
-          "/gains" ->
-            viewGainsPage model |> withNavigationDrawer model
+            "/gains" ->
+              viewGainsPage model |> withNavigationDrawer model
 
-          "/bookmarks" ->
-            viewBookmarksPage model |> withNavigationDrawer model
+            "/bookmarks" ->
+              viewBookmarksPage model |> withNavigationDrawer model
 
-          "/history" ->
-            viewHistoryPage model |> withNavigationDrawer model
+            "/history" ->
+              viewHistoryPage model |> withNavigationDrawer model
 
-          -- "/search" ->
-          _ ->
-            case model.searchState of
-              Nothing ->
-                (viewHomePage model, [])
+            _ ->
+              case model.searchState of
+                Nothing ->
+                  (viewHomePage model, [])
 
-              Just searchState ->
-                viewSearchPage model searchState |> withNavigationDrawer model
-
-          -- _ ->
-            -- (viewCenterNote "Coming soon" |> List.singleton |> column [ width fill, height fill ], [])
-            -- |> withNavigationDrawer model
+                Just searchState ->
+                  viewSearchPage model searchState |> withNavigationDrawer model
 
       header =
         viewPageHeader model

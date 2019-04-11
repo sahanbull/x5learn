@@ -15,6 +15,7 @@ import Animation exposing (..)
 
 type alias Model =
   { nav : Nav
+  , session : Maybe Session
   , windowWidth : Int
   , windowHeight : Int
   , mousePositionXwhenOnChunkTrigger : Float
@@ -137,9 +138,15 @@ type InspectorMenu
   = SaveToBookmarklistMenu
 
 
+type Session
+  = LoggedIn String
+  | Guest String
+
+
 initialModel : Nav -> Flags -> Model
 initialModel nav flags =
   { nav = nav
+  , session = Nothing
   , windowWidth = flags.windowWidth
   , windowHeight = flags.windowHeight
   , mousePositionXwhenOnChunkTrigger = 0
@@ -270,3 +277,7 @@ durationInSecondsFromOer {duration} =
         |> Maybe.withDefault 0
   in
       minutes * 60 + seconds
+
+
+isLoggedIn model =
+  model.session == Just LoggedIn

@@ -1,4 +1,6 @@
-from flask import Flask, jsonify, render_template, url_for, request
+from flask import Flask, jsonify, render_template, request, session
+from flask_mail import Mail
+from flask_security import Security, login_required, SQLAlchemySessionUserDatastore, current_user
 import urllib
 import json
 import http.client
@@ -9,16 +11,75 @@ import re
 import csv
 from fuzzywuzzy import fuzz
 from collections import defaultdict
+from random import randint
 
-app = Flask( __name__ )
+# instantiate the user management db classes
+from x5learn_server.db.database import get_or_create_session_db
+from x5learn_server._config import DB_ENGINE_URI
 
+get_or_create_session_db(DB_ENGINE_URI)
+
+from x5learn_server.db.database import db_session
+
+from x5learn_server.models import UserLogin, Role
+
+# Create app
+app = Flask(__name__)
+mail = Mail()
+
+app.config['DEBUG'] = True
+app.config['SECRET_KEY'] = 'super-secret'
+app.config['SECURITY_PASSWORD_HASH'] = "plaintext"
+
+# user registration configs
+app.config['SECURITY_REGISTERABLE'] = True
+app.config['SECURITY_REGISTER_URL'] = '/signup'
+app.config['SECURITY_SEND_REGISTER_EMAIL'] = False
+
+# user password configs
+app.config['SECURITY_CHANGEABLE'] = True
+app.config['SECURITY_CHANGE_URL'] = '/password_change'
+app.config['SECURITY_SEND_PASSWORD_CHANGE_EMAIL'] = False
+
+# Setup Flask-Security
+user_datastore = SQLAlchemySessionUserDatastore(db_session,
+                                                UserLogin, Role)
+
+security = Security(app, user_datastore)
+mail.init_app(app)
+
+
+# Initial OER data from CSV files
 loaded_oers = {}
 all_entity_titles = set([])
+
+
+
+# create database when starting the app
+@app.before_first_request
+def initiate_login_db():
+    from x5learn_server.db.database import initiate_login_table_and_admin_profile
+    initiate_login_table_and_admin_profile(user_datastore)
 
 
 @app.route("/")
 def home():
     return render_template('home.html')
+
+@app.route("/login")
+def login():
+    return render_template('security/login_user.html')
+
+@app.route("/signup")
+def signup():
+    return render_template('security/register_user.html')
+
+@app.route("/logout")
+# @login_required
+def logout():
+    print("LOGOUT!")
+    logout_user()
+    return redirect("/")
 
 @app.route("/search")
 def search():
@@ -52,6 +113,22 @@ def history():
 # def peers():
 #     return render_template('home.html')
 
+
+@app.route("/api/v1/session/", methods=['GET'])
+def api_session():
+    # setup_initial_data_if_needed()
+    if current_user.is_authenticated:
+        username = 'User_'+str(current_user.get_id())
+        return jsonify({'loggedIn': username})
+    else:
+        username = request.cookies.get('x5learn_guest_pseudonym')
+        print('username in cookie:', username)
+        if username==None or username=='':
+            username = 'Anonymous_'+str(randint(1,1000000))
+        print('username:', username)
+        resp = jsonify({'guest': username})
+        resp.set_cookie('x5learn_guest_pseudonym', username)
+        return resp
 
 @app.route("/api/v1/search/", methods=['GET'])
 def api_search():
@@ -204,6 +281,13 @@ def load_oers_from_csv_file():
     print('loading local OER data...')
     with open('/Users/stefan/x5/data/scenario1/oers.csv', newline='') as f:
         for oer in csv.DictReader(f, delimiter='\t'):
+
+            # DEBUG
+            if len(loaded_oers) > 20:
+                print('WARNING')
+                print('Loaded a subet of OER data to speed up debugging')
+                return
+
             url = oer['url']
             if url in loaded_oers:
                 continue # omit duplicates
@@ -228,6 +312,11 @@ def load_wikichunks_from_json_files():
         with open(dir_path+filename, newline='') as f:
             for line in f:
                 chunk = json.loads(line)
+
+                #DEBUG
+                if chunk['videoid'] not in loaded_oers:
+                    continue
+
                 oer = loaded_oers[chunk['videoid']]
                 url = oer['url']
                 if not url in chunkdata:
@@ -341,4 +430,4 @@ def search_suggestions(text):
 
 
 if __name__ == ' __main__':
-    app.run()
+    app.run(host='0.0.0.0', port=6001, debug=True)

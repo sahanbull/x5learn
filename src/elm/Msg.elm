@@ -14,7 +14,7 @@ import Model exposing (..)
 import Ports
 
 type Msg
-  = NoOp
+  = Initialized Url.Url
   | LinkClicked Browser.UrlRequest
   | UrlChanged Url.Url
   | ClockTick Posix
@@ -25,6 +25,7 @@ type Msg
   | UninspectSearchResult
   | ModalAnimationStart BoxAnimation
   | ModalAnimationStop Int
+  | RequestSession (Result Http.Error Session)
   | RequestOerSearch (Result Http.Error (List Oer))
   | RequestNextSteps (Result Http.Error (List Pathway))
   | RequestViewedFragments (Result Http.Error (List Fragment))

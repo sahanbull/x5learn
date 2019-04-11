@@ -22,13 +22,20 @@ import Request exposing (..)
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg ({nav} as model) =
   case msg of
-    NoOp ->
-      (model, Cmd.none)
+    Initialized url ->
+      let
+          (newModel, cmd) =
+            model |> update (UrlChanged url)
+      in
+          (newModel, [ cmd, requestSession ] |> Cmd.batch )
 
     LinkClicked urlRequest ->
       case urlRequest of
         Browser.Internal url ->
-          ( model |> closePopup, Navigation.pushUrl model.nav.key (Url.toString url) )
+          if List.member (url.path |> String.dropLeft 1) ("login signup logout" |> String.split " ") then
+            ( model |> closePopup, Navigation.load (Url.toString url) )
+          else
+            ( model |> closePopup, Navigation.pushUrl model.nav.key (Url.toString url) )
 
         Browser.External href ->
           ( model |> closePopup, Navigation.load href )
@@ -81,6 +88,16 @@ update msg ({nav} as model) =
 
     ModalAnimationStop dummy ->
       ( { model | modalAnimation = Nothing, animationsPending = model.animationsPending |> Set.remove modalId }, Cmd.none )
+
+    RequestSession (Ok session) ->
+      ( { model | session = Just session }, Cmd.none )
+
+    RequestSession (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestSession"
+      -- in
+      ( { model | userMessage = Just "There was a problem requesting user data. Please try again later." }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
       ( model |> updateSearch (insertSearchResults oers) |> includeEntityIds oers, [ Navigation.pushUrl nav.key "/search", setBrowserFocus "SearchField" ] |> Cmd.batch )

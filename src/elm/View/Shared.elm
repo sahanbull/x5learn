@@ -96,10 +96,6 @@ allSidesZero =
   }
 
 
-navLink url label =
-  link [] { url = url, label = label }
-
-
 wrapText attrs str =
   [ text str ] |> paragraph attrs
 

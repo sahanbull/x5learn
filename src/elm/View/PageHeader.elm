@@ -30,12 +30,28 @@ viewPageHeader model =
         [ width fill
         , height (px pageHeaderHeight)
         , spacing 20
-        , paddingEach { allSidesZero | top = 0, left = 16 }
+        , paddingEach { allSidesZero | top = 0, left = 16, right = 16 }
         , Background.color <| rgb 1 1 1
         , borderBottom 1
         , Border.color <| rgb 0.8 0.8 0.8
         ] ++ userMessage
+
+
+      loginLogoutSignup =
+        case model.session of
+          Just (LoggedIn username) ->
+            [ username |> captionNowrap [ alignRight ]
+            , link [ alignRight, paddingXY 15 10 ] { url = "/logout", label = "Log out" |> bodyNoWrap [] }
+            ]
+
+          Just (Guest username) ->
+            -- [ "(Guest ID "++username++")" |> captionNowrap [ alignRight ]
+            [ link [ alignRight, paddingXY 15 10 ] { url = "/login", label = "Log in" |> bodyNoWrap [] }
+            , link [ alignRight, paddingXY 15 10 ] { url = "/signup", label = "Sign up" |> bodyNoWrap [] }
+            ]
+
+          _ ->
+            []
   in
-      [ link [] { url = "/", label = image [ height (px 26) ] { src = imgPath "x5learn_logo.png", description = "X5Learn logo" } }
-      ]
+      [ link [] { url = "/", label = image [ height (px 26) ] { src = imgPath "x5learn_logo.png", description = "X5Learn logo" } } ] ++ loginLogoutSignup
       |> row attrs

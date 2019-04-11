@@ -1,4 +1,4 @@
-module Request exposing (searchOers, requestNextSteps, requestViewedFragments, requestGains, requestEntityDescriptions, requestSearchSuggestions)
+module Request exposing (requestSession, searchOers, requestNextSteps, requestViewedFragments, requestGains, requestEntityDescriptions, requestSearchSuggestions)
 
 import Http exposing (expectStringResponse)
 import Json.Decode exposing (Value,map,map2,map3,map8,field,bool,int,float,string,list,dict,oneOf,maybe,nullable)
@@ -14,6 +14,18 @@ import Msg exposing (..)
 
 apiRoot =
   "api/v1"
+
+
+requestSession : Cmd Msg
+requestSession =
+  let
+      encoded =
+        Url.Builder.absolute [ apiRoot, "session/" ] []
+  in
+      Http.get
+        { url = encoded
+        , expect = Http.expectJson RequestSession sessionDecoder
+        }
 
 
 searchOers : String -> Cmd Msg
@@ -86,6 +98,13 @@ requestEntityDescriptions entityIds =
         { url = encoded
         , expect = Http.expectJson RequestEntityDescriptions (dict string)
         }
+
+
+sessionDecoder =
+  oneOf
+    [ map LoggedIn (field "loggedIn" string)
+    , map Guest (field "guest" string)
+    ]
 
 
 gainDecoder =

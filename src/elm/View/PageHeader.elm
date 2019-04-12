@@ -73,8 +73,8 @@ viewUserMenu model username =
             [ username |> captionNowrap [ padding 15 ]
             , link [ paddingXY 15 10 ] { url = "/logout", label = "Log out" |> bodyNoWrap [] }
             ]
-            |> menuColumn [ width <| px 100, Background.color white, moveLeft 30 ]
-            |> below
+            |> menuColumn [ Background.color white, moveRight 67, moveDown 38 ]
+            |> onLeft
             |> List.singleton
 
           _ ->

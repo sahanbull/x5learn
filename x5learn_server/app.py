@@ -118,15 +118,15 @@ def history():
 def api_session():
     # setup_initial_data_if_needed()
     if current_user.is_authenticated:
-        username = 'User_'+str(current_user.get_id())
-        return jsonify({'loggedIn': username})
+        displayname = current_user.email
+        return jsonify({'loggedIn': displayname})
     else:
-        username = request.cookies.get('x5learn_guest_pseudonym')
-        print('username in cookie:', username)
-        if username==None or username=='':
-            username = 'Anonymous_'+str(randint(1,1000000))
-        print('username:', username)
-        resp = jsonify({'guest': username})
+        pseudonym = request.cookies.get('x5learn_guest_pseudonym')
+        print('pseudonym in cookie:', pseudonym)
+        if pseudonym==None or pseudonym=='':
+            pseudonym = 'Anonymous_user_'+str(randint(1,1000000))
+        print('pseudonym:', pseudonym)
+        resp = jsonify({'guest': 'Anonymous'})
         resp.set_cookie('x5learn_guest_pseudonym', username)
         return resp
 

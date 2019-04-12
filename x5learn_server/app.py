@@ -273,13 +273,6 @@ def load_oers_from_csv_file():
     print('loading local OER data...')
     with open('/Users/stefan/x5/data/scenario1/oers.csv', newline='') as f:
         for oer in csv.DictReader(f, delimiter='\t'):
-
-            # DEBUG
-            if len(loaded_oers) > 20:
-                print('WARNING')
-                print('Loaded a subet of OER data to speed up debugging')
-                return
-
             url = oer['url']
             if url in loaded_oers:
                 continue # omit duplicates
@@ -304,11 +297,6 @@ def load_wikichunks_from_json_files():
         with open(dir_path+filename, newline='') as f:
             for line in f:
                 chunk = json.loads(line)
-
-                #DEBUG
-                if chunk['videoid'] not in loaded_oers:
-                    continue
-
                 oer = loaded_oers[chunk['videoid']]
                 url = oer['url']
                 if not url in chunkdata:

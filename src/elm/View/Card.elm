@@ -237,14 +237,10 @@ viewOerCard model recommendedFragments position barId oer =
             Nothing
 
       cardAttrs =
-        [ htmlClass "InspectorAutoclose", widthOfCard, heightOfCard, inFront <| button [] { onPress = onPress, label = card }, inFront closeButton, moveRight position.x, moveDown position.y ]
+        [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| button [] { onPress = onPress, label = card }, inFront closeButton, moveRight position.x, moveDown position.y ]
   in
       none
       |> el cardAttrs
-
-
--- elevate zIndex =
---   htmlAttribute <| Html.Attributes.attribute "z-index" (String.fromInt zIndex)
 
 
 cardWidth =

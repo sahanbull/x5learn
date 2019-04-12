@@ -61,23 +61,28 @@ viewUserMenu model username =
       icon =
         image [ alpha 0.5 ] { src = svgPath "user_default_avatar", description = "user menu" }
 
-      title =
+      triangle =
         "▾" |> captionNowrap [ Font.color grey80 ]
 
       label =
-        [ icon, title ]
+        [ icon, triangle ]
+
+      navButton url buttonText =
+        link [ paddingXY 15 10, width fill ] { url = url, label = buttonText |> bodyNoWrap [] }
 
       menu =
-        case model.popup of
-          Just UserMenu ->
-            [ username |> captionNowrap [ padding 15 ]
-            , link [ paddingXY 15 10 ] { url = "/logout", label = "Log out" |> bodyNoWrap [] }
-            ]
-            |> menuColumn [ Background.color white, moveRight 67, moveDown 38 ]
-            |> onLeft
-            |> List.singleton
+        if model.popup == Just UserMenu then
+          [ username |> captionNowrap [ padding 15 ]
+          , navButton "/profile" "My profile"
+          , navButton "/logout" "Log out"
+          ]
+          |> menuColumn [ Background.color white, moveRight 67, moveDown 38 ]
+          |> onLeft
+          |> List.singleton
+        else
+          []
 
-          _ ->
-            []
+      clickMsg =
+        if model.popup == Just UserMenu then ClosePopup else SetPopup UserMenu
   in
-      button ([ htmlClass "PopupAutoclose", alignRight ] ++ menu) { onPress = Just <| SetPopup UserMenu, label = label |> row [ width fill, paddingXY 12 3, spacing 5 ]}
+      button ([ htmlClass "ClosePopupOnClickOutside", alignRight ] ++ menu) { onPress = Just <| clickMsg, label = label |> row [ width fill, paddingXY 12 3, spacing 5 ]}

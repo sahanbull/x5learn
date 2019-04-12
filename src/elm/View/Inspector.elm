@@ -60,7 +60,7 @@ viewModal model ({oer} as inspectorState) =
         , body
         , footer
         ]
-        |> column [ htmlClass "InspectorAutoclose", width (fill |> maximum 752), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow, inFront content.fixed ]
+        |> column [ htmlClass "CloseInspectorOnClickOutside", width (fill |> maximum 752), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow, inFront content.fixed ]
 
       animatingBox =
         case model.modalAnimation of

@@ -14,6 +14,7 @@ import View.Pages.Home exposing (viewHomePage)
 import View.Pages.Search exposing (viewSearchPage)
 import View.Pages.Bookmarks exposing (viewBookmarksPage)
 import View.Pages.Gains exposing (viewGainsPage)
+import View.Pages.Profile exposing (viewProfilePage)
 import View.Pages.History exposing (viewHistoryPage)
 import View.Pages.NextSteps exposing (viewNextStepsPage)
 
@@ -56,6 +57,9 @@ view model =
 
             "/gains" ->
               viewGainsPage model |> withNavigationDrawer model
+
+            "/profile" ->
+              viewProfilePage model |> withNavigationDrawer model
 
             "/bookmarks" ->
               viewBookmarksPage model |> withNavigationDrawer model

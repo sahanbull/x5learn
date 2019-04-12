@@ -107,9 +107,9 @@ def history():
 # def notes():
 #     return render_template('home.html')
 
-# @app.route("/peers")
-# def peers():
-#     return render_template('home.html')
+@app.route("/profile")
+def profile():
+    return render_template('home.html')
 
 
 @app.route("/api/v1/session/", methods=['GET'])

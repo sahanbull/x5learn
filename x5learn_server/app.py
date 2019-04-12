@@ -43,7 +43,8 @@ user_datastore = SQLAlchemySessionUserDatastore(db_session,
                                                 UserLogin, Role)
 
 # Initial set of OERs
-CSV_DATA_PATH = '/home/ucl/x5learn_data/oers.csv'
+CSV_DATA_DIR = os.environ['X5LEARN_DATA_DIRECTORY'] # e.g. '/home/ucl/x5learn_data/'
+
 
 security = Security(app, user_datastore)
 mail.init_app(app)
@@ -302,7 +303,7 @@ def store_all_entity_titles():
 def load_oers_from_csv_file():
     csv.field_size_limit(sys.maxsize)
     print('loading local OER data...')
-    with open(CSV_DATA_PATH, newline='') as f:
+    with open(CSV_DATA_DIR+'/oers.csv', newline='') as f:
         for oer in csv.DictReader(f, delimiter='\t'):
             url = oer['url']
             if url in loaded_oers:
@@ -323,7 +324,7 @@ def load_oers_from_csv_file():
 def load_wikichunks_from_json_files():
     chunkdata = {}
     print('Loading local wikichunk data...')
-    dir_path = '/Users/stefan/x5/data/scenario1/youtube_enrichments/'
+    dir_path = CSV_DATA_DIR+'/youtube_enrichments/'
     (_, _, filenames) = next(os.walk(dir_path))
     for filename in filenames:
         with open(dir_path + filename, newline='') as f:

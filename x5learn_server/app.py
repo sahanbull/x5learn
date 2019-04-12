@@ -437,5 +437,5 @@ def search_suggestions(text):
 #     return render_template('home.html')
 
 
-if __name__ == ' __main__':
+if __name__ == '__main__':
     app.run(host='0.0.0.0', port=6001, debug=True)

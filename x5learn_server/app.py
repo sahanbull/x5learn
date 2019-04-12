@@ -1,13 +1,10 @@
-from flask import Flask, jsonify, render_template, request, session
+from flask import Flask, jsonify, render_template, request, redirect
 from flask_mail import Mail
-from flask_security import Security, login_required, SQLAlchemySessionUserDatastore, current_user
-import urllib
+from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user
 import json
 import http.client
-from shutil import copyfile
 import sys
 import os
-import re
 import csv
 from fuzzywuzzy import fuzz
 from collections import defaultdict
@@ -232,7 +229,7 @@ class DummyUser:
             ]
 
 
-def search_results_from_experimental_local_oer_data(text):
+def  search_results_from_experimental_local_oer_data(text):
     max_results = 18
     frequencies = defaultdict(int)
     for video_id, oer in loaded_oers.items():

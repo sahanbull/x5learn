@@ -23,7 +23,6 @@ class UserLogin(Base, UserMixin):
     __tablename__ = 'user_login'
     id = Column(Integer, primary_key=True)
     email = Column(String(255), unique=True)
-    username = Column(String(255))
     password = Column(String(255))
     last_login_at = Column(DateTime())
     current_login_at = Column(DateTime())

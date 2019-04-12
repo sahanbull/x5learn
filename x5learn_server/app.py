@@ -124,7 +124,7 @@ def api_session():
             pseudonym = 'Anonymous_user_'+str(randint(1,1000000))
         print('pseudonym:', pseudonym)
         resp = jsonify({'guest': 'Anonymous'})
-        resp.set_cookie('x5learn_guest_pseudonym', username)
+        resp.set_cookie('x5learn_guest_pseudonym', pseudonym)
         return resp
 
 @app.route("/api/v1/search/", methods=['GET'])

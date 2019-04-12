@@ -96,6 +96,7 @@ type alias Entity =
 
 type Popup
   = ChunkOnBar ChunkPopup
+  | UserMenu
 
 
 type alias ChunkPopup = { barId : String, oer : Oer, chunk : Chunk, entityPopup : Maybe EntityPopup }

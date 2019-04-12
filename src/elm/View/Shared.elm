@@ -383,21 +383,21 @@ viewFragmentsBar model oer recommendedFragments barWidth barId =
               let
                   entityPopup =
                     case model.popup of
-                      Nothing ->
-                        Nothing
-
                       Just (ChunkOnBar p) ->
                         p.entityPopup
+
+                      _ ->
+                        Nothing
               in
                   { barId = barId, oer = oer, chunk = chunk, entityPopup = entityPopup }
 
             isPopupOpen =
               case model.popup of
-                Nothing ->
-                  False
-
                 Just (ChunkOnBar p) ->
                   barId == p.barId && chunk == p.chunk
+
+                _ ->
+                  False
 
             containsSearchString =
               case model.searchState of

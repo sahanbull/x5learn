@@ -14,3 +14,5 @@ x5learn_server/static/dist/
 
 # Developer environment variables
 .env
+
+x5learn.egg-info

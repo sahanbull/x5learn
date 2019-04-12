@@ -60,6 +60,7 @@ all_entity_titles = set([])
 def initiate_login_db():
     from x5learn_server.db.database import initiate_login_table_and_admin_profile
     initiate_login_table_and_admin_profile(user_datastore)
+    load_initial_dataset_from_csv()
 
 
 @app.route("/")
@@ -116,7 +117,6 @@ def history():
 
 @app.route("/api/v1/session/", methods=['GET'])
 def api_session():
-    # setup_initial_data_if_needed()
     if current_user.is_authenticated:
         displayname = current_user.email
         return jsonify({'loggedIn': displayname})
@@ -132,33 +132,28 @@ def api_session():
 
 @app.route("/api/v1/search/", methods=['GET'])
 def api_search():
-    setup_initial_data_if_needed()
     text = request.args['text']
     return search_results_from_experimental_local_oer_data(text.lower().strip())
 
 
 @app.route("/api/v1/search_suggestions/", methods=['GET'])
 def api_search_suggestions():
-    setup_initial_data_if_needed()
     text = request.args['text']
     return search_suggestions(text.lower().strip())
 
 
 @app.route("/api/v1/viewed_fragments/", methods=['GET'])
 def api_viewed_fragments():
-    setup_initial_data_if_needed()
     return jsonify(dummy_user.viewed_fragments())
 
 
 @app.route("/api/v1/gains/", methods=['GET'])
 def api_gains():
-    setup_initial_data_if_needed()
     return jsonify(dummy_user.gains())
 
 
 @app.route("/api/v1/next_steps/", methods=['GET'])
 def api_next_steps():
-    setup_initial_data_if_needed()
     playlists = dummy_user.recommended_next_steps()
     return jsonify(playlists)
 
@@ -187,7 +182,7 @@ def api_entity_descriptions():
     return jsonify(descriptions)
 
 
-def setup_initial_data_if_needed():
+def load_initial_dataset_from_csv():
     global loaded_oers
     if len(loaded_oers)==0:
         read_local_oer_data()
@@ -381,7 +376,6 @@ def find_oer_by_title(title):
 
 
 def search_suggestions(text):
-    setup_initial_data_if_needed()
     matches = [ (title, fuzz.partial_ratio(text, title) + fuzz.ratio(text, title)) for title in all_entity_titles ]
     matches = sorted(matches, key=lambda k_v: k_v[1], reverse=True)[:20]
     print([ v for k,v in matches ])

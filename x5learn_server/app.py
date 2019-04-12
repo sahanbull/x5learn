@@ -43,7 +43,7 @@ user_datastore = SQLAlchemySessionUserDatastore(db_session,
                                                 UserLogin, Role)
 
 # Initial set of OERs
-CSV_DATA_PATH = '~/x5learn_data/oers.csv'
+CSV_DATA_PATH = '/home/ucl/x5learn_data/oers.csv'
 
 security = Security(app, user_datastore)
 mail.init_app(app)

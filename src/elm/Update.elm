@@ -20,7 +20,11 @@ import Request exposing (..)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg ({nav} as model) =
+update msg ({nav, userProfileForm} as model) =
+  -- let
+  --     debugDummy =
+  --       log "update" msg
+  -- in
   case msg of
     Initialized url ->
       let
@@ -52,7 +56,7 @@ update msg ({nav} as model) =
             else
               Cmd.none
       in
-          ( { model | nav = { nav | url = url }, inspectorState = Nothing } |> closePopup, cmd )
+          ( { model | nav = { nav | url = url }, inspectorState = Nothing } |> closePopup |> resetUserProfileForm, cmd )
 
     ClockTick time ->
       ( { model | currentTime = time }, Cmd.none)
@@ -90,21 +94,21 @@ update msg ({nav} as model) =
       ( { model | modalAnimation = Nothing, animationsPending = model.animationsPending |> Set.remove modalId }, Cmd.none )
 
     RequestSession (Ok session) ->
-      ( { model | session = Just session }, Cmd.none )
+      ( { model | session = Just session } |> resetUserProfileForm, Cmd.none )
 
     RequestSession (Err err) ->
       -- let
       --     dummy =
       --       err |> Debug.log "Error in RequestSession"
       -- in
-      ( { model | userMessage = Just "There was a problem requesting user data. Please try again later." }, Cmd.none )
+      ( { model | userMessage = Just "There was a problem while requesting user data. Please try again later." }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
       ( model |> updateSearch (insertSearchResults oers) |> includeEntityIds oers, [ Navigation.pushUrl nav.key "/search", setBrowserFocus "SearchField" ] |> Cmd.batch )
       |> requestEntityDescriptionsIfNeeded
 
     RequestOerSearch (Err err) ->
-      ( { model | userMessage = Just "There was a problem with the search data" }, Cmd.none )
+      ( { model | userMessage = Just "There was a problem while fetching the search data" }, Cmd.none )
 
     RequestNextSteps (Ok pathways) ->
       let
@@ -121,7 +125,7 @@ update msg ({nav} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestNextSteps"
       -- in
-      ( { model | userMessage = Just "There was a problem with the recommendations data" }, Cmd.none )
+      ( { model | userMessage = Just "There was a problem while fetching the recommendations data" }, Cmd.none )
 
     RequestViewedFragments (Ok fragments) ->
       ( { model | viewedFragments = Just fragments } |> includeEntityIds (fragments |> List.map .oer), Cmd.none )
@@ -132,7 +136,7 @@ update msg ({nav} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestViewedFragments"
       -- in
-      ( { model | userMessage = Just "There was a problem with the history data" }, Cmd.none)
+      ( { model | userMessage = Just "There was a problem while fetching the history data" }, Cmd.none)
 
     RequestGains (Ok gains) ->
       ( { model | gains = Just gains }, Cmd.none )
@@ -142,7 +146,7 @@ update msg ({nav} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestGainsRequestViewedFragments"
       -- in
-      ( { model | userMessage = Just "There was a problem with the gains data" }, Cmd.none)
+      ( { model | userMessage = Just "There was a problem while fetching the gains data" }, Cmd.none)
 
     RequestEntityDescriptions (Ok descriptions) ->
       let
@@ -157,7 +161,7 @@ update msg ({nav} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestEntityDescriptions"
       -- in
-      ( { model | userMessage = Just "There was a problem with the wiki descriptions data", requestingEntityDescriptions = False }, Cmd.none )
+      ( { model | userMessage = Just "There was a problem while fetching the wiki descriptions data", requestingEntityDescriptions = False }, Cmd.none )
 
     RequestSearchSuggestions (Ok suggestions) ->
       if (millisSince model model.timeOfLastSearch) < 2000 then
@@ -170,7 +174,17 @@ update msg ({nav} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestSearchSuggestions"
       -- in
-      ( { model | userMessage = Just "There was a problem with the search suggestion" }, Cmd.none )
+      ( { model | userMessage = Just "There was a problem while fetching search suggestions" }, Cmd.none )
+
+    RequestSaveUserProfile (Ok _) ->
+      ({ model | userProfileForm = { userProfileForm | saved = True } }, Cmd.none)
+
+    RequestSaveUserProfile (Err err) ->
+      let
+          dummy =
+            err |> Debug.log "Error in RequestSaveUserProfile"
+      in
+      ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
 
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
@@ -204,6 +218,16 @@ update msg ({nav} as model) =
 
     YoutubeSeekTo fragmentStart ->
       ( model, youtubeSeekTo fragmentStart)
+
+    EditUserProfile field value ->
+      let
+          newForm =
+            { userProfileForm | userProfile = userProfileForm.userProfile |> updateUserProfile field value }
+      in
+          ( { model | userProfileForm = newForm }, Cmd.none )
+
+    ClickedSaveUserProfile ->
+      ( model, requestSaveUserProfile model.userProfileForm.userProfile)
 
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model
@@ -303,3 +327,23 @@ tagCloudFromOer oer =
 closePopup : Model -> Model
 closePopup model =
   { model | popup = Nothing }
+
+
+resetUserProfileForm : Model -> Model
+resetUserProfileForm model =
+  case loggedInUser model of
+    Just userProfile ->
+      { model | userProfileForm = freshUserProfileForm userProfile }
+
+    _ ->
+      model
+
+
+updateUserProfile : UserProfileField -> String -> UserProfile -> UserProfile
+updateUserProfile field value userProfile =
+  case field of
+    FirstName ->
+      { userProfile | firstName = value }
+
+    LastName ->
+      { userProfile | lastName = value }

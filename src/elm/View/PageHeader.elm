@@ -40,7 +40,7 @@ viewPageHeader model =
 
       loginLogoutSignup =
         case model.session of
-          Just (LoggedIn username) ->
+          Just (LoggedInUser username) ->
             [ viewUserMenu model username ]
 
           Just (Guest username) ->
@@ -56,7 +56,7 @@ viewPageHeader model =
       |> row attrs
 
 
-viewUserMenu model username =
+viewUserMenu model userProfile =
   let
       icon =
         image [ alpha 0.5 ] { src = svgPath "user_default_avatar", description = "user menu" }
@@ -72,7 +72,7 @@ viewUserMenu model username =
 
       menu =
         if model.popup == Just UserMenu then
-          [ username |> captionNowrap [ padding 15 ]
+          [ userProfile |> displayName |> captionNowrap [ padding 15 ]
           , navButton "/profile" "My profile"
           , navButton "/logout" "Log out"
           ]

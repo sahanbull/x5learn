@@ -40,6 +40,20 @@ type alias Model =
   , selectedSuggestion : String
   , suggestionSelectionOnHoverEnabled : Bool
   , timeOfLastSearch : Posix
+  , userProfileForm : UserProfileForm
+  }
+
+
+type alias UserProfileForm =
+  { userProfile : UserProfile
+  , saved : Bool
+  }
+
+
+type alias UserProfile =
+  { email : String
+  , firstName : String
+  , lastName : String
   }
 
 
@@ -140,7 +154,7 @@ type InspectorMenu
 
 
 type Session
-  = LoggedIn String
+  = LoggedInUser UserProfile
   | Guest String
 
 
@@ -172,6 +186,7 @@ initialModel nav flags =
   , selectedSuggestion = ""
   , suggestionSelectionOnHoverEnabled = True -- prevent accidental selection when user doesn't move the pointer but the menu appears on the pointer
   , timeOfLastSearch = initialTime
+  , userProfileForm = freshUserProfileForm (UserProfile "" "" "")
   }
 
 
@@ -280,5 +295,27 @@ durationInSecondsFromOer {duration} =
       minutes * 60 + seconds
 
 
-isLoggedIn model =
-  model.session == Just LoggedIn
+displayName userProfile =
+  let
+      name =
+        userProfile.firstName ++ " " ++ userProfile.lastName
+        |> String.trim
+  in
+      if name |> String.words |> List.isEmpty then
+        userProfile.email
+      else
+        name
+
+
+loggedInUser : Model -> Maybe UserProfile
+loggedInUser {session} =
+  case session of
+    Just (LoggedInUser user) ->
+      Just user
+
+    _ ->
+      Nothing
+
+
+freshUserProfileForm userProfile =
+  { userProfile = userProfile, saved = False }

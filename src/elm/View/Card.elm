@@ -72,7 +72,7 @@ viewOerGrid model playlist =
           |> List.reverse
           |> List.map inFront
     in
-        [ playlist.title |> subheaderWrap [ primaryWhite ]
+        [ playlist.title |> subheaderWrap [ whiteText ]
         ]
         -- |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ cards)
         |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
@@ -94,7 +94,7 @@ viewOerCard model recommendedFragments position barId oer =
       imageCounter txt =
         txt
         |> text
-        |> el [ paddingXY 5 3, Font.size 12, primaryWhite, Background.color <| rgba 0 0 0 0.5, moveDown 157 ]
+        |> el [ paddingXY 5 3, Font.size 12, whiteText, Background.color <| rgba 0 0 0 0.5, moveDown 157 ]
         |> inFront
 
       thumbnail =

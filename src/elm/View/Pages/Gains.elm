@@ -14,14 +14,9 @@ import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Element.Font as Font
 
 import Model exposing (..)
-import Animation exposing (..)
 import View.Shared exposing (..)
-import View.Inspector exposing (..)
-import View.Card exposing (..)
 
 import Msg exposing (..)
-
-import Json.Decode as Decode
 
 
 viewGainsPage : Model -> PageWithModal

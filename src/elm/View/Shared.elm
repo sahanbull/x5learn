@@ -40,16 +40,12 @@ materialDarkAlpha =
   alpha 0.87
 
 
-primaryWhite =
+whiteText =
   Font.color white
 
 
 x5color =
-  Font.color <| rgb255 82 134 148
-
-
-greyText =
-  Font.color <| grey 160
+  rgb255 82 134 148
 
 
 greyTextDisabled =

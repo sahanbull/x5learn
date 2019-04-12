@@ -1,9 +1,9 @@
-module Request exposing (requestSession, searchOers, requestNextSteps, requestViewedFragments, requestGains, requestEntityDescriptions, requestSearchSuggestions)
+module Request exposing (requestSession, searchOers, requestNextSteps, requestViewedFragments, requestGains, requestEntityDescriptions, requestSearchSuggestions, requestSaveUserProfile)
 
 import Http exposing (expectStringResponse)
 import Json.Decode exposing (Value,map,map2,map3,map8,field,bool,int,float,string,list,dict,oneOf,maybe,nullable)
 import Json.Decode.Extra exposing (andMap)
-import Json.Encode
+import Json.Encode as Encode
 import Url
 import Url.Builder
 
@@ -18,93 +18,90 @@ apiRoot =
 
 requestSession : Cmd Msg
 requestSession =
-  let
-      encoded =
-        Url.Builder.absolute [ apiRoot, "session/" ] []
-  in
-      Http.get
-        { url = encoded
-        , expect = Http.expectJson RequestSession sessionDecoder
-        }
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "session/" ] []
+    , expect = Http.expectJson RequestSession sessionDecoder
+    }
 
 
 searchOers : String -> Cmd Msg
 searchOers searchText =
-  let
-      encoded =
-        Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText ]
-  in
-      Http.get
-        { url = encoded
-        , expect = Http.expectJson RequestOerSearch searchResultsDecoder
-        }
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText ]
+    , expect = Http.expectJson RequestOerSearch searchResultsDecoder
+    }
 
 
 requestSearchSuggestions : String -> Cmd Msg
 requestSearchSuggestions searchText =
-  let
-      encoded =
-        Url.Builder.absolute [ apiRoot, "search_suggestions/" ] [ Url.Builder.string "text" searchText ]
-  in
-      Http.get
-        { url = encoded
-        , expect = Http.expectJson RequestSearchSuggestions (list string)
-        }
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "search_suggestions/" ] [ Url.Builder.string "text" searchText ]
+    , expect = Http.expectJson RequestSearchSuggestions (list string)
+    }
 
 
 requestNextSteps : Cmd Msg
 requestNextSteps =
-  let
-      encoded =
-        Url.Builder.absolute [ apiRoot, "next_steps/" ] []
-  in
-      Http.get
-        { url = encoded
-        , expect = Http.expectJson RequestNextSteps (list pathwayDecoder)
-        }
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "next_steps/" ] []
+    , expect = Http.expectJson RequestNextSteps (list pathwayDecoder)
+    }
 
 
 requestViewedFragments : Cmd Msg
 requestViewedFragments =
-  let
-      encoded =
-        Url.Builder.absolute [ apiRoot, "viewed_fragments/" ] []
-  in
-      Http.get
-        { url = encoded
-        , expect = Http.expectJson RequestViewedFragments (list fragmentDecoder)
-        }
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "viewed_fragments/" ] []
+    , expect = Http.expectJson RequestViewedFragments (list fragmentDecoder)
+    }
 
 
 requestGains : Cmd Msg
 requestGains =
-  let
-      encoded =
-        Url.Builder.absolute [ apiRoot, "gains/" ] []
-  in
-      Http.get
-        { url = encoded
-        , expect = Http.expectJson RequestGains (list gainDecoder)
-        }
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "gains/" ] []
+    , expect = Http.expectJson RequestGains (list gainDecoder)
+    }
 
 
 requestEntityDescriptions : List String -> Cmd Msg
 requestEntityDescriptions entityIds =
-  let
-      encoded =
-        Url.Builder.absolute [ apiRoot, "entity_descriptions/" ] [ Url.Builder.string "ids" (entityIds |> String.join ",") ]
-  in
-      Http.get
-        { url = encoded
-        , expect = Http.expectJson RequestEntityDescriptions (dict string)
-        }
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "entity_descriptions/" ] [ Url.Builder.string "ids" (entityIds |> String.join ",") ]
+    , expect = Http.expectJson RequestEntityDescriptions (dict string)
+    }
+
+
+requestSaveUserProfile : UserProfile -> Cmd Msg
+requestSaveUserProfile userProfile =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "save_user_profile/" ] []
+    , body = Http.jsonBody <| userProfileEncoder userProfile
+    , expect = Http.expectString RequestSaveUserProfile
+    }
+
+
+userProfileEncoder : UserProfile -> Encode.Value
+userProfileEncoder userProfile =
+  Encode.object
+    -- [ ("email", Encode.string userProfile.email)
+    [ ("firstName", Encode.string userProfile.firstName)
+    , ("lastName", Encode.string userProfile.lastName)
+    ]
 
 
 sessionDecoder =
   oneOf
-    [ map LoggedIn (field "loggedIn" string)
+    [ map LoggedInUser (field "loggedIn" userProfileDecoder)
     , map Guest (field "guest" string)
     ]
+
+
+userProfileDecoder =
+  map3 UserProfile
+    (field "email" string)
+    (field "firstName" string)
+    (field "lastName" string)
 
 
 gainDecoder =

@@ -47,6 +47,9 @@ init flags url key =
 view : Model -> Browser.Document Msg
 view model =
   let
+      homePage =
+        (viewHomePage model, [])
+
       (body, modal) =
         if model.session == Nothing then
           (viewLoadingSpinner, [])
@@ -59,7 +62,12 @@ view model =
               viewGainsPage model |> withNavigationDrawer model
 
             "/profile" ->
-              viewProfilePage model |> withNavigationDrawer model
+              case loggedInUser model of
+                Just userProfile ->
+                  viewProfilePage userProfile model.userProfileForm |> withNavigationDrawer model
+
+                _ ->
+                  homePage
 
             "/bookmarks" ->
               viewBookmarksPage model |> withNavigationDrawer model
@@ -70,7 +78,7 @@ view model =
             _ ->
               case model.searchState of
                 Nothing ->
-                  (viewHomePage model, [])
+                  homePage
 
                 Just searchState ->
                   viewSearchPage model searchState |> withNavigationDrawer model

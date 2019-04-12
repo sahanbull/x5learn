@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, render_template, request, redirect
 from flask_mail import Mail
-from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user
+from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required
 import json
 import http.client
 import sys
@@ -108,6 +108,7 @@ def history():
 #     return render_template('home.html')
 
 @app.route("/profile")
+@login_required
 def profile():
     return render_template('home.html')
 
@@ -115,8 +116,12 @@ def profile():
 @app.route("/api/v1/session/", methods=['GET'])
 def api_session():
     if current_user.is_authenticated:
-        displayname = current_user.email
-        return jsonify({'loggedIn': displayname})
+        user_profile = { 'email': current_user.email, 'firstName': 'Glen', 'lastName': 'Morangie' }
+        # TODO: get the email, first name and last name from the db
+        # if record doesn't exist, set firstName and lastName to empty strings
+        # use current_user.get_id()
+        print(user_profile)
+        return jsonify({'loggedIn': user_profile})
     else:
         pseudonym = request.cookies.get('x5learn_guest_pseudonym')
         print('pseudonym in cookie:', pseudonym)
@@ -177,6 +182,18 @@ def api_entity_descriptions():
         print(response)
         print('We sent the following ids:', ','.join(entity_ids))
     return jsonify(descriptions)
+
+
+@app.route("/api/v1/save_user_profile/", methods=['POST'])
+def api_save_user_profile():
+    if current_user.is_authenticated:
+        user_profile = request.get_json()
+        print('new user profile:', user_profile)
+        print('current user id =', current_user.get_id())
+        print('TODO: save changes to db')
+        return 'OK'
+    else:
+        return 'Error', 403
 
 
 def load_initial_dataset_from_csv():

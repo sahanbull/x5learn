@@ -32,6 +32,7 @@ type Msg
   | RequestGains (Result Http.Error (List Gain))
   | RequestEntityDescriptions (Result Http.Error (Dict String String))
   | RequestSearchSuggestions (Result Http.Error (List String))
+  | RequestSaveUserProfile (Result Http.Error String)
   | SetHover (Maybe String)
   | OpenSaveToBookmarklistMenu InspectorState
   | AddToBookmarklist Playlist Oer
@@ -44,6 +45,13 @@ type Msg
   | SelectSuggestion String
   | MouseOverChunkTrigger Float
   | YoutubeSeekTo Float
+  | EditUserProfile UserProfileField String
+  | ClickedSaveUserProfile
+
+
+type UserProfileField
+  = FirstName
+  | LastName
 
 
 subscriptions : Model -> Sub Msg

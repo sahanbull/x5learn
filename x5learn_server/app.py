@@ -42,6 +42,9 @@ app.config['SECURITY_SEND_PASSWORD_CHANGE_EMAIL'] = False
 user_datastore = SQLAlchemySessionUserDatastore(db_session,
                                                 UserLogin, Role)
 
+# Initial set of OERs
+CSV_DATA_PATH = '~/x5learn_data/oers.csv'
+
 security = Security(app, user_datastore)
 mail.init_app(app)
 
@@ -299,7 +302,7 @@ def store_all_entity_titles():
 def load_oers_from_csv_file():
     csv.field_size_limit(sys.maxsize)
     print('loading local OER data...')
-    with open('/Users/stefan/x5/data/scenario1/oers.csv', newline='') as f:
+    with open(CSV_DATA_PATH, newline='') as f:
         for oer in csv.DictReader(f, delimiter='\t'):
             url = oer['url']
             if url in loaded_oers:

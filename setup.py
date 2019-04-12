@@ -13,6 +13,8 @@ setup(
         'Flask>=1.0.2',
         'Flask-Security>=3.0.0',
         'SQLAlchemy>=1.3.1',
-        'psycopg2>=2.7.6.1'
+        'psycopg2>=2.7.6.1',
+        'gunicorn>=19.9.0',
+        'fuzzywuzzy>=0.17.0'
 ]
 )

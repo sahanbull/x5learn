@@ -4,7 +4,7 @@
   "description": "Web frontend for X5GON project",
   "main": "app.js",
   "scripts": {
-    "setup": "mkdir -p x5learn_server/static/dist && ./node_modules/elm/bin/elm init",
+    "setup": "mkdir -p x5learn_server/static/dist",
     "test": "./node_modules/elm/bin/elm-test",
     "build:uncompressed:rm": "rimraf x5learn_server/static/dist/**",
     "build:uncompressed": "npm run build:uncompressed:rm && npm run build:uncompressed:cp",

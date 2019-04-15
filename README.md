@@ -4,9 +4,11 @@ Experimental web frontend for X5GON project. www.x5gon.org
 
 ## Install
 
+Install node and npm. On Linux: `sudo apt install nodejs-legacy npm`
+
 `npm install`
 
-`npm run build`
+`sh init.sh`
 
 ## Build
 

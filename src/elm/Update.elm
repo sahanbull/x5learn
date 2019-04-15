@@ -180,10 +180,10 @@ update msg ({nav, userProfileForm} as model) =
       ({ model | userProfileForm = { userProfileForm | saved = True } }, Cmd.none)
 
     RequestSaveUserProfile (Err err) ->
-      let
-          dummy =
-            err |> Debug.log "Error in RequestSaveUserProfile"
-      in
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestSaveUserProfile"
+      -- in
       ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
 
     SetHover maybeUrl ->

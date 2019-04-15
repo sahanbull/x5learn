@@ -7,7 +7,6 @@
     "setup": "mkdir -p x5learn_server/static/dist",
     "test": "./node_modules/elm/bin/elm-test",
     "build:uncompressed:rm": "rimraf x5learn_server/static/dist/**",
-    "build:uncompressed:cp": "copy uncompressed x5learn_server/static/dist",
     "build:uncompressed": "npm run build:uncompressed:rm && npm run build:uncompressed:cp",
     "build:css:concat": "mkdir -p x5learn_server/static/dist/css && concat -o x5learn_server/static/dist/css/app.css src/css/style.css",
     "build:css:minify": "cleancss -o x5learn_server/static/dist/css/app.min.css x5learn_server/static/dist/css/app.css && rimraf x5learn_server/static/dist/css/app.css",
@@ -18,8 +17,6 @@
     "build:js:minify": "uglifyjs -mco x5learn_server/static/dist/js/app.min.js x5learn_server/static/dist/js/app.js && rimraf x5learn_server/static/dist/js/app.js",
     "build:js": "npm run build:js:elm && npm run build:js:concat && npm run build:js:minify",
     "build:js-dev": "npm run build:js:elm-dev && npm run build:js:concat && npm run build:js:minify",
-    "build:img:minify": "imagemin --out-dir=x5learn_server/static/dist/img assets/img/**/*.{png,jpg,gif}",
-    "build:img": "npm run build:img:minify",
     "build": "npm run build:uncompressed && npm run build:css && npm run build:js && npm run build:img"
   },
   "repository": {

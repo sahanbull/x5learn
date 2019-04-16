@@ -12,7 +12,7 @@ from random import randint
 
 # instantiate the user management db classes
 from x5learn_server.db.database import get_or_create_session_db
-from x5learn_server._config import DB_ENGINE_URI
+from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET
 
 get_or_create_session_db(DB_ENGINE_URI)
 
@@ -25,8 +25,8 @@ app = Flask(__name__)
 mail = Mail()
 
 app.config['DEBUG'] = True
-app.config['SECRET_KEY'] = 'super-secret'
-app.config['SECURITY_PASSWORD_HASH'] = "plaintext"
+app.config['SECRET_KEY'] = PASSWORD_SECRET
+app.config['SECURITY_PASSWORD_HASH'] = "sha512_crypt"
 
 # user registration configs
 app.config['SECURITY_REGISTERABLE'] = True

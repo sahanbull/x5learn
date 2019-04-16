@@ -26,7 +26,7 @@ mail = Mail()
 
 app.config['DEBUG'] = True
 app.config['SECRET_KEY'] = PASSWORD_SECRET
-app.config['SECURITY_PASSWORD_HASH'] = "sha512_crypt"
+app.config['SECURITY_PASSWORD_HASH'] = "bcrypt"
 
 # user registration configs
 app.config['SECURITY_REGISTERABLE'] = True

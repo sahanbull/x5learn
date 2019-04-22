@@ -222,7 +222,7 @@ update msg ({nav, userProfileForm} as model) =
     EditUserProfile field value ->
       let
           newForm =
-            { userProfileForm | userProfile = userProfileForm.userProfile |> updateUserProfile field value }
+            { userProfileForm | userProfile = userProfileForm.userProfile |> updateUserProfile field value, saved = False }
       in
           ( { model | userProfileForm = newForm }, Cmd.none )
 

@@ -125,7 +125,7 @@ def profile():
 def api_session():
     if current_user.is_authenticated:
         user_profile = {'email': current_user.email, 'firstName': 'Glen', 'lastName': 'Morangie'}
-        # TODO: get the email, first name and last name from the db
+        # TODO_DB: get the email, first name and last name from the db
         # if record doesn't exist, set firstName and lastName to empty strings
         # use current_user.get_id()
         print(user_profile)
@@ -200,7 +200,7 @@ def api_save_user_profile():
         user_profile = request.get_json()
         print('new user profile:', user_profile)
         print('current user id =', current_user.get_id())
-        print('TODO: save changes to db')
+        print('TODO: save changes to db') # TODO_DB
         return 'OK'
     else:
         return 'Error', 403

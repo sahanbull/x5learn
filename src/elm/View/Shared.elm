@@ -331,7 +331,9 @@ viewCenterNote str =
 
 
 viewLoadingSpinner =
-  "loading..." |> viewCenterNote
+  none
+  |> el [ htmlClass "loader", centerX, centerY ]
+  |> el [ centerX, centerY ]
 
 
 menuButtonDisabled str =

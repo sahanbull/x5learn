@@ -177,14 +177,14 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | userMessage = Just "There was a problem while fetching search suggestions" }, Cmd.none )
 
     RequestSaveUserProfile (Ok _) ->
-      ({ model | userProfileForm = { userProfileForm | saved = True } }, Cmd.none)
+      ({ model | userProfileForm = { userProfileForm | saved = True }, userProfileFormSubmitted = Nothing }, Cmd.none)
 
     RequestSaveUserProfile (Err err) ->
       -- let
       --     dummy =
       --       err |> Debug.log "Error in RequestSaveUserProfile"
       -- in
-      ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
+      ( { model | userMessage = Just "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
 
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
@@ -227,7 +227,7 @@ update msg ({nav, userProfileForm} as model) =
           ( { model | userProfileForm = newForm }, Cmd.none )
 
     ClickedSaveUserProfile ->
-      ( model, requestSaveUserProfile model.userProfileForm.userProfile)
+      ( { model | userProfileFormSubmitted = Just userProfileForm } , requestSaveUserProfile model.userProfileForm.userProfile)
 
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model

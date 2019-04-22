@@ -41,6 +41,7 @@ type alias Model =
   , suggestionSelectionOnHoverEnabled : Bool
   , timeOfLastSearch : Posix
   , userProfileForm : UserProfileForm
+  , userProfileFormSubmitted : Maybe UserProfileForm
   }
 
 
@@ -187,6 +188,7 @@ initialModel nav flags =
   , suggestionSelectionOnHoverEnabled = True -- prevent accidental selection when user doesn't move the pointer but the menu appears on the pointer
   , timeOfLastSearch = initialTime
   , userProfileForm = freshUserProfileForm (UserProfile "" "" "")
+  , userProfileFormSubmitted = Nothing
   }
 
 
@@ -301,7 +303,7 @@ displayName userProfile =
         userProfile.firstName ++ " " ++ userProfile.lastName
         |> String.trim
   in
-      if name |> String.words |> List.isEmpty then
+      if (name |> String.length) < 2 then
         userProfile.email
       else
         name

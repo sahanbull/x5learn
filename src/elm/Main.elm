@@ -64,7 +64,7 @@ view model =
             "/profile" ->
               case loggedInUser model of
                 Just userProfile ->
-                  viewProfilePage userProfile model.userProfileForm |> withNavigationDrawer model
+                  viewProfilePage model userProfile model.userProfileForm |> withNavigationDrawer model
 
                 _ ->
                   homePage

@@ -15,8 +15,8 @@ import View.Shared exposing (..)
 import Msg exposing (..)
 
 
-viewProfilePage : UserProfile -> UserProfileForm -> PageWithModal
-viewProfilePage savedUserProfile {userProfile, saved} =
+viewProfilePage : Model -> UserProfile -> UserProfileForm -> PageWithModal
+viewProfilePage model savedUserProfile {userProfile, saved} =
   let
       firstNameField =
         Input.text [ width fill ] { onChange = EditUserProfile FirstName, text = userProfile.firstName, placeholder = Just ("First Name" |> text |> Input.placeholder []), label = "First Name" |> text |> Input.labelAbove [ Font.size 16 ] }
@@ -25,10 +25,16 @@ viewProfilePage savedUserProfile {userProfile, saved} =
         Input.text [ width fill ] { onChange = EditUserProfile LastName, text = userProfile.lastName, placeholder = Just ("Last Name" |> text |> Input.placeholder []), label = "Last Name" |> text |> Input.labelAbove [ Font.size 16 ] }
 
       saveButton =
-        if saved then
-          "✓ Saved" |> bodyWrap [ greyTextDisabled, width fill ]
-        else
-          button [ paddingXY 16 8, width fill, Background.color x5color, whiteText ] { onPress = Just ClickedSaveUserProfile, label = "Save" |> text |> el [] }
+        case model.userProfileFormSubmitted of
+          Just _ ->
+            viewLoadingSpinner
+            |> el [ width (px 77), height (px 37) ]
+
+          Nothing ->
+            if saved then
+              "✓ Saved" |> bodyWrap [ greyTextDisabled, width fill ]
+            else
+              button [ paddingXY 16 8, width fill, Background.color x5color, whiteText ] { onPress = Just ClickedSaveUserProfile, label = "Save" |> text |> el [] }
 
       page =
         -- [ "My profile" |> headlineWrap []

@@ -82,3 +82,27 @@ a:hover {
 #SearchField{
   padding-right: 35px;
 }
+
+
+/* Loading spinner adapted from https://www.w3schools.com/howto/howto_css_loader.asp */
+
+.loader {
+  border: 3px solid #fffb !important;
+  border-radius: 50% !important;
+  border-top: 3px solid #528694 !important;
+  width: 30px !important;
+  height: 30px !important;
+  -webkit-animation: spin 1s cubic-bezier(0.2, 0.5, 1.0, 0.2) infinite !important; /* Safari */
+  animation: spin 1s cubic-bezier(0.2, 0.5, 1.0, 0.2) infinite !important;
+}
+
+/* Safari */
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

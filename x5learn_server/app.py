@@ -439,6 +439,17 @@ def search_suggestions(text):
 # def product(anything):
 #     return render_template('home.html')
 
+# Adding the following method appears to have fixed an urgent problem that I had encountered in local development:
+# sqlalchemy.exc.TimeoutError: QueuePool limit of size 5 overflow 10 reached, connection timed out, timeout 30 (Background on this error at: http://sqlalche.me/e/3o7r)
+# The solution was suggested here:
+# https://stackoverflow.com/questions/3360951/sql-alchemy-connection-time-out/28040482
+# Related question:
+# https://stackoverflow.com/questions/24956894/sql-alchemy-queuepool-limit-overflow
+# (Not an expert on this - grateful for any clarification)
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db_session.remove()
+
 
 if __name__ == '__main__':
     app.run()

@@ -69,7 +69,7 @@ view model =
                 _ ->
                   homePage
 
-            "/bookmarks" ->
+            "/notes" ->
               viewBookmarksPage model |> withNavigationDrawer model
 
             "/history" ->

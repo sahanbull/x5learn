@@ -102,8 +102,8 @@ def search():
 # def gains():
 #     return render_template('home.html')
 
-@app.route("/bookmarks")
-def bookmarks():
+@app.route("/notes")
+def notes():
     return render_template('home.html')
 
 

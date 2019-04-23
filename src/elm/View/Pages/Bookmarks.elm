@@ -34,7 +34,7 @@ viewBookmarksPage model =
 
       page =
         if playlists |> List.isEmpty then
-          viewCenterNote "Your bookmarked items will appear here"
+          viewCenterNote "Your notes will appear hear. Look inside a resource to create your first note."
         else
           playlists
           |> column [ width fill, height fill, spacing 20 ]

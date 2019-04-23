@@ -59,7 +59,7 @@ viewPageHeader model =
 viewUserMenu model userProfile =
   let
       icon =
-        image [ alpha 0.5 ] { src = svgPath "user_default_avatar", description = "user menu" }
+        avatarImage
 
       triangle =
         "▾" |> captionNowrap [ Font.color grey80 ]

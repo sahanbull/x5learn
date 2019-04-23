@@ -229,6 +229,47 @@ update msg ({nav, userProfileForm} as model) =
     ClickedSaveUserProfile ->
       ( { model | userProfileFormSubmitted = Just userProfileForm } , requestSaveUserProfile model.userProfileForm.userProfile)
 
+    EditDiaryEntry diaryKey str ->
+      ({ model
+       | diaries = model.diaries |> editEntryInDiaries diaryKey str
+       }, Cmd.none)
+
+    SaveDiaryEntry diaryKey ->
+      ({ model
+       | diaries = saveEntryInDiaries model diaryKey
+       }, Cmd.none)
+
+    KeyPressOnDiary diaryKey keyCode ->
+      if keyCode==13 then
+        model |> update (SaveDiaryEntry diaryKey)
+      else
+        (model, Cmd.none)
+
+
+editEntryInDiaries diaryKey str diaries =
+  let
+      oldDiary =
+        diaries
+        |> Dict.get diaryKey
+        |> Maybe.withDefault { newEntry = "", savedEntries = [] }
+      newDiary =
+        { oldDiary | newEntry = str }
+  in
+      diaries |> Dict.insert diaryKey newDiary
+
+
+saveEntryInDiaries model diaryKey =
+  let
+      oldDiary =
+        model.diaries
+        |> Dict.get diaryKey
+        |> Maybe.withDefault { newEntry = "", savedEntries = [] }
+      newDiary =
+        { oldDiary | newEntry = ""
+                   , savedEntries = {time = model.currentTime, body = oldDiary.newEntry} :: oldDiary.savedEntries }
+  in
+      model.diaries |> Dict.insert diaryKey newDiary
+
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model
 updateSearch transformFunction model =

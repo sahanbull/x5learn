@@ -47,6 +47,9 @@ type Msg
   | YoutubeSeekTo Float
   | EditUserProfile UserProfileField String
   | ClickedSaveUserProfile
+  | EditDiaryEntry String String
+  | SaveDiaryEntry String
+  | KeyPressOnDiary String Int
 
 
 type UserProfileField

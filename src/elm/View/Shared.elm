@@ -598,3 +598,7 @@ shortUrl characterLimit url =
         |> String.dropLeft ((String.length <| leftPart++rightPartRaw) - characterLimit)
   in
       leftPart ++ "/..." ++ rightPart
+
+
+avatarImage =
+  image [ alpha 0.5 ] { src = svgPath "user_default_avatar", description = "user menu" }

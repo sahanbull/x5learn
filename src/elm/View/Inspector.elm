@@ -14,6 +14,7 @@ import Model exposing (..)
 import Msg exposing (..)
 
 import View.Shared exposing (..)
+import View.Diary exposing (..)
 
 import Animation exposing (..)
 
@@ -124,12 +125,13 @@ inspectorContentDefault model inspectorState oer =
       body =
         [ player
         , description
+        , providerLink
         ]
         |> column [ spacing 30 ]
 
       footer =
-        [ providerLink
-        , none |> el [ width fill ]
+        [ viewDiary model (diaryKeyFromOer oer)
+        -- , none |> el [ width fill ]
         -- , actionButtons
         ]
 

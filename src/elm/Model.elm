@@ -42,6 +42,19 @@ type alias Model =
   , timeOfLastSearch : Posix
   , userProfileForm : UserProfileForm
   , userProfileFormSubmitted : Maybe UserProfileForm
+  , diaries : Dict String Diary
+  }
+
+
+type alias Diary =
+  { newEntry : String
+  , savedEntries : List DiaryEntry
+  }
+
+
+type alias DiaryEntry =
+  { body : String
+  , time : Posix
   }
 
 
@@ -190,7 +203,23 @@ initialModel nav flags =
   , timeOfLastSearch = initialTime
   , userProfileForm = freshUserProfileForm (UserProfile "" "" "")
   , userProfileFormSubmitted = Nothing
+  , diaries = Dict.empty
   }
+
+
+getDiary model key =
+  model.diaries
+  |> Dict.get key
+  |> Maybe.withDefault { newEntry = "", savedEntries = [] }
+
+
+getDiaryNewEntry model key =
+  case model.diaries |> Dict.get key of
+    Nothing ->
+      ""
+
+    Just {newEntry} ->
+      newEntry
 
 
 initialTime =
@@ -299,6 +328,11 @@ durationInSecondsFromOer {duration} =
         |> Maybe.withDefault 0
   in
       minutes * 60 + seconds
+
+
+diaryKeyFromOer : Oer -> String
+diaryKeyFromOer oer =
+  "oer_" ++ oer.url
 
 
 displayName userProfile =

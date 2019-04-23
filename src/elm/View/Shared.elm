@@ -431,7 +431,7 @@ viewFragmentsBar model oer recommendedFragments barWidth barId =
                   [ onClickNoBubble <| InspectSearchResult oer chunk.start ]
 
                 _ ->
-                  if hasVideo oer then
+                  if hasYoutubeVideo oer then
                     [ onClickNoBubble <| YoutubeSeekTo chunk.start ]
                   else
                     []
@@ -555,3 +555,46 @@ fragmentsBarHeight = 16
 
 isHoverMenuNearRightEdge model margin =
   model.mousePositionXwhenOnChunkTrigger > (toFloat model.windowWidth)-margin
+
+
+shortUrl characterLimit url =
+  let
+      cutBeforeFirst substr input =
+        case input |> String.indexes substr |> List.head of
+          Nothing ->
+            input
+
+          Just pos ->
+            input |> String.dropLeft (pos + (String.length substr))
+
+      cutAfterFirst substr input =
+        case input |> String.indexes substr |> List.head of
+          Nothing ->
+            input
+
+          Just pos ->
+            input |> String.left pos
+
+      cutBeforeLast substr input =
+        case input |> String.indexes substr |> List.reverse |> List.head of
+          Nothing ->
+            input
+
+          Just pos ->
+            input |> String.dropLeft pos
+
+      leftPart =
+        url
+        |> cutBeforeFirst "//"
+        |> cutBeforeFirst "www."
+        |> cutAfterFirst "/"
+
+      rightPartRaw =
+        url
+        |> cutBeforeLast "/"
+
+      rightPart =
+        rightPartRaw
+        |> String.dropLeft ((String.length <| leftPart++rightPartRaw) - characterLimit)
+  in
+      leftPart ++ "/..." ++ rightPart

@@ -9,6 +9,7 @@ import csv
 from fuzzywuzzy import fuzz
 from collections import defaultdict
 from random import randint
+import urllib
 
 # instantiate the user management db classes
 from x5learn_server.db.database import get_or_create_session_db
@@ -143,8 +144,10 @@ def api_session():
 
 @app.route("/api/v1/search/", methods=['GET'])
 def api_search():
-    text = request.args['text']
-    return search_results_from_experimental_local_oer_data(text.lower().strip())
+    text = request.args['text'].lower().strip()
+    results = search_results_from_experimental_local_oer_data(text) + search_results_from_x5gon_api(text)
+    return jsonify(results)
+
 
 
 @app.route("/api/v1/search_suggestions/", methods=['GET'])
@@ -271,7 +274,26 @@ def search_results_from_experimental_local_oer_data(text):
     #     n = max_results-len(results)
     #     print('Search: adding', n,'results by title and description')
     #     results += [ oer for oer in loaded_oers.values() if any_word_matches(search_words, oer['title']) or any_word_matches(search_words, oer['description']) ][:n]
-    return jsonify(results)
+    return results
+
+
+def search_results_from_x5gon_api(text):
+    max_results = 18
+    encoded_text = urllib.parse.quote(text)
+    conn = http.client.HTTPSConnection("platform.x5gon.org")
+    conn.request('GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&text='+encoded_text)
+    response = conn.getresponse().read().decode("utf-8")
+    # import pdb; pdb.set_trace()
+    results = json.loads(response)['rec_materials'][:max_results]
+    for result in results:
+        result['date'] = ''
+        if result['description'] is None:
+            result['description'] = ''
+        result['duration'] = ''
+        result['images'] = []
+        result['wikichunks'] = []
+        result['mediatype'] = result['type']
+    return results
 
 
 def any_word_matches(words, text):
@@ -315,6 +337,7 @@ def load_oers_from_csv_file():
             del oer['wikichunks']  # Use the new wikifier results instead (from the JSON files).
             del oer[
                 'transcript']  # Delete in order to prevent unnecessary network load when serving OER to the frontend.
+            oer['mediatype'] = 'video'
             videoid = oer['url'].split('v=')[1].split('&')[0]
             loaded_oers[videoid] = oer
     print('Done loading oers')
@@ -400,15 +423,6 @@ def search_suggestions(text):
     # import pdb; pdb.set_trace()
     print(matches)
     return jsonify(matches)
-
-
-# def search_results_from_x5gon_api(text):
-#     encoded_text = urllib.parse.quote(text)
-#     conn = http.client.HTTPSConnection("platform.x5gon.org")
-#     conn.request('GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&text='+encoded_text)
-#     response = conn.getresponse().read().decode("utf-8")
-#     recommendations = json.loads(response)['recommendations'][:9]
-#     return jsonify(recommendations)
 
 
 # THUMBNAILS FOR X5GON (experimental)

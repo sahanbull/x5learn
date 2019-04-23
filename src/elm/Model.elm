@@ -92,6 +92,7 @@ type alias Oer =
   , title : String
   , url : String
   , wikichunks : List Chunk
+  , mediatype : String
   }
 
 
@@ -216,11 +217,11 @@ newInspectorState oer fragmentStart =
   InspectorState oer fragmentStart Nothing
 
 
-hasVideo : Oer -> Bool
-hasVideo oer =
+hasYoutubeVideo : Oer -> Bool
+hasYoutubeVideo oer =
   case getYoutubeVideoId oer of
     Nothing ->
-      isFromVideoLecturesNet oer
+      False
 
     Just _ ->
       True
@@ -228,13 +229,16 @@ hasVideo oer =
 
 getYoutubeVideoId : Oer -> Maybe String
 getYoutubeVideoId oer =
-  oer.url
-  |> String.split "="
-  |> List.drop 1
-  |> List.head
-  |> Maybe.withDefault ""
-  |> String.split "&"
-  |> List.head
+  if (oer.url |> String.contains "://youtu") || (oer.url |> String.contains "://www.youtu") then
+    oer.url
+    |> String.split "="
+    |> List.drop 1
+    |> List.head
+    |> Maybe.withDefault ""
+    |> String.split "&"
+    |> List.head
+  else
+    Nothing
 
 
 modalId =

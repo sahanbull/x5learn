@@ -21,10 +21,6 @@ import Request exposing (..)
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg ({nav, userProfileForm} as model) =
-  -- let
-  --     debugDummy =
-  --       log "update" msg
-  -- in
   case msg of
     Initialized url ->
       let
@@ -108,6 +104,10 @@ update msg ({nav, userProfileForm} as model) =
       |> requestEntityDescriptionsIfNeeded
 
     RequestOerSearch (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestOerSearch"
+      -- in
       ( { model | userMessage = Just "There was a problem while fetching the search data" }, Cmd.none )
 
     RequestNextSteps (Ok pathways) ->

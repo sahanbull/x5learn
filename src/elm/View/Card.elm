@@ -97,7 +97,7 @@ viewOerCard model recommendedFragments position barId oer =
         |> el [ paddingXY 5 3, Font.size 12, whiteText, Background.color <| rgba 0 0 0 0.5, moveDown 157 ]
         |> inFront
 
-      thumbnail =
+      singleThumbnail =
         let
             attrs =
               case oer.images of
@@ -105,26 +105,46 @@ viewOerCard model recommendedFragments position barId oer =
                   [ preloadImage second ]
 
                 _ ->
-                  if hovering then [] else []
+                  []
         in
-            oer.images |> List.head |> Maybe.withDefault (imgPath "thumbnail_unavailable.jpg")
+            oer.images
+            |> List.head
+            |> Maybe.withDefault (imgPath "thumbnail_unavailable.jpg")
             |> upperImage attrs
 
       fragmentsBar =
-        viewFragmentsBar model oer recommendedFragments cardWidth barId
+        if oer.wikichunks |> List.isEmpty then
+          []
+        else
+          [ inFront <| viewFragmentsBar model oer recommendedFragments cardWidth barId ]
 
       preloadImage url =
         url
         |> upperImage [ width (px 1), alpha 0.01 ]
         |> behindContent
 
+      mediatypeIconInPlaceOfThumbnail =
+        let
+            stub =
+              if List.member oer.mediatype [ "video", "audio", "text" ] then
+                "mediatype_" ++ oer.mediatype
+              else
+                "mediatype_unknown"
+
+            weblink =
+              newTabLink [ centerX, alpha 0.7 ] { url = oer.url, label = oer.url |> shortUrl 40 |> bodyWrap [ whiteText ] }
+              |> el [ width (px cardWidth), moveDown 130 ]
+        in
+            image [ semiTransparent, centerX, centerY, width (px <| if hovering then 60 else 50) ] { src = (svgPath stub), description = "" }
+            |> el [ width fill, height (px imageHeight), Background.color x5color, inFront weblink ]
+
       carousel =
         case oer.images of
           [] ->
-            thumbnail
+            mediatypeIconInPlaceOfThumbnail
 
           [ _ ] ->
-            thumbnail
+            singleThumbnail
 
           head :: rest ->
             let
@@ -158,18 +178,10 @@ viewOerCard model recommendedFragments position barId oer =
         oer.title |> subheaderWrap [ height (fill |> maximum 64), clipY ]
 
       modalityIcon =
-        if hasVideo oer then
+        if hasYoutubeVideo oer then
           image [ moveRight 280, moveUp 50, width (px 30) ] { src = svgPath "playIcon", description = "play icon" }
         else
           none
-        -- let
-        --     stub =
-        --       if hasVideo oer then
-        --         "playIcon"
-        --       else
-        --         "textIcon"
-        -- in
-        --     image [ moveRight 280, moveDown 160, width (px 30) ] { src = svgPath stub, description = "play icon" }
 
       bottomRow =
         let
@@ -194,21 +206,21 @@ viewOerCard model recommendedFragments position barId oer =
         |> el [ paddingBottom 16 ]
 
       hoverPreview =
-        if oer.url |> String.contains "youtu" then
+        if oer.wikichunks |> List.isEmpty then
+          carousel
+        else
           case model.tagClouds |> Dict.get oer.url of
             Nothing ->
               carousel
 
             Just tagCloud ->
               tagCloudView tagCloud
-        else
-          carousel
 
       info =
         [ title
         , bottomRow
         ]
-        |> column [ padding 16, width fill, height fill, inFront modalityIcon, inFront fragmentsBar ]
+        |> column ([ padding 16, width fill, height fill, inFront modalityIcon ] ++ fragmentsBar)
 
       closeButton =
         -- if hovering then
@@ -223,7 +235,7 @@ viewOerCard model recommendedFragments position barId oer =
         height (px cardHeight)
 
       card =
-        [ (if hovering then hoverPreview else thumbnail)
+        [ (if hovering then hoverPreview else carousel)
         , info
         ]
         |> column [ widthOfCard, heightOfCard, htmlClass "materialCard", onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing) ]

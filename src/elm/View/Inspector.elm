@@ -106,7 +106,7 @@ inspectorContentDefault model inspectorState oer =
       player =
         case getYoutubeVideoId oer of
           Nothing ->
-            none
+            newTabLink [] { url = oer.url, label = oer.url |> bodyWrap [] }
 
           Just youtubeId ->
             let

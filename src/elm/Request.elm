@@ -144,6 +144,7 @@ oerDecoder =
   |> andMap (field "title" string)
   |> andMap (field "url" string)
   |> andMap (field "wikichunks" (list chunkDecoder))
+  |> andMap (field "mediatype" string)
 
 
 chunkDecoder =

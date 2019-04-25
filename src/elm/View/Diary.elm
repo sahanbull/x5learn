@@ -1,11 +1,7 @@
 module View.Diary exposing (viewDiary)
 
 import Dict
-import Time exposing (Posix)
-
-import Html
-import Html.Attributes
-import Html.Events
+import Time exposing (posixToMillis)
 
 import Element exposing (..)
 import Element.Background as Background
@@ -27,23 +23,36 @@ viewDiary model key =
       diary =
         getDiary model key
 
+      heading : Element Msg
       heading =
-        "Your notes" |> subheaderWrap []
+        "Quick Notes" |> subheaderWrap []
+
+      quickNotesWidget : Element Msg
+      quickNotesWidget =
+        let
+            quickNotesButton : String -> Element Msg
+            quickNotesButton str =
+              actionButtonWithoutIcon [ Background.color x5colorSemiTransparent, whiteText, paddingXY 5 3 ] str (Just (AddQuickNoteToDiary key str))
+        in
+            [ "Too hard for me", "Too easy for me", "Just what I need", "Not interested" ]
+            |> List.map quickNotesButton
+            |> wrappedRow [ spacing 8, width fill, alignRight ]
+
+      headingRow : Element Msg
+      headingRow =
+        [ heading
+        , quickNotesWidget
+        ]
+        |> column [ spacing 15, width fill ]
 
       newEntryValue =
         getDiaryNewEntry model key
 
-      saveClickAction =
-        if newEntryValue=="" then
-          []
-        else
-          [ onClick (SaveDiaryEntry key) ]
-
       saveButton =
-        actionButtonWithoutIcon [ bigButtonPadding ] "Save" (Just saveClickAction)
+        actionButtonWithoutIcon [ bigButtonPadding ] "Save" (if newEntryValue=="" then Nothing else Just <| SaveDiaryEntry key)
 
       textField =
-        Input.text [ width fill, onEnter <| (SaveDiaryEntry key), Border.color x5color ] { onChange = EditDiaryEntry key, text = newEntryValue, placeholder = Just ("Add a note" |> text |> Input.placeholder [ Font.size 14 ]), label = Input.labelHidden "note" }
+        Input.text [ width fill, onEnter <| (SaveDiaryEntry key), Border.color x5color ] { onChange = EditDiaryEntry key, text = newEntryValue, placeholder = Just ("Write a note" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "note" }
         -- |> el [ width fill ]
 
       newEntry =
@@ -59,39 +68,67 @@ viewDiary model key =
           diary.savedEntries
           |> List.reverse
           |> List.map (viewDiarySavedEntry model)
-          |> column [ spacing 10 ]
+          |> column [ spacing 10, width fill ]
           |> List.singleton
 
+      content : Element Msg
       content =
-        ([ heading ] ++ savedEntries ++ [ newEntry ])
-        |> column [ width fill, spacing 8 ]
+        ([ headingRow ] ++ savedEntries ++ [ newEntry ])
+        |> column [ width fill, spacing 15 ]
   in
       [ (diary.savedEntries |> List.length |> String.fromInt, content) ]
-      |> Keyed.column []
+      |> Keyed.column [ width fill ]
 
 
 viewDiarySavedEntry model entry =
   -- [ el [] (humanReadableRelativeTime model entry.time |> text)
-  [ avatarImage
-  , entry.body |> bodyWrap []
-  ]
-  |> row [ spacing 10 ]
+  let
+      date =
+        entry.time
+        |> humanReadableRelativeTime model
+        |> captionNowrap [ greyTextDisabled ]
+
+      actions =
+        button [] { onPress = Just <| RemoveDiaryEntry entry.time, label = trashIcon }
+  in
+      [ avatarImage |> el [ alignTop ]
+      , entry.body |> bodyWrap [ width fill ] |> el [ width fill ]
+      , [ date, actions ] |> row [ spacing 5, alignTop, moveUp 4 ]
+      ]
+      |> row [ spacing 10, width fill ]
 
 
--- humanReadableRelativeTime {currentTime} time =
---   if currentTime - time < 10 * Time.minute then
---     "Just now"
---   else
---     let
---         diffDays =
---           Duration.diffDays (Date.fromTime currentTime) (Date.fromTime time)
---     in
---         case diffDays of
---           0 ->
---             "Today"
+humanReadableRelativeTime {currentTime} time =
+  let
+      minutesAgo =
+        ((posixToMillis currentTime) - (posixToMillis time)) // 1000 // 60
 
---           1 ->
---             "Yesterday"
+      hoursAgo =
+        ceiling <| (toFloat minutesAgo) / 60
 
---           _ ->
---             (toString diffDays) ++ " days ago"
+      daysAgo =
+        hoursAgo // 24
+
+      weeksAgo =
+        daysAgo // 7
+
+      monthsAgo =
+        ceiling <| (toFloat daysAgo) / 30.4
+
+      yearsAgo =
+        daysAgo // 365
+  in
+      if minutesAgo<10 then
+        "Just now"
+      else if minutesAgo<60 then
+        "Less than an hour ago"
+      else if hoursAgo<24 then
+        (String.fromInt <| hoursAgo ) ++ " hours ago"
+      else if daysAgo<7 then
+        (String.fromInt <| daysAgo ) ++ " days ago"
+      else if weeksAgo<4 then
+        (String.fromInt <| weeksAgo ) ++ " weeks ago"
+      else if monthsAgo<12 then
+        (String.fromInt <| monthsAgo ) ++ " months ago"
+      else
+        (String.fromInt <| yearsAgo ) ++ " years ago"

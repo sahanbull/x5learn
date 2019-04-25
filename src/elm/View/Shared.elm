@@ -48,6 +48,10 @@ x5color =
   rgb255 82 134 148
 
 
+x5colorSemiTransparent =
+  rgba255 82 134 148 0.3
+
+
 greyTextDisabled =
   Font.color <| grey 180
 
@@ -109,7 +113,7 @@ bodyNoWrap attrs str =
 
 
 subheaderWrap attrs str =
-  [ text str ] |> paragraph (attrs ++ [ Font.size 16 ])
+  [ text str ] |> paragraph (attrs ++ [ Font.size 21 ])
 
 
 headlineWrap attrs str =
@@ -287,10 +291,11 @@ actionButtonWithIcon iconPosition svgIconStub str onPress =
       button [] { onPress = onPress, label = label |> row [ width fill, padding 12, spacing 3, Border.rounded 4 ]}
 
 
+actionButtonWithoutIcon : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
 actionButtonWithoutIcon attrs str onPress =
   let
       label =
-        str |> bodyNoWrap [ width fill, padding 12, spacing 3, Border.rounded 4 ]
+        str |> bodyNoWrap []
   in
       button attrs { onPress = onPress, label = label }
 
@@ -321,7 +326,11 @@ milkyWhiteCenteredContainer =
 
 
 closeIcon =
-  image [  materialDarkAlpha, hoverCircleBackground] { src = svgPath "close", description = "close" }
+  image [  materialDarkAlpha, hoverCircleBackground ] { src = svgPath "close", description = "close" }
+
+
+trashIcon =
+  image [  materialDarkAlpha, hoverCircleBackground, width <| px 30 ] { src = svgPath "delete", description = "delete" }
 
 
 viewCenterNote str =

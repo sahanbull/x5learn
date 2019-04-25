@@ -231,7 +231,7 @@ update msg ({nav, userProfileForm} as model) =
 
     EditDiaryEntry diaryKey str ->
       ({ model
-       | diaries = model.diaries |> editEntryInDiaries diaryKey str
+       | diaries = editEntryInDiaries model diaryKey str
        }, Cmd.none)
 
     SaveDiaryEntry diaryKey ->
@@ -245,30 +245,60 @@ update msg ({nav, userProfileForm} as model) =
       else
         (model, Cmd.none)
 
+    AddQuickNoteToDiary diaryKey entryText ->
+      ({ model
+       | diaries = addQuickNoteToDiary model diaryKey entryText
+       }, Cmd.none)
 
-editEntryInDiaries diaryKey str diaries =
+    RemoveDiaryEntry time ->
+      ({ model
+       | diaries = removeDiaryEntry model time
+       }, Cmd.none)
+
+
+editEntryInDiaries model diaryKey str =
   let
       oldDiary =
-        diaries
-        |> Dict.get diaryKey
-        |> Maybe.withDefault { newEntry = "", savedEntries = [] }
+        getDiary model diaryKey
+
       newDiary =
         { oldDiary | newEntry = str }
   in
-      diaries |> Dict.insert diaryKey newDiary
+      model.diaries |> Dict.insert diaryKey newDiary
 
 
 saveEntryInDiaries model diaryKey =
   let
       oldDiary =
-        model.diaries
-        |> Dict.get diaryKey
-        |> Maybe.withDefault { newEntry = "", savedEntries = [] }
+        getDiary model diaryKey
+
       newDiary =
         { oldDiary | newEntry = ""
                    , savedEntries = {time = model.currentTime, body = oldDiary.newEntry} :: oldDiary.savedEntries }
   in
       model.diaries |> Dict.insert diaryKey newDiary
+
+
+addQuickNoteToDiary model diaryKey entryText =
+  let
+      oldDiary =
+        getDiary model diaryKey
+
+      newDiary =
+        { oldDiary | newEntry = ""
+                   , savedEntries = {time = model.currentTime, body = entryText} :: oldDiary.savedEntries }
+  in
+      model.diaries |> Dict.insert diaryKey newDiary
+
+
+removeDiaryEntry model time =
+  let
+      removeEntry : String -> Diary -> Diary
+      removeEntry key diary =
+        { diary | savedEntries = diary.savedEntries |> List.filter (\entry -> entry.time /= time) }
+  in
+      model.diaries
+      |> Dict.map removeEntry
 
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model

@@ -61,7 +61,7 @@ viewModal model ({oer} as inspectorState) =
         , body
         , footer
         ]
-        |> column [ htmlClass "CloseInspectorOnClickOutside", width (fill |> maximum 752), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow, inFront content.fixed ]
+        |> column [ htmlClass "CloseInspectorOnClickOutside", width (fill |> maximum (752+notesWidth+15)), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow, inFront content.fixed ]
 
       animatingBox =
         case model.modalAnimation of
@@ -122,18 +122,22 @@ inspectorContentDefault model inspectorState oer =
         |> List.map (bodyWrap [])
         |> column [ spacing 7, height (shrink |> maximum 250), scrollbarY ]
 
-      body =
+      mainSection =
         [ player
         , description
         , providerLink
         ]
         |> column [ spacing 30 ]
 
-      footer =
-        [ viewDiary model (diaryKeyFromOer oer)
-        -- , none |> el [ width fill ]
-        -- , actionButtons
+      body =
+        [ mainSection
+        , viewDiary model (diaryKeyFromOer oer) |> el [ width <| px notesWidth, alignTop ]
         ]
+        |> row [ spacing 15 ]
+
+      footer =
+        []
+        -- [ viewDiary model (diaryKeyFromOer oer)
 
       fragmentsBar =
         let
@@ -191,3 +195,7 @@ inspectorContentSaveToBookmarklist model inspectorState oer =
         |> column [ spacing 10 ]
   in
       { header = header, body = body, footer = footer, fixed = none }
+
+
+notesWidth =
+  248

@@ -50,6 +50,8 @@ type Msg
   | EditDiaryEntry String String
   | SaveDiaryEntry String
   | KeyPressOnDiary String Int
+  | AddQuickNoteToDiary String String
+  | RemoveDiaryEntry Posix
 
 
 type UserProfileField

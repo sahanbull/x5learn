@@ -112,10 +112,6 @@ def history():
     return render_template('home.html')
 
 
-# @app.route("/notes")
-# def notes():
-#     return render_template('home.html')
-
 @app.route("/profile")
 @login_required
 def profile():
@@ -164,6 +160,19 @@ def api_viewed_fragments():
 @app.route("/api/v1/gains/", methods=['GET'])
 def api_gains():
     return jsonify(dummy_user.gains())
+
+
+@app.route("/api/v1/oers/", methods=['POST'])
+def api_oers():
+    print('/oers/')
+    urls = request.get_json()
+    print(urls)
+    oers = {}
+    for url in urls:
+        # print(url)
+        oers[url] = find_oer_by_url(url)
+    # print(oers)
+    return jsonify(oers)
 
 
 @app.route("/api/v1/next_steps/", methods=['GET'])
@@ -423,6 +432,26 @@ def search_suggestions(text):
     # import pdb; pdb.set_trace()
     print(matches)
     return jsonify(matches)
+
+
+def find_oer_by_url(url):
+    for oer in loaded_oers.values():
+        if oer['url'] == url:
+            # print('found', url)
+            return oer
+    # If not found in the CSV dataset:
+    # For now, return a blank oer. TODO: call X5GON API or cache
+    oer = {}
+    oer['date'] = ''
+    oer['description'] = ''
+    oer['duration'] = ''
+    oer['images'] = []
+    oer['provider'] = ''
+    oer['title'] = ''
+    oer['url'] = url
+    oer['wikichunks'] = []
+    oer['mediatype'] = 'text'
+    return oer
 
 
 # THUMBNAILS FOR X5GON (experimental)

@@ -1,4 +1,7 @@
-module Request exposing (requestSession, searchOers, requestNextSteps, requestViewedFragments, requestGains, requestEntityDescriptions, requestSearchSuggestions, requestSaveUserProfile)
+module Request exposing (requestSession , searchOers , requestNextSteps , requestViewedFragments , requestGains , requestEntityDescriptions , requestSearchSuggestions , requestSaveUserProfile, requestOers)
+
+import Set exposing (Set)
+import Time exposing (millisToPosix)
 
 import Http exposing (expectStringResponse)
 import Json.Decode exposing (Value,map,map2,map3,map8,field,bool,int,float,string,list,dict,oneOf,maybe,nullable)
@@ -53,6 +56,15 @@ requestViewedFragments =
   Http.get
     { url = Url.Builder.absolute [ apiRoot, "viewed_fragments/" ] []
     , expect = Http.expectJson RequestViewedFragments (list fragmentDecoder)
+    }
+
+
+requestOers : Set String -> Cmd Msg
+requestOers urls =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "oers/" ] []
+    , body = Http.jsonBody <| (Encode.list Encode.string) (urls |> Set.toList)
+    , expect = Http.expectJson RequestOers (dict oerDecoder)
     }
 
 
@@ -116,6 +128,12 @@ fragmentDecoder =
     (field "oer" oerDecoder)
     (field "start" float)
     (field "length" float)
+
+
+noteDecoder =
+  map2 (\text time -> Note text (millisToPosix time))
+    (field "text" string)
+    (field "time" int)
 
 
 pathwayDecoder =

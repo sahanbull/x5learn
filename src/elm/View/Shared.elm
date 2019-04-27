@@ -120,6 +120,10 @@ headlineWrap attrs str =
   [ text str ] |> paragraph (attrs ++ [ Font.size 24 ])
 
 
+italicText =
+  bodyWrap [ Font.italic ]
+
+
 white =
   rgb 1 1 1
 
@@ -440,7 +444,7 @@ viewFragmentsBar model oer recommendedFragments barWidth barId =
                   [ onClickNoBubble <| InspectSearchResult oer chunk.start ]
 
                 _ ->
-                  if hasYoutubeVideo oer then
+                  if hasYoutubeVideo oer.url then
                     [ onClickNoBubble <| YoutubeSeekTo chunk.start ]
                   else
                     []
@@ -504,10 +508,6 @@ viewEntityPopup model chunkPopup entityPopup entity =
   let
       actionButtons =
         [ ("Search", TriggerSearch entity.title)
-        -- , ("Share", ClosePopup)
-        -- , ("Bookmark", ClosePopup)
-        -- , ("Add to interests", ClosePopup)
-        -- , ("Mark as known", ClosePopup)
         ]
         |> List.map (entityActionButton chunkPopup entityPopup)
 
@@ -611,3 +611,12 @@ shortUrl characterLimit url =
 
 avatarImage =
   image [ alpha 0.5 ] { src = svgPath "user_default_avatar", description = "user menu" }
+
+
+openInspectorOnPress model oer =
+  case model.inspectorState of
+    Nothing ->
+      Just (InspectSearchResult oer 0)
+
+    _ ->
+      Nothing

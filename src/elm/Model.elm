@@ -3,7 +3,7 @@ module Model exposing (..)
 import Browser
 import Browser.Navigation as Navigation
 import Url
-import Time exposing (Posix, posixToMillis)
+import Time exposing (Posix, posixToMillis, millisToPosix)
 import Element exposing (Color, rgb255)
 import Dict exposing (Dict)
 import Set exposing (Set)
@@ -28,7 +28,6 @@ type alias Model =
   , timeOfLastMouseEnterOnCard : Posix
   , modalAnimation : Maybe BoxAnimation
   , animationsPending : Set String
-  , bookmarklists : List Playlist
   , viewedFragments : Maybe (List Fragment)
   , gains : Maybe (List Gain)
   , nextSteps : Maybe (List Pathway)
@@ -42,18 +41,19 @@ type alias Model =
   , timeOfLastSearch : Posix
   , userProfileForm : UserProfileForm
   , userProfileFormSubmitted : Maybe UserProfileForm
-  , diaries : Dict String Diary
+  , oerNoteboards : Dict String (List Note) -- persisted
+  , oerNoteForms : Dict String String -- not persisted
+  , cachedOers : Dict String Oer -- not persisted
+  , requestingOers : Bool
   }
 
 
-type alias Diary =
-  { newEntry : String
-  , savedEntries : List DiaryEntry
-  }
+type alias OerUrl = String
 
+type alias Noteboard = List Note
 
-type alias DiaryEntry =
-  { body : String
+type alias Note =
+  { text : String
   , time : Posix
   }
 
@@ -165,7 +165,7 @@ type AnimationStatus
 
 
 type InspectorMenu
-  = SaveToBookmarklistMenu
+  = QualitySurvey -- TODO
 
 
 type Session
@@ -189,7 +189,6 @@ initialModel nav flags =
   , timeOfLastMouseEnterOnCard = initialTime
   , modalAnimation = Nothing
   , animationsPending = Set.empty
-  , bookmarklists = initialBookmarklists
   , viewedFragments = Nothing
   , gains = Nothing
   , nextSteps = Nothing
@@ -203,36 +202,29 @@ initialModel nav flags =
   , timeOfLastSearch = initialTime
   , userProfileForm = freshUserProfileForm (UserProfile "" "" "")
   , userProfileFormSubmitted = Nothing
-  , diaries = Dict.empty
+  , oerNoteboards = Dict.singleton "https://www.youtube.com/watch?v=mbyG85GZ0PI&list=PLD63A284B7615313A" [ Note "Dummy note" (millisToPosix 1234567) ]
+  , oerNoteForms = Dict.empty
+  , cachedOers = Dict.empty
+  , requestingOers = False
   }
 
 
-getDiary model key =
-  model.diaries
-  |> Dict.get key
-  |> Maybe.withDefault { newEntry = "", savedEntries = [] }
+getOerNoteboard : Model -> String -> Noteboard
+getOerNoteboard model oerUrl =
+  model.oerNoteboards
+  |> Dict.get oerUrl
+  |> Maybe.withDefault []
 
 
-getDiaryNewEntry model key =
-  case model.diaries |> Dict.get key of
-    Nothing ->
-      ""
-
-    Just {newEntry} ->
-      newEntry
+getOerNoteForm : Model -> String -> String
+getOerNoteForm model oerUrl =
+  model.oerNoteForms
+  |> Dict.get oerUrl
+  |> Maybe.withDefault ""
 
 
 initialTime =
   Time.millisToPosix 0
-
-
-initialBookmarklists =
-  [ Playlist "Statistics" []
-  , Playlist "Python" []
-  , Playlist "Fun stuff" []
-  , Playlist "Machine learning in Music" []
-  , Playlist "Shared with Alice" []
-  ]
 
 
 newSearch str =
@@ -246,9 +238,9 @@ newInspectorState oer fragmentStart =
   InspectorState oer fragmentStart Nothing
 
 
-hasYoutubeVideo : Oer -> Bool
-hasYoutubeVideo oer =
-  case getYoutubeVideoId oer of
+hasYoutubeVideo : OerUrl -> Bool
+hasYoutubeVideo oerUrl =
+  case getYoutubeVideoId oerUrl of
     Nothing ->
       False
 
@@ -256,10 +248,10 @@ hasYoutubeVideo oer =
       True
 
 
-getYoutubeVideoId : Oer -> Maybe String
-getYoutubeVideoId oer =
-  if (oer.url |> String.contains "://youtu") || (oer.url |> String.contains "://www.youtu") then
-    oer.url
+getYoutubeVideoId : OerUrl -> Maybe String
+getYoutubeVideoId oerUrl =
+  if (oerUrl |> String.contains "://youtu") || (oerUrl |> String.contains "://www.youtu") then
+    oerUrl
     |> String.split "="
     |> List.drop 1
     |> List.head
@@ -330,11 +322,6 @@ durationInSecondsFromOer {duration} =
       minutes * 60 + seconds
 
 
-diaryKeyFromOer : Oer -> String
-diaryKeyFromOer oer =
-  "oer_" ++ oer.url
-
-
 displayName userProfile =
   let
       name =
@@ -359,3 +346,24 @@ loggedInUser {session} =
 
 freshUserProfileForm userProfile =
   { userProfile = userProfile, saved = False }
+
+
+getCachedOerWithBlankDefault : Model -> OerUrl -> Oer
+getCachedOerWithBlankDefault model oerUrl =
+  model.cachedOers
+  |> Dict.get oerUrl
+  |> Maybe.withDefault (blankOer oerUrl)
+
+
+-- temporary solution. TODO: refactor Oer data type
+blankOer oerUrl =
+  { date = ""
+  , description = ""
+  , duration = ""
+  , images = []
+  , provider = ""
+  , title = ""
+  , url = oerUrl
+  , wikichunks = []
+  , mediatype = ""
+  }

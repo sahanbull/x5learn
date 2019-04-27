@@ -1,4 +1,4 @@
-module View.Diary exposing (viewDiary)
+module View.Noteboard exposing (viewNoteboard, humanReadableRelativeTime)
 
 import Dict
 import Time exposing (posixToMillis)
@@ -18,11 +18,8 @@ import Msg exposing (..)
 import View.Shared exposing (..)
 
 
-viewDiary model key =
+viewNoteboard model oerUrl =
   let
-      diary =
-        getDiary model key
-
       heading : Element Msg
       heading =
         "Quick Notes" |> subheaderWrap []
@@ -32,7 +29,7 @@ viewDiary model key =
         let
             quickNotesButton : String -> Element Msg
             quickNotesButton str =
-              actionButtonWithoutIcon [ Background.color x5colorSemiTransparent, whiteText, paddingXY 5 3 ] str (Just (AddQuickNoteToDiary key str))
+              actionButtonWithoutIcon [ Background.color x5colorSemiTransparent, whiteText, paddingXY 5 3 ] str (Just <| ClickedQuickNoteButton oerUrl str)
         in
             [ "Too hard for me", "Too easy for me", "Just what I need", "Not interested" ]
             |> List.map quickNotesButton
@@ -45,54 +42,52 @@ viewDiary model key =
         ]
         |> column [ spacing 15, width fill ]
 
-      newEntryValue =
-        getDiaryNewEntry model key
-
-      saveButton =
-        actionButtonWithoutIcon [ bigButtonPadding ] "Save" (if newEntryValue=="" then Nothing else Just <| SaveDiaryEntry key)
+      formValue =
+        getOerNoteForm model oerUrl
 
       textField =
-        Input.text [ width fill, onEnter <| (SaveDiaryEntry key), Border.color x5color ] { onChange = EditDiaryEntry key, text = newEntryValue, placeholder = Just ("Write a note" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "note" }
+        Input.text [ width fill, onEnter <| (SubmittedNewNoteInOerNoteboard oerUrl), Border.color x5color ] { onChange = ChangedTextInNewNoteFormInOerNoteboard oerUrl, text = formValue, placeholder = Just ("Write a note" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "note" }
         -- |> el [ width fill ]
 
       newEntry =
         [ textField
-        -- , saveButton
         ]
         |> row [ spacing 10, width fill ]
 
-      savedEntries =
-        if List.isEmpty diary.savedEntries then
+      notes =
+        getOerNoteboard model oerUrl
+
+      noteElements =
+        if List.isEmpty notes then
           []
         else
-          diary.savedEntries
+          notes
           |> List.reverse
-          |> List.map (viewDiarySavedEntry model)
+          |> List.map (viewNote model)
           |> column [ spacing 10, width fill ]
           |> List.singleton
 
       content : Element Msg
       content =
-        ([ headingRow ] ++ savedEntries ++ [ newEntry ])
+        ([ headingRow ] ++ noteElements ++ [ newEntry ])
         |> column [ width fill, spacing 15 ]
   in
-      [ (diary.savedEntries |> List.length |> String.fromInt, content) ]
+      [ (notes |> List.length |> String.fromInt, content) ]
       |> Keyed.column [ width fill ]
 
 
-viewDiarySavedEntry model entry =
-  -- [ el [] (humanReadableRelativeTime model entry.time |> text)
+viewNote model note =
   let
       date =
-        entry.time
+        note.time
         |> humanReadableRelativeTime model
         |> captionNowrap [ greyTextDisabled ]
 
       actions =
-        button [] { onPress = Just <| RemoveDiaryEntry entry.time, label = trashIcon }
+        button [] { onPress = Just <| RemoveNote note.time, label = trashIcon }
   in
       [ avatarImage |> el [ alignTop ]
-      , entry.body |> bodyWrap [ width fill ] |> el [ width fill ]
+      , note.text |> bodyWrap [ width fill ] |> el [ width fill ]
       , [ date, actions ] |> row [ spacing 5, alignTop, moveUp 4 ]
       ]
       |> row [ spacing 10, width fill ]
@@ -118,10 +113,10 @@ humanReadableRelativeTime {currentTime} time =
       yearsAgo =
         daysAgo // 365
   in
-      if minutesAgo<10 then
+      if minutesAgo<7 then
         "Just now"
       else if minutesAgo<60 then
-        "Less than an hour ago"
+        "Last hour"
       else if hoursAgo<24 then
         (String.fromInt <| hoursAgo ) ++ " hours ago"
       else if daysAgo<7 then

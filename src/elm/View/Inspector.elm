@@ -14,7 +14,7 @@ import Model exposing (..)
 import Msg exposing (..)
 
 import View.Shared exposing (..)
-import View.Diary exposing (..)
+import View.Noteboard exposing (..)
 
 import Animation exposing (..)
 
@@ -30,15 +30,15 @@ viewInspectorModalOrEmpty model =
 
 
 viewModal : Model -> InspectorState -> Element Msg
-viewModal model ({oer} as inspectorState) =
+viewModal model inspectorState =
   let
       content =
         case inspectorState.activeMenu of
           Nothing ->
-            inspectorContentDefault model inspectorState oer
+            inspectorContentDefault model inspectorState
 
-          Just SaveToBookmarklistMenu ->
-            inspectorContentSaveToBookmarklist model inspectorState oer
+          Just QualitySurvey ->
+            inspectorContentDefault model inspectorState -- TODO
 
       header =
         [ content.header
@@ -99,60 +99,78 @@ viewModal model ({oer} as inspectorState) =
       |> el [ width fill, height fill, behindContent scrim, inFront animatingBox ]
 
 
-inspectorContentDefault model inspectorState oer =
+inspectorContentDefault model {oer, fragmentStart} =
   let
       header =
-        oer.title |> headlineWrap []
+        case oer.title of
+          "" ->
+            "Title unavailable" |> headlineWrap [ Font.italic ]
+
+          title ->
+            title |> headlineWrap []
 
       player =
-        case getYoutubeVideoId oer of
+        case getYoutubeVideoId oer.url of
           Nothing ->
             newTabLink [] { url = oer.url, label = oer.url |> bodyWrap [] }
 
           Just youtubeId ->
             let
                 startTime =
-                  inspectorState.fragmentStart * (durationInSecondsFromOer oer |> toFloat) |> floor
+                  fragmentStart * (durationInSecondsFromOer oer |> toFloat) |> floor
             in
                 embedYoutubePlayer youtubeId startTime
 
       description =
-        oer.description
-        |> String.split("\n")
-        |> List.map (bodyWrap [])
-        |> column [ spacing 7, height (shrink |> maximum 250), scrollbarY ]
+        case oer.description of
+          "" ->
+            "No description available" |> italicText
+
+          desc ->
+            desc
+            |> String.split("\n")
+            |> List.map (bodyWrap [])
+            |> column [ spacing 7, height (shrink |> maximum 250), scrollbarY ]
 
       mainSection =
         [ player
         , description
         , providerLink
         ]
-        |> column [ spacing 30 ]
+        |> column [ spacing 30, width (px playerWidth) ]
 
       body =
         [ mainSection
-        , viewDiary model (diaryKeyFromOer oer) |> el [ width <| px notesWidth, alignTop ]
+        , viewNoteboard model oer.url |> el [ width <| px notesWidth, height fill, alignTop, borderLeft 1, paddingTRBL 0 0 0 15 ]
         ]
         |> row [ spacing 15 ]
 
       footer =
         []
-        -- [ viewDiary model (diaryKeyFromOer oer)
 
       fragmentsBar =
-        let
-            content =
-              viewFragmentsBar model oer (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth "inspector"
-              |> el [ width (px playerWidth), height (px 16) ]
-        in
-            none |> el [ inFront content, moveDown 487, moveRight 16 ]
+        case oer.wikichunks of
+          [] ->
+            none
 
-      footerButton label =
-        button [ hoverCircleBackground ] { onPress = Nothing, label = label }
+          wikichunks ->
+            let
+                content =
+                  viewFragmentsBar model oer (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth "inspector"
+                  |> el [ width (px playerWidth), height (px 16) ]
+            in
+                none |> el [ inFront content, moveDown 487, moveRight 16 ]
 
       providerLink =
-        -- if inspectorState.providerLinkShown then
-          newTabLink [] { url = oer.url, label = oer.provider |> bodyNoWrap [] }
+        case oer.provider of
+          "" ->
+            none
+
+          provider ->
+            [ "Provider:" |> bodyNoWrap []
+            , newTabLink [] { url = oer.url, label = provider |> bodyNoWrap [] }
+            ]
+            |> row [ spacing 10 ]
         -- else
         --   actionButtonWithIcon IconRight "navigate_next" oer.provider (Just <| ShowProviderLinkInInspector)
         -- [ oer.provider |> bodyNoWrap [ alignLeft]
@@ -168,33 +186,6 @@ inspectorContentDefault model inspectorState oer =
       --   |> row [ spacing 20, alignRight ]
   in
       { header = header, body = body, footer = footer, fixed = fragmentsBar }
-
-
-inspectorContentSaveToBookmarklist model inspectorState oer =
-  let
-      header =
-        "Save to..." |> headlineWrap [ paddingXY 14 0 ]
-
-      footer =
-        [ actionButtonWithIcon IconLeft "add" "Create new list" <| Nothing ]
-
-      bookmarklistButton : Playlist -> Element Msg
-      bookmarklistButton playlist =
-        let
-            (icon, action) =
-              if isInPlaylist oer playlist then
-                ("checkbox_ticked", RemoveFromBookmarklist)
-              else
-                ("checkbox_unticked", AddToBookmarklist)
-        in
-            actionButtonWithIcon IconLeft icon playlist.title <| Just <| action playlist oer
-
-      body =
-        model.bookmarklists
-        |> List.map bookmarklistButton
-        |> column [ spacing 10 ]
-  in
-      { header = header, body = body, footer = footer, fixed = none }
 
 
 notesWidth =

@@ -132,7 +132,10 @@ viewOerCard model recommendedFragments position barId oer =
                 "mediatype_unknown"
 
             weblink =
-              newTabLink [ centerX, alpha 0.7 ] { url = oer.url, label = oer.url |> shortUrl 40 |> bodyWrap [ whiteText ] }
+              oer.url
+              |> shortUrl 40
+              |> bodyWrap [ whiteText, alpha 0.7 ]
+              |> el [ centerX ]
               |> el [ width (px cardWidth), moveDown 130 ]
         in
             image [ semiTransparent, centerX, centerY, width (px <| if hovering then 60 else 50) ] { src = (svgPath stub), description = "" }
@@ -178,7 +181,7 @@ viewOerCard model recommendedFragments position barId oer =
         oer.title |> subheaderWrap [ height (fill |> maximum 64), clipY ]
 
       modalityIcon =
-        if hasYoutubeVideo oer then
+        if hasYoutubeVideo oer.url then
           image [ moveRight 280, moveUp 50, width (px 30) ] { src = svgPath "playIcon", description = "play icon" }
         else
           none
@@ -222,12 +225,6 @@ viewOerCard model recommendedFragments position barId oer =
         ]
         |> column ([ padding 16, width fill, height fill, inFront modalityIcon ] ++ fragmentsBar)
 
-      closeButton =
-        -- if hovering then
-        --   button [ alignRight ] { onPress = Nothing, label = closeIcon }
-        -- else
-          none
-
       widthOfCard =
         width (px cardWidth)
 
@@ -240,16 +237,8 @@ viewOerCard model recommendedFragments position barId oer =
         ]
         |> column [ widthOfCard, heightOfCard, htmlClass "materialCard", onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing) ]
 
-      onPress =
-        case model.inspectorState of
-          Nothing ->
-            Just (InspectSearchResult oer 0)
-
-          _ ->
-            Nothing
-
       cardAttrs =
-        [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| button [] { onPress = onPress, label = card }, inFront closeButton, moveRight position.x, moveDown position.y ]
+        [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| button [] { onPress = openInspectorOnPress model oer, label = card }, moveRight position.x, moveDown position.y ]
   in
       none
       |> el cardAttrs

@@ -12,7 +12,7 @@ import View.PageHeader exposing (viewPageHeader)
 import View.NavigationDrawer exposing (..)
 import View.Pages.Home exposing (viewHomePage)
 import View.Pages.Search exposing (viewSearchPage)
-import View.Pages.Bookmarks exposing (viewBookmarksPage)
+import View.Pages.Notes exposing (viewNotesPage)
 import View.Pages.Gains exposing (viewGainsPage)
 import View.Pages.Profile exposing (viewProfilePage)
 import View.Pages.History exposing (viewHistoryPage)
@@ -70,7 +70,7 @@ view model =
                   homePage
 
             "/notes" ->
-              viewBookmarksPage model |> withNavigationDrawer model
+              viewNotesPage model |> withNavigationDrawer model
 
             "/history" ->
               viewHistoryPage model |> withNavigationDrawer model

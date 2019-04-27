@@ -22,7 +22,7 @@ viewNoteboard model oerUrl =
   let
       heading : Element Msg
       heading =
-        "Quick Notes" |> subheaderWrap []
+        "Private Notes" |> subheaderWrap []
 
       quickNotesWidget : Element Msg
       quickNotesWidget =

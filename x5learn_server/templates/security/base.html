@@ -1,0 +1,95 @@
+{% block doc -%}
+<!DOCTYPE html>
+<html{% block html_attribs %}{% endblock html_attribs %}>
+  {%- block html %}
+  <head>
+    {%- block head %}
+    <style>
+      body{
+        margin: 0;
+        font-family: sans-serif;
+        color: #282828;
+      }
+
+      h1{
+        text-align: center;
+      }
+
+      label{
+        display: block;
+        font-weight: bold;
+        padding-bottom: 5px;
+      }
+
+      input{
+        padding: .75rem 1.5rem;
+        font-size: 1.25rem;
+        border-radius: .3rem;
+      }
+
+      input[type=text],input[type=password]{
+        width: 348px;
+        max-width: 86%;
+      }
+
+      input[type=submit]{
+        width: 100%;
+        background: #6a95a4;
+        color: white;
+        border: none;
+      }
+
+      ul{
+        color: #d40;
+        list-style: none;
+        margin: 0 0 28px 0;
+        padding: 0;
+      }
+
+      ul{
+        color: #d40;
+        list-style: none;
+      }
+
+      .centerblock{
+        width: 400px;
+        max-width: 90%;
+        margin: auto;
+        padding-top: 30px;
+      }
+
+      .centernote{
+        text-align: center;
+        padding: 24px 0;
+        color: #999;
+      }
+    </style>
+    <title>{% block title %}{{ title|default }}{% endblock title %}</title>
+
+      {%- block metas %}
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      {%- endblock metas %}
+
+      {%- block styles %}
+      {%- endblock styles %}
+    {%- endblock head %}
+  </head>
+  <body{% block body_attribs %}{% endblock body_attribs %}>
+    {% block body -%}
+
+      <div style="border-bottom: 1px solid #ccc">
+        <a class="" href="/" rel="noopener noreferrer">
+          <img style="height: 26px; padding: 7px 16px 3px 16px" src="/static/dist/img/x5learn_logo.png" alt="X5Learn logo">
+        </a>
+      </div>
+
+      {% block content -%}
+      {%- endblock content %}
+
+      {% block scripts %}
+      {%- endblock scripts %}
+    {%- endblock body %}
+  </body>
+  {%- endblock html %}
+</html>
+{% endblock doc -%}

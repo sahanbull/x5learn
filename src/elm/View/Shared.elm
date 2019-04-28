@@ -40,16 +40,16 @@ materialDarkAlpha =
   alpha 0.87
 
 
-primaryWhite =
+whiteText =
   Font.color white
 
 
 x5color =
-  Font.color <| rgb255 82 134 148
+  rgb255 82 134 148
 
 
-greyText =
-  Font.color <| grey 160
+x5colorSemiTransparent =
+  rgba255 82 134 148 0.3
 
 
 greyTextDisabled =
@@ -96,10 +96,6 @@ allSidesZero =
   }
 
 
-navLink url label =
-  link [] { url = url, label = label }
-
-
 wrapText attrs str =
   [ text str ] |> paragraph attrs
 
@@ -117,11 +113,15 @@ bodyNoWrap attrs str =
 
 
 subheaderWrap attrs str =
-  [ text str ] |> paragraph (attrs ++ [ Font.size 16 ])
+  [ text str ] |> paragraph (attrs ++ [ Font.size 21 ])
 
 
 headlineWrap attrs str =
   [ text str ] |> paragraph (attrs ++ [ Font.size 24 ])
+
+
+italicText =
+  bodyWrap [ Font.italic ]
 
 
 white =
@@ -295,10 +295,11 @@ actionButtonWithIcon iconPosition svgIconStub str onPress =
       button [] { onPress = onPress, label = label |> row [ width fill, padding 12, spacing 3, Border.rounded 4 ]}
 
 
+actionButtonWithoutIcon : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
 actionButtonWithoutIcon attrs str onPress =
   let
       label =
-        str |> bodyNoWrap [ width fill, padding 12, spacing 3, Border.rounded 4 ]
+        str |> bodyNoWrap []
   in
       button attrs { onPress = onPress, label = label }
 
@@ -329,7 +330,11 @@ milkyWhiteCenteredContainer =
 
 
 closeIcon =
-  image [  materialDarkAlpha, hoverCircleBackground] { src = svgPath "close", description = "close" }
+  image [  materialDarkAlpha, hoverCircleBackground ] { src = svgPath "close", description = "close" }
+
+
+trashIcon =
+  image [  materialDarkAlpha, hoverCircleBackground, width <| px 30 ] { src = svgPath "delete", description = "delete" }
 
 
 viewCenterNote str =
@@ -339,7 +344,9 @@ viewCenterNote str =
 
 
 viewLoadingSpinner =
-  "loading..." |> viewCenterNote
+  none
+  |> el [ htmlClass "loader", centerX, centerY ]
+  |> el [ centerX, centerY ]
 
 
 menuButtonDisabled str =
@@ -387,21 +394,21 @@ viewFragmentsBar model oer recommendedFragments barWidth barId =
               let
                   entityPopup =
                     case model.popup of
-                      Nothing ->
-                        Nothing
-
                       Just (ChunkOnBar p) ->
                         p.entityPopup
+
+                      _ ->
+                        Nothing
               in
                   { barId = barId, oer = oer, chunk = chunk, entityPopup = entityPopup }
 
             isPopupOpen =
               case model.popup of
-                Nothing ->
-                  False
-
                 Just (ChunkOnBar p) ->
                   barId == p.barId && chunk == p.chunk
+
+                _ ->
+                  False
 
             containsSearchString =
               case model.searchState of
@@ -437,7 +444,7 @@ viewFragmentsBar model oer recommendedFragments barWidth barId =
                   [ onClickNoBubble <| InspectSearchResult oer chunk.start ]
 
                 _ ->
-                  if hasVideo oer then
+                  if hasYoutubeVideo oer.url then
                     [ onClickNoBubble <| YoutubeSeekTo chunk.start ]
                   else
                     []
@@ -501,10 +508,6 @@ viewEntityPopup model chunkPopup entityPopup entity =
   let
       actionButtons =
         [ ("Search", TriggerSearch entity.title)
-        -- , ("Share", ClosePopup)
-        -- , ("Bookmark", ClosePopup)
-        -- , ("Add to interests", ClosePopup)
-        -- , ("Mark as known", ClosePopup)
         ]
         |> List.map (entityActionButton chunkPopup entityPopup)
 
@@ -561,3 +564,59 @@ fragmentsBarHeight = 16
 
 isHoverMenuNearRightEdge model margin =
   model.mousePositionXwhenOnChunkTrigger > (toFloat model.windowWidth)-margin
+
+
+shortUrl characterLimit url =
+  let
+      cutBeforeFirst substr input =
+        case input |> String.indexes substr |> List.head of
+          Nothing ->
+            input
+
+          Just pos ->
+            input |> String.dropLeft (pos + (String.length substr))
+
+      cutAfterFirst substr input =
+        case input |> String.indexes substr |> List.head of
+          Nothing ->
+            input
+
+          Just pos ->
+            input |> String.left pos
+
+      cutBeforeLast substr input =
+        case input |> String.indexes substr |> List.reverse |> List.head of
+          Nothing ->
+            input
+
+          Just pos ->
+            input |> String.dropLeft pos
+
+      leftPart =
+        url
+        |> cutBeforeFirst "//"
+        |> cutBeforeFirst "www."
+        |> cutAfterFirst "/"
+
+      rightPartRaw =
+        url
+        |> cutBeforeLast "/"
+
+      rightPart =
+        rightPartRaw
+        |> String.dropLeft ((String.length <| leftPart++rightPartRaw) - characterLimit)
+  in
+      leftPart ++ "/..." ++ rightPart
+
+
+avatarImage =
+  image [ alpha 0.5 ] { src = svgPath "user_default_avatar", description = "user menu" }
+
+
+openInspectorOnPress model oer =
+  case model.inspectorState of
+    Nothing ->
+      Just (InspectSearchResult oer 0)
+
+    _ ->
+      Nothing

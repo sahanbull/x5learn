@@ -14,7 +14,7 @@ import Model exposing (..)
 import Ports
 
 type Msg
-  = NoOp
+  = Initialized Url.Url
   | LinkClicked Browser.UrlRequest
   | UrlChanged Url.Url
   | ClockTick Posix
@@ -25,16 +25,16 @@ type Msg
   | UninspectSearchResult
   | ModalAnimationStart BoxAnimation
   | ModalAnimationStop Int
+  | RequestSession (Result Http.Error Session)
   | RequestOerSearch (Result Http.Error (List Oer))
   | RequestNextSteps (Result Http.Error (List Pathway))
   | RequestViewedFragments (Result Http.Error (List Fragment))
+  | RequestOers (Result Http.Error (Dict String Oer))
   | RequestGains (Result Http.Error (List Gain))
   | RequestEntityDescriptions (Result Http.Error (Dict String String))
   | RequestSearchSuggestions (Result Http.Error (List String))
+  | RequestSaveUserProfile (Result Http.Error String)
   | SetHover (Maybe String)
-  | OpenSaveToBookmarklistMenu InspectorState
-  | AddToBookmarklist Playlist Oer
-  | RemoveFromBookmarklist Playlist Oer
   | SetPopup Popup
   | ClosePopup
   | CloseInspector
@@ -43,6 +43,18 @@ type Msg
   | SelectSuggestion String
   | MouseOverChunkTrigger Float
   | YoutubeSeekTo Float
+  | EditUserProfile UserProfileField String
+  | ClickedSaveUserProfile
+  | ChangedTextInNewNoteFormInOerNoteboard String String
+  | SubmittedNewNoteInOerNoteboard String
+  | PressedKeyInNewNoteFormInOerNoteboard String Int
+  | ClickedQuickNoteButton String String
+  | RemoveNote Posix
+
+
+type UserProfileField
+  = FirstName
+  | LastName
 
 
 subscriptions : Model -> Sub Msg

@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import scoped_session, sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
-from _config import ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_ROLE_NAME, ROLES
+from x5learn_server._config import ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_ROLE_NAME, ROLES
 
 engine = None
 db_session = None
@@ -36,12 +36,11 @@ def init_db():
     global Base
     global engine
 
-    import models
+    import x5learn_server.models
     Base.metadata.create_all(bind=engine)
 
 
 def initiate_login_table_and_admin_profile(user_datastore):
-
     init_db()
 
     # create roles
@@ -49,11 +48,11 @@ def initiate_login_table_and_admin_profile(user_datastore):
         user_datastore.find_or_create_role(id=int(role["id"]), name=role["name"], description=role["description"])
 
     # create admin user
-    if not user_datastore.find_user(email=ADMIN_EMAIL):
-        user_datastore.create_user(email=ADMIN_EMAIL, password=ADMIN_PASSWORD)
+    # if not user_datastore.find_user(email=ADMIN_EMAIL):
+    #     user_datastore.create_user(email=ADMIN_EMAIL, password=ADMIN_PASSWORD)
 
     db_session.commit()
 
     # assign admin privileges to admin
-    user_datastore.add_role_to_user(ADMIN_EMAIL, ADMIN_ROLE_NAME)
+    # user_datastore.add_role_to_user(ADMIN_EMAIL, ADMIN_ROLE_NAME)
     db_session.commit()

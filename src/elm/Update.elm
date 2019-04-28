@@ -6,7 +6,7 @@ import Url
 import Url.Builder
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Dict
+import Dict exposing (Dict)
 import Set
 import Time exposing (Posix)
 import List.Extra
@@ -20,32 +20,48 @@ import Request exposing (..)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg ({nav} as model) =
+update msg ({nav, userProfileForm} as model) =
+  -- let
+  --     actionlog =
+  --       msg |> log "action"
+  -- in
   case msg of
-    NoOp ->
-      (model, Cmd.none)
+    Initialized url ->
+      let
+          (newModel, cmd) =
+            model |> update (UrlChanged url)
+      in
+          (newModel, [ cmd, requestSession ] |> Cmd.batch )
 
     LinkClicked urlRequest ->
       case urlRequest of
         Browser.Internal url ->
-          ( model |> closePopup, Navigation.pushUrl model.nav.key (Url.toString url) )
+          if List.member (url.path |> String.dropLeft 1) ("login signup logout" |> String.split " ") then
+            ( model |> closePopup, Navigation.load (Url.toString url) )
+          else
+            ( model |> closePopup, Navigation.pushUrl model.nav.key (Url.toString url) )
 
         Browser.External href ->
           ( model |> closePopup, Navigation.load href )
 
     UrlChanged url ->
       let
-          cmd =
+          -- logOutput =
+          --   url.path |> log "UrlChanged"
+
+          (newModel, cmd) =
             if url.path == "/next_steps" then
-              requestNextSteps
+              (model, requestNextSteps)
             else if url.path == "/history" then
-              requestViewedFragments
+              (model, requestViewedFragments)
             else if url.path == "/gains" then
-              requestGains
+              (model, requestGains)
+            else if url.path == "/notes" then
+              ({ model | requestingOers = True }, requestOersAsNeeded model (model.oerNoteboards |> Dict.keys))
             else
-              Cmd.none
+              (model, Cmd.none)
       in
-          ( { model | nav = { nav | url = url }, inspectorState = Nothing } |> closePopup, cmd )
+          ( { newModel | nav = { nav | url = url }, inspectorState = Nothing } |> closePopup |> resetUserProfileForm, cmd )
 
     ClockTick time ->
       ( { model | currentTime = time }, Cmd.none)
@@ -58,7 +74,10 @@ update msg ({nav} as model) =
       ( { model | searchInputTyping = str } |> closePopup, if String.length str > 1 then requestSearchSuggestions str else Cmd.none)
 
     TriggerSearch str ->
-      ( { model | searchInputTyping = str, searchState = Just <| newSearch str, searchSuggestions = [], timeOfLastSearch = model.currentTime } |> closePopup, searchOers str)
+      if str=="" then
+        ( model, Cmd.none)
+      else
+        ( { model | searchInputTyping = str, searchState = Just <| newSearch str, searchSuggestions = [], timeOfLastSearch = model.currentTime } |> closePopup, searchOers str)
 
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, Cmd.none )
@@ -67,7 +86,7 @@ update msg ({nav} as model) =
       let
           inspectorParams =
             { modalId = modalId
-            , videoId = getYoutubeVideoId oer |> Maybe.withDefault ""
+            , videoId = getYoutubeVideoId oer.url |> Maybe.withDefault ""
             , fragmentStart = fragmentStart
             }
       in
@@ -82,12 +101,26 @@ update msg ({nav} as model) =
     ModalAnimationStop dummy ->
       ( { model | modalAnimation = Nothing, animationsPending = model.animationsPending |> Set.remove modalId }, Cmd.none )
 
+    RequestSession (Ok session) ->
+      ( { model | session = Just session } |> resetUserProfileForm, Cmd.none )
+
+    RequestSession (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestSession"
+      -- in
+      ( { model | userMessage = Just "There was a problem while requesting user data. Please try again later." }, Cmd.none )
+
     RequestOerSearch (Ok oers) ->
-      ( model |> updateSearch (insertSearchResults oers) |> includeEntityIds oers, [ Navigation.pushUrl nav.key "/search", setBrowserFocus "SearchField" ] |> Cmd.batch )
+      ( model |> updateSearch (insertSearchResults oers) |> includeEntityIds oers |> cacheOersFromList oers, [ Navigation.pushUrl nav.key "/search", setBrowserFocus "SearchField" ] |> Cmd.batch )
       |> requestEntityDescriptionsIfNeeded
 
     RequestOerSearch (Err err) ->
-      ( { model | userMessage = Just "There was a problem with the search data" }, Cmd.none )
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestOerSearch"
+      -- in
+      ( { model | userMessage = Just "There was a problem while fetching the search data" }, Cmd.none )
 
     RequestNextSteps (Ok pathways) ->
       let
@@ -104,7 +137,7 @@ update msg ({nav} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestNextSteps"
       -- in
-      ( { model | userMessage = Just "There was a problem with the recommendations data" }, Cmd.none )
+      ( { model | userMessage = Just "There was a problem while fetching the recommendations data" }, Cmd.none )
 
     RequestViewedFragments (Ok fragments) ->
       ( { model | viewedFragments = Just fragments } |> includeEntityIds (fragments |> List.map .oer), Cmd.none )
@@ -115,7 +148,17 @@ update msg ({nav} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestViewedFragments"
       -- in
-      ( { model | userMessage = Just "There was a problem with the history data" }, Cmd.none)
+      ( { model | userMessage = Just "There was a problem while fetching the history data" }, Cmd.none)
+
+    RequestOers (Ok oers) ->
+      ( { model | requestingOers = False } |> cacheOersFromDict oers, Cmd.none)
+
+    RequestOers (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestOers"
+      -- in
+      ( { model | requestingOers = False, userMessage = Just "There was a problem while fetching OER data" }, Cmd.none)
 
     RequestGains (Ok gains) ->
       ( { model | gains = Just gains }, Cmd.none )
@@ -125,7 +168,7 @@ update msg ({nav} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestGainsRequestViewedFragments"
       -- in
-      ( { model | userMessage = Just "There was a problem with the gains data" }, Cmd.none)
+      ( { model | userMessage = Just "There was a problem while fetching the gains data" }, Cmd.none)
 
     RequestEntityDescriptions (Ok descriptions) ->
       let
@@ -140,7 +183,7 @@ update msg ({nav} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestEntityDescriptions"
       -- in
-      ( { model | userMessage = Just "There was a problem with the wiki descriptions data", requestingEntityDescriptions = False }, Cmd.none )
+      ( { model | userMessage = Just "There was a problem while fetching the wiki descriptions data", requestingEntityDescriptions = False }, Cmd.none )
 
     RequestSearchSuggestions (Ok suggestions) ->
       if (millisSince model model.timeOfLastSearch) < 2000 then
@@ -153,19 +196,20 @@ update msg ({nav} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestSearchSuggestions"
       -- in
-      ( { model | userMessage = Just "There was a problem with the search suggestion" }, Cmd.none )
+      ( { model | userMessage = Just "There was a problem while fetching search suggestions" }, Cmd.none )
+
+    RequestSaveUserProfile (Ok _) ->
+      ({ model | userProfileForm = { userProfileForm | saved = True }, userProfileFormSubmitted = Nothing }, Cmd.none)
+
+    RequestSaveUserProfile (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestSaveUserProfile"
+      -- in
+      ( { model | userMessage = Just "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
 
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
-
-    OpenSaveToBookmarklistMenu inspectorState ->
-      ( { model | inspectorState = Just { inspectorState | activeMenu = Just SaveToBookmarklistMenu } }, Cmd.none )
-
-    AddToBookmarklist playlist oer ->
-      ( { model | bookmarklists = model.bookmarklists |> List.map (\p -> if p.title==playlist.title then { p | oers = oer :: p.oers } else p)}, Cmd.none )
-
-    RemoveFromBookmarklist playlist oer ->
-      ( { model | bookmarklists = model.bookmarklists |> List.map (\p -> if p.title==playlist.title then { p | oers = p.oers |> List.filter (\o -> o.url /= oer.url) } else p)}, Cmd.none )
 
     SetPopup popup ->
       ( { model | popup = Just popup }, Cmd.none)
@@ -187,6 +231,60 @@ update msg ({nav} as model) =
 
     YoutubeSeekTo fragmentStart ->
       ( model, youtubeSeekTo fragmentStart)
+
+    EditUserProfile field value ->
+      let
+          newForm =
+            { userProfileForm | userProfile = userProfileForm.userProfile |> updateUserProfile field value, saved = False }
+      in
+          ( { model | userProfileForm = newForm }, Cmd.none )
+
+    ClickedSaveUserProfile ->
+      ( { model | userProfileFormSubmitted = Just userProfileForm } , requestSaveUserProfile model.userProfileForm.userProfile)
+
+    ChangedTextInNewNoteFormInOerNoteboard oerUrl str ->
+      ({ model
+       | oerNoteForms = model.oerNoteForms |> Dict.insert oerUrl str
+       }, Cmd.none)
+
+    SubmittedNewNoteInOerNoteboard oerUrl ->
+      (model |> addNoteToOer oerUrl (getOerNoteForm model oerUrl), Cmd.none)
+      |> saveUserState msg
+
+    PressedKeyInNewNoteFormInOerNoteboard oerUrl keyCode ->
+      if keyCode==13 then
+        model |> update (SubmittedNewNoteInOerNoteboard oerUrl)
+      else
+        (model, Cmd.none)
+
+    ClickedQuickNoteButton oerUrl text ->
+      (model |> addNoteToOer oerUrl text, Cmd.none)
+
+    RemoveNote time ->
+      ({ model
+       | oerNoteboards = model.oerNoteboards |> Dict.map (removeNoteAtTime time)
+       }, Cmd.none)
+
+
+addNoteToOer : String -> String -> Model -> Model
+addNoteToOer oerUrl text model =
+  let
+      newNote =
+        Note text model.currentTime
+
+      oldNoteboard =
+        getOerNoteboard model oerUrl
+
+      newNoteboard =
+        newNote :: oldNoteboard
+  in
+      { model | oerNoteboards = model.oerNoteboards |> Dict.insert oerUrl newNoteboard }
+
+
+removeNoteAtTime : Posix -> String -> Noteboard -> Noteboard
+removeNoteAtTime time _ notes =
+  notes
+  |> List.filter (\note -> note.time /= time)
 
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model
@@ -232,6 +330,18 @@ requestEntityDescriptionsIfNeeded (oldModel, oldCmd) =
            (oldModel, oldCmd)
          else
            (newModel, [ oldCmd, requestEntityDescriptions missingEntities ] |> Cmd.batch)
+
+
+requestOersAsNeeded : Model -> List String -> Cmd Msg
+requestOersAsNeeded model neededUrls =
+  let
+      missingUrls =
+        neededUrls
+        |> Set.fromList
+        |> Set.filter (\url -> not <| List.member url (model.cachedOers |> Dict.keys))
+  in
+      missingUrls
+      |> requestOers
 
 
 includeEntityIds : List Oer -> Model -> Model
@@ -286,3 +396,43 @@ tagCloudFromOer oer =
 closePopup : Model -> Model
 closePopup model =
   { model | popup = Nothing }
+
+
+resetUserProfileForm : Model -> Model
+resetUserProfileForm model =
+  case loggedInUser model of
+    Just userProfile ->
+      { model | userProfileForm = freshUserProfileForm userProfile }
+
+    _ ->
+      model
+
+
+updateUserProfile : UserProfileField -> String -> UserProfile -> UserProfile
+updateUserProfile field value userProfile =
+  case field of
+    FirstName ->
+      { userProfile | firstName = value }
+
+    LastName ->
+      { userProfile | lastName = value }
+
+
+saveUserState lastAction (model, cmd) =
+  -- TODO persist user state
+  (model, cmd)
+
+
+cacheOersFromDict : Dict OerUrl Oer -> Model -> Model
+cacheOersFromDict oers model =
+  { model | cachedOers = Dict.union oers model.cachedOers }
+
+
+cacheOersFromList : List Oer -> Model -> Model
+cacheOersFromList oers model =
+  let
+      oersDict =
+        oers
+        |> List.foldl (\oer result -> result |> Dict.insert oer.url oer) Dict.empty
+  in
+      { model | cachedOers = Dict.union oersDict model.cachedOers }

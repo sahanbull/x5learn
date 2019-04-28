@@ -70,8 +70,12 @@ function startAnimationWhenModalIsReady(inspectorParams) {
 
 function setupEventHandlers(){
   document.addEventListener("click", function(e){
-    if(!e.target.closest('.InspectorAutoclose')){
+    if(!e.target.closest('.CloseInspectorOnClickOutside')){
       app.ports.closeInspector.send(12345);
+    }
+    if(!e.target.closest('.ClosePopupOnClickOutside')){
+      app.ports.closePopup.send(12345);
+      e.stopPropagation();
     }
     app.ports.clickedOnDocument.send(12345);
   });

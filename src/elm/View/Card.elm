@@ -72,7 +72,7 @@ viewOerGrid model playlist =
           |> List.reverse
           |> List.map inFront
     in
-        [ playlist.title |> subheaderWrap [ primaryWhite ]
+        [ playlist.title |> subheaderWrap [ whiteText ]
         ]
         -- |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ cards)
         |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
@@ -94,10 +94,10 @@ viewOerCard model recommendedFragments position barId oer =
       imageCounter txt =
         txt
         |> text
-        |> el [ paddingXY 5 3, Font.size 12, primaryWhite, Background.color <| rgba 0 0 0 0.5, moveDown 157 ]
+        |> el [ paddingXY 5 3, Font.size 12, whiteText, Background.color <| rgba 0 0 0 0.5, moveDown 157 ]
         |> inFront
 
-      thumbnail =
+      singleThumbnail =
         let
             attrs =
               case oer.images of
@@ -105,26 +105,49 @@ viewOerCard model recommendedFragments position barId oer =
                   [ preloadImage second ]
 
                 _ ->
-                  if hovering then [] else []
+                  []
         in
-            oer.images |> List.head |> Maybe.withDefault (imgPath "thumbnail_unavailable.jpg")
+            oer.images
+            |> List.head
+            |> Maybe.withDefault (imgPath "thumbnail_unavailable.jpg")
             |> upperImage attrs
 
       fragmentsBar =
-        viewFragmentsBar model oer recommendedFragments cardWidth barId
+        if oer.wikichunks |> List.isEmpty then
+          []
+        else
+          [ inFront <| viewFragmentsBar model oer recommendedFragments cardWidth barId ]
 
       preloadImage url =
         url
         |> upperImage [ width (px 1), alpha 0.01 ]
         |> behindContent
 
+      mediatypeIconInPlaceOfThumbnail =
+        let
+            stub =
+              if List.member oer.mediatype [ "video", "audio", "text" ] then
+                "mediatype_" ++ oer.mediatype
+              else
+                "mediatype_unknown"
+
+            weblink =
+              oer.url
+              |> shortUrl 40
+              |> bodyWrap [ whiteText, alpha 0.7 ]
+              |> el [ centerX ]
+              |> el [ width (px cardWidth), moveDown 130 ]
+        in
+            image [ semiTransparent, centerX, centerY, width (px <| if hovering then 60 else 50) ] { src = (svgPath stub), description = "" }
+            |> el [ width fill, height (px imageHeight), Background.color x5color, inFront weblink ]
+
       carousel =
         case oer.images of
           [] ->
-            thumbnail
+            mediatypeIconInPlaceOfThumbnail
 
           [ _ ] ->
-            thumbnail
+            singleThumbnail
 
           head :: rest ->
             let
@@ -158,18 +181,10 @@ viewOerCard model recommendedFragments position barId oer =
         oer.title |> subheaderWrap [ height (fill |> maximum 64), clipY ]
 
       modalityIcon =
-        if hasVideo oer then
+        if hasYoutubeVideo oer.url then
           image [ moveRight 280, moveUp 50, width (px 30) ] { src = svgPath "playIcon", description = "play icon" }
         else
           none
-        -- let
-        --     stub =
-        --       if hasVideo oer then
-        --         "playIcon"
-        --       else
-        --         "textIcon"
-        -- in
-        --     image [ moveRight 280, moveDown 160, width (px 30) ] { src = svgPath stub, description = "play icon" }
 
       bottomRow =
         let
@@ -194,27 +209,21 @@ viewOerCard model recommendedFragments position barId oer =
         |> el [ paddingBottom 16 ]
 
       hoverPreview =
-        if oer.url |> String.contains "youtu" then
+        if oer.wikichunks |> List.isEmpty then
+          carousel
+        else
           case model.tagClouds |> Dict.get oer.url of
             Nothing ->
               carousel
 
             Just tagCloud ->
               tagCloudView tagCloud
-        else
-          carousel
 
       info =
         [ title
         , bottomRow
         ]
-        |> column [ padding 16, width fill, height fill, inFront modalityIcon, inFront fragmentsBar ]
-
-      closeButton =
-        -- if hovering then
-        --   button [ alignRight ] { onPress = Nothing, label = closeIcon }
-        -- else
-          none
+        |> column ([ padding 16, width fill, height fill, inFront modalityIcon ] ++ fragmentsBar)
 
       widthOfCard =
         width (px cardWidth)
@@ -223,28 +232,16 @@ viewOerCard model recommendedFragments position barId oer =
         height (px cardHeight)
 
       card =
-        [ (if hovering then hoverPreview else thumbnail)
+        [ (if hovering then hoverPreview else carousel)
         , info
         ]
         |> column [ widthOfCard, heightOfCard, htmlClass "materialCard", onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing) ]
 
-      onPress =
-        case model.inspectorState of
-          Nothing ->
-            Just (InspectSearchResult oer 0)
-
-          _ ->
-            Nothing
-
       cardAttrs =
-        [ htmlClass "InspectorAutoclose", widthOfCard, heightOfCard, inFront <| button [] { onPress = onPress, label = card }, inFront closeButton, moveRight position.x, moveDown position.y ]
+        [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| button [] { onPress = openInspectorOnPress model oer, label = card }, moveRight position.x, moveDown position.y ]
   in
       none
       |> el cardAttrs
-
-
--- elevate zIndex =
---   htmlAttribute <| Html.Attributes.attribute "z-index" (String.fromInt zIndex)
 
 
 cardWidth =

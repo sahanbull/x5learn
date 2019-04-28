@@ -12,8 +12,9 @@ import View.PageHeader exposing (viewPageHeader)
 import View.NavigationDrawer exposing (..)
 import View.Pages.Home exposing (viewHomePage)
 import View.Pages.Search exposing (viewSearchPage)
-import View.Pages.Bookmarks exposing (viewBookmarksPage)
+import View.Pages.Notes exposing (viewNotesPage)
 import View.Pages.Gains exposing (viewGainsPage)
+import View.Pages.Profile exposing (viewProfilePage)
 import View.Pages.History exposing (viewHistoryPage)
 import View.Pages.NextSteps exposing (viewNextStepsPage)
 
@@ -38,7 +39,7 @@ init flags url key =
   let
       (model, cmd) =
         initialModel (Nav url key) flags
-        |> update (UrlChanged url) -- ensure that subpage-specific state is loaded when starting on a subpage
+        |> update (Initialized url) -- ensure that subpage-specific state is loaded when starting on a subpage
   in
       ( model, [ cmd, requestViewedFragments ] |> Cmd.batch )
 
@@ -46,32 +47,41 @@ init flags url key =
 view : Model -> Browser.Document Msg
 view model =
   let
+      homePage =
+        (viewHomePage model, [])
+
       (body, modal) =
-        case model.nav.url.path of
-          "/next_steps" ->
-            viewNextStepsPage model |> withNavigationDrawer model
+        if model.session == Nothing then
+          (viewLoadingSpinner, [])
+        else
+          case model.nav.url.path of
+            "/next_steps" ->
+              viewNextStepsPage model |> withNavigationDrawer model
 
-          "/gains" ->
-            viewGainsPage model |> withNavigationDrawer model
+            "/gains" ->
+              viewGainsPage model |> withNavigationDrawer model
 
-          "/bookmarks" ->
-            viewBookmarksPage model |> withNavigationDrawer model
+            "/profile" ->
+              case loggedInUser model of
+                Just userProfile ->
+                  viewProfilePage model userProfile model.userProfileForm |> withNavigationDrawer model
 
-          "/history" ->
-            viewHistoryPage model |> withNavigationDrawer model
+                _ ->
+                  homePage
 
-          -- "/search" ->
-          _ ->
-            case model.searchState of
-              Nothing ->
-                (viewHomePage model, [])
+            "/notes" ->
+              viewNotesPage model |> withNavigationDrawer model
 
-              Just searchState ->
-                viewSearchPage model searchState |> withNavigationDrawer model
+            "/history" ->
+              viewHistoryPage model |> withNavigationDrawer model
 
-          -- _ ->
-            -- (viewCenterNote "Coming soon" |> List.singleton |> column [ width fill, height fill ], [])
-            -- |> withNavigationDrawer model
+            _ ->
+              case model.searchState of
+                Nothing ->
+                  homePage
+
+                Just searchState ->
+                  viewSearchPage model searchState |> withNavigationDrawer model
 
       header =
         viewPageHeader model

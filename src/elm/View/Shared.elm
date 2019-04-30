@@ -112,6 +112,10 @@ bodyNoWrap attrs str =
   text str |> el ([ Font.size 14, Font.color materialDark ] ++ attrs)
 
 
+subSubheaderWrap attrs str =
+  [ text str ] |> paragraph (attrs ++ [ Font.size 18 ])
+
+
 subheaderWrap attrs str =
   [ text str ] |> paragraph (attrs ++ [ Font.size 21 ])
 
@@ -262,8 +266,8 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
         else
           model.searchSuggestions
           |> List.map (\suggestion -> suggestionButton suggestion)
-          |> menuColumn [ width fill, scrollbarY ]
-          |> el [ width fill, height <| px 196 ]
+          |> menuColumn [ width fill, clipY, height <| px (39*7) ]
+          |> el [ width fill, htmlId "SearchSuggestions" ]
   in
       searchField
 

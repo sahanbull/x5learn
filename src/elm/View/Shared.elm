@@ -266,8 +266,8 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
         else
           model.searchSuggestions
           |> List.map (\suggestion -> suggestionButton suggestion)
-          |> menuColumn [ width fill, scrollbarY ]
-          |> el [ width fill, height <| px 196 ]
+          |> menuColumn [ width fill, clipY, height <| px (39*7) ]
+          |> el [ width fill, htmlId "SearchSuggestions" ]
   in
       searchField
 

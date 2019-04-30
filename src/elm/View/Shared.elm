@@ -233,13 +233,19 @@ linkTo attrs url label =
 
 viewSearchWidget model widthAttr placeholder searchInputTyping =
   let
-      icon =
-        image [ semiTransparent ] { src = (svgPath "search"), description = "search icon" }
-        |> el [ moveLeft 34, moveDown 12 ]
+      submit =
+        TriggerSearch searchInputTyping
+
+      submitButton =
+        let
+            icon =
+              image [ semiTransparent ] { src = (svgPath "search"), description = "search" }
+        in
+            button [ moveLeft 45, moveDown 1, width (px 45), height (px 45) ] { onPress = Just submit, label = icon }
 
       searchField =
-        Input.text [ htmlId "SearchField", width fill, Input.focusedOnLoad, onEnter <| TriggerSearch searchInputTyping ] { onChange = ChangeSearchText, text = searchInputTyping, placeholder = Just (placeholder |> text |> Input.placeholder []), label = Input.labelHidden "search" }
-        |> el [ width widthAttr, onRight icon, centerX, below suggestions ]
+        Input.text [ htmlId "SearchField", width fill, Input.focusedOnLoad, onEnter <| submit ] { onChange = ChangeSearchText, text = searchInputTyping, placeholder = Just (placeholder |> text |> Input.placeholder []), label = Input.labelHidden "search" }
+        |> el [ width widthAttr, onRight submitButton, centerX, below suggestions ]
 
       suggestionButton str =
         let

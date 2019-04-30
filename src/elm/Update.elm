@@ -79,12 +79,13 @@ update msg ({nav, userProfileForm} as model) =
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, Cmd.none )
 
-    InspectSearchResult oer fragmentStart ->
+    InspectOer oer fragmentStart playWhenReady ->
       let
           inspectorParams =
             { modalId = modalId
             , videoId = getYoutubeVideoId oer.url |> Maybe.withDefault ""
             , fragmentStart = fragmentStart
+            , playWhenReady = playWhenReady
             }
       in
           ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation inspectorParams)

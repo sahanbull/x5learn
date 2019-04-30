@@ -19,11 +19,19 @@ function onYouTubeIframeAPIReady() {
 }
 
 
-// The API will call this function when the video player is ready.
-function onPlayerReady(event) {
+function onReadySeekAndPlay(event) {
   player = event.target;
   player.seekTo(playerFragmentStart * player.getDuration());
   player.playVideo();
+}
+
+function onReadySeek(event) {
+  player = event.target;
+  player.pauseVideo();
+  player.seekTo(playerFragmentStart * player.getDuration());
+  setTimeout(function() {
+    player.pauseVideo();
+  }, 300);
 }
 
 // The API calls this function when the player's state changes.
@@ -41,7 +49,7 @@ function embedVideo(inspectorParams){
     width: '720',
     videoId: inspectorParams.videoId,
     events: {
-      'onReady': onPlayerReady,
+      'onReady': inspectorParams.playWhenReady ? onReadySeekAndPlay : onReadySeek,
       'onStateChange': onPlayerStateChange
     }
   });

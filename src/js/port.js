@@ -36,6 +36,7 @@ function setupPorts(app){
     }
   });
 
+
   app.ports.youtubeSeekTo.subscribe(function(fragmentStart) {
     player.seekTo(fragmentStart * player.getDuration());
     player.playVideo();
@@ -86,4 +87,38 @@ function setupEventHandlers(){
       app.ports.mouseOverChunkTrigger.send(e.pageX);
     }
   });
+
+
+  document.onkeydown = function checkKey(e) {
+    e = e || window.event;
+    if(e.target.closest('#SearchField') || e.target.closest('#SearchSuggestions')){
+      if (e.keyCode == '38') {
+        changeFocusOnSearchSuggestions(-1);
+      }
+      else if (e.keyCode == '40') {
+        changeFocusOnSearchSuggestions(1);
+      }
+    }
+  }
+}
+
+function changeFocusOnSearchSuggestions(direction){
+  var field = document.getElementById('SearchField');
+  var suggestions = document.getElementById('SearchSuggestions');
+  if(!suggestions){
+    return
+  }
+  var activeElement = document.activeElement;
+  var options = suggestions.childNodes[0].childNodes;
+  var n = options.length;
+  var index = -1;
+  for(i=0;i<n; i++){
+    if(options[i]==document.activeElement){
+      index = i;
+      break
+    }
+  }
+  activeElement.blur();
+  var newIndex = Math.max(0, Math.min(index + direction, n-1));
+  options[newIndex].focus();
 }

@@ -441,7 +441,7 @@ viewFragmentsBar model oer recommendedFragments barWidth barId =
             clickHandler =
               case model.inspectorState of
                 Nothing ->
-                  [ onClickNoBubble <| InspectSearchResult oer chunk.start ]
+                  [ onClickNoBubble <| InspectOer oer chunk.start True ]
 
                 _ ->
                   if hasYoutubeVideo oer.url then
@@ -616,7 +616,7 @@ avatarImage =
 openInspectorOnPress model oer =
   case model.inspectorState of
     Nothing ->
-      Just (InspectSearchResult oer 0)
+      Just (InspectOer oer 0 False)
 
     _ ->
       Nothing

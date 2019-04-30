@@ -23,4 +23,5 @@ type alias InspectorParams =
   { modalId : String
   , videoId : String
   , fragmentStart : Float
+  , playWhenReady : Bool
   }

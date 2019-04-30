@@ -55,4 +55,4 @@ def initiate_login_table_and_admin_profile(user_datastore):
 
     # assign admin privileges to admin
     # user_datastore.add_role_to_user(ADMIN_EMAIL, ADMIN_ROLE_NAME)
-    db_session.commit()
+    # db_session.commit()

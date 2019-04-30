@@ -178,7 +178,7 @@ viewOerCard model userState recommendedFragments position barId oer =
                 |> upperImage [ preloadImage nextImageUrl, imageCounter <| (imageIndex+1 |> String.fromInt) ++ " / " ++ (oer.images |> List.length |> String.fromInt) ]
 
       title =
-        oer.title |> subheaderWrap [ height (fill |> maximum 64), clipY ]
+        oer.title |> subSubheaderWrap [ height (fill |> maximum 64), clipY ]
 
       modalityIcon =
         if hasYoutubeVideo oer.url then

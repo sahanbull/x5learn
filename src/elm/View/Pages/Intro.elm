@@ -1,4 +1,4 @@
-module View.Pages.Home exposing (viewHomePage)
+module View.Pages.Intro exposing (viewIntroPage)
 
 import Url
 
@@ -17,8 +17,8 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
-viewHomePage : Model -> Element Msg
-viewHomePage model =
+viewIntroPage : Model -> Element Msg
+viewIntroPage model =
   let
       title =
         -- "Easy entrance to deep ideas." |> text |> el [ whiteText, Font.size 48, centerX, centerY ] |> el [ width fill, height <| fillPortion 3 ]

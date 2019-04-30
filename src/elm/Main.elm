@@ -10,7 +10,7 @@ import Model exposing (..)
 import View.Shared exposing (..)
 import View.PageHeader exposing (viewPageHeader)
 import View.NavigationDrawer exposing (..)
-import View.Pages.Home exposing (viewHomePage)
+import View.Pages.Intro exposing (viewIntroPage)
 import View.Pages.Search exposing (viewSearchPage)
 import View.Pages.Notes exposing (viewNotesPage)
 import View.Pages.Gains exposing (viewGainsPage)
@@ -47,8 +47,8 @@ init flags url key =
 view : Model -> Browser.Document Msg
 view model =
   let
-      homePage =
-        (viewHomePage model, [])
+      introPage =
+        (viewIntroPage model, [])
 
       (body, modal) =
         case  model.session of
@@ -69,13 +69,16 @@ view model =
                     viewProfilePage model userProfile model.userProfileForm |> withNavigationDrawer model
 
                   GuestUser ->
-                    homePage
+                    introPage
 
               "/notes" ->
                 viewNotesPage model userState |> withNavigationDrawer model
 
               "/" ->
-                viewNotesPage model userState |> withNavigationDrawer model
+                if userState == initialUserState then
+                  introPage
+                else
+                  viewNotesPage model userState |> withNavigationDrawer model
 
               "/history" ->
                 viewHistoryPage model userState |> withNavigationDrawer model
@@ -83,7 +86,7 @@ view model =
               _ ->
                 case model.searchState of
                   Nothing ->
-                    homePage
+                    introPage
 
                   Just searchState ->
                     viewSearchPage model userState searchState |> withNavigationDrawer model

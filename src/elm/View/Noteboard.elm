@@ -18,7 +18,8 @@ import Msg exposing (..)
 import View.Shared exposing (..)
 
 
-viewNoteboard model oerUrl =
+viewNoteboard : Model -> UserState -> OerUrl -> Element Msg
+viewNoteboard model userState oerUrl =
   let
       heading : Element Msg
       heading =
@@ -55,7 +56,7 @@ viewNoteboard model oerUrl =
         |> row [ spacing 10, width fill ]
 
       notes =
-        getOerNoteboard model oerUrl
+        getOerNoteboard userState oerUrl
 
       noteElements =
         if List.isEmpty notes then
@@ -76,6 +77,7 @@ viewNoteboard model oerUrl =
       |> Keyed.column [ width fill ]
 
 
+viewNote : Model -> Note -> Element Msg
 viewNote model note =
   let
       date =

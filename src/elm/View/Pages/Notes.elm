@@ -27,11 +27,11 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
-viewNotesPage : Model -> PageWithModal
-viewNotesPage model =
+viewNotesPage : Model -> UserState -> PageWithModal
+viewNotesPage model userState =
   let
       noteCards =
-        model.oerNoteboards
+        userState.oerNoteboards
         |> Dict.toList
         |> List.concatMap (\(oerUrl, noteboard) -> noteboard |> List.map (\note -> (note, oerUrl |> getCachedOerWithBlankDefault model)))
         |> List.sortBy (\(note, _) -> (posixToMillis note.time))
@@ -54,7 +54,7 @@ viewNotesPage model =
         content
         |> el [ centerX, centerY ]
   in
-      (page, viewInspectorModalOrEmpty model)
+      (page, viewInspectorModalOrEmpty model userState)
 
 
 viewNoteCard model (note, oer) =

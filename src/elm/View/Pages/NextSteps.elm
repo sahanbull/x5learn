@@ -24,8 +24,8 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
-viewNextStepsPage : Model -> PageWithModal
-viewNextStepsPage model =
+viewNextStepsPage : Model -> UserState -> PageWithModal
+viewNextStepsPage model userState =
   case model.nextSteps of
     Nothing ->
       (viewLoadingSpinner, [])
@@ -38,4 +38,4 @@ viewNextStepsPage model =
             |> column [ width fill, height fill, spacing 70 ]
             |> el [ padding 50, width fill ]
       in
-          (page, viewInspectorModalOrEmpty model)
+          (page, viewInspectorModalOrEmpty model userState)

@@ -372,17 +372,17 @@ menuColumn attrs =
   column ([ Background.color white, Border.rounded 4, Border.color <| grey80, dialogShadow ] ++ attrs)
 
 
-viewFragmentsBar model oer recommendedFragments barWidth barId =
+viewFragmentsBar model userState oer recommendedFragments barWidth barId =
   let
       markers =
-        [ fragmentMarkers (model.viewedFragments |> Maybe.withDefault []) historyBlue
+        [ fragmentMarkers userState.viewedFragments historyBlue
         , fragmentMarkers recommendedFragments yellow
         ]
         |> List.concat
 
       fragmentMarkers fragments color =
         fragments
-        |> List.filter (\fragment -> fragment.oer == oer)
+        |> List.filter (\fragment -> fragment.oerUrl == oer.url)
         |> List.map (\{start,length} -> none |> el [ width (length |> pxFromFraction |> round |> px), height fill, Background.color color, moveRight (start |> pxFromFraction) ] |> inFront)
 
       pxFromFraction fraction =

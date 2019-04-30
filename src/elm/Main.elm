@@ -41,7 +41,7 @@ init flags url key =
         initialModel (Nav url key) flags
         |> update (Initialized url) -- ensure that subpage-specific state is loaded when starting on a subpage
   in
-      ( model, [ cmd, requestViewedFragments ] |> Cmd.batch )
+      ( model, cmd )
 
 
 view : Model -> Browser.Document Msg
@@ -51,37 +51,42 @@ view model =
         (viewHomePage model, [])
 
       (body, modal) =
-        if model.session == Nothing then
-          (viewLoadingSpinner, [])
-        else
-          case model.nav.url.path of
-            "/next_steps" ->
-              viewNextStepsPage model |> withNavigationDrawer model
+        case  model.session of
+          Nothing ->
+            (viewLoadingSpinner, [])
 
-            "/gains" ->
-              viewGainsPage model |> withNavigationDrawer model
+          Just ({userState} as session) ->
+            case model.nav.url.path of
+              -- "/next_steps" ->
+              --   viewNextStepsPage model |> withNavigationDrawer model
 
-            "/profile" ->
-              case loggedInUser model of
-                Just userProfile ->
-                  viewProfilePage model userProfile model.userProfileForm |> withNavigationDrawer model
+              -- "/gains" ->
+              --   viewGainsPage model |> withNavigationDrawer model
 
-                _ ->
-                  homePage
+              "/profile" ->
+                case session.loginState of
+                  LoggedInUser userProfile ->
+                    viewProfilePage model userProfile model.userProfileForm |> withNavigationDrawer model
 
-            "/notes" ->
-              viewNotesPage model |> withNavigationDrawer model
+                  GuestUser ->
+                    homePage
 
-            "/history" ->
-              viewHistoryPage model |> withNavigationDrawer model
+              "/notes" ->
+                viewNotesPage model userState |> withNavigationDrawer model
 
-            _ ->
-              case model.searchState of
-                Nothing ->
-                  homePage
+              "/" ->
+                viewNotesPage model userState |> withNavigationDrawer model
 
-                Just searchState ->
-                  viewSearchPage model searchState |> withNavigationDrawer model
+              "/history" ->
+                viewHistoryPage model userState |> withNavigationDrawer model
+
+              _ ->
+                case model.searchState of
+                  Nothing ->
+                    homePage
+
+                  Just searchState ->
+                    viewSearchPage model userState searchState |> withNavigationDrawer model
 
       header =
         viewPageHeader model

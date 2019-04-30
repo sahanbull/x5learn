@@ -1,10 +1,11 @@
-module Request exposing (requestSession , searchOers , requestNextSteps , requestViewedFragments , requestGains , requestEntityDescriptions , requestSearchSuggestions , requestSaveUserProfile, requestOers)
+module Request exposing (requestSession, searchOers, requestGains, requestEntityDescriptions, requestSearchSuggestions, requestSaveUserProfile, requestSaveUserState, requestOers)
 
 import Set exposing (Set)
-import Time exposing (millisToPosix)
+import Dict exposing (Dict)
+import Time exposing (millisToPosix, posixToMillis)
 
 import Http exposing (expectStringResponse)
-import Json.Decode exposing (Value,map,map2,map3,map8,field,bool,int,float,string,list,dict,oneOf,maybe,nullable)
+import Json.Decode as Decode exposing (Value,map,map2,map3,map8,field,bool,int,float,string,list,dict,oneOf,maybe,null)
 import Json.Decode.Extra exposing (andMap)
 import Json.Encode as Encode
 import Url
@@ -43,27 +44,21 @@ requestSearchSuggestions searchText =
     }
 
 
-requestNextSteps : Cmd Msg
-requestNextSteps =
-  Http.get
-    { url = Url.Builder.absolute [ apiRoot, "next_steps/" ] []
-    , expect = Http.expectJson RequestNextSteps (list pathwayDecoder)
-    }
-
-
-requestViewedFragments : Cmd Msg
-requestViewedFragments =
-  Http.get
-    { url = Url.Builder.absolute [ apiRoot, "viewed_fragments/" ] []
-    , expect = Http.expectJson RequestViewedFragments (list fragmentDecoder)
-    }
+-- requestNextSteps : Cmd Msg
+-- requestNextSteps =
+--   Http.get
+--     { url = Url.Builder.absolute [ apiRoot, "next_steps/" ] []
+--     , expect = Http.expectJson RequestNextSteps (list pathwayDecoder)
+--     }
 
 
 requestOers : Set String -> Cmd Msg
 requestOers urls =
   Http.post
     { url = Url.Builder.absolute [ apiRoot, "oers/" ] []
-    , body = Http.jsonBody <| (Encode.list Encode.string) (urls |> Set.toList)
+    -- , body = Http.jsonBody <| (Encode.list Encode.string) (urls |> Set.toList)
+    -- , body = Http.jsonBody <| Encode.object [ "urls", (urls |> Set.toList) ]
+    , body = Http.jsonBody <| Encode.object [ ("urls", (Encode.list Encode.string) (urls |> Set.toList)) ]
     , expect = Http.expectJson RequestOers (dict oerDecoder)
     }
 
@@ -96,24 +91,82 @@ requestSaveUserProfile userProfile =
 userProfileEncoder : UserProfile -> Encode.Value
 userProfileEncoder userProfile =
   Encode.object
-    -- [ ("email", Encode.string userProfile.email)
-    [ ("firstName", Encode.string userProfile.firstName)
+    [ ("email", Encode.string userProfile.email)
+    , ("firstName", Encode.string userProfile.firstName)
     , ("lastName", Encode.string userProfile.lastName)
+    ]
+
+
+requestSaveUserState : UserState -> Cmd Msg
+requestSaveUserState userState =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "save_user_state/" ] []
+    , body = Http.jsonBody <| userStateEncoder userState
+    , expect = Http.expectString RequestSaveUserState
+    }
+
+
+userStateEncoder : UserState -> Encode.Value
+userStateEncoder userState =
+  Encode.object
+    [ ("viewedFragments", (Encode.list fragmentEncoder) userState.viewedFragments )
+    , ("oerNoteboards", dictEncoder (Encode.list noteEncoder) userState.oerNoteboards)
+    ]
+
+
+fragmentEncoder : Fragment -> Encode.Value
+fragmentEncoder fragment =
+  Encode.object
+    [ ("oerUrl", Encode.string fragment.oerUrl)
+    , ("start", Encode.float fragment.start)
+    , ("length", Encode.float fragment.length)
+    ]
+
+
+noteEncoder : Note -> Encode.Value
+noteEncoder note =
+  Encode.object
+    [ ("text", Encode.string note.text)
+    , ("time", Encode.int (note.time |> posixToMillis))
     ]
 
 
 sessionDecoder =
   oneOf
-    [ map LoggedInUser (field "loggedIn" userProfileDecoder)
-    , map Guest (field "guest" string)
+    [ field "loggedInUser" loggedInUserDecoder
+    , field "guestUser" guestUserDecoder
+    ]
+
+
+loggedInUserDecoder =
+  map2 (\userState userProfile -> Session userState (LoggedInUser userProfile))
+    (field "userState" userStateDecoder)
+    (field "userProfile" userProfileDecoder)
+
+
+guestUserDecoder =
+  map (\userState -> Session userState GuestUser)
+    (field "userState" userStateDecoder)
+
+
+userStateDecoder =
+  oneOf
+    [ null initialUserState
+    , map2 UserState
+        (field "viewedFragments" (list fragmentDecoder))
+        (field "oerNoteboards" (dict noteboardDecoder))
     ]
 
 
 userProfileDecoder =
-  map3 UserProfile
-    (field "email" string)
-    (field "firstName" string)
-    (field "lastName" string)
+  oneOf
+    [ map3 UserProfile
+        (field "email" string)
+        (field "firstName" string)
+        (field "lastName" string)
+    , map initialUserProfile
+        (field "email" string)
+    ]
 
 
 gainDecoder =
@@ -125,9 +178,13 @@ gainDecoder =
 
 fragmentDecoder =
   map3 Fragment
-    (field "oer" oerDecoder)
+    (field "oerUrl" string)
     (field "start" float)
     (field "length" float)
+
+
+noteboardDecoder =
+  list noteDecoder
 
 
 noteDecoder =
@@ -153,7 +210,7 @@ searchResultsDecoder =
 
 
 oerDecoder =
-  Json.Decode.succeed Oer
+  Decode.succeed Oer
   |> andMap (field "date" string)
   |> andMap (field "description" string)
   |> andMap (field "duration" string)
@@ -191,3 +248,9 @@ entityDecoder =
 -- "type" : "video",
 -- "textType" : false,
 -- "videoType" : true
+
+
+dictEncoder enc dict =
+  Dict.toList dict
+    |> List.map (\(k,v) -> (k, enc v))
+    |> Encode.object

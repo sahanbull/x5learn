@@ -27,13 +27,13 @@ type Msg
   | ModalAnimationStop Int
   | RequestSession (Result Http.Error Session)
   | RequestOerSearch (Result Http.Error (List Oer))
-  | RequestNextSteps (Result Http.Error (List Pathway))
-  | RequestViewedFragments (Result Http.Error (List Fragment))
+  -- | RequestNextSteps (Result Http.Error (List Pathway))
   | RequestOers (Result Http.Error (Dict String Oer))
   | RequestGains (Result Http.Error (List Gain))
   | RequestEntityDescriptions (Result Http.Error (Dict String String))
   | RequestSearchSuggestions (Result Http.Error (List String))
   | RequestSaveUserProfile (Result Http.Error String)
+  | RequestSaveUserState (Result Http.Error String)
   | SetHover (Maybe String)
   | SetPopup Popup
   | ClosePopup
@@ -44,7 +44,7 @@ type Msg
   | MouseOverChunkTrigger Float
   | YoutubeSeekTo Float
   | EditUserProfile UserProfileField String
-  | ClickedSaveUserProfile
+  | SubmittedUserProfile
   | ChangedTextInNewNoteFormInOerNoteboard String String
   | SubmittedNewNoteInOerNoteboard String
   | PressedKeyInNewNoteFormInOerNoteboard String Int

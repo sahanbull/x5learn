@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, render_template, request, redirect
 from flask_mail import Mail
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required
+from flask_sqlalchemy import SQLAlchemy
 import json
 import http.client
 import sys
@@ -19,7 +20,7 @@ get_or_create_session_db(DB_ENGINE_URI)
 
 from x5learn_server.db.database import db_session
 
-from x5learn_server.models import UserLogin, Role
+from x5learn_server.models import UserLogin, Role, GuestUser
 
 # Create app
 app = Flask(__name__)
@@ -43,16 +44,20 @@ app.config['SECURITY_SEND_PASSWORD_CHANGE_EMAIL'] = False
 user_datastore = SQLAlchemySessionUserDatastore(db_session,
                                                 UserLogin, Role)
 
-# Initial set of OERs
-CSV_DATA_DIR = os.environ['X5LEARN_DATA_DIRECTORY']  # e.g. '/home/ucl/x5learn_data/'
+# Setup SQLAlchemy
+app.config["SQLALCHEMY_DATABASE_URI"] = DB_ENGINE_URI
+db = SQLAlchemy(app)
 
 security = Security(app, user_datastore)
 mail.init_app(app)
 
+
+GUEST_COOKIE_NAME = 'x5learn_guest'
+
 # Initial OER data from CSV files
+CSV_DATA_DIR = os.environ['X5LEARN_DATA_DIRECTORY']  # e.g. '/home/ucl/x5learn_data/'
 loaded_oers = {}
 all_entity_titles = set([])
-
 
 # create database when starting the app
 @app.before_first_request
@@ -80,7 +85,6 @@ def signup():
 @app.route("/logout")
 # @login_required
 def logout():
-    print("LOGOUT!")
     logout_user()
     return redirect("/")
 
@@ -121,21 +125,63 @@ def profile():
 @app.route("/api/v1/session/", methods=['GET'])
 def api_session():
     if current_user.is_authenticated:
-        user_profile = {'email': current_user.email, 'firstName': 'Glen', 'lastName': 'Morangie'}
-        # TODO_DB: get the email, first name and last name from the db
-        # if record doesn't exist, set firstName and lastName to empty strings
-        # use current_user.get_id()
-        print(user_profile)
-        return jsonify({'loggedIn': user_profile})
+        return get_logged_in_user_profile_and_state()
+    return get_guest_user_state()
+
+
+def get_logged_in_user_profile_and_state():
+    user = {}
+    user['userProfile'] = current_user.user_profile if current_user.user_profile is not None else { 'email': current_user.email }
+    user['userState'] = current_user.user_state
+    return jsonify({'loggedInUser': user})
+
+
+def get_guest_user_state():
+    guest_user_id = request.cookies.get(GUEST_COOKIE_NAME)
+    if guest_user_id == None or guest_user_id == '':
+        return create_guest_user_and_save_id_in_cookie(guest_user_response(None))
     else:
-        pseudonym = request.cookies.get('x5learn_guest_pseudonym')
-        print('pseudonym in cookie:', pseudonym)
-        if pseudonym == None or pseudonym == '':
-            pseudonym = 'Anonymous_user_' + str(randint(1, 1000000))
-        print('pseudonym:', pseudonym)
-        resp = jsonify({'guest': 'Anonymous'})
-        resp.set_cookie('x5learn_guest_pseudonym', pseudonym)
-        return resp
+        return load_guest_user_state(guest_user_id)
+
+
+def load_guest_user_state(guest_user_id):
+    guest = GuestUser.query.get(guest_user_id)
+    if guest is None: # In the rare case that the cookie points to a no-longer existent row
+        return create_guest_user_and_save_id_in_cookie(guest_user_response(None))
+    else:
+        return guest_user_response(guest.user_state)
+
+
+def create_guest_user_and_save_id_in_cookie(resp):
+    guest = GuestUser()
+    db_session.add(guest)
+    db_session.commit()
+    # Passing None will cause Elm to setup the initial user state.
+    resp.set_cookie(GUEST_COOKIE_NAME, str(guest.id))
+    return resp
+
+
+def guest_user_response(user_state):
+    return jsonify({'guestUser': {'userState': user_state}})
+
+
+@app.route("/api/v1/save_user_state/", methods=['POST'])
+def api_save_user_state():
+    user_state = request.get_json()
+    if current_user.is_authenticated:
+        current_user.user_state = user_state
+        db_session.commit()
+        return 'OK'
+    else:
+        guest_user_id = request.cookies.get(GUEST_COOKIE_NAME)
+        if guest_user_id == None or guest_user_id == '': # If the user cleared their cookie while using the app
+            return create_guest_user_and_save_id_in_cookie('OK')
+        guest = GuestUser.query.get(guest_user_id)
+        if guest is None: # In the rare case that the cookie points to no-longer existent row
+            return create_guest_user_and_save_id_in_cookie('OK')
+        guest.user_state = user_state
+        db_session.commit()
+        return 'OK'
 
 
 @app.route("/api/v1/search/", methods=['GET'])
@@ -152,33 +198,24 @@ def api_search_suggestions():
     return search_suggestions(text.lower().strip())
 
 
-@app.route("/api/v1/viewed_fragments/", methods=['GET'])
-def api_viewed_fragments():
-    return jsonify(dummy_user.viewed_fragments())
-
-
-@app.route("/api/v1/gains/", methods=['GET'])
-def api_gains():
-    return jsonify(dummy_user.gains())
+# @app.route("/api/v1/gains/", methods=['GET'])
+# def api_gains():
+#     return jsonify(dummy_user.gains())
 
 
 @app.route("/api/v1/oers/", methods=['POST'])
 def api_oers():
-    print('/oers/')
-    urls = request.get_json()
-    print(urls)
+    urls = request.get_json()['urls']
     oers = {}
     for url in urls:
-        # print(url)
         oers[url] = find_oer_by_url(url)
-    # print(oers)
     return jsonify(oers)
 
 
-@app.route("/api/v1/next_steps/", methods=['GET'])
-def api_next_steps():
-    playlists = dummy_user.recommended_next_steps()
-    return jsonify(playlists)
+# @app.route("/api/v1/next_steps/", methods=['GET'])
+# def api_next_steps():
+#     playlists = dummy_user.recommended_next_steps()
+#     return jsonify(playlists)
 
 
 @app.route("/api/v1/entity_descriptions/", methods=['GET'])
@@ -209,10 +246,8 @@ def api_entity_descriptions():
 @app.route("/api/v1/save_user_profile/", methods=['POST'])
 def api_save_user_profile():
     if current_user.is_authenticated:
-        user_profile = request.get_json()
-        print('new user profile:', user_profile)
-        print('current user id =', current_user.get_id())
-        print('TODO: save changes to db') # TODO_DB
+        current_user.user_profile = request.get_json()
+        db_session.commit()
         return 'OK'
     else:
         return 'Error', 403
@@ -222,48 +257,6 @@ def load_initial_dataset_from_csv():
     global loaded_oers
     if len(loaded_oers) == 0:
         read_local_oer_data()
-        setup_dummy_user()
-
-
-def setup_dummy_user():
-    global dummy_user
-    dummy_user = DummyUser()
-
-
-class DummyUser:
-    def __init__(self):
-        self.fragments = None
-
-    def viewed_fragments(self):
-        if not self.fragments:
-            print('creating viewed fragments')
-            self.fragments = [create_fragment('Lecture 01 - The Learning Problem', 0, 1),
-                              create_fragment('Lecture 02 - Is Learning Feasible?', 0, 0.33)]
-            # self.fragments = [ create_fragment('Lecture 02 - Is Learning Feasible?', 0, 0.33) ]
-        return self.fragments
-
-    def gains(self):
-        fragments = self.viewed_fragments()
-        topics = {}
-        for fragment in fragments:
-            for chunk in fragment['oer']['wikichunks']:
-                for entity in chunk['entities']:
-                    title = entity['title']
-                    level = (topics[title]['level'] if title in topics else 0) + 1
-                    topics[title] = {'title': title, 'level': level, 'confidence': 0.1}
-        result = list(topics.values())
-        result.sort(key=lambda gain: gain['level'], reverse=True)
-        for r in result:
-            print(r)
-        return result
-
-    def recommended_next_steps(self):
-        return [create_pathway("Continue studying",
-                               [create_fragment('Lecture 02 - Is Learning Feasible?', 0.33, 1 - 0.33)]),
-                create_pathway("20-minute sprint", [create_fragment("S18.3 Hoeffding's Inequality", 0, 1)]),
-                create_pathway("10-minute sprint",
-                               [create_fragment('Lecture 02 - Is Learning Feasible?', 0.33, 10 / 76)])
-                ]
 
 
 def search_results_from_experimental_local_oer_data(text):

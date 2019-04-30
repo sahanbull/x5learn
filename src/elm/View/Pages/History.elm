@@ -26,29 +26,24 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
-viewHistoryPage : Model -> PageWithModal
-viewHistoryPage model =
+viewHistoryPage : Model -> UserState -> PageWithModal
+viewHistoryPage model userState =
   let
       page =
-        case model.viewedFragments of
-          Nothing ->
-            viewLoadingSpinner
+        case userState.viewedFragments of
+          [] ->
+            viewCenterNote "Your viewed items will appear here"
 
-          Just fragmentsOrEmpty ->
-            case fragmentsOrEmpty of
-              [] ->
-                viewCenterNote "Your viewed items will appear here"
-
-              fragments ->
-                fragments
-                |> viewVerticalListOfCards model
+          fragments ->
+            fragments
+            |> viewVerticalListOfCards model userState
   in
-      (page, viewInspectorModalOrEmpty model)
+      (page, viewInspectorModalOrEmpty model userState)
 
 
 
-viewVerticalListOfCards : Model -> List Fragment -> Element Msg
-viewVerticalListOfCards model fragments =
+viewVerticalListOfCards : Model -> UserState -> List Fragment -> Element Msg
+viewVerticalListOfCards model userState fragments =
   let
       rowHeight =
         cardHeight + 50
@@ -59,9 +54,17 @@ viewVerticalListOfCards model fragments =
       cardPositionAtIndex index =
         { x = 0, y = index * rowHeight + 70 |> toFloat }
 
+      viewCard index fragment =
+        let
+            oer =
+              fragment.oerUrl
+              |> getCachedOerWithBlankDefault model
+        in
+            viewOerCard model userState [] (cardPositionAtIndex index) ("history-"++ (String.fromInt index)) oer |> el [ centerX ]
+
       cards =
         fragments
-        |> List.indexedMap (\index fragment -> viewOerCard model [] (cardPositionAtIndex index) ("history-"++ (String.fromInt index)) fragment.oer |> el [ centerX ])
+        |> List.indexedMap viewCard
         |> List.reverse
         |> List.map inFront
   in

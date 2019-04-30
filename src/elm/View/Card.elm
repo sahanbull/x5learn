@@ -45,7 +45,7 @@ viewPathway model pathway =
 
 
 
-viewOerGrid model playlist =
+viewOerGrid model userState playlist =
   if playlist.oers |> List.isEmpty then
     none
   else
@@ -68,7 +68,7 @@ viewOerGrid model playlist =
 
         cards =
           playlist.oers
-          |> List.indexedMap (\index oer -> viewOerCard model [] (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) oer)
+          |> List.indexedMap (\index oer -> viewOerCard model userState [] (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) oer)
           |> List.reverse
           |> List.map inFront
     in
@@ -78,8 +78,8 @@ viewOerGrid model playlist =
         |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
 
 
-viewOerCard : Model -> List Fragment -> Point -> String -> Oer -> Element Msg
-viewOerCard model recommendedFragments position barId oer =
+viewOerCard : Model -> UserState -> List Fragment -> Point -> String -> Oer -> Element Msg
+viewOerCard model userState recommendedFragments position barId oer =
   let
       hovering =
         model.hoveringOerUrl == Just oer.url
@@ -116,7 +116,7 @@ viewOerCard model recommendedFragments position barId oer =
         if oer.wikichunks |> List.isEmpty then
           []
         else
-          [ inFront <| viewFragmentsBar model oer recommendedFragments cardWidth barId ]
+          [ inFront <| viewFragmentsBar model userState oer recommendedFragments cardWidth barId ]
 
       preloadImage url =
         url

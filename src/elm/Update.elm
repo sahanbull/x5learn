@@ -50,16 +50,13 @@ update msg ({nav, userProfileForm} as model) =
           --   url.path |> log "UrlChanged"
 
           (newModel, cmd) =
-            if url.path == "/next_steps" then
-              (model, requestNextSteps)
-            else if url.path == "/history" then
-              (model, requestViewedFragments)
-            else if url.path == "/gains" then
-              (model, requestGains)
-            else if url.path == "/notes" then
-              ({ model | requestingOers = True }, requestOersAsNeeded model (model.oerNoteboards |> Dict.keys))
-            else
-              (model, Cmd.none)
+            (model, Cmd.none)
+            -- if url.path == "/next_steps" then
+            --   (model, requestNextSteps)
+            -- -- else if url.path == "/gains" then
+            -- --   (model, requestGains)
+            -- else
+            --   (model, Cmd.none)
       in
           ( { newModel | nav = { nav | url = url }, inspectorState = Nothing } |> closePopup |> resetUserProfileForm, cmd )
 
@@ -102,7 +99,7 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | modalAnimation = Nothing, animationsPending = model.animationsPending |> Set.remove modalId }, Cmd.none )
 
     RequestSession (Ok session) ->
-      ( { model | session = Just session } |> resetUserProfileForm, Cmd.none )
+      ( { model | session = Just session } |> resetUserProfileForm, requestOersAsNeeded session.userState model)
 
     RequestSession (Err err) ->
       -- let
@@ -122,33 +119,22 @@ update msg ({nav, userProfileForm} as model) =
       -- in
       ( { model | userMessage = Just "There was a problem while fetching the search data" }, Cmd.none )
 
-    RequestNextSteps (Ok pathways) ->
-      let
-          oers =
-            pathways
-            |> List.concatMap .fragments
-            |> List.map .oer
-      in
-          ( { model | nextSteps = Just pathways } |> includeEntityIds oers, Cmd.none)
-          |> requestEntityDescriptionsIfNeeded
+    -- RequestNextSteps (Ok pathways) ->
+    --   let
+    --       oers =
+    --         pathways
+    --         |> List.concatMap .fragments
+    --         |> List.map .oerUrl
+    --   in
+    --       ( { model | nextSteps = Just pathways } |> includeEntityIds oers, Cmd.none)
+    --       |> requestEntityDescriptionsIfNeeded
 
-    RequestNextSteps (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestNextSteps"
-      -- in
-      ( { model | userMessage = Just "There was a problem while fetching the recommendations data" }, Cmd.none )
-
-    RequestViewedFragments (Ok fragments) ->
-      ( { model | viewedFragments = Just fragments } |> includeEntityIds (fragments |> List.map .oer), Cmd.none )
-      |> requestEntityDescriptionsIfNeeded
-
-    RequestViewedFragments (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestViewedFragments"
-      -- in
-      ( { model | userMessage = Just "There was a problem while fetching the history data" }, Cmd.none)
+    -- RequestNextSteps (Err err) ->
+    --   let
+    --       dummy =
+    --         err |> Debug.log "Error in RequestNextSteps"
+    --   in
+    --   ( { model | userMessage = Just "There was a problem while fetching the recommendations data" }, Cmd.none )
 
     RequestOers (Ok oers) ->
       ( { model | requestingOers = False } |> cacheOersFromDict oers, Cmd.none)
@@ -208,6 +194,16 @@ update msg ({nav, userProfileForm} as model) =
       -- in
       ( { model | userMessage = Just "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
 
+    RequestSaveUserState (Ok _) ->
+      (model, Cmd.none)
+
+    RequestSaveUserState (Err err) ->
+      let
+          dummy =
+            err |> Debug.log "Error in RequestSaveUserState"
+      in
+      ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
+
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
 
@@ -239,8 +235,8 @@ update msg ({nav, userProfileForm} as model) =
       in
           ( { model | userProfileForm = newForm }, Cmd.none )
 
-    ClickedSaveUserProfile ->
-      ( { model | userProfileFormSubmitted = Just userProfileForm } , requestSaveUserProfile model.userProfileForm.userProfile)
+    SubmittedUserProfile ->
+      ( { model | userProfileFormSubmitted = Just userProfileForm }, requestSaveUserProfile model.userProfileForm.userProfile)
 
     ChangedTextInNewNoteFormInOerNoteboard oerUrl str ->
       ({ model
@@ -248,7 +244,11 @@ update msg ({nav, userProfileForm} as model) =
        }, Cmd.none)
 
     SubmittedNewNoteInOerNoteboard oerUrl ->
-      (model |> addNoteToOer oerUrl (getOerNoteForm model oerUrl), Cmd.none)
+      -- let
+      --     dummy =
+      --       oerUrl |> log "SubmittedNewNoteInOerNoteboard"
+      -- in
+      (model |> updateUserState (addNoteToOer oerUrl (getOerNoteForm model oerUrl) model), Cmd.none)
       |> saveUserState msg
 
     PressedKeyInNewNoteFormInOerNoteboard oerUrl keyCode ->
@@ -258,33 +258,47 @@ update msg ({nav, userProfileForm} as model) =
         (model, Cmd.none)
 
     ClickedQuickNoteButton oerUrl text ->
-      (model |> addNoteToOer oerUrl text, Cmd.none)
+      (model |> updateUserState (addNoteToOer oerUrl text model), Cmd.none)
+      |> saveUserState msg
 
     RemoveNote time ->
-      ({ model
-       | oerNoteboards = model.oerNoteboards |> Dict.map (removeNoteAtTime time)
-       }, Cmd.none)
+      (model |> updateUserState (removeNoteAtTime time), Cmd.none)
 
 
-addNoteToOer : String -> String -> Model -> Model
-addNoteToOer oerUrl text model =
+updateUserState : (UserState -> UserState) -> Model -> Model
+updateUserState fn model =
+  case model.session of
+    Nothing ->
+      model
+
+    Just session ->
+      { model | session = Just { session | userState = session.userState |> fn } }
+
+
+addNoteToOer : String -> String -> Model -> UserState -> UserState
+addNoteToOer oerUrl text {currentTime} userState =
   let
       newNote =
-        Note text model.currentTime
+        Note text currentTime
 
       oldNoteboard =
-        getOerNoteboard model oerUrl
+        getOerNoteboard userState oerUrl
 
       newNoteboard =
         newNote :: oldNoteboard
   in
-      { model | oerNoteboards = model.oerNoteboards |> Dict.insert oerUrl newNoteboard }
+      { userState | oerNoteboards = userState.oerNoteboards |> Dict.insert oerUrl newNoteboard }
 
 
-removeNoteAtTime : Posix -> String -> Noteboard -> Noteboard
-removeNoteAtTime time _ notes =
-  notes
-  |> List.filter (\note -> note.time /= time)
+removeNoteAtTime : Posix -> UserState -> UserState
+removeNoteAtTime time userState =
+  let
+      filter : OerUrl -> Noteboard -> Noteboard
+      filter _ notes =
+        notes
+        |> List.filter (\note -> note.time /= time)
+  in
+     { userState | oerNoteboards = userState.oerNoteboards |> Dict.map filter }
 
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model
@@ -332,9 +346,15 @@ requestEntityDescriptionsIfNeeded (oldModel, oldCmd) =
            (newModel, [ oldCmd, requestEntityDescriptions missingEntities ] |> Cmd.batch)
 
 
-requestOersAsNeeded : Model -> List String -> Cmd Msg
-requestOersAsNeeded model neededUrls =
+requestOersAsNeeded : UserState -> Model -> Cmd Msg
+requestOersAsNeeded userState model =
   let
+      neededUrls =
+        [ userState.oerNoteboards |> Dict.keys
+        , userState.viewedFragments |> List.map .oerUrl
+        ]
+        |> List.concat
+
       missingUrls =
         neededUrls
         |> Set.fromList
@@ -400,7 +420,7 @@ closePopup model =
 
 resetUserProfileForm : Model -> Model
 resetUserProfileForm model =
-  case loggedInUser model of
+  case loggedInUserProfile model of
     Just userProfile ->
       { model | userProfileForm = freshUserProfileForm userProfile }
 
@@ -419,8 +439,12 @@ updateUserProfile field value userProfile =
 
 
 saveUserState lastAction (model, cmd) =
-  -- TODO persist user state
-  (model, cmd)
+  case model.session of
+    Nothing ->
+      (model, cmd)
+
+    Just session ->
+      (model, [ cmd, requestSaveUserState session.userState ] |> Cmd.batch)
 
 
 cacheOersFromDict : Dict OerUrl Oer -> Model -> Model

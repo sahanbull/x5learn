@@ -28,7 +28,6 @@ type alias Model =
   , timeOfLastMouseEnterOnCard : Posix
   , modalAnimation : Maybe BoxAnimation
   , animationsPending : Set String
-  , viewedFragments : Maybe (List Fragment)
   , gains : Maybe (List Gain)
   , nextSteps : Maybe (List Pathway)
   , popup : Maybe Popup
@@ -41,10 +40,16 @@ type alias Model =
   , timeOfLastSearch : Posix
   , userProfileForm : UserProfileForm
   , userProfileFormSubmitted : Maybe UserProfileForm
-  , oerNoteboards : Dict String (List Note) -- persisted
-  , oerNoteForms : Dict String String -- not persisted
-  , cachedOers : Dict String Oer -- not persisted
+  , oerNoteForms : Dict String String
+  , cachedOers : Dict String Oer
   , requestingOers : Bool
+  }
+
+
+-- persisted on server
+type alias UserState =
+  { viewedFragments : List Fragment
+  , oerNoteboards : Dict String (List Note)
   }
 
 
@@ -140,7 +145,7 @@ type alias Gain =
 
 
 type alias Fragment =
-  { oer : Oer
+  { oerUrl : OerUrl
   , start : Float -- 0 to 1
   , length : Float -- 0 to 1
   }
@@ -168,9 +173,15 @@ type InspectorMenu
   = QualitySurvey -- TODO
 
 
-type Session
-  = LoggedInUser UserProfile
-  | Guest String
+type alias Session =
+  { userState : UserState
+  , loginState : LoginState
+  }
+
+
+type LoginState
+  = GuestUser
+  | LoggedInUser UserProfile
 
 
 initialModel : Nav -> Flags -> Model
@@ -189,7 +200,6 @@ initialModel nav flags =
   , timeOfLastMouseEnterOnCard = initialTime
   , modalAnimation = Nothing
   , animationsPending = Set.empty
-  , viewedFragments = Nothing
   , gains = Nothing
   , nextSteps = Nothing
   , popup = Nothing
@@ -200,18 +210,36 @@ initialModel nav flags =
   , selectedSuggestion = ""
   , suggestionSelectionOnHoverEnabled = True -- prevent accidental selection when user doesn't move the pointer but the menu appears on the pointer
   , timeOfLastSearch = initialTime
-  , userProfileForm = freshUserProfileForm (UserProfile "" "" "")
+  , userProfileForm = freshUserProfileForm (initialUserProfile "")
   , userProfileFormSubmitted = Nothing
-  , oerNoteboards = Dict.singleton "https://www.youtube.com/watch?v=mbyG85GZ0PI&list=PLD63A284B7615313A" [ Note "Dummy note" (millisToPosix 1234567) ]
   , oerNoteForms = Dict.empty
   , cachedOers = Dict.empty
   , requestingOers = False
   }
 
 
-getOerNoteboard : Model -> String -> Noteboard
-getOerNoteboard model oerUrl =
-  model.oerNoteboards
+-- initialUserState =
+--   { viewedFragments =
+--     [ Fragment "https://www.youtube.com/watch?v=mbyG85GZ0PI&list=PLD63A284B7615313A" 0 1
+--     , Fragment "https://www.youtube.com/watch?v=MEG35RDD7RA&index=2&list=PLD63A284B7615313A" 0.33 0.33
+--     ]
+--   , oerNoteboards = Dict.singleton "https://www.youtube.com/watch?v=mbyG85GZ0PI&list=PLD63A284B7615313A" [ Note "Dummy note" (millisToPosix 1234567) ]
+--   }
+
+
+initialUserState =
+  { viewedFragments = []
+  , oerNoteboards = Dict.empty
+  }
+
+
+initialUserProfile email =
+  UserProfile email "" ""
+
+
+getOerNoteboard : UserState -> String -> Noteboard
+getOerNoteboard userState oerUrl =
+  userState.oerNoteboards
   |> Dict.get oerUrl
   |> Maybe.withDefault []
 
@@ -328,20 +356,25 @@ displayName userProfile =
         userProfile.firstName ++ " " ++ userProfile.lastName
         |> String.trim
   in
-      if (name |> String.length) < 2 then
+      if (String.length name) < 2 then
         userProfile.email
       else
         name
 
 
-loggedInUser : Model -> Maybe UserProfile
-loggedInUser {session} =
+loggedInUserProfile : Model -> Maybe UserProfile
+loggedInUserProfile {session} =
   case session of
-    Just (LoggedInUser user) ->
-      Just user
-
-    _ ->
+    Nothing ->
       Nothing
+
+    Just {loginState} ->
+      case loginState of
+        GuestUser ->
+          Nothing
+
+        LoggedInUser userProfile ->
+          Just userProfile
 
 
 freshUserProfileForm userProfile =

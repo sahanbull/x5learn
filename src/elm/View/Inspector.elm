@@ -19,26 +19,26 @@ import View.Noteboard exposing (..)
 import Animation exposing (..)
 
 
-viewInspectorModalOrEmpty : Model -> List (Attribute Msg)
-viewInspectorModalOrEmpty model =
+viewInspectorModalOrEmpty : Model -> UserState -> List (Attribute Msg)
+viewInspectorModalOrEmpty model userState =
   case model.inspectorState of
     Nothing ->
       []
 
     Just inspectorState ->
-      [ inFront <| viewModal model inspectorState ]
+      [ inFront <| viewModal model userState inspectorState ]
 
 
-viewModal : Model -> InspectorState -> Element Msg
-viewModal model inspectorState =
+viewModal : Model -> UserState -> InspectorState -> Element Msg
+viewModal model userState inspectorState =
   let
       content =
         case inspectorState.activeMenu of
           Nothing ->
-            inspectorContentDefault model inspectorState
+            inspectorContentDefault model userState inspectorState
 
           Just QualitySurvey ->
-            inspectorContentDefault model inspectorState -- TODO
+            inspectorContentDefault model userState inspectorState -- TODO
 
       header =
         [ content.header
@@ -99,7 +99,7 @@ viewModal model inspectorState =
       |> el [ width fill, height fill, behindContent scrim, inFront animatingBox ]
 
 
-inspectorContentDefault model {oer, fragmentStart} =
+inspectorContentDefault model userState {oer, fragmentStart} =
   let
       header =
         case oer.title of
@@ -141,7 +141,7 @@ inspectorContentDefault model {oer, fragmentStart} =
 
       body =
         [ mainSection
-        , viewNoteboard model oer.url |> el [ width <| px notesWidth, height fill, alignTop, borderLeft 1, paddingTRBL 0 0 0 15 ]
+        , viewNoteboard model userState oer.url |> el [ width <| px notesWidth, height fill, alignTop, borderLeft 1, paddingTRBL 0 0 0 15 ]
         ]
         |> row [ spacing 15 ]
 
@@ -156,7 +156,7 @@ inspectorContentDefault model {oer, fragmentStart} =
           wikichunks ->
             let
                 content =
-                  viewFragmentsBar model oer (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth "inspector"
+                  viewFragmentsBar model userState oer (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth "inspector"
                   |> el [ width (px playerWidth), height (px 16) ]
             in
                 none |> el [ inFront content, moveDown 487, moveRight 16 ]

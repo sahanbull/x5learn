@@ -18,11 +18,14 @@ import Msg exposing (..)
 viewProfilePage : Model -> UserProfile -> UserProfileForm -> PageWithModal
 viewProfilePage model savedUserProfile {userProfile, saved} =
   let
+      textInput field labelText valueText =
+        Input.text [ width fill, onEnter SubmittedUserProfile ] { onChange = EditUserProfile field, text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = labelText |> text |> Input.labelAbove [ Font.size 16 ] }
+
       firstNameField =
-        Input.text [ width fill ] { onChange = EditUserProfile FirstName, text = userProfile.firstName, placeholder = Just ("First Name" |> text |> Input.placeholder []), label = "First Name" |> text |> Input.labelAbove [ Font.size 16 ] }
+        textInput FirstName "First Name" userProfile.firstName
 
       lastNameField =
-        Input.text [ width fill ] { onChange = EditUserProfile LastName, text = userProfile.lastName, placeholder = Just ("Last Name" |> text |> Input.placeholder []), label = "Last Name" |> text |> Input.labelAbove [ Font.size 16 ] }
+        textInput LastName "Last Name" userProfile.lastName
 
       saveButton =
         case model.userProfileFormSubmitted of
@@ -34,7 +37,7 @@ viewProfilePage model savedUserProfile {userProfile, saved} =
             if saved then
               "✓ Saved" |> bodyWrap [ greyTextDisabled, width fill ]
             else
-              button [ paddingXY 16 8, width fill, Background.color x5color, whiteText ] { onPress = Just ClickedSaveUserProfile, label = "Save" |> text |> el [] }
+              button [ paddingXY 16 8, width fill, Background.color x5color, whiteText ] { onPress = Just SubmittedUserProfile, label = "Save" |> text |> el [] }
 
       page =
         -- [ "My profile" |> headlineWrap []

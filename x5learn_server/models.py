@@ -2,7 +2,7 @@ from x5learn_server.db.database import Base
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy import Boolean, DateTime, Column, Integer, \
-    String, ForeignKey
+    String, JSON, ForeignKey
 
 
 class RolesUsers(Base):
@@ -32,10 +32,11 @@ class UserLogin(Base, UserMixin):
     active = Column(Boolean())
     confirmed_at = Column(DateTime())
     roles = relationship('Role', secondary='roles_users', backref=backref('user_login', lazy='dynamic'))
+    user_profile = Column(JSON())
+    user_state = Column(JSON())
 
-class User(Base):
-    __tablename__ = 'user'
+
+class GuestUser(Base):
+    __tablename__ = 'guest_user'
     id = Column(Integer(), primary_key=True)
-    fname = Column(String(255))
-    lname = Column(String(255))
-    x5cookie = Column(String(255))
+    user_state = Column(JSON())

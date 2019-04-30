@@ -40,17 +40,18 @@ viewPageHeader model =
 
       loginLogoutSignup =
         case model.session of
-          Just (LoggedInUser username) ->
-            [ viewUserMenu model username ]
-
-          Just (Guest username) ->
-            -- [ "(Guest ID "++username++")" |> captionNowrap [ alignRight ]
-            [ link [ alignRight, paddingXY 15 10 ] { url = "/login", label = "Log in" |> bodyNoWrap [] }
-            , link [ alignRight, paddingXY 15 10 ] { url = "/signup", label = "Sign up" |> bodyNoWrap [] }
-            ]
-
-          _ ->
+          Nothing ->
             []
+
+          Just session ->
+            case session.loginState of
+              LoggedInUser userProfile ->
+                [ viewUserMenu model userProfile ]
+
+              GuestUser ->
+                [ link [ alignRight, paddingXY 15 10 ] { url = "/login", label = "Log in" |> bodyNoWrap [] }
+                , link [ alignRight, paddingXY 15 10 ] { url = "/signup", label = "Sign up" |> bodyNoWrap [] }
+                ]
   in
       [ link [] { url = "/", label = image [ height (px 26) ] { src = imgPath "x5learn_logo.png", description = "X5Learn logo" } } ] ++ loginLogoutSignup
       |> row attrs
@@ -72,7 +73,7 @@ viewUserMenu model userProfile =
 
       menu =
         if model.popup == Just UserMenu then
-          [ userProfile |> displayName |> captionNowrap [ padding 15 ]
+          [ link [] { url = "/profile", label = displayName userProfile |> captionNowrap [ padding 15 ] }
           , navButton "/profile" "My profile"
           , navButton "/logout" "Log out"
           ]

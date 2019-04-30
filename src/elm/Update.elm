@@ -72,7 +72,7 @@ update msg ({nav, userProfileForm} as model) =
 
     TriggerSearch str ->
       if str=="" then
-        ( model, Cmd.none)
+        ( model, setBrowserFocus "SearchField")
       else
         ( { model | searchInputTyping = str, searchState = Just <| newSearch str, searchSuggestions = [], timeOfLastSearch = model.currentTime } |> closePopup, searchOers str)
 

@@ -88,7 +88,7 @@ update msg ({nav, userProfileForm} as model) =
             , playWhenReady = playWhenReady
             }
       in
-          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation inspectorParams)
+          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> (updateUserState <| addOerToHistory oer), openModalAnimation inspectorParams)
 
     UninspectSearchResult ->
       ( { model | inspectorState = Nothing}, Cmd.none)
@@ -461,3 +461,8 @@ cacheOersFromList oers model =
         |> List.foldl (\oer result -> result |> Dict.insert oer.url oer) Dict.empty
   in
       { model | cachedOers = Dict.union oersDict model.cachedOers }
+
+
+addOerToHistory : Oer -> UserState -> UserState
+addOerToHistory oer userState =
+  { userState | viewedFragments = { oerUrl = oer.url, start = 0, length = 1 } :: userState.viewedFragments }

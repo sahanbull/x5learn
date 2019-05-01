@@ -109,7 +109,7 @@ requestSaveUserState userState =
 userStateEncoder : UserState -> Encode.Value
 userStateEncoder userState =
   Encode.object
-    [ ("viewedFragments", (Encode.list fragmentEncoder) userState.viewedFragments )
+    [ ("fragmentAccesses", dictEncoder fragmentEncoder (userState.fragmentAccesses |> convertKeysFromIntToString) )
     , ("oerNoteboards", dictEncoder (Encode.list noteEncoder) userState.oerNoteboards)
     ]
 
@@ -153,9 +153,14 @@ userStateDecoder =
   oneOf
     [ null initialUserState
     , map2 UserState
-        (field "viewedFragments" (list fragmentDecoder))
+        fragmentAccessesDecoder
         (field "oerNoteboards" (dict noteboardDecoder))
     ]
+
+
+fragmentAccessesDecoder =
+    map (\maybeFragmentAccesses -> maybeFragmentAccesses |> Maybe.withDefault Dict.empty |> convertKeysFromStringToInt)
+      (field "fragmentAccesses" (dict fragmentDecoder) |> maybe)
 
 
 userProfileDecoder =
@@ -254,3 +259,19 @@ dictEncoder enc dict =
   Dict.toList dict
     |> List.map (\(k,v) -> (k, enc v))
     |> Encode.object
+
+
+convertKeysFromIntToString : Dict Int v -> Dict String v
+convertKeysFromIntToString d =
+  d
+  |> Dict.toList
+  |> List.map (\(k, v) -> (k |> String.fromInt, v))
+  |> Dict.fromList
+
+
+convertKeysFromStringToInt : Dict String v -> Dict Int v
+convertKeysFromStringToInt d =
+  d
+  |> Dict.toList
+  |> List.map (\(k, v) -> (k |> String.toInt |> Maybe.withDefault 0, v))
+  |> Dict.fromList

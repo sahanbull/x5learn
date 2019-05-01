@@ -30,16 +30,14 @@ viewHistoryPage : Model -> UserState -> PageWithModal
 viewHistoryPage model userState =
   let
       page =
-        case userState.viewedFragments of
-          [] ->
-            viewCenterNote "Your viewed items will appear here"
-
-          fragments ->
-            fragments
-            |> viewVerticalListOfCards model userState
+        if userState.fragmentAccesses |> Dict.isEmpty then
+          viewCenterNote "Your viewed items will appear here"
+        else
+          userState.fragmentAccesses
+          |> Dict.values
+          |> viewVerticalListOfCards model userState
   in
       (page, viewInspectorModalOrEmpty model userState)
-
 
 
 viewVerticalListOfCards : Model -> UserState -> List Fragment -> Element Msg

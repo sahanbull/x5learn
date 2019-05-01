@@ -385,7 +385,7 @@ menuColumn attrs =
 viewFragmentsBar model userState oer recommendedFragments barWidth barId =
   let
       markers =
-        [ fragmentMarkers userState.viewedFragments historyBlue
+        [ fragmentMarkers (userState.fragmentAccesses |> Dict.values) historyBlue
         , fragmentMarkers recommendedFragments yellow
         ]
         |> List.concat

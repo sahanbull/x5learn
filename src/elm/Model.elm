@@ -48,7 +48,7 @@ type alias Model =
 
 -- persisted on server
 type alias UserState =
-  { viewedFragments : List Fragment
+  { fragmentAccesses : Dict Int Fragment
   , oerNoteboards : Dict String (List Note)
   }
 
@@ -218,17 +218,8 @@ initialModel nav flags =
   }
 
 
--- initialUserState =
---   { viewedFragments =
---     [ Fragment "https://www.youtube.com/watch?v=mbyG85GZ0PI&list=PLD63A284B7615313A" 0 1
---     , Fragment "https://www.youtube.com/watch?v=MEG35RDD7RA&index=2&list=PLD63A284B7615313A" 0.33 0.33
---     ]
---   , oerNoteboards = Dict.singleton "https://www.youtube.com/watch?v=mbyG85GZ0PI&list=PLD63A284B7615313A" [ Note "Dummy note" (millisToPosix 1234567) ]
---   }
-
-
 initialUserState =
-  { viewedFragments = []
+  { fragmentAccesses = Dict.empty
   , oerNoteboards = Dict.empty
   }
 

@@ -8,7 +8,7 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import Dict exposing (Dict)
 import Set
-import Time exposing (Posix)
+import Time exposing (Posix, millisToPosix, posixToMillis)
 import List.Extra
 
 -- import Debug exposing (log)
@@ -88,7 +88,7 @@ update msg ({nav, userProfileForm} as model) =
             , playWhenReady = playWhenReady
             }
       in
-          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> (updateUserState <| addOerToHistory oer), openModalAnimation inspectorParams)
+          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> (updateUserState <| addOerToHistory oer model.currentTime), openModalAnimation inspectorParams)
 
     UninspectSearchResult ->
       ( { model | inspectorState = Nothing}, Cmd.none)
@@ -153,7 +153,7 @@ update msg ({nav, userProfileForm} as model) =
     RequestGains (Err err) ->
       -- let
       --     dummy =
-      --       err |> Debug.log "Error in RequestGainsRequestViewedFragments"
+      --       err |> Debug.log "Error in RequestGains"
       -- in
       ( { model | userMessage = Just "There was a problem while fetching the gains data" }, Cmd.none)
 
@@ -352,7 +352,7 @@ requestOersAsNeeded userState model =
   let
       neededUrls =
         [ userState.oerNoteboards |> Dict.keys
-        , userState.viewedFragments |> List.map .oerUrl
+        , userState.fragmentAccesses |> Dict.values |> List.map .oerUrl
         ]
         |> List.concat
 
@@ -463,6 +463,6 @@ cacheOersFromList oers model =
       { model | cachedOers = Dict.union oersDict model.cachedOers }
 
 
-addOerToHistory : Oer -> UserState -> UserState
-addOerToHistory oer userState =
-  { userState | viewedFragments = { oerUrl = oer.url, start = 0, length = 1 } :: userState.viewedFragments }
+addOerToHistory : Oer -> Posix -> UserState -> UserState
+addOerToHistory oer currentTime userState =
+  { userState | fragmentAccesses = userState.fragmentAccesses |> Dict.insert (posixToMillis currentTime) { oerUrl = oer.url, start = 0, length = 1 } }

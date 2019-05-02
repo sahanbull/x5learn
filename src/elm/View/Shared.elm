@@ -624,9 +624,18 @@ avatarImage =
 
 
 openInspectorOnPress model oer =
-  case model.inspectorState of
-    Nothing ->
-      Just (InspectOer oer 0 1 False)
+  let
+      fragmentLength =
+        case oer.wikichunks |> List.head of
+          Nothing ->
+            1
 
-    _ ->
-      Nothing
+          Just chunk ->
+            chunk.length
+  in
+      case model.inspectorState of
+        Nothing ->
+          Just (InspectOer oer 0 fragmentLength False)
+
+        _ ->
+          Nothing

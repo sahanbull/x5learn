@@ -21,7 +21,7 @@ type Msg
   | AnimationTick Posix
   | ChangeSearchText String
   | ResizeBrowser Int Int
-  | InspectOer Oer Float Bool
+  | InspectOer Oer Float Float Bool
   | UninspectSearchResult
   | ModalAnimationStart BoxAnimation
   | ModalAnimationStop Int

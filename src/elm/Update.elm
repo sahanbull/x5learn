@@ -79,7 +79,7 @@ update msg ({nav, userProfileForm} as model) =
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, Cmd.none )
 
-    InspectOer oer fragmentStart playWhenReady ->
+    InspectOer oer fragmentStart fragmentLength playWhenReady ->
       let
           inspectorParams =
             { modalId = modalId
@@ -88,7 +88,8 @@ update msg ({nav, userProfileForm} as model) =
             , playWhenReady = playWhenReady
             }
       in
-          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> (updateUserState <| addOerToRecents oer model.currentTime), openModalAnimation inspectorParams)
+          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> (updateUserState <| addFragmentAccess (Fragment oer.url fragmentStart fragmentLength) model.currentTime), openModalAnimation inspectorParams)
+      |> saveUserState msg
 
     UninspectSearchResult ->
       ( { model | inspectorState = Nothing}, Cmd.none)
@@ -463,6 +464,6 @@ cacheOersFromList oers model =
       { model | cachedOers = Dict.union oersDict model.cachedOers }
 
 
-addOerToRecents : Oer -> Posix -> UserState -> UserState
-addOerToRecents oer currentTime userState =
-  { userState | fragmentAccesses = userState.fragmentAccesses |> Dict.insert (posixToMillis currentTime) { oerUrl = oer.url, start = 0, length = 1 } }
+addFragmentAccess : Fragment -> Posix -> UserState -> UserState
+addFragmentAccess fragment currentTime userState =
+  { userState | fragmentAccesses = userState.fragmentAccesses |> Dict.insert (posixToMillis currentTime) fragment }

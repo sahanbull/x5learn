@@ -68,6 +68,7 @@ viewVerticalListOfCards model userState oerUrls =
       cards =
         oerUrls
         |> List.indexedMap viewCard
+        |> List.reverse
         |> List.map inFront
   in
       none

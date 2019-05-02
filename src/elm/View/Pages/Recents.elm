@@ -1,4 +1,4 @@
-module View.Pages.History exposing (viewHistoryPage)
+module View.Pages.Recents exposing (viewRecentsPage)
 
 import Url
 import Dict
@@ -26,8 +26,8 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
-viewHistoryPage : Model -> UserState -> PageWithModal
-viewHistoryPage model userState =
+viewRecentsPage : Model -> UserState -> PageWithModal
+viewRecentsPage model userState =
   let
       page =
         if userState.fragmentAccesses |> Dict.isEmpty then
@@ -63,7 +63,7 @@ viewVerticalListOfCards model userState oerUrls =
               oerUrl
               |> getCachedOerWithBlankDefault model
         in
-            viewOerCard model userState [] (cardPositionAtIndex index) ("history-"++ (String.fromInt index)) oer |> el [ centerX ]
+            viewOerCard model userState [] (cardPositionAtIndex index) ("recents-"++ (String.fromInt index)) oer |> el [ centerX ]
 
       cards =
         oerUrls

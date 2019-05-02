@@ -88,7 +88,7 @@ update msg ({nav, userProfileForm} as model) =
             , playWhenReady = playWhenReady
             }
       in
-          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> (updateUserState <| addOerToHistory oer model.currentTime), openModalAnimation inspectorParams)
+          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> (updateUserState <| addOerToRecents oer model.currentTime), openModalAnimation inspectorParams)
 
     UninspectSearchResult ->
       ( { model | inspectorState = Nothing}, Cmd.none)
@@ -199,10 +199,10 @@ update msg ({nav, userProfileForm} as model) =
       (model, Cmd.none)
 
     RequestSaveUserState (Err err) ->
-      let
-          dummy =
-            err |> Debug.log "Error in RequestSaveUserState"
-      in
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestSaveUserState"
+      -- in
       ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
 
     SetHover maybeUrl ->
@@ -463,6 +463,6 @@ cacheOersFromList oers model =
       { model | cachedOers = Dict.union oersDict model.cachedOers }
 
 
-addOerToHistory : Oer -> Posix -> UserState -> UserState
-addOerToHistory oer currentTime userState =
+addOerToRecents : Oer -> Posix -> UserState -> UserState
+addOerToRecents oer currentTime userState =
   { userState | fragmentAccesses = userState.fragmentAccesses |> Dict.insert (posixToMillis currentTime) { oerUrl = oer.url, start = 0, length = 1 } }

@@ -15,7 +15,7 @@ import View.Pages.Search exposing (viewSearchPage)
 import View.Pages.Notes exposing (viewNotesPage)
 import View.Pages.Gains exposing (viewGainsPage)
 import View.Pages.Profile exposing (viewProfilePage)
-import View.Pages.History exposing (viewHistoryPage)
+import View.Pages.Recents exposing (viewRecentsPage)
 import View.Pages.NextSteps exposing (viewNextStepsPage)
 
 import Update exposing (..)
@@ -80,8 +80,8 @@ view model =
                 else
                   viewNotesPage model userState |> withNavigationDrawer model
 
-              "/history" ->
-                viewHistoryPage model userState |> withNavigationDrawer model
+              "/recents" ->
+                viewRecentsPage model userState |> withNavigationDrawer model
 
               _ ->
                 case model.searchState of

@@ -140,7 +140,7 @@ orange =
   rgb255 255 120 0
 
 
-historyBlue =
+recentsBlue =
   rgb255 0 190 250
 
 
@@ -385,7 +385,7 @@ menuColumn attrs =
 viewFragmentsBar model userState oer recommendedFragments barWidth barId =
   let
       markers =
-        [ fragmentMarkers userState.viewedFragments historyBlue
+        [ fragmentMarkers (userState.fragmentAccesses |> Dict.values) recentsBlue
         , fragmentMarkers recommendedFragments yellow
         ]
         |> List.concat
@@ -451,7 +451,7 @@ viewFragmentsBar model userState oer recommendedFragments barWidth barId =
             clickHandler =
               case model.inspectorState of
                 Nothing ->
-                  [ onClickNoBubble <| InspectOer oer chunk.start True ]
+                  [ onClickNoBubble <| InspectOer oer chunk.start chunk.length True ]
 
                 _ ->
                   if hasYoutubeVideo oer.url then
@@ -624,9 +624,18 @@ avatarImage =
 
 
 openInspectorOnPress model oer =
-  case model.inspectorState of
-    Nothing ->
-      Just (InspectOer oer 0 False)
+  let
+      fragmentLength =
+        case oer.wikichunks |> List.head of
+          Nothing ->
+            1
 
-    _ ->
-      Nothing
+          Just chunk ->
+            chunk.length
+  in
+      case model.inspectorState of
+        Nothing ->
+          Just (InspectOer oer 0 fragmentLength False)
+
+        _ ->
+          Nothing

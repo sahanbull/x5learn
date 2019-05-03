@@ -1,4 +1,4 @@
-module View.Pages.History exposing (viewHistoryPage)
+module View.Pages.Recents exposing (viewRecentsPage)
 
 import Url
 import Dict
@@ -26,48 +26,51 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
-viewHistoryPage : Model -> UserState -> PageWithModal
-viewHistoryPage model userState =
+viewRecentsPage : Model -> UserState -> PageWithModal
+viewRecentsPage model userState =
   let
       page =
-        case userState.viewedFragments of
-          [] ->
-            viewCenterNote "Your viewed items will appear here"
-
-          fragments ->
-            fragments
-            |> viewVerticalListOfCards model userState
+        if userState.fragmentAccesses |> Dict.isEmpty then
+          viewCenterNote "Your viewed items will appear here"
+        else
+          let
+              oerUrls =
+                userState.fragmentAccesses
+                |> Dict.toList
+                |> List.map (\(time, fragment) -> fragment.oerUrl)
+                |> List.reverse
+                |> List.Extra.unique
+          in
+              viewVerticalListOfCards model userState oerUrls
   in
       (page, viewInspectorModalOrEmpty model userState)
 
 
-
-viewVerticalListOfCards : Model -> UserState -> List Fragment -> Element Msg
-viewVerticalListOfCards model userState fragments =
+viewVerticalListOfCards : Model -> UserState -> List OerUrl -> Element Msg
+viewVerticalListOfCards model userState oerUrls =
   let
       rowHeight =
         cardHeight + 50
 
       nrows =
-        List.length fragments
+        List.length oerUrls
 
       cardPositionAtIndex index =
         { x = 0, y = index * rowHeight + 70 |> toFloat }
 
-      viewCard index fragment =
+      viewCard index oerUrl =
         let
             oer =
-              fragment.oerUrl
+              oerUrl
               |> getCachedOerWithBlankDefault model
         in
-            viewOerCard model userState [] (cardPositionAtIndex index) ("history-"++ (String.fromInt index)) oer |> el [ centerX ]
+            viewOerCard model userState [] (cardPositionAtIndex index) ("recents-"++ (String.fromInt index)) oer |> el [ centerX ]
 
       cards =
-        fragments
+        oerUrls
         |> List.indexedMap viewCard
         |> List.reverse
         |> List.map inFront
   in
       none
-      -- |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ cards)
       |> el ([ height (rowHeight * nrows + 100|> px), spacing 20, paddingBottom 200, width fill, Border.rounded 2 ] ++ cards)

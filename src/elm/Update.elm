@@ -8,7 +8,7 @@ import Json.Decode as Decode
 import Json.Encode as Encode
 import Dict exposing (Dict)
 import Set
-import Time exposing (Posix)
+import Time exposing (Posix, millisToPosix, posixToMillis)
 import List.Extra
 
 -- import Debug exposing (log)
@@ -79,7 +79,7 @@ update msg ({nav, userProfileForm} as model) =
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, Cmd.none )
 
-    InspectOer oer fragmentStart playWhenReady ->
+    InspectOer oer fragmentStart fragmentLength playWhenReady ->
       let
           inspectorParams =
             { modalId = modalId
@@ -88,7 +88,8 @@ update msg ({nav, userProfileForm} as model) =
             , playWhenReady = playWhenReady
             }
       in
-          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation inspectorParams)
+          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> (updateUserState <| addFragmentAccess (Fragment oer.url fragmentStart fragmentLength) model.currentTime), openModalAnimation inspectorParams)
+      |> saveUserState msg
 
     UninspectSearchResult ->
       ( { model | inspectorState = Nothing}, Cmd.none)
@@ -153,7 +154,7 @@ update msg ({nav, userProfileForm} as model) =
     RequestGains (Err err) ->
       -- let
       --     dummy =
-      --       err |> Debug.log "Error in RequestGainsRequestViewedFragments"
+      --       err |> Debug.log "Error in RequestGains"
       -- in
       ( { model | userMessage = Just "There was a problem while fetching the gains data" }, Cmd.none)
 
@@ -199,10 +200,10 @@ update msg ({nav, userProfileForm} as model) =
       (model, Cmd.none)
 
     RequestSaveUserState (Err err) ->
-      let
-          dummy =
-            err |> Debug.log "Error in RequestSaveUserState"
-      in
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestSaveUserState"
+      -- in
       ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
 
     SetHover maybeUrl ->
@@ -240,16 +241,14 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | userProfileFormSubmitted = Just userProfileForm }, requestSaveUserProfile model.userProfileForm.userProfile)
 
     ChangedTextInNewNoteFormInOerNoteboard oerUrl str ->
-      ({ model
-       | oerNoteForms = model.oerNoteForms |> Dict.insert oerUrl str
-       }, Cmd.none)
+      ( model |> setTextInNoteForm oerUrl str, Cmd.none)
 
     SubmittedNewNoteInOerNoteboard oerUrl ->
       -- let
       --     dummy =
       --       oerUrl |> log "SubmittedNewNoteInOerNoteboard"
       -- in
-      (model |> updateUserState (addNoteToOer oerUrl (getOerNoteForm model oerUrl) model), Cmd.none)
+      (model |> updateUserState (addNoteToOer oerUrl (getOerNoteForm model oerUrl) model) |> setTextInNoteForm oerUrl "", Cmd.none)
       |> saveUserState msg
 
     PressedKeyInNewNoteFormInOerNoteboard oerUrl keyCode ->
@@ -259,11 +258,14 @@ update msg ({nav, userProfileForm} as model) =
         (model, Cmd.none)
 
     ClickedQuickNoteButton oerUrl text ->
-      (model |> updateUserState (addNoteToOer oerUrl text model), Cmd.none)
+      (model |> updateUserState (addNoteToOer oerUrl text model) |> setTextInNoteForm oerUrl "" , Cmd.none)
       |> saveUserState msg
 
     RemoveNote time ->
       (model |> updateUserState (removeNoteAtTime time), Cmd.none)
+
+    VideoIsPlayingAtPosition position ->
+      (model |> updateUserState (expandCurrentFragmentOrCreateNewOne position model.inspectorState), Cmd.none)
 
 
 updateUserState : (UserState -> UserState) -> Model -> Model
@@ -352,7 +354,7 @@ requestOersAsNeeded userState model =
   let
       neededUrls =
         [ userState.oerNoteboards |> Dict.keys
-        , userState.viewedFragments |> List.map .oerUrl
+        , userState.fragmentAccesses |> Dict.values |> List.map .oerUrl
         ]
         |> List.concat
 
@@ -461,3 +463,44 @@ cacheOersFromList oers model =
         |> List.foldl (\oer result -> result |> Dict.insert oer.url oer) Dict.empty
   in
       { model | cachedOers = Dict.union oersDict model.cachedOers }
+
+
+addFragmentAccess : Fragment -> Posix -> UserState -> UserState
+addFragmentAccess fragment currentTime userState =
+  { userState | fragmentAccesses = userState.fragmentAccesses |> Dict.insert (posixToMillis currentTime) fragment }
+
+
+setTextInNoteForm : OerUrl -> String -> Model -> Model
+setTextInNoteForm oerUrl str model =
+  { model | oerNoteForms = model.oerNoteForms |> Dict.insert oerUrl str }
+
+
+expandCurrentFragmentOrCreateNewOne : Float -> Maybe InspectorState -> UserState -> UserState
+expandCurrentFragmentOrCreateNewOne position inspectorState userState =
+  case inspectorState of
+    Nothing ->
+      userState
+
+    Just {oer} ->
+      case mostRecentFragmentAccess userState.fragmentAccesses of
+        Nothing ->
+          userState
+
+        Just (time, fragment) ->
+          let
+              fragmentEnd =
+                fragment.start + fragment.length
+
+              newFragmentAccesses =
+                if position >= fragmentEnd && position < fragmentEnd + 0.05 then
+                  -- The video appears to be playing normally.
+                  -- -> Extend the current fragment to the current play position.
+                  userState.fragmentAccesses
+                  |> Dict.insert time { fragment | length = position - fragment.start }
+                else
+                  -- The user appears to have skipped within the video, using the player's controls (rather than the fragmentsBar)
+                  -- -> Create a new fragment, starting with the current position
+                  userState.fragmentAccesses
+                  |> Dict.insert time (Fragment oer.url position 0)
+          in
+              { userState | fragmentAccesses = newFragmentAccesses }

@@ -38,6 +38,7 @@ viewRecentsPage model userState =
                 userState.fragmentAccesses
                 |> Dict.toList
                 |> List.map (\(time, fragment) -> fragment.oerUrl)
+                |> List.reverse
                 |> List.Extra.unique
           in
               viewVerticalListOfCards model userState oerUrls

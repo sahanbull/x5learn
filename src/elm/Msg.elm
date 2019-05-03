@@ -50,6 +50,7 @@ type Msg
   | PressedKeyInNewNoteFormInOerNoteboard String Int
   | ClickedQuickNoteButton String String
   | RemoveNote Posix
+  | VideoIsPlayingAtPosition Float
 
 
 type UserProfileField
@@ -81,6 +82,7 @@ subscriptions model =
       , Ports.closeInspector (\_ -> CloseInspector)
       , Ports.clickedOnDocument (\_ -> ClickedOnDocument)
       , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
+      , Ports.videoIsPlayingAtPosition VideoIsPlayingAtPosition
       , Time.every 500 ClockTick
       ] ++ anim)
       |> Sub.batch

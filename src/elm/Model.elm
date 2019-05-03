@@ -391,3 +391,11 @@ blankOer oerUrl =
   , wikichunks = []
   , mediatype = ""
   }
+
+
+mostRecentFragmentAccess : Dict Int Fragment -> Maybe (Int, Fragment)
+mostRecentFragmentAccess fragmentAccesses =
+  fragmentAccesses
+  |> Dict.toList
+  |> List.reverse
+  |> List.head

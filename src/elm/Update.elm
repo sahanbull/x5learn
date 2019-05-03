@@ -241,16 +241,14 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | userProfileFormSubmitted = Just userProfileForm }, requestSaveUserProfile model.userProfileForm.userProfile)
 
     ChangedTextInNewNoteFormInOerNoteboard oerUrl str ->
-      ({ model
-       | oerNoteForms = model.oerNoteForms |> Dict.insert oerUrl str
-       }, Cmd.none)
+      ( model |> setTextInNoteForm oerUrl str, Cmd.none)
 
     SubmittedNewNoteInOerNoteboard oerUrl ->
       -- let
       --     dummy =
       --       oerUrl |> log "SubmittedNewNoteInOerNoteboard"
       -- in
-      (model |> updateUserState (addNoteToOer oerUrl (getOerNoteForm model oerUrl) model), Cmd.none)
+      (model |> updateUserState (addNoteToOer oerUrl (getOerNoteForm model oerUrl) model) |> setTextInNoteForm oerUrl "", Cmd.none)
       |> saveUserState msg
 
     PressedKeyInNewNoteFormInOerNoteboard oerUrl keyCode ->
@@ -260,11 +258,14 @@ update msg ({nav, userProfileForm} as model) =
         (model, Cmd.none)
 
     ClickedQuickNoteButton oerUrl text ->
-      (model |> updateUserState (addNoteToOer oerUrl text model), Cmd.none)
+      (model |> updateUserState (addNoteToOer oerUrl text model) |> setTextInNoteForm oerUrl "" , Cmd.none)
       |> saveUserState msg
 
     RemoveNote time ->
       (model |> updateUserState (removeNoteAtTime time), Cmd.none)
+
+    VideoIsPlayingAtPosition position ->
+      (model |> updateUserState (expandCurrentFragmentOrCreateNewOne position model.inspectorState), Cmd.none)
 
 
 updateUserState : (UserState -> UserState) -> Model -> Model
@@ -467,3 +468,39 @@ cacheOersFromList oers model =
 addFragmentAccess : Fragment -> Posix -> UserState -> UserState
 addFragmentAccess fragment currentTime userState =
   { userState | fragmentAccesses = userState.fragmentAccesses |> Dict.insert (posixToMillis currentTime) fragment }
+
+
+setTextInNoteForm : OerUrl -> String -> Model -> Model
+setTextInNoteForm oerUrl str model =
+  { model | oerNoteForms = model.oerNoteForms |> Dict.insert oerUrl str }
+
+
+expandCurrentFragmentOrCreateNewOne : Float -> Maybe InspectorState -> UserState -> UserState
+expandCurrentFragmentOrCreateNewOne position inspectorState userState =
+  case inspectorState of
+    Nothing ->
+      userState
+
+    Just {oer} ->
+      case mostRecentFragmentAccess userState.fragmentAccesses of
+        Nothing ->
+          userState
+
+        Just (time, fragment) ->
+          let
+              fragmentEnd =
+                fragment.start + fragment.length
+
+              newFragmentAccesses =
+                if position >= fragmentEnd && position < fragmentEnd + 0.05 then
+                  -- The video appears to be playing normally.
+                  -- -> Extend the current fragment to the current play position.
+                  userState.fragmentAccesses
+                  |> Dict.insert time { fragment | length = position - fragment.start }
+                else
+                  -- The user appears to have skipped within the video, using the player's controls (rather than the fragmentsBar)
+                  -- -> Create a new fragment, starting with the current position
+                  userState.fragmentAccesses
+                  |> Dict.insert time (Fragment oer.url position 0)
+          in
+              { userState | fragmentAccesses = newFragmentAccesses }

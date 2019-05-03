@@ -15,7 +15,7 @@ function loadYoutubeApiAsynchronously(){
 
 
 function onYouTubeIframeAPIReady() {
-  // console.log('onYouTubeIframeAPIReady');
+  setupYouTubePlayPositionFollower();
 }
 
 
@@ -53,4 +53,14 @@ function embedVideo(inspectorParams){
       'onStateChange': onPlayerStateChange
     }
   });
+}
+
+function setupYouTubePlayPositionFollower(){
+  setInterval(function(){
+    // see YouTube API documentation https://developers.google.com/youtube/iframe_api_reference#Playback_status
+    if(player && player.getPlayerState && player.getPlayerState()==1){
+      var fraction = player.getCurrentTime() / player.getDuration();
+      app.ports.videoIsPlayingAtPosition.send(fraction);
+    }
+  }, 1000);
 }

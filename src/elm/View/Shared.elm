@@ -140,7 +140,7 @@ orange =
   rgb255 255 120 0
 
 
-recentsBlue =
+recentBlue =
   rgb255 0 190 250
 
 
@@ -385,7 +385,7 @@ menuColumn attrs =
 viewFragmentsBar model userState oer recommendedFragments barWidth barId =
   let
       markers =
-        [ fragmentMarkers (userState.fragmentAccesses |> Dict.values) recentsBlue
+        [ fragmentMarkers (userState.fragmentAccesses |> Dict.values) recentBlue
         , fragmentMarkers recommendedFragments yellow
         ]
         |> List.concat

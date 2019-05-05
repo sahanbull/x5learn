@@ -111,8 +111,8 @@ def notes():
     return render_template('home.html')
 
 
-@app.route("/recents")
-def recents():
+@app.route("/recent")
+def recent():
     return render_template('home.html')
 
 

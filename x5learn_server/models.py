@@ -40,3 +40,19 @@ class GuestUser(Base):
     __tablename__ = 'guest_user'
     id = Column(Integer(), primary_key=True)
     user_state = Column(JSON())
+
+
+class Oer(Base):
+    __tablename__ = 'oer'
+
+    id = Column(Integer(), primary_key=True)
+    url = Column(String(255), unique=True, nullable=False)
+    data = Column(JSON())
+    origin = Column(String(255))
+    x5gon_material_id = Column(Integer())
+
+    def __init__(self, url, data, origin, x5gon_material_id):
+        self.url = url
+        self.data = data
+        self.origin = origin
+        self.x5gon_material_id = x5gon_material_id

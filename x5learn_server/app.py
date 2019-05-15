@@ -20,7 +20,7 @@ get_or_create_session_db(DB_ENGINE_URI)
 
 from x5learn_server.db.database import db_session
 
-from x5learn_server.models import UserLogin, Role, GuestUser
+from x5learn_server.models import UserLogin, Role, User
 
 # Create app
 app = Flask(__name__)
@@ -130,53 +130,53 @@ def api_session():
 
 
 def get_logged_in_user_profile_and_state():
-    user = {}
-    user['userProfile'] = current_user.user_profile if current_user.user_profile is not None else { 'email': current_user.email }
-    user['userState'] = current_user.user_state
-    return jsonify({'loggedInUser': user})
+    profile = current_user.user_profile if current_user.user_profile is not None else { 'email': current_user.email }
+    user = User.query.filter(login_id=current_user)[0] # TODO use ORM relation properly
+    logged_in_user = {'userState': user.frontend_user_state(), 'userProfile': profile}
+    return jsonify({'loggedInUser': logged_in_user})
 
 
 def get_guest_user_state():
-    guest_user_id = request.cookies.get(GUEST_COOKIE_NAME)
-    if guest_user_id == None or guest_user_id == '':
+    user_id = request.cookies.get(GUEST_COOKIE_NAME)
+    if user_id == None or user_id == '':
         return create_guest_user_and_save_id_in_cookie(guest_user_response(None))
     else:
-        return load_guest_user_state(guest_user_id)
+        return load_guest_user_state(user_id)
 
 
-def load_guest_user_state(guest_user_id):
-    guest = GuestUser.query.get(guest_user_id)
+def load_guest_user_state(user_id):
+    guest = User.query.get(user_id)
     if guest is None: # In the rare case that the cookie points to a no-longer existent row
         return create_guest_user_and_save_id_in_cookie(guest_user_response(None))
     else:
-        return guest_user_response(guest.user_state)
+        return guest_user_response(guest.frontend_user_state)
 
 
 def create_guest_user_and_save_id_in_cookie(resp):
-    guest = GuestUser()
+    guest = User()
     db_session.add(guest)
     db_session.commit()
-    # Passing None will cause Elm to setup the initial user state.
     resp.set_cookie(GUEST_COOKIE_NAME, str(guest.id))
     return resp
 
 
-def guest_user_response(user_state):
-    return jsonify({'guestUser': {'userState': user_state}})
+def guest_user_response(frontend_user_state):
+    # If frontend_user_state is none, Elm will setup the initial user state.
+    return jsonify({'guestUser': {'userState': frontend_user_state}})
 
 
 @app.route("/api/v1/save_user_state/", methods=['POST'])
 def api_save_user_state():
-    user_state = request.get_json()
+    frontend_user_state = request.get_json()
     if current_user.is_authenticated:
         current_user.user_state = user_state
         db_session.commit()
         return 'OK'
     else:
-        guest_user_id = request.cookies.get(GUEST_COOKIE_NAME)
-        if guest_user_id == None or guest_user_id == '': # If the user cleared their cookie while using the app
+        user_id = request.cookies.get(GUEST_COOKIE_NAME)
+        if user_id == None or user_id == '': # If the user cleared their cookie while using the app
             return create_guest_user_and_save_id_in_cookie('OK')
-        guest = GuestUser.query.get(guest_user_id)
+        guest = User.query.get(user_id)
         if guest is None: # In the rare case that the cookie points to no-longer existent row
             return create_guest_user_and_save_id_in_cookie('OK')
         guest.user_state = user_state

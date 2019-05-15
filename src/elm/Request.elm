@@ -109,8 +109,8 @@ requestSaveUserState userState =
 userStateEncoder : UserState -> Encode.Value
 userStateEncoder userState =
   Encode.object
-    [ ("fragmentAccesses", dictEncoder fragmentEncoder (userState.fragmentAccesses |> convertKeysFromIntToString) )
-    , ("oerNoteboards", dictEncoder (Encode.list noteEncoder) userState.oerNoteboards)
+    [ ("viewings", dictEncoder fragmentEncoder (userState.fragmentAccesses |> convertKeysFromIntToString) )
+    , ("notes", dictEncoder (Encode.list noteEncoder) userState.oerNoteboards)
     ]
 
 
@@ -153,14 +153,14 @@ userStateDecoder =
   oneOf
     [ null initialUserState
     , map2 UserState
-        fragmentAccessesDecoder
-        (field "oerNoteboards" (dict noteboardDecoder))
+        viewingsDecoder
+        (field "notes" (dict noteboardDecoder))
     ]
 
 
-fragmentAccessesDecoder =
+viewingsDecoder =
     map (\maybeFragmentAccesses -> maybeFragmentAccesses |> Maybe.withDefault Dict.empty |> convertKeysFromStringToInt)
-      (field "fragmentAccesses" (dict fragmentDecoder) |> maybe)
+      (field "viewings" (dict fragmentDecoder) |> maybe)
 
 
 userProfileDecoder =

@@ -2,6 +2,7 @@ import sys
 import os
 import csv
 import json
+import math
 
 from x5learn_server.db.database import db_session
 
@@ -17,6 +18,8 @@ all_entity_titles = set([])
 def load_initial_dataset_from_csv():
     global db_session
     global loaded_oers
+    # import pdb; pdb.set_trace()
+    Oer.query.delete(); db_session.commit()
     load_oers_from_csv_file()
     load_wikichunks_from_json_files()
     print(len(loaded_oers), 'OERs loaded.')
@@ -46,106 +49,65 @@ def load_oers_from_csv_file():
             row['images'] = json.loads(row['images'].replace("'", '"'))
             row['description'] = '\n'.join([ l for l in row['description'].strip().split('\n') if len(l)>1 ])
             row['date'] = row['date'].replace('Published on ', '') if 'date' in row else ''
-            row['duration'] = human_readable_time_from_ms(float(row['duration'])) if 'duration' in row else ''
+            # row['duration'] = human_readable_time_from_ms(float(row['duration'])) if 'duration' in row else ''
+            row['duration'] = math.ceil(float(row['duration'])/1000) if 'duration' in row else ''
             del row['wikichunks']  # Use the new wikifier results instead (from the JSON files).
-            del row[
-                'transcript']  # Delete in order to prevent unnecessary network load when serving OER to the frontend.
+            del row['transcript']  # Delete in order to prevent unnecessary network load when serving OER to the frontend.
             row['mediatype'] = 'video'
             videoid = row['url'].split('v=')[1].split('&')[0]
             # loaded_oers[videoid] = row
-            #TODO
-            print('loaded: ', row)
+            # print('loaded: ', row)
             url = row['url']
-            print(111)
+            # print(111)
+            # Oer.query.delete()
+            # db_session.commit()
             if db_session.query(Oer.id).filter_by(url=url).scalar() is None:
-                print(222)
-                oer = Oer(url, row, 'YOUTUBE_ML', None)
+                # print(222)
+                origin = 'YOUTUBE_VARIOUS' if 'youtu' in row['provider'] else 'YOUTUBE_'+row['provider'].replace(' ', '_')
+                oer = Oer(url, row, origin, None, videoid)
                 db_session.add(oer)
                 db_session.commit()
-            print(333)
-            print(Oer.query.all())
-            print(444)
-            import pdb; pdb.set_trace()
-            break
-
-
-
+                print('saved', origin, row['title'])
     print('Done loading oers')
 
 
 def load_wikichunks_from_json_files():
-    chunkdata = {}
     print('Loading local wikichunk data...')
     dir_path = CSV_DATA_DIR + '/youtube_enrichments/'
     (_, _, filenames) = next(os.walk(dir_path))
     for filename in filenames:
+        print('json file:', filename)
         with open(dir_path + filename, newline='') as f:
             for line in f:
                 chunk = json.loads(line)
-                oer = loaded_oers[chunk['videoid']]
-                url = oer['url']
-                if not url in chunkdata:
-                    chunkdata[url] = []
-                chunkdata[url].append(chunk)
+                oer = Oer.query.filter(Oer.youtube_video_id==chunk['videoid'])[0]
+                if oer.chunks is None:
+                    oer.chunks = { 'compact': [] }
+                else:
+                    oer.chunks['compact'].append(encode_chunk_to_compact_format(chunk))
+                    oer.chunks = dict(oer.chunks) # see https://stackoverflow.com/a/53977819/2237986
+                    # print(oer.chunks)
+                db_session.commit()
     print('Done loading wikichunks')
-    print('______________')
-    print('Encoding wikichunks')
-    for videoid, oer in loaded_oers.items():
-        url = oer['url']
-        if not url in chunkdata:
-            # print('WARNING: oer has no JSON chunks', videoid)
+
+
+def encode_chunk_to_compact_format(chunk):
+    annotations = chunk['annotations']['annotation_data']
+    annotations = annotations[:7]  # use the top ones, assuming they come sorted by pagerank
+    annotations = sorted(annotations, key=lambda a: a['cosine'], reverse=True)
+    entities = []
+    for a in annotations:
+        try:
+            entities.append({'id': a['wikiDataItemId'], 'title': a['title'], 'url': a['url']})
+        except (NameError, TypeError):
             pass
-        else:
-            json_chunks = chunkdata[url]
-            chunks = []
-            last_chunk = json_chunks[-1]
-            duration = last_chunk['start'] + last_chunk['length']
-            for j in json_chunks:
-                annotations = j['annotations']['annotation_data']
-                annotations = annotations[:7]  # use the top ones, assuming they come sorted by pagerank
-                annotations = sorted(annotations, key=lambda a: a['cosine'], reverse=True)
-                entities = []
-                for a in annotations:
-                    try:
-                        entities.append({'id': a['wikiDataItemId'], 'title': a['title'], 'url': a['url']})
-                    except (NameError, TypeError):
-                        pass
-                entities = entities[:5]
-                chunks.append(encode_chunk(j['start'], j['length'], entities, duration))
-            oer['wikichunks'] = chunks
-    print('______________')
-    print('Done encoding wikichunks')
+    entities = entities[:5]
+    return {'start': chunk['start'], 'length': chunk['length'], 'entities': entities}
 
 
-def encode_chunk(start_second, length_seconds, entities, duration):
-    start = round(start_second / duration, 4)
-    length = round(length_seconds / duration, 4)
-    return {'start': start, 'length': length, 'entities': entities}
-
-
-def human_readable_time_from_ms(ms):
-    minutes = int(ms / 60000)
-    seconds = int(ms / 1000 - minutes * 60)
-    return str(minutes) + ':' + str(seconds).rjust(2, '0')
-
-
-def search_results_from_experimental_local_oer_data(text):
-    max_results = 18
-    frequencies = defaultdict(int)
-    for video_id, oer in loaded_oers.items():
-        for chunk in oer['wikichunks']:
-            for entity in chunk['entities']:
-                if text == entity['title'].lower().strip():
-                    frequencies[video_id] += 1
-    # import pdb; pdb.set_trace()
-    results = [loaded_oers[video_id] for video_id, freq in
-               sorted(frequencies.items(), key=lambda k_v: k_v[1], reverse=True)[:max_results]]
-    print(len(results), 'search results found based on wikichunks.')
-    # if len(results) < max_results:
-    #     search_words = text.split()
-    #     n = max_results-len(results)
-    #     print('Search: adding', n,'results by title and description')
-    #     results += [ oer for oer in loaded_oers.values() if any_word_matches(search_words, oer['title']) or any_word_matches(search_words, oer['description']) ][:n]
-    return results
+# def human_readable_time_from_ms(ms):
+#     minutes = int(ms / 60000)
+#     seconds = int(ms / 1000 - minutes * 60)
+#     return str(minutes) + ':' + str(seconds).rjust(2, '0')
 
 

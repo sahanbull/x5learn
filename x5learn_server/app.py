@@ -288,6 +288,26 @@ def search_suggestions(text):
     return jsonify(matches)
 
 
+# def search_results_from_experimental_local_oer_data(text):
+#     max_results = 18
+#     frequencies = defaultdict(int)
+#     for video_id, oer in loaded_oers.items():
+#         for chunk in oer['wikichunks']:
+#             for entity in chunk['entities']:
+#                 if text == entity['title'].lower().strip():
+#                     frequencies[video_id] += 1
+#     # import pdb; pdb.set_trace()
+#     results = [loaded_oers[video_id] for video_id, freq in
+#                sorted(frequencies.items(), key=lambda k_v: k_v[1], reverse=True)[:max_results]]
+#     print(len(results), 'search results found based on wikichunks.')
+#     # if len(results) < max_results:
+#     #     search_words = text.split()
+#     #     n = max_results-len(results)
+#     #     print('Search: adding', n,'results by title and description')
+#     #     results += [ oer for oer in loaded_oers.values() if any_word_matches(search_words, oer['title']) or any_word_matches(search_words, oer['description']) ][:n]
+#     return results
+
+
 # def find_oer_by_url(url):
 #     for oer in loaded_oers.values():
 #         if oer['url'] == url:

@@ -50,9 +50,12 @@ class Oer(Base):
     data = Column(JSON())
     origin = Column(String(255))
     x5gon_material_id = Column(Integer())
+    youtube_video_id = Column(String(255))
+    chunks = Column(JSON())
 
-    def __init__(self, url, data, origin, x5gon_material_id):
+    def __init__(self, url, data, origin, x5gon_material_id, youtube_video_id):
         self.url = url
         self.data = data
         self.origin = origin
         self.x5gon_material_id = x5gon_material_id
+        self.youtube_video_id = youtube_video_id

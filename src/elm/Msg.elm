@@ -51,6 +51,7 @@ type Msg
   | ClickedQuickNoteButton String String
   | RemoveNote Posix
   | VideoIsPlayingAtPosition Float
+  | SubmitPostRegistrationForm Bool
 
 
 type UserProfileField

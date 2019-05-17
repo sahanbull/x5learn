@@ -11,12 +11,12 @@ import View.Shared exposing (..)
 import View.PageHeader exposing (viewPageHeader)
 import View.NavigationDrawer exposing (..)
 import View.Pages.Intro exposing (viewIntroPage)
+import View.Pages.PostRegistration exposing (viewPostRegistrationPage)
 import View.Pages.Search exposing (viewSearchPage)
 import View.Pages.Notes exposing (viewNotesPage)
 import View.Pages.Gains exposing (viewGainsPage)
 import View.Pages.Profile exposing (viewProfilePage)
 import View.Pages.Recent exposing (viewRecentPage)
-import View.Pages.NextSteps exposing (viewNextStepsPage)
 
 import Update exposing (..)
 import Request exposing (..)
@@ -75,7 +75,9 @@ view model =
                 viewNotesPage model userState |> withNavigationDrawer model
 
               "/" ->
-                if userState == initialUserState then
+                if session.loginState /= GuestUser && (not userState.registrationComplete) then
+                  viewPostRegistrationPage model userState |> withNavigationDrawer model
+                else if userState == initialUserState then
                   introPage
                 else
                   viewNotesPage model userState |> withNavigationDrawer model

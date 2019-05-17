@@ -50,6 +50,7 @@ type alias Model =
 type alias UserState =
   { fragmentAccesses : Dict Int Fragment
   , oerNoteboards : Dict String (List Note)
+  , registrationComplete : Bool
   }
 
 
@@ -221,6 +222,7 @@ initialModel nav flags =
 initialUserState =
   { fragmentAccesses = Dict.empty
   , oerNoteboards = Dict.empty
+  , registrationComplete = False
   }
 
 

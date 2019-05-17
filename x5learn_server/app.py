@@ -135,6 +135,15 @@ def new_guest_session():
     return resp
 
 
+def new_guest_ok():
+    user = User()
+    db_session.add(user)
+    db_session.commit()
+    resp = make_response('OK')
+    resp.set_cookie(GUEST_COOKIE_NAME, str(user.id))
+    return resp
+
+
 def get_logged_in_user_profile_and_state():
     profile = current_user.user_profile if current_user.user_profile is not None else { 'email': current_user.email }
     user = get_user_row_for_current_user()
@@ -153,6 +162,11 @@ def on_user_registered(sender, user, confirm_token):
 def get_user_row_for_current_user():
     login_id = current_user.get_id()
     user = User.query.filter(User.login_id==login_id).first() # TODO apply ORM relation best practice (using foreign key etc) -> current_user.user
+    if user is None:
+        user = User()
+        user.login_id = login_id
+        db_session.add(user)
+        db_session.commit()
     return user
 
 
@@ -166,10 +180,10 @@ def api_save_user_state():
     else:
         user_id = request.cookies.get(GUEST_COOKIE_NAME)
         if user_id == None or user_id == '': # If the user cleared their cookie while using the app
-            return create_guest_user_and_save_id_in_cookie('OK')
+            return new_guest_ok('OK')
         user = User.query.get(user_id)
         if user is None: # In the rare case that the cookie points to no-longer existent row
-            return create_guest_user_and_save_id_in_cookie('OK')
+            return new_guest_ok('OK')
         user.frontend_state = frontend_state
         db_session.commit()
         return 'OK'

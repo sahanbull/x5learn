@@ -5,7 +5,7 @@ import Dict exposing (Dict)
 import Time exposing (millisToPosix, posixToMillis)
 
 import Http exposing (expectStringResponse)
-import Json.Decode as Decode exposing (Value,map,map2,map3,map8,field,bool,int,float,string,list,dict,oneOf,maybe,null)
+import Json.Decode as Decode exposing (Value,map,map2,map3,map4,map8,field,bool,int,float,string,list,dict,oneOf,maybe,null)
 import Json.Decode.Extra exposing (andMap)
 import Json.Encode as Encode
 import Url
@@ -109,8 +109,9 @@ requestSaveUserState userState =
 userStateEncoder : UserState -> Encode.Value
 userStateEncoder userState =
   Encode.object
-    [ ("fragmentAccesses", dictEncoder fragmentEncoder (userState.fragmentAccesses |> convertKeysFromIntToString) )
-    , ("oerNoteboards", dictEncoder (Encode.list noteEncoder) userState.oerNoteboards)
+    [ ("viewings", dictEncoder fragmentEncoder (userState.fragmentAccesses |> convertKeysFromIntToString) )
+    , ("notes", dictEncoder (Encode.list noteEncoder) userState.oerNoteboards)
+    , ("registrationComplete", Encode.bool userState.registrationComplete)
     ]
 
 
@@ -152,15 +153,21 @@ guestUserDecoder =
 userStateDecoder =
   oneOf
     [ null initialUserState
-    , map2 UserState
-        fragmentAccessesDecoder
-        (field "oerNoteboards" (dict noteboardDecoder))
+    , map3 UserState
+        viewingsDecoder
+        (field "notes" (dict noteboardDecoder))
+        registrationCompleteDecoder
     ]
 
 
-fragmentAccessesDecoder =
-    map (\maybeFragmentAccesses -> maybeFragmentAccesses |> Maybe.withDefault Dict.empty |> convertKeysFromStringToInt)
-      (field "fragmentAccesses" (dict fragmentDecoder) |> maybe)
+registrationCompleteDecoder =
+  map (\optionalField -> optionalField |> Maybe.withDefault False)
+    (field "registrationComplete" bool |> maybe)
+
+
+viewingsDecoder =
+  map (\maybeViewings -> maybeViewings |> Maybe.withDefault Dict.empty |> convertKeysFromStringToInt)
+    (field "viewings" (dict fragmentDecoder) |> maybe)
 
 
 userProfileDecoder =

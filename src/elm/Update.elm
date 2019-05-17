@@ -233,7 +233,7 @@ update msg ({nav, userProfileForm} as model) =
     EditUserProfile field value ->
       let
           newForm =
-            { userProfileForm | userProfile = userProfileForm.userProfile |> updateUserProfile field value, saved = False }
+            { userProfileForm | userProfile = userProfileForm.userProfile |> updateUserProfileField field value, saved = False }
       in
           ( { model | userProfileForm = newForm }, Cmd.none )
 
@@ -263,9 +263,15 @@ update msg ({nav, userProfileForm} as model) =
 
     RemoveNote time ->
       (model |> updateUserState (removeNoteAtTime time), Cmd.none)
+      |> saveUserState msg
 
     VideoIsPlayingAtPosition position ->
       (model |> updateUserState (expandCurrentFragmentOrCreateNewOne position model.inspectorState), Cmd.none)
+      |> saveUserState msg
+
+    SubmitPostRegistrationForm keepData ->
+      (model |> updateUserState completeRegistration, Cmd.none)
+      |> saveUserState msg
 
 
 updateUserState : (UserState -> UserState) -> Model -> Model
@@ -431,8 +437,8 @@ resetUserProfileForm model =
       model
 
 
-updateUserProfile : UserProfileField -> String -> UserProfile -> UserProfile
-updateUserProfile field value userProfile =
+updateUserProfileField : UserProfileField -> String -> UserProfile -> UserProfile
+updateUserProfileField field value userProfile =
   case field of
     FirstName ->
       { userProfile | firstName = value }
@@ -504,3 +510,8 @@ expandCurrentFragmentOrCreateNewOne position inspectorState userState =
                   |> Dict.insert time (Fragment oer.url position 0)
           in
               { userState | fragmentAccesses = newFragmentAccesses }
+
+
+completeRegistration : UserState -> UserState
+completeRegistration userState =
+  { userState | registrationComplete = True }

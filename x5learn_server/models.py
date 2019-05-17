@@ -38,11 +38,6 @@ class UserLogin(Base, UserMixin):
 class User(Base):
     __tablename__ = 'user'
     id = Column(Integer(), primary_key=True)
-    login_id = Column('login_id', Integer(), ForeignKey('user_login.id'))
-    # user_state = Column(JSON())
-    notes = Column(JSON())
-    viewings = Column(JSON())
-
-    def frontend_user_state(): # TODO: consider extracting into a new layer
-        return { 'notes': json.loads(self.notes),
-                'viewings': json.loads(self.viewings) }
+    # login_id = Column('login_id', Integer(), ForeignKey('user_login.id')) # TODO use foreign keys like a normal human being
+    login_id = Column(Integer())
+    frontend_state = Column(JSON())

@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, render_template, request, redirect
 from flask_mail import Mail
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required
+from flask_security.signals import user_registered
 from flask_sqlalchemy import SQLAlchemy
 import json
 import http.client
@@ -21,6 +22,7 @@ get_or_create_session_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
 
 from x5learn_server.models import UserLogin, Role, User
+
 
 # Create app
 app = Flask(__name__)
@@ -72,16 +74,6 @@ def home():
     return render_template('home.html')
 
 
-@app.route("/login")
-def login():
-    return render_template('security/login_user.html')
-
-
-@app.route("/signup")
-def signup():
-    return render_template('security/register_user.html')
-
-
 @app.route("/logout")
 # @login_required
 def logout():
@@ -93,18 +85,6 @@ def logout():
 def search():
     return render_template('home.html')
 
-
-# @app.route("/next_steps")
-# def next_steps():
-#     return render_template('home.html')
-
-# @app.route("/journeys")
-# def journeys():
-#     return render_template('home.html')
-
-# @app.route("/gains")
-# def gains():
-#     return render_template('home.html')
 
 @app.route("/notes")
 def notes():
@@ -125,61 +105,72 @@ def profile():
 @app.route("/api/v1/session/", methods=['GET'])
 def api_session():
     if current_user.is_authenticated:
-        return get_logged_in_user_profile_and_state()
-    return get_guest_user_state()
+        resp = get_logged_in_user_profile_and_state()
+        if str(get_user_row_for_current_user().id) == get_guest_id_from_cookie():
+            resp.delete_cookie(GUEST_COOKIE_NAME)
+        return resp
+    return guest_session()
+
+
+def guest_session():
+    user_id = get_guest_id_from_cookie()
+    if user_id is None or user_id == '': # No cookie set
+        return new_guest_session()
+    user = User.query.get(user_id)
+    if user is None: # The cookie points to a row which no longer exists
+        return new_guest_session()
+    return jsonify({'guestUser': {'userState': user.frontend_state}})
+
+
+def get_guest_id_from_cookie():
+    return request.cookies.get(GUEST_COOKIE_NAME)
+
+
+def new_guest_session():
+    user = User()
+    db_session.add(user)
+    db_session.commit()
+    resp = jsonify({'guestUser': {'userState': None}})
+    resp.set_cookie(GUEST_COOKIE_NAME, str(user.id))
+    return resp
 
 
 def get_logged_in_user_profile_and_state():
     profile = current_user.user_profile if current_user.user_profile is not None else { 'email': current_user.email }
-    user = User.query.filter(login_id=current_user)[0] # TODO use ORM relation properly
-    logged_in_user = {'userState': user.frontend_user_state(), 'userProfile': profile}
+    user = get_user_row_for_current_user()
+    logged_in_user = {'userState': user.frontend_state, 'userProfile': profile}
     return jsonify({'loggedInUser': logged_in_user})
 
 
-def get_guest_user_state():
-    user_id = request.cookies.get(GUEST_COOKIE_NAME)
-    if user_id == None or user_id == '':
-        return create_guest_user_and_save_id_in_cookie(guest_user_response(None))
-    else:
-        return load_guest_user_state(user_id)
-
-
-def load_guest_user_state(user_id):
-    guest = User.query.get(user_id)
-    if guest is None: # In the rare case that the cookie points to a no-longer existent row
-        return create_guest_user_and_save_id_in_cookie(guest_user_response(None))
-    else:
-        return guest_user_response(guest.frontend_user_state)
-
-
-def create_guest_user_and_save_id_in_cookie(resp):
-    guest = User()
-    db_session.add(guest)
+@user_registered.connect_via(app)
+def on_user_registered(sender, user, confirm_token):
+    # NB the "user" parameter takes a UserLogin object, not a User object
+    guest = User.query.get(get_guest_id_from_cookie())
+    guest.login_id = user.id
     db_session.commit()
-    resp.set_cookie(GUEST_COOKIE_NAME, str(guest.id))
-    return resp
 
 
-def guest_user_response(frontend_user_state):
-    # If frontend_user_state is none, Elm will setup the initial user state.
-    return jsonify({'guestUser': {'userState': frontend_user_state}})
+def get_user_row_for_current_user():
+    login_id = current_user.get_id()
+    user = User.query.filter(User.login_id==login_id).first() # TODO apply ORM relation best practice (using foreign key etc) -> current_user.user
+    return user
 
 
 @app.route("/api/v1/save_user_state/", methods=['POST'])
 def api_save_user_state():
-    frontend_user_state = request.get_json()
+    frontend_state = request.get_json()
     if current_user.is_authenticated:
-        current_user.user_state = user_state
+        get_user_row_for_current_user().frontend_state = frontend_state
         db_session.commit()
         return 'OK'
     else:
         user_id = request.cookies.get(GUEST_COOKIE_NAME)
         if user_id == None or user_id == '': # If the user cleared their cookie while using the app
             return create_guest_user_and_save_id_in_cookie('OK')
-        guest = User.query.get(user_id)
-        if guest is None: # In the rare case that the cookie points to no-longer existent row
+        user = User.query.get(user_id)
+        if user is None: # In the rare case that the cookie points to no-longer existent row
             return create_guest_user_and_save_id_in_cookie('OK')
-        guest.user_state = user_state
+        user.frontend_state = frontend_state
         db_session.commit()
         return 'OK'
 
@@ -198,11 +189,6 @@ def api_search_suggestions():
     return search_suggestions(text.lower().strip())
 
 
-# @app.route("/api/v1/gains/", methods=['GET'])
-# def api_gains():
-#     return jsonify(dummy_user.gains())
-
-
 @app.route("/api/v1/oers/", methods=['POST'])
 def api_oers():
     urls = request.get_json()['urls']
@@ -210,12 +196,6 @@ def api_oers():
     for url in urls:
         oers[url] = find_oer_by_url(url)
     return jsonify(oers)
-
-
-# @app.route("/api/v1/next_steps/", methods=['GET'])
-# def api_next_steps():
-#     playlists = dummy_user.recommended_next_steps()
-#     return jsonify(playlists)
 
 
 @app.route("/api/v1/entity_descriptions/", methods=['GET'])

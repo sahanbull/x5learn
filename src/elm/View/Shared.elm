@@ -314,6 +314,15 @@ actionButtonWithoutIcon attrs str onPress =
       button attrs { onPress = onPress, label = label }
 
 
+confirmButton : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
+confirmButton attrs str onPress =
+  let
+      label =
+        str |> bodyNoWrap [ Background.color x5color, bigButtonPadding, whiteText ]
+  in
+      button attrs { onPress = onPress, label = label }
+
+
 selectByIndex : Int -> a -> List a -> a
 selectByIndex index fallback elements =
   elements

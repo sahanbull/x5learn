@@ -44,7 +44,7 @@ viewNotesPage model userState =
         else
           case noteCards of
             [] ->
-              viewCenterNote "Your notes will appear here. Look inside a resource to create your first note."
+              viewCenterNote "Your notes will appear here. Find some material to create your first note."
 
             cards ->
               cards

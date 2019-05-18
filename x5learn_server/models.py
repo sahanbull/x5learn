@@ -39,6 +39,5 @@ class UserLogin(Base, UserMixin):
 class User(Base):
     __tablename__ = 'user'
     id = Column(Integer(), primary_key=True)
-    login_id = Column(Integer())
     frontend_state = Column(JSON())
     user_login_id = Column(Integer, ForeignKey('user_login.id'))

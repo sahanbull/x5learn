@@ -156,7 +156,7 @@ def on_user_registered(sender, user, confirm_token):
     # NB the "user" parameter takes a UserLogin object, not a User object
     # The unfortunate naming results in "user.user" which looks weird although it is technically correct.
     guest = User.query.get(get_guest_id_from_cookie())
-    guest.login_id = user.id
+    guest.user_login_id = user.id
     user.user = guest
     db_session.commit()
 

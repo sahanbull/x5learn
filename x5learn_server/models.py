@@ -33,14 +33,14 @@ class UserLogin(Base, UserMixin):
     confirmed_at = Column(DateTime())
     roles = relationship('Role', secondary='roles_users', backref=backref('user_login', lazy='dynamic'))
     user_profile = Column(JSON())
+    user = relationship("User", uselist=False, backref="user_login")
 
 
 class User(Base):
     __tablename__ = 'user'
     id = Column(Integer(), primary_key=True)
-    # login_id = Column('login_id', Integer(), ForeignKey('user_login.id')) # TODO use foreign keys like a normal human being
-    login_id = Column(Integer())
     frontend_state = Column(JSON())
+    user_login_id = Column(Integer, ForeignKey('user_login.id'))
 
 
 class Oer(Base):

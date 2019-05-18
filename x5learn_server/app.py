@@ -99,7 +99,7 @@ def profile():
 def api_session():
     if current_user.is_authenticated:
         resp = get_logged_in_user_profile_and_state()
-        if str(get_user_row_for_current_user().id) == get_guest_id_from_cookie():
+        if str(get_or_create_logged_in_user().id) == get_guest_id_from_cookie():
             resp.delete_cookie(GUEST_COOKIE_NAME)
         return resp
     return guest_session()
@@ -139,7 +139,7 @@ def new_guest_ok():
 
 def get_logged_in_user_profile_and_state():
     profile = current_user.user_profile if current_user.user_profile is not None else { 'email': current_user.email }
-    user = get_user_row_for_current_user()
+    user = get_or_create_logged_in_user()
     logged_in_user = {'userState': user.frontend_state, 'userProfile': profile}
     return jsonify({'loggedInUser': logged_in_user})
 
@@ -147,18 +147,19 @@ def get_logged_in_user_profile_and_state():
 @user_registered.connect_via(app)
 def on_user_registered(sender, user, confirm_token):
     # NB the "user" parameter takes a UserLogin object, not a User object
+    # The unfortunate naming results in "user.user" which looks weird although it is technically correct.
     guest = User.query.get(get_guest_id_from_cookie())
-    guest.login_id = user.id
+    guest.user_login_id = user.id
+    user.user = guest
     db_session.commit()
 
 
-def get_user_row_for_current_user():
-    login_id = current_user.get_id()
-    user = User.query.filter(User.login_id==login_id).first() # TODO apply ORM relation best practice (using foreign key etc) -> current_user.user
-    if user is None:
+def get_or_create_logged_in_user():
+    user = current_user.user
+    if user is None: # This will happen for the handful of people who have signed up before this change and have been warned that their user state will be reset. Other than that, there is no good reasons for current_user.user to ever be None. So at a later point, we may want to replace this entire function with simply current_user.user
         user = User()
-        user.login_id = login_id
         db_session.add(user)
+        current_user.user = user
         db_session.commit()
     return user
 
@@ -167,7 +168,7 @@ def get_user_row_for_current_user():
 def api_save_user_state():
     frontend_state = request.get_json()
     if current_user.is_authenticated:
-        get_user_row_for_current_user().frontend_state = frontend_state
+        get_or_create_logged_in_user().frontend_state = frontend_state
         db_session.commit()
         return 'OK'
     else:

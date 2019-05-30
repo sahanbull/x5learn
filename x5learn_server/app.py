@@ -18,7 +18,7 @@ get_or_create_session_db(DB_ENGINE_URI)
 
 from x5learn_server.db.database import db_session
 
-from x5learn_server.models import UserLogin, Role, User
+from x5learn_server.models import UserLogin, Role, User, Oer, Chunk, Topic
 from x5learn_server.db.seed import load_initial_dataset_from_csv
 
 
@@ -59,7 +59,7 @@ GUEST_COOKIE_NAME = 'x5learn_guest'
 def initiate_login_db():
     from x5learn_server.db.database import initiate_login_table_and_admin_profile
     initiate_login_table_and_admin_profile(user_datastore)
-    load_initial_dataset_from_csv()
+    # load_initial_dataset_from_csv()
 
 
 @app.route("/")
@@ -200,14 +200,9 @@ def api_search_suggestions():
 
 @app.route("/api/v1/oers/", methods=['POST'])
 def api_oers():
-    urls = request.get_json()['urls']
     oers = {}
-    # TODO
-    # q = db_session.query(oers)
-    # q.filter(cls.id.in_(
-    # q.all()
-    # for url in urls:
-    #     oers[url] = find_oer_by_url(url)
+    for url in request.get_json()['urls']:
+        oers[url] = find_oer_by_url(url)
     return jsonify(oers)
 
 
@@ -252,7 +247,6 @@ def search_results_from_x5gon_api(text):
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request('GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&text='+encoded_text)
     response = conn.getresponse().read().decode("utf-8")
-    # import pdb; pdb.set_trace()
     results = json.loads(response)['rec_materials'][:max_results]
     for result in results:
         result['date'] = ''
@@ -302,24 +296,33 @@ def search_suggestions(text):
 #     return results
 
 
-# def find_oer_by_url(url):
-#     for oer in loaded_oers.values():
-#         if oer['url'] == url:
-#             # print('found', url)
-#             return oer
-#     # If not found in the CSV dataset:
-#     # For now, return a blank oer. TODO: call X5GON API or cache
-#     oer = {}
-#     oer['date'] = ''
-#     oer['description'] = '(Sorry, this resource is no longer accessible)'
-#     oer['duration'] = ''
-#     oer['images'] = []
-#     oer['provider'] = ''
-#     oer['title'] = '(not found)'
-#     oer['url'] = url
-#     oer['wikichunks'] = []
-#     oer['mediatype'] = 'text'
-#     return oer
+def find_oer_by_url(url):
+    oer = Oer.query.filter_by(url=url).first()
+    if oer is None:
+        # If not found in the local dataset: For now, return a blank OER.
+        result = {}
+        result['date'] = ''
+        result['description'] = '(Sorry, this resource is no longer accessible)'
+        result['duration'] = ''
+        result['images'] = []
+        result['provider'] = ''
+        result['title'] = '(not found)'
+        result['url'] = url
+        result['wikichunks'] = []
+        result['mediatype'] = 'text'
+    else:
+        print(oer.data)
+        result = {}
+        result['date'] = oer.data['date']
+        result['description'] = oer.data['description']
+        result['duration'] = oer.data['duration']
+        result['images'] = oer.data['images']
+        result['provider'] = oer.data['provider']
+        result['title'] =oer.data['title']
+        result['url'] = oer.url
+        result['wikichunks'] = oer.chunks
+        result['mediatype'] = oer.data['mediatype']
+    return result
 
 
 # THUMBNAILS FOR X5GON (experimental)

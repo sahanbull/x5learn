@@ -101,11 +101,11 @@ wrapText attrs str =
 
 
 captionNowrap attrs str =
-  text str |> el (attrs ++ [ Font.size 12 ])
+  text str |> el ([ Font.size 12 ] ++ attrs)
 
 
 bodyWrap attrs str =
-  [ text str ] |> paragraph (attrs ++ [ Font.size 14 ])
+  [ text str ] |> paragraph ([ Font.size 14 ] ++ attrs)
 
 
 bodyNoWrap attrs str =
@@ -113,15 +113,15 @@ bodyNoWrap attrs str =
 
 
 subSubheaderWrap attrs str =
-  [ text str ] |> paragraph (attrs ++ [ Font.size 18 ])
+  [ text str ] |> paragraph ([ Font.size 18 ] ++ attrs)
 
 
 subheaderWrap attrs str =
-  [ text str ] |> paragraph (attrs ++ [ Font.size 21 ])
+  [ text str ] |> paragraph ([ Font.size 21 ] ++ attrs)
 
 
 headlineWrap attrs str =
-  [ text str ] |> paragraph (attrs ++ [ Font.size 24 ])
+  [ text str ] |> paragraph ([ Font.size 24 ] ++ attrs)
 
 
 italicText =

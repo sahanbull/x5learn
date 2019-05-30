@@ -2,7 +2,7 @@ from x5learn_server.db.database import Base
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy import Boolean, DateTime, Column, Integer, \
-    String, JSON, ForeignKey
+    Text, String, JSON, Float, ForeignKey, Table
 
 
 class RolesUsers(Base):
@@ -33,7 +33,7 @@ class UserLogin(Base, UserMixin):
     confirmed_at = Column(DateTime())
     roles = relationship('Role', secondary='roles_users', backref=backref('user_login', lazy='dynamic'))
     user_profile = Column(JSON())
-    user = relationship("User", uselist=False, backref="user_login")
+    user = relationship('User', uselist=False, backref='user_login')
 
 
 class User(Base):
@@ -43,16 +43,24 @@ class User(Base):
     user_login_id = Column(Integer, ForeignKey('user_login.id'))
 
 
+# class OersChunks(Base):
+#     __tablename__ = 'oers_chunks'
+#     id = Column(Integer(), primary_key=True)
+#     oer_id = Column('oer_id', Integer(), ForeignKey('oer.id'))
+#     chunk_id = Column('chunk_id', Integer(), ForeignKey('chunk.id'))
+
+
+# good post on cascade: https://stackoverflow.com/a/38770040/2237986
+
 class Oer(Base):
     __tablename__ = 'oer'
-
     id = Column(Integer(), primary_key=True)
     url = Column(String(255), unique=True, nullable=False)
     data = Column(JSON())
     origin = Column(String(255))
     x5gon_material_id = Column(Integer())
     youtube_video_id = Column(String(255))
-    chunks = Column(JSON())
+    chunks = relationship('Chunk', backref='oer', passive_deletes=True)
 
     def __init__(self, url, data, origin, x5gon_material_id, youtube_video_id):
         self.url = url
@@ -60,3 +68,37 @@ class Oer(Base):
         self.origin = origin
         self.x5gon_material_id = x5gon_material_id
         self.youtube_video_id = youtube_video_id
+
+
+chunks_topics = Table('chunks_topics_association', Base.metadata,
+    Column('chunk_id', Integer, ForeignKey('chunk.id', ondelete='CASCADE')),
+    Column('topic_id', Integer, ForeignKey('topic.id', ondelete='CASCADE'))
+)
+
+
+class Chunk(Base):
+    __tablename__ = 'chunk'
+    id = Column(Integer(), primary_key=True)
+    start = Column(Float())
+    length = Column(Float())
+    text = Column(Text())
+    oer_id = Column(Integer, ForeignKey('oer.id', ondelete='CASCADE'), nullable=False)
+    topics = relationship('Topic', secondary = chunks_topics, backref=backref('chunks', passive_deletes=True), passive_deletes=True)
+
+    def __init__(self, start, length, text):
+        self.start = start
+        self.length = length
+        self.text = text
+
+
+class Topic(Base):
+    __tablename__ = 'topic'
+    id = Column(Integer(), primary_key=True)
+    wikidata_item = Column(String(10))
+    title = Column(String(255))
+    url = Column(String(255), unique=True)
+
+    def __init__(self, wikidata_item, title, url):
+        self.wikidata_item = wikidata_item
+        self.title = title
+        self.url = url

@@ -48,10 +48,17 @@ viewPathway model pathway =
 viewOerGrid : Model -> UserState -> Playlist -> Element Msg
 viewOerGrid model userState playlist =
   let
+      helper url result =
+        case Dict.get url model.cachedOers of
+          Nothing ->
+            result
+
+          Just oer ->
+            oer :: result
+
       oers =
-        model.cachedOers
-        |> Dict.values
-        |> List.filter (\oer -> List.member oer.url playlist.oerUrls)
+        playlist.oerUrls
+        |> List.foldr helper []
   in
       if oers |> List.isEmpty then
         none

@@ -10,7 +10,7 @@ from collections import defaultdict
 from random import randint
 import urllib
 from datetime import datetime, timedelta
-from sqlalchemy import or_
+from sqlalchemy import or_, and_
 
 # instantiate the user management db classes
 from x5learn_server.db.database import get_or_create_session_db
@@ -248,7 +248,7 @@ def api_save_user_profile():
 def most_urgent_unstarted_enrichment_task():
     # task = EnrichmentTask.query.filter_by(started=None).order_by(EnrichmentTask.priority.desc()).first()
     timeout = datetime.now() - timedelta(minutes=10)
-    task = EnrichmentTask.query.filter(or_(EnrichmentTask.started == None, EnrichmentTask.started < timeout)).order_by(EnrichmentTask.priority.desc()).first()
+    task = EnrichmentTask.query.filter(and_(EnrichmentTask.error == None, or_(EnrichmentTask.started == None, EnrichmentTask.started < timeout))).order_by(EnrichmentTask.priority.desc()).first()
     if task is None: # Queue empty -> Nothing to do
         return jsonify({'info': 'queue empty'})
     url = task.url
@@ -269,17 +269,16 @@ def ingest_enrichment_data():
     data = j['data']
     url = data['url']
     enrichment = Enrichment.query.filter_by(url=url).first()
-    if enrichment is None: # shouldn't happen
-        error = 'Enrichment not found: ' + url
-        return error
-    # Store any new data and errors
+    if enrichment is None: # shouldn't normally happen
+        return 'Enrichment not found: ' + url
+    # Store any new data
     enrichment.data = data
-    if 'error' in j:
-        enrichment.error = j['error']
+    task = EnrichmentTask.query.filter_by(url=url).first()
+    if j['error'] is not None:
+        task.error = j['error']
     else:
         enrichment.version = CURRENT_ENRICHMENT_VERSION
-    task = EnrichmentTask.query.filter_by(url=url).first()
-    db_session.delete(task)
+        db_session.delete(task)
     db_session.commit()
     return 'OK'
 
@@ -299,7 +298,7 @@ def search_results_from_x5gon_api(text):
             enrichment = Enrichment(url, data_from_x5gon_search_result(material, url))
             db_session.add(enrichment)
             db_session.commit()
-        if enrichment.version is None or enrichment.version < CURRENT_ENRICHMENT_VERSION:
+        if enrichment.version != CURRENT_ENRICHMENT_VERSION:
             bump_in_queue(url, len(materials)-index)
         enrichments.append(enrichment.data)
     return enrichments

@@ -49,7 +49,6 @@ class Enrichment(Base):
     url = Column(String(255), unique=True, nullable=False)
     data = Column(JSON())
     version = Column(Integer())
-    error = Column(String(255))
 
     def __init__(self, url, data):
         self.url = url
@@ -62,6 +61,7 @@ class EnrichmentTask(Base):
     url = Column(String(255), unique=True, nullable=False)
     priority = Column(Integer())
     started = Column(DateTime())
+    error = Column(String(255))
 
     def __init__(self, url, priority):
         self.url = url

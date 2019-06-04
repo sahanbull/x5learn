@@ -30,7 +30,7 @@ type Msg
   -- | RequestNextSteps (Result Http.Error (List Pathway))
   | RequestOers (Result Http.Error (Dict String Oer))
   | RequestGains (Result Http.Error (List Gain))
-  | RequestEntityDescriptions (Result Http.Error (Dict String String))
+  | RequestWikichunkEnrichments (Result Http.Error (Dict OerUrl WikichunkEnrichment))
   | RequestSearchSuggestions (Result Http.Error (List String))
   | RequestSaveUserProfile (Result Http.Error String)
   | RequestSaveUserState (Result Http.Error String)

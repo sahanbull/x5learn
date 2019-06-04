@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestGains, requestEntityDescriptions, requestSearchSuggestions, requestSaveUserProfile, requestSaveUserState, requestOers)
+module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestSearchSuggestions, requestSaveUserProfile, requestSaveUserState, requestOers)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -52,12 +52,10 @@ requestSearchSuggestions searchText =
 --     }
 
 
-requestOers : Set String -> Cmd Msg
+requestOers : Set OerUrl -> Cmd Msg
 requestOers urls =
   Http.post
     { url = Url.Builder.absolute [ apiRoot, "oers/" ] []
-    -- , body = Http.jsonBody <| (Encode.list Encode.string) (urls |> Set.toList)
-    -- , body = Http.jsonBody <| Encode.object [ "urls", (urls |> Set.toList) ]
     , body = Http.jsonBody <| Encode.object [ ("urls", (Encode.list Encode.string) (urls |> Set.toList)) ]
     , expect = Http.expectJson RequestOers (dict oerDecoder)
     }
@@ -71,11 +69,12 @@ requestGains =
     }
 
 
-requestEntityDescriptions : List String -> Cmd Msg
-requestEntityDescriptions entityIds =
-  Http.get
-    { url = Url.Builder.absolute [ apiRoot, "entity_descriptions/" ] [ Url.Builder.string "ids" (entityIds |> String.join ",") ]
-    , expect = Http.expectJson RequestEntityDescriptions (dict string)
+requestWikichunkEnrichments : List OerUrl -> Cmd Msg
+requestWikichunkEnrichments urls =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "wikichunk_enrichments/" ] []
+    , body = Http.jsonBody <| Encode.object [ ("urls", (Encode.list Encode.string) urls) ]
+    , expect = Http.expectJson RequestWikichunkEnrichments (dict wikichunkEnrichmentDecoder)
     }
 
 
@@ -224,8 +223,13 @@ oerDecoder =
   |> andMap (field "provider" string)
   |> andMap (field "title" string)
   |> andMap (field "url" string)
-  |> andMap (field "wikichunks" (list chunkDecoder))
   |> andMap (field "mediatype" string)
+
+
+wikichunkEnrichmentDecoder =
+  map2 WikichunkEnrichment
+    (field "wikichunks" (list chunkDecoder))
+    (field "errors" bool)
 
 
 chunkDecoder =
@@ -236,9 +240,10 @@ chunkDecoder =
 
 
 entityDecoder =
-  map3 Entity
+  map4 Entity
     (field "id" string)
     (field "title" string)
+    (field "definition" string)
     (field "url" string)
 
 

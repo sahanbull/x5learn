@@ -474,19 +474,24 @@ viewFragmentsBar model userState oer recommendedFragments barWidth barId =
             |> el ([ htmlClass "ChunkTrigger", width <| px <| floor <| chunk.length * (toFloat barWidth) + 1, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler )
             |> inFront
 
-      dots =
-        List.repeat ((model.currentTime |> posixToMillis)//1000 |> modBy 3) "."
-        |> String.join ""
-
       chunkTriggers =
-        oer.wikichunks
+        chunksFromUrl model oer.url
         |> List.map chunkTrigger
+
+      message content =
+        content
+        |> captionNowrap [ width fill, paddingXY 17 2, whiteText ]
+
+      processingMessage =
+        "Processing." ++ (List.repeat ((model.currentTime |> posixToMillis)//1000 |> modBy 3) "." |> String.join "")
+        |> message
+
+      errorMessage =
+        "Preview unavailable"
+        |> message
   in
-      if oer.wikichunks |> List.isEmpty then
-        [ "Processing." ++ dots |> captionNowrap [ width fill, paddingXY 17 2, whiteText ]
-        -- , viewLoadingSpinner
-        ]
-        |> row [ width fill, height (px fragmentsBarHeight), materialScrimBackground, moveUp fragmentsBarHeight ]
+      if chunksFromUrl model oer.url |> List.isEmpty then
+         processingMessage
       else
         none
         |> el ([ width fill, height (px fragmentsBarHeight), materialScrimBackground, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)
@@ -565,23 +570,15 @@ entityActionButton chunkPopup entityPopup (title, clickAction) =
       actionButtonWithoutIcon attrs title (Just clickAction)
 
 
-viewDefinition model entity =
+viewDefinition model {definition} =
   let
-      unavailable =
-        "(Description unavailable)"
-        |> captionNowrap []
-
       blurb =
-        case model.entityDescriptions |> Dict.get entity.id of
-          Nothing ->
-            unavailable
-
-          Just description ->
-            if description=="(Description unavailable)" then
-              unavailable
-            else
-              ("“" ++ description ++ "” (Wikidata)")
-              |> bodyWrap [ Font.italic ]
+        if definition=="" || definition=="(Definition unavailable)" then
+          "(Definition unavailable)"
+          |> captionNowrap []
+        else
+          ("“" ++ definition ++ "” (Wikidata)")
+          |> bodyWrap [ Font.italic ]
   in
       [ blurb ]
       |> column [ padding 10, spacing 16, width (px 240) ]
@@ -644,7 +641,7 @@ avatarImage =
 openInspectorOnPress model oer =
   let
       fragmentLength =
-        case oer.wikichunks |> List.head of
+        case chunksFromUrl model oer.url |> List.head of
           Nothing ->
             1
 

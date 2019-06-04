@@ -149,7 +149,7 @@ inspectorContentDefault model userState {oer, fragmentStart} =
         []
 
       fragmentsBar =
-        case oer.wikichunks of
+        case chunksFromUrl model oer.url of
           [] ->
             none
 

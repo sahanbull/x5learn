@@ -62,8 +62,7 @@ update msg ({nav, userProfileForm} as model) =
 
     ClockTick time ->
       ( { model | currentTime = time }, Cmd.none)
-      |> requestEntityDescriptionsIfNeeded
-      |> requestEnrichmentDataIfNeeded
+      |> requestWikichunkEnrichmentsIfNeeded
 
     AnimationTick time ->
       ( { model | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
@@ -112,8 +111,8 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | userMessage = Just "There was a problem while requesting user data. Please try again later." }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
-      ( model |> updateSearch (insertSearchResults (oers |> List.map .url)) |> includeEntityIds oers |> cacheOersFromList oers, [ Navigation.pushUrl nav.key "/search", setBrowserFocus "SearchField" ] |> Cmd.batch )
-      |> requestEntityDescriptionsIfNeeded
+      ( model |> updateSearch (insertSearchResults (oers |> List.map .url)) |> cacheOersFromList oers, [ Navigation.pushUrl nav.key "/search", setBrowserFocus "SearchField" ] |> Cmd.batch )
+      |> requestWikichunkEnrichmentsIfNeeded
 
     RequestOerSearch (Err err) ->
       let
@@ -121,23 +120,6 @@ update msg ({nav, userProfileForm} as model) =
             err |> Debug.log "Error in RequestOerSearch"
       in
       ( { model | userMessage = Just "There was a problem while fetching the search data" }, Cmd.none )
-
-    -- RequestNextSteps (Ok pathways) ->
-    --   let
-    --       oers =
-    --         pathways
-    --         |> List.concatMap .fragments
-    --         |> List.map .oerUrl
-    --   in
-    --       ( { model | nextSteps = Just pathways } |> includeEntityIds oers, Cmd.none)
-    --       |> requestEntityDescriptionsIfNeeded
-
-    -- RequestNextSteps (Err err) ->
-    --   let
-    --       dummy =
-    --         err |> Debug.log "Error in RequestNextSteps"
-    --   in
-    --   ( { model | userMessage = Just "There was a problem while fetching the recommendations data" }, Cmd.none )
 
     RequestOers (Ok oers) ->
       ( { model | requestingOers = False } |> cacheOersFromDict oers, Cmd.none)
@@ -159,20 +141,20 @@ update msg ({nav, userProfileForm} as model) =
       -- in
       ( { model | userMessage = Just "There was a problem while fetching the gains data" }, Cmd.none)
 
-    RequestEntityDescriptions (Ok descriptions) ->
+    RequestWikichunkEnrichments (Ok enrichments) ->
       let
-          entityDescriptions =
-            model.entityDescriptions |> Dict.union descriptions
+          wikichunkEnrichments =
+            model.wikichunkEnrichments |> Dict.union enrichments
       in
-          ( { model | entityDescriptions = entityDescriptions, requestingEntityDescriptions = False }, Cmd.none )
-          |> requestEntityDescriptionsIfNeeded
+          ( { model | wikichunkEnrichments = wikichunkEnrichments, requestingWikichunkEnrichments = False }, Cmd.none )
+          -- |> requestWikichunkEnrichmentsIfNeeded
 
-    RequestEntityDescriptions (Err err) ->
+    RequestWikichunkEnrichments (Err err) ->
       -- let
       --     dummy =
-      --       err |> Debug.log "Error in RequestEntityDescriptions"
+      --       err |> Debug.log "Error in RequestWikichunkEnrichments"
       -- in
-      ( { model | userMessage = Just "There was a problem while fetching the wiki descriptions data", requestingEntityDescriptions = False }, Cmd.none )
+      ( { model | userMessage = Just "There was a problem while fetching wikichunk enrichments", requestingWikichunkEnrichments = False }, Cmd.none )
 
     RequestSearchSuggestions (Ok suggestions) ->
       if (millisSince model model.timeOfLastSearch) < 2000 then
@@ -335,42 +317,24 @@ incrementFrameCountInModalAnimation model =
       { model | modalAnimation = Just { animation | frameCount = animation.frameCount + 1 } }
 
 
-requestEnrichmentDataIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
-requestEnrichmentDataIfNeeded (model, oldCmd) =
-  let
-      missing =
-        model.cachedOers
-        |> Dict.filter (\url oer -> oer.wikichunks == [])
-        |> Dict.keys
-
-      dummy =
-        Debug.log "requestEnrichmentDataIfNeeded" (missing |> String.join "---")
-  in
-      if List.isEmpty missing then
-        (model, oldCmd)
-      else
-        (model, [ oldCmd, requestOers (Set.fromList missing) ] |> Cmd.batch)
-
-
-requestEntityDescriptionsIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
-requestEntityDescriptionsIfNeeded (oldModel, oldCmd) =
-  if oldModel.requestingEntityDescriptions then
-    (oldModel, oldCmd)
+requestWikichunkEnrichmentsIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
+requestWikichunkEnrichmentsIfNeeded (model, oldCmd) =
+  if model.requestingWikichunkEnrichments then
+    (model, oldCmd)
   else
-     let
-         newModel =
-           { oldModel | requestingEntityDescriptions = True }
+    let
+        missing =
+          model.cachedOers
+          |> Dict.keys
+          |> List.filter (\url -> Dict.member url model.wikichunkEnrichments |> not)
 
-         missingEntities =
-           oldModel.entityDescriptions
-           |> Dict.filter (\id description -> id/="" && description=="")
-           |> Dict.keys
-           |> List.take 50 -- 50 is the current limit according to https://www.wikidata.org/w/api.php?action=help&modules=wbgetentities
-     in
-         if List.isEmpty missingEntities then
-           (oldModel, oldCmd)
-         else
-           (newModel, [ oldCmd, requestEntityDescriptions missingEntities ] |> Cmd.batch)
+--         dummy =
+--           Debug.log "requestWikichunkEnrichmentsIfNeeded" (missing |> String.join "---")
+    in
+        if List.isEmpty missing then
+          (model, oldCmd)
+        else
+          (model, [ oldCmd, requestWikichunkEnrichments missing ] |> Cmd.batch)
 
 
 requestOersAsNeeded : UserState -> Model -> Cmd Msg
@@ -391,53 +355,53 @@ requestOersAsNeeded userState model =
       |> requestOers
 
 
-includeEntityIds : List Oer -> Model -> Model
-includeEntityIds incomingOers model =
-  let
-      tagClouds =
-        incomingOers
-        |> List.foldl (\oer result -> if model.tagClouds |> Dict.member oer.url then result else (result |> Dict.insert oer.url (tagCloudFromOer oer))) model.tagClouds
+-- includeEntityIds : List Oer -> Model -> Model
+-- includeEntityIds incomingOers model =
+--   let
+--       tagClouds =
+--         incomingOers
+--         |> List.foldl (\oer result -> if model.tagClouds |> Dict.member oer.url then result else (result |> Dict.insert oer.url (tagCloudFromOer oer))) model.tagClouds
 
-      entityDescriptions =
-        incomingOers
-        |> List.concatMap .wikichunks
-        |> List.concatMap .entities
-        |> List.map .id
-        |> List.foldl (\id result -> if model.entityDescriptions |> Dict.member id then result else (result |> Dict.insert id "")) model.entityDescriptions
-  in
-      { model | tagClouds = tagClouds, entityDescriptions = entityDescriptions }
-
-
-tagCloudFromOer : Oer -> List String
-tagCloudFromOer oer =
-  let
-      uniqueTitles : List String
-      uniqueTitles =
-        oer.wikichunks
-        |> List.concatMap .entities
-        |> List.map .title
-        |> Set.fromList
-        |> Set.toList
-
-      titleRankings : List { title : String, rank : Int }
-      titleRankings =
-        uniqueTitles
-        |> List.map (\title -> { title = title, rank = rankingForTitle title })
+--       entityDescriptions =
+--         incomingOers
+--         |> List.concatMap .wikichunks
+--         |> List.concatMap .entities
+--         |> List.map .id
+--         |> List.foldl (\id result -> if model.entityDescriptions |> Dict.member id then result else (result |> Dict.insert id "")) model.entityDescriptions
+--   in
+--       { model | tagClouds = tagClouds, entityDescriptions = entityDescriptions }
 
 
-      rankingForTitle : String -> Int
-      rankingForTitle title =
-        oer.wikichunks
-        |> List.concatMap .entities
-        |> List.map .title
-        |> List.filter ((==) title)
-        |> List.length
-  in
-      titleRankings
-      |> List.sortBy .rank
-      |> List.map .title
-      |> List.reverse
-      |> List.take 5
+-- tagCloudFromOer : Oer -> List String
+-- tagCloudFromOer oer =
+--   let
+--       uniqueTitles : List String
+--       uniqueTitles =
+--         oer.wikichunks
+--         |> List.concatMap .entities
+--         |> List.map .title
+--         |> Set.fromList
+--         |> Set.toList
+
+--       titleRankings : List { title : String, rank : Int }
+--       titleRankings =
+--         uniqueTitles
+--         |> List.map (\title -> { title = title, rank = rankingForTitle title })
+
+
+--       rankingForTitle : String -> Int
+--       rankingForTitle title =
+--         oer.wikichunks
+--         |> List.concatMap .entities
+--         |> List.map .title
+--         |> List.filter ((==) title)
+--         |> List.length
+--   in
+--       titleRankings
+--       |> List.sortBy .rank
+--       |> List.map .title
+--       |> List.reverse
+--       |> List.take 5
 
 
 closePopup : Model -> Model

@@ -43,20 +43,32 @@ class User(Base):
     user_login_id = Column(Integer, ForeignKey('user_login.id'))
 
 
-class Enrichment(Base):
-    __tablename__ = 'enrichment'
+class Oer(Base):
+    __tablename__ = 'oer'
     id = Column(Integer(), primary_key=True)
     url = Column(String(255), unique=True, nullable=False)
     data = Column(JSON())
-    version = Column(Integer())
 
     def __init__(self, url, data):
         self.url = url
         self.data = data
 
 
-class EnrichmentTask(Base):
-    __tablename__ = 'enrichment_task'
+class WikichunkEnrichment(Base):
+    __tablename__ = 'wikichunk_enrichment'
+    id = Column(Integer(), primary_key=True)
+    url = Column(String(255), unique=True, nullable=False)
+    data = Column(JSON())
+    version = Column(Integer())
+
+    def __init__(self, url, data, version):
+        self.url = url
+        self.data = data
+        self.version = version
+
+
+class WikichunkEnrichmentTask(Base):
+    __tablename__ = 'wikichunk_enrichment_task'
     id = Column(Integer(), primary_key=True)
     url = Column(String(255), unique=True, nullable=False)
     priority = Column(Integer())

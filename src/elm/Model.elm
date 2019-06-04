@@ -31,8 +31,8 @@ type alias Model =
   , gains : Maybe (List Gain)
   , nextSteps : Maybe (List Pathway)
   , popup : Maybe Popup
-  , entityDescriptions : Dict String String
-  , requestingEntityDescriptions : Bool
+  , requestingWikichunkEnrichments : Bool
+  , wikichunkEnrichments : Dict OerUrl WikichunkEnrichment
   , tagClouds : Dict String (List String)
   , searchSuggestions : List String
   , selectedSuggestion : String
@@ -110,10 +110,14 @@ type alias Oer =
   , provider : String
   , title : String
   , url : String
-  , wikichunks : List Chunk
   , mediatype : String
   }
 
+
+type alias WikichunkEnrichment =
+  { chunks : List Chunk
+  , errors : Bool
+  }
 
 type alias Chunk =
   { start : Float -- 0 to 1
@@ -125,6 +129,7 @@ type alias Chunk =
 type alias Entity =
   { id : String
   , title : String
+  , definition : String
   , url : String
   }
 
@@ -204,8 +209,8 @@ initialModel nav flags =
   , gains = Nothing
   , nextSteps = Nothing
   , popup = Nothing
-  , entityDescriptions = Dict.empty
-  , requestingEntityDescriptions = False
+  , requestingWikichunkEnrichments = False
+  , wikichunkEnrichments = Dict.empty
   , tagClouds = Dict.empty
   , searchSuggestions = []
   , selectedSuggestion = ""
@@ -390,7 +395,6 @@ blankOer oerUrl =
   , provider = ""
   , title = ""
   , url = oerUrl
-  , wikichunks = []
   , mediatype = ""
   }
 
@@ -401,3 +405,13 @@ mostRecentFragmentAccess fragmentAccesses =
   |> Dict.toList
   |> List.reverse
   |> List.head
+
+
+chunksFromUrl : Model -> OerUrl -> List Chunk
+chunksFromUrl model url =
+  case model.wikichunkEnrichments |> Dict.get url of
+    Nothing ->
+      []
+
+    Just enrichment ->
+      enrichment.chunks

@@ -20,7 +20,7 @@ get_or_create_session_db(DB_ENGINE_URI)
 
 from x5learn_server.db.database import db_session
 
-from x5learn_server.models import UserLogin, Role, User, Enrichment, EnrichmentTask
+from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask
 
 
 # Create app
@@ -209,29 +209,16 @@ def api_oers():
     return jsonify(oers)
 
 
-@app.route("/api/v1/entity_descriptions/", methods=['GET'])
-def api_entity_descriptions():
-    entity_ids = request.args['ids'].split(',')
-    descriptions = {}
-    conn = http.client.HTTPSConnection("www.wikidata.org")
-    request_string = '/w/api.php?action=wbgetentities&props=descriptions&ids=' + '|'.join(
-        entity_ids) + '&languages=en&sitefilter=enwiki&languagefallback=1&format=json'
-    conn.request('GET', request_string)
-    response = conn.getresponse().read().decode("utf-8")
-    j = json.loads(response)
-    try:
-        entities = j['entities']
-        for entity_id, value in entities.items():
-            try:
-                descriptions[entity_id] = value['descriptions']['en']['value']
-            except KeyError:
-                # print('WARNING: entity', entity_id, 'has no description.')
-                descriptions[entity_id] = '(Description unavailable)'
-    except KeyError:
-        print('Error trying to retrieve entity descriptions from wikidata. The x5learn_server responded with:')
-        print(response)
-        print('We sent the following ids:', ','.join(entity_ids))
-    return jsonify(descriptions)
+@app.route("/api/v1/wikichunk_enrichments/", methods=['POST'])
+def api_wikichunk_enrichments():
+    enrichments = {}
+    for url in request.get_json()['urls']:
+        enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
+        if enrichment is not None:
+            enrichments[url] = enrichment.data
+        else:
+            push_enrichment_task(url, 1)
+    return jsonify(enrichments)
 
 
 @app.route("/api/v1/save_user_profile/", methods=['POST'])
@@ -246,41 +233,44 @@ def api_save_user_profile():
 
 @app.route("/api/v1/most_urgent_unstarted_enrichment_task/", methods=['POST'])
 def most_urgent_unstarted_enrichment_task():
-    # task = EnrichmentTask.query.filter_by(started=None).order_by(EnrichmentTask.priority.desc()).first()
     timeout = datetime.now() - timedelta(minutes=10)
-    task = EnrichmentTask.query.filter(and_(EnrichmentTask.error == None, or_(EnrichmentTask.started == None, EnrichmentTask.started < timeout))).order_by(EnrichmentTask.priority.desc()).first()
-    if task is None: # Queue empty -> Nothing to do
-        return jsonify({'info': 'queue empty'})
+    task = WikichunkEnrichmentTask.query.filter(and_(WikichunkEnrichmentTask.error == None, or_(WikichunkEnrichmentTask.started == None, WikichunkEnrichmentTask.started < timeout))).order_by(WikichunkEnrichmentTask.priority.desc()).first()
+    if task is None:
+        return jsonify({'info': 'No tasks available'})
     url = task.url
     task.started = datetime.now()
     db_session.commit()
     print('Started task with priority:', task.priority, 'url:', url)
-    enrichment = Enrichment.query.filter_by(url=url).first()
-    if enrichment is None: # shouldn't happen
-        error = 'Orphaned EnrichmentTask url: ' + url
-        print(error)
-        return jsonify({'error': error})
-    return jsonify({'data': enrichment.data})
+    return jsonify({'url': url})
 
 
 @app.route("/api/v1/ingest_enrichment_data/", methods=['POST'])
 def ingest_enrichment_data():
     j = request.get_json(force=True)
+    error = j['error']
     data = j['data']
-    url = data['url']
-    enrichment = Enrichment.query.filter_by(url=url).first()
-    if enrichment is None: # shouldn't normally happen
-        return 'Enrichment not found: ' + url
-    # Store any new data
-    enrichment.data = data
-    task = EnrichmentTask.query.filter_by(url=url).first()
-    if j['error'] is not None:
-        task.error = j['error']
+    url = j['url']
+    print('ingest_enrichment_data', url)
+    task = WikichunkEnrichmentTask.query.filter_by(url=url).first()
+    print('task', task)
+    if error is not None:
+        task.error = error
     else:
-        enrichment.version = CURRENT_ENRICHMENT_VERSION
         db_session.delete(task)
     db_session.commit()
+    save_enrichment(url, data)
     return 'OK'
+
+
+def save_enrichment(url, data):
+    enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
+    if enrichment is None:
+        enrichment = WikichunkEnrichment(url, data, CURRENT_ENRICHMENT_VERSION)
+        db_session.add(enrichment)
+    else:
+        enrichment.data = data
+        enrichment.version = CURRENT_ENRICHMENT_VERSION
+    db_session.commit()
 
 
 def search_results_from_x5gon_api(text):
@@ -290,21 +280,21 @@ def search_results_from_x5gon_api(text):
     conn.request('GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&text='+encoded_text)
     response = conn.getresponse().read().decode("utf-8")
     materials = json.loads(response)['rec_materials'][:max_results]
-    enrichments = []
+    oers = []
     for index, material in enumerate(materials):
         url = material['url']
-        enrichment = Enrichment.query.filter_by(url=url).first()
-        if enrichment is None:
-            enrichment = Enrichment(url, data_from_x5gon_search_result(material, url))
-            db_session.add(enrichment)
+        oer = Oer.query.filter_by(url=url).first()
+        if oer is None:
+            oer = Oer(url, convert_x5_material_to_oer(material, url))
+            db_session.add(oer)
             db_session.commit()
-        if enrichment.version != CURRENT_ENRICHMENT_VERSION:
-            bump_in_queue(url, len(materials)-index)
-        enrichments.append(enrichment.data)
-    return enrichments
+        enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
+        if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION):
+            push_enrichment_task(url, len(materials)-index)
+    return oers
 
 
-def data_from_x5gon_search_result(material, url):
+def convert_x5_material_to_oer(material, url):
     # Insert some fields that the frontend expects, using values from the x5gon search result when possible, otherwise default values.
     data = {}
     data['url'] = url
@@ -316,15 +306,15 @@ def data_from_x5gon_search_result(material, url):
     data['date'] = ''
     data['duration'] = ''
     data['images'] = []
-    data['wikichunks'] = []
     data['mediatype'] = material['type']
     return data
 
 
-def bump_in_queue(url, priority):
-    task = EnrichmentTask.query.filter_by(url=url).first()
+def push_enrichment_task(url, priority):
+    print('push_enrichment_task')
+    task = WikichunkEnrichmentTask.query.filter_by(url=url).first()
     if task is None:
-        task = EnrichmentTask(url, priority)
+        task = WikichunkEnrichmentTask(url, priority)
         db_session.add(task)
     else:
         task.priority += priority
@@ -349,43 +339,22 @@ def search_suggestions(text):
     return jsonify(matches)
 
 
-# def search_results_from_experimental_local_oer_data(text):
-#     max_results = 18
-#     frequencies = defaultdict(int)
-#     for video_id, oer in loaded_oers.items():
-#         for chunk in oer['wikichunks']:
-#             for entity in chunk['entities']:
-#                 if text == entity['title'].lower().strip():
-#                     frequencies[video_id] += 1
-#     # import pdb; pdb.set_trace()
-#     results = [loaded_oers[video_id] for video_id, freq in
-#                sorted(frequencies.items(), key=lambda k_v: k_v[1], reverse=True)[:max_results]]
-#     print(len(results), 'search results found based on wikichunks.')
-#     # if len(results) < max_results:
-#     #     search_words = text.split()
-#     #     n = max_results-len(results)
-#     #     print('Search: adding', n,'results by title and description')
-#     #     results += [ oer for oer in loaded_oers.values() if any_word_matches(search_words, oer['title']) or any_word_matches(search_words, oer['description']) ][:n]
-#     return results
-
-
 def find_oer_by_url(url):
-    enrichment = Enrichment.query.filter_by(url=url).first()
-    if enrichment is not None:
-        return enrichment.data
+    oer = Oer.query.filter_by(url=url).first()
+    if oer is not None:
+        return oer.data
     else:
-        # Return a blank OER.
-        result = {}
-        result['date'] = ''
-        result['description'] = '(Sorry, this resource is no longer accessible)'
-        result['duration'] = ''
-        result['images'] = []
-        result['provider'] = ''
-        result['title'] = '(not found)'
-        result['url'] = url
-        result['wikichunks'] = []
-        result['mediatype'] = 'text'
-        return result
+        # Return a blank OER. This should not happen normally
+        oer = {}
+        oer['date'] = ''
+        oer['description'] = '(Sorry, this resource is no longer accessible)'
+        oer['duration'] = ''
+        oer['images'] = []
+        oer['provider'] = ''
+        oer['title'] = '(not found)'
+        oer['url'] = url
+        oer['mediatype'] = 'text'
+        return oer
 
 
 # THUMBNAILS FOR X5GON (experimental)

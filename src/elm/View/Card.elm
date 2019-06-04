@@ -220,7 +220,7 @@ viewOerCard model userState recommendedFragments position barId oer =
         |> el [ paddingBottom 16 ]
 
       hoverPreview =
-        if oer.wikichunks |> List.isEmpty then
+        if chunksFromUrl model oer.url |> List.isEmpty then
           carousel
         else
           case model.tagClouds |> Dict.get oer.url of

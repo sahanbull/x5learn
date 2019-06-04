@@ -115,10 +115,10 @@ update msg ({nav, userProfileForm} as model) =
       |> requestWikichunkEnrichmentsIfNeeded
 
     RequestOerSearch (Err err) ->
-      let
-          dummy =
-            err |> Debug.log "Error in RequestOerSearch"
-      in
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestOerSearch"
+      -- in
       ( { model | userMessage = Just "There was a problem while fetching the search data" }, Cmd.none )
 
     RequestOers (Ok oers) ->
@@ -150,10 +150,10 @@ update msg ({nav, userProfileForm} as model) =
           -- |> requestWikichunkEnrichmentsIfNeeded
 
     RequestWikichunkEnrichments (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestWikichunkEnrichments"
-      -- in
+      let
+          dummy =
+            err |> Debug.log "Error in RequestWikichunkEnrichments"
+      in
       ( { model | userMessage = Just "There was a problem while fetching wikichunk enrichments", requestingWikichunkEnrichments = False }, Cmd.none )
 
     RequestSearchSuggestions (Ok suggestions) ->

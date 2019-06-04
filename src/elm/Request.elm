@@ -228,7 +228,7 @@ oerDecoder =
 
 wikichunkEnrichmentDecoder =
   map2 WikichunkEnrichment
-    (field "wikichunks" (list chunkDecoder))
+    (field "chunks" (list chunkDecoder))
     (field "errors" bool)
 
 

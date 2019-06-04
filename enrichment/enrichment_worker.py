@@ -2,7 +2,8 @@ import requests
 import json
 from time import sleep
 
-from chunk_extractors.pdf import extract_chunks_from_pdf
+from wikichunkifiers.pdf import extract_chunks_from_pdf
+from wikichunkifiers.lib.util import EnrichmentError
 
 API_ROOT = 'http://127.0.0.1:5000/api/v1/'
 
@@ -20,7 +21,7 @@ def main():
             post_back(url, data, error)
         elif 'info' in j:
             say(j['info'])
-            sleep(10)
+            sleep(2)
 
 
 def say(text):
@@ -28,23 +29,19 @@ def say(text):
 
 
 def make_enrichment_data(url):
-    data = { 'wikichunks': [], 'errors': False }
+    data = { 'chunks': [], 'errors': False }
     error = None
     try:
-        data['wikichunks'] = make_wikichunks(url)
+        data['chunks'] = make_wikichunks(url)
     except EnrichmentError as err:
         error = err.message
         data['errors'] = True
     return data, error
 
 
-class EnrichmentError(ValueError):
-    def __init__(self, message):
-        self.message = message
-
-
 def make_wikichunks(url):
-    if url.endswith('.pdf'):
+    print('in make_wikichunks. url =', url)
+    if url.lower().endswith('.pdf'):
         return extract_chunks_from_pdf(url)
     raise EnrichmentError('Unsupported file format')
 
@@ -52,7 +49,7 @@ def make_wikichunks(url):
 def post_back(url, data, error):
     payload = {'url': url, 'data': data, 'error': error}
     r = requests.post(API_ROOT+"ingest_enrichment_data/", data=json.dumps(payload))
-    print('\npost_back', payload)
+    print('post_back', payload)
 
 
 if __name__ == '__main__':

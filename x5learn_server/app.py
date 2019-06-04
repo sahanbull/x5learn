@@ -209,6 +209,16 @@ def api_oers():
     return jsonify(oers)
 
 
+@app.route("/api/v1/save_user_profile/", methods=['POST'])
+def api_save_user_profile():
+    if current_user.is_authenticated:
+        current_user.user_profile = request.get_json()
+        db_session.commit()
+        return 'OK'
+    else:
+        return 'Error', 403
+
+
 @app.route("/api/v1/wikichunk_enrichments/", methods=['POST'])
 def api_wikichunk_enrichments():
     enrichments = {}
@@ -219,16 +229,6 @@ def api_wikichunk_enrichments():
         else:
             push_enrichment_task(url, 1)
     return jsonify(enrichments)
-
-
-@app.route("/api/v1/save_user_profile/", methods=['POST'])
-def api_save_user_profile():
-    if current_user.is_authenticated:
-        current_user.user_profile = request.get_json()
-        db_session.commit()
-        return 'OK'
-    else:
-        return 'Error', 403
 
 
 @app.route("/api/v1/most_urgent_unstarted_enrichment_task/", methods=['POST'])
@@ -252,7 +252,6 @@ def ingest_enrichment_data():
     url = j['url']
     print('ingest_enrichment_data', url)
     task = WikichunkEnrichmentTask.query.filter_by(url=url).first()
-    print('task', task)
     if error is not None:
         task.error = error
     else:
@@ -288,6 +287,7 @@ def search_results_from_x5gon_api(text):
             oer = Oer(url, convert_x5_material_to_oer(material, url))
             db_session.add(oer)
             db_session.commit()
+        oers.append(oer.data)
         enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
         if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION):
             push_enrichment_task(url, len(materials)-index)

@@ -43,62 +43,39 @@ class User(Base):
     user_login_id = Column(Integer, ForeignKey('user_login.id'))
 
 
-# class OersChunks(Base):
-#     __tablename__ = 'oers_chunks'
-#     id = Column(Integer(), primary_key=True)
-#     oer_id = Column('oer_id', Integer(), ForeignKey('oer.id'))
-#     chunk_id = Column('chunk_id', Integer(), ForeignKey('chunk.id'))
-
-
-# good post on cascade: https://stackoverflow.com/a/38770040/2237986
-
-class Oer(Base):
-    __tablename__ = 'oer'
+class Enrichment(Base):
+    __tablename__ = 'enrichment'
     id = Column(Integer(), primary_key=True)
     url = Column(String(255), unique=True, nullable=False)
     data = Column(JSON())
-    origin = Column(String(255))
-    x5gon_material_id = Column(Integer())
-    youtube_video_id = Column(String(255))
-    chunks = relationship('Chunk', backref='oer', passive_deletes=True)
+    version = Column(Integer())
+    error = Column(String(255))
 
-    def __init__(self, url, data, origin, x5gon_material_id, youtube_video_id):
+    def __init__(self, url, data):
         self.url = url
         self.data = data
-        self.origin = origin
-        self.x5gon_material_id = x5gon_material_id
-        self.youtube_video_id = youtube_video_id
 
 
-chunks_topics = Table('chunks_topics_association', Base.metadata,
-    Column('chunk_id', Integer, ForeignKey('chunk.id', ondelete='CASCADE')),
-    Column('topic_id', Integer, ForeignKey('topic.id', ondelete='CASCADE'))
-)
-
-
-class Chunk(Base):
-    __tablename__ = 'chunk'
+class EnrichmentTask(Base):
+    __tablename__ = 'enrichment_task'
     id = Column(Integer(), primary_key=True)
-    start = Column(Float())
-    length = Column(Float())
-    text = Column(Text())
-    oer_id = Column(Integer, ForeignKey('oer.id', ondelete='CASCADE'), nullable=False)
-    topics = relationship('Topic', secondary = chunks_topics, backref=backref('chunks', passive_deletes=True), passive_deletes=True)
+    url = Column(String(255), unique=True, nullable=False)
+    priority = Column(Integer())
+    started = Column(DateTime())
 
-    def __init__(self, start, length, text):
-        self.start = start
-        self.length = length
-        self.text = text
-
-
-class Topic(Base):
-    __tablename__ = 'topic'
-    id = Column(Integer(), primary_key=True)
-    wikidata_item = Column(String(10))
-    title = Column(String(255))
-    url = Column(String(255), unique=True)
-
-    def __init__(self, wikidata_item, title, url):
-        self.wikidata_item = wikidata_item
-        self.title = title
+    def __init__(self, url, priority):
         self.url = url
+        self.priority = priority
+
+
+# class Topic(Base):
+#     __tablename__ = 'topic'
+#     id = Column(Integer(), primary_key=True)
+#     wikidata_item = Column(String(10))
+#     title = Column(String(255))
+#     url = Column(String(255), unique=True)
+
+#     def __init__(self, wikidata_item, title, url):
+#         self.wikidata_item = wikidata_item
+#         self.title = title
+#         self.url = url

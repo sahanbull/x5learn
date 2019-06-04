@@ -6,7 +6,7 @@ import math
 
 from x5learn_server.db.database import db_session, engine
 
-from x5learn_server.models import UserLogin, Role, User, Oer, Chunk, Topic
+from x5learn_server.models import UserLogin, Role, User, ChunkedResource
 
 
 # Initial OER data from CSV files

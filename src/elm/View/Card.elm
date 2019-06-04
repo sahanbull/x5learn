@@ -45,37 +45,44 @@ viewPathway model pathway =
 
 
 
+viewOerGrid : Model -> UserState -> Playlist -> Element Msg
 viewOerGrid model userState playlist =
-  if playlist.oers |> List.isEmpty then
-    none
-  else
-    let
-        rowHeight =
-          cardHeight + 50
+  let
+      oers =
+        model.cachedOers
+        |> Dict.values
+        |> List.filter (\oer -> List.member oer.url playlist.oerUrls)
+  in
+      if oers |> List.isEmpty then
+        none
+      else
+        let
+            rowHeight =
+              cardHeight + 50
 
-        nrows =
-          ((List.length playlist.oers) + 2) // 3
+            nrows =
+              ((List.length oers) + 2) // 3
 
-        cardPositionAtIndex index =
-          let
-              x =
-                modBy 3 index
+            cardPositionAtIndex index =
+              let
+                  x =
+                    modBy 3 index
 
-              y =
-                index//3
-          in
-              { x = x * (cardWidth + 50) +180 |> toFloat, y = y * rowHeight + 70 |> toFloat }
+                  y =
+                    index//3
+              in
+                  { x = x * (cardWidth + 50) +180 |> toFloat, y = y * rowHeight + 70 |> toFloat }
 
-        cards =
-          playlist.oers
-          |> List.indexedMap (\index oer -> viewOerCard model userState [] (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) oer)
-          |> List.reverse
-          |> List.map inFront
-    in
-        [ playlist.title |> subheaderWrap [ whiteText ]
-        ]
-        -- |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ cards)
-        |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
+            cards =
+              oers
+              |> List.indexedMap (\index oer -> viewOerCard model userState [] (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) oer)
+              |> List.reverse
+              |> List.map inFront
+        in
+            [ playlist.title |> subheaderWrap [ whiteText ]
+            ]
+            -- |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ cards)
+            |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
 
 
 viewOerCard : Model -> UserState -> List Fragment -> Point -> String -> Oer -> Element Msg
@@ -113,10 +120,7 @@ viewOerCard model userState recommendedFragments position barId oer =
             |> upperImage attrs
 
       fragmentsBar =
-        if oer.wikichunks |> List.isEmpty then
-          []
-        else
-          [ inFront <| viewFragmentsBar model userState oer recommendedFragments cardWidth barId ]
+        [ inFront <| viewFragmentsBar model userState oer recommendedFragments cardWidth barId ]
 
       preloadImage url =
         url

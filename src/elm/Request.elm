@@ -211,12 +211,6 @@ pathwayDecoder =
     (field "fragments" (list fragmentDecoder))
 
 
-playlistDecoder =
-  map2 Playlist
-    (field "title" string)
-    (field "oers" (list oerDecoder))
-
-
 searchResultsDecoder =
   list oerDecoder
 

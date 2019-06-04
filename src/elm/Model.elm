@@ -40,8 +40,8 @@ type alias Model =
   , timeOfLastSearch : Posix
   , userProfileForm : UserProfileForm
   , userProfileFormSubmitted : Maybe UserProfileForm
-  , oerNoteForms : Dict String String
-  , cachedOers : Dict String Oer
+  , oerNoteForms : Dict OerUrl String
+  , cachedOers : Dict OerUrl Oer
   , requestingOers : Bool
   }
 
@@ -91,7 +91,7 @@ type alias Nav =
 
 type alias SearchState =
   { lastSearch : String
-  , searchResults : Maybe (List Oer)
+  , searchResults : Maybe (List OerUrl)
   }
 
 
@@ -154,7 +154,7 @@ type alias Fragment =
 
 type alias Playlist =
   { title : String
-  , oers : List Oer
+  , oerUrls : List OerUrl
   }
 
 
@@ -313,9 +313,9 @@ isFromVideoLecturesNet oer =
   String.startsWith "http://videolectures.net/" oer.url
 
 
-isInPlaylist : Oer -> Playlist -> Bool
-isInPlaylist oer playlist =
-  List.member oer playlist.oers
+isInPlaylist : OerUrl -> Playlist -> Bool
+isInPlaylist oerUrl playlist =
+  List.member oerUrl playlist.oerUrls
 
 
 durationInSecondsFromOer : Oer -> Int

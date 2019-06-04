@@ -9,6 +9,8 @@ from fuzzywuzzy import fuzz
 from collections import defaultdict
 from random import randint
 import urllib
+from datetime import datetime, timedelta
+from sqlalchemy import or_
 
 # instantiate the user management db classes
 from x5learn_server.db.database import get_or_create_session_db
@@ -18,8 +20,7 @@ get_or_create_session_db(DB_ENGINE_URI)
 
 from x5learn_server.db.database import db_session
 
-from x5learn_server.models import UserLogin, Role, User, Oer, Chunk, Topic
-from x5learn_server.db.seed import load_initial_dataset_from_csv
+from x5learn_server.models import UserLogin, Role, User, Enrichment, EnrichmentTask
 
 
 # Create app
@@ -54,12 +55,14 @@ mail.init_app(app)
 
 GUEST_COOKIE_NAME = 'x5learn_guest'
 
+CURRENT_ENRICHMENT_VERSION = 1
+
+
 # create database when starting the app
 @app.before_first_request
 def initiate_login_db():
     from x5learn_server.db.database import initiate_login_table_and_admin_profile
     initiate_login_table_and_admin_profile(user_datastore)
-    # load_initial_dataset_from_csv()
 
 
 @app.route("/")
@@ -241,22 +244,92 @@ def api_save_user_profile():
         return 'Error', 403
 
 
+@app.route("/api/v1/most_urgent_unstarted_enrichment_task/", methods=['POST'])
+def most_urgent_unstarted_enrichment_task():
+    # task = EnrichmentTask.query.filter_by(started=None).order_by(EnrichmentTask.priority.desc()).first()
+    timeout = datetime.now() - timedelta(minutes=10)
+    task = EnrichmentTask.query.filter(or_(EnrichmentTask.started == None, EnrichmentTask.started < timeout)).order_by(EnrichmentTask.priority.desc()).first()
+    if task is None: # Queue empty -> Nothing to do
+        return jsonify({'info': 'queue empty'})
+    url = task.url
+    task.started = datetime.now()
+    db_session.commit()
+    print('Started task with priority:', task.priority, 'url:', url)
+    enrichment = Enrichment.query.filter_by(url=url).first()
+    if enrichment is None: # shouldn't happen
+        error = 'Orphaned EnrichmentTask url: ' + url
+        print(error)
+        return jsonify({'error': error})
+    return jsonify({'data': enrichment.data})
+
+
+@app.route("/api/v1/ingest_enrichment_data/", methods=['POST'])
+def ingest_enrichment_data():
+    j = request.get_json(force=True)
+    data = j['data']
+    url = data['url']
+    enrichment = Enrichment.query.filter_by(url=url).first()
+    if enrichment is None: # shouldn't happen
+        error = 'Enrichment not found: ' + url
+        return error
+    # Store any new data and errors
+    enrichment.data = data
+    if 'error' in j:
+        enrichment.error = j['error']
+    else:
+        enrichment.version = CURRENT_ENRICHMENT_VERSION
+    task = EnrichmentTask.query.filter_by(url=url).first()
+    db_session.delete(task)
+    db_session.commit()
+    return 'OK'
+
+
 def search_results_from_x5gon_api(text):
     max_results = 18
     encoded_text = urllib.parse.quote(text)
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request('GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&text='+encoded_text)
     response = conn.getresponse().read().decode("utf-8")
-    results = json.loads(response)['rec_materials'][:max_results]
-    for result in results:
-        result['date'] = ''
-        if result['description'] is None:
-            result['description'] = ''
-        result['duration'] = ''
-        result['images'] = []
-        result['wikichunks'] = []
-        result['mediatype'] = result['type']
-    return results
+    materials = json.loads(response)['rec_materials'][:max_results]
+    enrichments = []
+    for index, material in enumerate(materials):
+        url = material['url']
+        enrichment = Enrichment.query.filter_by(url=url).first()
+        if enrichment is None:
+            enrichment = Enrichment(url, data_from_x5gon_search_result(material, url))
+            db_session.add(enrichment)
+            db_session.commit()
+        if enrichment.version is None or enrichment.version < CURRENT_ENRICHMENT_VERSION:
+            bump_in_queue(url, len(materials)-index)
+        enrichments.append(enrichment.data)
+    return enrichments
+
+
+def data_from_x5gon_search_result(material, url):
+    # Insert some fields that the frontend expects, using values from the x5gon search result when possible, otherwise default values.
+    data = {}
+    data['url'] = url
+    data['title'] = material['title']
+    data['provider'] = material['provider']
+    data['description'] = material['description']
+    if data['description'] is None:
+        data['description'] = ''
+    data['date'] = ''
+    data['duration'] = ''
+    data['images'] = []
+    data['wikichunks'] = []
+    data['mediatype'] = material['type']
+    return data
+
+
+def bump_in_queue(url, priority):
+    task = EnrichmentTask.query.filter_by(url=url).first()
+    if task is None:
+        task = EnrichmentTask(url, priority)
+        db_session.add(task)
+    else:
+        task.priority += priority
+    db_session.commit()
 
 
 def any_word_matches(words, text):
@@ -267,12 +340,13 @@ def any_word_matches(words, text):
 
 
 def search_suggestions(text):
+    all_entity_titles = [] # TODO: use Topics table in db
     matches = [(title, fuzz.partial_ratio(text, title) + fuzz.ratio(text, title)) for title in all_entity_titles]
     matches = sorted(matches, key=lambda k_v: k_v[1], reverse=True)[:20]
     print([v for k, v in matches])
     matches = [k for k, v in matches]
     # import pdb; pdb.set_trace()
-    print(matches)
+    # print(matches)
     return jsonify(matches)
 
 
@@ -297,9 +371,11 @@ def search_suggestions(text):
 
 
 def find_oer_by_url(url):
-    oer = Oer.query.filter_by(url=url).first()
-    if oer is None:
-        # If not found in the local dataset: For now, return a blank OER.
+    enrichment = Enrichment.query.filter_by(url=url).first()
+    if enrichment is not None:
+        return enrichment.data
+    else:
+        # Return a blank OER.
         result = {}
         result['date'] = ''
         result['description'] = '(Sorry, this resource is no longer accessible)'
@@ -310,19 +386,7 @@ def find_oer_by_url(url):
         result['url'] = url
         result['wikichunks'] = []
         result['mediatype'] = 'text'
-    else:
-        print(oer.data)
-        result = {}
-        result['date'] = oer.data['date']
-        result['description'] = oer.data['description']
-        result['duration'] = oer.data['duration']
-        result['images'] = oer.data['images']
-        result['provider'] = oer.data['provider']
-        result['title'] =oer.data['title']
-        result['url'] = oer.url
-        result['wikichunks'] = oer.chunks
-        result['mediatype'] = oer.data['mediatype']
-    return result
+        return result
 
 
 # THUMBNAILS FOR X5GON (experimental)

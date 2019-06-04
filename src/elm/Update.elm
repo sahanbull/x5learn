@@ -63,6 +63,7 @@ update msg ({nav, userProfileForm} as model) =
     ClockTick time ->
       ( { model | currentTime = time }, Cmd.none)
       |> requestEntityDescriptionsIfNeeded
+      |> requestEnrichmentDataIfNeeded
 
     AnimationTick time ->
       ( { model | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
@@ -74,7 +75,7 @@ update msg ({nav, userProfileForm} as model) =
       if str=="" then
         ( model, setBrowserFocus "SearchField")
       else
-        ( { model | searchInputTyping = str, searchState = Just <| newSearch str, searchSuggestions = [], timeOfLastSearch = model.currentTime } |> closePopup, searchOers str)
+        ( { model | searchInputTyping = str, searchState = Just <| newSearch str, searchSuggestions = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers str)
 
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, Cmd.none )
@@ -111,14 +112,14 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | userMessage = Just "There was a problem while requesting user data. Please try again later." }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
-      ( model |> updateSearch (insertSearchResults oers) |> includeEntityIds oers |> cacheOersFromList oers, [ Navigation.pushUrl nav.key "/search", setBrowserFocus "SearchField" ] |> Cmd.batch )
+      ( model |> updateSearch (insertSearchResults (oers |> List.map .url)) |> includeEntityIds oers |> cacheOersFromList oers, [ Navigation.pushUrl nav.key "/search", setBrowserFocus "SearchField" ] |> Cmd.batch )
       |> requestEntityDescriptionsIfNeeded
 
     RequestOerSearch (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestOerSearch"
-      -- in
+      let
+          dummy =
+            err |> Debug.log "Error in RequestOerSearch"
+      in
       ( { model | userMessage = Just "There was a problem while fetching the search data" }, Cmd.none )
 
     -- RequestNextSteps (Ok pathways) ->
@@ -320,8 +321,8 @@ updateSearch transformFunction model =
       { model | searchState = Just (searchState |> transformFunction) }
 
 
-insertSearchResults oers searchState =
-  { searchState | searchResults = Just oers }
+insertSearchResults oerUrls searchState =
+  { searchState | searchResults = Just oerUrls }
 
 
 incrementFrameCountInModalAnimation : Model -> Model
@@ -332,6 +333,23 @@ incrementFrameCountInModalAnimation model =
 
     Just animation ->
       { model | modalAnimation = Just { animation | frameCount = animation.frameCount + 1 } }
+
+
+requestEnrichmentDataIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
+requestEnrichmentDataIfNeeded (model, oldCmd) =
+  let
+      missing =
+        model.cachedOers
+        |> Dict.filter (\url oer -> oer.wikichunks == [])
+        |> Dict.keys
+
+      dummy =
+        Debug.log "requestEnrichmentDataIfNeeded" (missing |> String.join "---")
+  in
+      if List.isEmpty missing then
+        (model, oldCmd)
+      else
+        (model, [ oldCmd, requestOers (Set.fromList missing) ] |> Cmd.batch)
 
 
 requestEntityDescriptionsIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)

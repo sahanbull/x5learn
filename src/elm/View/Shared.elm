@@ -4,6 +4,8 @@ import Html
 import Html.Attributes
 import Html.Events
 
+import Time exposing (Posix, millisToPosix, posixToMillis)
+
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -472,15 +474,22 @@ viewFragmentsBar model userState oer recommendedFragments barWidth barId =
             |> el ([ htmlClass "ChunkTrigger", width <| px <| floor <| chunk.length * (toFloat barWidth) + 1, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler )
             |> inFront
 
+      dots =
+        List.repeat ((model.currentTime |> posixToMillis)//1000 |> modBy 3) "."
+        |> String.join ""
+
       chunkTriggers =
         oer.wikichunks
         |> List.map chunkTrigger
-
-      underlay =
+  in
+      if oer.wikichunks |> List.isEmpty then
+        [ "Processing." ++ dots |> captionNowrap [ width fill, paddingXY 17 2, whiteText ]
+        -- , viewLoadingSpinner
+        ]
+        |> row [ width fill, height (px fragmentsBarHeight), materialScrimBackground, moveUp fragmentsBarHeight ]
+      else
         none
         |> el ([ width fill, height (px fragmentsBarHeight), materialScrimBackground, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)
-  in
-      underlay
 
 
 viewChunkPopup model popup =

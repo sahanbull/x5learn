@@ -29,6 +29,8 @@ def extract_chunks_from_pdf(url):
 def download_file(url):
     print('Downloading...')
     r = requests.get(url)
+    if r.status_code != 200:
+        raise EnrichmentError('Download failed with status '+str(r.status_code))
     with open(pdf_path(), 'wb') as f:
         f.write(r.content)
 

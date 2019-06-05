@@ -36,6 +36,7 @@ def get_entities(text):
     entities = []
     for a in annotations:
         if 'wikiDataItemId' in a:
+            # print(json.dumps(a, indent=4, sort_keys=True))
             entities.append({'id': a['wikiDataItemId'],
                              'title': a['title'],
                              'definition': '',

@@ -141,16 +141,9 @@ viewOerCard model userState recommendedFragments position barId oer =
                 "mediatype_" ++ oer.mediatype
               else
                 "mediatype_unknown"
-
-            weblink =
-              oer.url
-              |> shortUrl 40
-              |> bodyWrap [ whiteText, alpha 0.7 ]
-              |> el [ centerX ]
-              |> el [ width (px cardWidth), moveDown 130 ]
         in
             image [ semiTransparent, centerX, centerY, width (px <| if hovering then 60 else 50) ] { src = (svgPath stub), description = "" }
-            |> el [ width fill, height (px imageHeight), Background.color x5color, inFront weblink ]
+            |> el [ width fill, height (px imageHeight), Background.color x5color ]
 
       carousel =
         case oer.images of

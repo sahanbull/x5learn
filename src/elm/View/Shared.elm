@@ -402,6 +402,7 @@ viewFragmentsBar model userState oer recommendedFragments barWidth barId =
       processingMessage =
         "Processing." ++ (List.repeat ((model.currentTime |> posixToMillis)//1000 |> modBy 3) "." |> String.join "")
         |> message
+        |> el [ width fill, inFront <| (viewLoadingSpinner |> el [ moveUp 60, width fill ]) ]
 
       errorMessage =
         "(Preview unavailable)"

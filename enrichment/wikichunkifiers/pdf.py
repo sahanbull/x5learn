@@ -43,7 +43,12 @@ def convert_to_text():
             '-',
             ]
     res = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    return res.stdout.decode('utf-8')
+    try:
+        text = res.stdout.decode('utf-8')
+    except UnicodeDecodeError as err:
+        import pdb; pdb.set_trace()
+        raise EnrichmentError('UnicodeDecodeError after pdf conversion')
+    return text
 
 
 def split_text_into_equal_parts(text):

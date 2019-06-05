@@ -18,7 +18,7 @@ def main():
         if 'url' in j:
             url = j['url']
             data, error = make_enrichment_data(url)
-            post_back(url, data, error)
+            post_back_wikichunks(url, data, error)
         elif 'info' in j:
             say(j['info'])
             sleep(2)
@@ -46,10 +46,10 @@ def make_wikichunks(url):
     raise EnrichmentError('Unsupported file format')
 
 
-def post_back(url, data, error):
+def post_back_wikichunks(url, data, error):
     payload = {'url': url, 'data': data, 'error': error}
-    r = requests.post(API_ROOT+"ingest_enrichment_data/", data=json.dumps(payload))
-    print('post_back', payload)
+    r = requests.post(API_ROOT+"ingest_wikichunk_enrichment/", data=json.dumps(payload))
+    print('post_back_wikichunks', payload)
 
 
 if __name__ == '__main__':

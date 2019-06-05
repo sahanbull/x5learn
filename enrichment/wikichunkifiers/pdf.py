@@ -7,6 +7,7 @@ from wikichunkifiers.lib.wikify import get_entities, WIKIFIER_CHARACTER_LIMIT
 def extract_chunks_from_pdf(url):
     print('\nin extract_chunks_from_pdf\n')
     download_file(url)
+    # create_thumbnail_and_post_back(url)
     text = convert_to_text()
     if len(text) < 500:
         raise EnrichmentError('Text too short')
@@ -59,5 +60,19 @@ def split_text_into_equal_parts(text):
     print('chunksize', chunksize)
     return [ text[i:i+chunksize] for i in range(0, len(text), chunksize) ]
 
+
 def pdf_path():
     return temp_file_path('pdf')
+
+
+# def create_thumbnail_and_post_back(url):
+#     args = ["/usr/local/bin/convert",
+#             pdf_path(),
+#             ]
+#     subprocess.check_call(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#     res = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#     import pdb; pdb.set_trace()
+#     # res = subprocess.run(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#     payload = {'url': url, 'filename': data, 'error': error}
+#     r = requests.post(API_ROOT+"ingest_thumbnail/", data=json.dumps(payload))
+#     print('create_thumbnail_and_post_back', payload)

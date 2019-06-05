@@ -244,13 +244,13 @@ def most_urgent_unstarted_enrichment_task():
     return jsonify({'url': url})
 
 
-@app.route("/api/v1/ingest_enrichment_data/", methods=['POST'])
-def ingest_enrichment_data():
+@app.route("/api/v1/ingest_wikichunk_enrichment/", methods=['POST'])
+def ingest_wikichunk_enrichment():
     j = request.get_json(force=True)
     error = j['error']
     data = j['data']
     url = j['url']
-    print('ingest_enrichment_data', url)
+    print('ingest_wikichunk_enrichment', url)
     task = WikichunkEnrichmentTask.query.filter_by(url=url).first()
     if error is not None:
         task.error = error

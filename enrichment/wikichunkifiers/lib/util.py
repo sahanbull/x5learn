@@ -5,7 +5,7 @@ TEMP_DIR = '/tmp/'
 
 
 def temp_file_path(suffix):
-    return TEMP_DIR+'x5learn_temp_'+str(os.getpid())+suffix
+    return TEMP_DIR+'x5learn_temp_'+str(os.getpid())+'.'+suffix
 
 
 

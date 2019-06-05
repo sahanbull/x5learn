@@ -46,7 +46,6 @@ def convert_to_text():
     try:
         text = res.stdout.decode('utf-8')
     except UnicodeDecodeError as err:
-        import pdb; pdb.set_trace()
         raise EnrichmentError('UnicodeDecodeError after pdf conversion')
     return text
 

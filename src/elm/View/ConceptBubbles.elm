@@ -5,6 +5,7 @@ import Time exposing (Posix, millisToPosix, posixToMillis)
 
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
+import Svg.Events exposing (..)
 
 import Model exposing (..)
 import View.Shared exposing (..)
@@ -13,14 +14,15 @@ import Msg exposing (..)
 
 
 type alias Occurrence =
-  { entityId : String
+  { entity : Entity
   , posX : Float
   , posY : Float
   }
 
 
 type alias Bubble =
-  { posX : Float
+  { entity : Entity
+  , posX : Float
   , posY : Float
   , size : Float
   , hue : Float
@@ -63,7 +65,9 @@ viewConceptBubbles model url chunks =
       bubbles =
         occurrencesFromChunks chunks
         |> bubblesFromOccurrences mergePhase
-        |> List.map viewBubble
+        |> List.sortBy .size
+        |> List.reverse
+        |> List.indexedMap (viewBubble model url)
 
       background =
         rect [ width widthString, height heightString, fill "#191919" ] []
@@ -96,12 +100,12 @@ occurrencesFromChunk nChunksMinus1 chunkIndex {entities, length} =
 
 
 occurrenceFromEntity : Float -> Int -> Int -> Entity -> Occurrence
-occurrenceFromEntity posX nEntitiesMinus1 entityIndex {id} =
+occurrenceFromEntity posX nEntitiesMinus1 entityIndex entity =
   let
       posY =
         (toFloat entityIndex) / (toFloat nEntitiesMinus1)
   in
-      Occurrence id posX posY
+      Occurrence entity posX posY
 
 
 bubblesFromOccurrences : Float -> List Occurrence -> List Bubble
@@ -115,7 +119,7 @@ bubbleFromOccurrence mergePhase occurrences occurrence =
   let
       occurrencesWithSameEntityId =
         occurrences
-        |> List.filter (\o -> o.entityId == occurrence.entityId)
+        |> List.filter (\o -> o.entity.id == occurrence.entity.id)
 
       mergedPosX =
         occurrencesWithSameEntityId
@@ -128,12 +132,13 @@ bubbleFromOccurrence mergePhase occurrences occurrence =
       mergedSize =
         occurrencesWithSameEntityId |> List.length |> toFloat |> sqrt
   in
-      { posX = interp mergePhase occurrence.posX mergedPosX
+      { entity = occurrence.entity
+      , posX = interp mergePhase occurrence.posX mergedPosX
       , posY = interp mergePhase occurrence.posY mergedPosY
       , size = interp mergePhase 1 mergedSize
       , hue = 52 -- 240 - 180 * (fakeStringDistanceFromSearchTerm occurrence.entityId)
       , alpha = 0.3
-      , saturation = fakeLexicalSimilarityToSearchTerm occurrence.entityId
+      , saturation = fakeLexicalSimilarityToSearchTerm occurrence.entity.id
       }
       -- , hue = 240 - 180 * (fakePredictedLevelOfInterestFromEntity occurrence.entityId)
       -- , alpha = fakePredictedLevelOfKnowledgeFromEntity occurrence.entityId
@@ -160,15 +165,36 @@ fakeLexicalSimilarityToSearchTerm id =
 --   (String.length id |> modBy 5 |> toFloat) / 5 * 100
 
 
-viewBubble : Bubble -> Svg.Svg Msg
-viewBubble {posX, posY, size, hue, alpha, saturation} =
-  circle
-    [ cx (posX * (toFloat contentWidth) + margin |> String.fromFloat)
-    , cy (posY * (toFloat contentHeight) + margin |> String.fromFloat)
-    , r (size * (toFloat contentWidth) * 0.05 |> String.fromFloat)
-    , fill <| "hsla("++(String.fromFloat hue)++","++(String.fromFloat saturation)++"%,50%,"++(String.fromFloat alpha)++")"
-    ]
-    []
+viewBubble : Model -> OerUrl -> Int -> Bubble -> Svg.Svg Msg
+viewBubble model oerUrl bubbleIndex {entity, posX, posY, size, hue, alpha, saturation} =
+  let
+      bubbleIdentifier =
+        BubbleIdentifier oerUrl bubbleIndex
+
+      isHovering =
+        model.hoveringBubbleIdentifier == Just bubbleIdentifier
+
+      outline =
+        if isHovering then
+          [ stroke "white", strokeWidth "2" ]
+        else
+          []
+
+      tooltip =
+        if isHovering then
+          [ Svg.title [] [ text <| entity.title ] ]
+        else
+          []
+  in
+      circle
+        ([ cx (posX * (toFloat contentWidth) + margin |> String.fromFloat)
+        , cy (posY * (toFloat contentHeight) + margin |> String.fromFloat)
+        , r (size * (toFloat contentWidth) * 0.042 |> String.fromFloat)
+        , fill <| "hsla("++(String.fromFloat hue)++","++(String.fromFloat saturation)++"%,50%,"++(String.fromFloat alpha)++")"
+        , onMouseOver <| MouseOverBubble <| Just <| bubbleIdentifier
+        , onMouseOut <| MouseOverBubble Nothing
+        ] ++ outline)
+        tooltip
 
 
 interp : Float -> Float -> Float -> Float

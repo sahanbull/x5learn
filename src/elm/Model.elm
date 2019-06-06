@@ -45,6 +45,7 @@ type alias Model =
   , oerNoteForms : Dict OerUrl String
   , cachedOers : Dict OerUrl Oer
   , requestingOers : Bool
+  , hoveringBubbleIdentifier : Maybe BubbleIdentifier
   }
 
 
@@ -133,6 +134,12 @@ type alias Entity =
   , title : String
   , definition : String
   , url : String
+  }
+
+
+type alias BubbleIdentifier =
+  { oerUrl : OerUrl
+  , bubbleIndex : Int
   }
 
 
@@ -225,6 +232,7 @@ initialModel nav flags =
   , oerNoteForms = Dict.empty
   , cachedOers = Dict.empty
   , requestingOers = False
+  , hoveringBubbleIdentifier = Nothing
   }
 
 

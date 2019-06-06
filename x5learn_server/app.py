@@ -291,7 +291,7 @@ def search_results_from_x5gon_api(text):
         oers.append(oer.data)
         enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
         if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION):
-            push_enrichment_task(url, (len(materials)-index) * 1000)
+            push_enrichment_task(url, int(1000/(index+1)))
     return oers
 
 
@@ -299,11 +299,9 @@ def convert_x5_material_to_oer(material, url):
     # Insert some fields that the frontend expects, using values from the x5gon search result when possible, otherwise default values.
     data = {}
     data['url'] = url
-    data['title'] = material['title']
-    data['provider'] = material['provider']
-    data['description'] = material['description']
-    if data['description'] is None:
-        data['description'] = ''
+    data['title'] = material['title'] or '(Title unavailable)'
+    data['provider'] = material['provider'] or ''
+    data['description'] = material['description'] or ''
     data['date'] = ''
     data['duration'] = ''
     data['images'] = []

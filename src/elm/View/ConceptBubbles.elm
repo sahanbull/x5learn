@@ -46,7 +46,7 @@ contentHeight =
 
 
 margin =
-  20
+  30
 
 
 viewConceptBubbles model url chunks =

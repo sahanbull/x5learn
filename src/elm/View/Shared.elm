@@ -150,6 +150,10 @@ grey80 =
   grey 80
 
 
+greyMedium =
+  grey 160
+
+
 transparentWhite =
   -- rgba 1 1 1 0.32
   rgba 1 1 1 0.4
@@ -393,33 +397,7 @@ menuColumn attrs =
   column ([ Background.color white, Border.rounded 4, Border.color <| grey80, dialogShadow ] ++ attrs)
 
 
-viewFragmentsBar model userState oer recommendedFragments barWidth barId =
-  let
-      message content =
-        content
-        |> captionNowrap [ width fill, paddingXY 17 2, whiteText, height (px fragmentsBarHeight), materialScrimBackground, moveUp fragmentsBarHeight ]
-
-      processingMessage =
-        "Processing." ++ (List.repeat ((model.currentTime |> posixToMillis)//1000 |> modBy 3) "." |> String.join "")
-        |> message
-        |> el [ width fill, inFront <| (viewLoadingSpinner |> el [ moveUp 60, width fill ]) ]
-
-      errorMessage =
-        "(Preview unavailable)"
-        |> message
-  in
-      case Dict.get oer.url model.wikichunkEnrichments of
-        Nothing ->
-          processingMessage
-
-        Just enrichment ->
-          if enrichment.errors then
-            errorMessage
-          else
-            viewFragmentsBarContent model userState oer enrichment.chunks recommendedFragments barWidth barId
-
-
-viewFragmentsBarContent model userState oer chunks recommendedFragments barWidth barId =
+viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId =
   let
       markers =
         [ fragmentMarkers (userState.fragmentAccesses |> Dict.values) recentBlue

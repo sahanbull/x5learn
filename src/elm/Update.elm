@@ -125,10 +125,10 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | requestingOers = False } |> cacheOersFromDict oers, Cmd.none)
 
     RequestOers (Err err) ->
-      let
-          dummy =
-            err |> Debug.log "Error in RequestOers"
-      in
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestOers"
+      -- in
       ( { model | requestingOers = False, userMessage = Just "There was a problem while fetching OER data" }, Cmd.none)
 
     RequestGains (Ok gains) ->
@@ -155,10 +155,10 @@ update msg ({nav, userProfileForm} as model) =
           -- |> requestWikichunkEnrichmentsIfNeeded
 
     RequestWikichunkEnrichments (Err err) ->
-      let
-          dummy =
-            err |> Debug.log "Error in RequestWikichunkEnrichments"
-      in
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestWikichunkEnrichments"
+      -- in
       ( { model | userMessage = Just "There was a problem while fetching wikichunk enrichments", requestingWikichunkEnrichments = False }, Cmd.none )
 
     RequestSearchSuggestions (Ok suggestions) ->

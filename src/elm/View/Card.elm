@@ -124,37 +124,53 @@ viewOerCard model userState recommendedFragments position barId oer =
             |> Maybe.withDefault (imgPath "thumbnail_unavailable.jpg")
             |> upperImage attrs
 
+      maybeEnrichment =
+        Dict.get oer.url model.wikichunkEnrichments
+
       fragmentsBar =
-        viewFragmentsBar model userState oer recommendedFragments cardWidth barId
-        |> el [ width fill, moveDown imageHeight ]
-        |> inFront
+        inFront <|
+          case maybeEnrichment of
+            Nothing ->
+              viewLoadingSpinner |> el [ moveDown 80, width fill ]
+
+            Just enrichment ->
+              if enrichment.errors then
+                none
+              else
+                viewFragmentsBar model userState oer enrichment.chunks recommendedFragments cardWidth barId
+                |> el [ width fill, moveDown imageHeight ]
 
       preloadImage url =
         url
         |> upperImage [ width (px 1), alpha 0.01 ]
         |> behindContent
 
-      mediatypeIconInPlaceOfThumbnail =
-        let
-            stub =
-              if List.member oer.mediatype [ "video", "audio", "text" ] then
-                "mediatype_" ++ oer.mediatype
-              else
-                "mediatype_unknown"
-        in
-            image [ semiTransparent, centerX, centerY, width (px <| if hovering then 60 else 50) ] { src = (svgPath stub), description = "" }
-            |> el [ width fill, height (px imageHeight), Background.color x5color ]
+      -- mediatypeIcon =
+      --   let
+      --       stub =
+      --         if List.member oer.mediatype [ "video", "audio", "text" ] then
+      --           "mediatype_" ++ oer.mediatype
+      --         else
+      --           "mediatype_unknown"
+      --   in
+      --       image [ semiTransparent, centerX, centerY, width (px <| if hovering then 60 else 50) ] { src = (svgPath stub), description = "" }
+      --       |> el [ width fill, height (px imageHeight), Background.color x5color ]
 
       carousel =
         case oer.images of
           [] ->
-            case chunksFromUrl model oer.url of
-              [] ->
-                mediatypeIconInPlaceOfThumbnail
+            case maybeEnrichment of
+              Nothing ->
+                none
+                |> el [ width fill, height (px imageHeight), Background.color x5color ]
 
-              chunks ->
-                viewConceptBubbles model oer.url chunks
-                |> html
+              Just enrichment ->
+                if enrichment.errors then
+                  image [ alpha 0.5, centerX, centerY ] { src = svgPath "enrichment_error", description = "No preview available for this resource" }
+                  |> el [ width fill, height (px imageHeight), Background.color greyMedium ]
+                else
+                  viewConceptBubbles model oer.url enrichment.chunks
+                  |> html
 
           [ _ ] ->
             singleThumbnail

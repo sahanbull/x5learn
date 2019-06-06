@@ -156,7 +156,7 @@ inspectorContentDefault model userState {oer, fragmentStart} =
           wikichunks ->
             let
                 content =
-                  viewFragmentsBar model userState oer (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth "inspector"
+                  viewFragmentsBar model userState oer wikichunks (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth "inspector"
                   |> el [ width (px playerWidth), height (px 16) ]
             in
                 none |> el [ inFront content, moveDown 487, moveRight 16 ]

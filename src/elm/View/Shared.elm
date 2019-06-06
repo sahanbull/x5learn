@@ -665,3 +665,15 @@ openInspectorOnPress model oer =
 
         _ ->
           Nothing
+
+
+imageHeight =
+  175
+
+
+cardWidth =
+  332
+
+
+cardHeight =
+  280

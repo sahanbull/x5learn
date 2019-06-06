@@ -1,4 +1,4 @@
-module View.Card exposing (viewPathway, viewOerGrid, cardHeight, viewOerCard)
+module View.Card exposing (viewPathway, viewOerGrid, viewOerCard)
 
 import Element exposing (..)
 import Element.Background as Background
@@ -11,6 +11,7 @@ import Dict exposing (Dict)
 
 import Model exposing (..)
 import View.Shared exposing (..)
+import View.ConceptBubbles exposing (..)
 
 import Msg exposing (..)
 import Animation exposing (..)
@@ -98,9 +99,6 @@ viewOerCard model userState recommendedFragments position barId oer =
       hovering =
         model.hoveringOerUrl == Just oer.url
 
-      imageHeight =
-        175
-
       upperImage attrs url =
         none
         |> el ([ width fill, height <| px <| imageHeight, Background.image <| url, htmlClass (if isFromVideoLecturesNet oer then "materialHoverZoomThumb-videolectures" else "materialHoverZoomThumb") ] ++ attrs)
@@ -127,7 +125,9 @@ viewOerCard model userState recommendedFragments position barId oer =
             |> upperImage attrs
 
       fragmentsBar =
-        [ inFront <| viewFragmentsBar model userState oer recommendedFragments cardWidth barId ]
+        viewFragmentsBar model userState oer recommendedFragments cardWidth barId
+        |> el [ width fill, moveDown imageHeight ]
+        |> inFront
 
       preloadImage url =
         url
@@ -148,7 +148,13 @@ viewOerCard model userState recommendedFragments position barId oer =
       carousel =
         case oer.images of
           [] ->
-            mediatypeIconInPlaceOfThumbnail
+            case chunksFromUrl model oer.url of
+              [] ->
+                mediatypeIconInPlaceOfThumbnail
+
+              chunks ->
+                viewConceptBubbles chunks
+                |> html
 
           [ _ ] ->
             singleThumbnail
@@ -182,15 +188,18 @@ viewOerCard model userState recommendedFragments position barId oer =
                 |> upperImage [ preloadImage nextImageUrl, imageCounter <| (imageIndex+1 |> String.fromInt) ++ " / " ++ (oer.images |> List.length |> String.fromInt) ]
 
       title =
-        oer.title |> subSubheaderWrap [ height (fill |> maximum 64), clipY ]
+        oer.title
+        |> subSubheaderWrap [ paddingXY 16 0, centerY ]
+        |> el [ height <| px 75, moveDown 180 ]
+        |> inFront
 
-      modalityIcon =
-        if hasYoutubeVideo oer.url then
-          image [ moveRight 280, moveUp 50, width (px 30) ] { src = svgPath "playIcon", description = "play icon" }
-        else
-          none
+      -- modalityIcon =
+      --   if hasYoutubeVideo oer.url then
+      --     image [ moveRight 280, moveUp 50, width (px 30) ] { src = svgPath "playIcon", description = "play icon" }
+      --   else
+      --     none
 
-      bottomRow =
+      bottomInfo =
         let
             content =
               if oer.duration=="" then
@@ -204,7 +213,8 @@ viewOerCard model userState recommendedFragments position barId oer =
                 ]
         in
             content
-            |> row [ width fill ]
+            |> row [ width fill, paddingXY 16 0, moveDown 258 ]
+            |> inFront
 
       tagCloudView tagCloud =
         tagCloud
@@ -223,12 +233,6 @@ viewOerCard model userState recommendedFragments position barId oer =
             Just tagCloud ->
               tagCloudView tagCloud
 
-      info =
-        [ title
-        , bottomRow
-        ]
-        |> column ([ padding 16, width fill, height fill, inFront modalityIcon ] ++ fragmentsBar)
-
       widthOfCard =
         width (px cardWidth)
 
@@ -237,20 +241,11 @@ viewOerCard model userState recommendedFragments position barId oer =
 
       card =
         [ (if hovering then hoverPreview else carousel)
-        , info
         ]
-        |> column [ widthOfCard, heightOfCard, htmlClass "materialCard", onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing) ]
+        |> column [ widthOfCard, heightOfCard, htmlClass "materialCard", onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing), title, bottomInfo, fragmentsBar ]
 
-      cardAttrs =
+      wrapperAttrs =
         [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| button [] { onPress = openInspectorOnPress model oer, label = card }, moveRight position.x, moveDown position.y ]
   in
       none
-      |> el cardAttrs
-
-
-cardWidth =
-  332
-
-
-cardHeight =
-  280
+      |> el wrapperAttrs

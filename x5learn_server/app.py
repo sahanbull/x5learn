@@ -239,6 +239,7 @@ def most_urgent_unstarted_enrichment_task():
         return jsonify({'info': 'No tasks available'})
     url = task.url
     task.started = datetime.now()
+    task.priority = 0
     db_session.commit()
     print('Started task with priority:', task.priority, 'url:', url)
     return jsonify({'url': url})
@@ -290,7 +291,7 @@ def search_results_from_x5gon_api(text):
         oers.append(oer.data)
         enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
         if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION):
-            push_enrichment_task(url, len(materials)-index)
+            push_enrichment_task(url, (len(materials)-index) * 1000)
     return oers
 
 

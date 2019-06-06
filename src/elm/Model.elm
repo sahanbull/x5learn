@@ -422,7 +422,7 @@ chunksFromUrl model url =
 
 
 enrichmentAnimationDuration =
-  2000
+  5000
 
 
 anyEnrichmentsLoadedRecently : Model -> Bool

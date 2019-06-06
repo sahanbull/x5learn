@@ -52,7 +52,7 @@ margin =
 viewConceptBubbles model url chunks =
   let
       mergePhase =
-        (millisSinceEnrichmentLoaded model url |> toFloat) / 1000.0 |> Basics.min 1
+        (millisSinceEnrichmentLoaded model url |> toFloat) / (toFloat enrichmentAnimationDuration) |> Basics.min 1
 
       widthString =
         containerWidth |> String.fromInt

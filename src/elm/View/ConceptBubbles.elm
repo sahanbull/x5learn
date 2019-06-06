@@ -1,5 +1,7 @@
 module View.ConceptBubbles exposing (viewConceptBubbles)
 
+import Time exposing (Posix, millisToPosix, posixToMillis)
+
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 
@@ -9,10 +11,20 @@ import View.Shared exposing (..)
 import Msg exposing (..)
 
 
+type alias Occurrence =
+  { entityId : String
+  , posX : Float
+  , posY : Float
+  }
+
+
 type alias Bubble =
   { posX : Float
   , posY : Float
   , size : Float
+  , hue : Float
+  , alpha : Float
+  , saturation : Float
   }
 
 
@@ -36,8 +48,12 @@ margin =
   20
 
 
-viewConceptBubbles chunks =
+viewConceptBubbles model chunks =
   let
+      mergePhase =
+        1
+        -- (model.currentTime |> posixToMillis |> modBy 5000 |> toFloat) / 5000.0
+
       widthString =
         containerWidth |> String.fromInt
 
@@ -45,7 +61,8 @@ viewConceptBubbles chunks =
         containerHeight |> String.fromInt
 
       bubbles =
-        bubblesFromChunks chunks
+        occurrencesFromChunks chunks
+        |> bubblesFromOccurrences mergePhase
         |> List.map viewBubble
 
       background =
@@ -55,18 +72,18 @@ viewConceptBubbles chunks =
       |> svg [ width widthString, height heightString, viewBox <| "0 0 " ++ ([ widthString, heightString ] |> String.join " ") ]
 
 
-bubblesFromChunks : List Chunk -> List Bubble
-bubblesFromChunks chunks =
+occurrencesFromChunks : List Chunk -> List Occurrence
+occurrencesFromChunks chunks =
   let
       nChunksMinus1 = (List.length chunks) - 1
   in
       chunks
-      |> List.indexedMap (bubblesFromChunk nChunksMinus1)
+      |> List.indexedMap (occurrencesFromChunk nChunksMinus1)
       |> List.concat
 
 
-bubblesFromChunk : Int -> Int -> Chunk -> List Bubble
-bubblesFromChunk nChunksMinus1 chunkIndex {entities, length} =
+occurrencesFromChunk : Int -> Int -> Chunk -> List Occurrence
+occurrencesFromChunk nChunksMinus1 chunkIndex {entities, length} =
   let
       posX =
         (toFloat chunkIndex) / (toFloat nChunksMinus1)
@@ -75,24 +92,89 @@ bubblesFromChunk nChunksMinus1 chunkIndex {entities, length} =
         (List.length entities) - 1
   in
       entities
-      |> List.indexedMap (bubbleFromEntity posX nEntitiesMinus1)
+      |> List.indexedMap (occurrenceFromEntity posX nEntitiesMinus1)
 
 
-bubbleFromEntity : Float -> Int -> Int -> Entity -> Bubble
-bubbleFromEntity posX nEntitiesMinus1 entityIndex {id} =
+occurrenceFromEntity : Float -> Int -> Int -> Entity -> Occurrence
+occurrenceFromEntity posX nEntitiesMinus1 entityIndex {id} =
   let
       posY =
         (toFloat entityIndex) / (toFloat nEntitiesMinus1)
   in
-      Bubble posX posY 0.05
+      Occurrence id posX posY
+
+
+bubblesFromOccurrences : Float -> List Occurrence -> List Bubble
+bubblesFromOccurrences mergePhase occurrences =
+  occurrences
+  |> List.map (bubbleFromOccurrence mergePhase occurrences)
+
+
+bubbleFromOccurrence : Float -> List Occurrence -> Occurrence -> Bubble
+bubbleFromOccurrence mergePhase occurrences occurrence =
+  let
+      occurrencesWithSameEntityId =
+        occurrences
+        |> List.filter (\o -> o.entityId == occurrence.entityId)
+
+      mergedPosX =
+        occurrencesWithSameEntityId
+        |> averageOf .posX
+
+      mergedPosY =
+        occurrencesWithSameEntityId
+        |> averageOf .posY
+
+      mergedSize =
+        occurrencesWithSameEntityId |> List.length |> toFloat |> sqrt
+  in
+      { posX = interp mergePhase occurrence.posX mergedPosX
+      , posY = interp mergePhase occurrence.posY mergedPosY
+      , size = interp mergePhase 1 mergedSize
+      , hue = 52 -- 240 - 180 * (fakeStringDistanceFromSearchTerm occurrence.entityId)
+      , alpha = 0.3
+      , saturation = fakeLexicalSimilarityToSearchTerm occurrence.entityId
+      }
+      -- , hue = 240 - 180 * (fakePredictedLevelOfInterestFromEntity occurrence.entityId)
+      -- , alpha = fakePredictedLevelOfKnowledgeFromEntity occurrence.entityId
+      -- , saturation = fakedLevelOfTheSystemsConfidenceInHue occurrence.entityId
+
+
+fakeLexicalSimilarityToSearchTerm : String -> Float
+fakeLexicalSimilarityToSearchTerm id =
+  if (String.length id) == 7 then 90 else 0
+
+
+-- fakePredictedLevelOfKnowledgeFromEntity : String -> Float
+-- fakePredictedLevelOfKnowledgeFromEntity id =
+--   ((String.length id |> modBy 3) + 1 |> toFloat) / 3
+
+
+-- fakePredictedLevelOfInterestFromEntity : String -> Float
+-- fakePredictedLevelOfInterestFromEntity id =
+--   (String.length id |> modBy 4 |> toFloat) / 3
+
+
+-- fakedLevelOfTheSystemsConfidenceInHue : String -> Float
+-- fakedLevelOfTheSystemsConfidenceInHue id =
+--   (String.length id |> modBy 5 |> toFloat) / 5 * 100
 
 
 viewBubble : Bubble -> Svg.Svg Msg
-viewBubble {posX, posY, size} =
+viewBubble {posX, posY, size, hue, alpha, saturation} =
   circle
     [ cx (posX * (toFloat contentWidth) + margin |> String.fromFloat)
     , cy (posY * (toFloat contentHeight) + margin |> String.fromFloat)
-    , r (size * (toFloat contentWidth) |> String.fromFloat)
-    , fill "blue"
+    , r (size * (toFloat contentWidth) * 0.05 |> String.fromFloat)
+    , fill <| "hsla("++(String.fromFloat hue)++","++(String.fromFloat saturation)++"%,50%,"++(String.fromFloat alpha)++")"
     ]
     []
+
+
+interp : Float -> Float -> Float -> Float
+interp phase a b =
+  phase * b + (1-phase) * a
+
+
+averageOf getterFunction records =
+  (records |> List.map getterFunction |> List.sum) / (records |> List.length |> toFloat)

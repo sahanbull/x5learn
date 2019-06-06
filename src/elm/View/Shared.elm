@@ -457,25 +457,25 @@ viewFragmentsBarContent model userState oer chunks recommendedFragments barWidth
                 _ ->
                   False
 
-            containsSearchString =
-              case model.searchState of
-                Nothing ->
-                  False
+            -- containsSearchString =
+            --   case model.searchState of
+            --     Nothing ->
+            --       False
 
-                Just searchState ->
-                  let
-                      searchStringLowercase =
-                        searchState.lastSearch |> String.toLower
-                  in
-                      chunk.entities
-                      |> List.map .title
-                      |> List.any (\title -> String.contains searchStringLowercase (title |> String.toLower))
+            --     Just searchState ->
+            --       let
+            --           searchStringLowercase =
+            --             searchState.lastSearch |> String.toLower
+            --       in
+            --           chunk.entities
+            --           |> List.map .title
+            --           |> List.any (\title -> String.contains searchStringLowercase (title |> String.toLower))
 
             background =
               if isPopupOpen then
                 [ Background.color <| orange ]
-              else if containsSearchString then
-                [ Background.color <| yellow ]
+              -- else if containsSearchString then
+              --   [ Background.color <| yellow ]
               else
                 []
 

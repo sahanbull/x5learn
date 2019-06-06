@@ -153,7 +153,7 @@ viewOerCard model userState recommendedFragments position barId oer =
                 mediatypeIconInPlaceOfThumbnail
 
               chunks ->
-                viewConceptBubbles model chunks
+                viewConceptBubbles model oer.url chunks
                 |> html
 
           [ _ ] ->
@@ -190,7 +190,7 @@ viewOerCard model userState recommendedFragments position barId oer =
       title =
         oer.title
         |> subSubheaderWrap [ paddingXY 16 0, centerY ]
-        |> el [ height <| px 75, moveDown 178 ]
+        |> el [ height <| px 75, moveDown 177 ]
         |> inFront
 
       -- modalityIcon =

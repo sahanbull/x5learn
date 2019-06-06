@@ -33,6 +33,8 @@ type alias Model =
   , popup : Maybe Popup
   , requestingWikichunkEnrichments : Bool
   , wikichunkEnrichments : Dict OerUrl WikichunkEnrichment
+  , wikichunkEnrichmentLoadTimes : Dict OerUrl Posix
+  , enrichmentsAnimating : Bool
   , tagClouds : Dict String (List String)
   , searchSuggestions : List String
   , selectedSuggestion : String
@@ -211,6 +213,8 @@ initialModel nav flags =
   , popup = Nothing
   , requestingWikichunkEnrichments = False
   , wikichunkEnrichments = Dict.empty
+  , wikichunkEnrichmentLoadTimes = Dict.empty
+  , enrichmentsAnimating = False
   , tagClouds = Dict.empty
   , searchSuggestions = []
   , selectedSuggestion = ""
@@ -415,3 +419,23 @@ chunksFromUrl model url =
 
     Just enrichment ->
       enrichment.chunks
+
+
+enrichmentAnimationDuration =
+  2000
+
+
+anyEnrichmentsLoadedRecently : Model -> Bool
+anyEnrichmentsLoadedRecently model =
+  model.wikichunkEnrichmentLoadTimes
+  |> Dict.values
+  |> List.any (\loadTime -> (posixToMillis model.currentTime) - (posixToMillis loadTime) < enrichmentAnimationDuration)
+
+
+millisSinceEnrichmentLoaded model url =
+  case model.wikichunkEnrichmentLoadTimes |> Dict.get url of
+    Nothing -> -- shouldn't happen
+      100000000
+
+    Just time ->
+      (model.currentTime |> posixToMillis) - (time |> posixToMillis)

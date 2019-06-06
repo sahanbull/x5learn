@@ -1,5 +1,6 @@
 module View.ConceptBubbles exposing (viewConceptBubbles)
 
+import Dict exposing (Dict)
 import Time exposing (Posix, millisToPosix, posixToMillis)
 
 import Svg exposing (..)
@@ -48,11 +49,10 @@ margin =
   20
 
 
-viewConceptBubbles model chunks =
+viewConceptBubbles model url chunks =
   let
       mergePhase =
-        1
-        -- (model.currentTime |> posixToMillis |> modBy 5000 |> toFloat) / 5000.0
+        (millisSinceEnrichmentLoaded model url |> toFloat) / 1000.0 |> Basics.min 1
 
       widthString =
         containerWidth |> String.fromInt

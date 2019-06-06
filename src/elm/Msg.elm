@@ -62,19 +62,19 @@ type UserProfileField
 subscriptions : Model -> Sub Msg
 subscriptions model =
   let
-      anim =
+      isModalAnimating =
         if model.animationsPending |> Set.isEmpty then
-          []
+           False
         else
           case model.modalAnimation of
             Nothing ->
-              [ Browser.Events.onAnimationFrame AnimationTick ] --- TODO consider switching off when no animations are playing
+              True
 
             Just animation ->
               if animation.frameCount<2 then
-                [ Browser.Events.onAnimationFrame AnimationTick ] --- TODO consider switching off when no animations are playing
+                True
               else
-                []
+                False
   in
       ([ Browser.Events.onResize ResizeBrowser
       , Ports.modalAnimationStart ModalAnimationStart
@@ -85,5 +85,5 @@ subscriptions model =
       , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
       , Ports.videoIsPlayingAtPosition VideoIsPlayingAtPosition
       , Time.every 500 ClockTick
-      ] ++ anim)
+      ] ++ (if anyEnrichmentsLoadedRecently model || isModalAnimating then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
       |> Sub.batch

@@ -61,7 +61,7 @@ update msg ({nav, userProfileForm} as model) =
           ( { newModel | nav = { nav | url = url }, inspectorState = Nothing } |> closePopup |> resetUserProfileForm, cmd )
 
     ClockTick time ->
-      ( { model | currentTime = time }, Cmd.none)
+      ( { model | currentTime = time, enrichmentsAnimating = anyEnrichmentsLoadedRecently model }, Cmd.none)
       |> requestWikichunkEnrichmentsIfNeeded
 
     AnimationTick time ->
@@ -145,8 +145,13 @@ update msg ({nav, userProfileForm} as model) =
       let
           wikichunkEnrichments =
             model.wikichunkEnrichments |> Dict.union enrichments
+
+          wikichunkEnrichmentLoadTimes =
+            enrichments
+            |> Dict.keys
+            |> List.foldl (\url dict -> dict |> Dict.insert url model.currentTime) model.wikichunkEnrichmentLoadTimes
       in
-          ( { model | wikichunkEnrichments = wikichunkEnrichments, requestingWikichunkEnrichments = False }, Cmd.none )
+          ( { model | wikichunkEnrichments = wikichunkEnrichments, wikichunkEnrichmentLoadTimes = wikichunkEnrichmentLoadTimes, requestingWikichunkEnrichments = False, enrichmentsAnimating = True }, Cmd.none )
           -- |> requestWikichunkEnrichmentsIfNeeded
 
     RequestWikichunkEnrichments (Err err) ->

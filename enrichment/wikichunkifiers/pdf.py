@@ -1,4 +1,4 @@
-import subprocess, requests, math
+import subprocess, requests, math, json
 import textwrap
 
 from wikichunkifiers.lib.util import temp_file_path, EnrichmentError
@@ -20,10 +20,9 @@ def extract_chunks_from_pdf(url):
         entities = get_entities(part)
         length = len(part) / len(text)
         chunk = { 'start': start, 'length': length, 'entities': entities }
-        print(chunk)
+        # print(json.dumps(chunk, indent=4, sort_keys=True))
         chunks.append(chunk)
         start += length
-    chunks.append(chunk)
     return chunks
 
 

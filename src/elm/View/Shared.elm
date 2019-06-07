@@ -82,6 +82,10 @@ bigButtonPadding =
   paddingXY 13 10
 
 
+borderTop px =
+  Border.widthEach { allSidesZero | top = px }
+
+
 borderBottom px =
   Border.widthEach { allSidesZero | bottom = px }
 
@@ -154,8 +158,11 @@ greyMedium =
   grey 160
 
 
+veryTransparentWhite =
+  rgba 1 1 1 0.1
+
+
 transparentWhite =
-  -- rgba 1 1 1 0.32
   rgba 1 1 1 0.4
 
 
@@ -449,11 +456,23 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
             --           |> List.map .title
             --           |> List.any (\title -> String.contains searchStringLowercase (title |> String.toLower))
 
+            border =
+              if isPopupOpen then
+                [ Border.color white, Border.widthEach { allSidesZero | top = chunkTopBorderHeight, left = 1, right = 1 } ]
+              else
+                case model.hoveringEntityIds of
+                  Nothing ->
+                    []
+
+                  Just ids ->
+                    if List.any (\id -> List.member id (chunk.entities |> List.map .id)) ids then
+                      [ Border.color white, borderTop chunkTopBorderHeight ]
+                    else
+                      []
+
             background =
               if isPopupOpen then
-                [ Background.color <| orange ]
-              -- else if containsSearchString then
-              --   [ Background.color <| yellow ]
+                [ Background.color semiTransparentWhite ]
               else
                 []
 
@@ -475,7 +494,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                     []
         in
             none
-            |> el ([ htmlClass "ChunkTrigger", width <| px <| floor <| chunk.length * (toFloat barWidth) + 1, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler )
+            |> el ([ htmlClass "ChunkTrigger", width <| px <| floor <| chunk.length * (toFloat barWidth) - 2, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ border ++ popup ++ clickHandler)
             |> inFront
 
       chunkTriggers =
@@ -499,7 +518,7 @@ viewChunkPopup model popup =
   in
       entitiesSection
       |> menuColumn []
-      |> el [ moveLeft 30, moveDown fragmentsBarHeight ]
+      |> el [ moveLeft 30, moveDown (fragmentsBarHeight - chunkTopBorderHeight) ]
 
 
 viewEntityButton : Model -> ChunkPopup -> Entity -> Element Msg
@@ -675,7 +694,11 @@ cardHeight =
   280
 
 
+chunkTopBorderHeight =
+  1
+
+
 entityHoverHandlers entity =
-  [ Events.onMouseEnter <| MouseOverBubblogramEntity <| Just <| entity.id
-  , Events.onMouseLeave <| MouseOverBubblogramEntity Nothing
+  [ Events.onMouseEnter <| MouseOverEntities <| Just [ entity.id ]
+  , Events.onMouseLeave <| MouseOverEntities Nothing
   ]

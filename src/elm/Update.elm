@@ -198,7 +198,21 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
 
     SetPopup popup ->
-      ( { model | popup = Just popup }, Cmd.none)
+      let
+          hoveringEntityIds =
+            case model.popup of
+              Just (ChunkOnBar p) ->
+                case p.entityPopup of
+                  Nothing ->
+                    Nothing
+
+                  Just entityPopup ->
+                    Just [ entityPopup.entityId ]
+
+              _ ->
+                Nothing
+      in
+          ( { model | popup = Just popup, hoveringEntityIds = hoveringEntityIds }, Cmd.none)
 
     ClosePopup ->
       ( model |> closePopup, Cmd.none )
@@ -261,8 +275,8 @@ update msg ({nav, userProfileForm} as model) =
       (model |> updateUserState completeRegistration, Cmd.none)
       |> saveUserState msg
 
-    MouseOverBubblogramEntity maybeBubbleIdentifier ->
-      ({model | hoveringEntityId = maybeBubbleIdentifier }, Cmd.none)
+    MouseOverEntities maybeIds ->
+      ({model | hoveringEntityIds = maybeIds }, Cmd.none)
 
 
 updateUserState : (UserState -> UserState) -> Model -> Model
@@ -414,7 +428,7 @@ requestOersAsNeeded userState model =
 
 closePopup : Model -> Model
 closePopup model =
-  { model | popup = Nothing }
+  { model | popup = Nothing, hoveringEntityIds = Nothing }
 
 
 resetUserProfileForm : Model -> Model

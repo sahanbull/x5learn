@@ -203,7 +203,7 @@ viewBubble : Model -> OerUrl -> Bubble -> Svg.Svg Msg
 viewBubble model oerUrl ({entity, posX, posY, size} as bubble) =
   let
       isHovering =
-        model.hoveringEntityId == Just entity.id
+        model.hoveringEntityIds == Just [ entity.id ]
 
       outline =
         if isHovering then
@@ -222,8 +222,8 @@ viewBubble model oerUrl ({entity, posX, posY, size} as bubble) =
         , cy (posY * (toFloat contentHeight) + margin + 20 |> String.fromFloat)
         , r (size * (toFloat contentWidth) * 0.042 |> String.fromFloat)
         , fill <| Color.toCssString <| colorFromBubble bubble
-        , onMouseOver <| MouseOverBubblogramEntity <| Just <| entity.id
-        , onMouseOut <| MouseOverBubblogramEntity Nothing
+        , onMouseOver <| MouseOverEntities <| Just [ entity.id ]
+        , onMouseOut <| MouseOverEntities Nothing
         ] ++ outline)
         tooltip
 
@@ -245,12 +245,12 @@ averageOf getterFunction records =
 viewKeyConcept model {entity} =
   let
       underline =
-        case model.hoveringEntityId of
+        case model.hoveringEntityIds of
           Nothing ->
             []
 
-          Just entityId ->
-            if entityId == entity.id then
+          Just entityIds ->
+            if List.member entity.id entityIds then
               [ Font.underline ]
             else
               []

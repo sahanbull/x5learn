@@ -45,7 +45,7 @@ type alias Model =
   , oerNoteForms : Dict OerUrl String
   , cachedOers : Dict OerUrl Oer
   , requestingOers : Bool
-  , hoveringEntityId : Maybe String
+  , hoveringEntityIds : Maybe (List String)
   }
 
 
@@ -226,7 +226,7 @@ initialModel nav flags =
   , oerNoteForms = Dict.empty
   , cachedOers = Dict.empty
   , requestingOers = False
-  , hoveringEntityId = Nothing
+  , hoveringEntityIds = Nothing
   }
 
 

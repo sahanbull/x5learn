@@ -550,7 +550,7 @@ viewEntityPopup model chunkPopup entityPopup entity =
       actionButtons =
         [ ("Search", TriggerSearch entity.title)
         ]
-        |> List.map (entityActionButton chunkPopup entityPopup)
+        |> List.map (\item -> entityActionButton chunkPopup entityPopup item |> el [ padding 10 ])
 
       items =
         [ viewDefinition model entity ] ++ actionButtons

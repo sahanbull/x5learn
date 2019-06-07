@@ -70,9 +70,23 @@ viewBubblogram model url chunks =
       heightString =
         containerHeight |> String.fromInt
 
+      rawBubbles =
+        let
+            occurrences =
+              chunks
+              |> occurrencesFromChunks
+        in
+            occurrences
+            |> List.map (bubbleFromOccurrence mergePhase occurrences)
+
+      mergedBubbles =
+        rawBubbles
+        |> List.Extra.uniqueBy (\{entity, posX, posY} -> (entity.title, posX, posY))
+        |> List.map (\bubble -> { bubble | alpha = Basics.min 0.8 <| rawBubbleAlpha * (rawBubbles |> List.filter (\b -> b.entity == bubble.entity)  |> List.length |> toFloat) })
+
       bubbles =
-        occurrencesFromChunks chunks
-        |> bubblesFromOccurrences mergePhase
+        -- (if mergePhase<1 then rawBubbles else mergedBubbles)
+        rawBubbles
         |> List.sortBy .size
         |> List.reverse
 
@@ -84,8 +98,7 @@ viewBubblogram model url chunks =
         rect [ width widthString, height heightString, fill "#191919" ] []
 
       keyConcepts =
-        bubbles
-        |> List.Extra.uniqueBy (\bubble -> bubble.entity.title)
+        mergedBubbles
         |> List.take 3
         |> List.map viewKeyConcept
         |> row [ spacing 18, padding 8, Element.width <| px <| containerWidth-8, clipX ]
@@ -129,12 +142,6 @@ occurrenceFromEntity posX nEntitiesMinus1 entityIndex entity =
       Occurrence entity posX posY
 
 
-bubblesFromOccurrences : Float -> List Occurrence -> List Bubble
-bubblesFromOccurrences mergePhase occurrences =
-  occurrences
-  |> List.map (bubbleFromOccurrence mergePhase occurrences)
-
-
 bubbleFromOccurrence : Float -> List Occurrence -> Occurrence -> Bubble
 bubbleFromOccurrence mergePhase occurrences occurrence =
   let
@@ -158,7 +165,7 @@ bubbleFromOccurrence mergePhase occurrences occurrence =
       , posY = interp mergePhase occurrence.posY mergedPosY
       , size = interp mergePhase 1 mergedSize
       , hue = 0.144 -- 240 - 180 * (fakeStringDistanceFromSearchTerm occurrence.entityId)
-      , alpha = 0.3
+      , alpha = rawBubbleAlpha
       , saturation = fakeLexicalSimilarityToSearchTerm occurrence.entity.id
       }
       -- , hue = 240 - 180 * (fakePredictedLevelOfInterestFromEntity occurrence.entityId)
@@ -243,3 +250,7 @@ elementColorFromElmColor elmColor =
   elmColor
   |> Color.toRgba
   |> Element.fromRgb
+
+
+rawBubbleAlpha =
+  0.28

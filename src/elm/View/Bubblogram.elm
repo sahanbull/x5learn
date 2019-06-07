@@ -79,28 +79,34 @@ viewBubblogram model url chunks =
             occurrences
             |> List.map (bubbleFromOccurrence mergePhase occurrences)
 
-      mergedBubbles =
-        rawBubbles
-        |> List.Extra.uniqueBy (\{entity, posX, posY} -> (entity.title, posX, posY))
-        |> List.map (\bubble -> { bubble | alpha = Basics.min 0.8 <| rawBubbleAlpha * (rawBubbles |> List.filter (\b -> b.entity == bubble.entity)  |> List.length |> toFloat) })
-
-      bubbles =
-        -- (if mergePhase<1 then rawBubbles else mergedBubbles)
-        rawBubbles
-        |> List.sortBy .size
-        |> List.reverse
+      -- mergedBubbles =
+      --   rawBubbles
+      --   |> List.Extra.uniqueBy (\{entity} -> entity.title)
+      --   |> List.map (\bubble -> { bubble | alpha = Basics.min 0.8 <| rawBubbleAlpha * (rawBubbles |> List.filter (\b -> b.entity == bubble.entity)  |> List.length |> toFloat) })
+      --   |> List.sortBy .size
+      --   |> List.reverse
 
       svgBubbles =
-        bubbles
-        |> List.indexedMap (viewBubble model url)
+        rawBubbles
+        |> List.sortBy frequency
+        |> List.reverse
+        |> List.map (viewBubble model url)
 
       background =
         rect [ width widthString, height heightString, fill "#191919" ] []
 
+      frequency bubble =
+        rawBubbles
+        |> List.filter (\b -> b.entity == bubble.entity)
+        |> List.length
+
       keyConcepts =
-        mergedBubbles
+        rawBubbles
+        |> List.Extra.uniqueBy (\{entity} -> entity.title)
+        |> List.sortBy frequency
+        |> List.reverse
         |> List.take 3
-        |> List.map viewKeyConcept
+        |> List.map (viewKeyConcept model)
         |> row [ spacing 18, padding 8, Element.width <| px <| containerWidth-8, clipX ]
         |> inFront
   in
@@ -193,14 +199,11 @@ fakeLexicalSimilarityToSearchTerm id =
 --   (String.length id |> modBy 5 |> toFloat) / 5 * 100
 
 
-viewBubble : Model -> OerUrl -> Int -> Bubble -> Svg.Svg Msg
-viewBubble model oerUrl bubbleIndex ({entity, posX, posY, size} as bubble) =
+viewBubble : Model -> OerUrl -> Bubble -> Svg.Svg Msg
+viewBubble model oerUrl ({entity, posX, posY, size} as bubble) =
   let
-      bubbleIdentifier =
-        BubbleIdentifier oerUrl bubbleIndex
-
       isHovering =
-        model.hoveringBubbleIdentifier == Just bubbleIdentifier
+        model.hoveringEntityId == Just entity.id
 
       outline =
         if isHovering then
@@ -219,8 +222,8 @@ viewBubble model oerUrl bubbleIndex ({entity, posX, posY, size} as bubble) =
         , cy (posY * (toFloat contentHeight) + margin + 20 |> String.fromFloat)
         , r (size * (toFloat contentWidth) * 0.042 |> String.fromFloat)
         , fill <| Color.toCssString <| colorFromBubble bubble
-        , onMouseOver <| MouseOverBubble <| Just <| bubbleIdentifier
-        , onMouseOut <| MouseOverBubble Nothing
+        , onMouseOver <| MouseOverBubblogramEntity <| Just <| entity.id
+        , onMouseOut <| MouseOverBubblogramEntity Nothing
         ] ++ outline)
         tooltip
 
@@ -239,17 +242,22 @@ averageOf getterFunction records =
   (records |> List.map getterFunction |> List.sum) / (records |> List.length |> toFloat)
 
 
-viewKeyConcept bubble =
-  bubble.entity.title
-  |> truncateSentence 20
-  -- |> captionNowrap [ Font.color <| elementColorFromElmColor <| colorFromBubble bubble ]
-  |> captionNowrap [ whiteText ]
+viewKeyConcept model {entity} =
+  let
+      underline =
+        case model.hoveringEntityId of
+          Nothing ->
+            []
 
-
-elementColorFromElmColor elmColor =
-  elmColor
-  |> Color.toRgba
-  |> Element.fromRgb
+          Just entityId ->
+            if entityId == entity.id then
+              [ Font.underline ]
+            else
+              []
+  in
+      entity.title
+      |> truncateSentence 20
+      |> captionNowrap ([ whiteText ] ++ underline)
 
 
 rawBubbleAlpha =

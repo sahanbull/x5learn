@@ -205,7 +205,7 @@ viewOerCard model userState recommendedFragments position barId oer =
       title =
         oer.title
         |> subSubheaderWrap [ paddingXY 16 0, centerY ]
-        |> el [ height <| px 75, moveDown 177 ]
+        |> el [ height <| px 70, clipY, moveDown 181 ]
         |> inFront
 
       -- modalityIcon =

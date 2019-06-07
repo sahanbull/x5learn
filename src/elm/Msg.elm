@@ -52,7 +52,7 @@ type Msg
   | RemoveNote Posix
   | VideoIsPlayingAtPosition Float
   | SubmitPostRegistrationForm Bool
-  | MouseOverBubble (Maybe BubbleIdentifier)
+  | MouseOverBubblogramEntity (Maybe String)
 
 
 type UserProfileField

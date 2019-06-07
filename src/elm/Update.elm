@@ -261,8 +261,8 @@ update msg ({nav, userProfileForm} as model) =
       (model |> updateUserState completeRegistration, Cmd.none)
       |> saveUserState msg
 
-    MouseOverBubble maybeBubbleIdentifier ->
-      ({model | hoveringBubbleIdentifier = maybeBubbleIdentifier }, Cmd.none)
+    MouseOverBubblogramEntity maybeBubbleIdentifier ->
+      ({model | hoveringEntityId = maybeBubbleIdentifier }, Cmd.none)
 
 
 updateUserState : (UserState -> UserState) -> Model -> Model

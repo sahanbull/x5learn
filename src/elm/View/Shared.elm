@@ -673,3 +673,9 @@ cardWidth =
 
 cardHeight =
   280
+
+
+entityHoverHandlers entity =
+  [ Events.onMouseEnter <| MouseOverBubblogramEntity <| Just <| entity.id
+  , Events.onMouseLeave <| MouseOverBubblogramEntity Nothing
+  ]

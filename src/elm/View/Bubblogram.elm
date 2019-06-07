@@ -254,10 +254,13 @@ viewKeyConcept model {entity} =
               [ Font.underline ]
             else
               []
+
+      attrs =
+        [ whiteText ] ++ (entityHoverHandlers entity) ++ underline
   in
       entity.title
       |> truncateSentence 20
-      |> captionNowrap ([ whiteText ] ++ underline)
+      |> captionNowrap attrs
 
 
 rawBubbleAlpha =

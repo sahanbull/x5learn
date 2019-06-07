@@ -11,7 +11,7 @@ import Dict exposing (Dict)
 
 import Model exposing (..)
 import View.Shared exposing (..)
-import View.ConceptBubbles exposing (..)
+import View.Bubblogram exposing (..)
 
 import Msg exposing (..)
 import Animation exposing (..)
@@ -169,8 +169,7 @@ viewOerCard model userState recommendedFragments position barId oer =
                   image [ alpha 0.5, centerX, centerY ] { src = svgPath "enrichment_error", description = "No preview available for this resource" }
                   |> el [ width fill, height (px imageHeight), Background.color greyMedium ]
                 else
-                  viewConceptBubbles model oer.url enrichment.chunks
-                  |> html
+                  viewBubblogram model oer.url enrichment.chunks
 
           [ _ ] ->
             singleThumbnail

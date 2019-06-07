@@ -1,11 +1,19 @@
-module View.ConceptBubbles exposing (viewConceptBubbles)
+module View.Bubblogram exposing (viewBubblogram)
 
 import Dict exposing (Dict)
 import Time exposing (Posix, millisToPosix, posixToMillis)
 
+import List.Extra
+
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Svg.Events exposing (..)
+
+import Element exposing (el, html, inFront, row, padding, spacing, px, clipX)
+import Element.Font as Font
+import Element.Background as Background
+
+import Color -- avh4/elm-color
 
 import Model exposing (..)
 import View.Shared exposing (..)
@@ -51,7 +59,7 @@ margin =
   30
 
 
-viewConceptBubbles model url chunks =
+viewBubblogram model url chunks =
   let
       mergePhase =
         (millisSinceEnrichmentLoaded model url |> toFloat) / (toFloat enrichmentAnimationDuration) |> Basics.min 1
@@ -67,13 +75,26 @@ viewConceptBubbles model url chunks =
         |> bubblesFromOccurrences mergePhase
         |> List.sortBy .size
         |> List.reverse
+
+      svgBubbles =
+        bubbles
         |> List.indexedMap (viewBubble model url)
 
       background =
         rect [ width widthString, height heightString, fill "#191919" ] []
+
+      keyConcepts =
+        bubbles
+        |> List.Extra.uniqueBy (\bubble -> bubble.entity.title)
+        |> List.take 3
+        |> List.map viewKeyConcept
+        |> row [ spacing 18, padding 8, Element.width <| px <| containerWidth-8, clipX ]
+        |> inFront
   in
-      [ background ] ++ bubbles
+      [ background ] ++ svgBubbles
       |> svg [ width widthString, height heightString, viewBox <| "0 0 " ++ ([ widthString, heightString ] |> String.join " ") ]
+      |> html
+      |> el [ keyConcepts ]
 
 
 occurrencesFromChunks : List Chunk -> List Occurrence
@@ -136,7 +157,7 @@ bubbleFromOccurrence mergePhase occurrences occurrence =
       , posX = interp mergePhase occurrence.posX mergedPosX
       , posY = interp mergePhase occurrence.posY mergedPosY
       , size = interp mergePhase 1 mergedSize
-      , hue = 52 -- 240 - 180 * (fakeStringDistanceFromSearchTerm occurrence.entityId)
+      , hue = 0.144 -- 240 - 180 * (fakeStringDistanceFromSearchTerm occurrence.entityId)
       , alpha = 0.3
       , saturation = fakeLexicalSimilarityToSearchTerm occurrence.entity.id
       }
@@ -147,7 +168,7 @@ bubbleFromOccurrence mergePhase occurrences occurrence =
 
 fakeLexicalSimilarityToSearchTerm : String -> Float
 fakeLexicalSimilarityToSearchTerm id =
-  if (String.length id) == 7 then 90 else 0
+  if (String.length id) == 7 then 0.9 else 0
 
 
 -- fakePredictedLevelOfKnowledgeFromEntity : String -> Float
@@ -166,7 +187,7 @@ fakeLexicalSimilarityToSearchTerm id =
 
 
 viewBubble : Model -> OerUrl -> Int -> Bubble -> Svg.Svg Msg
-viewBubble model oerUrl bubbleIndex {entity, posX, posY, size, hue, alpha, saturation} =
+viewBubble model oerUrl bubbleIndex ({entity, posX, posY, size} as bubble) =
   let
       bubbleIdentifier =
         BubbleIdentifier oerUrl bubbleIndex
@@ -188,9 +209,9 @@ viewBubble model oerUrl bubbleIndex {entity, posX, posY, size, hue, alpha, satur
   in
       circle
         ([ cx (posX * (toFloat contentWidth) + margin |> String.fromFloat)
-        , cy (posY * (toFloat contentHeight) + margin |> String.fromFloat)
+        , cy (posY * (toFloat contentHeight) + margin + 20 |> String.fromFloat)
         , r (size * (toFloat contentWidth) * 0.042 |> String.fromFloat)
-        , fill <| "hsla("++(String.fromFloat hue)++","++(String.fromFloat saturation)++"%,50%,"++(String.fromFloat alpha)++")"
+        , fill <| Color.toCssString <| colorFromBubble bubble
         , onMouseOver <| MouseOverBubble <| Just <| bubbleIdentifier
         , onMouseOut <| MouseOverBubble Nothing
         ] ++ outline)
@@ -202,5 +223,23 @@ interp phase a b =
   phase * b + (1-phase) * a
 
 
+colorFromBubble : Bubble -> Color.Color
+colorFromBubble {hue, alpha, saturation} =
+  Color.hsla hue saturation 0.5 alpha
+
+
 averageOf getterFunction records =
   (records |> List.map getterFunction |> List.sum) / (records |> List.length |> toFloat)
+
+
+viewKeyConcept bubble =
+  bubble.entity.title
+  |> truncateSentence 20
+  -- |> captionNowrap [ Font.color <| elementColorFromElmColor <| colorFromBubble bubble ]
+  |> captionNowrap [ whiteText ]
+
+
+elementColorFromElmColor elmColor =
+  elmColor
+  |> Color.toRgba
+  |> Element.fromRgb

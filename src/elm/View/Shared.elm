@@ -400,8 +400,8 @@ menuColumn attrs =
 viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId =
   let
       markers =
-        [ fragmentMarkers (userState.fragmentAccesses |> Dict.values) recentBlue
-        , fragmentMarkers recommendedFragments yellow
+        -- [ fragmentMarkers (userState.fragmentAccesses |> Dict.values) recentBlue
+        [ fragmentMarkers recommendedFragments yellow
         ]
         |> List.concat
 
@@ -580,47 +580,65 @@ isHoverMenuNearRightEdge model margin =
   model.mousePositionXwhenOnChunkTrigger > (toFloat model.windowWidth)-margin
 
 
-shortUrl characterLimit url =
-  let
-      cutBeforeFirst substr input =
-        case input |> String.indexes substr |> List.head of
-          Nothing ->
-            input
+truncateSentence characterLimit sentence =
+  if (String.length sentence) <= characterLimit then
+    sentence
+  else
+    let
+        firstWords words =
+          let
+              joined =
+                words |> String.join " "
+          in
+              if (words |> List.length) < 2 || (joined |> String.length) < characterLimit then
+                joined
+              else
+                firstWords (words |> List.reverse |> List.drop 1 |> List.reverse)
+    in
+        (firstWords (sentence |> String.split " ")) ++ "…"
 
-          Just pos ->
-            input |> String.dropLeft (pos + (String.length substr))
 
-      cutAfterFirst substr input =
-        case input |> String.indexes substr |> List.head of
-          Nothing ->
-            input
+-- shortUrl characterLimit url =
+--   let
+--       cutBeforeFirst substr input =
+--         case input |> String.indexes substr |> List.head of
+--           Nothing ->
+--             input
 
-          Just pos ->
-            input |> String.left pos
+--           Just pos ->
+--             input |> String.dropLeft (pos + (String.length substr))
 
-      cutBeforeLast substr input =
-        case input |> String.indexes substr |> List.reverse |> List.head of
-          Nothing ->
-            input
+--       cutAfterFirst substr input =
+--         case input |> String.indexes substr |> List.head of
+--           Nothing ->
+--             input
 
-          Just pos ->
-            input |> String.dropLeft pos
+--           Just pos ->
+--             input |> String.left pos
 
-      leftPart =
-        url
-        |> cutBeforeFirst "//"
-        |> cutBeforeFirst "www."
-        |> cutAfterFirst "/"
+--       cutBeforeLast substr input =
+--         case input |> String.indexes substr |> List.reverse |> List.head of
+--           Nothing ->
+--             input
 
-      rightPartRaw =
-        url
-        |> cutBeforeLast "/"
+--           Just pos ->
+--             input |> String.dropLeft pos
 
-      rightPart =
-        rightPartRaw
-        |> String.dropLeft ((String.length <| leftPart++rightPartRaw) - characterLimit)
-  in
-      leftPart ++ "/..." ++ rightPart
+--       leftPart =
+--         url
+--         |> cutBeforeFirst "//"
+--         |> cutBeforeFirst "www."
+--         |> cutAfterFirst "/"
+
+--       rightPartRaw =
+--         url
+--         |> cutBeforeLast "/"
+
+--       rightPart =
+--         rightPartRaw
+--         |> String.dropLeft ((String.length <| leftPart++rightPartRaw) - characterLimit)
+--   in
+--       leftPart ++ "/..." ++ rightPart
 
 
 avatarImage =

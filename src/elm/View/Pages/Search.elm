@@ -40,8 +40,8 @@ viewSearchResults model userState searchState =
       -- "Sorry, no results were found for \""++ searchState.lastSearch ++"\"" |> viewCenterNote
       "No results were found for \"" ++ searchState.lastSearch ++ "\". Try using the topic suggestions." |> viewCenterNote
 
-    Just oers ->
-      -- Playlist ("Search results for \""++ searchState.lastSearch ++"\"") oers
-      Playlist ((oers |> List.length |> String.fromInt) ++ " result" ++ (if List.length oers == 1 then "" else "s") ++ " for \""++ searchState.lastSearch ++"\"") oers
+    Just oerUrls ->
+      -- Playlist ("Search results for \""++ searchState.lastSearch ++"\"") oerUrls
+      Playlist ((oerUrls |> List.length |> String.fromInt) ++ " result" ++ (if List.length oerUrls == 1 then "" else "s") ++ " for \""++ searchState.lastSearch ++"\"") oerUrls
       |> viewOerGrid model userState
       |> el [ width fill, paddingBottom 100 ]

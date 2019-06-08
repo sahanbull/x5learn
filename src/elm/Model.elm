@@ -31,8 +31,10 @@ type alias Model =
   , gains : Maybe (List Gain)
   , nextSteps : Maybe (List Pathway)
   , popup : Maybe Popup
-  , entityDescriptions : Dict String String
-  , requestingEntityDescriptions : Bool
+  , requestingWikichunkEnrichments : Bool
+  , wikichunkEnrichments : Dict OerUrl WikichunkEnrichment
+  , wikichunkEnrichmentLoadTimes : Dict OerUrl Posix
+  , enrichmentsAnimating : Bool
   , tagClouds : Dict String (List String)
   , searchSuggestions : List String
   , selectedSuggestion : String
@@ -40,9 +42,10 @@ type alias Model =
   , timeOfLastSearch : Posix
   , userProfileForm : UserProfileForm
   , userProfileFormSubmitted : Maybe UserProfileForm
-  , oerNoteForms : Dict String String
-  , cachedOers : Dict String Oer
+  , oerNoteForms : Dict OerUrl String
+  , cachedOers : Dict OerUrl Oer
   , requestingOers : Bool
+  , hoveringEntityIds : Maybe (List String)
   }
 
 
@@ -91,7 +94,7 @@ type alias Nav =
 
 type alias SearchState =
   { lastSearch : String
-  , searchResults : Maybe (List Oer)
+  , searchResults : Maybe (List OerUrl)
   }
 
 
@@ -110,10 +113,14 @@ type alias Oer =
   , provider : String
   , title : String
   , url : String
-  , wikichunks : List Chunk
   , mediatype : String
   }
 
+
+type alias WikichunkEnrichment =
+  { chunks : List Chunk
+  , errors : Bool
+  }
 
 type alias Chunk =
   { start : Float -- 0 to 1
@@ -125,6 +132,7 @@ type alias Chunk =
 type alias Entity =
   { id : String
   , title : String
+  , definition : String
   , url : String
   }
 
@@ -154,7 +162,7 @@ type alias Fragment =
 
 type alias Playlist =
   { title : String
-  , oers : List Oer
+  , oerUrls : List OerUrl
   }
 
 
@@ -204,8 +212,10 @@ initialModel nav flags =
   , gains = Nothing
   , nextSteps = Nothing
   , popup = Nothing
-  , entityDescriptions = Dict.empty
-  , requestingEntityDescriptions = False
+  , requestingWikichunkEnrichments = False
+  , wikichunkEnrichments = Dict.empty
+  , wikichunkEnrichmentLoadTimes = Dict.empty
+  , enrichmentsAnimating = False
   , tagClouds = Dict.empty
   , searchSuggestions = []
   , selectedSuggestion = ""
@@ -216,6 +226,7 @@ initialModel nav flags =
   , oerNoteForms = Dict.empty
   , cachedOers = Dict.empty
   , requestingOers = False
+  , hoveringEntityIds = Nothing
   }
 
 
@@ -313,9 +324,9 @@ isFromVideoLecturesNet oer =
   String.startsWith "http://videolectures.net/" oer.url
 
 
-isInPlaylist : Oer -> Playlist -> Bool
-isInPlaylist oer playlist =
-  List.member oer playlist.oers
+isInPlaylist : OerUrl -> Playlist -> Bool
+isInPlaylist oerUrl playlist =
+  List.member oerUrl playlist.oerUrls
 
 
 durationInSecondsFromOer : Oer -> Int
@@ -390,7 +401,6 @@ blankOer oerUrl =
   , provider = ""
   , title = ""
   , url = oerUrl
-  , wikichunks = []
   , mediatype = ""
   }
 
@@ -401,3 +411,33 @@ mostRecentFragmentAccess fragmentAccesses =
   |> Dict.toList
   |> List.reverse
   |> List.head
+
+
+chunksFromUrl : Model -> OerUrl -> List Chunk
+chunksFromUrl model url =
+  case model.wikichunkEnrichments |> Dict.get url of
+    Nothing ->
+      []
+
+    Just enrichment ->
+      enrichment.chunks
+
+
+enrichmentAnimationDuration =
+  5000
+
+
+anyEnrichmentsLoadedRecently : Model -> Bool
+anyEnrichmentsLoadedRecently model =
+  model.wikichunkEnrichmentLoadTimes
+  |> Dict.values
+  |> List.any (\loadTime -> (posixToMillis model.currentTime) - (posixToMillis loadTime) < enrichmentAnimationDuration)
+
+
+millisSinceEnrichmentLoaded model url =
+  case model.wikichunkEnrichmentLoadTimes |> Dict.get url of
+    Nothing -> -- shouldn't happen
+      100000000
+
+    Just time ->
+      (model.currentTime |> posixToMillis) - (time |> posixToMillis)

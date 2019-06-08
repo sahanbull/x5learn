@@ -1,4 +1,4 @@
-module View.Card exposing (viewPathway, viewOerGrid, cardHeight, viewOerCard)
+module View.Card exposing (viewPathway, viewOerGrid, viewOerCard)
 
 import Element exposing (..)
 import Element.Background as Background
@@ -11,6 +11,7 @@ import Dict exposing (Dict)
 
 import Model exposing (..)
 import View.Shared exposing (..)
+import View.Bubblogram exposing (..)
 
 import Msg exposing (..)
 import Animation exposing (..)
@@ -45,37 +46,51 @@ viewPathway model pathway =
 
 
 
+viewOerGrid : Model -> UserState -> Playlist -> Element Msg
 viewOerGrid model userState playlist =
-  if playlist.oers |> List.isEmpty then
-    none
-  else
-    let
-        rowHeight =
-          cardHeight + 50
+  let
+      helper url result =
+        case Dict.get url model.cachedOers of
+          Nothing ->
+            result
 
-        nrows =
-          ((List.length playlist.oers) + 2) // 3
+          Just oer ->
+            oer :: result
 
-        cardPositionAtIndex index =
-          let
-              x =
-                modBy 3 index
+      oers =
+        playlist.oerUrls
+        |> List.foldr helper []
+  in
+      if oers |> List.isEmpty then
+        none
+      else
+        let
+            rowHeight =
+              cardHeight + 50
 
-              y =
-                index//3
-          in
-              { x = x * (cardWidth + 50) +180 |> toFloat, y = y * rowHeight + 70 |> toFloat }
+            nrows =
+              ((List.length oers) + 2) // 3
 
-        cards =
-          playlist.oers
-          |> List.indexedMap (\index oer -> viewOerCard model userState [] (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) oer)
-          |> List.reverse
-          |> List.map inFront
-    in
-        [ playlist.title |> subheaderWrap [ whiteText ]
-        ]
-        -- |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ cards)
-        |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
+            cardPositionAtIndex index =
+              let
+                  x =
+                    modBy 3 index
+
+                  y =
+                    index//3
+              in
+                  { x = x * (cardWidth + 50) +180 |> toFloat, y = y * rowHeight + 70 |> toFloat }
+
+            cards =
+              oers
+              |> List.indexedMap (\index oer -> viewOerCard model userState [] (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) oer)
+              |> List.reverse
+              |> List.map inFront
+        in
+            [ playlist.title |> subheaderWrap [ whiteText ]
+            ]
+            -- |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ cards)
+            |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
 
 
 viewOerCard : Model -> UserState -> List Fragment -> Point -> String -> Oer -> Element Msg
@@ -83,9 +98,6 @@ viewOerCard model userState recommendedFragments position barId oer =
   let
       hovering =
         model.hoveringOerUrl == Just oer.url
-
-      imageHeight =
-        175
 
       upperImage attrs url =
         none
@@ -112,39 +124,52 @@ viewOerCard model userState recommendedFragments position barId oer =
             |> Maybe.withDefault (imgPath "thumbnail_unavailable.jpg")
             |> upperImage attrs
 
+      maybeEnrichment =
+        Dict.get oer.url model.wikichunkEnrichments
+
       fragmentsBar =
-        if oer.wikichunks |> List.isEmpty then
-          []
-        else
-          [ inFront <| viewFragmentsBar model userState oer recommendedFragments cardWidth barId ]
+        inFront <|
+          case maybeEnrichment of
+            Nothing ->
+              viewLoadingSpinner |> el [ moveDown 80, width fill ]
+
+            Just enrichment ->
+              if enrichment.errors then
+                none
+              else
+                viewFragmentsBar model userState oer enrichment.chunks recommendedFragments cardWidth barId
+                |> el [ width fill, moveDown imageHeight ]
 
       preloadImage url =
         url
         |> upperImage [ width (px 1), alpha 0.01 ]
         |> behindContent
 
-      mediatypeIconInPlaceOfThumbnail =
-        let
-            stub =
-              if List.member oer.mediatype [ "video", "audio", "text" ] then
-                "mediatype_" ++ oer.mediatype
-              else
-                "mediatype_unknown"
-
-            weblink =
-              oer.url
-              |> shortUrl 40
-              |> bodyWrap [ whiteText, alpha 0.7 ]
-              |> el [ centerX ]
-              |> el [ width (px cardWidth), moveDown 130 ]
-        in
-            image [ semiTransparent, centerX, centerY, width (px <| if hovering then 60 else 50) ] { src = (svgPath stub), description = "" }
-            |> el [ width fill, height (px imageHeight), Background.color x5color, inFront weblink ]
+      -- mediatypeIcon =
+      --   let
+      --       stub =
+      --         if List.member oer.mediatype [ "video", "audio", "text" ] then
+      --           "mediatype_" ++ oer.mediatype
+      --         else
+      --           "mediatype_unknown"
+      --   in
+      --       image [ semiTransparent, centerX, centerY, width (px <| if hovering then 60 else 50) ] { src = (svgPath stub), description = "" }
+      --       |> el [ width fill, height (px imageHeight), Background.color x5color ]
 
       carousel =
         case oer.images of
           [] ->
-            mediatypeIconInPlaceOfThumbnail
+            case maybeEnrichment of
+              Nothing ->
+                none
+                |> el [ width fill, height (px imageHeight), Background.color x5color ]
+
+              Just enrichment ->
+                if enrichment.errors then
+                  image [ alpha 0.5, centerX, centerY ] { src = svgPath "enrichment_error", description = "No preview available for this resource" }
+                  |> el [ width fill, height (px imageHeight), Background.color greyMedium ]
+                else
+                  viewBubblogram model oer.url enrichment.chunks
 
           [ _ ] ->
             singleThumbnail
@@ -178,15 +203,18 @@ viewOerCard model userState recommendedFragments position barId oer =
                 |> upperImage [ preloadImage nextImageUrl, imageCounter <| (imageIndex+1 |> String.fromInt) ++ " / " ++ (oer.images |> List.length |> String.fromInt) ]
 
       title =
-        oer.title |> subSubheaderWrap [ height (fill |> maximum 64), clipY ]
+        oer.title
+        |> subSubheaderWrap [ paddingXY 16 0, centerY ]
+        |> el [ height <| px 70, clipY, moveDown 181 ]
+        |> inFront
 
-      modalityIcon =
-        if hasYoutubeVideo oer.url then
-          image [ moveRight 280, moveUp 50, width (px 30) ] { src = svgPath "playIcon", description = "play icon" }
-        else
-          none
+      -- modalityIcon =
+      --   if hasYoutubeVideo oer.url then
+      --     image [ moveRight 280, moveUp 50, width (px 30) ] { src = svgPath "playIcon", description = "play icon" }
+      --   else
+      --     none
 
-      bottomRow =
+      bottomInfo =
         let
             content =
               if oer.duration=="" then
@@ -200,7 +228,8 @@ viewOerCard model userState recommendedFragments position barId oer =
                 ]
         in
             content
-            |> row [ width fill ]
+            |> row [ width fill, paddingXY 16 0, moveDown 253 ]
+            |> inFront
 
       tagCloudView tagCloud =
         tagCloud
@@ -209,7 +238,7 @@ viewOerCard model userState recommendedFragments position barId oer =
         |> el [ paddingBottom 16 ]
 
       hoverPreview =
-        if oer.wikichunks |> List.isEmpty then
+        if chunksFromUrl model oer.url |> List.isEmpty then
           carousel
         else
           case model.tagClouds |> Dict.get oer.url of
@@ -219,12 +248,6 @@ viewOerCard model userState recommendedFragments position barId oer =
             Just tagCloud ->
               tagCloudView tagCloud
 
-      info =
-        [ title
-        , bottomRow
-        ]
-        |> column ([ padding 16, width fill, height fill, inFront modalityIcon ] ++ fragmentsBar)
-
       widthOfCard =
         width (px cardWidth)
 
@@ -233,20 +256,11 @@ viewOerCard model userState recommendedFragments position barId oer =
 
       card =
         [ (if hovering then hoverPreview else carousel)
-        , info
         ]
-        |> column [ widthOfCard, heightOfCard, htmlClass "materialCard", onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing) ]
+        |> column [ widthOfCard, heightOfCard, htmlClass "materialCard", onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing), title, bottomInfo, fragmentsBar ]
 
-      cardAttrs =
+      wrapperAttrs =
         [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| button [] { onPress = openInspectorOnPress model oer, label = card }, moveRight position.x, moveDown position.y ]
   in
       none
-      |> el cardAttrs
-
-
-cardWidth =
-  332
-
-
-cardHeight =
-  280
+      |> el wrapperAttrs

@@ -2,7 +2,7 @@ from x5learn_server.db.database import Base
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy import Boolean, DateTime, Column, Integer, \
-    String, JSON, ForeignKey
+    Text, String, JSON, Float, ForeignKey, Table
 
 
 class RolesUsers(Base):
@@ -33,7 +33,7 @@ class UserLogin(Base, UserMixin):
     confirmed_at = Column(DateTime())
     roles = relationship('Role', secondary='roles_users', backref=backref('user_login', lazy='dynamic'))
     user_profile = Column(JSON())
-    user = relationship("User", uselist=False, backref="user_login")
+    user = relationship('User', uselist=False, backref='user_login')
 
 
 class User(Base):
@@ -41,3 +41,53 @@ class User(Base):
     id = Column(Integer(), primary_key=True)
     frontend_state = Column(JSON())
     user_login_id = Column(Integer, ForeignKey('user_login.id'))
+
+
+class Oer(Base):
+    __tablename__ = 'oer'
+    id = Column(Integer(), primary_key=True)
+    url = Column(String(255), unique=True, nullable=False)
+    data = Column(JSON())
+
+    def __init__(self, url, data):
+        self.url = url
+        self.data = data
+
+
+class WikichunkEnrichment(Base):
+    __tablename__ = 'wikichunk_enrichment'
+    id = Column(Integer(), primary_key=True)
+    url = Column(String(255), unique=True, nullable=False)
+    data = Column(JSON())
+    version = Column(Integer())
+
+    def __init__(self, url, data, version):
+        self.url = url
+        self.data = data
+        self.version = version
+
+
+class WikichunkEnrichmentTask(Base):
+    __tablename__ = 'wikichunk_enrichment_task'
+    id = Column(Integer(), primary_key=True)
+    url = Column(String(255), unique=True, nullable=False)
+    priority = Column(Integer())
+    started = Column(DateTime())
+    error = Column(String(255))
+
+    def __init__(self, url, priority):
+        self.url = url
+        self.priority = priority
+
+
+# class Topic(Base):
+#     __tablename__ = 'topic'
+#     id = Column(Integer(), primary_key=True)
+#     wikidata_item = Column(String(10))
+#     title = Column(String(255))
+#     url = Column(String(255), unique=True)
+
+#     def __init__(self, wikidata_item, title, url):
+#         self.wikidata_item = wikidata_item
+#         self.title = title
+#         self.url = url

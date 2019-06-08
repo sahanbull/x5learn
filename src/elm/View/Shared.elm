@@ -4,6 +4,8 @@ import Html
 import Html.Attributes
 import Html.Events
 
+import Time exposing (Posix, millisToPosix, posixToMillis)
+
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
@@ -80,6 +82,10 @@ bigButtonPadding =
   paddingXY 13 10
 
 
+borderTop px =
+  Border.widthEach { allSidesZero | top = px }
+
+
 borderBottom px =
   Border.widthEach { allSidesZero | bottom = px }
 
@@ -101,11 +107,11 @@ wrapText attrs str =
 
 
 captionNowrap attrs str =
-  text str |> el (attrs ++ [ Font.size 12 ])
+  text str |> el ([ Font.size 12 ] ++ attrs)
 
 
 bodyWrap attrs str =
-  [ text str ] |> paragraph (attrs ++ [ Font.size 14 ])
+  [ text str ] |> paragraph ([ Font.size 14 ] ++ attrs)
 
 
 bodyNoWrap attrs str =
@@ -113,15 +119,15 @@ bodyNoWrap attrs str =
 
 
 subSubheaderWrap attrs str =
-  [ text str ] |> paragraph (attrs ++ [ Font.size 18 ])
+  [ text str ] |> paragraph ([ Font.size 18 ] ++ attrs)
 
 
 subheaderWrap attrs str =
-  [ text str ] |> paragraph (attrs ++ [ Font.size 21 ])
+  [ text str ] |> paragraph ([ Font.size 21 ] ++ attrs)
 
 
 headlineWrap attrs str =
-  [ text str ] |> paragraph (attrs ++ [ Font.size 24 ])
+  [ text str ] |> paragraph ([ Font.size 24 ] ++ attrs)
 
 
 italicText =
@@ -148,8 +154,15 @@ grey80 =
   grey 80
 
 
+greyMedium =
+  grey 160
+
+
+veryTransparentWhite =
+  rgba 1 1 1 0.1
+
+
 transparentWhite =
-  -- rgba 1 1 1 0.32
   rgba 1 1 1 0.4
 
 
@@ -391,11 +404,11 @@ menuColumn attrs =
   column ([ Background.color white, Border.rounded 4, Border.color <| grey80, dialogShadow ] ++ attrs)
 
 
-viewFragmentsBar model userState oer recommendedFragments barWidth barId =
+viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId =
   let
       markers =
-        [ fragmentMarkers (userState.fragmentAccesses |> Dict.values) recentBlue
-        , fragmentMarkers recommendedFragments yellow
+        -- [ fragmentMarkers (userState.fragmentAccesses |> Dict.values) recentBlue
+        [ fragmentMarkers recommendedFragments yellow
         ]
         |> List.concat
 
@@ -429,25 +442,37 @@ viewFragmentsBar model userState oer recommendedFragments barWidth barId =
                 _ ->
                   False
 
-            containsSearchString =
-              case model.searchState of
-                Nothing ->
-                  False
+            -- containsSearchString =
+            --   case model.searchState of
+            --     Nothing ->
+            --       False
 
-                Just searchState ->
-                  let
-                      searchStringLowercase =
-                        searchState.lastSearch |> String.toLower
-                  in
-                      chunk.entities
-                      |> List.map .title
-                      |> List.any (\title -> String.contains searchStringLowercase (title |> String.toLower))
+            --     Just searchState ->
+            --       let
+            --           searchStringLowercase =
+            --             searchState.lastSearch |> String.toLower
+            --       in
+            --           chunk.entities
+            --           |> List.map .title
+            --           |> List.any (\title -> String.contains searchStringLowercase (title |> String.toLower))
+
+            border =
+              if isPopupOpen then
+                [ Border.color white, Border.widthEach { allSidesZero | top = chunkTopBorderHeight, left = 1, right = 1 } ]
+              else
+                case model.hoveringEntityIds of
+                  Nothing ->
+                    []
+
+                  Just ids ->
+                    if List.any (\id -> List.member id (chunk.entities |> List.map .id)) ids then
+                      [ Border.color white, borderTop chunkTopBorderHeight ]
+                    else
+                      []
 
             background =
               if isPopupOpen then
-                [ Background.color <| orange ]
-              else if containsSearchString then
-                [ Background.color <| yellow ]
+                [ Background.color semiTransparentWhite ]
               else
                 []
 
@@ -469,18 +494,15 @@ viewFragmentsBar model userState oer recommendedFragments barWidth barId =
                     []
         in
             none
-            |> el ([ htmlClass "ChunkTrigger", width <| px <| floor <| chunk.length * (toFloat barWidth) + 1, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler )
+            |> el ([ htmlClass "ChunkTrigger", width <| px <| floor <| chunk.length * (toFloat barWidth) - 2, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ border ++ popup ++ clickHandler)
             |> inFront
 
       chunkTriggers =
-        oer.wikichunks
+        chunks
         |> List.map chunkTrigger
-
-      underlay =
-        none
-        |> el ([ width fill, height (px fragmentsBarHeight), materialScrimBackground, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)
   in
-      underlay
+      none
+      |> el ([ width fill, height (px fragmentsBarHeight), materialScrimBackground, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)
 
 
 viewChunkPopup model popup =
@@ -496,7 +518,7 @@ viewChunkPopup model popup =
   in
       entitiesSection
       |> menuColumn []
-      |> el [ moveLeft 30, moveDown fragmentsBarHeight ]
+      |> el [ moveLeft 30, moveDown (fragmentsBarHeight - chunkTopBorderHeight) ]
 
 
 viewEntityButton : Model -> ChunkPopup -> Entity -> Element Msg
@@ -528,7 +550,7 @@ viewEntityPopup model chunkPopup entityPopup entity =
       actionButtons =
         [ ("Search", TriggerSearch entity.title)
         ]
-        |> List.map (entityActionButton chunkPopup entityPopup)
+        |> List.map (\item -> entityActionButton chunkPopup entityPopup item |> el [ padding 10 ])
 
       items =
         [ viewDefinition model entity ] ++ actionButtons
@@ -556,23 +578,15 @@ entityActionButton chunkPopup entityPopup (title, clickAction) =
       actionButtonWithoutIcon attrs title (Just clickAction)
 
 
-viewDefinition model entity =
+viewDefinition model {definition} =
   let
-      unavailable =
-        "(Description unavailable)"
-        |> captionNowrap []
-
       blurb =
-        case model.entityDescriptions |> Dict.get entity.id of
-          Nothing ->
-            unavailable
-
-          Just description ->
-            if description=="(Description unavailable)" then
-              unavailable
-            else
-              ("“" ++ description ++ "” (Wikidata)")
-              |> bodyWrap [ Font.italic ]
+        if definition=="" || definition=="(Definition unavailable)" then
+          "(Definition unavailable)"
+          |> captionNowrap []
+        else
+          ("“" ++ definition ++ "” (Wikidata)")
+          |> bodyWrap [ Font.italic ]
   in
       [ blurb ]
       |> column [ padding 10, spacing 16, width (px 240) ]
@@ -585,47 +599,65 @@ isHoverMenuNearRightEdge model margin =
   model.mousePositionXwhenOnChunkTrigger > (toFloat model.windowWidth)-margin
 
 
-shortUrl characterLimit url =
-  let
-      cutBeforeFirst substr input =
-        case input |> String.indexes substr |> List.head of
-          Nothing ->
-            input
+truncateSentence characterLimit sentence =
+  if (String.length sentence) <= characterLimit then
+    sentence
+  else
+    let
+        firstWords words =
+          let
+              joined =
+                words |> String.join " "
+          in
+              if (words |> List.length) < 2 || (joined |> String.length) < characterLimit then
+                joined
+              else
+                firstWords (words |> List.reverse |> List.drop 1 |> List.reverse)
+    in
+        (firstWords (sentence |> String.split " ")) ++ "…"
 
-          Just pos ->
-            input |> String.dropLeft (pos + (String.length substr))
 
-      cutAfterFirst substr input =
-        case input |> String.indexes substr |> List.head of
-          Nothing ->
-            input
+-- shortUrl characterLimit url =
+--   let
+--       cutBeforeFirst substr input =
+--         case input |> String.indexes substr |> List.head of
+--           Nothing ->
+--             input
 
-          Just pos ->
-            input |> String.left pos
+--           Just pos ->
+--             input |> String.dropLeft (pos + (String.length substr))
 
-      cutBeforeLast substr input =
-        case input |> String.indexes substr |> List.reverse |> List.head of
-          Nothing ->
-            input
+--       cutAfterFirst substr input =
+--         case input |> String.indexes substr |> List.head of
+--           Nothing ->
+--             input
 
-          Just pos ->
-            input |> String.dropLeft pos
+--           Just pos ->
+--             input |> String.left pos
 
-      leftPart =
-        url
-        |> cutBeforeFirst "//"
-        |> cutBeforeFirst "www."
-        |> cutAfterFirst "/"
+--       cutBeforeLast substr input =
+--         case input |> String.indexes substr |> List.reverse |> List.head of
+--           Nothing ->
+--             input
 
-      rightPartRaw =
-        url
-        |> cutBeforeLast "/"
+--           Just pos ->
+--             input |> String.dropLeft pos
 
-      rightPart =
-        rightPartRaw
-        |> String.dropLeft ((String.length <| leftPart++rightPartRaw) - characterLimit)
-  in
-      leftPart ++ "/..." ++ rightPart
+--       leftPart =
+--         url
+--         |> cutBeforeFirst "//"
+--         |> cutBeforeFirst "www."
+--         |> cutAfterFirst "/"
+
+--       rightPartRaw =
+--         url
+--         |> cutBeforeLast "/"
+
+--       rightPart =
+--         rightPartRaw
+--         |> String.dropLeft ((String.length <| leftPart++rightPartRaw) - characterLimit)
+--   in
+--       leftPart ++ "/..." ++ rightPart
 
 
 avatarImage =
@@ -635,7 +667,7 @@ avatarImage =
 openInspectorOnPress model oer =
   let
       fragmentLength =
-        case oer.wikichunks |> List.head of
+        case chunksFromUrl model oer.url |> List.head of
           Nothing ->
             1
 
@@ -648,3 +680,25 @@ openInspectorOnPress model oer =
 
         _ ->
           Nothing
+
+
+imageHeight =
+  175
+
+
+cardWidth =
+  332
+
+
+cardHeight =
+  280
+
+
+chunkTopBorderHeight =
+  1
+
+
+entityHoverHandlers entity =
+  [ Events.onMouseEnter <| MouseOverEntities <| Just [ entity.id ]
+  , Events.onMouseLeave <| MouseOverEntities Nothing
+  ]

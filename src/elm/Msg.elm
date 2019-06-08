@@ -30,7 +30,7 @@ type Msg
   -- | RequestNextSteps (Result Http.Error (List Pathway))
   | RequestOers (Result Http.Error (Dict String Oer))
   | RequestGains (Result Http.Error (List Gain))
-  | RequestEntityDescriptions (Result Http.Error (Dict String String))
+  | RequestWikichunkEnrichments (Result Http.Error (Dict OerUrl WikichunkEnrichment))
   | RequestSearchSuggestions (Result Http.Error (List String))
   | RequestSaveUserProfile (Result Http.Error String)
   | RequestSaveUserState (Result Http.Error String)
@@ -52,6 +52,7 @@ type Msg
   | RemoveNote Posix
   | VideoIsPlayingAtPosition Float
   | SubmitPostRegistrationForm Bool
+  | MouseOverEntities (Maybe (List String))
 
 
 type UserProfileField
@@ -62,19 +63,19 @@ type UserProfileField
 subscriptions : Model -> Sub Msg
 subscriptions model =
   let
-      anim =
+      isModalAnimating =
         if model.animationsPending |> Set.isEmpty then
-          []
+           False
         else
           case model.modalAnimation of
             Nothing ->
-              [ Browser.Events.onAnimationFrame AnimationTick ] --- TODO consider switching off when no animations are playing
+              True
 
             Just animation ->
               if animation.frameCount<2 then
-                [ Browser.Events.onAnimationFrame AnimationTick ] --- TODO consider switching off when no animations are playing
+                True
               else
-                []
+                False
   in
       ([ Browser.Events.onResize ResizeBrowser
       , Ports.modalAnimationStart ModalAnimationStart
@@ -85,5 +86,5 @@ subscriptions model =
       , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
       , Ports.videoIsPlayingAtPosition VideoIsPlayingAtPosition
       , Time.every 500 ClockTick
-      ] ++ anim)
+      ] ++ (if anyEnrichmentsLoadedRecently model || isModalAnimating then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
       |> Sub.batch

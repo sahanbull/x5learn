@@ -275,11 +275,14 @@ update msg ({nav, userProfileForm} as model) =
       (model |> updateUserState completeRegistration, Cmd.none)
       |> saveUserState msg
 
-    MouseOverEntity maybeId ->
-      ({model | hoveringEntityId = maybeId }, Cmd.none)
+    BubbleMouseOver id ->
+      ({model | hoveringEntityId = Just id }, Cmd.none)
 
-    BubbleClicked entity chunkIndex ->
-      ({model | popup = BubbleFlyout entity }, Cmd.none)
+    BubbleMouseOut ->
+      ({model | hoveringEntityId = Nothing } |> closePopup, Cmd.none)
+
+    BubbleClicked oerUrl entity ->
+      ({model | popup = if model.popup==Nothing then Just <| BubbleFlyout oerUrl entity else Nothing }, Cmd.none)
 
 
 updateUserState : (UserState -> UserState) -> Model -> Model

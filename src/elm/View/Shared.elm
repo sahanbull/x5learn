@@ -685,8 +685,8 @@ cardHeight =
 
 
 entityHoverHandlers entity =
-  [ Events.onMouseEnter <| MouseOverEntity <| Just entity.id
-  , Events.onMouseLeave <| MouseOverEntity Nothing
+  [ Events.onMouseEnter <| BubbleMouseOver entity.id
+  , Events.onMouseLeave <| BubbleMouseOut
   ]
 
 

@@ -2,6 +2,7 @@ module View.Bubblogram exposing (viewBubblogram)
 
 import Dict exposing (Dict)
 import Time exposing (Posix, millisToPosix, posixToMillis)
+import Json.Decode
 
 import List.Extra
 
@@ -9,7 +10,7 @@ import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Svg.Events exposing (..)
 
-import Element exposing (el, html, inFront, row, padding, spacing, px, moveDown, moveRight)
+import Element exposing (el, html, inFront, row, padding, spacing, px, moveDown, moveRight, above, none)
 import Element.Font as Font
 import Element.Background as Background
 
@@ -119,11 +120,37 @@ viewBubblogram model url chunks =
                 |> captionNowrap [ whiteText, moveRight <| (posX + size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY - size*1.1*bubbleZoom) * contentHeight + marginTop - 15 ]
                 |> inFront
                 |> List.singleton
+
+      flyout =
+        case model.popup of
+          Just (BubbleFlyout oerUrl entity) ->
+            if oerUrl == url then
+              case rawBubbles |> List.filter (\bubble -> bubble.entity == entity) |> List.reverse |> List.head of
+                Nothing -> -- shouldn't happen
+                  []
+
+                Just {posX, posY, size} ->
+                  let
+                      box =
+                        entity.title ++ " definition goes here"
+                        |> bodyWrap []
+                        |> List.singleton
+                        |> menuColumn [ Element.width <| px flyoutWidth, padding 10 ]
+                  in
+                      none
+                      |> el [ above box, moveRight <| posX * contentWidth + marginX - flyoutWidth/2, moveDown <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5 ]
+                      |> inFront
+                      |> List.singleton
+            else
+              []
+
+          _ ->
+            []
   in
       [ background ] ++ svgBubbles
       |> svg [ width widthString, height heightString, viewBox <| "0 0 " ++ ([ widthString, heightString ] |> String.join " ") ]
       |> html
-      |> el entityLabel
+      |> el (entityLabel ++ flyout)
 
 
 occurrencesFromChunks : List Chunk -> List Occurrence
@@ -232,9 +259,9 @@ viewBubble model oerUrl ({entity, posX, posY, size} as bubble) =
         , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
         , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
         , fill <| Color.toCssString <| colorFromBubble bubble
-        , onMouseOver <| MouseOverEntity <| Just entity.id
-        , onMouseOut <| MouseOverEntity Nothing
-        , onClick <| BubbleClicked entity chunkIndex
+        , onMouseOver <| BubbleMouseOver entity.id
+        , onMouseOut <| BubbleMouseOut
+        , stopPropagationOn "click" (Json.Decode.succeed (BubbleClicked oerUrl entity, True))
         ] ++ outline)
         []
 
@@ -280,3 +307,7 @@ rawBubbleAlpha =
 
 bubbleZoom =
   0.042
+
+
+flyoutWidth =
+  175

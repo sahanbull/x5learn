@@ -52,8 +52,9 @@ type Msg
   | RemoveNote Posix
   | VideoIsPlayingAtPosition Float
   | SubmitPostRegistrationForm Bool
-  | MouseOverEntity (Maybe String)
-  | BubbleClicked Entity Int
+  | BubbleMouseOver String
+  | BubbleMouseOut
+  | BubbleClicked OerUrl Entity
 
 
 type UserProfileField

@@ -140,6 +140,7 @@ type alias Entity =
 type Popup
   = ChunkOnBar ChunkPopup
   | UserMenu
+  | BubbleFlyout OerUrl Entity
 
 
 type alias ChunkPopup = { barId : String, oer : Oer, chunk : Chunk, entityPopup : Maybe EntityPopup }

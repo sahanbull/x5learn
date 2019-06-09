@@ -17,7 +17,6 @@ import Color -- avh4/elm-color
 
 import Model exposing (..)
 import View.Shared exposing (..)
-import View.PatchSvg exposing (..)
 
 import Msg exposing (..)
 
@@ -111,7 +110,7 @@ viewBubblogram model url chunks =
             []
 
           Just entityId ->
-            case rawBubbles |> List.filter (\bubble -> bubble.entity.id == entityId) |> List.head of
+            case rawBubbles |> List.filter (\bubble -> bubble.entity.id == entityId) |> List.reverse |> List.head of
               Nothing -> -- shouldn't happen
                 []
 
@@ -234,7 +233,7 @@ viewBubble model oerUrl ({entity, posX, posY, size} as bubble) =
         , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
         , fill <| Color.toCssString <| colorFromBubble bubble
         , onMouseOver <| MouseOverEntity <| Just entity.id
-        , onMouseLeave <| MouseOverEntity Nothing
+        , onMouseOut <| MouseOverEntity Nothing
         ] ++ outline)
         []
 

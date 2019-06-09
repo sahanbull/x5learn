@@ -154,20 +154,29 @@ bubbleFromOccurrence model mergePhase occurrences {entity, posX, posY} =
 
       mergedSize =
         occurrencesWithSameEntityId |> List.length |> toFloat |> sqrt
+
+      isSearchTerm =
+        isEqualToSearchString model entity.title
+
+      (hue, saturation, alpha) =
+        if isSearchTerm then
+          (0.145, 0.9, 0.15 + 0.55 * (1.0 / (occurrencesWithSameEntityId |> List.length |> toFloat)))
+        else
+          (0.536, fakeLexicalSimilarityToSearchTerm entity.id, rawBubbleAlpha)
   in
       { entity = entity
       , posX = interp mergePhase posX mergedPosX
       , posY = interp mergePhase posY mergedPosY
       , size = interp mergePhase 1 mergedSize
-      , hue = 0.145 -- 240 - 180 * (fakeStringDistanceFromSearchTerm entityId)
-      , alpha = rawBubbleAlpha
-      , saturation = if (isEqualToSearchString model entity.title) then 0.9 else (fakeLexicalSimilarityToSearchTerm entity.id)
+      , hue = hue
+      , saturation = saturation
+      , alpha = alpha
       }
 
 
 fakeLexicalSimilarityToSearchTerm : String -> Float
 fakeLexicalSimilarityToSearchTerm id =
-  if (String.length id) == 7 then 0.7 else 0
+  if (String.length id) == 7 then 0.5 else 0
 
 
 -- fakePredictedLevelOfKnowledgeFromEntity : String -> Float

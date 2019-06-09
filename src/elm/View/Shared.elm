@@ -82,8 +82,8 @@ bigButtonPadding =
   paddingXY 13 10
 
 
-borderTop px =
-  Border.widthEach { allSidesZero | top = px }
+-- borderTop px =
+--   Border.widthEach { allSidesZero | top = px }
 
 
 borderBottom px =
@@ -442,23 +442,9 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                 _ ->
                   False
 
-            -- containsSearchString =
-            --   case model.searchState of
-            --     Nothing ->
-            --       False
-
-            --     Just searchState ->
-            --       let
-            --           searchStringLowercase =
-            --             searchState.lastSearch |> String.toLower
-            --       in
-            --           chunk.entities
-            --           |> List.map .title
-            --           |> List.any (\title -> String.contains searchStringLowercase (title |> String.toLower))
-
-            border =
+            hintGlow =
               if isPopupOpen then
-                [ Border.color white, Border.widthEach { allSidesZero | top = chunkTopBorderHeight, left = 1, right = 1 } ]
+                []
               else
                 case model.hoveringEntityIds of
                   Nothing ->
@@ -466,7 +452,11 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
 
                   Just ids ->
                     if List.any (\id -> List.member id (chunk.entities |> List.map .id)) ids then
-                      [ Border.color white, borderTop chunkTopBorderHeight ]
+                      none
+                      |> el [ width fill, height <| px 0, Border.rounded 8, Border.glow semiTransparentWhite 8, moveDown (fragmentsBarHeight + 3) ]
+                      |> el [ width fill, paddingXY 6 0 ]
+                      |> inFront
+                      |> List.singleton
                     else
                       []
 
@@ -494,7 +484,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                     []
         in
             none
-            |> el ([ htmlClass "ChunkTrigger", width <| px <| floor <| chunk.length * (toFloat barWidth) - 2, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ border ++ popup ++ clickHandler)
+            |> el ([ htmlClass "ChunkTrigger", width <| px <| floor <| chunk.length * (toFloat barWidth) - 2, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ hintGlow ++ popup ++ clickHandler)
             |> inFront
 
       chunkTriggers =
@@ -518,7 +508,7 @@ viewChunkPopup model popup =
   in
       entitiesSection
       |> menuColumn []
-      |> el [ moveLeft 30, moveDown (fragmentsBarHeight - chunkTopBorderHeight) ]
+      |> el [ moveLeft 30, moveDown fragmentsBarHeight ]
 
 
 viewEntityButton : Model -> ChunkPopup -> Entity -> Element Msg
@@ -692,10 +682,6 @@ cardWidth =
 
 cardHeight =
   280
-
-
-chunkTopBorderHeight =
-  1
 
 
 entityHoverHandlers entity =

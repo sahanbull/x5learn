@@ -13,6 +13,7 @@ import Element.Font as Font
 import Element.Input as Input exposing (button)
 import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave, onFocus)
 import Json.Decode
+import Json.Encode
 import Dict
 
 import Model exposing (..)
@@ -446,12 +447,12 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
               if isPopupOpen then
                 []
               else
-                case model.hoveringEntityIds of
+                case model.hoveringEntityId of
                   Nothing ->
                     []
 
-                  Just ids ->
-                    if List.any (\id -> List.member id (chunk.entities |> List.map .id)) ids then
+                  Just id ->
+                    if chunk.entities |> List.map .id |> List.member id then
                       none
                       |> el [ width fill, height <| px 0, Border.rounded 8, Border.glow semiTransparentWhite 8, moveDown (fragmentsBarHeight + 3) ]
                       |> el [ width fill, paddingXY 6 0 ]
@@ -685,6 +686,10 @@ cardHeight =
 
 
 entityHoverHandlers entity =
-  [ Events.onMouseEnter <| MouseOverEntities <| Just [ entity.id ]
-  , Events.onMouseLeave <| MouseOverEntities Nothing
+  [ Events.onMouseEnter <| MouseOverEntity <| Just entity.id
+  , Events.onMouseLeave <| MouseOverEntity Nothing
   ]
+
+
+-- pointerEventsNone =
+  -- Html.Attributes.property "pointer-events" (Json.Encode.string "none")

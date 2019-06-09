@@ -9,7 +9,7 @@ import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Svg.Events exposing (..)
 
-import Element exposing (el, html, inFront, row, padding, spacing, px, clipX)
+import Element exposing (el, html, inFront, row, padding, spacing, px, moveDown, moveRight)
 import Element.Font as Font
 import Element.Background as Background
 
@@ -17,6 +17,7 @@ import Color -- avh4/elm-color
 
 import Model exposing (..)
 import View.Shared exposing (..)
+import View.PatchSvg exposing (..)
 
 import Msg exposing (..)
 
@@ -48,14 +49,18 @@ containerHeight =
 
 
 contentWidth =
-  cardWidth - 2*margin
+  cardWidth - 2*marginX
 
 
 contentHeight =
-  imageHeight - 2*margin - (fragmentsBarHeight + 10)
+  imageHeight - 2*marginX - (fragmentsBarHeight + 10)
 
 
-margin =
+marginTop =
+  marginX + 18
+
+
+marginX =
   25
 
 
@@ -99,10 +104,27 @@ viewBubblogram model url chunks =
         rawBubbles
         |> List.filter (\b -> b.entity == bubble.entity)
         |> List.length
+
+      entityLabel =
+        case model.hoveringEntityId of
+          Nothing ->
+            []
+
+          Just entityId ->
+            case rawBubbles |> List.filter (\bubble -> bubble.entity.id == entityId) |> List.head of
+              Nothing -> -- shouldn't happen
+                []
+
+              Just {entity, posX, posY, size} ->
+                entity.title
+                |> captionNowrap [ whiteText, moveRight <| (posX + size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY - size*1.1*bubbleZoom) * contentHeight + marginTop - 15 ]
+                |> inFront
+                |> List.singleton
   in
       [ background ] ++ svgBubbles
       |> svg [ width widthString, height heightString, viewBox <| "0 0 " ++ ([ widthString, heightString ] |> String.join " ") ]
       |> html
+      |> el entityLabel
 
 
 occurrencesFromChunks : List Chunk -> List Occurrence
@@ -198,29 +220,23 @@ viewBubble : Model -> OerUrl -> Bubble -> Svg.Svg Msg
 viewBubble model oerUrl ({entity, posX, posY, size} as bubble) =
   let
       isHovering =
-        model.hoveringEntityIds == Just [ entity.id ]
+        model.hoveringEntityId == Just entity.id
 
       outline =
         if isHovering then
           [ stroke "white", strokeWidth "2" ]
         else
           []
-
-      tooltip =
-        if isHovering then
-          [ Svg.title [] [ text <| entity.title ] ]
-        else
-          []
   in
       circle
-        ([ cx (posX * (toFloat contentWidth) + margin |> String.fromFloat)
-        , cy (posY * (toFloat contentHeight) + margin + 18 |> String.fromFloat)
-        , r (size * (toFloat contentWidth) * 0.042 |> String.fromFloat)
+        ([ cx (posX * (toFloat contentWidth) + marginX |> String.fromFloat)
+        , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
+        , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
         , fill <| Color.toCssString <| colorFromBubble bubble
-        , onMouseOver <| MouseOverEntities <| Just [ entity.id ]
-        , onMouseOut <| MouseOverEntities Nothing
+        , onMouseOver <| MouseOverEntity <| Just entity.id
+        , onMouseLeave <| MouseOverEntity Nothing
         ] ++ outline)
-        tooltip
+        []
 
 
 interp : Float -> Float -> Float -> Float
@@ -240,12 +256,12 @@ averageOf getterFunction records =
 viewKeyConcept model {entity} =
   let
       underline =
-        case model.hoveringEntityIds of
+        case model.hoveringEntityId of
           Nothing ->
             []
 
-          Just entityIds ->
-            if List.member entity.id entityIds then
+          Just entityId ->
+            if entityId == entity.id then
               [ Font.underline ]
             else
               []
@@ -260,3 +276,7 @@ viewKeyConcept model {entity} =
 
 rawBubbleAlpha =
   0.28
+
+
+bubbleZoom =
+  0.042

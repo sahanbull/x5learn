@@ -199,7 +199,7 @@ update msg ({nav, userProfileForm} as model) =
 
     SetPopup popup ->
       let
-          hoveringEntityIds =
+          hoveringEntityId =
             case model.popup of
               Just (ChunkOnBar p) ->
                 case p.entityPopup of
@@ -207,12 +207,12 @@ update msg ({nav, userProfileForm} as model) =
                     Nothing
 
                   Just entityPopup ->
-                    Just [ entityPopup.entityId ]
+                    Just entityPopup.entityId
 
               _ ->
                 Nothing
       in
-          ( { model | popup = Just popup, hoveringEntityIds = hoveringEntityIds }, Cmd.none)
+          ( { model | popup = Just popup, hoveringEntityId = hoveringEntityId }, Cmd.none)
 
     ClosePopup ->
       ( model |> closePopup, Cmd.none )
@@ -275,8 +275,8 @@ update msg ({nav, userProfileForm} as model) =
       (model |> updateUserState completeRegistration, Cmd.none)
       |> saveUserState msg
 
-    MouseOverEntities maybeIds ->
-      ({model | hoveringEntityIds = maybeIds }, Cmd.none)
+    MouseOverEntity maybeId ->
+      ({model | hoveringEntityId = maybeId }, Cmd.none)
 
 
 updateUserState : (UserState -> UserState) -> Model -> Model
@@ -428,7 +428,7 @@ requestOersAsNeeded userState model =
 
 closePopup : Model -> Model
 closePopup model =
-  { model | popup = Nothing, hoveringEntityIds = Nothing }
+  { model | popup = Nothing, hoveringEntityId = Nothing }
 
 
 resetUserProfileForm : Model -> Model

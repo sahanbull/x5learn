@@ -443,7 +443,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                 _ ->
                   False
 
-            hintGlow =
+            hint =
               if isPopupOpen then
                 []
               else
@@ -453,9 +453,8 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
 
                   Just id ->
                     if chunk.entities |> List.map .id |> List.member id then
-                      none
-                      |> el [ width fill, height <| px 0, Border.rounded 8, Border.glow semiTransparentWhite 8, moveDown (fragmentsBarHeight + 3) ]
-                      |> el [ width fill, paddingXY 6 0 ]
+                      image [ alpha 0.9, centerX, width <| px 10, moveDown 6 ] { src = svgPath "white_triangle_down", description = "" }
+                      |> el [ width fill ]
                       |> inFront
                       |> List.singleton
                     else
@@ -485,7 +484,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                     []
         in
             none
-            |> el ([ htmlClass "ChunkTrigger", width <| px <| floor <| chunk.length * (toFloat barWidth) - 2, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ hintGlow ++ popup ++ clickHandler)
+            |> el (hint ++ [ htmlClass "ChunkTrigger", width <| px <| floor <| chunk.length * (toFloat barWidth) - 2, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
             |> inFront
 
       chunkTriggers =

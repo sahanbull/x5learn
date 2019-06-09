@@ -280,6 +280,7 @@ def search_results_from_x5gon_api(text):
     conn.request('GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&text='+encoded_text)
     response = conn.getresponse().read().decode("utf-8")
     materials = json.loads(response)['rec_materials'][:max_results]
+    materials = [ m for m in materials if '/assignments/' not in m['url'] ] # filter out assignments from MIT OCW
     oers = []
     for index, material in enumerate(materials):
         url = material['url']

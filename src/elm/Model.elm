@@ -441,3 +441,13 @@ millisSinceEnrichmentLoaded model url =
 
     Just time ->
       (model.currentTime |> posixToMillis) - (time |> posixToMillis)
+
+
+
+isEqualToSearchString model entityTitle =
+  case model.searchState of
+    Nothing ->
+      False
+
+    Just searchState ->
+      (entityTitle |> String.toLower) == (searchState.lastSearch |> String.toLower)

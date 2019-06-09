@@ -52,11 +52,11 @@ contentWidth =
 
 
 contentHeight =
-  imageHeight - 2*margin - fragmentsBarHeight
+  imageHeight - 2*margin - (fragmentsBarHeight + 10)
 
 
 margin =
-  30
+  25
 
 
 viewBubblogram model url chunks =
@@ -77,7 +77,7 @@ viewBubblogram model url chunks =
               |> occurrencesFromChunks
         in
             occurrences
-            |> List.map (bubbleFromOccurrence mergePhase occurrences)
+            |> List.map (bubbleFromOccurrence model mergePhase occurrences)
 
       -- mergedBubbles =
       --   rawBubbles
@@ -137,12 +137,12 @@ occurrenceFromEntity posX nEntitiesMinus1 entityIndex entity =
       Occurrence entity posX posY
 
 
-bubbleFromOccurrence : Float -> List Occurrence -> Occurrence -> Bubble
-bubbleFromOccurrence mergePhase occurrences occurrence =
+bubbleFromOccurrence : Model -> Float -> List Occurrence -> Occurrence -> Bubble
+bubbleFromOccurrence model mergePhase occurrences {entity, posX, posY} =
   let
       occurrencesWithSameEntityId =
         occurrences
-        |> List.filter (\o -> o.entity.id == occurrence.entity.id)
+        |> List.filter (\o -> o.entity.id == entity.id)
 
       mergedPosX =
         occurrencesWithSameEntityId
@@ -155,22 +155,19 @@ bubbleFromOccurrence mergePhase occurrences occurrence =
       mergedSize =
         occurrencesWithSameEntityId |> List.length |> toFloat |> sqrt
   in
-      { entity = occurrence.entity
-      , posX = interp mergePhase occurrence.posX mergedPosX
-      , posY = interp mergePhase occurrence.posY mergedPosY
+      { entity = entity
+      , posX = interp mergePhase posX mergedPosX
+      , posY = interp mergePhase posY mergedPosY
       , size = interp mergePhase 1 mergedSize
-      , hue = 0.144 -- 240 - 180 * (fakeStringDistanceFromSearchTerm occurrence.entityId)
+      , hue = 0.145 -- 240 - 180 * (fakeStringDistanceFromSearchTerm entityId)
       , alpha = rawBubbleAlpha
-      , saturation = fakeLexicalSimilarityToSearchTerm occurrence.entity.id
+      , saturation = if (isEqualToSearchString model entity.title) then 0.9 else (fakeLexicalSimilarityToSearchTerm entity.id)
       }
-      -- , hue = 240 - 180 * (fakePredictedLevelOfInterestFromEntity occurrence.entityId)
-      -- , alpha = fakePredictedLevelOfKnowledgeFromEntity occurrence.entityId
-      -- , saturation = fakedLevelOfTheSystemsConfidenceInHue occurrence.entityId
 
 
 fakeLexicalSimilarityToSearchTerm : String -> Float
 fakeLexicalSimilarityToSearchTerm id =
-  if (String.length id) == 7 then 0.9 else 0
+  if (String.length id) == 7 then 0.7 else 0
 
 
 -- fakePredictedLevelOfKnowledgeFromEntity : String -> Float
@@ -208,7 +205,7 @@ viewBubble model oerUrl ({entity, posX, posY, size} as bubble) =
   in
       circle
         ([ cx (posX * (toFloat contentWidth) + margin |> String.fromFloat)
-        , cy (posY * (toFloat contentHeight) + margin + 20 |> String.fromFloat)
+        , cy (posY * (toFloat contentHeight) + margin + 18 |> String.fromFloat)
         , r (size * (toFloat contentWidth) * 0.042 |> String.fromFloat)
         , fill <| Color.toCssString <| colorFromBubble bubble
         , onMouseOver <| MouseOverEntities <| Just [ entity.id ]

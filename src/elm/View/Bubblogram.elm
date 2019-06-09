@@ -99,21 +99,10 @@ viewBubblogram model url chunks =
         rawBubbles
         |> List.filter (\b -> b.entity == bubble.entity)
         |> List.length
-
-      keyConcepts =
-        rawBubbles
-        |> List.Extra.uniqueBy (\{entity} -> entity.title)
-        |> List.sortBy frequency
-        |> List.reverse
-        |> List.take 3
-        |> List.map (viewKeyConcept model)
-        |> row [ spacing 18, padding 8, Element.width <| px <| containerWidth-8, clipX ]
-        |> inFront
   in
       [ background ] ++ svgBubbles
       |> svg [ width widthString, height heightString, viewBox <| "0 0 " ++ ([ widthString, heightString ] |> String.join " ") ]
       |> html
-      |> el [ keyConcepts ]
 
 
 occurrencesFromChunks : List Chunk -> List Occurrence

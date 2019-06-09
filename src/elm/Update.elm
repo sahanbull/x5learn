@@ -278,6 +278,9 @@ update msg ({nav, userProfileForm} as model) =
     MouseOverEntity maybeId ->
       ({model | hoveringEntityId = maybeId }, Cmd.none)
 
+    BubbleClicked entity chunkIndex ->
+      ({model | popup = BubbleFlyout entity }, Cmd.none)
+
 
 updateUserState : (UserState -> UserState) -> Model -> Model
 updateUserState fn model =

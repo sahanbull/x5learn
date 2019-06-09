@@ -53,6 +53,7 @@ type Msg
   | VideoIsPlayingAtPosition Float
   | SubmitPostRegistrationForm Bool
   | MouseOverEntity (Maybe String)
+  | BubbleClicked Entity Int
 
 
 type UserProfileField

@@ -234,6 +234,7 @@ viewBubble model oerUrl ({entity, posX, posY, size} as bubble) =
         , fill <| Color.toCssString <| colorFromBubble bubble
         , onMouseOver <| MouseOverEntity <| Just entity.id
         , onMouseOut <| MouseOverEntity Nothing
+        , onClick <| BubbleClicked entity chunkIndex
         ] ++ outline)
         []
 

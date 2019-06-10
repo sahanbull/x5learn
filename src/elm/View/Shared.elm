@@ -568,17 +568,19 @@ entityActionButton chunkPopup entityPopup (title, clickAction) =
       actionButtonWithoutIcon attrs title (Just clickAction)
 
 
-viewDefinition model {definition} =
+viewDefinition model {title} =
   let
-      blurb =
-        if definition=="" || definition=="(Definition unavailable)" then
-          "(Definition unavailable)"
-          |> captionNowrap []
-        else
-          ("“" ++ definition ++ "” (Wikidata)")
-          |> bodyWrap [ Font.italic ]
+      definition =
+        title ++ " definition goes here"
+      -- blurb =
+      --   if definition=="" || definition=="(Definition unavailable)" then
+      --     "(Definition unavailable)"
+      --     |> captionNowrap []
+      --   else
+      --     ("“" ++ definition ++ "” (Wikidata)")
+        |> bodyWrap [ Font.italic ]
   in
-      [ blurb ]
+      [ definition ]
       |> column [ padding 10, spacing 16, width (px 240) ]
 
 

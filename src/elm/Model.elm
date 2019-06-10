@@ -132,7 +132,6 @@ type alias Chunk =
 type alias Entity =
   { id : String
   , title : String
-  , definition : String
   , url : String
   }
 

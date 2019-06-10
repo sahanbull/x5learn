@@ -240,10 +240,9 @@ chunkDecoder =
 
 
 entityDecoder =
-  map4 Entity
+  map3 Entity
     (field "id" string)
     (field "title" string)
-    (field "definition" string)
     (field "url" string)
 
 

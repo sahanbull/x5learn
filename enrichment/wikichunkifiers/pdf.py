@@ -1,7 +1,7 @@
 import subprocess, requests, math, json
 import textwrap
 
-from wikichunkifiers.lib.util import temp_file_path, EnrichmentError
+from wikichunkifiers.lib.util import temp_file_path, EnrichmentError, make_chunk
 from wikichunkifiers.lib.wikify import get_entities, WIKIFIER_CHARACTER_LIMIT
 
 def extract_chunks_from_pdf(url):
@@ -19,7 +19,7 @@ def extract_chunks_from_pdf(url):
     for part in parts:
         entities = get_entities(part)
         length = len(part) / len(text)
-        chunk = { 'start': start, 'length': length, 'entities': entities }
+        chunk = make_chunk(start, length, entities, text)
         # print(json.dumps(chunk, indent=4, sort_keys=True))
         chunks.append(chunk)
         start += length

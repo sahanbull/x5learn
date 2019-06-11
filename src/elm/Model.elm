@@ -45,7 +45,7 @@ type alias Model =
   , oerNoteForms : Dict OerUrl String
   , cachedOers : Dict OerUrl Oer
   , requestingOers : Bool
-  , hoveringEntityId : Maybe String
+  , hoveringBubbleEntityId : Maybe String
   }
 
 
@@ -126,6 +126,7 @@ type alias Chunk =
   { start : Float -- 0 to 1
   , length : Float -- 0 to 1
   , entities : List Entity
+  , text : String -- raw text extracted from the resource
   }
 
 
@@ -226,7 +227,7 @@ initialModel nav flags =
   , oerNoteForms = Dict.empty
   , cachedOers = Dict.empty
   , requestingOers = False
-  , hoveringEntityId = Nothing
+  , hoveringBubbleEntityId = Nothing
   }
 
 

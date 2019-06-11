@@ -106,7 +106,7 @@ viewBubblogram model url chunks =
         |> List.length
 
       entityLabel =
-        case model.hoveringEntityId of
+        case hoveringBubbleOrFragmentsBarEntityId model of
           Nothing ->
             []
 
@@ -246,7 +246,7 @@ viewBubble : Model -> OerUrl -> Bubble -> Svg.Svg Msg
 viewBubble model oerUrl ({entity, posX, posY, size} as bubble) =
   let
       isHovering =
-        model.hoveringEntityId == Just entity.id
+        hoveringBubbleOrFragmentsBarEntityId model == Just entity.id
 
       outline =
         if isHovering then
@@ -283,7 +283,7 @@ averageOf getterFunction records =
 viewKeyConcept model {entity} =
   let
       underline =
-        case model.hoveringEntityId of
+        case model.hoveringBubbleEntityId of
           Nothing ->
             []
 
@@ -311,3 +311,22 @@ bubbleZoom =
 
 flyoutWidth =
   175
+
+
+hoveringBubbleOrFragmentsBarEntityId model =
+  case model.hoveringBubbleEntityId of
+    Just entityId ->
+      Just entityId
+
+    Nothing ->
+      case model.popup of
+        Just (ChunkOnBar chunkPopup) ->
+          case chunkPopup.entityPopup of
+            Nothing ->
+              Nothing
+
+            Just entityPopup ->
+              Just entityPopup.entityId
+
+        _ ->
+          Nothing

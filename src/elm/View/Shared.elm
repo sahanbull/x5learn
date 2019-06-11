@@ -447,7 +447,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
               if isPopupOpen then
                 []
               else
-                case model.hoveringEntityId of
+                case model.hoveringBubbleEntityId of
                   Nothing ->
                     []
 
@@ -495,14 +495,14 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
       |> el ([ width fill, height (px fragmentsBarHeight), materialScrimBackground, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)
 
 
-viewChunkPopup model popup =
+viewChunkPopup model chunkPopup =
   let
       entitiesSection =
-        if popup.chunk.entities |> List.isEmpty then
+        if chunkPopup.chunk.entities |> List.isEmpty then
           [ "No data available" |> text ]
         else
-          popup.chunk.entities
-          |> List.map (viewEntityButton model popup)
+          chunkPopup.chunk.entities
+          |> List.map (viewEntityButton model chunkPopup)
           |> column [ width fill ]
           |> List.singleton
   in
@@ -543,7 +543,7 @@ viewEntityPopup model chunkPopup entityPopup entity =
         |> List.map (\item -> entityActionButton chunkPopup entityPopup item |> el [ padding 10 ])
 
       items =
-        [ viewDefinition model entity ] ++ actionButtons
+        (viewMentions entity chunkPopup.chunk.text) ++ actionButtons
   in
       items
       |> menuColumn []
@@ -568,20 +568,36 @@ entityActionButton chunkPopup entityPopup (title, clickAction) =
       actionButtonWithoutIcon attrs title (Just clickAction)
 
 
-viewDefinition model {title} =
+viewMentions {title} text =
   let
-      definition =
-        title ++ " definition goes here"
-      -- blurb =
-      --   if definition=="" || definition=="(Definition unavailable)" then
-      --     "(Definition unavailable)"
-      --     |> captionNowrap []
-      --   else
-      --     ("“" ++ definition ++ "” (Wikidata)")
-        |> bodyWrap [ Font.italic ]
+      titleLower =
+        String.toLower title
+
+      viewSentence sentence =
+        sentence
+        |> bodyWrap [ borderBottom 1, padding 10, width <| px 400 ]
   in
-      [ definition ]
-      |> column [ padding 10, spacing 16, width (px 240) ]
+      text
+      |> String.split ". "
+      |> List.concatMap (String.split "\n")
+      |> List.filter (\sentence -> (looksRoughlyLikeAnEnglishSentence sentence) && (String.contains titleLower <| String.toLower sentence))
+      |> List.map viewSentence
+
+
+-- viewDefinition model {title} =
+--   let
+--       definition =
+--         title ++ " definition goes here"
+--       -- blurb =
+--       --   if definition=="" || definition=="(Definition unavailable)" then
+--       --     "(Definition unavailable)"
+--       --     |> captionNowrap []
+--       --   else
+--       --     ("“" ++ definition ++ "” (Wikidata)")
+--         |> bodyWrap [ Font.italic ]
+--   in
+--       [ definition ]
+--       |> column [ padding 10, spacing 16, width (px 240) ]
 
 
 fragmentsBarHeight = 16
@@ -694,3 +710,24 @@ entityHoverHandlers entity =
 
 -- pointerEventsNone =
   -- Html.Attributes.property "pointer-events" (Json.Encode.string "none")
+
+
+looksRoughlyLikeAnEnglishSentence str =
+  let
+      words =
+        str
+        |> String.split " "
+
+      nWords =
+        words
+        |> List.length
+
+      nWordsThatLookRoughlyLikeEnglish =
+        words
+        |> List.filter (\word -> word |> String.all (\c -> Char.isUpper c || Char.isLower c))
+        |> List.length
+
+  in
+      nWords > 2
+      && nWords < 20
+      && nWordsThatLookRoughlyLikeEnglish > (nWords // 2)

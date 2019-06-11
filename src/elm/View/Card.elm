@@ -254,13 +254,21 @@ viewOerCard model userState recommendedFragments position barId oer =
       heightOfCard =
         height (px cardHeight)
 
+      clickHandler =
+        case openInspectorOnPress model oer of
+          Just msg ->
+            [ onClick msg ]
+
+          Nothing ->
+            []
       card =
         [ (if hovering then hoverPreview else carousel)
         ]
-        |> column [ widthOfCard, heightOfCard, htmlClass "materialCard", onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing), title, bottomInfo, fragmentsBar ]
+        |> column ([ widthOfCard, heightOfCard, htmlClass "materialCard", onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing), title, bottomInfo, fragmentsBar ] ++ clickHandler)
 
       wrapperAttrs =
-        [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| button [] { onPress = openInspectorOnPress model oer, label = card }, moveRight position.x, moveDown position.y ]
+        -- [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| button [] { onPress = openInspectorOnPress model oer, label = card }, moveRight position.x, moveDown position.y ]
+        [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y ]
   in
       none
       |> el wrapperAttrs

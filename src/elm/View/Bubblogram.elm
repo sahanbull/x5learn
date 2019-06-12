@@ -253,9 +253,9 @@ viewBubble model oerUrl chunks ({entity, posX, posY, size} as bubble) =
         , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
         , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
         , fill <| Color.toCssString <| colorFromBubble bubble
-        , onMouseOver <| BubbleMouseOver entity.id
+        , onMouseOver <| BubbleMouseOver oerUrl chunks entity
         , onMouseOut <| BubbleMouseOut
-        , custom "click" (Json.Decode.succeed { message = BubbleClicked oerUrl entity chunks, stopPropagation = True, preventDefault = True })
+        , custom "click" (Json.Decode.succeed { message = BubbleClicked oerUrl, stopPropagation = True, preventDefault = True })
         , class "UserSelectNone"
         ] ++ outline)
         []
@@ -273,27 +273,6 @@ colorFromBubble {hue, alpha, saturation} =
 
 averageOf getterFunction records =
   (records |> List.map getterFunction |> List.sum) / (records |> List.length |> toFloat)
-
-
-viewKeyConcept model {entity} =
-  let
-      underline =
-        case model.hoveringBubbleEntityId of
-          Nothing ->
-            []
-
-          Just entityId ->
-            if entityId == entity.id then
-              [ Font.underline ]
-            else
-              []
-
-      attrs =
-        [ whiteText ] ++ (entityHoverHandlers entity) ++ underline
-  in
-      entity.title
-      |> truncateSentence 20
-      |> captionNowrap attrs
 
 
 rawBubbleAlpha =
@@ -328,11 +307,11 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
   let
       (text, popupWidth) =
         case content of
-          Definition ->
-            (entityId ++ " definition goes here", 175)
+          DefinitionInBubblePopup ->
+            (entityId ++ " definition goes here", 170)
 
-          Mention {sentence} ->
-            (sentence, 300)
+          MentionInBubblePopup {sentence} ->
+            (sentence, 170) -- If we want to make it wider we need to find a solution to prevent the popup from being occluded by any OER card to the left
 
       box =
         text

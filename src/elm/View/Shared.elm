@@ -446,8 +446,8 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
             mentions =
               let
                   viewMention =
-                    -- image [ alpha 0.9, centerX, width <| px 10, moveDown 6 ] { src = svgPath "white_triangle_down", description = "" }
-                    image [ alpha 0.9, centerX, width <| px 14, moveDown 9 ] { src = svgPath "white_semicircle", description = "" }
+                    image [ alpha 0.9, centerX, width <| px 10, moveDown 6 ] { src = svgPath "white_triangle_down", description = "" }
+                    -- image [ alpha 0.9, centerX, width <| px 14, moveDown 9 ] { src = svgPath "white_semicircle", description = "" }
                     |> el [ width fill ]
               in
                   if isPopupOpen then
@@ -692,12 +692,6 @@ cardWidth =
 
 cardHeight =
   280
-
-
-entityHoverHandlers entity =
-  [ Events.onMouseEnter <| BubbleMouseOver entity.id
-  , Events.onMouseLeave <| BubbleMouseOut
-  ]
 
 
 -- pointerEventsNone =

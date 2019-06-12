@@ -46,6 +46,7 @@ type alias Model =
   , cachedOers : Dict OerUrl Oer
   , requestingOers : Bool
   , hoveringBubbleEntityId : Maybe String
+  , mentionsInOers : MentionsDict
   }
 
 
@@ -150,8 +151,10 @@ type alias EntityPopup = { entityId : String, hoveringAction : Maybe String }
 type alias BubblePopupState = { oerUrl : OerUrl, entityId : String, content : BubblePopupContent, nextContents : List BubblePopupContent }
 
 type BubblePopupContent
-  = Definition
-  | Mention MentionInOer
+  = DefinitionInBubblePopup
+  | MentionInBubblePopup MentionInOer
+
+type alias MentionsDict = Dict (OerUrl,String) (List MentionInOer)
 
 type alias MentionInOer =
   { chunkIndex : Int
@@ -240,6 +243,7 @@ initialModel nav flags =
   , cachedOers = Dict.empty
   , requestingOers = False
   , hoveringBubbleEntityId = Nothing
+  , mentionsInOers = Dict.empty
   }
 
 

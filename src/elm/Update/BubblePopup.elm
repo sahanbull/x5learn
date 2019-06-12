@@ -6,11 +6,6 @@ import Dict
 import Model exposing (..)
 
 
-getMentions : Model -> OerUrl -> String -> Maybe (List MentionInOer)
-getMentions model oerUrl entityId =
-  model.mentionsInOers |> Dict.get (oerUrl, entityId)
-
-
 findMentions : Model -> OerUrl -> List Chunk -> Entity -> MentionsDict
 findMentions ({mentionsInOers} as model) oerUrl chunks entity =
   case getMentions model oerUrl entity.id of

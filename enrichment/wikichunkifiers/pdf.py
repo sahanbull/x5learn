@@ -19,7 +19,7 @@ def extract_chunks_from_pdf(url):
     for part in parts:
         entities = get_entities(part)
         length = len(part) / len(text)
-        chunk = make_chunk(start, length, entities, text)
+        chunk = make_chunk(start, length, entities, part)
         # print(json.dumps(chunk, indent=4, sort_keys=True))
         chunks.append(chunk)
         start += length

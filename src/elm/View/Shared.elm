@@ -421,7 +421,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
       pxFromFraction fraction =
         (barWidth |> toFloat) * fraction
 
-      chunkTrigger chunk =
+      chunkTrigger chunkIndex chunk =
         let
             chunkPopup =
               let
@@ -444,6 +444,32 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                   False
 
             bump =
+              case model.hoveringBubbleEntityId of
+                Nothing ->
+                  []
+
+                Just entityId ->
+                  if isPopupOpen || (anyMentionsOfEntityInThisChunk entityId) then
+                    []
+                  else if chunk.entities |> List.map .id |> List.member entityId then
+                    image [ alpha 0.9, centerX, height <| px 12, moveDown 2 ] { src = svgPath "white_semicircle", description = "" }
+                    |> el [ width fill ]
+                    |> inFront
+                    |> List.singleton
+                  else
+                    []
+
+            anyMentionsOfEntityInThisChunk entityId =
+              entityId
+              |> mentionsInThisChunk
+              |> List.any (\mention -> mention.chunkIndex==chunkIndex)
+
+            mentionsInThisChunk entityId =
+              getMentions model oer.url entityId
+              |> Maybe.withDefault [] -- shouldn't happen
+              |> List.filter (\mention -> mention.chunkIndex == chunkIndex)
+
+            mentionIndicators =
               if isPopupOpen then
                 []
               else
@@ -451,15 +477,17 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                   Nothing ->
                     []
 
-                  Just id ->
-                    if chunk.entities |> List.map .id |> List.member id then
-                      -- image [ alpha 0.9, centerX, width <| px 10, moveDown 6 ] { src = svgPath "white_triangle_down", description = "" }
-                      image [ alpha 0.9, centerX, height <| px 12, moveDown 2 ] { src = svgPath "white_semicircle", description = "" }
-                      |> el [ width fill ]
-                      |> inFront
-                      |> List.singleton
-                    else
-                      []
+                  Just entityId ->
+                    let
+                        viewMentionIndicator mention =
+                          none
+                          |> el [ width fill, above <| image [ alpha 0.9, centerX, width <| px 10, moveDown fragmentsBarHeight ] { src = svgPath "white_triangle_down", description = "" } ]
+                    in
+                        mentionsInThisChunk entityId
+                        |> List.map viewMentionIndicator
+                        |> row [ width <| px chunkWidth, paddingXY 5 0 ]
+                        |> inFront
+                        |> List.singleton
 
             background =
               if isPopupOpen then
@@ -488,12 +516,12 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
               floor <| chunk.length * (toFloat barWidth) - 2
         in
             none
-            |> el (bump ++ [ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
+            |> el (bump ++ mentionIndicators ++ [ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
             |> inFront
 
       chunkTriggers =
         chunks
-        |> List.map chunkTrigger
+        |> List.indexedMap chunkTrigger
   in
       none
       |> el ([ width fill, height (px fragmentsBarHeight), materialScrimBackground, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)

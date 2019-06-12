@@ -468,3 +468,8 @@ isEqualToSearchString model entityTitle =
 
     Just searchState ->
       (entityTitle |> String.toLower) == (searchState.lastSearch |> String.toLower)
+
+
+getMentions : Model -> OerUrl -> String -> Maybe (List MentionInOer)
+getMentions model oerUrl entityId =
+  model.mentionsInOers |> Dict.get (oerUrl, entityId)

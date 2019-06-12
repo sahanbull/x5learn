@@ -443,27 +443,23 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                 _ ->
                   False
 
-            mentions =
-              let
-                  viewMention =
-                    image [ alpha 0.9, centerX, width <| px 10, moveDown 6 ] { src = svgPath "white_triangle_down", description = "" }
-                    -- image [ alpha 0.9, centerX, width <| px 14, moveDown 9 ] { src = svgPath "white_semicircle", description = "" }
-                    |> el [ width fill ]
-              in
-                  if isPopupOpen then
+            bump =
+              if isPopupOpen then
+                []
+              else
+                case model.hoveringBubbleEntityId of
+                  Nothing ->
                     []
-                  else
-                    case model.hoveringBubbleEntityId of
-                      Nothing ->
-                        []
 
-                      Just id ->
-                        if chunk.entities |> List.map .id |> List.member id then
-                          viewMention
-                          |> inFront
-                          |> List.singleton
-                        else
-                          []
+                  Just id ->
+                    if chunk.entities |> List.map .id |> List.member id then
+                      -- image [ alpha 0.9, centerX, width <| px 10, moveDown 6 ] { src = svgPath "white_triangle_down", description = "" }
+                      image [ alpha 0.9, centerX, height <| px 12, moveDown 2 ] { src = svgPath "white_semicircle", description = "" }
+                      |> el [ width fill ]
+                      |> inFront
+                      |> List.singleton
+                    else
+                      []
 
             background =
               if isPopupOpen then
@@ -492,7 +488,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
               floor <| chunk.length * (toFloat barWidth) - 2
         in
             none
-            |> el (mentions ++ [ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
+            |> el (bump ++ [ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
             |> inFront
 
       chunkTriggers =

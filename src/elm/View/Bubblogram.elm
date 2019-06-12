@@ -61,7 +61,7 @@ marginTop =
 
 
 marginX =
-  30
+  25
 
 
 viewBubblogram model oerUrl chunks =

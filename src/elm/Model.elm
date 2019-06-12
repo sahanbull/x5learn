@@ -140,12 +140,24 @@ type alias Entity =
 type Popup
   = ChunkOnBar ChunkPopup
   | UserMenu
-  | BubbleFlyout OerUrl Entity
+  | BubblePopup BubblePopupState
 
 
 type alias ChunkPopup = { barId : String, oer : Oer, chunk : Chunk, entityPopup : Maybe EntityPopup }
 
 type alias EntityPopup = { entityId : String, hoveringAction : Maybe String }
+
+type alias BubblePopupState = { oerUrl : OerUrl, entityId : String, content : BubblePopupContent, nextContents : List BubblePopupContent }
+
+type BubblePopupContent
+  = Definition
+  | Mention MentionInOer
+
+type alias MentionInOer =
+  { chunkIndex : Int
+  , indexInChunk : Int
+  , sentence : String
+  }
 
 type alias Gain =
   { title : String

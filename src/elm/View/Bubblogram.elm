@@ -8,7 +8,7 @@ import List.Extra
 
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
-import Svg.Events exposing (..)
+import Svg.Events exposing (onMouseOver, onMouseOut, custom)
 
 import Element exposing (el, html, inFront, row, padding, spacing, px, moveDown, moveRight, above, none)
 import Element.Font as Font
@@ -61,13 +61,13 @@ marginTop =
 
 
 marginX =
-  25
+  30
 
 
-viewBubblogram model url chunks =
+viewBubblogram model oerUrl chunks =
   let
       mergePhase =
-        (millisSinceEnrichmentLoaded model url |> toFloat) / (toFloat enrichmentAnimationDuration) |> Basics.min 1
+        (millisSinceEnrichmentLoaded model oerUrl |> toFloat) / (toFloat enrichmentAnimationDuration) |> Basics.min 1
 
       widthString =
         containerWidth |> String.fromInt
@@ -95,7 +95,7 @@ viewBubblogram model url chunks =
         rawBubbles
         |> List.sortBy frequency
         |> List.reverse
-        |> List.map (viewBubble model url)
+        |> List.map (viewBubble model oerUrl chunks)
 
       background =
         rect [ width widthString, height heightString, fill "#191919" ] []
@@ -105,13 +105,17 @@ viewBubblogram model url chunks =
         |> List.filter (\b -> b.entity == bubble.entity)
         |> List.length
 
+      findBubbleByEntityId : String -> Maybe Bubble
+      findBubbleByEntityId entityId =
+        rawBubbles |> List.filter (\bubble -> bubble.entity.id == entityId) |> List.reverse |> List.head
+
       entityLabel =
         case hoveringBubbleOrFragmentsBarEntityId model of
           Nothing ->
             []
 
           Just entityId ->
-            case rawBubbles |> List.filter (\bubble -> bubble.entity.id == entityId) |> List.reverse |> List.head of
+            case findBubbleByEntityId entityId of
               Nothing -> -- shouldn't happen
                 []
 
@@ -121,26 +125,16 @@ viewBubblogram model url chunks =
                 |> inFront
                 |> List.singleton
 
-      flyout =
+      popup =
         case model.popup of
-          Just (BubbleFlyout oerUrl entity) ->
-            if oerUrl == url then
-              case rawBubbles |> List.filter (\bubble -> bubble.entity == entity) |> List.reverse |> List.head of
+          Just (BubblePopup state) ->
+            if state.oerUrl==oerUrl then
+              case findBubbleByEntityId state.entityId of
                 Nothing -> -- shouldn't happen
                   []
 
-                Just {posX, posY, size} ->
-                  let
-                      box =
-                        entity.title ++ " definition goes here"
-                        |> bodyWrap []
-                        |> List.singleton
-                        |> menuColumn [ Element.width <| px flyoutWidth, padding 10 ]
-                  in
-                      none
-                      |> el [ above box, moveRight <| posX * contentWidth + marginX - flyoutWidth/2, moveDown <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5 ]
-                      |> inFront
-                      |> List.singleton
+                Just bubble ->
+                  viewPopup model state bubble
             else
               []
 
@@ -150,7 +144,7 @@ viewBubblogram model url chunks =
       [ background ] ++ svgBubbles
       |> svg [ width widthString, height heightString, viewBox <| "0 0 " ++ ([ widthString, heightString ] |> String.join " ") ]
       |> html
-      |> el (entityLabel ++ flyout)
+      |> el (entityLabel ++ popup)
 
 
 occurrencesFromChunks : List Chunk -> List Occurrence
@@ -242,8 +236,8 @@ fakeLexicalSimilarityToSearchTerm id =
 --   (String.length id |> modBy 5 |> toFloat) / 5 * 100
 
 
-viewBubble : Model -> OerUrl -> Bubble -> Svg.Svg Msg
-viewBubble model oerUrl ({entity, posX, posY, size} as bubble) =
+viewBubble : Model -> OerUrl -> List Chunk -> Bubble -> Svg.Svg Msg
+viewBubble model oerUrl chunks ({entity, posX, posY, size} as bubble) =
   let
       isHovering =
         hoveringBubbleOrFragmentsBarEntityId model == Just entity.id
@@ -261,7 +255,8 @@ viewBubble model oerUrl ({entity, posX, posY, size} as bubble) =
         , fill <| Color.toCssString <| colorFromBubble bubble
         , onMouseOver <| BubbleMouseOver entity.id
         , onMouseOut <| BubbleMouseOut
-        , stopPropagationOn "click" (Json.Decode.succeed (BubbleClicked oerUrl entity, True))
+        , custom "click" (Json.Decode.succeed { message = BubbleClicked oerUrl entity chunks, stopPropagation = True, preventDefault = True })
+        , class "UserSelectNone"
         ] ++ outline)
         []
 
@@ -309,10 +304,6 @@ bubbleZoom =
   0.042
 
 
-flyoutWidth =
-  175
-
-
 hoveringBubbleOrFragmentsBarEntityId model =
   case model.hoveringBubbleEntityId of
     Just entityId ->
@@ -330,3 +321,26 @@ hoveringBubbleOrFragmentsBarEntityId model =
 
         _ ->
           Nothing
+
+
+viewPopup : Model -> BubblePopupState -> Bubble -> List (Element.Attribute Msg)
+viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
+  let
+      (text, popupWidth) =
+        case content of
+          Definition ->
+            (entityId ++ " definition goes here", 175)
+
+          Mention {sentence} ->
+            (sentence, 300)
+
+      box =
+        text
+        |> bodyWrap []
+        |> List.singleton
+        |> menuColumn [ Element.width <| px popupWidth, padding 10 ]
+  in
+      none
+      |> el [ above box, moveRight <| posX * contentWidth + marginX - popupWidth/2, moveDown <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5 ]
+      |> inFront
+      |> List.singleton

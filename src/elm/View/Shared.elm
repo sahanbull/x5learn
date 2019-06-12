@@ -443,22 +443,27 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                 _ ->
                   False
 
-            hint =
-              if isPopupOpen then
-                []
-              else
-                case model.hoveringBubbleEntityId of
-                  Nothing ->
+            mentions =
+              let
+                  viewMention =
+                    -- image [ alpha 0.9, centerX, width <| px 10, moveDown 6 ] { src = svgPath "white_triangle_down", description = "" }
+                    image [ alpha 0.9, centerX, width <| px 14, moveDown 9 ] { src = svgPath "white_semicircle", description = "" }
+                    |> el [ width fill ]
+              in
+                  if isPopupOpen then
                     []
+                  else
+                    case model.hoveringBubbleEntityId of
+                      Nothing ->
+                        []
 
-                  Just id ->
-                    if chunk.entities |> List.map .id |> List.member id then
-                      image [ alpha 0.9, centerX, width <| px 10, moveDown 6 ] { src = svgPath "white_triangle_down", description = "" }
-                      |> el [ width fill ]
-                      |> inFront
-                      |> List.singleton
-                    else
-                      []
+                      Just id ->
+                        if chunk.entities |> List.map .id |> List.member id then
+                          viewMention
+                          |> inFront
+                          |> List.singleton
+                        else
+                          []
 
             background =
               if isPopupOpen then
@@ -482,9 +487,12 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                     [ onClickNoBubble <| YoutubeSeekTo chunk.start ]
                   else
                     []
+
+            chunkWidth =
+              floor <| chunk.length * (toFloat barWidth) - 2
         in
             none
-            |> el (hint ++ [ htmlClass "ChunkTrigger", width <| px <| floor <| chunk.length * (toFloat barWidth) - 2, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
+            |> el (mentions ++ [ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
             |> inFront
 
       chunkTriggers =
@@ -543,7 +551,7 @@ viewEntityPopup model chunkPopup entityPopup entity =
         |> List.map (\item -> entityActionButton chunkPopup entityPopup item |> el [ padding 10 ])
 
       items =
-        (viewMentions entity chunkPopup.chunk.text) ++ actionButtons
+        actionButtons
   in
       items
       |> menuColumn []
@@ -566,22 +574,6 @@ entityActionButton chunkPopup entityPopup (title, clickAction) =
         hoverAction :: ([ width fill ] ++ background)
   in
       actionButtonWithoutIcon attrs title (Just clickAction)
-
-
-viewMentions {title} text =
-  let
-      titleLower =
-        String.toLower title
-
-      viewSentence sentence =
-        sentence
-        |> bodyWrap [ borderBottom 1, padding 10, width <| px 400 ]
-  in
-      text
-      |> String.split ". "
-      |> List.concatMap (String.split "\n")
-      |> List.filter (\sentence -> (looksRoughlyLikeAnEnglishSentence sentence) && (String.contains titleLower <| String.toLower sentence))
-      |> List.map viewSentence
 
 
 -- viewDefinition model {title} =
@@ -710,24 +702,3 @@ entityHoverHandlers entity =
 
 -- pointerEventsNone =
   -- Html.Attributes.property "pointer-events" (Json.Encode.string "none")
-
-
-looksRoughlyLikeAnEnglishSentence str =
-  let
-      words =
-        str
-        |> String.split " "
-
-      nWords =
-        words
-        |> List.length
-
-      nWordsThatLookRoughlyLikeEnglish =
-        words
-        |> List.filter (\word -> word |> String.all (\c -> Char.isUpper c || Char.isLower c))
-        |> List.length
-
-  in
-      nWords > 2
-      && nWords < 20
-      && nWordsThatLookRoughlyLikeEnglish > (nWords // 2)

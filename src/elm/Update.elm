@@ -14,6 +14,7 @@ import List.Extra
 -- import Debug exposing (log)
 
 import Model exposing (..)
+import Update.BubblePopup exposing (..)
 import Msg exposing (..)
 import Ports exposing (..)
 import Request exposing (..)
@@ -267,8 +268,8 @@ update msg ({nav, userProfileForm} as model) =
     BubbleMouseOut ->
       ({model | hoveringBubbleEntityId = Nothing } |> closePopup, Cmd.none)
 
-    BubbleClicked oerUrl entity ->
-      ({model | popup = if model.popup==Nothing then Just <| BubbleFlyout oerUrl entity else Nothing }, Cmd.none)
+    BubbleClicked oerUrl entityId chunks ->
+      ({model | popup = model.popup |> updateBubblePopup model oerUrl entityId chunks }, Cmd.none)
 
 
 updateUserState : (UserState -> UserState) -> Model -> Model

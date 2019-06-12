@@ -54,7 +54,7 @@ type Msg
   | SubmitPostRegistrationForm Bool
   | BubbleMouseOver String
   | BubbleMouseOut
-  | BubbleClicked OerUrl Entity
+  | BubbleClicked OerUrl Entity (List Chunk)
 
 
 type UserProfileField

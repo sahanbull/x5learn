@@ -308,10 +308,10 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
       (text, popupWidth) =
         case content of
           DefinitionInBubblePopup ->
-            (entityId ++ " definition goes here", 170)
+            (entityId ++ " definition goes here", 160)
 
           MentionInBubblePopup {sentence} ->
-            (sentence, 170) -- If we want to make it wider we need to find a solution to prevent the popup from being occluded by any OER card to the left
+            (sentence, 160) -- If we want to make it wider we need to find a solution to prevent the popup from being occluded by any OER card to the left
 
       box =
         text

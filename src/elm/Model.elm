@@ -473,3 +473,18 @@ isEqualToSearchString model entityTitle =
 getMentions : Model -> OerUrl -> String -> Maybe (List MentionInOer)
 getMentions model oerUrl entityId =
   model.mentionsInOers |> Dict.get (oerUrl, entityId)
+
+
+mentionInBubblePopup : Model -> Maybe MentionInOer
+mentionInBubblePopup model =
+  case model.popup of
+    Just (BubblePopup state) ->
+      case state.content of
+        MentionInBubblePopup mention ->
+          Just mention
+
+        _ ->
+          Nothing
+
+    _ ->
+      Nothing

@@ -342,7 +342,7 @@ def convert_x5_material_to_oer(material, url):
 
 
 def push_enrichment_task(url, priority):
-    print('push_enrichment_task')
+    # print('push_enrichment_task')
     task = WikichunkEnrichmentTask.query.filter_by(url=url).first()
     if task is None:
         task = WikichunkEnrichmentTask(url, priority)

@@ -481,14 +481,14 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                     let
                         viewMentionIndicator mention =
                           let
-                              size =
+                              class =
                                 if mentionInBubblePopup model == Just mention then
-                                  25
+                                  "MentionIndicator MentionIndicator_Current"
                                 else
-                                  10
+                                  "MentionIndicator"
                           in
                               none
-                              |> el [ width fill, above <| image [ alpha 0.9, centerX, width <| px size, moveDown fragmentsBarHeight ] { src = svgPath "white_triangle_down", description = "" } ]
+                              |> el [ width fill, htmlClass "MentionIndicatorWrapper", height <| px fragmentsBarHeight, inFront (none |> el [ htmlClass class, centerX ]) ]
                     in
                         mentionsInThisChunk entityId
                         |> List.map viewMentionIndicator

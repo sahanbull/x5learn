@@ -311,7 +311,7 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
             (entityId ++ " definition goes here", 160)
 
           MentionInBubblePopup {sentence} ->
-            (sentence, 160) -- If we want to make it wider we need to find a solution to prevent the popup from being occluded by any OER card to the left
+            (sentence, 260)
 
       box =
         text
@@ -320,6 +320,6 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
         |> menuColumn [ Element.width <| px popupWidth, padding 10 ]
   in
       none
-      |> el [ above box, moveRight <| posX * contentWidth + marginX - popupWidth/2, moveDown <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5 ]
+      |> el [ above box, moveRight <| (posX/2 + 1/4) * contentWidth + marginX - popupWidth/2, moveDown <| Basics.max 10 <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5 ]
       |> inFront
       |> List.singleton

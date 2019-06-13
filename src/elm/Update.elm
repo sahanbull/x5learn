@@ -64,6 +64,7 @@ update msg ({nav, userProfileForm} as model) =
     ClockTick time ->
       ( { model | currentTime = time, enrichmentsAnimating = anyEnrichmentsLoadedRecently model }, Cmd.none)
       |> requestWikichunkEnrichmentsIfNeeded
+      |> requestEntityDefinitionsIfNeeded
 
     AnimationTick time ->
       ( { model | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
@@ -152,7 +153,7 @@ update msg ({nav, userProfileForm} as model) =
             |> Dict.keys
             |> List.foldl (\url dict -> dict |> Dict.insert url model.currentTime) model.wikichunkEnrichmentLoadTimes
       in
-          ( { model | wikichunkEnrichments = wikichunkEnrichments, wikichunkEnrichmentLoadTimes = wikichunkEnrichmentLoadTimes, requestingWikichunkEnrichments = False, enrichmentsAnimating = True }, Cmd.none )
+          ( { model | wikichunkEnrichments = wikichunkEnrichments, wikichunkEnrichmentLoadTimes = wikichunkEnrichmentLoadTimes, requestingWikichunkEnrichments = False, enrichmentsAnimating = True } |> registerUndefinedEntities (Dict.values enrichments), Cmd.none )
           -- |> requestWikichunkEnrichmentsIfNeeded
 
     RequestWikichunkEnrichments (Err err) ->
@@ -161,6 +162,21 @@ update msg ({nav, userProfileForm} as model) =
       --       err |> Debug.log "Error in RequestWikichunkEnrichments"
       -- in
       ( { model | userMessage = Just "There was a problem while fetching wikichunk enrichments", requestingWikichunkEnrichments = False }, Cmd.none )
+
+    RequestEntityDefinitions (Ok definitionTexts) ->
+      let
+          entityDefinitions =
+            model.entityDefinitions |> Dict.union (definitionTexts |> Dict.map (\_ text -> DefinitionLoaded text))
+      in
+          ( { model | entityDefinitions = entityDefinitions, requestingEntityDefinitions = False }, Cmd.none )
+          |> requestEntityDefinitionsIfNeeded
+
+    RequestEntityDefinitions (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestEntityDefinitions"
+      -- in
+      ( { model | userMessage = Just "There was a problem while fetching the wiki definitions data", requestingEntityDefinitions = False }, Cmd.none )
 
     RequestSearchSuggestions (Ok suggestions) ->
       if (millisSince model model.timeOfLastSearch) < 2000 then
@@ -370,53 +386,38 @@ requestOersAsNeeded userState model =
       |> requestOers
 
 
--- includeEntityIds : List Oer -> Model -> Model
--- includeEntityIds incomingOers model =
---   let
---       tagClouds =
---         incomingOers
---         |> List.foldl (\oer result -> if model.tagClouds |> Dict.member oer.url then result else (result |> Dict.insert oer.url (tagCloudFromOer oer))) model.tagClouds
+requestEntityDefinitionsIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
+requestEntityDefinitionsIfNeeded (oldModel, oldCmd) =
+  if oldModel.requestingEntityDefinitions then
+    (oldModel, oldCmd)
+  else
+     let
+         newModel =
+           { oldModel | requestingEntityDefinitions = True }
 
---       entityDescriptions =
---         incomingOers
---         |> List.concatMap .wikichunks
---         |> List.concatMap .entities
---         |> List.map .id
---         |> List.foldl (\id result -> if model.entityDescriptions |> Dict.member id then result else (result |> Dict.insert id "")) model.entityDescriptions
---   in
---       { model | tagClouds = tagClouds, entityDescriptions = entityDescriptions }
-
-
--- tagCloudFromOer : Oer -> List String
--- tagCloudFromOer oer =
---   let
---       uniqueTitles : List String
---       uniqueTitles =
---         oer.wikichunks
---         |> List.concatMap .entities
---         |> List.map .title
---         |> Set.fromList
---         |> Set.toList
-
---       titleRankings : List { title : String, rank : Int }
---       titleRankings =
---         uniqueTitles
---         |> List.map (\title -> { title = title, rank = rankingForTitle title })
+         missingEntities =
+           oldModel.entityDefinitions
+           |> Dict.filter (\_ definition -> definition==DefinitionScheduledForLoading)
+           |> Dict.keys
+           |> List.take 50 -- arbitrary pagination
+     in
+         if List.isEmpty missingEntities then
+           (oldModel, oldCmd)
+         else
+           (newModel, [ oldCmd, requestEntityDefinitions missingEntities ] |> Cmd.batch)
 
 
---       rankingForTitle : String -> Int
---       rankingForTitle title =
---         oer.wikichunks
---         |> List.concatMap .entities
---         |> List.map .title
---         |> List.filter ((==) title)
---         |> List.length
---   in
---       titleRankings
---       |> List.sortBy .rank
---       |> List.map .title
---       |> List.reverse
---       |> List.take 5
+registerUndefinedEntities : List WikichunkEnrichment -> Model -> Model
+registerUndefinedEntities enrichments model =
+  let
+      entityDefinitions =
+        enrichments
+        |> List.concatMap .chunks
+        |> List.concatMap .entities
+        |> List.map .id
+        |> List.foldl (\entityId result -> if model.entityDefinitions |> Dict.member entityId then result else (result |> Dict.insert entityId DefinitionScheduledForLoading)) model.entityDefinitions
+  in
+      { model | entityDefinitions = entityDefinitions }
 
 
 closePopup : Model -> Model

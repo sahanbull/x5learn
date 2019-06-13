@@ -66,7 +66,7 @@ viewOerGrid model userState playlist =
       else
         let
             rowHeight =
-              cardHeight + 50
+              cardHeight + 90
 
             nrows =
               ((List.length oers) + 2) // 3

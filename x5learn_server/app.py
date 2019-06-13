@@ -263,6 +263,16 @@ def ingest_wikichunk_enrichment():
     return 'OK'
 
 
+@app.route("/api/v1/entity_definitions/", methods=['GET'])
+def api_entity_descriptions():
+    entity_ids = request.args['ids'].split(',')
+    definitions = {}
+    for entity_id in entity_ids:
+        entity_definition = EntityDefinition.query.filter_by(entity_id=entity_id).first()
+        definitions[entity_id] = entity_definition.extract if entity_definition is not None else ''
+    return jsonify(definitions)
+
+
 def save_enrichment(url, data):
     enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
     if enrichment is None:

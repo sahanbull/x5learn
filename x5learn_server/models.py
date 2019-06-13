@@ -86,7 +86,7 @@ class EntityDefinition(Base):
     entity_id = Column(String(20))
     title = Column(String(255))
     url = Column(String(255), unique=True)
-    extract = Column(String(255))
+    extract = Column(Text())
 
     def __init__(self, entity_id, title, url, extract):
         self.entity_id = entity_id

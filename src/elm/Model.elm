@@ -47,16 +47,22 @@ type alias Model =
   , requestingOers : Bool
   , hoveringBubbleEntityId : Maybe String
   , mentionsInOers : MentionsDict
+  , entityDefinitions : Dict String EntityDefinition
+  , requestingEntityDefinitions : Bool
   }
 
 
--- persisted on server
+-- persisted on backend
 type alias UserState =
   { fragmentAccesses : Dict Int Fragment
   , oerNoteboards : Dict String (List Note)
   , registrationComplete : Bool
   }
 
+type EntityDefinition
+  = DefinitionScheduledForLoading
+  | DefinitionLoaded String
+  -- | DefinitionUnavailable -- TODO consider appropriate error handling
 
 type alias OerUrl = String
 
@@ -244,6 +250,8 @@ initialModel nav flags =
   , requestingOers = False
   , hoveringBubbleEntityId = Nothing
   , mentionsInOers = Dict.empty
+  , entityDefinitions = Dict.empty
+  , requestingEntityDefinitions = False
   }
 
 

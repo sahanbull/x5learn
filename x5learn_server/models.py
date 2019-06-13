@@ -80,14 +80,16 @@ class WikichunkEnrichmentTask(Base):
         self.priority = priority
 
 
-# class Topic(Base):
-#     __tablename__ = 'topic'
-#     id = Column(Integer(), primary_key=True)
-#     wikidata_item = Column(String(10))
-#     title = Column(String(255))
-#     url = Column(String(255), unique=True)
+class EntityDefinition(Base):
+    __tablename__ = 'entity_definition'
+    id = Column(Integer(), primary_key=True)
+    entity_id = Column(String(20))
+    title = Column(String(255))
+    url = Column(String(255), unique=True)
+    extract = Column(String(255))
 
-#     def __init__(self, wikidata_item, title, url):
-#         self.wikidata_item = wikidata_item
-#         self.title = title
-#         self.url = url
+    def __init__(self, entity_id, title, url, extract):
+        self.entity_id = entity_id
+        self.title = title
+        self.url = url
+        self.extract = extract

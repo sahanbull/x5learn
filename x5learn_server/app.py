@@ -20,7 +20,7 @@ get_or_create_session_db(DB_ENGINE_URI)
 
 from x5learn_server.db.database import db_session
 
-from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask
+from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition
 
 
 # Create app
@@ -259,6 +259,7 @@ def ingest_wikichunk_enrichment():
         db_session.delete(task)
     db_session.commit()
     save_enrichment(url, data)
+    save_definitions(data)
     return 'OK'
 
 
@@ -271,6 +272,26 @@ def save_enrichment(url, data):
         enrichment.data = data
         enrichment.version = CURRENT_ENRICHMENT_VERSION
     db_session.commit()
+
+
+def save_definitions(data):
+    for chunk in data['chunks']:
+        for entity in chunk['entities']:
+            title = entity['title']
+            # print(title, '...')
+            definition = EntityDefinition.query.filter_by(title=title).first()
+            if definition is None:
+                encoded_title = urllib.parse.quote(title)
+                conn = http.client.HTTPSConnection('en.wikipedia.org')
+                conn.request('GET', '/w/api.php?action=query&prop=extracts&exintro&explaintext&exsentences=1&titles='+encoded_title+'&format=json')
+                response = conn.getresponse().read().decode("utf-8")
+                pages = json.loads(response)['query']['pages']
+                (_,page) = pages.popitem()
+                extract = page['extract']
+                # print(extract)
+                definition = EntityDefinition(entity['id'], title, entity['url'], extract)
+                db_session.add(definition)
+                db_session.commit()
 
 
 def search_results_from_x5gon_api(text):

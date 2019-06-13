@@ -127,7 +127,8 @@ a:hover {
   border-left: 5px solid transparent !important;
   border-right: 5px solid transparent !important;
   border-top: 9px solid #fff !important;
-  transition: all 0.07s ease-out;
+  transition: all 0.07s ease-in;
+  transition: top 0.07s ease-out;
 }
 
 .MentionIndicator_Current{

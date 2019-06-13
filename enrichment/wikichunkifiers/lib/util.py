@@ -12,3 +12,7 @@ def temp_file_path(suffix):
 class EnrichmentError(ValueError):
     def __init__(self, message):
         self.message = message
+
+
+def make_chunk(start, length, entities, text):
+    return { 'start': start, 'length': length, 'entities': entities, 'text': text }

@@ -45,7 +45,8 @@ type alias Model =
   , oerNoteForms : Dict OerUrl String
   , cachedOers : Dict OerUrl Oer
   , requestingOers : Bool
-  , hoveringEntityIds : Maybe (List String)
+  , hoveringBubbleEntityId : Maybe String
+  , mentionsInOers : MentionsDict
   }
 
 
@@ -126,13 +127,13 @@ type alias Chunk =
   { start : Float -- 0 to 1
   , length : Float -- 0 to 1
   , entities : List Entity
+  , text : String -- raw text extracted from the resource
   }
 
 
 type alias Entity =
   { id : String
   , title : String
-  , definition : String
   , url : String
   }
 
@@ -140,11 +141,26 @@ type alias Entity =
 type Popup
   = ChunkOnBar ChunkPopup
   | UserMenu
+  | BubblePopup BubblePopupState
 
 
 type alias ChunkPopup = { barId : String, oer : Oer, chunk : Chunk, entityPopup : Maybe EntityPopup }
 
 type alias EntityPopup = { entityId : String, hoveringAction : Maybe String }
+
+type alias BubblePopupState = { oerUrl : OerUrl, entityId : String, content : BubblePopupContent, nextContents : List BubblePopupContent }
+
+type BubblePopupContent
+  = DefinitionInBubblePopup
+  | MentionInBubblePopup MentionInOer
+
+type alias MentionsDict = Dict (OerUrl,String) (List MentionInOer)
+
+type alias MentionInOer =
+  { chunkIndex : Int
+  , indexInChunk : Int
+  , sentence : String
+  }
 
 type alias Gain =
   { title : String
@@ -226,7 +242,8 @@ initialModel nav flags =
   , oerNoteForms = Dict.empty
   , cachedOers = Dict.empty
   , requestingOers = False
-  , hoveringEntityIds = Nothing
+  , hoveringBubbleEntityId = Nothing
+  , mentionsInOers = Dict.empty
   }
 
 
@@ -441,3 +458,33 @@ millisSinceEnrichmentLoaded model url =
 
     Just time ->
       (model.currentTime |> posixToMillis) - (time |> posixToMillis)
+
+
+
+isEqualToSearchString model entityTitle =
+  case model.searchState of
+    Nothing ->
+      False
+
+    Just searchState ->
+      (entityTitle |> String.toLower) == (searchState.lastSearch |> String.toLower)
+
+
+getMentions : Model -> OerUrl -> String -> Maybe (List MentionInOer)
+getMentions model oerUrl entityId =
+  model.mentionsInOers |> Dict.get (oerUrl, entityId)
+
+
+mentionInBubblePopup : Model -> Maybe MentionInOer
+mentionInBubblePopup model =
+  case model.popup of
+    Just (BubblePopup state) ->
+      case state.content of
+        MentionInBubblePopup mention ->
+          Just mention
+
+        _ ->
+          Nothing
+
+    _ ->
+      Nothing

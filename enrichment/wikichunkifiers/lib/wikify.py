@@ -39,7 +39,6 @@ def get_entities(text):
             # print(json.dumps(a, indent=4, sort_keys=True))
             entities.append({'id': a['wikiDataItemId'],
                              'title': a['title'],
-                             'definition': '',
                              'url': a['url'],
                              })
     if entities==[]:

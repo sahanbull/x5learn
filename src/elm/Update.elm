@@ -14,6 +14,7 @@ import List.Extra
 -- import Debug exposing (log)
 
 import Model exposing (..)
+import Update.BubblePopup exposing (..)
 import Msg exposing (..)
 import Ports exposing (..)
 import Request exposing (..)
@@ -198,21 +199,7 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
 
     SetPopup popup ->
-      let
-          hoveringEntityIds =
-            case model.popup of
-              Just (ChunkOnBar p) ->
-                case p.entityPopup of
-                  Nothing ->
-                    Nothing
-
-                  Just entityPopup ->
-                    Just [ entityPopup.entityId ]
-
-              _ ->
-                Nothing
-      in
-          ( { model | popup = Just popup, hoveringEntityIds = hoveringEntityIds }, Cmd.none)
+      ( { model | popup = Just popup }, Cmd.none)
 
     ClosePopup ->
       ( model |> closePopup, Cmd.none )
@@ -275,8 +262,14 @@ update msg ({nav, userProfileForm} as model) =
       (model |> updateUserState completeRegistration, Cmd.none)
       |> saveUserState msg
 
-    MouseOverEntities maybeIds ->
-      ({model | hoveringEntityIds = maybeIds }, Cmd.none)
+    BubbleMouseOver oerUrl chunks entity ->
+      ({model | hoveringBubbleEntityId = Just entity.id, mentionsInOers = findMentions model oerUrl chunks entity }, Cmd.none)
+
+    BubbleMouseOut ->
+      ({model | hoveringBubbleEntityId = Nothing } |> closePopup, Cmd.none)
+
+    BubbleClicked oerUrl ->
+      ({model | popup = model.popup |> updateBubblePopupOnClick model oerUrl }, Cmd.none)
 
 
 updateUserState : (UserState -> UserState) -> Model -> Model
@@ -428,7 +421,7 @@ requestOersAsNeeded userState model =
 
 closePopup : Model -> Model
 closePopup model =
-  { model | popup = Nothing, hoveringEntityIds = Nothing }
+  { model | popup = Nothing, hoveringBubbleEntityId = Nothing }
 
 
 resetUserProfileForm : Model -> Model

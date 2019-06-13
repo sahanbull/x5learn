@@ -13,6 +13,7 @@ import Element.Font as Font
 import Element.Input as Input exposing (button)
 import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave, onFocus)
 import Json.Decode
+import Json.Encode
 import Dict
 
 import Model exposing (..)
@@ -82,8 +83,8 @@ bigButtonPadding =
   paddingXY 13 10
 
 
-borderTop px =
-  Border.widthEach { allSidesZero | top = px }
+-- borderTop px =
+--   Border.widthEach { allSidesZero | top = px }
 
 
 borderBottom px =
@@ -420,7 +421,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
       pxFromFraction fraction =
         (barWidth |> toFloat) * fraction
 
-      chunkTrigger chunk =
+      chunkTrigger chunkIndex chunk =
         let
             chunkPopup =
               let
@@ -442,33 +443,58 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                 _ ->
                   False
 
-            -- containsSearchString =
-            --   case model.searchState of
-            --     Nothing ->
-            --       False
+            bump =
+              case model.hoveringBubbleEntityId of
+                Nothing ->
+                  []
 
-            --     Just searchState ->
-            --       let
-            --           searchStringLowercase =
-            --             searchState.lastSearch |> String.toLower
-            --       in
-            --           chunk.entities
-            --           |> List.map .title
-            --           |> List.any (\title -> String.contains searchStringLowercase (title |> String.toLower))
+                Just entityId ->
+                  if isPopupOpen || (anyMentionsOfEntityInThisChunk entityId) then
+                    []
+                  else if chunk.entities |> List.map .id |> List.member entityId then
+                    image [ alpha 0.9, centerX, height <| px 12, moveDown 2 ] { src = svgPath "white_semicircle", description = "" }
+                    |> el [ width fill ]
+                    |> inFront
+                    |> List.singleton
+                  else
+                    []
 
-            border =
+            anyMentionsOfEntityInThisChunk entityId =
+              entityId
+              |> mentionsInThisChunk
+              |> List.any (\mention -> mention.chunkIndex==chunkIndex)
+
+            mentionsInThisChunk entityId =
+              getMentions model oer.url entityId
+              |> Maybe.withDefault [] -- shouldn't happen
+              |> List.filter (\mention -> mention.chunkIndex == chunkIndex)
+
+            mentionIndicators =
               if isPopupOpen then
-                [ Border.color white, Border.widthEach { allSidesZero | top = chunkTopBorderHeight, left = 1, right = 1 } ]
+                []
               else
-                case model.hoveringEntityIds of
+                case model.hoveringBubbleEntityId of
                   Nothing ->
                     []
 
-                  Just ids ->
-                    if List.any (\id -> List.member id (chunk.entities |> List.map .id)) ids then
-                      [ Border.color white, borderTop chunkTopBorderHeight ]
-                    else
-                      []
+                  Just entityId ->
+                    let
+                        viewMentionIndicator mention =
+                          let
+                              class =
+                                if mentionInBubblePopup model == Just mention then
+                                  "MentionIndicator MentionIndicator_Current"
+                                else
+                                  "MentionIndicator"
+                          in
+                              none
+                              |> el [ width fill, htmlClass "MentionIndicatorWrapper", height <| px fragmentsBarHeight, inFront (none |> el [ htmlClass class, centerX ]) ]
+                    in
+                        mentionsInThisChunk entityId
+                        |> List.map viewMentionIndicator
+                        |> row [ width <| px chunkWidth, paddingXY 5 0 ]
+                        |> inFront
+                        |> List.singleton
 
             background =
               if isPopupOpen then
@@ -492,33 +518,36 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                     [ onClickNoBubble <| YoutubeSeekTo chunk.start ]
                   else
                     []
+
+            chunkWidth =
+              floor <| chunk.length * (toFloat barWidth) - 2
         in
             none
-            |> el ([ htmlClass "ChunkTrigger", width <| px <| floor <| chunk.length * (toFloat barWidth) - 2, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ border ++ popup ++ clickHandler)
+            |> el (bump ++ mentionIndicators ++ [ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
             |> inFront
 
       chunkTriggers =
         chunks
-        |> List.map chunkTrigger
+        |> List.indexedMap chunkTrigger
   in
       none
       |> el ([ width fill, height (px fragmentsBarHeight), materialScrimBackground, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)
 
 
-viewChunkPopup model popup =
+viewChunkPopup model chunkPopup =
   let
       entitiesSection =
-        if popup.chunk.entities |> List.isEmpty then
+        if chunkPopup.chunk.entities |> List.isEmpty then
           [ "No data available" |> text ]
         else
-          popup.chunk.entities
-          |> List.map (viewEntityButton model popup)
+          chunkPopup.chunk.entities
+          |> List.map (viewEntityButton model chunkPopup)
           |> column [ width fill ]
           |> List.singleton
   in
       entitiesSection
       |> menuColumn []
-      |> el [ moveLeft 30, moveDown (fragmentsBarHeight - chunkTopBorderHeight) ]
+      |> el [ moveLeft 30, moveDown fragmentsBarHeight ]
 
 
 viewEntityButton : Model -> ChunkPopup -> Entity -> Element Msg
@@ -553,7 +582,7 @@ viewEntityPopup model chunkPopup entityPopup entity =
         |> List.map (\item -> entityActionButton chunkPopup entityPopup item |> el [ padding 10 ])
 
       items =
-        [ viewDefinition model entity ] ++ actionButtons
+        actionButtons
   in
       items
       |> menuColumn []
@@ -578,18 +607,20 @@ entityActionButton chunkPopup entityPopup (title, clickAction) =
       actionButtonWithoutIcon attrs title (Just clickAction)
 
 
-viewDefinition model {definition} =
-  let
-      blurb =
-        if definition=="" || definition=="(Definition unavailable)" then
-          "(Definition unavailable)"
-          |> captionNowrap []
-        else
-          ("“" ++ definition ++ "” (Wikidata)")
-          |> bodyWrap [ Font.italic ]
-  in
-      [ blurb ]
-      |> column [ padding 10, spacing 16, width (px 240) ]
+-- viewDefinition model {title} =
+--   let
+--       definition =
+--         title ++ " definition goes here"
+--       -- blurb =
+--       --   if definition=="" || definition=="(Definition unavailable)" then
+--       --     "(Definition unavailable)"
+--       --     |> captionNowrap []
+--       --   else
+--       --     ("“" ++ definition ++ "” (Wikidata)")
+--         |> bodyWrap [ Font.italic ]
+--   in
+--       [ definition ]
+--       |> column [ padding 10, spacing 16, width (px 240) ]
 
 
 fragmentsBarHeight = 16
@@ -694,11 +725,5 @@ cardHeight =
   280
 
 
-chunkTopBorderHeight =
-  1
-
-
-entityHoverHandlers entity =
-  [ Events.onMouseEnter <| MouseOverEntities <| Just [ entity.id ]
-  , Events.onMouseLeave <| MouseOverEntities Nothing
-  ]
+-- pointerEventsNone =
+  -- Html.Attributes.property "pointer-events" (Json.Encode.string "none")

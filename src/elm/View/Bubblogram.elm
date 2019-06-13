@@ -2,14 +2,15 @@ module View.Bubblogram exposing (viewBubblogram)
 
 import Dict exposing (Dict)
 import Time exposing (Posix, millisToPosix, posixToMillis)
+import Json.Decode
 
 import List.Extra
 
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
-import Svg.Events exposing (..)
+import Svg.Events exposing (onMouseOver, onMouseOut, custom)
 
-import Element exposing (el, html, inFront, row, padding, spacing, px, clipX)
+import Element exposing (el, html, inFront, row, padding, spacing, px, moveDown, moveRight, above, none)
 import Element.Font as Font
 import Element.Background as Background
 
@@ -48,21 +49,25 @@ containerHeight =
 
 
 contentWidth =
-  cardWidth - 2*margin
+  cardWidth - 2*marginX
 
 
 contentHeight =
-  imageHeight - 2*margin - fragmentsBarHeight
+  imageHeight - 2*marginX - (fragmentsBarHeight + 10)
 
 
-margin =
-  30
+marginTop =
+  marginX + 18
 
 
-viewBubblogram model url chunks =
+marginX =
+  25
+
+
+viewBubblogram model oerUrl chunks =
   let
       mergePhase =
-        (millisSinceEnrichmentLoaded model url |> toFloat) / (toFloat enrichmentAnimationDuration) |> Basics.min 1
+        (millisSinceEnrichmentLoaded model oerUrl |> toFloat) / (toFloat enrichmentAnimationDuration) |> Basics.min 1
 
       widthString =
         containerWidth |> String.fromInt
@@ -77,7 +82,7 @@ viewBubblogram model url chunks =
               |> occurrencesFromChunks
         in
             occurrences
-            |> List.map (bubbleFromOccurrence mergePhase occurrences)
+            |> List.map (bubbleFromOccurrence model mergePhase occurrences)
 
       -- mergedBubbles =
       --   rawBubbles
@@ -90,7 +95,7 @@ viewBubblogram model url chunks =
         rawBubbles
         |> List.sortBy frequency
         |> List.reverse
-        |> List.map (viewBubble model url)
+        |> List.map (viewBubble model oerUrl chunks)
 
       background =
         rect [ width widthString, height heightString, fill "#191919" ] []
@@ -100,20 +105,46 @@ viewBubblogram model url chunks =
         |> List.filter (\b -> b.entity == bubble.entity)
         |> List.length
 
-      keyConcepts =
-        rawBubbles
-        |> List.Extra.uniqueBy (\{entity} -> entity.title)
-        |> List.sortBy frequency
-        |> List.reverse
-        |> List.take 3
-        |> List.map (viewKeyConcept model)
-        |> row [ spacing 18, padding 8, Element.width <| px <| containerWidth-8, clipX ]
-        |> inFront
+      findBubbleByEntityId : String -> Maybe Bubble
+      findBubbleByEntityId entityId =
+        rawBubbles |> List.filter (\bubble -> bubble.entity.id == entityId) |> List.reverse |> List.head
+
+      entityLabel =
+        case hoveringBubbleOrFragmentsBarEntityId model of
+          Nothing ->
+            []
+
+          Just entityId ->
+            case findBubbleByEntityId entityId of
+              Nothing -> -- shouldn't happen
+                []
+
+              Just {entity, posX, posY, size} ->
+                entity.title
+                |> captionNowrap [ whiteText, moveRight <| (posX + size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY - size*1.1*bubbleZoom) * contentHeight + marginTop - 15 ]
+                |> inFront
+                |> List.singleton
+
+      popup =
+        case model.popup of
+          Just (BubblePopup state) ->
+            if state.oerUrl==oerUrl then
+              case findBubbleByEntityId state.entityId of
+                Nothing -> -- shouldn't happen
+                  []
+
+                Just bubble ->
+                  viewPopup model state bubble
+            else
+              []
+
+          _ ->
+            []
   in
       [ background ] ++ svgBubbles
       |> svg [ width widthString, height heightString, viewBox <| "0 0 " ++ ([ widthString, heightString ] |> String.join " ") ]
       |> html
-      |> el [ keyConcepts ]
+      |> el (entityLabel ++ popup)
 
 
 occurrencesFromChunks : List Chunk -> List Occurrence
@@ -148,12 +179,12 @@ occurrenceFromEntity posX nEntitiesMinus1 entityIndex entity =
       Occurrence entity posX posY
 
 
-bubbleFromOccurrence : Float -> List Occurrence -> Occurrence -> Bubble
-bubbleFromOccurrence mergePhase occurrences occurrence =
+bubbleFromOccurrence : Model -> Float -> List Occurrence -> Occurrence -> Bubble
+bubbleFromOccurrence model mergePhase occurrences {entity, posX, posY} =
   let
       occurrencesWithSameEntityId =
         occurrences
-        |> List.filter (\o -> o.entity.id == occurrence.entity.id)
+        |> List.filter (\o -> o.entity.id == entity.id)
 
       mergedPosX =
         occurrencesWithSameEntityId
@@ -165,23 +196,29 @@ bubbleFromOccurrence mergePhase occurrences occurrence =
 
       mergedSize =
         occurrencesWithSameEntityId |> List.length |> toFloat |> sqrt
+
+      isSearchTerm =
+        isEqualToSearchString model entity.title
+
+      (hue, saturation, alpha) =
+        if isSearchTerm then
+          (0.145, 0.9, 0.15 + 0.55 * (1.0 / (occurrencesWithSameEntityId |> List.length |> toFloat)))
+        else
+          (0.536, fakeLexicalSimilarityToSearchTerm entity.id, rawBubbleAlpha)
   in
-      { entity = occurrence.entity
-      , posX = interp mergePhase occurrence.posX mergedPosX
-      , posY = interp mergePhase occurrence.posY mergedPosY
+      { entity = entity
+      , posX = interp mergePhase posX mergedPosX
+      , posY = interp mergePhase posY mergedPosY
       , size = interp mergePhase 1 mergedSize
-      , hue = 0.144 -- 240 - 180 * (fakeStringDistanceFromSearchTerm occurrence.entityId)
-      , alpha = rawBubbleAlpha
-      , saturation = fakeLexicalSimilarityToSearchTerm occurrence.entity.id
+      , hue = hue
+      , saturation = saturation
+      , alpha = alpha
       }
-      -- , hue = 240 - 180 * (fakePredictedLevelOfInterestFromEntity occurrence.entityId)
-      -- , alpha = fakePredictedLevelOfKnowledgeFromEntity occurrence.entityId
-      -- , saturation = fakedLevelOfTheSystemsConfidenceInHue occurrence.entityId
 
 
 fakeLexicalSimilarityToSearchTerm : String -> Float
 fakeLexicalSimilarityToSearchTerm id =
-  if (String.length id) == 7 then 0.9 else 0
+  if (String.length id) == 7 then 0.5 else 0
 
 
 -- fakePredictedLevelOfKnowledgeFromEntity : String -> Float
@@ -199,33 +236,29 @@ fakeLexicalSimilarityToSearchTerm id =
 --   (String.length id |> modBy 5 |> toFloat) / 5 * 100
 
 
-viewBubble : Model -> OerUrl -> Bubble -> Svg.Svg Msg
-viewBubble model oerUrl ({entity, posX, posY, size} as bubble) =
+viewBubble : Model -> OerUrl -> List Chunk -> Bubble -> Svg.Svg Msg
+viewBubble model oerUrl chunks ({entity, posX, posY, size} as bubble) =
   let
       isHovering =
-        model.hoveringEntityIds == Just [ entity.id ]
+        hoveringBubbleOrFragmentsBarEntityId model == Just entity.id
 
       outline =
         if isHovering then
           [ stroke "white", strokeWidth "2" ]
         else
           []
-
-      tooltip =
-        if isHovering then
-          [ Svg.title [] [ text <| entity.title ] ]
-        else
-          []
   in
       circle
-        ([ cx (posX * (toFloat contentWidth) + margin |> String.fromFloat)
-        , cy (posY * (toFloat contentHeight) + margin + 20 |> String.fromFloat)
-        , r (size * (toFloat contentWidth) * 0.042 |> String.fromFloat)
+        ([ cx (posX * (toFloat contentWidth) + marginX |> String.fromFloat)
+        , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
+        , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
         , fill <| Color.toCssString <| colorFromBubble bubble
-        , onMouseOver <| MouseOverEntities <| Just [ entity.id ]
-        , onMouseOut <| MouseOverEntities Nothing
+        , onMouseOver <| BubbleMouseOver oerUrl chunks entity
+        , onMouseOut <| BubbleMouseOut
+        , custom "click" (Json.Decode.succeed { message = BubbleClicked oerUrl, stopPropagation = True, preventDefault = True })
+        , class "UserSelectNone"
         ] ++ outline)
-        tooltip
+        []
 
 
 interp : Float -> Float -> Float -> Float
@@ -242,26 +275,51 @@ averageOf getterFunction records =
   (records |> List.map getterFunction |> List.sum) / (records |> List.length |> toFloat)
 
 
-viewKeyConcept model {entity} =
-  let
-      underline =
-        case model.hoveringEntityIds of
-          Nothing ->
-            []
-
-          Just entityIds ->
-            if List.member entity.id entityIds then
-              [ Font.underline ]
-            else
-              []
-
-      attrs =
-        [ whiteText ] ++ (entityHoverHandlers entity) ++ underline
-  in
-      entity.title
-      |> truncateSentence 20
-      |> captionNowrap attrs
-
-
 rawBubbleAlpha =
   0.28
+
+
+bubbleZoom =
+  0.042
+
+
+hoveringBubbleOrFragmentsBarEntityId model =
+  case model.hoveringBubbleEntityId of
+    Just entityId ->
+      Just entityId
+
+    Nothing ->
+      case model.popup of
+        Just (ChunkOnBar chunkPopup) ->
+          case chunkPopup.entityPopup of
+            Nothing ->
+              Nothing
+
+            Just entityPopup ->
+              Just entityPopup.entityId
+
+        _ ->
+          Nothing
+
+
+viewPopup : Model -> BubblePopupState -> Bubble -> List (Element.Attribute Msg)
+viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
+  let
+      (text, popupWidth) =
+        case content of
+          DefinitionInBubblePopup ->
+            (entityId ++ " definition goes here", 160)
+
+          MentionInBubblePopup {sentence} ->
+            (sentence, 260)
+
+      box =
+        text
+        |> bodyWrap []
+        |> List.singleton
+        |> menuColumn [ Element.width <| px popupWidth, padding 10 ]
+  in
+      none
+      |> el [ above box, moveRight <| (posX/2 + 1/4) * contentWidth + marginX - popupWidth/2, moveDown <| Basics.max 10 <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5 ]
+      |> inFront
+      |> List.singleton

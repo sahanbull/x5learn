@@ -233,17 +233,17 @@ wikichunkEnrichmentDecoder =
 
 
 chunkDecoder =
-  map3 Chunk
+  map4 Chunk
     (field "start" float)
     (field "length" float)
     (field "entities" (list entityDecoder))
+    (field "text" string)
 
 
 entityDecoder =
-  map4 Entity
+  map3 Entity
     (field "id" string)
     (field "title" string)
-    (field "definition" string)
     (field "url" string)
 
 

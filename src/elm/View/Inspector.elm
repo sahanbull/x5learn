@@ -149,17 +149,20 @@ inspectorContentDefault model userState {oer, fragmentStart} =
         []
 
       fragmentsBar =
-        case chunksFromUrl model oer.url of
-          [] ->
-            none
+        if hasYoutubeVideo oer.url then
+          case chunksFromUrl model oer.url of
+            [] ->
+              none
 
-          wikichunks ->
-            let
-                content =
-                  viewFragmentsBar model userState oer wikichunks (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth "inspector"
-                  |> el [ width (px playerWidth), height (px 16) ]
-            in
-                none |> el [ inFront content, moveDown 487, moveRight 16 ]
+            wikichunks ->
+              let
+                  content =
+                    viewFragmentsBar model userState oer wikichunks (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth "inspector"
+                    |> el [ width (px playerWidth), height (px 16) ]
+              in
+                  none |> el [ inFront content, moveDown 487, moveRight 16 ]
+        else
+          none
 
       providerLink =
         case oer.provider of

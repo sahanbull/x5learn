@@ -46,7 +46,7 @@ type alias Model =
   , cachedOers : Dict OerUrl Oer
   , requestingOers : Bool
   , hoveringBubbleEntityId : Maybe String
-  , mentionsInOers : MentionsDict
+  , cachedMentions : MentionsDict
   , entityDefinitions : Dict String EntityDefinition
   , requestingEntityDefinitions : Bool
   }
@@ -249,7 +249,7 @@ initialModel nav flags =
   , cachedOers = Dict.empty
   , requestingOers = False
   , hoveringBubbleEntityId = Nothing
-  , mentionsInOers = Dict.empty
+  , cachedMentions = Dict.empty
   , entityDefinitions = Dict.empty
   , requestingEntityDefinitions = False
   }
@@ -480,7 +480,19 @@ isEqualToSearchString model entityTitle =
 
 getMentions : Model -> OerUrl -> String -> Maybe (List MentionInOer)
 getMentions model oerUrl entityId =
-  model.mentionsInOers |> Dict.get (oerUrl, entityId)
+  model.cachedMentions |> Dict.get (oerUrl, entityId)
+
+
+hasMentions : Model -> OerUrl -> String -> Bool
+hasMentions model oerUrl entityId =
+  case getMentions model oerUrl entityId of
+    Nothing ->
+      False
+
+    Just mentions ->
+      mentions
+      |> List.isEmpty
+      |> not
 
 
 mentionInBubblePopup : Model -> Maybe MentionInOer
@@ -496,3 +508,10 @@ mentionInBubblePopup model =
 
     _ ->
       Nothing
+
+
+uniqueEntitiesFromEnrichments enrichments =
+  enrichments
+  |> List.concatMap .chunks
+  |> List.concatMap .entities
+  |> List.Extra.uniqueBy .id

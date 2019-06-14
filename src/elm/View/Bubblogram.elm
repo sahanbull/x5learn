@@ -80,7 +80,7 @@ viewBubblogram model oerUrl chunks =
             occurrences =
               chunks
               |> occurrencesFromChunks
-              |> List.filter (\{entity} -> Dict.member entity.id model.entityDefinitions)
+              |> List.filter (\{entity} -> (String.length entity.title)>1 && Dict.member entity.id model.entityDefinitions && hasMentions model oerUrl entity.id)
         in
             occurrences
             |> List.map (bubbleFromOccurrence model mergePhase occurrences)

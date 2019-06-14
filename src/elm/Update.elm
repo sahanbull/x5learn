@@ -152,9 +152,11 @@ update msg ({nav, userProfileForm} as model) =
             enrichments
             |> Dict.keys
             |> List.foldl (\url dict -> dict |> Dict.insert url model.currentTime) model.wikichunkEnrichmentLoadTimes
+
+          cachedMentions =
+            Dict.foldl extractMentionsFromEnrichment model.cachedMentions enrichments
       in
-          ( { model | wikichunkEnrichments = wikichunkEnrichments, wikichunkEnrichmentLoadTimes = wikichunkEnrichmentLoadTimes, requestingWikichunkEnrichments = False, enrichmentsAnimating = True } |> registerUndefinedEntities (Dict.values enrichments), Cmd.none )
-          -- |> requestWikichunkEnrichmentsIfNeeded
+          ( { model | wikichunkEnrichments = wikichunkEnrichments, wikichunkEnrichmentLoadTimes = wikichunkEnrichmentLoadTimes, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, cachedMentions = cachedMentions } |> registerUndefinedEntities (Dict.values enrichments), Cmd.none )
 
     RequestWikichunkEnrichments (Err err) ->
       -- let
@@ -279,7 +281,7 @@ update msg ({nav, userProfileForm} as model) =
       |> saveUserState msg
 
     BubbleMouseOver oerUrl chunks entity ->
-      ({model | hoveringBubbleEntityId = Just entity.id, mentionsInOers = findMentions model oerUrl chunks entity }, Cmd.none)
+      ({model | hoveringBubbleEntityId = Just entity.id }, Cmd.none)
 
     BubbleMouseOut ->
       ({model | hoveringBubbleEntityId = Nothing } |> closePopup, Cmd.none)
@@ -412,10 +414,9 @@ registerUndefinedEntities enrichments model =
   let
       entityDefinitions =
         enrichments
-        |> List.concatMap .chunks
-        |> List.concatMap .entities
+        |> uniqueEntitiesFromEnrichments
         |> List.map .id
-        |> List.foldl (\entityId result -> if model.entityDefinitions |> Dict.member entityId then result else (result |> Dict.insert entityId DefinitionScheduledForLoading)) model.entityDefinitions
+        |> List.foldl (\entityId output -> if model.entityDefinitions |> Dict.member entityId then output else (output |> Dict.insert entityId DefinitionScheduledForLoading)) model.entityDefinitions
   in
       { model | entityDefinitions = entityDefinitions }
 
@@ -464,7 +465,7 @@ cacheOersFromList oers model =
   let
       oersDict =
         oers
-        |> List.foldl (\oer result -> result |> Dict.insert oer.url oer) Dict.empty
+        |> List.foldl (\oer output -> output |> Dict.insert oer.url oer) Dict.empty
   in
       { model | cachedOers = Dict.union oersDict model.cachedOers }
 
@@ -513,3 +514,49 @@ expandCurrentFragmentOrCreateNewOne position inspectorState userState =
 completeRegistration : UserState -> UserState
 completeRegistration userState =
   { userState | registrationComplete = True }
+
+
+extractMentionsFromEnrichment : OerUrl -> WikichunkEnrichment -> MentionsDict -> MentionsDict
+extractMentionsFromEnrichment oerUrl {chunks} cachedMentions =
+  let
+      entities =
+        chunks
+        |> List.concatMap .entities
+        |> List.Extra.uniqueBy .id
+  in
+      List.foldl (extractMentionsOfEntity oerUrl chunks) cachedMentions entities
+
+
+extractMentionsOfEntity : OerUrl -> List Chunk -> Entity -> MentionsDict -> MentionsDict
+extractMentionsOfEntity oerUrl chunks entity cachedMentions =
+  if Dict.member (oerUrl, entity.id) cachedMentions then
+    cachedMentions
+  else
+    let
+        condense str =
+          str
+          |> String.toLower
+          |> String.toList
+          |> List.filter Char.isLower
+          |> String.fromList
+
+        entityTitleCondensed =
+          entity.title
+          |> condense
+
+        mentionsInChunk : Int -> Chunk -> List MentionInOer
+        mentionsInChunk chunkIndex chunk =
+          chunk.text
+          |> extractSentences
+          |> List.filter (\sentence -> String.contains entityTitleCondensed (condense sentence))
+          |> List.indexedMap (\indexInChunk sentence -> { chunkIndex = chunkIndex, indexInChunk = indexInChunk, sentence = sentence})
+
+        mentionsOfEntity : List MentionInOer
+        mentionsOfEntity =
+          chunks
+          |> List.indexedMap mentionsInChunk
+          |> List.concat
+          |> List.Extra.uniqueBy .sentence -- Omitting duplicates here is a design choice. When using the bubble popup, you don't want identical sentences to appear over and over. An extreme example might be an ebook with the same heading on every page, resulting in hundreds of duplicate mentions. On the other hand, taking only the first mention bears a risk of emphasising tables of contents. We should test these aspects empirically and see what's best.
+    in
+        cachedMentions
+        |> Dict.insert (oerUrl, entity.id) mentionsOfEntity

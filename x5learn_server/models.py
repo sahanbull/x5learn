@@ -66,6 +66,9 @@ class WikichunkEnrichment(Base):
         self.data = data
         self.version = version
 
+    def entities_to_string(self):
+        return '. '.join([ '. '.join([ e['title'] for e in chunk['entities'] ]) for chunk in self.data['chunks'] ])
+
 
 class WikichunkEnrichmentTask(Base):
     __tablename__ = 'wikichunk_enrichment_task'

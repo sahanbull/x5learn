@@ -311,7 +311,8 @@ def search_results_from_x5gon_api(text):
     conn.request('GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=text&text='+encoded_text)
     response = conn.getresponse().read().decode("utf-8")
     materials = json.loads(response)['rec_materials'][:max_results]
-    materials = [ m for m in materials if m['url'].endswith('.pdf') and '/assignments/' not in m['url'] and '199' not in m['url'] and '200' not in m['url']  ] # crudely filter out materials from MIT OCW that are assignments or date back to the 90s or early 2000s
+    materials = [ m for m in materials if m['url'].endswith('.pdf') and '/assignments/' not in m['url'] and '199' not in m['url'] and '200' not in m['url'] ] # crudely filter out materials from MIT OCW that are assignments or date back to the 90s or early 2000s
+    materials = remove_duplicates_from_search_results(materials)
     oers = []
     for index, material in enumerate(materials):
         url = material['url']
@@ -325,6 +326,31 @@ def search_results_from_x5gon_api(text):
         if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION):
             push_enrichment_task(url, int(1000/(index+1)))
     return oers
+
+
+def remove_duplicates_from_search_results(materials):
+    enrichments = {}
+    urls = [ m['url'] for m in materials ]
+    for enrichment in WikichunkEnrichment.query.filter(WikichunkEnrichment.url.in_(urls)).all():
+        enrichments[enrichment.url] = enrichment
+    included_materials = []
+    included_enrichments = []
+    def is_duplicate(material):
+        url = material['url']
+        if url not in enrichments: # For materials that haven't been enriched yet, we can't tell whether they are identical.
+            return False
+        enrichment = enrichments[url]
+        for e in included_enrichments:
+            if fuzz.ratio(e.entities_to_string(), enrichment.entities_to_string()) > 90:
+                return True
+        return False
+    for m in materials:
+        if not is_duplicate(m):
+            included_materials.append(m)
+            url = m['url']
+            if url in enrichments:
+                included_enrichments.append(enrichments[url])
+    return included_materials
 
 
 def convert_x5_material_to_oer(material, url):

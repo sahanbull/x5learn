@@ -155,8 +155,17 @@ update msg ({nav, userProfileForm} as model) =
 
           cachedMentions =
             Dict.foldl extractMentionsFromEnrichment model.cachedMentions enrichments
+
+          failCount =
+            if Dict.isEmpty enrichments then
+              model.wikichunkEnrichmentRequestFailCount + 1
+            else
+              0
+
+          retryTime =
+            (posixToMillis model.currentTime) + failCount*2000 |> millisToPosix
       in
-          ( { model | wikichunkEnrichments = wikichunkEnrichments, wikichunkEnrichmentLoadTimes = wikichunkEnrichmentLoadTimes, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, cachedMentions = cachedMentions } |> registerUndefinedEntities (Dict.values enrichments), Cmd.none )
+          ( { model | wikichunkEnrichments = wikichunkEnrichments, wikichunkEnrichmentLoadTimes = wikichunkEnrichmentLoadTimes, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, cachedMentions = cachedMentions, wikichunkEnrichmentRequestFailCount = failCount, wikichunkEnrichmentRetryTime = retryTime } |> registerUndefinedEntities (Dict.values enrichments), Cmd.none )
 
     RequestWikichunkEnrichments (Err err) ->
       -- let
@@ -352,7 +361,7 @@ incrementFrameCountInModalAnimation model =
 
 requestWikichunkEnrichmentsIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
 requestWikichunkEnrichmentsIfNeeded (model, oldCmd) =
-  if model.requestingWikichunkEnrichments then
+  if model.requestingWikichunkEnrichments || (model.wikichunkEnrichmentRequestFailCount>0 && (model.currentTime |> posixToMillis) < (model.wikichunkEnrichmentRetryTime |> posixToMillis)) then
     (model, oldCmd)
   else
     let
@@ -360,9 +369,6 @@ requestWikichunkEnrichmentsIfNeeded (model, oldCmd) =
           model.cachedOers
           |> Dict.keys
           |> List.filter (\url -> Dict.member url model.wikichunkEnrichments |> not)
-
---         dummy =
---           Debug.log "requestWikichunkEnrichmentsIfNeeded" (missing |> String.join "---")
     in
         if List.isEmpty missing then
           (model, oldCmd)

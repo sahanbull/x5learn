@@ -49,6 +49,8 @@ type alias Model =
   , cachedMentions : MentionsDict
   , entityDefinitions : Dict String EntityDefinition
   , requestingEntityDefinitions : Bool
+  , wikichunkEnrichmentRequestFailCount : Int
+  , wikichunkEnrichmentRetryTime : Posix
   }
 
 
@@ -252,6 +254,8 @@ initialModel nav flags =
   , cachedMentions = Dict.empty
   , entityDefinitions = Dict.empty
   , requestingEntityDefinitions = False
+  , wikichunkEnrichmentRequestFailCount = 0
+  , wikichunkEnrichmentRetryTime = initialTime
   }
 
 

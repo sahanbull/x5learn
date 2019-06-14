@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestSearchSuggestions, requestSaveUserProfile, requestSaveUserState, requestOers)
+module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestSearchSuggestions, requestEntityDefinitions, requestSaveUserProfile, requestSaveUserState, requestOers)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -75,6 +75,14 @@ requestWikichunkEnrichments urls =
     { url = Url.Builder.absolute [ apiRoot, "wikichunk_enrichments/" ] []
     , body = Http.jsonBody <| Encode.object [ ("urls", (Encode.list Encode.string) urls) ]
     , expect = Http.expectJson RequestWikichunkEnrichments (dict wikichunkEnrichmentDecoder)
+    }
+
+
+requestEntityDefinitions : List String -> Cmd Msg
+requestEntityDefinitions entityIds =
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "entity_definitions/" ] [ Url.Builder.string "ids" (entityIds |> String.join ",") ]
+    , expect = Http.expectJson RequestEntityDefinitions (dict string)
     }
 
 

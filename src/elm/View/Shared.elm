@@ -443,21 +443,21 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                 _ ->
                   False
 
-            bump =
-              case model.hoveringBubbleEntityId of
-                Nothing ->
-                  []
+            -- bump =
+            --   case model.hoveringBubbleEntityId of
+            --     Nothing ->
+            --       []
 
-                Just entityId ->
-                  if isPopupOpen || (anyMentionsOfEntityInThisChunk entityId) then
-                    []
-                  else if chunk.entities |> List.map .id |> List.member entityId then
-                    image [ alpha 0.9, centerX, height <| px 12, moveDown 2 ] { src = svgPath "white_semicircle", description = "" }
-                    |> el [ width fill ]
-                    |> inFront
-                    |> List.singleton
-                  else
-                    []
+            --     Just entityId ->
+            --       if isPopupOpen || (anyMentionsOfEntityInThisChunk entityId) then
+            --         []
+            --       else if chunk.entities |> List.map .id |> List.member entityId then
+            --         image [ alpha 0.9, centerX, height <| px 12, moveDown 2 ] { src = svgPath "white_semicircle", description = "" }
+            --         |> el [ width fill ]
+            --         |> inFront
+            --         |> List.singleton
+            --       else
+            --         []
 
             anyMentionsOfEntityInThisChunk entityId =
               entityId
@@ -523,7 +523,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
               floor <| chunk.length * (toFloat barWidth) - 2
         in
             none
-            |> el (bump ++ mentionIndicators ++ [ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
+            |> el (mentionIndicators ++ [ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
             |> inFront
 
       chunkTriggers =

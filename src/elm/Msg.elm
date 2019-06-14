@@ -31,6 +31,7 @@ type Msg
   | RequestOers (Result Http.Error (Dict String Oer))
   | RequestGains (Result Http.Error (List Gain))
   | RequestWikichunkEnrichments (Result Http.Error (Dict OerUrl WikichunkEnrichment))
+  | RequestEntityDefinitions (Result Http.Error (Dict String String))
   | RequestSearchSuggestions (Result Http.Error (List String))
   | RequestSaveUserProfile (Result Http.Error String)
   | RequestSaveUserState (Result Http.Error String)

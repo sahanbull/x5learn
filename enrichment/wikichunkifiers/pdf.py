@@ -16,7 +16,8 @@ def extract_chunks_from_pdf(url):
 
     chunks = []
     start = 0
-    for part in parts:
+    for index, part in enumerate(parts):
+        print('Processing chunk', index+1, '/', len(parts))
         entities = get_entities(part)
         length = len(part) / len(text)
         chunk = make_chunk(start, length, entities, part)

@@ -64,6 +64,7 @@ update msg ({nav, userProfileForm} as model) =
     ClockTick time ->
       ( { model | currentTime = time, enrichmentsAnimating = anyEnrichmentsLoadedRecently model }, Cmd.none)
       |> requestWikichunkEnrichmentsIfNeeded
+      |> requestEntityDefinitionsIfNeeded
 
     AnimationTick time ->
       ( { model | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
@@ -151,9 +152,11 @@ update msg ({nav, userProfileForm} as model) =
             enrichments
             |> Dict.keys
             |> List.foldl (\url dict -> dict |> Dict.insert url model.currentTime) model.wikichunkEnrichmentLoadTimes
+
+          cachedMentions =
+            Dict.foldl extractMentionsFromEnrichment model.cachedMentions enrichments
       in
-          ( { model | wikichunkEnrichments = wikichunkEnrichments, wikichunkEnrichmentLoadTimes = wikichunkEnrichmentLoadTimes, requestingWikichunkEnrichments = False, enrichmentsAnimating = True }, Cmd.none )
-          -- |> requestWikichunkEnrichmentsIfNeeded
+          ( { model | wikichunkEnrichments = wikichunkEnrichments, wikichunkEnrichmentLoadTimes = wikichunkEnrichmentLoadTimes, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, cachedMentions = cachedMentions } |> registerUndefinedEntities (Dict.values enrichments), Cmd.none )
 
     RequestWikichunkEnrichments (Err err) ->
       -- let
@@ -161,6 +164,21 @@ update msg ({nav, userProfileForm} as model) =
       --       err |> Debug.log "Error in RequestWikichunkEnrichments"
       -- in
       ( { model | userMessage = Just "There was a problem while fetching wikichunk enrichments", requestingWikichunkEnrichments = False }, Cmd.none )
+
+    RequestEntityDefinitions (Ok definitionTexts) ->
+      let
+          entityDefinitions =
+            model.entityDefinitions |> Dict.union (definitionTexts |> Dict.map (\_ text -> DefinitionLoaded text))
+      in
+          ( { model | entityDefinitions = entityDefinitions, requestingEntityDefinitions = False }, Cmd.none )
+          |> requestEntityDefinitionsIfNeeded
+
+    RequestEntityDefinitions (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestEntityDefinitions"
+      -- in
+      ( { model | userMessage = Just "There was a problem while fetching the wiki definitions data", requestingEntityDefinitions = False }, Cmd.none )
 
     RequestSearchSuggestions (Ok suggestions) ->
       if (millisSince model model.timeOfLastSearch) < 2000 then
@@ -263,7 +281,7 @@ update msg ({nav, userProfileForm} as model) =
       |> saveUserState msg
 
     BubbleMouseOver oerUrl chunks entity ->
-      ({model | hoveringBubbleEntityId = Just entity.id, mentionsInOers = findMentions model oerUrl chunks entity }, Cmd.none)
+      ({model | hoveringBubbleEntityId = Just entity.id }, Cmd.none)
 
     BubbleMouseOut ->
       ({model | hoveringBubbleEntityId = Nothing } |> closePopup, Cmd.none)
@@ -370,53 +388,37 @@ requestOersAsNeeded userState model =
       |> requestOers
 
 
--- includeEntityIds : List Oer -> Model -> Model
--- includeEntityIds incomingOers model =
---   let
---       tagClouds =
---         incomingOers
---         |> List.foldl (\oer result -> if model.tagClouds |> Dict.member oer.url then result else (result |> Dict.insert oer.url (tagCloudFromOer oer))) model.tagClouds
+requestEntityDefinitionsIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
+requestEntityDefinitionsIfNeeded (oldModel, oldCmd) =
+  if oldModel.requestingEntityDefinitions then
+    (oldModel, oldCmd)
+  else
+     let
+         newModel =
+           { oldModel | requestingEntityDefinitions = True }
 
---       entityDescriptions =
---         incomingOers
---         |> List.concatMap .wikichunks
---         |> List.concatMap .entities
---         |> List.map .id
---         |> List.foldl (\id result -> if model.entityDescriptions |> Dict.member id then result else (result |> Dict.insert id "")) model.entityDescriptions
---   in
---       { model | tagClouds = tagClouds, entityDescriptions = entityDescriptions }
-
-
--- tagCloudFromOer : Oer -> List String
--- tagCloudFromOer oer =
---   let
---       uniqueTitles : List String
---       uniqueTitles =
---         oer.wikichunks
---         |> List.concatMap .entities
---         |> List.map .title
---         |> Set.fromList
---         |> Set.toList
-
---       titleRankings : List { title : String, rank : Int }
---       titleRankings =
---         uniqueTitles
---         |> List.map (\title -> { title = title, rank = rankingForTitle title })
+         missingEntities =
+           oldModel.entityDefinitions
+           |> Dict.filter (\_ definition -> definition==DefinitionScheduledForLoading)
+           |> Dict.keys
+           |> List.take 50 -- arbitrary pagination
+     in
+         if List.isEmpty missingEntities then
+           (oldModel, oldCmd)
+         else
+           (newModel, [ oldCmd, requestEntityDefinitions missingEntities ] |> Cmd.batch)
 
 
---       rankingForTitle : String -> Int
---       rankingForTitle title =
---         oer.wikichunks
---         |> List.concatMap .entities
---         |> List.map .title
---         |> List.filter ((==) title)
---         |> List.length
---   in
---       titleRankings
---       |> List.sortBy .rank
---       |> List.map .title
---       |> List.reverse
---       |> List.take 5
+registerUndefinedEntities : List WikichunkEnrichment -> Model -> Model
+registerUndefinedEntities enrichments model =
+  let
+      entityDefinitions =
+        enrichments
+        |> uniqueEntitiesFromEnrichments
+        |> List.map .id
+        |> List.foldl (\entityId output -> if model.entityDefinitions |> Dict.member entityId then output else (output |> Dict.insert entityId DefinitionScheduledForLoading)) model.entityDefinitions
+  in
+      { model | entityDefinitions = entityDefinitions }
 
 
 closePopup : Model -> Model
@@ -463,7 +465,7 @@ cacheOersFromList oers model =
   let
       oersDict =
         oers
-        |> List.foldl (\oer result -> result |> Dict.insert oer.url oer) Dict.empty
+        |> List.foldl (\oer output -> output |> Dict.insert oer.url oer) Dict.empty
   in
       { model | cachedOers = Dict.union oersDict model.cachedOers }
 
@@ -512,3 +514,49 @@ expandCurrentFragmentOrCreateNewOne position inspectorState userState =
 completeRegistration : UserState -> UserState
 completeRegistration userState =
   { userState | registrationComplete = True }
+
+
+extractMentionsFromEnrichment : OerUrl -> WikichunkEnrichment -> MentionsDict -> MentionsDict
+extractMentionsFromEnrichment oerUrl {chunks} cachedMentions =
+  let
+      entities =
+        chunks
+        |> List.concatMap .entities
+        |> List.Extra.uniqueBy .id
+  in
+      List.foldl (extractMentionsOfEntity oerUrl chunks) cachedMentions entities
+
+
+extractMentionsOfEntity : OerUrl -> List Chunk -> Entity -> MentionsDict -> MentionsDict
+extractMentionsOfEntity oerUrl chunks entity cachedMentions =
+  if Dict.member (oerUrl, entity.id) cachedMentions then
+    cachedMentions
+  else
+    let
+        condense str =
+          str
+          |> String.toLower
+          |> String.toList
+          |> List.filter Char.isLower
+          |> String.fromList
+
+        entityTitleCondensed =
+          entity.title
+          |> condense
+
+        mentionsInChunk : Int -> Chunk -> List MentionInOer
+        mentionsInChunk chunkIndex chunk =
+          chunk.text
+          |> extractSentences
+          |> List.filter (\sentence -> String.contains entityTitleCondensed (condense sentence))
+          |> List.indexedMap (\indexInChunk sentence -> { chunkIndex = chunkIndex, indexInChunk = indexInChunk, sentence = sentence})
+
+        mentionsOfEntity : List MentionInOer
+        mentionsOfEntity =
+          chunks
+          |> List.indexedMap mentionsInChunk
+          |> List.concat
+          |> List.Extra.uniqueBy .sentence -- Omitting duplicates here is a design choice. When using the bubble popup, you don't want identical sentences to appear over and over. An extreme example might be an ebook with the same heading on every page, resulting in hundreds of duplicate mentions. On the other hand, taking only the first mention bears a risk of emphasising tables of contents. We should test these aspects empirically and see what's best.
+    in
+        cachedMentions
+        |> Dict.insert (oerUrl, entity.id) mentionsOfEntity

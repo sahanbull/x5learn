@@ -80,6 +80,7 @@ viewBubblogram model oerUrl chunks =
             occurrences =
               chunks
               |> occurrencesFromChunks
+              |> List.filter (\{entity} -> (String.length entity.title)>1 && Dict.member entity.id model.entityDefinitions && hasMentions model oerUrl entity.id)
         in
             occurrences
             |> List.map (bubbleFromOccurrence model mergePhase occurrences)
@@ -305,17 +306,41 @@ hoveringBubbleOrFragmentsBarEntityId model =
 viewPopup : Model -> BubblePopupState -> Bubble -> List (Element.Attribute Msg)
 viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
   let
-      (text, popupWidth) =
+      (contentElement, popupWidth) =
         case content of
           DefinitionInBubblePopup ->
-            (entityId ++ " definition goes here", 160)
+            let
+                unavailable =
+                  "✗ Definition unavailable"
+                  |> bodyWrap []
+
+                element =
+                  case model.entityDefinitions |> Dict.get entityId of
+                    Nothing -> -- shouldn't happen
+                      unavailable
+
+                    Just definition ->
+                      case definition of
+                        DefinitionScheduledForLoading ->
+                          viewLoadingSpinner
+
+                        DefinitionLoaded text ->
+                          if text=="" then
+                            unavailable
+                          else
+                            ("“" ++ text ++ "” (Wikipedia)")
+                            |> bodyWrap [ Font.italic ]
+
+                        -- DefinitionUnavailable ->
+                        -- unavailable
+            in
+                (element, 260)
 
           MentionInBubblePopup {sentence} ->
-            (sentence, 260)
+            (sentence |> bodyWrap [], 260)
 
       box =
-        text
-        |> bodyWrap []
+        contentElement
         |> List.singleton
         |> menuColumn [ Element.width <| px popupWidth, padding 10 ]
   in

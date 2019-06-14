@@ -498,7 +498,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
 
             background =
               if isPopupOpen then
-                [ Background.color semiTransparentWhite ]
+                [ Background.color orange ]
               else
                 []
 

@@ -49,7 +49,7 @@ containerHeight =
 
 
 contentWidth =
-  cardWidth - 2*marginX
+  cardWidth - 2*marginX - 40 -- shrink a bit in order to make a bit of space for labels of the right
 
 
 contentHeight =
@@ -105,16 +105,16 @@ viewBubblogram model oerUrl chunks =
 
       svgBubbles =
         rawBubbles
-        |> List.sortBy frequency
+        |> List.sortBy (\{entity} -> frequency entity)
         |> List.reverse
         |> List.map (viewBubble model oerUrl chunks)
 
       background =
         rect [ width widthString, height heightString, fill "#191919" ] []
 
-      frequency bubble =
+      frequency entity =
         rawBubbles
-        |> List.filter (\b -> b.entity == bubble.entity)
+        |> List.filter (\b -> b.entity == entity)
         |> List.length
 
       findBubbleByEntityId : String -> Maybe Bubble
@@ -126,23 +126,30 @@ viewBubblogram model oerUrl chunks =
           []
         else
           rawBubbles
-          -- |> List.Extra.uniqueBy (\{posX, posY, size} -> (posX, posY, size))
-          |> List.map entityLabel
+          |> List.Extra.uniqueBy (\{entity} -> entity.id)
+          |> List.concatMap entityLabel
 
       entityLabel {entity, posX, posY, size} =
         let
             isHovering =
               hoveringBubbleOrFragmentsBarEntityId model == Just entity.id
 
-            underline =
+            isVisible =
+              isHovering || (List.member entity (rawBubbles |> List.map .entity |> List.Extra.uniqueBy .id |> List.sortBy frequency |> List.reverse |> List.take 3))
+
+            highlight =
               if isHovering then
                 [ Font.underline ]
               else
-                []
+                [ Element.alpha (interp (size/3) (1.6*labelPhase-1) 0.6) ]
         in
-            entity.title
-            |> captionNowrap ([ whiteText, Element.alpha (interp (size/3) (1.6*labelPhase-1) 0.6), moveRight <| (posX + size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY - size*1.1*bubbleZoom) * contentHeight + marginTop - 15 ] ++ underline)
-            |> inFront
+            if isVisible then
+              entity.title
+              |> captionNowrap ([ whiteText, moveRight <| (posX + size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY - size*1.1*bubbleZoom) * contentHeight + marginTop - 15 ] ++ highlight)
+              |> inFront
+              |> List.singleton
+            else
+              []
 
       popup =
         case model.popup of

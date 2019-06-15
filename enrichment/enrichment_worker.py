@@ -40,7 +40,8 @@ def make_enrichment_data(url):
 
 
 def make_wikichunks(url):
-    print('in make_wikichunks. url =', url)
+    print('\n_______________________________________________________________________________')
+    print(url)
     if url.lower().endswith('.pdf'):
         return extract_chunks_from_pdf(url)
     raise EnrichmentError('Unsupported file format')
@@ -49,7 +50,7 @@ def make_wikichunks(url):
 def post_back_wikichunks(url, data, error):
     payload = {'url': url, 'data': data, 'error': error}
     r = requests.post(API_ROOT+"ingest_wikichunk_enrichment/", data=json.dumps(payload))
-    print('post_back_wikichunks', payload)
+    # print('post_back_wikichunks', payload)
 
 
 if __name__ == '__main__':

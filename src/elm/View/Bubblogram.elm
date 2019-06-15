@@ -10,7 +10,7 @@ import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Svg.Events exposing (onMouseOver, onMouseOut, custom)
 
-import Element exposing (el, html, inFront, row, padding, spacing, px, moveDown, moveRight, above, none)
+import Element exposing (el, html, inFront, row, padding, spacing, px, moveDown, moveRight, above, below, none)
 import Element.Font as Font
 import Element.Background as Background
 
@@ -145,11 +145,14 @@ viewBubblogram model oerUrl chunks =
 
           _ ->
             []
+
+      graphic =
+        [ background ] ++ svgBubbles
+        |> svg [ width widthString, height heightString, viewBox <| "0 0 " ++ ([ widthString, heightString ] |> String.join " ") ]
+        |> html
+        |> el entityLabel
   in
-      [ background ] ++ svgBubbles
-      |> svg [ width widthString, height heightString, viewBox <| "0 0 " ++ ([ widthString, heightString ] |> String.join " ") ]
-      |> html
-      |> el (entityLabel ++ popup)
+      (graphic, popup)
 
 
 occurrencesFromChunks : List Chunk -> List Occurrence
@@ -310,13 +313,15 @@ hoveringBubbleOrFragmentsBarEntityId model =
 viewPopup : Model -> BubblePopupState -> Bubble -> List (Element.Attribute Msg)
 viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
   let
-      (contentElement, popupWidth) =
+      enlargementPhaseFromText text =
+        (String.length text |> toFloat) / 200 |> Basics.min 1
+
+      (contentElement, enlargementPhase) =
         case content of
           DefinitionInBubblePopup ->
             let
                 unavailable =
-                  "✗ Definition unavailable"
-                  |> bodyWrap []
+                  ("✗ Definition unavailable" |> bodyWrap [], 0)
 
                 element =
                   case model.entityDefinitions |> Dict.get entityId of
@@ -326,29 +331,48 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
                     Just definition ->
                       case definition of
                         DefinitionScheduledForLoading ->
-                          viewLoadingSpinner
+                          (viewLoadingSpinner, 0)
 
                         DefinitionLoaded text ->
                           if text=="" then
                             unavailable
                           else
-                            ("“" ++ text ++ "” (Wikipedia)")
-                            |> bodyWrap [ Font.italic ]
+                            ("“" ++ text ++ "” (Wikipedia)" |> bodyWrap [ Font.italic ], enlargementPhaseFromText text)
 
                         -- DefinitionUnavailable ->
                         -- unavailable
             in
-                (element, 260)
+                element
 
           MentionInBubblePopup {sentence} ->
-            (sentence |> bodyWrap [], 260)
+            (sentence |> bodyWrap [], enlargementPhaseFromText sentence)
 
       box =
         contentElement
         |> List.singleton
-        |> menuColumn [ Element.width <| px popupWidth, padding 10 ]
+        |> menuColumn [ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone ]
+
+      (horizontalOffset, popupWidth) =
+        let
+            allowedMargin =
+              horizontalSpacingBetweenCards - 5
+
+            smallest =
+              { horizontalOffset = (posX/2 + 1/4) * contentWidth + marginX - 260/2, popupWidth = 260 }
+
+            largest =
+              { horizontalOffset = -allowedMargin, popupWidth = cardWidth + 2*allowedMargin }
+        in
+            (interp enlargementPhase smallest.horizontalOffset largest.horizontalOffset
+            , interp enlargementPhase smallest.popupWidth largest.popupWidth)
+
+      (verticalDirection, verticalOffset) =
+        if posY > 0.4 then
+          (above, Basics.max 10 <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5)
+        else
+          (below, Basics.max 10 <| (posY + size*3.5*bubbleZoom) * contentHeight + marginTop + 5)
   in
       none
-      |> el [ above box, moveRight <| (posX/2 + 1/4) * contentWidth + marginX - popupWidth/2, moveDown <| Basics.max 10 <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5 ]
+      |> el [ verticalDirection box, moveRight <| horizontalOffset, moveDown <| verticalOffset ]
       |> inFront
       |> List.singleton

@@ -45,21 +45,35 @@ update msg ({nav, userProfileForm} as model) =
         Browser.External href ->
           ( model |> closePopup, Navigation.load href )
 
-    UrlChanged url ->
+    UrlChanged ({path} as url) ->
       let
-          -- logOutput =
-          --   url.path |> log "UrlChanged"
+          -- dummy =
+          --   path |> Debug.log "UrlChanged"
 
-          (newModel, cmd) =
-            (model, Cmd.none)
-            -- if url.path == "/next_steps" then
-            --   (model, requestNextSteps)
-            -- -- else if url.path == "/gains" then
-            -- --   (model, requestGains)
-            -- else
-            --   (model, Cmd.none)
+          cmd =
+            case model.session of
+              Nothing ->
+                Cmd.none
+
+              Just session ->
+                requestOersAsNeeded session.userState newModel
+
+          subpage =
+            if path |> String.startsWith profilePath then
+              Profile
+            else if path |> String.startsWith notesPath then
+              Notes
+            else if path |> String.startsWith recentPath then
+              Recent
+            else if path |> String.startsWith searchPath then
+              Search
+            else
+              Home
+
+          newModel =
+            { model | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage } |> closePopup |> resetUserProfileForm
       in
-          ( { newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime } |> closePopup |> resetUserProfileForm, cmd )
+          ( newModel, cmd )
 
     ClockTick time ->
       ( { model | currentTime = time, enrichmentsAnimating = anyUrlChangeOrEnrichmentsLoadedRecently model }, Cmd.none)
@@ -380,10 +394,15 @@ requestOersAsNeeded : UserState -> Model -> Cmd Msg
 requestOersAsNeeded userState model =
   let
       neededUrls =
-        [ userState.oerNoteboards |> Dict.keys
-        , userState.fragmentAccesses |> Dict.values |> List.map .oerUrl
-        ]
-        |> List.concat
+        case model.subpage of
+          Notes ->
+            userState.oerNoteboards |> Dict.keys
+
+          Recent ->
+            userState.fragmentAccesses |> Dict.values |> List.map .oerUrl
+
+          _ ->
+            []
 
       missingUrls =
         neededUrls

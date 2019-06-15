@@ -15,6 +15,7 @@ import Animation exposing (..)
 
 type alias Model =
   { nav : Nav
+  , subpage : Subpage
   , session : Maybe Session
   , windowWidth : Int
   , windowHeight : Int
@@ -100,6 +101,14 @@ type alias Nav =
   { url : Url.Url
   , key : Navigation.Key
   }
+
+
+type Subpage
+  = Home
+  | Profile
+  | Search
+  | Notes
+  | Recent
 
 
 type alias SearchState =
@@ -221,6 +230,7 @@ type LoginState
 initialModel : Nav -> Flags -> Model
 initialModel nav flags =
   { nav = nav
+  , subpage = Home
   , session = Nothing
   , windowWidth = flags.windowWidth
   , windowHeight = flags.windowHeight
@@ -527,3 +537,19 @@ uniqueEntitiesFromEnrichments enrichments =
   |> List.concatMap .chunks
   |> List.concatMap .entities
   |> List.Extra.uniqueBy .id
+
+
+homePath =
+  "/"
+
+profilePath =
+  "/profile"
+
+searchPath =
+  "/search"
+
+notesPath =
+  "/notes"
+
+recentPath =
+  "/recent"

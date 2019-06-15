@@ -56,25 +56,8 @@ view model =
             (viewLoadingSpinner, [])
 
           Just ({userState} as session) ->
-            case model.nav.url.path of
-              -- "/next_steps" ->
-              --   viewNextStepsPage model |> withNavigationDrawer model
-
-              -- "/gains" ->
-              --   viewGainsPage model |> withNavigationDrawer model
-
-              "/profile" ->
-                case session.loginState of
-                  LoggedInUser userProfile ->
-                    viewProfilePage model userProfile model.userProfileForm |> withNavigationDrawer model
-
-                  GuestUser ->
-                    introPage
-
-              "/notes" ->
-                viewNotesPage model userState |> withNavigationDrawer model
-
-              "/" ->
+            case model.subpage of
+              Home ->
                 if session.loginState /= GuestUser && (not userState.registrationComplete) then
                   viewPostRegistrationPage model userState |> withNavigationDrawer model
                 else if userState == initialUserState then
@@ -82,16 +65,27 @@ view model =
                 else
                   viewNotesPage model userState |> withNavigationDrawer model
 
-              "/recent" ->
-                viewRecentPage model userState |> withNavigationDrawer model
+              Profile ->
+                case session.loginState of
+                  LoggedInUser userProfile ->
+                    viewProfilePage model userProfile model.userProfileForm |> withNavigationDrawer model
 
-              _ ->
+                  GuestUser ->
+                    introPage
+
+              Search ->
                 case model.searchState of
                   Nothing ->
                     introPage
 
                   Just searchState ->
                     viewSearchPage model userState searchState |> withNavigationDrawer model
+
+              Notes ->
+                viewNotesPage model userState |> withNavigationDrawer model
+
+              Recent ->
+                viewRecentPage model userState |> withNavigationDrawer model
 
       header =
         viewPageHeader model

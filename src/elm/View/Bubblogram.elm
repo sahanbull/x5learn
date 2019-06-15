@@ -71,6 +71,13 @@ viewBubblogram model oerUrl chunks =
             millisSinceStart =
               Basics.min (millisSinceEnrichmentLoaded model oerUrl) (millisSinceLastUrlChange model)
         in
+            (millisSinceStart |> toFloat) / (toFloat enrichmentAnimationDuration) * 1.2 |> Basics.min 1
+
+      labelPhase =
+        let
+            millisSinceStart =
+              (Basics.min (millisSinceEnrichmentLoaded model oerUrl) (millisSinceLastUrlChange model))
+        in
             (millisSinceStart |> toFloat) / (toFloat enrichmentAnimationDuration) |> Basics.min 1
 
       widthString =
@@ -114,21 +121,28 @@ viewBubblogram model oerUrl chunks =
       findBubbleByEntityId entityId =
         rawBubbles |> List.filter (\bubble -> bubble.entity.id == entityId) |> List.reverse |> List.head
 
-      entityLabel =
-        case hoveringBubbleOrFragmentsBarEntityId model of
-          Nothing ->
-            []
+      entityLabels =
+        if mergePhase < 0.1 then
+          []
+        else
+          rawBubbles
+          -- |> List.Extra.uniqueBy (\{posX, posY, size} -> (posX, posY, size))
+          |> List.map entityLabel
 
-          Just entityId ->
-            case findBubbleByEntityId entityId of
-              Nothing -> -- shouldn't happen
+      entityLabel {entity, posX, posY, size} =
+        let
+            isHovering =
+              hoveringBubbleOrFragmentsBarEntityId model == Just entity.id
+
+            underline =
+              if isHovering then
+                [ Font.underline ]
+              else
                 []
-
-              Just {entity, posX, posY, size} ->
-                entity.title
-                |> captionNowrap [ whiteText, moveRight <| (posX + size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY - size*1.1*bubbleZoom) * contentHeight + marginTop - 15 ]
-                |> inFront
-                |> List.singleton
+        in
+            entity.title
+            |> captionNowrap ([ whiteText, Element.alpha (interp (size/3) (1.6*labelPhase-1) 0.6), moveRight <| (posX + size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY - size*1.1*bubbleZoom) * contentHeight + marginTop - 15 ] ++ underline)
+            |> inFront
 
       popup =
         case model.popup of
@@ -150,7 +164,7 @@ viewBubblogram model oerUrl chunks =
         [ background ] ++ svgBubbles
         |> svg [ width widthString, height heightString, viewBox <| "0 0 " ++ ([ widthString, heightString ] |> String.join " ") ]
         |> html
-        |> el entityLabel
+        |> el entityLabels
   in
       (graphic, popup)
 

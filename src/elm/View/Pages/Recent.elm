@@ -50,7 +50,7 @@ viewVerticalListOfCards : Model -> UserState -> List OerUrl -> Element Msg
 viewVerticalListOfCards model userState oerUrls =
   let
       rowHeight =
-        cardHeight + 50
+        cardHeight + verticalSpacingBetweenCards
 
       nrows =
         List.length oerUrls

@@ -66,20 +66,29 @@ viewOerGrid model userState playlist =
       else
         let
             rowHeight =
-              cardHeight + 90
+              cardHeight + verticalSpacingBetweenCards
+
+            nColumns =
+              if model.windowWidth > 1500 then
+                3
+              else
+                2
 
             nrows =
-              ((List.length oers) + 2) // 3
+              ((List.length oers) + (nColumns-1)) // nColumns
+
+            leftMargin =
+              (model.windowWidth - navigationDrawerWidth - nColumns*cardWidth - (nColumns-1)*horizontalSpacingBetweenCards) // 2
 
             cardPositionAtIndex index =
               let
                   x =
-                    modBy 3 index
+                    modBy nColumns index
 
                   y =
-                    index//3
+                    index//nColumns
               in
-                  { x = x * (cardWidth + 50) +180 |> toFloat, y = y * rowHeight + 70 |> toFloat }
+                  { x = x * (cardWidth + horizontalSpacingBetweenCards) + leftMargin |> toFloat, y = y * rowHeight + 70 |> toFloat }
 
             cards =
               oers
@@ -156,51 +165,65 @@ viewOerCard model userState recommendedFragments position barId oer =
       --       image [ semiTransparent, centerX, centerY, width (px <| if hovering then 60 else 50) ] { src = (svgPath stub), description = "" }
       --       |> el [ width fill, height (px imageHeight), Background.color x5color ]
 
-      carousel =
-        case oer.images of
-          [] ->
-            case maybeEnrichment of
-              Nothing ->
-                none
-                |> el [ width fill, height (px imageHeight), Background.color x5color ]
+      -- carousel =
+      --   case oer.images of
+      --     [] ->
+      --       case maybeEnrichment of
+      --         Nothing ->
+      --           none
+      --           |> el [ width fill, height (px imageHeight), Background.color x5color ]
 
-              Just enrichment ->
-                if enrichment.errors then
-                  image [ alpha 0.5, centerX, centerY ] { src = svgPath "enrichment_error", description = "No preview available for this resource" }
-                  |> el [ width fill, height (px imageHeight), Background.color greyMedium ]
-                else
-                  viewBubblogram model oer.url enrichment.chunks
+      --         Just enrichment ->
+      --           if enrichment.errors then
+      --             image [ alpha 0.5, centerX, centerY ] { src = svgPath "enrichment_error", description = "No preview available for this resource" }
+      --             |> el [ width fill, height (px imageHeight), Background.color greyMedium ]
+      --           else
+      --             viewBubblogram model oer.url enrichment.chunks
 
-          [ _ ] ->
-            singleThumbnail
+      --     [ _ ] ->
+      --       singleThumbnail
 
-          head :: rest ->
-            let
-                imageIndex =
-                  (millisSince model model.timeOfLastMouseEnterOnCard) // 1500 + 1
-                  |> modBy (List.length oer.images)
+      --     head :: rest ->
+      --       let
+      --           imageIndex =
+      --             (millisSince model model.timeOfLastMouseEnterOnCard) // 1500 + 1
+      --             |> modBy (List.length oer.images)
 
-                currentImageUrl =
-                  oer.images
-                  |> selectByIndex imageIndex head
+      --           currentImageUrl =
+      --             oer.images
+      --             |> selectByIndex imageIndex head
 
-                nextImageUrl =
-                  oer.images
-                  |> selectByIndex (imageIndex+1) head
+      --           nextImageUrl =
+      --             oer.images
+      --             |> selectByIndex (imageIndex+1) head
 
-                -- dot url =
-                --   none
-                --   |> el [ width (px 6), height (px 6), Border.rounded 3, Background.color <| if url==currentImageUrl then white else semiTransparentWhite ]
+      --           -- dot url =
+      --           --   none
+      --           --   |> el [ width (px 6), height (px 6), Border.rounded 3, Background.color <| if url==currentImageUrl then white else semiTransparentWhite ]
 
-                -- dotRow =
-                --   oer.images
-                --   |> List.map dot
-                --   |> row [ spacing 5, moveDown 160, moveRight 16 ]
-                --   |> inFront
+      --           -- dotRow =
+      --           --   oer.images
+      --           --   |> List.map dot
+      --           --   |> row [ spacing 5, moveDown 160, moveRight 16 ]
+      --           --   |> inFront
 
-            in
-                currentImageUrl
-                |> upperImage [ preloadImage nextImageUrl, imageCounter <| (imageIndex+1 |> String.fromInt) ++ " / " ++ (oer.images |> List.length |> String.fromInt) ]
+      --       in
+      --           currentImageUrl
+      --           |> upperImage [ preloadImage nextImageUrl, imageCounter <| (imageIndex+1 |> String.fromInt) ++ " / " ++ (oer.images |> List.length |> String.fromInt) ]
+
+      (graphic, popup) =
+        case maybeEnrichment of
+          Nothing ->
+            (none |> el [ width fill, height (px imageHeight), Background.color x5color ]
+            , [])
+
+          Just enrichment ->
+            if enrichment.errors then
+              (image [ alpha 0.5, centerX, centerY ] { src = svgPath "enrichment_error", description = "No preview available for this resource" }
+               |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
+              , [])
+            else
+              viewBubblogram model oer.url enrichment.chunks
 
       title =
         oer.title
@@ -237,16 +260,16 @@ viewOerCard model userState recommendedFragments position barId oer =
         |> column [ padding 16, spacing 6, height <| px <| imageHeight-16 ]
         |> el [ paddingBottom 16 ]
 
-      hoverPreview =
-        if chunksFromUrl model oer.url |> List.isEmpty then
-          carousel
-        else
-          case model.tagClouds |> Dict.get oer.url of
-            Nothing ->
-              carousel
+      -- hoverPreview =
+      --   if chunksFromUrl model oer.url |> List.isEmpty then
+      --     carousel
+      --   else
+      --     case model.tagClouds |> Dict.get oer.url of
+      --       Nothing ->
+      --         carousel
 
-            Just tagCloud ->
-              tagCloudView tagCloud
+      --       Just tagCloud ->
+      --         tagCloudView tagCloud
 
       widthOfCard =
         width (px cardWidth)
@@ -261,10 +284,12 @@ viewOerCard model userState recommendedFragments position barId oer =
 
           Nothing ->
             []
+
       card =
-        [ (if hovering then hoverPreview else carousel)
-        ]
-        |> column ([ widthOfCard, heightOfCard, htmlClass "materialCard", onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing), title, bottomInfo, fragmentsBar ] ++ clickHandler)
+        -- [ (if hovering then hoverPreview else carousel)
+        -- ]
+        [ graphic ]
+        |> column ([ widthOfCard, heightOfCard, htmlClass "materialCard", onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing), title, bottomInfo, fragmentsBar ] ++ clickHandler ++ popup)
 
       wrapperAttrs =
         -- [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| button [] { onPress = openInspectorOnPress model oer, label = card }, moveRight position.x, moveDown position.y ]

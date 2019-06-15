@@ -24,9 +24,9 @@
       var app = Elm.Main.init({flags: flags});
       setupPorts(app);
 
-      const minWindowWidth=1440;
+      const minWindowWidth=1280;
       if(screen.width<minWindowWidth){
-        alert('You seem to be using this site on a small device. We are working to support mobile devices soon but for now we recommend that you use a large screen (apologies). You can still use the site but some functions will not work as expected.');
+        alert('You seem to be using this site on a small device. We are working to support mobile devices soon but for now we recommend that you use a large screen (apologies). You can still use the site but some functions will not work as expected. Currently, the minimum recommended screen width is '+minWindowWidth+' pixels.');
       }else if(window.innerWidth<minWindowWidth){
         alert('You seem to be using this site in a small window. This early version of the interface needs a lot of screen space (apologies). Please consider making the window larger if possible. Otherwise, some functions may not work as expected.');
       }

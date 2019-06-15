@@ -55,6 +55,10 @@ x5colorSemiTransparent =
   rgba255 82 134 148 0.3
 
 
+x5colorDark =
+  rgb255 38 63 71
+
+
 greyTextDisabled =
   Font.color <| grey 180
 
@@ -725,5 +729,14 @@ cardHeight =
   280
 
 
--- pointerEventsNone =
-  -- Html.Attributes.property "pointer-events" (Json.Encode.string "none")
+horizontalSpacingBetweenCards =
+  70
+
+
+verticalSpacingBetweenCards =
+  90
+
+
+pointerEventsNone =
+  Html.Attributes.property "pointer-events" (Json.Encode.string "none")
+  |> htmlAttribute

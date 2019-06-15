@@ -51,6 +51,7 @@ type alias Model =
   , requestingEntityDefinitions : Bool
   , wikichunkEnrichmentRequestFailCount : Int
   , wikichunkEnrichmentRetryTime : Posix
+  , timeOfLastUrlChange : Posix
   }
 
 
@@ -256,6 +257,7 @@ initialModel nav flags =
   , requestingEntityDefinitions = False
   , wikichunkEnrichmentRequestFailCount = 0
   , wikichunkEnrichmentRetryTime = initialTime
+  , timeOfLastUrlChange = initialTime
   }
 
 
@@ -456,11 +458,14 @@ enrichmentAnimationDuration =
   5000
 
 
-anyEnrichmentsLoadedRecently : Model -> Bool
-anyEnrichmentsLoadedRecently model =
-  model.wikichunkEnrichmentLoadTimes
-  |> Dict.values
-  |> List.any (\loadTime -> (posixToMillis model.currentTime) - (posixToMillis loadTime) < enrichmentAnimationDuration)
+anyUrlChangeOrEnrichmentsLoadedRecently : Model -> Bool
+anyUrlChangeOrEnrichmentsLoadedRecently model =
+  if millisSinceLastUrlChange model < enrichmentAnimationDuration then
+    True
+  else
+    model.wikichunkEnrichmentLoadTimes
+    |> Dict.values
+    |> List.any (\loadTime -> (posixToMillis model.currentTime) - (posixToMillis loadTime) < enrichmentAnimationDuration)
 
 
 millisSinceEnrichmentLoaded model url =
@@ -471,6 +476,9 @@ millisSinceEnrichmentLoaded model url =
     Just time ->
       (model.currentTime |> posixToMillis) - (time |> posixToMillis)
 
+
+millisSinceLastUrlChange model =
+  (model.currentTime |> posixToMillis) - (model.timeOfLastUrlChange |> posixToMillis)
 
 
 isEqualToSearchString model entityTitle =

@@ -22,8 +22,9 @@ viewIntroPage model =
   let
       title =
         -- "Easy entrance to deep ideas." |> text |> el [ whiteText, Font.size 48, centerX, centerY ] |> el [ width fill, height <| fillPortion 3 ]
-        [ "Study anything. Anywhere. Free!" |> text |> el [ whiteText, Font.size 60, centerX ]
-        , "Easy entrance to deep ideas" |> text |> el [ whiteText, Font.size 24, centerX ]
+        [ "Welcome to X5Learn" |> text |> el [ whiteText, Font.size 60, centerX ]
+        -- , "Easy entrance to deep ideas" |> text |> el [ whiteText, Font.size 24, centerX ]
+        , "Explore Open Educational Resources" |> text |> el [ whiteText, Font.size 24, centerX ]
         ]
         |> column [ centerX, centerY, spacing 30 ]
         |> el [ width fill, height <| fillPortion 3 ]

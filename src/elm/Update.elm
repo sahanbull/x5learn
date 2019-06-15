@@ -59,10 +59,10 @@ update msg ({nav, userProfileForm} as model) =
             -- else
             --   (model, Cmd.none)
       in
-          ( { newModel | nav = { nav | url = url }, inspectorState = Nothing } |> closePopup |> resetUserProfileForm, cmd )
+          ( { newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime } |> closePopup |> resetUserProfileForm, cmd )
 
     ClockTick time ->
-      ( { model | currentTime = time, enrichmentsAnimating = anyEnrichmentsLoadedRecently model }, Cmd.none)
+      ( { model | currentTime = time, enrichmentsAnimating = anyUrlChangeOrEnrichmentsLoadedRecently model }, Cmd.none)
       |> requestWikichunkEnrichmentsIfNeeded
       |> requestEntityDefinitionsIfNeeded
 

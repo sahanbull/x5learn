@@ -67,7 +67,11 @@ marginX =
 viewBubblogram model oerUrl chunks =
   let
       mergePhase =
-        (millisSinceEnrichmentLoaded model oerUrl |> toFloat) / (toFloat enrichmentAnimationDuration) |> Basics.min 1
+        let
+            millisSinceStart =
+              Basics.min (millisSinceEnrichmentLoaded model oerUrl) (millisSinceLastUrlChange model)
+        in
+            (millisSinceStart |> toFloat) / (toFloat enrichmentAnimationDuration) |> Basics.min 1
 
       widthString =
         containerWidth |> String.fromInt

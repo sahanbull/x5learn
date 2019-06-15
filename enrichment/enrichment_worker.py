@@ -9,7 +9,7 @@ API_ROOT = 'http://127.0.0.1:5000/api/v1/'
 
 
 def main():
-    say('X5Learn WikichunkEnrichment worker')
+    say('hello')
     while(True):
         payload = {}
         r = requests.post(API_ROOT+"most_urgent_unstarted_enrichment_task/", data=payload)

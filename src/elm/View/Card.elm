@@ -66,7 +66,7 @@ viewOerGrid model userState playlist =
       else
         let
             rowHeight =
-              cardHeight + 90
+              cardHeight + verticalSpacingBetweenCards
 
             nrows =
               ((List.length oers) + 2) // 3
@@ -79,7 +79,7 @@ viewOerGrid model userState playlist =
                   y =
                     index//3
               in
-                  { x = x * (cardWidth + horizontalSpacingBetweenCards) + 180 |> toFloat, y = y * rowHeight + verticalSpacingBetweenCards |> toFloat }
+                  { x = x * (cardWidth + horizontalSpacingBetweenCards) + 180 |> toFloat, y = y * rowHeight + 70 |> toFloat }
 
             cards =
               oers

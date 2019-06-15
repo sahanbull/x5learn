@@ -730,11 +730,11 @@ cardHeight =
 
 
 horizontalSpacingBetweenCards =
-  50
+  70
 
 
 verticalSpacingBetweenCards =
-  70
+  90
 
 
 pointerEventsNone =

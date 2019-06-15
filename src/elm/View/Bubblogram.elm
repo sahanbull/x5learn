@@ -314,7 +314,7 @@ viewPopup : Model -> BubblePopupState -> Bubble -> List (Element.Attribute Msg)
 viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
   let
       enlargementPhaseFromText text =
-        (String.length text |> toFloat) / 200 |> Basics.min 1
+        (String.length text |> toFloat) / 200 - posY*0.5 |> Basics.min 1
 
       (contentElement, enlargementPhase) =
         case content of
@@ -367,10 +367,10 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
             , interp enlargementPhase smallest.popupWidth largest.popupWidth)
 
       (verticalDirection, verticalOffset) =
-        if posY > 0.2 then
-          (above, Basics.max 10 <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5)
-        else
-          (below, Basics.max 10 <| (posY + size*3.5*bubbleZoom) * contentHeight + marginTop + 5)
+        -- if posY > 0.2 then
+        (above, Basics.max 10 <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5)
+        -- else
+        --   (below, Basics.max 10 <| (posY + size*3.5*bubbleZoom) * contentHeight + marginTop + 5)
   in
       none
       |> el [ verticalDirection box, moveRight <| horizontalOffset, moveDown <| verticalOffset ]

@@ -497,18 +497,21 @@ cacheOersFromList oers model =
 
 addFragmentAccess : Fragment -> Posix -> UserState -> UserState
 addFragmentAccess fragment currentTime userState =
-  let
-      maxNumberOfItemsToKeep =
-        10 -- arbitrary value. I'm keeping this fairly small to avoid long loading times. At the time of writing, I figure that we could speed things up by removing redundant entity titles and urls from the chunk data. See issue #115
+  if List.member fragment (Dict.values userState.fragmentAccesses) then
+    userState
+  else
+      let
+          maxNumberOfItemsToKeep =
+            10 -- arbitrary value. I'm keeping this fairly small to avoid long loading times. At the time of writing, I figure that we could speed things up by removing redundant entity titles and urls from the chunk data. See issue #115
 
-      fragmentAccesses =
-        userState.fragmentAccesses
-        |> Dict.toList
-        |> List.drop ((Dict.size userState.fragmentAccesses) - maxNumberOfItemsToKeep)
-        |> Dict.fromList
-        |> Dict.insert (posixToMillis currentTime) fragment
-  in
-      { userState | fragmentAccesses = fragmentAccesses }
+          fragmentAccesses =
+            userState.fragmentAccesses
+            |> Dict.toList
+            |> List.drop ((Dict.size userState.fragmentAccesses) - maxNumberOfItemsToKeep)
+            |> Dict.fromList
+            |> Dict.insert (posixToMillis currentTime) fragment
+      in
+          { userState | fragmentAccesses = fragmentAccesses }
 
 
 setTextInNoteForm : OerUrl -> String -> Model -> Model

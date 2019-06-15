@@ -316,6 +316,9 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
       enlargementPhaseFromText text =
         (String.length text |> toFloat) / 200 - posY*0.5 |> Basics.min 1
 
+      heightLimit =
+        Element.height (Element.fill |> Element.maximum 110)
+
       (contentElement, enlargementPhase) =
         case content of
           DefinitionInBubblePopup ->
@@ -350,7 +353,7 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
       box =
         contentElement
         |> List.singleton
-        |> menuColumn [ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone ]
+        |> menuColumn [ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone, heightLimit, Element.clipY ]
 
       (horizontalOffset, popupWidth) =
         let

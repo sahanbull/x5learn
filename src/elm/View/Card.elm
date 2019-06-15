@@ -71,6 +71,9 @@ viewOerGrid model userState playlist =
             nrows =
               ((List.length oers) + 2) // 3
 
+            leftMargin =
+              (model.windowWidth - navigationDrawerWidth - 3*cardWidth - 2*horizontalSpacingBetweenCards) // 2
+
             cardPositionAtIndex index =
               let
                   x =
@@ -79,7 +82,7 @@ viewOerGrid model userState playlist =
                   y =
                     index//3
               in
-                  { x = x * (cardWidth + horizontalSpacingBetweenCards) + 180 |> toFloat, y = y * rowHeight + 70 |> toFloat }
+                  { x = x * (cardWidth + horizontalSpacingBetweenCards) + leftMargin |> toFloat, y = y * rowHeight + 70 |> toFloat }
 
             cards =
               oers

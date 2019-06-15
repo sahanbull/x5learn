@@ -358,7 +358,7 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
               horizontalSpacingBetweenCards - 5
 
             smallest =
-              { horizontalOffset = (posX/2 + 1/4) * contentWidth + marginX - 260/2, popupWidth = 260 }
+              { horizontalOffset = (posX/2 + 1/4) * contentWidth + marginX - 220/2, popupWidth = 220 }
 
             largest =
               { horizontalOffset = -allowedMargin, popupWidth = cardWidth + 2*allowedMargin }
@@ -367,7 +367,7 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
             , interp enlargementPhase smallest.popupWidth largest.popupWidth)
 
       (verticalDirection, verticalOffset) =
-        if posY > 0.4 then
+        if posY > 0.2 then
           (above, Basics.max 10 <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5)
         else
           (below, Basics.max 10 <| (posY + size*3.5*bubbleZoom) * contentHeight + marginTop + 5)

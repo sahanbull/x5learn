@@ -49,7 +49,7 @@ containerHeight =
 
 
 contentWidth =
-  cardWidth - 2*marginX
+  cardWidth - 2*marginX - 40 -- shrink a bit in order to make a bit of space for labels of the right
 
 
 contentHeight =
@@ -70,6 +70,13 @@ viewBubblogram model oerUrl chunks =
         let
             millisSinceStart =
               Basics.min (millisSinceEnrichmentLoaded model oerUrl) (millisSinceLastUrlChange model)
+        in
+            (millisSinceStart |> toFloat) / (toFloat enrichmentAnimationDuration) * 1.2 |> Basics.min 1
+
+      labelPhase =
+        let
+            millisSinceStart =
+              (Basics.min (millisSinceEnrichmentLoaded model oerUrl) (millisSinceLastUrlChange model))
         in
             (millisSinceStart |> toFloat) / (toFloat enrichmentAnimationDuration) |> Basics.min 1
 
@@ -98,37 +105,51 @@ viewBubblogram model oerUrl chunks =
 
       svgBubbles =
         rawBubbles
-        |> List.sortBy frequency
+        |> List.sortBy (\{entity} -> frequency entity)
         |> List.reverse
         |> List.map (viewBubble model oerUrl chunks)
 
       background =
         rect [ width widthString, height heightString, fill "#191919" ] []
 
-      frequency bubble =
+      frequency entity =
         rawBubbles
-        |> List.filter (\b -> b.entity == bubble.entity)
+        |> List.filter (\b -> b.entity == entity)
         |> List.length
 
       findBubbleByEntityId : String -> Maybe Bubble
       findBubbleByEntityId entityId =
         rawBubbles |> List.filter (\bubble -> bubble.entity.id == entityId) |> List.reverse |> List.head
 
-      entityLabel =
-        case hoveringBubbleOrFragmentsBarEntityId model of
-          Nothing ->
-            []
+      entityLabels =
+        if mergePhase < 0.1 then
+          []
+        else
+          rawBubbles
+          |> List.Extra.uniqueBy (\{entity} -> entity.id)
+          |> List.concatMap entityLabel
 
-          Just entityId ->
-            case findBubbleByEntityId entityId of
-              Nothing -> -- shouldn't happen
-                []
+      entityLabel {entity, posX, posY, size} =
+        let
+            isHovering =
+              hoveringBubbleOrFragmentsBarEntityId model == Just entity.id
 
-              Just {entity, posX, posY, size} ->
-                entity.title
-                |> captionNowrap [ whiteText, moveRight <| (posX + size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY - size*1.1*bubbleZoom) * contentHeight + marginTop - 15 ]
-                |> inFront
-                |> List.singleton
+            isVisible =
+              isHovering || (List.member entity (rawBubbles |> List.map .entity |> List.Extra.uniqueBy .id |> List.sortBy frequency |> List.reverse |> List.take 3))
+
+            highlight =
+              if isHovering then
+                [ Font.underline ]
+              else
+                [ Element.alpha (interp (size/3) (1.6*labelPhase-1) 0.6) ]
+        in
+            if isVisible then
+              entity.title
+              |> captionNowrap ([ whiteText, moveRight <| (posX + size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY - size*1.1*bubbleZoom) * contentHeight + marginTop - 15 ] ++ highlight)
+              |> inFront
+              |> List.singleton
+            else
+              []
 
       popup =
         case model.popup of
@@ -150,7 +171,7 @@ viewBubblogram model oerUrl chunks =
         [ background ] ++ svgBubbles
         |> svg [ width widthString, height heightString, viewBox <| "0 0 " ++ ([ widthString, heightString ] |> String.join " ") ]
         |> html
-        |> el entityLabel
+        |> el entityLabels
   in
       (graphic, popup)
 

@@ -13,6 +13,7 @@ import Svg.Events exposing (onMouseOver, onMouseOut, custom)
 import Element exposing (Element, el, html, inFront, row, padding, spacing, px, moveDown, moveRight, above, below, none)
 import Element.Font as Font
 import Element.Background as Background
+import Element.Events as Events
 
 import Color -- avh4/elm-color
 
@@ -77,7 +78,7 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
                 [ Element.alpha (interp (size/3) (1.8*labelPhase-1) 0.8) ]
         in
             entity.title
-            |> captionNowrap ([ whiteText, moveRight <| (posX + size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY - size*1.1*bubbleZoom) * contentHeight + marginTop - 15 ] ++ highlight)
+            |> captionNowrap ([ whiteText, moveRight <| (posX + size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY - size*1.1*bubbleZoom) * contentHeight + marginTop - 15, Events.onMouseEnter <| BubbleMouseOver entity.id, Events.onMouseLeave BubbleMouseOut, onClickNoBubble (BubbleClicked oerUrl), htmlClass hoverableClass ] ++ highlight)
             |> inFront
             |> List.singleton
 
@@ -130,7 +131,7 @@ viewBubble model oerUrl animationPhase ({entity} as bubble) =
         , onMouseOver <| BubbleMouseOver entity.id
         , onMouseOut <| BubbleMouseOut
         , custom "click" (Json.Decode.succeed { message = BubbleClicked oerUrl, stopPropagation = True, preventDefault = True })
-        , class "UserSelectNone"
+        , class hoverableClass
         ] ++ outline)
         []
 
@@ -265,3 +266,7 @@ animatedBubbleCurrentCoordinates phase {initialCoordinates, finalCoordinates} =
   , posY = interp phase initialCoordinates.posY finalCoordinates.posY
   , size = interp phase initialCoordinates.size finalCoordinates.size
   }
+
+
+hoverableClass =
+  "UserSelectNone CursorPointer"

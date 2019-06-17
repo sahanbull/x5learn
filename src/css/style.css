@@ -76,7 +76,11 @@ a:hover {
 
 
 .CursorNotAllowed{
-  cursor: not-allowed
+  cursor: not-allowed;
+}
+
+.CursorPointer {
+  cursor: pointer;
 }
 
 #SearchField{

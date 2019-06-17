@@ -25,16 +25,11 @@ import Msg exposing (..)
 viewBubblogram : Model -> OerUrl -> Bubblogram -> (Element Msg, List (Element.Attribute Msg))
 viewBubblogram model oerUrl {createdAt, bubbles} =
   let
-      millisSinceStart =
-        millisSince model createdAt
-        |> Basics.min (millisSinceLastUrlChange model)
-        |> toFloat
-
       animationPhase =
-        millisSinceStart / enrichmentAnimationDuration * 2 |> Basics.min 1
+        bubblogramAnimationPhase model createdAt
 
       labelPhase =
-        millisSinceStart / enrichmentAnimationDuration * 2 - 1 |> Basics.min 1 |> Basics.max 0
+        animationPhase * 2 - 1 |> Basics.min 1 |> Basics.max 0
 
       widthString =
         containerWidth |> String.fromInt

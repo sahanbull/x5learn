@@ -160,11 +160,6 @@ update msg ({nav, userProfileForm} as model) =
 
     RequestWikichunkEnrichments (Ok enrichments) ->
       let
-          wikichunkEnrichmentLoadTimes =
-            enrichments
-            |> Dict.keys
-            |> List.foldl (\url dict -> dict |> Dict.insert url model.currentTime) model.wikichunkEnrichmentLoadTimes
-
           cachedMentions =
             Dict.foldl extractMentionsFromEnrichment model.cachedMentions enrichments
 
@@ -177,7 +172,7 @@ update msg ({nav, userProfileForm} as model) =
           retryTime =
             (posixToMillis model.currentTime) + failCount*2000 |> millisToPosix
       in
-          ( { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.union enrichments, wikichunkEnrichmentLoadTimes = wikichunkEnrichmentLoadTimes, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, cachedMentions = cachedMentions, wikichunkEnrichmentRequestFailCount = failCount, wikichunkEnrichmentRetryTime = retryTime } |> registerUndefinedEntities (Dict.values enrichments), Cmd.none )
+          ( { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.union enrichments, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, cachedMentions = cachedMentions, wikichunkEnrichmentRequestFailCount = failCount, wikichunkEnrichmentRetryTime = retryTime } |> registerUndefinedEntities (Dict.values enrichments), Cmd.none )
 
     RequestWikichunkEnrichments (Err err) ->
       -- let

@@ -34,7 +34,6 @@ type alias Model =
   , popup : Maybe Popup
   , requestingWikichunkEnrichments : Bool
   , wikichunkEnrichments : Dict OerUrl WikichunkEnrichment
-  , wikichunkEnrichmentLoadTimes : Dict OerUrl Posix
   , enrichmentsAnimating : Bool
   , tagClouds : Dict String (List String)
   , searchSuggestions : List String
@@ -277,7 +276,6 @@ initialModel nav flags =
   , popup = Nothing
   , requestingWikichunkEnrichments = False
   , wikichunkEnrichments = Dict.empty
-  , wikichunkEnrichmentLoadTimes = Dict.empty
   , enrichmentsAnimating = False
   , tagClouds = Dict.empty
   , searchSuggestions = []
@@ -498,30 +496,28 @@ enrichmentAnimationDuration =
 
 anyBubblogramsAnimating : Model -> Bool
 anyBubblogramsAnimating model =
-  if millisSinceLastUrlChange model < enrichmentAnimationDuration then
-    True
-  else
-    let
-        isAnimating {bubblogram} =
-          case bubblogram of
-            Nothing ->
-              False
+  let
+      isAnimating enrichment =
+        case enrichment.bubblogram of
+          Nothing ->
+            False
 
-            Just {createdAt} ->
-              (posixToMillis createdAt) + enrichmentAnimationDuration > (posixToMillis model.currentTime)
-    in
-        model.wikichunkEnrichments
-        |> Dict.values
-        |> List.any isAnimating
+          Just {createdAt} ->
+            bubblogramAnimationPhase model createdAt < 1
+  in
+      model.wikichunkEnrichments
+      |> Dict.values
+      |> List.any isAnimating
 
 
-millisSinceEnrichmentLoaded model url =
-  case model.wikichunkEnrichmentLoadTimes |> Dict.get url of
-    Nothing -> -- shouldn't happen
-      100000000
-
-    Just time ->
-      (model.currentTime |> posixToMillis) - (time |> posixToMillis)
+bubblogramAnimationPhase model createdAt =
+  let
+      millisSinceStart =
+        millisSince model createdAt
+        |> Basics.min (millisSinceLastUrlChange model)
+        |> toFloat
+  in
+      millisSinceStart / enrichmentAnimationDuration * 2 |> Basics.min 1
 
 
 millisSinceLastUrlChange model =

@@ -164,7 +164,7 @@ greyMedium =
 
 
 veryTransparentWhite =
-  rgba 1 1 1 0.1
+  rgba 1 1 1 0.2
 
 
 transparentWhite =
@@ -535,7 +535,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
         |> List.indexedMap chunkTrigger
   in
       none
-      |> el ([ width fill, height (px fragmentsBarHeight), materialScrimBackground, borderTop 1, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)
+      |> el ([ width fill, height (px fragmentsBarHeight), materialScrimBackground, borderTop 1, Border.color veryTransparentWhite, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)
 
 
 viewChunkPopup model chunkPopup =

@@ -123,7 +123,7 @@ bubbleFromEntity model occurrencesOfAllEntities rankedEntities entity =
         if isSearchTerm then
           (0.145, 0.9, 0.8)
         else
-          (0.536, 0, defaultOpacity)
+          (0.536, 0, 0.6)
 
       initialCoordinates =
         { posX = initialPosX
@@ -166,13 +166,17 @@ bubbleFromEntity model occurrencesOfAllEntities rankedEntities entity =
 --   (String.length id |> modBy 5 |> toFloat) / 5 * 100
 
 
-defaultOpacity =
-  0.3
-
-
 layoutBubbles : List Bubble -> List Bubble
 layoutBubbles bubbles =
   let
+      medianPosX =
+        case bubbles |> List.sortBy (\{initialCoordinates} -> initialCoordinates.posX) |> List.drop ((List.length bubbles)//2) |> List.head of
+          Nothing -> -- shouldn't happen
+            0.5
+
+          Just bubble ->
+            bubble.finalCoordinates.posX
+
       nBubblesMinus1 =
         (List.length bubbles) - 1 |> toFloat
 
@@ -181,31 +185,32 @@ layoutBubbles bubbles =
 
       setPosX index ({entity, finalCoordinates} as bubble) =
         let
-            strlen =
-              toFloat <| String.length entity.title
+            approximateLabelWidth =
+              (toFloat <| String.length entity.title) * 0.02
 
             posX =
-              if (index |> modBy 2) == 1 then
-                0.8 - 0.01 * strlen - 0.03 * finalCoordinates.size
-              else
+              if finalCoordinates.posX < medianPosX then
                 0.03 * finalCoordinates.size + (if index==0 || index==((List.length bubbles) - 1) then 0.07 else 0)
+              else
+                0.95 - approximateLabelWidth - 0.03 * finalCoordinates.size
         in
             { bubble | finalCoordinates = { finalCoordinates | posX = posX } }
   in
       bubbles
-      -- |> List.sortBy (\{entity} -> entity.title |> String.length)
-      |> List.sortBy (\{initialCoordinates} -> initialCoordinates.posX)
-      |> List.reverse
-      |> unsortAlternating
+      |> List.sortBy (\{finalCoordinates} -> finalCoordinates.size)
       |> List.indexedMap setPosX
+      -- |> List.sortBy (\{entity} -> entity.title |> String.length)
+      -- |> List.sortBy (\{initialCoordinates} -> initialCoordinates.posX)
+      -- |> List.reverse
+      -- |> unsortZigZag
       |> List.indexedMap setPosY
 
 
-unsortAlternating : List a -> List a
-unsortAlternating xs =
-  case xs of
-    [] ->
-      []
+-- unsortZigZag : List a -> List a
+-- unsortZigZag xs =
+--   case xs of
+--     [] ->
+--       []
 
-    x :: rest ->
-      x :: (rest |> List.reverse |> unsortAlternating)
+--     x :: rest ->
+--       x :: (rest |> List.reverse |> unsortZigZag)

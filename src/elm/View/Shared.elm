@@ -87,8 +87,8 @@ bigButtonPadding =
   paddingXY 13 10
 
 
--- borderTop px =
---   Border.widthEach { allSidesZero | top = px }
+borderTop px =
+  Border.widthEach { allSidesZero | top = px }
 
 
 borderBottom px =
@@ -535,7 +535,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
         |> List.indexedMap chunkTrigger
   in
       none
-      |> el ([ width fill, height (px fragmentsBarHeight), materialScrimBackground, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)
+      |> el ([ width fill, height (px fragmentsBarHeight), materialScrimBackground, borderTop 1, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)
 
 
 viewChunkPopup model chunkPopup =

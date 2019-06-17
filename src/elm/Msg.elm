@@ -53,7 +53,7 @@ type Msg
   | RemoveNote Posix
   | VideoIsPlayingAtPosition Float
   | SubmitPostRegistrationForm Bool
-  | BubbleMouseOver OerUrl (List Chunk) Entity
+  | BubbleMouseOver String
   | BubbleMouseOut
   | BubbleClicked OerUrl
 

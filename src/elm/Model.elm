@@ -68,6 +68,30 @@ type EntityDefinition
   | DefinitionLoaded String
   -- | DefinitionUnavailable -- TODO consider appropriate error handling
 
+type alias Bubble =
+  { entity : Entity
+  , hue : Float
+  , alpha : Float
+  , saturation : Float
+  , initialCoordinates : BubbleCoordinates
+  , finalCoordinates : BubbleCoordinates
+  }
+
+type alias BubbleCoordinates =
+  { posX : Float
+  , posY : Float
+  , size : Float
+  }
+
+type alias Occurrence =
+  { entity : Entity
+  , positionInText : Float
+  , rank : Float
+  }
+
+
+type alias Bubblogram = List Bubble
+
 type alias OerUrl = String
 
 type alias Noteboard = List Note
@@ -137,7 +161,8 @@ type alias Oer =
 
 
 type alias WikichunkEnrichment =
-  { chunks : List Chunk
+  { bubblogram : Maybe Bubblogram
+  , chunks : List Chunk
   , errors : Bool
   }
 
@@ -465,7 +490,7 @@ chunksFromUrl model url =
 
 
 enrichmentAnimationDuration =
-  5000
+  12000
 
 
 anyUrlChangeOrEnrichmentsLoadedRecently : Model -> Bool
@@ -553,3 +578,12 @@ notesPath =
 
 recentPath =
   "/recent"
+
+
+averageOf getterFunction records =
+  (records |> List.map getterFunction |> List.sum) / (records |> List.length |> toFloat)
+
+
+interp : Float -> Float -> Float -> Float
+interp phase a b =
+  phase * b + (1-phase) * a

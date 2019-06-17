@@ -10,7 +10,7 @@ import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Svg.Events exposing (onMouseOver, onMouseOut, custom)
 
-import Element exposing (el, html, inFront, row, padding, spacing, px, moveDown, moveRight, above, below, none)
+import Element exposing (Element, el, html, inFront, row, padding, spacing, px, moveDown, moveRight, above, below, none)
 import Element.Font as Font
 import Element.Background as Background
 
@@ -22,79 +22,28 @@ import View.Shared exposing (..)
 import Msg exposing (..)
 
 
-type alias Occurrence =
-  { entity : Entity
-  , posX : Float
-  , posY : Float
-  }
-
-
-type alias Bubble =
-  { entity : Entity
-  , posX : Float
-  , posY : Float
-  , size : Float
-  , hue : Float
-  , alpha : Float
-  , saturation : Float
-  }
-
-
-containerWidth =
-  cardWidth
-
-
-containerHeight =
-  imageHeight
-
-
-contentWidth =
-  cardWidth - 2*marginX - 40 -- shrink a bit in order to make a bit of space for labels of the right
-
-
-contentHeight =
-  imageHeight - 2*marginX - (fragmentsBarHeight + 10)
-
-
-marginTop =
-  marginX + 18
-
-
-marginX =
-  25
-
-
-viewBubblogram model oerUrl chunks =
+viewBubblogram : Model -> OerUrl -> Bubblogram -> (Element Msg, List (Element.Attribute Msg))
+viewBubblogram model oerUrl bubbles =
   let
-      mergePhase =
+      animationPhase =
         let
             millisSinceStart =
               Basics.min (millisSinceEnrichmentLoaded model oerUrl) (millisSinceLastUrlChange model)
         in
-            (millisSinceStart |> toFloat) / (toFloat enrichmentAnimationDuration) * 1.2 |> Basics.min 1
+            (millisSinceStart |> toFloat) / (toFloat enrichmentAnimationDuration) * 2 |> Basics.min 1
 
       labelPhase =
         let
             millisSinceStart =
-              (Basics.min (millisSinceEnrichmentLoaded model oerUrl) (millisSinceLastUrlChange model))
+              Basics.min (millisSinceEnrichmentLoaded model oerUrl) (millisSinceLastUrlChange model)
         in
-            (millisSinceStart |> toFloat) / (toFloat enrichmentAnimationDuration) |> Basics.min 1
+            ((millisSinceStart |> toFloat) / (toFloat enrichmentAnimationDuration) * 2 - 1) |> Basics.min 1 |> Basics.max 0
 
       widthString =
         containerWidth |> String.fromInt
 
       heightString =
         containerHeight |> String.fromInt
-
-      rawBubbles =
-        let
-            occurrences =
-              chunks
-              |> occurrencesFromChunks
-              |> List.filter (\{entity} -> (String.length entity.title)>1 && Dict.member entity.id model.entityDefinitions && hasMentions model oerUrl entity.id)
-        in
-            occurrences
-            |> List.map (bubbleFromOccurrence model mergePhase occurrences)
 
       -- mergedBubbles =
       --   rawBubbles
@@ -104,38 +53,30 @@ viewBubblogram model oerUrl chunks =
       --   |> List.reverse
 
       svgBubbles =
-        rawBubbles
-        |> List.sortBy (\{entity} -> frequency entity)
-        |> List.reverse
-        |> List.map (viewBubble model oerUrl chunks)
+        bubbles
+        |> List.map (viewBubble model oerUrl animationPhase)
 
       background =
         rect [ width widthString, height heightString, fill "#191919" ] []
 
-      frequency entity =
-        rawBubbles
-        |> List.filter (\b -> b.entity == entity)
-        |> List.length
-
       findBubbleByEntityId : String -> Maybe Bubble
       findBubbleByEntityId entityId =
-        rawBubbles |> List.filter (\bubble -> bubble.entity.id == entityId) |> List.reverse |> List.head
+        bubbles |> List.filter (\bubble -> bubble.entity.id == entityId) |> List.reverse |> List.head
 
       entityLabels =
-        if mergePhase < 0.1 then
+        if animationPhase < 0.1 then
           []
         else
-          rawBubbles
-          |> List.Extra.uniqueBy (\{entity} -> entity.id)
+          bubbles
           |> List.concatMap entityLabel
 
-      entityLabel {entity, posX, posY, size} =
+      entityLabel ({entity} as bubble) =
         let
+            {posX, posY, size} =
+              animatedBubbleCurrentCoordinates animationPhase bubble
+
             isHovering =
               hoveringBubbleOrFragmentsBarEntityId model == Just entity.id
-
-            isVisible =
-              isHovering || (List.member entity (rawBubbles |> List.map .entity |> List.Extra.uniqueBy .id |> List.sortBy frequency |> List.reverse |> List.take 3))
 
             highlight =
               if isHovering then
@@ -143,13 +84,10 @@ viewBubblogram model oerUrl chunks =
               else
                 [ Element.alpha (interp (size/3) (1.6*labelPhase-1) 0.6) ]
         in
-            if isVisible then
-              entity.title
-              |> captionNowrap ([ whiteText, moveRight <| (posX + size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY - size*1.1*bubbleZoom) * contentHeight + marginTop - 15 ] ++ highlight)
-              |> inFront
-              |> List.singleton
-            else
-              []
+            entity.title
+            |> captionNowrap ([ whiteText, moveRight <| (posX + size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY - size*1.1*bubbleZoom) * contentHeight + marginTop - 15 ] ++ highlight)
+            |> inFront
+            |> List.singleton
 
       popup =
         case model.popup of
@@ -160,7 +98,7 @@ viewBubblogram model oerUrl chunks =
                   []
 
                 Just bubble ->
-                  viewPopup model state bubble
+                  viewPopup model state (animatedBubbleCurrentCoordinates animationPhase bubble)
             else
               []
 
@@ -176,98 +114,13 @@ viewBubblogram model oerUrl chunks =
       (graphic, popup)
 
 
-occurrencesFromChunks : List Chunk -> List Occurrence
-occurrencesFromChunks chunks =
+
+viewBubble : Model -> OerUrl -> Float -> Bubble -> Svg.Svg Msg
+viewBubble model oerUrl animationPhase ({entity} as bubble) =
   let
-      nChunksMinus1 = (List.length chunks) - 1
-  in
-      chunks
-      |> List.indexedMap (occurrencesFromChunk nChunksMinus1)
-      |> List.concat
+      {posX, posY, size} =
+        animatedBubbleCurrentCoordinates animationPhase bubble
 
-
-occurrencesFromChunk : Int -> Int -> Chunk -> List Occurrence
-occurrencesFromChunk nChunksMinus1 chunkIndex {entities, length} =
-  let
-      posX =
-        (toFloat chunkIndex) / (toFloat nChunksMinus1)
-
-      nEntitiesMinus1 =
-        (List.length entities) - 1
-  in
-      entities
-      |> List.indexedMap (occurrenceFromEntity posX nEntitiesMinus1)
-
-
-occurrenceFromEntity : Float -> Int -> Int -> Entity -> Occurrence
-occurrenceFromEntity posX nEntitiesMinus1 entityIndex entity =
-  let
-      posY =
-        (toFloat entityIndex) / (toFloat nEntitiesMinus1)
-  in
-      Occurrence entity posX posY
-
-
-bubbleFromOccurrence : Model -> Float -> List Occurrence -> Occurrence -> Bubble
-bubbleFromOccurrence model mergePhase occurrences {entity, posX, posY} =
-  let
-      occurrencesWithSameEntityId =
-        occurrences
-        |> List.filter (\o -> o.entity.id == entity.id)
-
-      mergedPosX =
-        occurrencesWithSameEntityId
-        |> averageOf .posX
-
-      mergedPosY =
-        occurrencesWithSameEntityId
-        |> averageOf .posY
-
-      mergedSize =
-        occurrencesWithSameEntityId |> List.length |> toFloat |> sqrt
-
-      isSearchTerm =
-        isEqualToSearchString model entity.title
-
-      (hue, saturation, alpha) =
-        if isSearchTerm then
-          (0.145, 0.9, 0.15 + 0.55 * (1.0 / (occurrencesWithSameEntityId |> List.length |> toFloat)))
-        else
-          (0.536, fakeLexicalSimilarityToSearchTerm entity.id, rawBubbleAlpha)
-  in
-      { entity = entity
-      , posX = interp mergePhase posX mergedPosX
-      , posY = interp mergePhase posY mergedPosY
-      , size = interp mergePhase 1 mergedSize
-      , hue = hue
-      , saturation = saturation
-      , alpha = alpha
-      }
-
-
-fakeLexicalSimilarityToSearchTerm : String -> Float
-fakeLexicalSimilarityToSearchTerm id =
-  if (String.length id) == 7 then 0.5 else 0
-
-
--- fakePredictedLevelOfKnowledgeFromEntity : String -> Float
--- fakePredictedLevelOfKnowledgeFromEntity id =
---   ((String.length id |> modBy 3) + 1 |> toFloat) / 3
-
-
--- fakePredictedLevelOfInterestFromEntity : String -> Float
--- fakePredictedLevelOfInterestFromEntity id =
---   (String.length id |> modBy 4 |> toFloat) / 3
-
-
--- fakedLevelOfTheSystemsConfidenceInHue : String -> Float
--- fakedLevelOfTheSystemsConfidenceInHue id =
---   (String.length id |> modBy 5 |> toFloat) / 5 * 100
-
-
-viewBubble : Model -> OerUrl -> List Chunk -> Bubble -> Svg.Svg Msg
-viewBubble model oerUrl chunks ({entity, posX, posY, size} as bubble) =
-  let
       isHovering =
         hoveringBubbleOrFragmentsBarEntityId model == Just entity.id
 
@@ -282,7 +135,7 @@ viewBubble model oerUrl chunks ({entity, posX, posY, size} as bubble) =
         , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
         , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
         , fill <| Color.toCssString <| colorFromBubble bubble
-        , onMouseOver <| BubbleMouseOver oerUrl chunks entity
+        , onMouseOver <| BubbleMouseOver entity.id
         , onMouseOut <| BubbleMouseOut
         , custom "click" (Json.Decode.succeed { message = BubbleClicked oerUrl, stopPropagation = True, preventDefault = True })
         , class "UserSelectNone"
@@ -290,22 +143,9 @@ viewBubble model oerUrl chunks ({entity, posX, posY, size} as bubble) =
         []
 
 
-interp : Float -> Float -> Float -> Float
-interp phase a b =
-  phase * b + (1-phase) * a
-
-
 colorFromBubble : Bubble -> Color.Color
 colorFromBubble {hue, alpha, saturation} =
   Color.hsla hue saturation 0.5 alpha
-
-
-averageOf getterFunction records =
-  (records |> List.map getterFunction |> List.sum) / (records |> List.length |> toFloat)
-
-
-rawBubbleAlpha =
-  0.28
 
 
 bubbleZoom =
@@ -331,7 +171,7 @@ hoveringBubbleOrFragmentsBarEntityId model =
           Nothing
 
 
-viewPopup : Model -> BubblePopupState -> Bubble -> List (Element.Attribute Msg)
+viewPopup : Model -> BubblePopupState -> BubbleCoordinates -> List (Element.Attribute Msg)
 viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
   let
       enlargementPhaseFromText text =
@@ -400,3 +240,35 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
       |> el [ verticalDirection box, moveRight <| horizontalOffset, moveDown <| verticalOffset ]
       |> inFront
       |> List.singleton
+
+
+containerWidth =
+  cardWidth
+
+
+containerHeight =
+  imageHeight
+
+
+contentWidth =
+  cardWidth - 2*marginX
+
+
+contentHeight =
+  imageHeight - 2*marginX - (fragmentsBarHeight + 10)
+
+
+marginTop =
+  marginX + 18
+
+
+marginX =
+  25
+
+
+animatedBubbleCurrentCoordinates : Float -> Bubble -> BubbleCoordinates
+animatedBubbleCurrentCoordinates phase {initialCoordinates, finalCoordinates} =
+  { posX = interp phase initialCoordinates.posX finalCoordinates.posX
+  , posY = interp phase initialCoordinates.posY finalCoordinates.posY
+  , size = interp phase initialCoordinates.size finalCoordinates.size
+  }

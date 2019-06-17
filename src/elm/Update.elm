@@ -15,6 +15,7 @@ import List.Extra
 
 import Model exposing (..)
 import Update.BubblePopup exposing (..)
+import Update.Bubblogram exposing (..)
 import Msg exposing (..)
 import Ports exposing (..)
 import Request exposing (..)
@@ -159,9 +160,6 @@ update msg ({nav, userProfileForm} as model) =
 
     RequestWikichunkEnrichments (Ok enrichments) ->
       let
-          wikichunkEnrichments =
-            model.wikichunkEnrichments |> Dict.union enrichments
-
           wikichunkEnrichmentLoadTimes =
             enrichments
             |> Dict.keys
@@ -179,7 +177,7 @@ update msg ({nav, userProfileForm} as model) =
           retryTime =
             (posixToMillis model.currentTime) + failCount*2000 |> millisToPosix
       in
-          ( { model | wikichunkEnrichments = wikichunkEnrichments, wikichunkEnrichmentLoadTimes = wikichunkEnrichmentLoadTimes, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, cachedMentions = cachedMentions, wikichunkEnrichmentRequestFailCount = failCount, wikichunkEnrichmentRetryTime = retryTime } |> registerUndefinedEntities (Dict.values enrichments), Cmd.none )
+          ( { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.union enrichments, wikichunkEnrichmentLoadTimes = wikichunkEnrichmentLoadTimes, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, cachedMentions = cachedMentions, wikichunkEnrichmentRequestFailCount = failCount, wikichunkEnrichmentRetryTime = retryTime } |> registerUndefinedEntities (Dict.values enrichments), Cmd.none )
 
     RequestWikichunkEnrichments (Err err) ->
       -- let
@@ -193,7 +191,7 @@ update msg ({nav, userProfileForm} as model) =
           entityDefinitions =
             model.entityDefinitions |> Dict.union (definitionTexts |> Dict.map (\_ text -> DefinitionLoaded text))
       in
-          ( { model | entityDefinitions = entityDefinitions, requestingEntityDefinitions = False }, Cmd.none )
+          ( { model | entityDefinitions = entityDefinitions, requestingEntityDefinitions = False } |> updateBubblogramsIfNeeded, Cmd.none )
           |> requestEntityDefinitionsIfNeeded
 
     RequestEntityDefinitions (Err err) ->
@@ -303,8 +301,8 @@ update msg ({nav, userProfileForm} as model) =
       (model |> updateUserState completeRegistration, Cmd.none)
       |> saveUserState msg
 
-    BubbleMouseOver oerUrl chunks entity ->
-      ({model | hoveringBubbleEntityId = Just entity.id }, Cmd.none)
+    BubbleMouseOver entityId ->
+      ({model | hoveringBubbleEntityId = Just entityId }, Cmd.none)
 
     BubbleMouseOut ->
       ({model | hoveringBubbleEntityId = Nothing } |> closePopup, Cmd.none)
@@ -599,3 +597,11 @@ extractMentionsOfEntity oerUrl chunks entity cachedMentions =
     in
         cachedMentions
         |> Dict.insert (oerUrl, entity.id) mentionsOfEntity
+
+
+updateBubblogramsIfNeeded : Model -> Model
+updateBubblogramsIfNeeded model =
+  if model.entityDefinitions |> Dict.values |> List.any (\definition -> definition == DefinitionScheduledForLoading) then
+    model
+  else
+    { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.map (addBubblogram model) }

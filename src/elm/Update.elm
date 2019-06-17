@@ -77,7 +77,7 @@ update msg ({nav, userProfileForm} as model) =
           ( newModel, cmd )
 
     ClockTick time ->
-      ( { model | currentTime = time, enrichmentsAnimating = anyUrlChangeOrEnrichmentsLoadedRecently model }, Cmd.none)
+      ( { model | currentTime = time, enrichmentsAnimating = anyBubblogramsAnimating model }, Cmd.none)
       |> requestWikichunkEnrichmentsIfNeeded
       |> requestEntityDefinitionsIfNeeded
 

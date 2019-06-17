@@ -31,7 +31,7 @@ addBubblogram model oerUrl enrichment =
           rankedEntities
           |> List.map (bubbleFromEntity model occurrences rankedEntities)
     in
-        { enrichment | bubblogram = Just bubbles }
+        { enrichment | bubblogram = Just { createdAt = model.currentTime, bubbles = bubbles } }
 
 
 entitiesFromOccurrences : List Occurrence -> List Entity

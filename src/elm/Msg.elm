@@ -89,5 +89,5 @@ subscriptions model =
       , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
       , Ports.videoIsPlayingAtPosition VideoIsPlayingAtPosition
       , Time.every 500 ClockTick
-      ] ++ (if anyUrlChangeOrEnrichmentsLoadedRecently model || isModalAnimating then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
+      ] ++ (if anyBubblogramsAnimating model || isModalAnimating then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
       |> Sub.batch

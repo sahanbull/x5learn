@@ -90,7 +90,10 @@ type alias Occurrence =
   }
 
 
-type alias Bubblogram = List Bubble
+type alias Bubblogram =
+  { createdAt : Posix
+  , bubbles : List Bubble
+  }
 
 type alias OerUrl = String
 
@@ -490,17 +493,26 @@ chunksFromUrl model url =
 
 
 enrichmentAnimationDuration =
-  12000
+  3000
 
 
-anyUrlChangeOrEnrichmentsLoadedRecently : Model -> Bool
-anyUrlChangeOrEnrichmentsLoadedRecently model =
+anyBubblogramsAnimating : Model -> Bool
+anyBubblogramsAnimating model =
   if millisSinceLastUrlChange model < enrichmentAnimationDuration then
     True
   else
-    model.wikichunkEnrichmentLoadTimes
-    |> Dict.values
-    |> List.any (\loadTime -> (posixToMillis model.currentTime) - (posixToMillis loadTime) < enrichmentAnimationDuration)
+    let
+        isAnimating {bubblogram} =
+          case bubblogram of
+            Nothing ->
+              False
+
+            Just {createdAt} ->
+              (posixToMillis createdAt) + enrichmentAnimationDuration > (posixToMillis model.currentTime)
+    in
+        model.wikichunkEnrichments
+        |> Dict.values
+        |> List.any isAnimating
 
 
 millisSinceEnrichmentLoaded model url =

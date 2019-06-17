@@ -56,36 +56,45 @@ view model =
             (viewLoadingSpinner, [])
 
           Just ({userState} as session) ->
-            case model.subpage of
-              Home ->
-                if session.loginState /= GuestUser && (not userState.registrationComplete) then
-                  viewPostRegistrationPage model userState |> withNavigationDrawer model
-                else if userState == initialUserState then
-                  introPage
-                else
-                  viewNotesPage model userState |> withNavigationDrawer model
+            let
+                defaultPage =
+                  case session.loginState of
+                    LoggedInUser userProfile ->
+                      viewNotesPage model userState |> withNavigationDrawer model
 
-              Profile ->
-                case session.loginState of
-                  LoggedInUser userProfile ->
-                    viewProfilePage model userProfile model.userProfileForm |> withNavigationDrawer model
+                    GuestUser ->
+                      introPage
+            in
+                case model.subpage of
+                  Home ->
+                    if session.loginState /= GuestUser && (not userState.registrationComplete) then
+                      viewPostRegistrationPage model userState |> withNavigationDrawer model
+                    else if userState == initialUserState then
+                      introPage
+                    else
+                      defaultPage
 
-                  GuestUser ->
-                    introPage
+                  Profile ->
+                    case session.loginState of
+                      LoggedInUser userProfile ->
+                        viewProfilePage model userProfile model.userProfileForm |> withNavigationDrawer model
 
-              Search ->
-                case model.searchState of
-                  Nothing ->
-                    introPage
+                      GuestUser ->
+                        introPage
 
-                  Just searchState ->
-                    viewSearchPage model userState searchState |> withNavigationDrawer model
+                  Search ->
+                    case model.searchState of
+                      Nothing ->
+                        defaultPage
 
-              Notes ->
-                viewNotesPage model userState |> withNavigationDrawer model
+                      Just searchState ->
+                        viewSearchPage model userState searchState |> withNavigationDrawer model
 
-              Recent ->
-                viewRecentPage model userState |> withNavigationDrawer model
+                  Notes ->
+                    viewNotesPage model userState |> withNavigationDrawer model
+
+                  Recent ->
+                    viewRecentPage model userState |> withNavigationDrawer model
 
       header =
         viewPageHeader model

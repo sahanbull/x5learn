@@ -30,6 +30,7 @@ addBubblogram model oerUrl enrichment =
         bubbles =
           rankedEntities
           |> List.map (bubbleFromEntity model occurrences rankedEntities)
+          |> layoutBubbles
     in
         { enrichment | bubblogram = Just { createdAt = model.currentTime, bubbles = bubbles } }
 
@@ -167,3 +168,44 @@ bubbleFromEntity model occurrencesOfAllEntities rankedEntities entity =
 
 defaultOpacity =
   0.3
+
+
+layoutBubbles : List Bubble -> List Bubble
+layoutBubbles bubbles =
+  let
+      nBubblesMinus1 =
+        (List.length bubbles) - 1 |> toFloat
+
+      setPosY index ({finalCoordinates} as bubble) =
+        { bubble | finalCoordinates = { finalCoordinates | posY = (toFloat index) / nBubblesMinus1 * 0.9 } }
+
+      setPosX index ({entity, finalCoordinates} as bubble) =
+        let
+            strlen =
+              toFloat <| String.length entity.title
+
+            posX =
+              if (index |> modBy 2) == 1 then
+                0.8 - 0.01 * strlen - 0.03 * finalCoordinates.size
+              else
+                0.03 * finalCoordinates.size + (if index==0 || index==((List.length bubbles) - 1) then 0.07 else 0)
+        in
+            { bubble | finalCoordinates = { finalCoordinates | posX = posX } }
+  in
+      bubbles
+      -- |> List.sortBy (\{entity} -> entity.title |> String.length)
+      |> List.sortBy (\{initialCoordinates} -> initialCoordinates.posX)
+      |> List.reverse
+      |> unsortAlternating
+      |> List.indexedMap setPosX
+      |> List.indexedMap setPosY
+
+
+unsortAlternating : List a -> List a
+unsortAlternating xs =
+  case xs of
+    [] ->
+      []
+
+    x :: rest ->
+      x :: (rest |> List.reverse |> unsortAlternating)

@@ -74,7 +74,7 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
               if isHovering then
                 [ Font.underline ]
               else
-                [ Element.alpha (interp (size/3) (1.6*labelPhase-1) 0.6) ]
+                [ Element.alpha (interp (size/3) (1.8*labelPhase-1) 0.8) ]
         in
             entity.title
             |> captionNowrap ([ whiteText, moveRight <| (posX + size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY - size*1.1*bubbleZoom) * contentHeight + marginTop - 15 ] ++ highlight)

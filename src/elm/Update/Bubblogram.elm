@@ -181,7 +181,7 @@ layoutBubbles bubbles =
         (List.length bubbles) - 1 |> toFloat
 
       setPosY index ({finalCoordinates} as bubble) =
-        { bubble | finalCoordinates = { finalCoordinates | posY = (toFloat index) / nBubblesMinus1 * 0.9 } }
+        { bubble | finalCoordinates = { finalCoordinates | posY = (toFloat index) / nBubblesMinus1 * 0.85 + 0.05 } }
 
       setPosX index ({entity, finalCoordinates} as bubble) =
         let
@@ -198,6 +198,7 @@ layoutBubbles bubbles =
   in
       bubbles
       |> List.sortBy (\{finalCoordinates} -> finalCoordinates.size)
+      |> List.reverse
       |> List.indexedMap setPosX
       -- |> List.sortBy (\{entity} -> entity.title |> String.length)
       -- |> List.sortBy (\{initialCoordinates} -> initialCoordinates.posX)

@@ -133,12 +133,9 @@ viewOerCard model userState recommendedFragments position barId oer =
             |> Maybe.withDefault (imgPath "thumbnail_unavailable.jpg")
             |> upperImage attrs
 
-      maybeEnrichment =
-        Dict.get oer.url model.wikichunkEnrichments
-
       fragmentsBar =
         inFront <|
-          case maybeEnrichment of
+          case Dict.get oer.url model.wikichunkEnrichments of
             Nothing ->
               viewLoadingSpinner |> el [ moveDown 80, width fill ]
 
@@ -212,18 +209,27 @@ viewOerCard model userState recommendedFragments position barId oer =
       --           |> upperImage [ preloadImage nextImageUrl, imageCounter <| (imageIndex+1 |> String.fromInt) ++ " / " ++ (oer.images |> List.length |> String.fromInt) ]
 
       (graphic, popup) =
-        case maybeEnrichment of
+        case Dict.get oer.url model.wikichunkEnrichments of
           Nothing ->
             (none |> el [ width fill, height (px imageHeight), Background.color x5color ]
             , [])
 
           Just enrichment ->
-            if enrichment.errors then
-              (image [ alpha 0.5, centerX, centerY ] { src = svgPath "enrichment_error", description = "No preview available for this resource" }
-               |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
-              , [])
-            else
-              viewBubblogram model oer.url enrichment.chunks
+            let
+                error =
+                  (image [ alpha 0.5, centerX, centerY ] { src = svgPath "enrichment_error", description = "No preview available for this resource" }
+                   |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
+                  , [])
+            in
+                if enrichment.errors then
+                  error
+                else
+                  case enrichment.bubblogram of
+                    Nothing -> -- shouldn't happen
+                      error
+
+                    Just bubblogram ->
+                      viewBubblogram model oer.url bubblogram
 
       title =
         oer.title

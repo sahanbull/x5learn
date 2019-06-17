@@ -34,7 +34,6 @@ type alias Model =
   , popup : Maybe Popup
   , requestingWikichunkEnrichments : Bool
   , wikichunkEnrichments : Dict OerUrl WikichunkEnrichment
-  , wikichunkEnrichmentLoadTimes : Dict OerUrl Posix
   , enrichmentsAnimating : Bool
   , tagClouds : Dict String (List String)
   , searchSuggestions : List String
@@ -67,6 +66,33 @@ type EntityDefinition
   = DefinitionScheduledForLoading
   | DefinitionLoaded String
   -- | DefinitionUnavailable -- TODO consider appropriate error handling
+
+type alias Bubble =
+  { entity : Entity
+  , hue : Float
+  , alpha : Float
+  , saturation : Float
+  , initialCoordinates : BubbleCoordinates
+  , finalCoordinates : BubbleCoordinates
+  }
+
+type alias BubbleCoordinates =
+  { posX : Float
+  , posY : Float
+  , size : Float
+  }
+
+type alias Occurrence =
+  { entity : Entity
+  , positionInText : Float
+  , rank : Float
+  }
+
+
+type alias Bubblogram =
+  { createdAt : Posix
+  , bubbles : List Bubble
+  }
 
 type alias OerUrl = String
 
@@ -137,7 +163,8 @@ type alias Oer =
 
 
 type alias WikichunkEnrichment =
-  { chunks : List Chunk
+  { bubblogram : Maybe Bubblogram
+  , chunks : List Chunk
   , errors : Bool
   }
 
@@ -249,7 +276,6 @@ initialModel nav flags =
   , popup = Nothing
   , requestingWikichunkEnrichments = False
   , wikichunkEnrichments = Dict.empty
-  , wikichunkEnrichmentLoadTimes = Dict.empty
   , enrichmentsAnimating = False
   , tagClouds = Dict.empty
   , searchSuggestions = []
@@ -465,26 +491,33 @@ chunksFromUrl model url =
 
 
 enrichmentAnimationDuration =
-  5000
+  3000
 
 
-anyUrlChangeOrEnrichmentsLoadedRecently : Model -> Bool
-anyUrlChangeOrEnrichmentsLoadedRecently model =
-  if millisSinceLastUrlChange model < enrichmentAnimationDuration then
-    True
-  else
-    model.wikichunkEnrichmentLoadTimes
-    |> Dict.values
-    |> List.any (\loadTime -> (posixToMillis model.currentTime) - (posixToMillis loadTime) < enrichmentAnimationDuration)
+anyBubblogramsAnimating : Model -> Bool
+anyBubblogramsAnimating model =
+  let
+      isAnimating enrichment =
+        case enrichment.bubblogram of
+          Nothing ->
+            False
+
+          Just {createdAt} ->
+            bubblogramAnimationPhase model createdAt < 1
+  in
+      model.wikichunkEnrichments
+      |> Dict.values
+      |> List.any isAnimating
 
 
-millisSinceEnrichmentLoaded model url =
-  case model.wikichunkEnrichmentLoadTimes |> Dict.get url of
-    Nothing -> -- shouldn't happen
-      100000000
-
-    Just time ->
-      (model.currentTime |> posixToMillis) - (time |> posixToMillis)
+bubblogramAnimationPhase model createdAt =
+  let
+      millisSinceStart =
+        millisSince model createdAt
+        |> Basics.min (millisSinceLastUrlChange model)
+        |> toFloat
+  in
+      millisSinceStart / enrichmentAnimationDuration * 2 |> Basics.min 1
 
 
 millisSinceLastUrlChange model =
@@ -553,3 +586,12 @@ notesPath =
 
 recentPath =
   "/recent"
+
+
+averageOf getterFunction records =
+  (records |> List.map getterFunction |> List.sum) / (records |> List.length |> toFloat)
+
+
+interp : Float -> Float -> Float -> Float
+interp phase a b =
+  phase * b + (1-phase) * a

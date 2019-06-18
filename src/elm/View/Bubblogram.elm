@@ -57,7 +57,7 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
         bubbles |> List.filter (\bubble -> bubble.entity.id == entityId) |> List.reverse |> List.head
 
       entityLabels =
-        if animationPhase < 0.1 then
+        if labelPhase <= 0 then
           []
         else
           bubbles

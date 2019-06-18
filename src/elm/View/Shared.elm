@@ -164,7 +164,7 @@ greyMedium =
 
 
 veryTransparentWhite =
-  rgba 1 1 1 0.2
+  rgba 1 1 1 0.25
 
 
 transparentWhite =

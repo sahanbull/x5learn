@@ -16,3 +16,6 @@ x5learn_server/static/dist/
 .env
 
 x5learn.egg-info
+
+# output from enrichment workers running in the background
+enrichment/nohup.out

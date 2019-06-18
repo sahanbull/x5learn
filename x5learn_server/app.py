@@ -312,6 +312,7 @@ def search_results_from_x5gon_api(text):
     response = conn.getresponse().read().decode("utf-8")
     materials = json.loads(response)['rec_materials'][:max_results]
     materials = [ m for m in materials if m['url'].endswith('.pdf') and '/assignments/' not in m['url'] and '199' not in m['url'] and '200' not in m['url'] ] # crudely filter out materials from MIT OCW that are assignments or date back to the 90s or early 2000s
+    materials = [ m for m in materials if 'unibo' not in m['url'] ] # crudely excluding materials from University of Bologna for now, because they often come out poorly after wikification (maybe to do with the language? X5GON search doesn't have a language parameter at the time of writing).
     materials = remove_duplicates_from_search_results(materials)
     oers = []
     for index, material in enumerate(materials):

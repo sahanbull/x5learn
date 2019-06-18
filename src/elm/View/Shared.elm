@@ -473,33 +473,6 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
               |> Maybe.withDefault [] -- shouldn't happen
               |> List.filter (\mention -> mention.chunkIndex == chunkIndex)
 
-            mentionIndicators =
-              if isPopupOpen then
-                []
-              else
-                case model.hoveringBubbleEntityId of
-                  Nothing ->
-                    []
-
-                  Just entityId ->
-                    let
-                        viewMentionIndicator mention =
-                          let
-                              class =
-                                if mentionInBubblePopup model == Just mention then
-                                  "MentionIndicator MentionIndicator_Current"
-                                else
-                                  "MentionIndicator"
-                          in
-                              none
-                              |> el [ width fill, htmlClass "MentionIndicatorWrapper", height <| px fragmentsBarHeight, inFront (none |> el [ htmlClass class, centerX ]) ]
-                    in
-                        mentionsInThisChunk entityId
-                        |> List.map viewMentionIndicator
-                        |> row [ width <| px chunkWidth, paddingXY 5 0 ]
-                        |> inFront
-                        |> List.singleton
-
             background =
               if isPopupOpen then
                 [ Background.color orange ]
@@ -527,7 +500,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
               floor <| chunk.length * (toFloat barWidth) - 2
         in
             none
-            |> el (mentionIndicators ++ [ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
+            |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
             |> inFront
 
       chunkTriggers =
@@ -740,3 +713,14 @@ verticalSpacingBetweenCards =
 pointerEventsNone =
   Html.Attributes.property "pointer-events" (Json.Encode.string "none")
   |> htmlAttribute
+
+
+isAnyChunkPopupOpen model =
+  case model.popup of
+    Just (ChunkOnBar _) ->
+      True
+
+    _ ->
+      False
+
+

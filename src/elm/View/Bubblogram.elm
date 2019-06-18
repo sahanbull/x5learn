@@ -47,7 +47,7 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
 
       svgBubbles =
         bubbles
-        |> List.map (viewBubble model oerUrl animationPhase)
+        |> List.concatMap (viewBubble model oerUrl animationPhase)
 
       background =
         rect [ width widthString, height heightString, fill "#191919" ] []
@@ -57,7 +57,7 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
         bubbles |> List.filter (\bubble -> bubble.entity.id == entityId) |> List.reverse |> List.head
 
       entityLabels =
-        if animationPhase < 0.1 then
+        if labelPhase <= 0 then
           []
         else
           bubbles
@@ -107,8 +107,7 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
       (graphic, popup)
 
 
-
-viewBubble : Model -> OerUrl -> Float -> Bubble -> Svg.Svg Msg
+viewBubble : Model -> OerUrl -> Float -> Bubble -> List (Svg.Svg Msg)
 viewBubble model oerUrl animationPhase ({entity} as bubble) =
   let
       {posX, posY, size} =
@@ -122,18 +121,28 @@ viewBubble model oerUrl animationPhase ({entity} as bubble) =
           [ stroke "white", strokeWidth "2" ]
         else
           []
+
+      mentionMarkers =
+        -- if isHovering then
+        
+          [ polygon [ fill "orange", points "0,0 20,0 10,20" ] [] ]
+        -- else
+        --   []
+
+      body =
+        circle
+          ([ cx (posX * (toFloat contentWidth) + marginX |> String.fromFloat)
+          , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
+          , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
+          , fill <| Color.toCssString <| colorFromBubble bubble
+          , onMouseOver <| BubbleMouseOver entity.id
+          , onMouseOut <| BubbleMouseOut
+          , custom "click" (Json.Decode.succeed { message = BubbleClicked oerUrl, stopPropagation = True, preventDefault = True })
+          , class hoverableClass
+          ] ++ outline)
+          []
   in
-      circle
-        ([ cx (posX * (toFloat contentWidth) + marginX |> String.fromFloat)
-        , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
-        , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
-        , fill <| Color.toCssString <| colorFromBubble bubble
-        , onMouseOver <| BubbleMouseOver entity.id
-        , onMouseOut <| BubbleMouseOut
-        , custom "click" (Json.Decode.succeed { message = BubbleClicked oerUrl, stopPropagation = True, preventDefault = True })
-        , class hoverableClass
-        ] ++ outline)
-        []
+      body :: mentionMarkers
 
 
 colorFromBubble : Bubble -> Color.Color
@@ -270,3 +279,24 @@ animatedBubbleCurrentCoordinates phase {initialCoordinates, finalCoordinates} =
 
 hoverableClass =
   "UserSelectNone CursorPointer"
+
+
+-- mentionIndicators model bubble =
+--   if isAnyChunkPopupOpen model then
+--     []
+--   else
+--     case model.hoveringBubbleEntityId of
+--       Nothing ->
+--         []
+
+--       Just entityId ->
+--         let
+--             viewMentionIndicator mention =
+
+--         in
+--             mentionsInThisChunk entityId
+--             |> List.map viewMentionIndicator
+--             |> row [ width <| px chunkWidth, paddingXY 5 0 ]
+--             |> inFront
+--             |> List.singleton
+

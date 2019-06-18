@@ -190,7 +190,7 @@ layoutBubbles bubbles =
 
             posX =
               if finalCoordinates.posX < medianPosX then
-                0.03 * finalCoordinates.size + (if index==0 || index==((List.length bubbles) - 1) then 0.07 else 0)
+                0.03 * finalCoordinates.size + (if index==1 || index==((List.length bubbles) - 1) then 0.06 else 0)
               else
                 0.95 - approximateLabelWidth - 0.03 * finalCoordinates.size
         in

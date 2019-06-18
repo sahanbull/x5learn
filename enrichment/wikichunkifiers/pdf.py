@@ -37,7 +37,7 @@ def download_file(url):
 
 
 def convert_to_text():
-    args = ["/usr/local/bin/pdftotext",
+    args = ["pdftotext",
             '-enc',
             'UTF-8',
             pdf_path(),

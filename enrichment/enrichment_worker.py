@@ -5,22 +5,30 @@ from time import sleep
 from wikichunkifiers.pdf import extract_chunks_from_pdf
 from wikichunkifiers.lib.util import EnrichmentError
 
-API_ROOT = 'http://127.0.0.1:5000/api/v1/'
+# API_ROOT = 'http://127.0.0.1:5000/api/v1/'
+API_ROOT = 'http://127.0.0.1:6001/api/v1/'
 
 
 def main():
     say('hello')
     while(True):
         payload = {}
-        r = requests.post(API_ROOT+"most_urgent_unstarted_enrichment_task/", data=payload)
-        j = json.loads(r.text)
-        if 'url' in j:
-            url = j['url']
-            data, error = make_enrichment_data(url)
-            post_back_wikichunks(url, data, error)
-        elif 'info' in j:
-            say(j['info'])
-            sleep(2)
+        try:
+            r = requests.post(API_ROOT+"most_urgent_unstarted_enrichment_task/", data=payload)
+            j = json.loads(r.text)
+            if 'url' in j:
+                url = j['url']
+                data, error = make_enrichment_data(url)
+                post_back_wikichunks(url, data, error)
+            elif 'info' in j:
+                say(j['info'])
+                sleep(2)
+        except requests.exceptions.ConnectionError:
+            say('ConnectionError caught - waiting for main app to respond.')
+            sleep(5)
+        except:
+            say('Something went wrong. Waiting.')
+            sleep(5)
 
 
 def say(text):

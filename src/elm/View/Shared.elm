@@ -463,15 +463,10 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
             --       else
             --         []
 
-            anyMentionsOfEntityInThisChunk entityId =
-              entityId
-              |> mentionsInThisChunk
-              |> List.any (\mention -> mention.chunkIndex==chunkIndex)
-
-            mentionsInThisChunk entityId =
-              getMentions model oer.url entityId
-              |> Maybe.withDefault [] -- shouldn't happen
-              |> List.filter (\mention -> mention.chunkIndex == chunkIndex)
+            -- anyMentionsOfEntityInThisChunk entityId =
+            --   entityId
+            --   |> mentionsInThisChunk
+            --   |> List.any (\mention -> mention.chunkIndex==chunkIndex)
 
             background =
               if isPopupOpen then

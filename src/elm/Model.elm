@@ -204,6 +204,7 @@ type alias MentionsDict = Dict (OerUrl,String) (List MentionInOer)
 type alias MentionInOer =
   { chunkIndex : Int
   , indexInChunk : Int
+  , positionInEntireText : Float
   , sentence : String
   }
 

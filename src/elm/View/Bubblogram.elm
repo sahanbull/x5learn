@@ -107,7 +107,7 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
       (graphic, popup)
 
 
-viewBubble : Model -> OerUrl -> Float -> Bubble -> List (Svg.Svg Msg)
+viewBubble : Model -> OerUrl -> Float -> Bubble -> List (Svg Msg)
 viewBubble model oerUrl animationPhase ({entity} as bubble) =
   let
       {posX, posY, size} =
@@ -123,11 +123,7 @@ viewBubble model oerUrl animationPhase ({entity} as bubble) =
           []
 
       mentionMarkers =
-        -- if isHovering then
-        
-          [ polygon [ fill "orange", points "0,0 20,0 10,20" ] [] ]
-        -- else
-        --   []
+        viewMentionMarkers model oerUrl bubble
 
       body =
         circle
@@ -281,22 +277,32 @@ hoverableClass =
   "UserSelectNone CursorPointer"
 
 
--- mentionIndicators model bubble =
---   if isAnyChunkPopupOpen model then
---     []
---   else
---     case model.hoveringBubbleEntityId of
---       Nothing ->
---         []
+viewMentionMarkers model oerUrl bubble =
+  if isAnyChunkPopupOpen model then
+    []
+  else
+    case model.hoveringBubbleEntityId of
+      Nothing ->
+        []
 
---       Just entityId ->
---         let
---             viewMentionIndicator mention =
+      Just entityId ->
+        let
+            marker : MentionInOer -> Svg Msg
+            marker {positionInEntireText} =
+              let
+                  x =
+                    positionInEntireText * containerWidth
+                    |> String.fromFloat
+              in
+                  polygon [ fill "orange", points (x++",0         TODO      20,0 10,20") ] []
 
---         in
---             mentionsInThisChunk entityId
---             |> List.map viewMentionIndicator
---             |> row [ width <| px chunkWidth, paddingXY 5 0 ]
---             |> inFront
---             |> List.singleton
-
+            mentions =
+              getMentions model oerUrl entityId
+              |> Maybe.withDefault [] -- shouldn't happen
+              -- |> List.filter (\mention -> mention.chunkIndex == chunkIndex)
+        in
+            mentions
+            |> List.map marker
+            -- |> row [ width <| px chunkWidth, paddingXY 5 0 ]
+            -- |> inFront
+            -- |> List.singleton

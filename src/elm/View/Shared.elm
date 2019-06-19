@@ -290,7 +290,7 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
         else
           model.searchSuggestions
           |> List.map (\suggestion -> suggestionButton suggestion)
-          |> menuColumn True [ width fill, clipY, height <| px (39*7) ]
+          |> menuColumn [ width fill, clipY, height <| px (39*7) ]
           |> el [ width fill, htmlId "SearchSuggestions" ]
   in
       searchField
@@ -405,8 +405,8 @@ closePopupOnMouseLeave =
   onMouseLeave ClosePopup
 
 
-menuColumn shadowEnabled attrs =
-  column ([ Background.color white, Border.rounded 4, Border.color <| grey80 ] ++ (if shadowEnabled then [ dialogShadow ] else []) ++ attrs)
+menuColumn attrs =
+  column ([ Background.color white, Border.rounded 4, Border.color <| grey80, dialogShadow ] ++ attrs)
 
 
 viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId =
@@ -518,7 +518,7 @@ viewChunkPopup model chunkPopup =
           |> List.singleton
   in
       entitiesSection
-      |> menuColumn True []
+      |> menuColumn []
       |> el [ moveLeft 30, moveDown fragmentsBarHeight ]
 
 
@@ -557,7 +557,7 @@ viewEntityPopup model chunkPopup entityPopup entity =
         actionButtons
   in
       items
-      |> menuColumn True []
+      |> menuColumn []
       |> (if isHoverMenuNearRightEdge model 300 then onLeft else onRight)
       |> List.singleton
 
@@ -706,8 +706,7 @@ verticalSpacingBetweenCards =
 
 
 pointerEventsNone =
-  Html.Attributes.property "pointer-events" (Json.Encode.string "none")
-  |> htmlAttribute
+  htmlClass "PointerEventsNone"
 
 
 isAnyChunkPopupOpen model =

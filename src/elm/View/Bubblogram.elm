@@ -12,7 +12,7 @@ import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Svg.Events exposing (onMouseOver, custom)
 
-import Element exposing (Element, el, html, inFront, row, padding, spacing, px, moveDown, moveRight, above, below, none)
+import Element exposing (Element, el, html, inFront, row, padding, spacing, px, moveDown, moveLeft, moveRight, above, below, none)
 import Element.Font as Font
 import Element.Background as Background
 import Element.Events as Events
@@ -34,23 +34,9 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
       labelPhase =
         animationPhase * 2 - 1 |> Basics.min 1 |> Basics.max 0
 
-      widthString =
-        containerWidth |> String.fromInt
-
-      heightString =
-        containerHeight |> String.fromInt
-
-      -- mergedBubbles =
-      --   rawBubbles
-      --   |> List.Extra.uniqueBy (\{entity} -> entity.title)
-      --   |> List.map (\bubble -> { bubble | alpha = Basics.min 0.8 <| rawBubbleAlpha * (rawBubbles |> List.filter (\b -> b.entity == bubble.entity)  |> List.length |> toFloat) })
-      --   |> List.sortBy .size
-      --   |> List.reverse
-
-      (svgBubbles, tail) =
+      svgBubbles =
         bubbles
-        |> List.map (viewBubble model oerUrl animationPhase)
-        |> List.unzip
+        |> List.concatMap (viewBubble model oerUrl animationPhase)
 
       background =
         rect [ width widthString, height heightString, fill "#191919" ] []
@@ -102,7 +88,7 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
             []
 
       graphic =
-        [ background ] ++ (List.concat svgBubbles) ++ (List.concat tail)
+        [ background ] ++ svgBubbles
         |> svg [ width widthString, height heightString, viewBox <| "0 0 " ++ ([ widthString, heightString ] |> String.join " ") ]
         |> html
         |> el entityLabels
@@ -110,7 +96,7 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
       (graphic, popup)
 
 
-viewBubble : Model -> OerUrl -> Float -> Bubble -> (List (Svg Msg), List (Svg Msg))
+viewBubble : Model -> OerUrl -> Float -> Bubble -> List (Svg Msg)
 viewBubble model oerUrl animationPhase ({entity} as bubble) =
   let
       {posX, posY, size} =
@@ -125,11 +111,11 @@ viewBubble model oerUrl animationPhase ({entity} as bubble) =
         else
           []
 
-      (mentionDots, tail) =
+      mentionDots =
         if isHovering then
-          viewMentionDotsWithPotentialTail model oerUrl bubble
+          viewMentionDots model oerUrl bubble
         else
-          ([], [])
+          []
 
       body =
         circle
@@ -144,7 +130,7 @@ viewBubble model oerUrl animationPhase ({entity} as bubble) =
           ] ++ outline)
           []
   in
-      ((mentionDots ++ [ body ]), tail)
+      mentionDots ++ [ body ]
 
 
 colorFromBubble : Bubble -> Color.Color
@@ -180,9 +166,6 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
   let
       zoomFromText text =
         (String.length text |> toFloat) / 200 - posY*0.5 |> Basics.min 1
-
-      -- heightLimit =
-      --   Element.height (Element.fill |> Element.maximum 110)
 
       (contentElement, zoom) =
         case content of
@@ -222,8 +205,47 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
         in
             contentElement
             |> List.singleton
-            -- |> menuColumn [ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone, heightLimit, Element.clipY ]
-            |> menuColumn shadowEnabled [ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone, Element.clipY, htmlClass "PointerEventsNone" ]
+            |> menuColumn [ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone, Element.clipY ]
+
+      tail =
+        case content of
+          MentionInBubblePopup {positionInEntireText} ->
+            let
+                sizeY =
+                  containerHeight - verticalOffset
+
+                hs =
+                  sizeY
+                  |> String.fromFloat
+
+                tipX =
+                  positionInEntireText * containerWidth
+
+                rootX =
+                  horizontalOffset + (if positionInEntireText<0.5 then rootMargin else popupWidth-rootMargin-rootWidth)
+
+                rootWidth =
+                  21
+
+                rootMargin =
+                  21
+
+                corners =
+                  [ (rootX + 0, 0)
+                  , (rootX + rootWidth, 0)
+                  , (tipX, sizeY-12)
+                  ]
+                  |> svgPointsFromCorners
+            in
+                [ polygon [ fill "white", points corners, class "PointerEventsNone" ] [] ]
+                |> svg [ width widthString, height hs, viewBox <| "0 0 " ++ ([ widthString, hs ] |> String.join " ") ]
+                |> html
+                |> el [ moveDown <| sizeY-1, moveLeft horizontalOffset, pointerEventsNone ]
+                |> above
+                |> List.singleton
+
+          _ ->
+            []
 
       (horizontalOffset, popupWidth) =
         let
@@ -239,14 +261,11 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
             (interp zoom smallest.horizontalOffset largest.horizontalOffset
             , interp zoom smallest.popupWidth largest.popupWidth)
 
-      (verticalDirection, verticalOffset) =
-        -- if posY > 0.2 then
-        (above, popupVerticalPositionFromBubble posY size)
-        -- else
-        --   (below, Basics.max 10 <| (posY + size*3.5*bubbleZoom) * contentHeight + marginTop + 5)
+      verticalOffset =
+        popupVerticalPositionFromBubble posY size
   in
       none
-      |> el [ verticalDirection box, moveRight <| horizontalOffset, moveDown <| verticalOffset ]
+      |> el ([ above box, moveRight <| horizontalOffset, moveDown <| verticalOffset ]++tail)
       |> inFront
       |> List.singleton
 
@@ -275,6 +294,13 @@ marginX =
   25
 
 
+widthString =
+  containerWidth |> String.fromInt
+
+heightString =
+  containerHeight |> String.fromInt
+
+
 animatedBubbleCurrentCoordinates : Float -> Bubble -> BubbleCoordinates
 animatedBubbleCurrentCoordinates phase {initialCoordinates, finalCoordinates} =
   { posX = interp phase initialCoordinates.posX finalCoordinates.posX
@@ -287,24 +313,18 @@ hoverableClass =
   "UserSelectNone CursorPointer"
 
 
-viewMentionDotsWithPotentialTail : Model -> OerUrl -> Bubble -> (List (Svg Msg), List (Svg Msg))
-viewMentionDotsWithPotentialTail model oerUrl bubble =
+viewMentionDots : Model -> OerUrl -> Bubble -> List (Svg Msg)
+viewMentionDots model oerUrl bubble =
   if isAnyChunkPopupOpen model then
-    ([], [])
+    []
   else
     let
         circlePosY =
           containerHeight - 8
           |> String.fromFloat
 
-        tailBottom =
-          containerHeight - 11
-
-        tailTop =
-          popupVerticalPositionFromBubble bubble.finalCoordinates.posY bubble.finalCoordinates.size
-
-        marker : MentionInOer -> (Svg Msg, List (Svg Msg))
-        marker {positionInEntireText, sentence} =
+        dot : MentionInOer -> Svg Msg
+        dot {positionInEntireText, sentence} =
           let
               isInPopup =
                 case model.popup of
@@ -329,37 +349,15 @@ viewMentionDotsWithPotentialTail model oerUrl bubble =
 
               circleRadius =
                 "5"
-
-              corners =
-                [ (positionInEntireText * containerWidth + 18, tailTop)
-                , (positionInEntireText * containerWidth + 38, tailTop)
-                , (positionInEntireText * containerWidth, tailBottom)
-                ]
-                |> svgPointsFromCorners
-
-              tail =
-                if isInPopup then
-                  [ polygon [ fill "white", points corners, class "PointerEventsNone" ] [] ]
-                else
-                  []
           in
-              (circle [ cx circlePosX, cy circlePosY, r circleRadius, fill "orange" ] [], tail)
+              circle [ cx circlePosX, cy circlePosY, r circleRadius, fill "orange" ] []
 
         mentions =
           getMentions model oerUrl bubble.entity.id
           |> Maybe.withDefault [] -- shouldn't happen
-
-        -- (List (Svg Msg), List (List (Svg Msg), 
-        (dots, potentialTails) =
-          mentions
-          |> List.map marker
-          |> List.unzip
-          -- |> List.filter (\mention -> mention.chunkIndex == chunkIndex)
     in
-        (dots, List.concat potentialTails)
-        -- |> row [ width <| px chunkWidth, paddingXY 5 0 ]
-        -- |> inFront
-        -- |> List.singleton
+        mentions
+        |> List.map dot
 
 
 svgPointsFromCorners : List (Float, Float) -> String

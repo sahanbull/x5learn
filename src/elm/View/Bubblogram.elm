@@ -47,9 +47,10 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
       --   |> List.sortBy .size
       --   |> List.reverse
 
-      svgBubbles =
+      (svgBubbles, tail) =
         bubbles
-        |> List.concatMap (viewBubble model oerUrl animationPhase)
+        |> List.map (viewBubble model oerUrl animationPhase)
+        |> List.unzip
 
       background =
         rect [ width widthString, height heightString, fill "#191919" ] []
@@ -101,7 +102,7 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
             []
 
       graphic =
-        [ background ] ++ svgBubbles
+        [ background ] ++ (List.concat svgBubbles) ++ (List.concat tail)
         |> svg [ width widthString, height heightString, viewBox <| "0 0 " ++ ([ widthString, heightString ] |> String.join " ") ]
         |> html
         |> el entityLabels
@@ -109,7 +110,7 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
       (graphic, popup)
 
 
-viewBubble : Model -> OerUrl -> Float -> Bubble -> List (Svg Msg)
+viewBubble : Model -> OerUrl -> Float -> Bubble -> (List (Svg Msg), List (Svg Msg))
 viewBubble model oerUrl animationPhase ({entity} as bubble) =
   let
       {posX, posY, size} =
@@ -124,8 +125,11 @@ viewBubble model oerUrl animationPhase ({entity} as bubble) =
         else
           []
 
-      mentionMarkers =
-        viewMentionMarkers model oerUrl bubble
+      (mentionDots, tail) =
+        if isHovering then
+          viewMentionDotsWithPotentialTail model oerUrl bubble
+        else
+          ([], [])
 
       body =
         circle
@@ -140,7 +144,7 @@ viewBubble model oerUrl animationPhase ({entity} as bubble) =
           ] ++ outline)
           []
   in
-      [ body ] ++ mentionMarkers
+      ((mentionDots ++ [ body ]), tail)
 
 
 colorFromBubble : Bubble -> Color.Color
@@ -212,10 +216,14 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
             (sentence |> bodyWrap [], zoomFromText sentence)
 
       box =
-        contentElement
-        |> List.singleton
-        -- |> menuColumn [ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone, heightLimit, Element.clipY ]
-        |> menuColumn [ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone, Element.clipY, htmlClass "PointerEventsNone" ]
+        let
+            shadowEnabled =
+              content==DefinitionInBubblePopup
+        in
+            contentElement
+            |> List.singleton
+            -- |> menuColumn [ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone, heightLimit, Element.clipY ]
+            |> menuColumn shadowEnabled [ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone, Element.clipY, htmlClass "PointerEventsNone" ]
 
       (horizontalOffset, popupWidth) =
         let
@@ -233,7 +241,7 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
 
       (verticalDirection, verticalOffset) =
         -- if posY > 0.2 then
-        (above, Basics.max 10 <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5)
+        (above, popupVerticalPositionFromBubble posY size)
         -- else
         --   (below, Basics.max 10 <| (posY + size*3.5*bubbleZoom) * contentHeight + marginTop + 5)
   in
@@ -279,69 +287,83 @@ hoverableClass =
   "UserSelectNone CursorPointer"
 
 
-viewMentionMarkers model oerUrl bubble =
+viewMentionDotsWithPotentialTail : Model -> OerUrl -> Bubble -> (List (Svg Msg), List (Svg Msg))
+viewMentionDotsWithPotentialTail model oerUrl bubble =
   if isAnyChunkPopupOpen model then
-    []
+    ([], [])
   else
-    case model.hoveringBubbleEntityId of
-      Nothing ->
-        []
+    let
+        circlePosY =
+          containerHeight - 8
+          |> String.fromFloat
 
-      Just entityId ->
-        let
-            circlePosY =
-              containerHeight - 8
-              |> String.fromFloat
+        tailBottom =
+          containerHeight - 11
 
-            marker : MentionInOer -> Svg Msg
-            marker ({positionInEntireText} as mention) =
-              let
-                  isInPopup =
-                    case model.popup of
-                      Just (BubblePopup state) ->
-                        if state.oerUrl==oerUrl && state.entityId==entityId then
-                          case state.content of
-                            MentionInBubblePopup m ->
-                              m==mention
+        tailTop =
+          popupVerticalPositionFromBubble bubble.finalCoordinates.posY bubble.finalCoordinates.size
 
-                            _ ->
-                              False
+        marker : MentionInOer -> (Svg Msg, List (Svg Msg))
+        marker {positionInEntireText, sentence} =
+          let
+              isInPopup =
+                case model.popup of
+                  Just (BubblePopup state) ->
+                    if state.oerUrl==oerUrl && state.entityId==bubble.entity.id then
+                      case state.content of
+                        MentionInBubblePopup mention ->
+                          mention.sentence==sentence
 
-                        else
+                        _ ->
                           False
 
-                      _ ->
-                        False
+                    else
+                      False
 
-                  circlePosX =
-                    positionInEntireText * containerWidth
-                    |> String.fromFloat
+                  _ ->
+                    False
 
-                  circleRadius =
-                    "5"
-              in
-                  circle
-                    [ cx circlePosX
-                    , cy circlePosY
-                    , r circleRadius
-                    , fill "orange"
-                    ]
-                    []
+              circlePosX =
+                positionInEntireText * containerWidth
+                |> String.fromFloat
 
-            mentions =
-              getMentions model oerUrl entityId
-              |> Maybe.withDefault [] -- shouldn't happen
-              -- |> List.filter (\mention -> mention.chunkIndex == chunkIndex)
-        in
-            mentions
-            |> List.map marker
-            -- |> row [ width <| px chunkWidth, paddingXY 5 0 ]
-            -- |> inFront
-            -- |> List.singleton
+              circleRadius =
+                "5"
+
+              corners =
+                [ (positionInEntireText * containerWidth + 18, tailTop)
+                , (positionInEntireText * containerWidth + 38, tailTop)
+                , (positionInEntireText * containerWidth, tailBottom)
+                ]
+                |> svgPointsFromCorners
+
+              tail =
+                if isInPopup then
+                  [ polygon [ fill "white", points corners, class "PointerEventsNone" ] [] ]
+                else
+                  []
+          in
+              (circle [ cx circlePosX, cy circlePosY, r circleRadius, fill "orange" ] [], tail)
+
+        mentions =
+          getMentions model oerUrl bubble.entity.id
+          |> Maybe.withDefault [] -- shouldn't happen
+
+        -- (List (Svg Msg), List (List (Svg Msg), 
+        (dots, potentialTails) =
+          mentions
+          |> List.map marker
+          |> List.unzip
+          -- |> List.filter (\mention -> mention.chunkIndex == chunkIndex)
+    in
+        (dots, List.concat potentialTails)
+        -- |> row [ width <| px chunkWidth, paddingXY 5 0 ]
+        -- |> inFront
+        -- |> List.singleton
 
 
-svgPointFromCorners : List (Float, Float) -> String
-svgPointFromCorners corners =
+svgPointsFromCorners : List (Float, Float) -> String
+svgPointsFromCorners corners =
   corners
   |> List.map (\(x,y) -> (x |> String.fromFloat)++","++(y |> String.fromFloat))
   |> String.join " "
@@ -350,3 +372,7 @@ svgPointFromCorners corners =
 onMouseLeave : msg -> Attribute msg
 onMouseLeave msg =
   Html.Events.on "mouseleave" (Json.Decode.succeed msg)
+
+
+popupVerticalPositionFromBubble posY size =
+  Basics.max 10 <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5

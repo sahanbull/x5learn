@@ -77,7 +77,7 @@ viewUserMenu model userProfile =
           , navButton "/profile" "My profile"
           , navButton "/logout" "Log out"
           ]
-          |> menuColumn [ Background.color white, moveRight 67, moveDown 38 ]
+          |> menuColumn True [ Background.color white, moveRight 67, moveDown 38 ]
           |> onLeft
           |> List.singleton
         else

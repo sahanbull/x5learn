@@ -16,6 +16,7 @@ import Element exposing (Element, el, html, inFront, row, padding, spacing, px, 
 import Element.Font as Font
 import Element.Background as Background
 import Element.Events as Events
+import Element.Border as Border
 
 import Color -- avh4/elm-color
 
@@ -200,12 +201,17 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
 
       box =
         let
-            shadowEnabled =
-              content==DefinitionInBubblePopup
+            roundedBorder =
+              case content of
+                MentionInBubblePopup _ ->
+                  [ Border.rounded 10 ]
+
+                _ ->
+                  []
         in
             contentElement
             |> List.singleton
-            |> menuColumn [ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone, Element.clipY ]
+            |> menuColumn ([ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone, Element.clipY ] ++ roundedBorder)
 
       tail =
         case content of
@@ -222,7 +228,7 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
                   positionInEntireText * containerWidth
 
                 rootX =
-                  horizontalOffset + (if positionInEntireText<0.5 then rootMargin else popupWidth-rootMargin-rootWidth)
+                  horizontalOffset + (if positionInEntireText<0.5 then rootMargin else popupWidth-rootMargin-rootWidth) |> Basics.max 5 |> Basics.min (containerWidth - rootMargin - 15)
 
                 rootWidth =
                   21

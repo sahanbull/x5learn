@@ -38,7 +38,8 @@ viewSearchResults model userState searchState =
 
     Just [] ->
       -- "Sorry, no results were found for \""++ searchState.lastSearch ++"\"" |> viewCenterNote
-      "No results were found for \"" ++ searchState.lastSearch ++ "\". Try using the topic suggestions." |> viewCenterNote
+      -- "No results were found for \"" ++ searchState.lastSearch ++ "\". Try using the topic suggestions." |> viewCenterNote
+      "No results were found for \"" ++ searchState.lastSearch ++ "\". Please try a different search term." |> viewCenterNote
 
     Just oerUrls ->
       -- Playlist ("Search results for \""++ searchState.lastSearch ++"\"") oerUrls

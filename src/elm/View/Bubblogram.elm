@@ -204,7 +204,7 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
             roundedBorder =
               case content of
                 MentionInBubblePopup _ ->
-                  [ Border.rounded 10 ]
+                  [ Border.rounded 12 ]
 
                 _ ->
                   []
@@ -231,10 +231,10 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
                   horizontalOffset + (if positionInEntireText<0.5 then rootMargin else popupWidth-rootMargin-rootWidth) |> Basics.max 5 |> Basics.min (containerWidth - rootMargin - 15)
 
                 rootWidth =
-                  21
+                  20
 
                 rootMargin =
-                  21
+                  22
 
                 corners =
                   [ (rootX + 0, 0)

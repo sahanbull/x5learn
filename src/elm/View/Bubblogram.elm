@@ -6,9 +6,11 @@ import Json.Decode
 
 import List.Extra
 
+import Html.Events
+
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
-import Svg.Events exposing (onMouseOver, onMouseOut, custom)
+import Svg.Events exposing (onMouseOver, custom)
 
 import Element exposing (Element, el, html, inFront, row, padding, spacing, px, moveDown, moveRight, above, below, none)
 import Element.Font as Font
@@ -132,7 +134,7 @@ viewBubble model oerUrl animationPhase ({entity} as bubble) =
           , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
           , fill <| Color.toCssString <| colorFromBubble bubble
           , onMouseOver <| BubbleMouseOver entity.id
-          , onMouseOut <| BubbleMouseOut
+          , onMouseLeave <| BubbleMouseOut
           , custom "click" (Json.Decode.succeed { message = BubbleClicked oerUrl, stopPropagation = True, preventDefault = True })
           , class hoverableClass
           ] ++ outline)
@@ -172,13 +174,13 @@ hoveringBubbleOrFragmentsBarEntityId model =
 viewPopup : Model -> BubblePopupState -> BubbleCoordinates -> List (Element.Attribute Msg)
 viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
   let
-      enlargementPhaseFromText text =
+      zoomFromText text =
         (String.length text |> toFloat) / 200 - posY*0.5 |> Basics.min 1
 
       -- heightLimit =
       --   Element.height (Element.fill |> Element.maximum 110)
 
-      (contentElement, enlargementPhase) =
+      (contentElement, zoom) =
         case content of
           DefinitionInBubblePopup ->
             let
@@ -199,7 +201,7 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
                           if text=="" then
                             unavailable
                           else
-                            ("“" ++ text ++ "” (Wikipedia)" |> bodyWrap [ Font.italic ], enlargementPhaseFromText text)
+                            ("“" ++ text ++ "” (Wikipedia)" |> bodyWrap [ Font.italic ], zoomFromText text)
 
                         -- DefinitionUnavailable ->
                         -- unavailable
@@ -207,13 +209,13 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
                 element
 
           MentionInBubblePopup {sentence} ->
-            (sentence |> bodyWrap [], enlargementPhaseFromText sentence)
+            (sentence |> bodyWrap [], zoomFromText sentence)
 
       box =
         contentElement
         |> List.singleton
         -- |> menuColumn [ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone, heightLimit, Element.clipY ]
-        |> menuColumn [ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone, Element.clipY ]
+        |> menuColumn [ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone, Element.clipY, htmlClass "PointerEventsNone" ]
 
       (horizontalOffset, popupWidth) =
         let
@@ -226,8 +228,8 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
             largest =
               { horizontalOffset = -allowedMargin, popupWidth = cardWidth + 2*allowedMargin }
         in
-            (interp enlargementPhase smallest.horizontalOffset largest.horizontalOffset
-            , interp enlargementPhase smallest.popupWidth largest.popupWidth)
+            (interp zoom smallest.horizontalOffset largest.horizontalOffset
+            , interp zoom smallest.popupWidth largest.popupWidth)
 
       (verticalDirection, verticalOffset) =
         -- if posY > 0.2 then
@@ -343,3 +345,8 @@ svgPointFromCorners corners =
   corners
   |> List.map (\(x,y) -> (x |> String.fromFloat)++","++(y |> String.fromFloat))
   |> String.join " "
+
+
+onMouseLeave : msg -> Attribute msg
+onMouseLeave msg =
+  Html.Events.on "mouseleave" (Json.Decode.succeed msg)

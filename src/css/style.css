@@ -83,6 +83,10 @@ a:hover {
   cursor: pointer;
 }
 
+.PointerEventsNone, .PointerEventsNone * {
+  pointer-events: none !important;
+}
+
 #SearchField{
   padding-right: 35px;
 }

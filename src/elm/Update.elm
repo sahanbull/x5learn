@@ -170,7 +170,7 @@ update msg ({nav, userProfileForm} as model) =
               0
 
           retryTime =
-            (posixToMillis model.currentTime) + failCount*2000 |> millisToPosix
+            (posixToMillis model.currentTime) + (failCount*2000 |> min 10000) |> millisToPosix
       in
           ( { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.union enrichments, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, cachedMentions = cachedMentions, wikichunkEnrichmentRequestFailCount = failCount, wikichunkEnrichmentRetryTime = retryTime } |> registerUndefinedEntities (Dict.values enrichments), Cmd.none )
 

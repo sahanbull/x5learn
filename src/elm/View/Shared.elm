@@ -463,42 +463,10 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
             --       else
             --         []
 
-            anyMentionsOfEntityInThisChunk entityId =
-              entityId
-              |> mentionsInThisChunk
-              |> List.any (\mention -> mention.chunkIndex==chunkIndex)
-
-            mentionsInThisChunk entityId =
-              getMentions model oer.url entityId
-              |> Maybe.withDefault [] -- shouldn't happen
-              |> List.filter (\mention -> mention.chunkIndex == chunkIndex)
-
-            mentionIndicators =
-              if isPopupOpen then
-                []
-              else
-                case model.hoveringBubbleEntityId of
-                  Nothing ->
-                    []
-
-                  Just entityId ->
-                    let
-                        viewMentionIndicator mention =
-                          let
-                              class =
-                                if mentionInBubblePopup model == Just mention then
-                                  "MentionIndicator MentionIndicator_Current"
-                                else
-                                  "MentionIndicator"
-                          in
-                              none
-                              |> el [ width fill, htmlClass "MentionIndicatorWrapper", height <| px fragmentsBarHeight, inFront (none |> el [ htmlClass class, centerX ]) ]
-                    in
-                        mentionsInThisChunk entityId
-                        |> List.map viewMentionIndicator
-                        |> row [ width <| px chunkWidth, paddingXY 5 0 ]
-                        |> inFront
-                        |> List.singleton
+            -- anyMentionsOfEntityInThisChunk entityId =
+            --   entityId
+            --   |> mentionsInThisChunk
+            --   |> List.any (\mention -> mention.chunkIndex==chunkIndex)
 
             background =
               if isPopupOpen then
@@ -527,7 +495,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
               floor <| chunk.length * (toFloat barWidth) - 2
         in
             none
-            |> el (mentionIndicators ++ [ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
+            |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
             |> inFront
 
       chunkTriggers =
@@ -535,7 +503,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
         |> List.indexedMap chunkTrigger
   in
       none
-      |> el ([ width fill, height (px fragmentsBarHeight), materialScrimBackground, borderTop 1, Border.color veryTransparentWhite, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)
+      |> el ([ width fill, height <| px <| fragmentsBarHeight-1, materialScrimBackground, borderTop 1, Border.color veryTransparentWhite, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)
 
 
 viewChunkPopup model chunkPopup =
@@ -738,5 +706,15 @@ verticalSpacingBetweenCards =
 
 
 pointerEventsNone =
-  Html.Attributes.property "pointer-events" (Json.Encode.string "none")
-  |> htmlAttribute
+  htmlClass "PointerEventsNone"
+
+
+isAnyChunkPopupOpen model =
+  case model.popup of
+    Just (ChunkOnBar _) ->
+      True
+
+    _ ->
+      False
+
+

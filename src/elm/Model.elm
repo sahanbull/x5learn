@@ -84,7 +84,7 @@ type alias BubbleCoordinates =
 
 type alias Occurrence =
   { entity : Entity
-  , positionInText : Float
+  , approximatePositionInText : Float
   , rank : Float
   }
 
@@ -204,6 +204,7 @@ type alias MentionsDict = Dict (OerUrl,String) (List MentionInOer)
 type alias MentionInOer =
   { chunkIndex : Int
   , indexInChunk : Int
+  , positionInEntireText : Float
   , sentence : String
   }
 

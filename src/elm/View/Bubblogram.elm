@@ -6,14 +6,17 @@ import Json.Decode
 
 import List.Extra
 
+import Html.Events
+
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
-import Svg.Events exposing (onMouseOver, onMouseOut, custom)
+import Svg.Events exposing (onMouseOver, custom)
 
-import Element exposing (Element, el, html, inFront, row, padding, spacing, px, moveDown, moveRight, above, below, none)
+import Element exposing (Element, el, html, inFront, row, padding, spacing, px, moveDown, moveLeft, moveRight, above, below, none)
 import Element.Font as Font
 import Element.Background as Background
 import Element.Events as Events
+import Element.Border as Border
 
 import Color -- avh4/elm-color
 
@@ -32,22 +35,9 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
       labelPhase =
         animationPhase * 2 - 1 |> Basics.min 1 |> Basics.max 0
 
-      widthString =
-        containerWidth |> String.fromInt
-
-      heightString =
-        containerHeight |> String.fromInt
-
-      -- mergedBubbles =
-      --   rawBubbles
-      --   |> List.Extra.uniqueBy (\{entity} -> entity.title)
-      --   |> List.map (\bubble -> { bubble | alpha = Basics.min 0.8 <| rawBubbleAlpha * (rawBubbles |> List.filter (\b -> b.entity == bubble.entity)  |> List.length |> toFloat) })
-      --   |> List.sortBy .size
-      --   |> List.reverse
-
       svgBubbles =
         bubbles
-        |> List.map (viewBubble model oerUrl animationPhase)
+        |> List.concatMap (viewBubble model oerUrl animationPhase)
 
       background =
         rect [ width widthString, height heightString, fill "#191919" ] []
@@ -107,8 +97,7 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
       (graphic, popup)
 
 
-
-viewBubble : Model -> OerUrl -> Float -> Bubble -> Svg.Svg Msg
+viewBubble : Model -> OerUrl -> Float -> Bubble -> List (Svg Msg)
 viewBubble model oerUrl animationPhase ({entity} as bubble) =
   let
       {posX, posY, size} =
@@ -122,18 +111,27 @@ viewBubble model oerUrl animationPhase ({entity} as bubble) =
           [ stroke "white", strokeWidth "2" ]
         else
           []
+
+      mentionDots =
+        if isHovering then
+          viewMentionDots model oerUrl bubble
+        else
+          []
+
+      body =
+        circle
+          ([ cx (posX * (toFloat contentWidth) + marginX |> String.fromFloat)
+          , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
+          , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
+          , fill <| Color.toCssString <| colorFromBubble bubble
+          , onMouseOver <| BubbleMouseOver entity.id
+          , onMouseLeave <| BubbleMouseOut
+          , custom "click" (Json.Decode.succeed { message = BubbleClicked oerUrl, stopPropagation = True, preventDefault = True })
+          , class hoverableClass
+          ] ++ outline)
+          []
   in
-      circle
-        ([ cx (posX * (toFloat contentWidth) + marginX |> String.fromFloat)
-        , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
-        , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
-        , fill <| Color.toCssString <| colorFromBubble bubble
-        , onMouseOver <| BubbleMouseOver entity.id
-        , onMouseOut <| BubbleMouseOut
-        , custom "click" (Json.Decode.succeed { message = BubbleClicked oerUrl, stopPropagation = True, preventDefault = True })
-        , class hoverableClass
-        ] ++ outline)
-        []
+      mentionDots ++ [ body ]
 
 
 colorFromBubble : Bubble -> Color.Color
@@ -167,13 +165,10 @@ hoveringBubbleOrFragmentsBarEntityId model =
 viewPopup : Model -> BubblePopupState -> BubbleCoordinates -> List (Element.Attribute Msg)
 viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
   let
-      enlargementPhaseFromText text =
+      zoomFromText text =
         (String.length text |> toFloat) / 200 - posY*0.5 |> Basics.min 1
 
-      -- heightLimit =
-      --   Element.height (Element.fill |> Element.maximum 110)
-
-      (contentElement, enlargementPhase) =
+      (contentElement, zoom) =
         case content of
           DefinitionInBubblePopup ->
             let
@@ -194,7 +189,7 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
                           if text=="" then
                             unavailable
                           else
-                            ("“" ++ text ++ "” (Wikipedia)" |> bodyWrap [ Font.italic ], enlargementPhaseFromText text)
+                            ("“" ++ text ++ "” (Wikipedia)" |> bodyWrap [ Font.italic ], zoomFromText text)
 
                         -- DefinitionUnavailable ->
                         -- unavailable
@@ -202,13 +197,61 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
                 element
 
           MentionInBubblePopup {sentence} ->
-            (sentence |> bodyWrap [], enlargementPhaseFromText sentence)
+            (sentence |> bodyWrap [], zoomFromText sentence)
 
       box =
-        contentElement
-        |> List.singleton
-        -- |> menuColumn [ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone, heightLimit, Element.clipY ]
-        |> menuColumn [ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone, Element.clipY ]
+        let
+            roundedBorder =
+              case content of
+                MentionInBubblePopup _ ->
+                  [ Border.rounded 12 ]
+
+                _ ->
+                  []
+        in
+            contentElement
+            |> List.singleton
+            |> menuColumn ([ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone, Element.clipY ] ++ roundedBorder)
+
+      tail =
+        case content of
+          MentionInBubblePopup {positionInEntireText} ->
+            let
+                sizeY =
+                  containerHeight - verticalOffset
+
+                hs =
+                  sizeY
+                  |> String.fromFloat
+
+                tipX =
+                  positionInEntireText * containerWidth
+
+                rootX =
+                  horizontalOffset + (if positionInEntireText<0.5 then rootMargin else popupWidth-rootMargin-rootWidth) |> Basics.max 5 |> Basics.min (containerWidth - rootMargin - 15)
+
+                rootWidth =
+                  20
+
+                rootMargin =
+                  22
+
+                corners =
+                  [ (rootX + 0, 0)
+                  , (rootX + rootWidth, 0)
+                  , (tipX, sizeY-12)
+                  ]
+                  |> svgPointsFromCorners
+            in
+                [ polygon [ fill "white", points corners, class "PointerEventsNone" ] [] ]
+                |> svg [ width widthString, height hs, viewBox <| "0 0 " ++ ([ widthString, hs ] |> String.join " ") ]
+                |> html
+                |> el [ moveDown <| sizeY-1, moveLeft horizontalOffset, pointerEventsNone ]
+                |> above
+                |> List.singleton
+
+          _ ->
+            []
 
       (horizontalOffset, popupWidth) =
         let
@@ -221,17 +264,14 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
             largest =
               { horizontalOffset = -allowedMargin, popupWidth = cardWidth + 2*allowedMargin }
         in
-            (interp enlargementPhase smallest.horizontalOffset largest.horizontalOffset
-            , interp enlargementPhase smallest.popupWidth largest.popupWidth)
+            (interp zoom smallest.horizontalOffset largest.horizontalOffset
+            , interp zoom smallest.popupWidth largest.popupWidth)
 
-      (verticalDirection, verticalOffset) =
-        -- if posY > 0.2 then
-        (above, Basics.max 10 <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5)
-        -- else
-        --   (below, Basics.max 10 <| (posY + size*3.5*bubbleZoom) * contentHeight + marginTop + 5)
+      verticalOffset =
+        popupVerticalPositionFromBubble posY size
   in
       none
-      |> el [ verticalDirection box, moveRight <| horizontalOffset, moveDown <| verticalOffset ]
+      |> el ([ above box, moveRight <| horizontalOffset, moveDown <| verticalOffset ]++tail)
       |> inFront
       |> List.singleton
 
@@ -249,7 +289,7 @@ contentWidth =
 
 
 contentHeight =
-  imageHeight - 2*marginX - (fragmentsBarHeight + 10)
+  imageHeight - 2*marginX - fragmentsBarHeight - 10
 
 
 marginTop =
@@ -258,6 +298,13 @@ marginTop =
 
 marginX =
   25
+
+
+widthString =
+  containerWidth |> String.fromInt
+
+heightString =
+  containerHeight |> String.fromInt
 
 
 animatedBubbleCurrentCoordinates : Float -> Bubble -> BubbleCoordinates
@@ -270,3 +317,66 @@ animatedBubbleCurrentCoordinates phase {initialCoordinates, finalCoordinates} =
 
 hoverableClass =
   "UserSelectNone CursorPointer"
+
+
+viewMentionDots : Model -> OerUrl -> Bubble -> List (Svg Msg)
+viewMentionDots model oerUrl bubble =
+  if isAnyChunkPopupOpen model then
+    []
+  else
+    let
+        circlePosY =
+          containerHeight - 8
+          |> String.fromFloat
+
+        dot : MentionInOer -> Svg Msg
+        dot {positionInEntireText, sentence} =
+          let
+              isInPopup =
+                case model.popup of
+                  Just (BubblePopup state) ->
+                    if state.oerUrl==oerUrl && state.entityId==bubble.entity.id then
+                      case state.content of
+                        MentionInBubblePopup mention ->
+                          mention.sentence==sentence
+
+                        _ ->
+                          False
+
+                    else
+                      False
+
+                  _ ->
+                    False
+
+              circlePosX =
+                positionInEntireText * containerWidth
+                |> String.fromFloat
+
+              circleRadius =
+                "5"
+          in
+              circle [ cx circlePosX, cy circlePosY, r circleRadius, fill "orange" ] []
+
+        mentions =
+          getMentions model oerUrl bubble.entity.id
+          |> Maybe.withDefault [] -- shouldn't happen
+    in
+        mentions
+        |> List.map dot
+
+
+svgPointsFromCorners : List (Float, Float) -> String
+svgPointsFromCorners corners =
+  corners
+  |> List.map (\(x,y) -> (x |> String.fromFloat)++","++(y |> String.fromFloat))
+  |> String.join " "
+
+
+onMouseLeave : msg -> Attribute msg
+onMouseLeave msg =
+  Html.Events.on "mouseleave" (Json.Decode.succeed msg)
+
+
+popupVerticalPositionFromBubble posY size =
+  Basics.max 10 <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5

@@ -170,7 +170,7 @@ update msg ({nav, userProfileForm} as model) =
               0
 
           retryTime =
-            (posixToMillis model.currentTime) + failCount*2000 |> millisToPosix
+            (posixToMillis model.currentTime) + (failCount*2000 |> min 10000) |> millisToPosix
       in
           ( { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.union enrichments, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, cachedMentions = cachedMentions, wikichunkEnrichmentRequestFailCount = failCount, wikichunkEnrichmentRetryTime = retryTime } |> registerUndefinedEntities (Dict.values enrichments), Cmd.none )
 
@@ -576,12 +576,23 @@ extractMentionsOfEntity oerUrl chunks entity cachedMentions =
           entity.title
           |> condense
 
+        nChunks =
+          List.length chunks
+          |> toFloat
+
         mentionsInChunk : Int -> Chunk -> List MentionInOer
         mentionsInChunk chunkIndex chunk =
-          chunk.text
-          |> extractSentences
-          |> List.filter (\sentence -> String.contains entityTitleCondensed (condense sentence))
-          |> List.indexedMap (\indexInChunk sentence -> { chunkIndex = chunkIndex, indexInChunk = indexInChunk, sentence = sentence})
+          let
+              sentences =
+                chunk.text
+                |> extractSentences
+                |> List.filter (\sentence -> String.contains entityTitleCondensed (condense sentence))
+
+              positionInEntireText indexInChunk sentence =
+                (toFloat chunkIndex) / nChunks + ((toFloat indexInChunk) / (List.length sentences |> toFloat) * 0.8 + 0.1)/nChunks
+          in
+              sentences
+              |> List.indexedMap (\indexInChunk sentence -> { chunkIndex = chunkIndex, indexInChunk = indexInChunk, positionInEntireText = positionInEntireText indexInChunk sentence, sentence = sentence})
 
         mentionsOfEntity : List MentionInOer
         mentionsOfEntity =

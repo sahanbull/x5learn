@@ -65,23 +65,23 @@ occurrencesFromChunks chunks =
 occurrencesFromChunk : Int -> Int -> Chunk -> List Occurrence
 occurrencesFromChunk nChunksMinus1 chunkIndex {entities, length} =
   let
-      positionInText =
+      approximatePositionInText =
         (toFloat chunkIndex) / (toFloat nChunksMinus1)
 
       nEntitiesMinus1 =
         (List.length entities) - 1
   in
       entities
-      |> List.indexedMap (occurrenceFromEntity positionInText nEntitiesMinus1)
+      |> List.indexedMap (occurrenceFromEntity approximatePositionInText nEntitiesMinus1)
 
 
 occurrenceFromEntity : Float -> Int -> Int -> Entity -> Occurrence
-occurrenceFromEntity positionInText nEntitiesMinus1 entityIndex entity =
+occurrenceFromEntity approximatePositionInText nEntitiesMinus1 entityIndex entity =
   let
       rank =
         (toFloat entityIndex) / (toFloat nEntitiesMinus1)
   in
-      Occurrence entity positionInText rank
+      Occurrence entity approximatePositionInText rank
 
 
 bubbleFromEntity : Model -> List Occurrence -> List Entity -> Entity -> Bubble
@@ -93,7 +93,7 @@ bubbleFromEntity model occurrencesOfAllEntities rankedEntities entity =
 
       initialPosX =
         occurrencesOfThisEntity
-        |> averageOf .positionInText
+        |> averageOf .approximatePositionInText
         |> (*) 0.6
 
       initialPosY =
@@ -106,7 +106,7 @@ bubbleFromEntity model occurrencesOfAllEntities rankedEntities entity =
 
       finalPosX =
         occurrencesOfThisEntity
-        |> averageOf .positionInText
+        |> averageOf .approximatePositionInText
         |> (*) 0.6
 
       finalPosY =
@@ -177,11 +177,11 @@ layoutBubbles bubbles =
           Just bubble ->
             bubble.finalCoordinates.posX
 
-      nBubblesMinus1 =
-        (List.length bubbles) - 1 |> toFloat
+      nBubblesMinus1max1 =
+        (List.length bubbles) - 1 |> max 1 |> toFloat
 
       setPosY index ({finalCoordinates} as bubble) =
-        { bubble | finalCoordinates = { finalCoordinates | posY = (toFloat index) / nBubblesMinus1 * 0.85 + 0.05 } }
+        { bubble | finalCoordinates = { finalCoordinates | posY = (toFloat index) / nBubblesMinus1max1 * 0.85 + 0.05 } }
 
       setPosX index ({entity, finalCoordinates} as bubble) =
         let

@@ -578,6 +578,7 @@ extractMentionsOfEntity oerUrl chunks entity cachedMentions =
 
         nChunks =
           List.length chunks
+          |> toFloat
 
         mentionsInChunk : Int -> Chunk -> List MentionInOer
         mentionsInChunk chunkIndex chunk =
@@ -586,9 +587,12 @@ extractMentionsOfEntity oerUrl chunks entity cachedMentions =
                 chunk.text
                 |> extractSentences
                 |> List.filter (\sentence -> String.contains entityTitleCondensed (condense sentence))
+
+              positionInEntireText indexInChunk sentence =
+                (toFloat chunkIndex) / nChunks + ((toFloat indexInChunk) / (List.length sentences |> toFloat) * 0.8 + 0.1)/nChunks
           in
               sentences
-              |> List.indexedMap (\indexInChunk sentence -> { chunkIndex = chunkIndex, indexInChunk = indexInChunk, positionInEntireText = (toFloat chunkIndex) / (toFloat nChunks) + (toFloat indexInChunk) / (List.length sentences |> toFloat), sentence = sentence})
+              |> List.indexedMap (\indexInChunk sentence -> { chunkIndex = chunkIndex, indexInChunk = indexInChunk, positionInEntireText = positionInEntireText indexInChunk sentence, sentence = sentence})
 
         mentionsOfEntity : List MentionInOer
         mentionsOfEntity =

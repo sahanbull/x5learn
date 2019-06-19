@@ -84,7 +84,7 @@ type alias BubbleCoordinates =
 
 type alias Occurrence =
   { entity : Entity
-  , positionInText : Float
+  , approximatePositionInText : Float
   , rank : Float
   }
 

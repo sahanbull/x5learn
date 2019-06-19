@@ -138,7 +138,7 @@ viewBubble model oerUrl animationPhase ({entity} as bubble) =
           ] ++ outline)
           []
   in
-      body :: mentionMarkers
+      [ body ] ++ mentionMarkers
 
 
 colorFromBubble : Bubble -> Color.Color
@@ -254,7 +254,7 @@ contentWidth =
 
 
 contentHeight =
-  imageHeight - 2*marginX - (fragmentsBarHeight + 10)
+  imageHeight - 2*marginX - fragmentsBarHeight - 10
 
 
 marginTop =
@@ -288,13 +288,42 @@ viewMentionMarkers model oerUrl bubble =
       Just entityId ->
         let
             marker : MentionInOer -> Svg Msg
-            marker {positionInEntireText} =
+            marker ({positionInEntireText} as mention) =
               let
-                  x =
-                    positionInEntireText * containerWidth
-                    |> String.fromFloat
+                  isInPopup =
+                    case model.popup of
+                      Just (BubblePopup state) ->
+                        if state.oerUrl==oerUrl && state.entityId==entityId then
+                          case state.content of
+                            MentionInBubblePopup m ->
+                              m==mention
+
+                            _ ->
+                              False
+
+                        else
+                          False
+
+                      _ ->
+                        False
+
+                  top =
+                    if isInPopup then
+                      bubble.finalCoordinates.posY * contentHeight
+                    else
+                      containerHeight - fragmentsBarHeight
+
+                  bottom =
+                    containerHeight
+
+                  corners =
+                    [ (positionInEntireText * containerWidth - 8, top)
+                    , (positionInEntireText * containerWidth + 8, top)
+                    , (positionInEntireText * containerWidth, bottom)
+                    ]
+                    |> svgPointFromCorners
               in
-                  polygon [ fill "orange", points (x++",0         TODO      20,0 10,20") ] []
+                  polygon [ fill "white", points corners ] []
 
             mentions =
               getMentions model oerUrl entityId
@@ -306,3 +335,10 @@ viewMentionMarkers model oerUrl bubble =
             -- |> row [ width <| px chunkWidth, paddingXY 5 0 ]
             -- |> inFront
             -- |> List.singleton
+
+
+svgPointFromCorners : List (Float, Float) -> String
+svgPointFromCorners corners =
+  corners
+  |> List.map (\(x,y) -> (x |> String.fromFloat)++","++(y |> String.fromFloat))
+  |> String.join " "

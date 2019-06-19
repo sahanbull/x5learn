@@ -503,7 +503,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
         |> List.indexedMap chunkTrigger
   in
       none
-      |> el ([ width fill, height (px fragmentsBarHeight), materialScrimBackground, borderTop 1, Border.color veryTransparentWhite, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)
+      |> el ([ width fill, height <| px <| fragmentsBarHeight-1, materialScrimBackground, borderTop 1, Border.color veryTransparentWhite, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)
 
 
 viewChunkPopup model chunkPopup =

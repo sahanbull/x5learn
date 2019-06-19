@@ -287,6 +287,10 @@ viewMentionMarkers model oerUrl bubble =
 
       Just entityId ->
         let
+            circlePosY =
+              containerHeight - 8
+              |> String.fromFloat
+
             marker : MentionInOer -> Svg Msg
             marker ({positionInEntireText} as mention) =
               let
@@ -307,23 +311,20 @@ viewMentionMarkers model oerUrl bubble =
                       _ ->
                         False
 
-                  top =
-                    if isInPopup then
-                      bubble.finalCoordinates.posY * contentHeight
-                    else
-                      containerHeight - fragmentsBarHeight
+                  circlePosX =
+                    positionInEntireText * containerWidth
+                    |> String.fromFloat
 
-                  bottom =
-                    containerHeight
-
-                  corners =
-                    [ (positionInEntireText * containerWidth - 8, top)
-                    , (positionInEntireText * containerWidth + 8, top)
-                    , (positionInEntireText * containerWidth, bottom)
-                    ]
-                    |> svgPointFromCorners
+                  circleRadius =
+                    "5"
               in
-                  polygon [ fill "white", points corners ] []
+                  circle
+                    [ cx circlePosX
+                    , cy circlePosY
+                    , r circleRadius
+                    , fill "orange"
+                    ]
+                    []
 
             mentions =
               getMentions model oerUrl entityId

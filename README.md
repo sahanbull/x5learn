@@ -22,7 +22,17 @@ To compile only the elm/javascript parts during development (including debug and
 
 ## Run locally
 
+Start the flask app:
+
 `FLASK_APP=server/app.py flask run --host=0.0.0.0`
+
+Start an enrichment worker:
+
+`cd enrichments`
+
+`nohup python enrichment_worker.py&`
+
+Repeat the above command to run multiple workers in parallel.
 
 ## Extend
 

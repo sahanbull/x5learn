@@ -177,11 +177,11 @@ layoutBubbles bubbles =
           Just bubble ->
             bubble.finalCoordinates.posX
 
-      nBubblesMinus1 =
-        (List.length bubbles) - 1 |> toFloat
+      nBubblesMinus1max1 =
+        (List.length bubbles) - 1 |> max 1 |> toFloat
 
       setPosY index ({finalCoordinates} as bubble) =
-        { bubble | finalCoordinates = { finalCoordinates | posY = (toFloat index) / nBubblesMinus1 * 0.85 + 0.05 } }
+        { bubble | finalCoordinates = { finalCoordinates | posY = (toFloat index) / nBubblesMinus1max1 * 0.85 + 0.05 } }
 
       setPosX index ({entity, finalCoordinates} as bubble) =
         let

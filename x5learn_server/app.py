@@ -22,6 +22,8 @@ from x5learn_server.db.database import db_session
 
 from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition
 
+from x5learn_server.labstudyone import search_results_from_lab_study_one_dataset
+
 
 # Create app
 app = Flask(__name__)
@@ -190,7 +192,7 @@ def api_save_user_state():
 def api_search():
     text = request.args['text'].lower().strip()
     # results = search_results_from_experimental_local_oer_data(text) + search_results_from_x5gon_api(text)
-    results = search_results_from_x5gon_api(text)
+    results = search_results_from_lab_study_one_dataset(text) or search_results_from_x5gon_api(text)
     return jsonify(results)
 
 

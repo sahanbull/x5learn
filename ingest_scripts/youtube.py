@@ -72,48 +72,8 @@ def get_duration_from_youtube(url):
     if '"status":"UNPLAYABLE"' in txt:
         raise ValueError('unplayable')
     duration = int(txt.split('lengthSeconds\\":\\"')[1].split('\\')[0])
-    print('duration = ', duration)    
+    print('duration = ', duration)
     return duration
-
-
-# def get_main_concepts_from_wikifier_org__and_update_mapping_between_ids_and_titles(text):
-#     payload = {'userKey': 'yeydkrkxbnrfxcgayvanalxesqqwja',
-#                'text': text,
-#                 'lang': 'auto',
-#                 'support': 'false',
-#                 'ranges': 'false',
-#                 'includeCosines': 'true',
-#                 'nTopDfValuesToIgnore': 50,
-#                 'nWordsToIgnoreFromList': 50,
-#               }
-#     r = requests.post("http://www.wikifier.org/annotate-article", data=payload)
-#     j = json.loads(r.text)
-#     annotations = sorted(j['annotations'], key=lambda k: k['pageRank'], reverse=True)[:5]
-#     main_concepts = []
-#     # store mappings in json file
-#     titles_filepath = '/Users/stefan/x5/data/scenario_sigchi/wiki_id_title_mapping.json'
-#     with open(titles_filepath, 'r') as f:
-#         titles = json.load(f)
-#     for a in annotations:
-#         if 'wikiDataItemId' in a:
-#             concept_id = a['wikiDataItemId']
-#             title = a['title']
-#             titles[concept_id] = title
-#             main_concepts.append(concept_id)
-#             print(concept_id, title)
-#     print('___________________________________')
-#     with open(titles_filepath, 'w') as f:
-#         json.dump(titles, f)
-#     return main_concepts
-
-
-def second_from_line(line):
-    return int(line.split(':')[0])* 60 + int(line.split(':')[1])
-
-def is_time(line):
-    return re.match(r'\d\d+:\d\d$', line)
-
-
 
 
 def scrape_youtube_page(videoid):
@@ -222,6 +182,77 @@ def scrape_youtube_page(videoid):
 ###########################################################
 
 
+CALTECH = ['https://www.youtube.com/watch?v=mbyG85GZ0PI&list=PLD63A284B7615313A&index=1',
+     'https://www.youtube.com/watch?v=MEG35RDD7RA&list=PLD63A284B7615313A&index=2',
+     'https://www.youtube.com/watch?v=FIbVs5GbBlQ&list=PLD63A284B7615313A&index=3',
+     'https://www.youtube.com/watch?v=L_0efNkdGMc&list=PLD63A284B7615313A&index=4',
+     'https://www.youtube.com/watch?v=SEYAnnLazMU&list=PLD63A284B7615313A&index=5',
+     'https://www.youtube.com/watch?v=6FWRijsmLtE&list=PLD63A284B7615313A&index=6',
+     'https://www.youtube.com/watch?v=Dc0sr0kdBVI&list=PLD63A284B7615313A&index=7',
+     'https://www.youtube.com/watch?v=zrEyxfl2-a8&list=PLD63A284B7615313A&index=8',
+     'https://www.youtube.com/watch?v=qSTHZvN8hzs&list=PLD63A284B7615313A&index=9',
+     'https://www.youtube.com/watch?v=Ih5Mr93E-2c&list=PLD63A284B7615313A&index=10',
+     'https://www.youtube.com/watch?v=EQWr3GGCdzw&list=PLD63A284B7615313A&index=11',
+     'https://www.youtube.com/watch?v=I-VfYXzC5ro&list=PLD63A284B7615313A&index=12',
+     'https://www.youtube.com/watch?v=o7zzaKd0Lkk&list=PLD63A284B7615313A&index=13',
+     'https://www.youtube.com/watch?v=eHsErlPJWUU&list=PLD63A284B7615313A&index=14',
+     'https://www.youtube.com/watch?v=XUj5JbQihlU&list=PLD63A284B7615313A&index=15',
+     'https://www.youtube.com/watch?v=O8CfrnOPtLc&list=PLD63A284B7615313A&index=16',
+     'https://www.youtube.com/watch?v=EZBUDG12Nr0&list=PLD63A284B7615313A&index=17',
+     'https://www.youtube.com/watch?v=ihLwJPHkMRY&list=PLD63A284B7615313A&index=18']
+
+STANFORD = ['https://www.youtube.com/watch?v=6QRpDLj8huE&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=1',
+     'https://www.youtube.com/watch?v=W46UTQ_JDPk&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=2',
+     'https://www.youtube.com/watch?v=WXNUbLC8A4I&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=3',
+     'https://www.youtube.com/watch?v=UVCFaaEBnTE&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=4',
+     'https://www.youtube.com/watch?v=lZit4Uzlswc&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=5',
+     'https://www.youtube.com/watch?v=4u81xU7BIOc&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=6',
+     'https://www.youtube.com/watch?v=QjOILAQ0EFg&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=7',
+     'https://www.youtube.com/watch?v=SGEroEKFbnY&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=8',
+     'https://www.youtube.com/watch?v=UVjj2fHu9YU&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=9',
+     'https://www.youtube.com/watch?v=zNhCF97exlA&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=10',
+     'https://www.youtube.com/watch?v=Tppi2Fof1DE&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=11',
+     'https://www.youtube.com/watch?v=uV5TnFc7eaE&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=12',
+     'https://www.youtube.com/watch?v=0D4LnsJr85Y&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=13',
+     'https://www.youtube.com/watch?v=pAwjiGkafbM&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=14',
+     'https://www.youtube.com/watch?v=UqqPm-Q4aMo&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=15',
+     'https://www.youtube.com/watch?v=GIcuSNAAa4g&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=16',
+     'https://www.youtube.com/watch?v=ed4whd9B-xw&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=17',
+     'https://www.youtube.com/watch?v=_GvMC0ZYvK8&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=18',
+     'https://www.youtube.com/watch?v=oByDE-RJkZA&list=PLoR5VjrKytrCv-Vxnhp5UyS1UjZsXP0Kj&index=19']
+
+
+# https://www.youtube.com/results?search_query=machine+learning+introduction
+FIRST_PAGE_OF_SEARCH_RESULTS_FOR_MACHINE_LEARNING_INTRODUCTION = ['https://www.youtube.com/watch?v=ukzFI9rgwfU',
+     'https://www.youtube.com/watch?v=IpGxLWOIZy4',
+     'https://www.youtube.com/watch?v=h0e2HAPTGF4',
+     'https://www.youtube.com/watch?v=ujTCoH21GlA',
+     'https://www.youtube.com/watch?v=hjh1ikznScg',
+     'https://www.youtube.com/watch?v=Gv9_4yMHFhI',
+     'https://www.youtube.com/watch?v=GvQwE2OhL8I',
+     'https://www.youtube.com/watch?v=JgvyzIkgxF0',
+     'https://www.youtube.com/watch?v=4vGiHC35j9s',
+     'https://www.youtube.com/watch?v=nKW8Ndu7Mjw',
+     'https://www.youtube.com/watch?v=cKxRvEZd3Mw',
+     'https://www.youtube.com/watch?v=JN6H4rQvwgY',
+     'https://www.youtube.com/watch?v=63NTeLmDANo',
+     'https://www.youtube.com/watch?v=8onB7rPG4Pk',
+     'https://www.youtube.com/watch?v=SN2BZswEWUA',
+     'https://www.youtube.com/watch?v=Q59X518JZHE',
+     'https://www.youtube.com/watch?v=aircAruvnKk',
+     'https://www.youtube.com/watch?v=5hNK7-N23eU',
+     'https://www.youtube.com/watch?v=-DEL6SVRPw0',
+     'https://www.youtube.com/watch?v=BR9h47Jtqyw',
+     'https://www.youtube.com/watch?v=O5xeyoRL95U',
+     'https://www.youtube.com/watch?v=J1_A-rdNBNQ']
+
+
+def human_readable_time_from_seconds(seconds):
+    minutes = int(seconds / 60)
+    seconds = int(seconds - minutes * 60)
+    return str(minutes) + ':' + str(seconds).rjust(2, '0')
+
+
 def ingest_oer_from_url(url):
     # import pdb; pdb.set_trace()
     print('\n______________________________________________________________')
@@ -232,21 +263,31 @@ def ingest_oer_from_url(url):
         return True
     videoid = url.split('watch?v=')[1].split('&')[0]
     print(videoid)
-    info = scrape_youtube_page(videoid)
-    if isinstance(info, str):
-        print('Error:', info)
+    data = scrape_youtube_page(videoid)
+    if isinstance(data, str):
+        print('Error:', data)
         return False
     else:
-        info['images'] = ['https://i.ytimg.com/vi/'+videoid+'/hqdefault.jpg']
-        info['duration'] = get_duration_from_youtube(url)
-        oer = Oer(url, info)
+        data['images'] = ['https://i.ytimg.com/vi/'+videoid+'/hqdefault.jpg']
+        data['duration'] = human_readable_time_from_seconds(get_duration_from_youtube(url))
+        data['mediatype'] = 'video'
+        data['url'] = url
+        data['mediatype'] = 'video'
+        if data['provider']=='caltech':
+            data['provider'] = 'Caltech'
+        if data['provider']=='Machine Learning and AI':
+            data['provider'] = 'Stanford'
+        if len(data['provider']) > 20:
+            data['provider'] = data['provider'] + '…'
+        oer = Oer(url, data)
         session.add(oer)
         session.commit()
         return True
 
 
 if __name__ == '__main__':
-    urls = ... (insert urls)
+    urls = CALTECH + STANFORD + FIRST_PAGE_OF_SEARCH_RESULTS_FOR_MACHINE_LEARNING_INTRODUCTION
+
     for url in urls:
         success = ingest_oer_from_url(url)
         while not success:

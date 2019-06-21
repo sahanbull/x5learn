@@ -492,18 +492,23 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                     []
 
             chunkWidth =
-              floor <| chunk.length * (toFloat barWidth) - 2
+              floor <| chunk.length * (toFloat barWidth) + 1
         in
             none
-            |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
+            -- |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
+            |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
             |> inFront
 
       chunkTriggers =
         chunks
         |> List.indexedMap chunkTrigger
+
+      border =
+        [ none |> el [ width fill , Background.color veryTransparentWhite, height <| px 1 ] |> above ]
   in
       none
-      |> el ([ width fill, height <| px <| fragmentsBarHeight-1, materialScrimBackground, borderTop 1, Border.color veryTransparentWhite, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)
+      -- |> el ([ width fill, height <| px <| fragmentsBarHeight, materialScrimBackground, borderTop 1, Border.color veryTransparentWhite, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)
+      |> el ([ width fill, height <| px <| fragmentsBarHeight,  moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers ++ border)
 
 
 viewChunkPopup model chunkPopup =

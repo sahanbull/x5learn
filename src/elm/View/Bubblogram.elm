@@ -215,7 +215,7 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
 
       tail =
         case content of
-          MentionInBubblePopup {positionInEntireText} ->
+          MentionInBubblePopup {positionInResource} ->
             let
                 sizeY =
                   containerHeight - verticalOffset
@@ -225,10 +225,10 @@ viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
                   |> String.fromFloat
 
                 tipX =
-                  positionInEntireText * containerWidth
+                  positionInResource * containerWidth
 
                 rootX =
-                  horizontalOffset + (if positionInEntireText<0.5 then rootMargin else popupWidth-rootMargin-rootWidth) |> Basics.max 5 |> Basics.min (containerWidth - rootMargin - 15)
+                  horizontalOffset + (if positionInResource<0.5 then rootMargin else popupWidth-rootMargin-rootWidth) |> Basics.max 5 |> Basics.min (containerWidth - rootMargin - 15)
 
                 rootWidth =
                   20
@@ -330,7 +330,7 @@ viewMentionDots model oerUrl bubble =
           |> String.fromFloat
 
         dot : MentionInOer -> Svg Msg
-        dot {positionInEntireText, sentence} =
+        dot {positionInResource, sentence} =
           let
               isInPopup =
                 case model.popup of
@@ -350,7 +350,7 @@ viewMentionDots model oerUrl bubble =
                     False
 
               circlePosX =
-                positionInEntireText * containerWidth
+                positionInResource * containerWidth
                 |> String.fromFloat
 
               circleRadius =
@@ -360,7 +360,6 @@ viewMentionDots model oerUrl bubble =
 
         mentions =
           getMentions model oerUrl bubble.entity.id
-          |> Maybe.withDefault [] -- shouldn't happen
     in
         mentions
         |> List.map dot

@@ -235,9 +235,16 @@ oerDecoder =
 
 
 wikichunkEnrichmentDecoder =
-  map2 (WikichunkEnrichment Nothing)
+  map3 (WikichunkEnrichment Nothing)
+    (field "mentions" (dict (list mentionDecoder)))
     (field "chunks" (list chunkDecoder))
     (field "errors" bool)
+
+
+mentionDecoder =
+  map2 MentionInOer
+    (field "positionInResource" float)
+    (field "sentence" string)
 
 
 chunkDecoder =

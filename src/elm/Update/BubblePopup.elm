@@ -39,7 +39,6 @@ initialPopup model oerUrl entityId =
       nextContents : List BubblePopupContent
       nextContents =
         getMentions model oerUrl entityId
-        |> Maybe.withDefault [] -- shouldn't happen
         |> List.map MentionInBubblePopup
   in
       BubblePopup <| BubblePopupState oerUrl entityId DefinitionInBubblePopup nextContents
@@ -53,37 +52,3 @@ updatedPopup state =
 
     x :: xs ->
       Just <| BubblePopup <| { state | content = x, nextContents = xs }
-
-
-looksRoughlyLikeAnEnglishSentence str =
-  let
-      words =
-        str
-        |> String.toLower
-        |> String.split " "
-
-      nWords =
-        words
-        |> List.length
-
-      nWordsThatLookRoughlyLikeEnglish =
-        words
-        |> List.filter (\word -> word |> String.all (\c -> Char.isLower c))
-        |> List.length
-
-  in
-      nWords > 4
-      && nWords < 20
-      && nWordsThatLookRoughlyLikeEnglish > (nWords // 2)
-
-
-extractSentences text =
-  text
-  |> String.split ". "
-  |> List.concatMap (String.split "? ")
-  |> List.concatMap (String.split "! ")
-  |> List.concatMap (String.split "\n")
-  |> List.concatMap (String.split "\r")
-  |> List.concatMap (String.split "\t")
-  |> List.concatMap (String.split "")
-  |> List.filter (\sentence -> looksRoughlyLikeAnEnglishSentence sentence)

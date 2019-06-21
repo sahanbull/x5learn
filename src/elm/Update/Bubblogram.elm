@@ -49,7 +49,7 @@ entityRelevance occurrences entity =
         |> List.filter (\occurrence -> occurrence.entity.id == entity.id)
         |> List.length
   in
-      frequency -- also consider adding extra factors e.g. average rank (indexInChunk) and trueskill values
+      frequency -- also consider adding extra factors e.g. average rank (e.g. index in chunk) and trueskill values
 
 
 occurrencesFromChunks : List Chunk -> List Occurrence
@@ -200,18 +200,4 @@ layoutBubbles bubbles =
       |> List.sortBy (\{finalCoordinates} -> finalCoordinates.size)
       |> List.reverse
       |> List.indexedMap setPosX
-      -- |> List.sortBy (\{entity} -> entity.title |> String.length)
-      -- |> List.sortBy (\{initialCoordinates} -> initialCoordinates.posX)
-      -- |> List.reverse
-      -- |> unsortZigZag
       |> List.indexedMap setPosY
-
-
--- unsortZigZag : List a -> List a
--- unsortZigZag xs =
---   case xs of
---     [] ->
---       []
-
---     x :: rest ->
---       x :: (rest |> List.reverse |> unsortZigZag)

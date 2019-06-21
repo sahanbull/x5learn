@@ -46,7 +46,6 @@ type alias Model =
   , cachedOers : Dict OerUrl Oer
   , requestingOers : Bool
   , hoveringBubbleEntityId : Maybe String
-  , cachedMentions : MentionsDict
   , entityDefinitions : Dict String EntityDefinition
   , requestingEntityDefinitions : Bool
   , wikichunkEnrichmentRequestFailCount : Int
@@ -164,6 +163,7 @@ type alias Oer =
 
 type alias WikichunkEnrichment =
   { bubblogram : Maybe Bubblogram
+  , mentions : Dict String (List MentionInOer)
   , chunks : List Chunk
   , errors : Bool
   }
@@ -199,12 +199,8 @@ type BubblePopupContent
   = DefinitionInBubblePopup
   | MentionInBubblePopup MentionInOer
 
-type alias MentionsDict = Dict (OerUrl,String) (List MentionInOer)
-
 type alias MentionInOer =
-  { chunkIndex : Int
-  , indexInChunk : Int
-  , positionInEntireText : Float
+  { positionInResource : Float
   , sentence : String
   }
 
@@ -289,7 +285,6 @@ initialModel nav flags =
   , cachedOers = Dict.empty
   , requestingOers = False
   , hoveringBubbleEntityId = Nothing
-  , cachedMentions = Dict.empty
   , entityDefinitions = Dict.empty
   , requestingEntityDefinitions = False
   , wikichunkEnrichmentRequestFailCount = 0
@@ -534,21 +529,23 @@ isEqualToSearchString model entityTitle =
       (entityTitle |> String.toLower) == (searchState.lastSearch |> String.toLower)
 
 
-getMentions : Model -> OerUrl -> String -> Maybe (List MentionInOer)
+getMentions : Model -> OerUrl -> String -> List MentionInOer
 getMentions model oerUrl entityId =
-  model.cachedMentions |> Dict.get (oerUrl, entityId)
+  case model.wikichunkEnrichments |> Dict.get oerUrl of
+    Nothing ->
+      []
+
+    Just enrichment ->
+      enrichment.mentions
+      |> Dict.get entityId
+      |> Maybe.withDefault []
 
 
 hasMentions : Model -> OerUrl -> String -> Bool
 hasMentions model oerUrl entityId =
-  case getMentions model oerUrl entityId of
-    Nothing ->
-      False
-
-    Just mentions ->
-      mentions
-      |> List.isEmpty
-      |> not
+  getMentions model oerUrl entityId
+  |> List.isEmpty
+  |> not
 
 
 mentionInBubblePopup : Model -> Maybe MentionInOer

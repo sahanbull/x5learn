@@ -160,9 +160,6 @@ update msg ({nav, userProfileForm} as model) =
 
     RequestWikichunkEnrichments (Ok enrichments) ->
       let
-          cachedMentions =
-            Dict.foldl extractMentionsFromEnrichment model.cachedMentions enrichments
-
           failCount =
             if Dict.isEmpty enrichments then
               model.wikichunkEnrichmentRequestFailCount + 1
@@ -172,7 +169,7 @@ update msg ({nav, userProfileForm} as model) =
           retryTime =
             (posixToMillis model.currentTime) + (failCount*2000 |> min 10000) |> millisToPosix
       in
-          ( { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.union enrichments, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, cachedMentions = cachedMentions, wikichunkEnrichmentRequestFailCount = failCount, wikichunkEnrichmentRetryTime = retryTime } |> registerUndefinedEntities (Dict.values enrichments), Cmd.none )
+          ( { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.union enrichments, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, wikichunkEnrichmentRequestFailCount = failCount, wikichunkEnrichmentRetryTime = retryTime } |> registerUndefinedEntities (Dict.values enrichments), Cmd.none )
 
     RequestWikichunkEnrichments (Err err) ->
       -- let
@@ -546,63 +543,6 @@ expandCurrentFragmentOrCreateNewOne position inspectorState userState =
 completeRegistration : UserState -> UserState
 completeRegistration userState =
   { userState | registrationComplete = True }
-
-
-extractMentionsFromEnrichment : OerUrl -> WikichunkEnrichment -> MentionsDict -> MentionsDict
-extractMentionsFromEnrichment oerUrl {chunks} cachedMentions =
-  let
-      entities =
-        chunks
-        |> List.concatMap .entities
-        |> List.Extra.uniqueBy .id
-  in
-      List.foldl (extractMentionsOfEntity oerUrl chunks) cachedMentions entities
-
-
-extractMentionsOfEntity : OerUrl -> List Chunk -> Entity -> MentionsDict -> MentionsDict
-extractMentionsOfEntity oerUrl chunks entity cachedMentions =
-  if Dict.member (oerUrl, entity.id) cachedMentions then
-    cachedMentions
-  else
-    let
-        condense str =
-          str
-          |> String.toLower
-          |> String.toList
-          |> List.filter Char.isLower
-          |> String.fromList
-
-        entityTitleCondensed =
-          entity.title
-          |> condense
-
-        nChunks =
-          List.length chunks
-          |> toFloat
-
-        mentionsInChunk : Int -> Chunk -> List MentionInOer
-        mentionsInChunk chunkIndex chunk =
-          let
-              sentences =
-                chunk.text
-                |> extractSentences
-                |> List.filter (\sentence -> String.contains entityTitleCondensed (condense sentence))
-
-              positionInEntireText indexInChunk sentence =
-                (toFloat chunkIndex) / nChunks + ((toFloat indexInChunk) / (List.length sentences |> toFloat) * 0.8 + 0.1)/nChunks
-          in
-              sentences
-              |> List.indexedMap (\indexInChunk sentence -> { chunkIndex = chunkIndex, indexInChunk = indexInChunk, positionInEntireText = positionInEntireText indexInChunk sentence, sentence = sentence})
-
-        mentionsOfEntity : List MentionInOer
-        mentionsOfEntity =
-          chunks
-          |> List.indexedMap mentionsInChunk
-          |> List.concat
-          |> List.Extra.uniqueBy .sentence -- Omitting duplicates here is a design choice. When using the bubble popup, you don't want identical sentences to appear over and over. An extreme example might be an ebook with the same heading on every page, resulting in hundreds of duplicate mentions. On the other hand, taking only the first mention bears a risk of emphasising tables of contents. We should test these aspects empirically and see what's best.
-    in
-        cachedMentions
-        |> Dict.insert (oerUrl, entity.id) mentionsOfEntity
 
 
 updateBubblogramsIfNeeded : Model -> Model

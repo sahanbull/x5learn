@@ -16,6 +16,7 @@ setup(
         'psycopg2>=2.7.6.1',
         'gunicorn>=19.9.0',
         'fuzzywuzzy>=0.17.0',
-        'flask_sqlalchemy'
+        'flask_sqlalchemy',
+        'langdetect'
 ]
 )

@@ -61,7 +61,7 @@ viewModal model userState inspectorState =
         , body
         , footer
         ]
-        |> column [ htmlClass "CloseInspectorOnClickOutside", width (fill |> maximum (752+notesWidth+15)), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow, inFront content.fixed ]
+        |> column [ htmlClass "CloseInspectorOnClickOutside", width (px sheetWidth), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow, inFront content.fixed ]
 
       animatingBox =
         case model.modalAnimation of
@@ -136,13 +136,13 @@ inspectorContentDefault model userState {oer, fragmentStart} =
         [ player
         , fragmentsBarWrapper
         ]
-        |> column [ width (px playerWidth) ]
+        |> column [ width (px playerWidth), moveLeft notesWidth ]
 
       body =
-        [ mainSection
-        , viewNoteboard model userState oer.url |> el [ width <| px notesWidth, height fill, alignTop, borderLeft 1, paddingTRBL 0 0 0 15 ]
+        [ viewNoteboard model userState oer.url |> el [ width <| px notesWidth, height fill, alignTop, borderLeft 1, paddingTRBL 0 0 0 15, moveRight (sheetWidth - notesWidth - 30 ) ]
+        , mainSection
         ]
-        |> row [ spacing 15 ]
+        |> row []
 
       footer =
         []
@@ -203,3 +203,7 @@ notesWidth =
 
 fragmentsBarWrapperHeight =
   200
+
+
+sheetWidth =
+  752+notesWidth+15

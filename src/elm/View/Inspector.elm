@@ -61,7 +61,7 @@ viewModal model userState inspectorState =
         , body
         , footer
         ]
-        |> column [ htmlClass "CloseInspectorOnClickOutside", width (fill |> maximum (752+notesWidth+15)), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow, inFront content.fixed ]
+        |> column [ htmlClass "CloseInspectorOnClickOutside", width (px sheetWidth), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow, inFront content.fixed ]
 
       animatingBox =
         case model.modalAnimation of
@@ -130,23 +130,29 @@ inspectorContentDefault model userState {oer, fragmentStart} =
             desc
             |> String.split("\n")
             |> List.map (bodyWrap [])
-            |> column [ spacing 7, height (shrink |> maximum 250), scrollbarY ]
+            |> column [ spacing 7, height fill, scrollbarY, paddingTop 30 ]
 
       mainSection =
         [ player
-        , description
-        , providerLink
+        , fragmentsBarWrapper
         ]
-        |> column [ spacing 30, width (px playerWidth) ]
+        |> column [ width (px playerWidth), moveLeft notesWidth ]
 
       body =
-        [ mainSection
-        , viewNoteboard model userState oer.url |> el [ width <| px notesWidth, height fill, alignTop, borderLeft 1, paddingTRBL 0 0 0 15 ]
+        [ viewNoteboard model userState oer.url |> el [ width <| px notesWidth, height fill, alignTop, borderLeft 1, paddingTRBL 0 0 0 15, moveRight (sheetWidth - notesWidth - 30 ) ]
+        , mainSection
         ]
-        |> row [ spacing 15 ]
+        |> row []
 
       footer =
         []
+
+      fragmentsBarWrapper =
+        [ description
+        , providerLink
+        , fragmentsBar
+        ]
+        |> column [ width (px playerWidth), height <| px fragmentsBarWrapperHeight ]
 
       fragmentsBar =
         if hasYoutubeVideo oer.url then
@@ -157,10 +163,10 @@ inspectorContentDefault model userState {oer, fragmentStart} =
             wikichunks ->
               let
                   content =
-                    viewFragmentsBar model userState oer wikichunks (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth "inspector"
+                    viewFragmentsBar model userState oer wikichunks (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth "inspector" True
                     |> el [ width (px playerWidth), height (px 16) ]
               in
-                  none |> el [ inFront content, moveDown 487, moveRight 16 ]
+                  none |> el [ inFront content, moveUp (fragmentsBarWrapperHeight - fragmentsBarHeight) ]
         else
           none
 
@@ -173,7 +179,7 @@ inspectorContentDefault model userState {oer, fragmentStart} =
             [ "Provider:" |> bodyNoWrap []
             , newTabLink [] { url = oer.url, label = provider |> bodyNoWrap [] }
             ]
-            |> row [ spacing 10 ]
+            |> row [ spacing 10, paddingTop 30 ]
         -- else
         --   actionButtonWithIcon IconRight "navigate_next" oer.provider (Just <| ShowProviderLinkInInspector)
         -- [ oer.provider |> bodyNoWrap [ alignLeft]
@@ -188,8 +194,16 @@ inspectorContentDefault model userState {oer, fragmentStart} =
       --   ]
       --   |> row [ spacing 20, alignRight ]
   in
-      { header = header, body = body, footer = footer, fixed = fragmentsBar }
+      { header = header, body = body, footer = footer, fixed = none }
 
 
 notesWidth =
   248
+
+
+fragmentsBarWrapperHeight =
+  200
+
+
+sheetWidth =
+  752+notesWidth+15

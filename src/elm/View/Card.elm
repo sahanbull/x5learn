@@ -143,7 +143,7 @@ viewOerCard model userState recommendedFragments position barId oer =
               if enrichment.errors then
                 none
               else
-                viewFragmentsBar model userState oer enrichment.chunks recommendedFragments cardWidth barId
+                viewFragmentsBar model userState oer enrichment.chunks recommendedFragments cardWidth barId False
                 |> el [ width fill, moveDown imageHeight ]
 
       preloadImage url =

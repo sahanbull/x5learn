@@ -409,7 +409,7 @@ menuColumn attrs =
   column ([ Background.color white, Border.rounded 4, Border.color <| grey80, dialogShadow ] ++ attrs)
 
 
-viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId =
+viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId darkBackground =
   let
       markers =
         -- [ fragmentMarkers (userState.fragmentAccesses |> Dict.values) recentBlue
@@ -468,7 +468,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
             --   |> mentionsInThisChunk
             --   |> List.any (\mention -> mention.chunkIndex==chunkIndex)
 
-            background =
+            chunkBackground =
               if isPopupOpen then
                 [ Background.color orange ]
               else
@@ -496,7 +496,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
         in
             none
             -- |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
-            |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
+            |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ chunkBackground ++ popup ++ clickHandler)
             |> inFront
 
       chunkTriggers =
@@ -505,10 +505,15 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
 
       border =
         [ none |> el [ width fill , Background.color veryTransparentWhite, height <| px 1 ] |> above ]
+
+      background =
+        if darkBackground then
+          [ materialScrimBackground ]
+        else
+          []
   in
-      none
-      -- |> el ([ width fill, height <| px <| fragmentsBarHeight, materialScrimBackground, borderTop 1, Border.color veryTransparentWhite, moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers)
-      |> el ([ width fill, height <| px <| fragmentsBarHeight,  moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers ++ border)
+    none
+    |> el ([ width fill, height <| px <| fragmentsBarHeight,  moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers ++ border ++ background)
 
 
 viewChunkPopup model chunkPopup =
@@ -529,24 +534,24 @@ viewChunkPopup model chunkPopup =
 
 viewEntityButton : Model -> ChunkPopup -> Entity -> Element Msg
 viewEntityButton model chunkPopup entity =
-    let
-        label =
-          [ entity.title |> bodyNoWrap [ width fill ]
-          , image [ alpha 0.5, alignRight ] { src = svgPath "arrow_right", description = "" }
-          ]
+  let
+      label =
+        [ entity.title |> bodyNoWrap [ width fill ]
+        , image [ alpha 0.5, alignRight ] { src = svgPath "arrow_right", description = "" }
+        ]
           |> row [ width fill, paddingXY 10 5, spacing 10 ]
 
-        backgroundAndSubmenu =
-          case chunkPopup.entityPopup of
-            Nothing ->
-              []
+      backgroundAndSubmenu =
+        case chunkPopup.entityPopup of
+          Nothing ->
+            []
 
-            Just entityPopup ->
-              -- if chunkPopup.chunk == chunk && entityPopup.entityId == entityId then
-              if entityPopup.entityId == entity.id then
-                superLightBackground :: (viewEntityPopup model chunkPopup entityPopup entity)
-              else
-                []
+          Just entityPopup ->
+            -- if chunkPopup.chunk == chunk && entityPopup.entityId == entityId then
+            if entityPopup.entityId == entity.id then
+              superLightBackground :: (viewEntityPopup model chunkPopup entityPopup entity)
+            else
+              []
     in
         button ([ padding 5, width fill, popupOnMouseEnter (ChunkOnBar { chunkPopup | entityPopup = Just { entityId = entity.id, hoveringAction = Nothing } }) ] ++ backgroundAndSubmenu) { onPress = Nothing, label = label }
 

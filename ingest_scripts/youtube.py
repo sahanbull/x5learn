@@ -118,7 +118,7 @@ def scrape_youtube_page(videoid):
             #print('clicked transcript button')
             sleep(random.uniform(1,2))
             element = WebDriverWait(driver, waittime).until(EC.presence_of_element_located((By.CSS_SELECTOR, "ytd-transcript-body-renderer.style-scope")))
-            transcript = element.text
+            transcript = element.text.strip()
         except:
             msg = 'No transcript available'
             driver.quit()

@@ -244,7 +244,8 @@ def most_urgent_unstarted_enrichment_task():
     task.priority = 0
     db_session.commit()
     print('Started task with priority:', task.priority, 'url:', url)
-    return jsonify({'url': url})
+    oer = Oer.query.filter_by(url=url).first()
+    return jsonify({'data': oer.data})
 
 
 @app.route("/api/v1/ingest_wikichunk_enrichment/", methods=['POST'])

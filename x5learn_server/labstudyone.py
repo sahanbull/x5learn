@@ -67,11 +67,11 @@ FIRST_PAGE_OF_SEARCH_RESULTS_FOR_MACHINE_LEARNING_INTRODUCTION = ['https://www.y
 
 
 def search_results_from_lab_study_one_dataset(text):
-    if text=='ml_c':
+    if text=='a':
         return load_playlist(CALTECH)
-    if text=='ml_s':
+    if text=='b':
         return load_playlist(STANFORD)
-    if text=='ml_i':
+    if text=='i':
         return load_playlist(FIRST_PAGE_OF_SEARCH_RESULTS_FOR_MACHINE_LEARNING_INTRODUCTION)
 
 

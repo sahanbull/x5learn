@@ -492,7 +492,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                     []
 
             chunkWidth =
-              floor <| chunk.length * (toFloat barWidth) + 1
+              floor <| chunk.length * (toFloat barWidth) + (if chunkIndex == (List.length chunks)-1 then 0 else 1)
         in
             none
             -- |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)

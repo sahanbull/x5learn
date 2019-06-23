@@ -55,18 +55,18 @@ entityRelevance occurrences entity =
 occurrencesFromChunks : List Chunk -> List Occurrence
 occurrencesFromChunks chunks =
   let
-      nChunksMinus1 = (List.length chunks) - 1
+      nChunksMinus1max1 = (List.length chunks) - 1 |> max 1 |> toFloat
   in
       chunks
-      |> List.indexedMap (occurrencesFromChunk nChunksMinus1)
+      |> List.indexedMap (occurrencesFromChunk nChunksMinus1max1)
       |> List.concat
 
 
-occurrencesFromChunk : Int -> Int -> Chunk -> List Occurrence
-occurrencesFromChunk nChunksMinus1 chunkIndex {entities, length} =
+occurrencesFromChunk : Float -> Int -> Chunk -> List Occurrence
+occurrencesFromChunk nChunksMinus1max1 chunkIndex {entities, length} =
   let
       approximatePositionInText =
-        (toFloat chunkIndex) / (toFloat nChunksMinus1)
+        (toFloat chunkIndex) / nChunksMinus1max1
 
       nEntitiesMinus1 =
         (List.length entities) - 1

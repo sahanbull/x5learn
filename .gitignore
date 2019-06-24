@@ -22,3 +22,6 @@ enrichment/nohup.out
 
 # output from headless browser (scraping)
 geckodriver.log
+
+# output from ingest script
+ingest_scripts/youtube_log.txt

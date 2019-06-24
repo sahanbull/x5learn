@@ -26,29 +26,15 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.firefox.options import Options
 
 
-Base = declarative_base()
+# For relative imports to work in Python 3.6
+sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
-# engine = create_engine(os.environ['DATABASE_URL'])
-engine = create_engine('postgresql://localhost/x5learn')
-Session = sessionmaker(bind=engine)
+from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET
+from x5learn_server.db.database import get_or_create_session_db
+get_or_create_session_db(DB_ENGINE_URI)
+from x5learn_server.db.database import db_session
+from x5learn_server.models import Oer
 
-session = Session()
-
-
-###########################################################
-# DB MODELS
-###########################################################
-
-
-class Oer(Base):
-    __tablename__ = 'oer'
-    id = Column(Integer(), primary_key=True)
-    url = Column(String(255), unique=True, nullable=False)
-    data = Column(JSON())
-
-    def __init__(self, url, data):
-        self.url = url
-        self.data = data
 
 
 ###########################################################
@@ -208,8 +194,8 @@ def ingest_oer_from_url(url):
         if len(data['provider']) > 20:
             data['provider'] = data['provider'] + '…'
         oer = Oer(url, data)
-        session.add(oer)
-        session.commit()
+        db_session.add(oer)
+        db_session.commit()
         return True
 
 
@@ -233,7 +219,7 @@ if __name__ == '__main__':
     for url in urls:
         print('\n______________________________________________________________')
         print(url)
-        oer = session.query(Oer).filter_by(url=url).first()
+        oer = db_session.query(Oer).filter_by(url=url).first()
         if oer is not None:
             print('Exists already -> skipping.')
             skipped.append(url)
@@ -260,5 +246,3 @@ if __name__ == '__main__':
         print('Failed URLs:')
         for url, error in errors.items():
             print(url, error)
-
-    import pdb; pdb.set_trace()

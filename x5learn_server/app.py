@@ -13,13 +13,10 @@ from datetime import datetime, timedelta
 from sqlalchemy import or_, and_
 
 # instantiate the user management db classes
-from x5learn_server.db.database import get_or_create_session_db
 from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET
-
+from x5learn_server.db.database import get_or_create_session_db
 get_or_create_session_db(DB_ENGINE_URI)
-
 from x5learn_server.db.database import db_session
-
 from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition
 
 from x5learn_server.labstudyone import search_results_from_lab_study_one_dataset

@@ -1,7 +1,6 @@
 import sys
 import os
 import json
-import jsondiff
 import argparse
 
 from datetime import datetime
@@ -190,16 +189,11 @@ def human_readable_time_from_seconds(seconds):
 
 
 def ingest_oer_from_url(url):
-    print('\n______________________________________________________________')
-    print(url)
-    oer = session.query(Oer).filter_by(url=url).first()
-    if oer is not None:
-        print('Exists already -> skipping.')
-        return True
     videoid = url.split('watch?v=')[1].split('&')[0]
     data = scrape_youtube_page(videoid)
     if isinstance(data, str):
         print('Error:', data)
+        errors[url] = data
         return False
     else:
         data['images'] = ['https://i.ytimg.com/vi/'+videoid+'/hqdefault.jpg']
@@ -219,6 +213,9 @@ def ingest_oer_from_url(url):
         return True
 
 
+errors = {}
+
+
 if __name__ == '__main__':
     parser=argparse.ArgumentParser(
         description='''X5Learn ingestion script for youtube videos. ''',
@@ -226,10 +223,42 @@ if __name__ == '__main__':
     parser.add_argument('urls', type=str, help='Text file containing a newline-separated list of video urls')
     args=parser.parse_args()
     urls = open(args.urls).readlines()
+    urls = [ u.strip() for u in urls ]
+
+    skipped = []
+    succeeded_at_first_try = []
+    succeeded_at_second_try = []
+    failed = []
 
     for url in urls:
-        success = ingest_oer_from_url(url)
-        while not success:
-            print('Retrying...')
-            success = ingest_oer_from_url(url)
-    print('Done.')
+        print('\n______________________________________________________________')
+        print(url)
+        oer = session.query(Oer).filter_by(url=url).first()
+        if oer is not None:
+            print('Exists already -> skipping.')
+            skipped.append(url)
+        elif ingest_oer_from_url(url):
+            succeeded_at_first_try.append(url)
+        elif ingest_oer_from_url(url):
+            succeeded_at_second_try.append(url)
+        else:
+            print('Giving up.')
+            failed.append(url)
+
+    print(len(urls), 'URLs processed.\n')
+
+    print(len(skipped), 'videos skipped.')
+    print(len(succeeded_at_first_try), 'videos succeeded at first try.')
+    print(len(succeeded_at_second_try), 'videos succeeded at second try.')
+    print(len(failed), 'videos failed.')
+
+    print()
+
+    if len(errors)==0:
+        print('All videos ingested successfully.')
+    else:
+        print('Failed URLs:')
+        for url, error in errors.items():
+            print(url, error)
+
+    import pdb; pdb.set_trace()

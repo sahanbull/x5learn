@@ -68,7 +68,7 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
                 [ Element.alpha (interp (size/3) (1.8*labelPhase-1) 0.8) ]
         in
             entity.title
-            |> captionNowrap ([ whiteText, moveRight <| (posX + size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY - size*1.1*bubbleZoom) * contentHeight + marginTop - 15, Events.onMouseEnter <| BubbleMouseOver entity.id, Events.onMouseLeave BubbleMouseOut, onClickNoBubble (BubbleClicked oerUrl), htmlClass hoverableClass ] ++ highlight)
+            |> captionNowrap ([ whiteText, moveRight <| (posX + 0*size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY + 0.1 -  0*size*1.1*bubbleZoom) * contentHeight + marginTop - 15, Events.onMouseEnter <| BubbleMouseOver entity.id, Events.onMouseLeave BubbleMouseOut, onClickNoBubble (BubbleClicked oerUrl), htmlClass hoverableClass ] ++ highlight)
             |> inFront
             |> List.singleton
 
@@ -108,7 +108,8 @@ viewBubble model oerUrl animationPhase ({entity} as bubble) =
 
       outline =
         if isHovering then
-          [ stroke "white", strokeWidth "2" ]
+          -- [ stroke "#fff", strokeWidth "2", fill "#f93" ]
+          [ fill "#f93" ]
         else
           []
 

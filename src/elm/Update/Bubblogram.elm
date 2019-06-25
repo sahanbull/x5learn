@@ -114,7 +114,7 @@ bubbleFromEntity model occurrencesOfAllEntities rankedEntities entity =
         |> averageOf .rank
 
       finalSize =
-        occurrencesOfThisEntity |> List.length |> toFloat |> sqrt
+        0.3 + (occurrencesOfThisEntity |> List.length |> toFloat |> sqrt) / 2
 
       isSearchTerm =
         isEqualToSearchString model entity.title
@@ -123,7 +123,8 @@ bubbleFromEntity model occurrencesOfAllEntities rankedEntities entity =
         if isSearchTerm then
           (0.145, 0.9, 0.8)
         else
-          (0.536, 0, 0.6)
+          -- (0.536, 0, 0.6)
+          (0.536, 0, 0.01 + 0.3 * finalSize)
 
       initialCoordinates =
         { posX = initialPosX

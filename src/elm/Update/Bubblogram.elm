@@ -114,7 +114,7 @@ bubbleFromEntity model occurrencesOfAllEntities rankedEntities entity =
         |> averageOf .rank
 
       finalSize =
-        0.3 + (occurrencesOfThisEntity |> List.length |> toFloat |> sqrt) / 2
+        0.4 + (occurrencesOfThisEntity |> List.length |> toFloat |> sqrt) / 2
 
       isSearchTerm =
         isEqualToSearchString model entity.title

@@ -44,7 +44,7 @@ viewSearchResults model userState searchState =
     Just oerUrls ->
       -- Playlist ("Search results for \""++ searchState.lastSearch ++"\"") oerUrls
       (if isLabStudy1 model then
-        Playlist (searchState.lastSearch ++" - "++(oerUrls |> List.length |> String.fromInt) ++ " video" ++ (if List.length oerUrls == 1 then "" else "s")) oerUrls
+        Playlist (searchState.lastSearch ++" ("++(oerUrls |> List.length |> String.fromInt) ++ " video" ++ (if List.length oerUrls == 1 then "" else "s")++")") oerUrls
       else
         Playlist ((oerUrls |> List.length |> String.fromInt) ++ " result" ++ (if List.length oerUrls == 1 then "" else "s") ++ " for \""++ searchState.lastSearch ++"\"") oerUrls
       )

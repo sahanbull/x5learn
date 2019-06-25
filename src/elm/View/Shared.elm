@@ -557,19 +557,22 @@ viewEntityButton model chunkPopup entity =
 
 
 viewEntityPopup model chunkPopup entityPopup entity =
-  let
-      actionButtons =
-        [ ("Search", TriggerSearch entity.title)
-        ]
-        |> List.map (\item -> entityActionButton chunkPopup entityPopup item |> el [ padding 10 ])
+  if isLabStudy1 model then
+    []
+  else
+    let
+        actionButtons =
+          [ ("Search", TriggerSearch entity.title)
+          ]
+          |> List.map (\item -> entityActionButton chunkPopup entityPopup item |> el [ padding 10 ])
 
-      items =
-        actionButtons
-  in
-      items
-      |> menuColumn []
-      |> (if isHoverMenuNearRightEdge model 300 then onLeft else onRight)
-      |> List.singleton
+        items =
+          actionButtons
+    in
+        items
+        |> menuColumn []
+        |> (if isHoverMenuNearRightEdge model 300 then onLeft else onRight)
+        |> List.singleton
 
 
 entityActionButton chunkPopup entityPopup (title, clickAction) =

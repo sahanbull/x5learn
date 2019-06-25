@@ -33,18 +33,21 @@ withNavigationDrawer model (pageContent, modal) =
             |> if enabled then linkTo [ width fill ] url else el [ semiTransparent, htmlClass "CursorNotAllowed" ]
 
       navButtons =
-        -- [ navButton False "/next_steps" "nav_next_steps" "Next Steps"
-        -- , navButton False "/journeys" "nav_journeys" "Journeys"
-        [ navButton True "/notes" "nav_bookmarks" "Notes"
-        , navButton True "/recent" "nav_recent" "Recent"
-        -- , navButton True "/gains" "nav_gains" "Gains"
-        -- , navButton False "/notes" "nav_notes" "Notes"
-        -- , navButton False "/peers" "nav_peers" "Peers"
-        ]
-        |> column [ width fill, spacing 10 ]
+        if isLabStudy1 model then
+          none
+        else
+          -- [ navButton False "/next_steps" "nav_next_steps" "Next Steps"
+          -- , navButton False "/journeys" "nav_journeys" "Journeys"
+          [ navButton True "/notes" "nav_bookmarks" "Notes"
+          , navButton True "/recent" "nav_recent" "Recent"
+          -- , navButton True "/gains" "nav_gains" "Gains"
+          -- , navButton False "/notes" "nav_notes" "Notes"
+          -- , navButton False "/peers" "nav_peers" "Peers"
+          ]
+          |> column [ width fill, spacing 10 ]
 
       drawer =
-        [ model.searchInputTyping |> viewSearchWidget model fill "Search"
+        [ model.searchInputTyping |> (if isLabStudy1 model then dataSetSelectionWidget model else viewSearchWidget model fill "Search")
         , navButtons
         ]
         |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 14, spacing 30, whiteBackground ]
@@ -58,3 +61,17 @@ withNavigationDrawer model (pageContent, modal) =
         |> row [ width fill, height fill ]
   in
       (page, modal ++ [ drawer ])
+
+
+
+
+dataSetSelectionWidget model searchInputTyping =
+  let
+      submit =
+        TriggerSearch searchInputTyping
+
+      searchField =
+        Input.text [ htmlId "SearchField", width fill, Input.focusedOnLoad, onEnter <| submit ] { onChange = ChangeSearchText, text = searchInputTyping, placeholder = Just ("Dataset" |> text |> Input.placeholder []), label = Input.labelHidden "search" }
+        |> el [ width fill, centerX ]
+  in
+      searchField

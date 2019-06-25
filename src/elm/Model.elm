@@ -593,3 +593,12 @@ averageOf getterFunction records =
 interp : Float -> Float -> Float -> Float
 interp phase a b =
   phase * b + (1-phase) * a
+
+
+isLabStudy1 model =
+  case loggedInUserProfile model of
+    Nothing ->
+      False
+
+    Just {email} ->
+      email |> String.endsWith ".lab"

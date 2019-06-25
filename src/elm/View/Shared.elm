@@ -124,7 +124,7 @@ bodyNoWrap attrs str =
 
 
 subSubheaderWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 18 ] ++ attrs)
+  [ text str ] |> paragraph ([ Font.size 16 ] ++ attrs)
 
 
 subheaderWrap attrs str =

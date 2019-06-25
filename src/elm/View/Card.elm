@@ -252,7 +252,7 @@ viewOerCard model userState recommendedFragments position barId oer =
                 ]
               else
                 [ oer.date |> captionNowrap []
-                , oer.provider |> domainOnly |> captionNowrap [ centerX ]
+                , oer.provider |> domainOnly |> truncateSentence 24 |> captionNowrap [ centerX ]
                 , oer.duration |> captionNowrap [ alignRight ]
                 ]
         in

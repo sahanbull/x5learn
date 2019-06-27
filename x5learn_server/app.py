@@ -33,12 +33,16 @@ app.config['SECURITY_PASSWORD_HASH'] = "plaintext"
 # user registration configs
 app.config['SECURITY_REGISTERABLE'] = True
 app.config['SECURITY_REGISTER_URL'] = '/signup'
-app.config['SECURITY_SEND_REGISTER_EMAIL'] = False
+app.config['SECURITY_SEND_REGISTER_EMAIL'] = True
+app.config['SECURITY_CONFIRMABLE'] = True
 
 # user password configs
 app.config['SECURITY_CHANGEABLE'] = True
 app.config['SECURITY_CHANGE_URL'] = '/password_change'
-app.config['SECURITY_SEND_PASSWORD_CHANGE_EMAIL'] = False
+app.config['SECURITY_EMAIL_SENDER'] = 'x5learnmail@gmail.com'
+app.config['SECURITY_SEND_PASSWORD_CHANGE_EMAIL'] = True
+app.config['SECURITY_RECOVERABLE'] = True
+app.config['SECURITY_RESET_URL'] = '/recover'
 
 # Setup Flask-Security
 user_datastore = SQLAlchemySessionUserDatastore(db_session,
@@ -49,6 +53,15 @@ app.config["SQLALCHEMY_DATABASE_URI"] = DB_ENGINE_URI
 db = SQLAlchemy(app)
 
 security = Security(app, user_datastore)
+
+# Setup Flask-Mail Server
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 465
+app.config['MAIL_USE_SSL'] = True
+app.config['MAIL_USERNAME'] = 'x5learnmail@gmail.com'
+app.config['MAIL_PASSWORD'] = 'sahan123'
+app.config['MAIL_DEFAULT_SENDER'] = 'x5learnmail@gmail.com'
+
 mail.init_app(app)
 
 

@@ -17,7 +17,7 @@ from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET
 from x5learn_server.db.database import get_or_create_session_db
 get_or_create_session_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
-from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition
+from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 
@@ -271,6 +271,18 @@ def api_entity_descriptions():
         entity_definition = EntityDefinition.query.filter_by(entity_id=entity_id).first()
         definitions[entity_id] = entity_definition.extract if entity_definition is not None else ''
     return jsonify(definitions)
+
+
+@app.route("/api/v1/log_event_for_lab_study/", methods=['POST'])
+def log_event_for_lab_study():
+    if current_user.is_authenticated:
+        email = current_user.email
+        if email.endswith('.lab'):
+            j = request.get_json(force=True)
+            event = LabStudyLogEvent(email, j['eventType'], j['params'], j['browserTime'])
+            db_session.add(event)
+            db_session.commit()
+    return 'OK'
 
 
 def save_enrichment(url, data):

@@ -1,9 +1,10 @@
 from x5learn_server.db.database import Base
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy import Boolean, DateTime, Column, Integer, \
+from sqlalchemy import Boolean, DateTime, Column, Integer, BigInteger, \
     Text, String, JSON, Float, ForeignKey, Table
 
+from datetime import datetime
 
 class RolesUsers(Base):
     __tablename__ = 'roles_users'
@@ -96,3 +97,21 @@ class EntityDefinition(Base):
         self.title = title
         self.url = url
         self.extract = extract
+
+
+# This table is only used for the purpose of conducting lab-based evaluations of user experience at UCL.
+class LabStudyLogEvent(Base):
+    __tablename__ = 'lab_study_log_event'
+    id = Column(Integer(), primary_key=True)
+    participant = Column(String(255))
+    event_type = Column(String(40))
+    params = Column(String())
+    browser_time = Column(BigInteger())
+    created_at = Column(DateTime())
+
+    def __init__(self, participant, event_type, params, browser_time):
+        self.participant = participant
+        self.event_type = event_type
+        self.params = params
+        self.browser_time = browser_time
+        self.created_at = datetime.now()

@@ -40,11 +40,14 @@ update msg ({nav, userProfileForm} as model) =
         Browser.Internal url ->
           if List.member (url.path |> String.dropLeft 1) ("login signup logout" |> String.split " ") then
             ( model |> closePopup, Navigation.load (Url.toString url) )
+            |> logEventForLabStudy "LinkClickedInternal" [ url.path ]
           else
             ( model |> closePopup, Navigation.pushUrl model.nav.key (Url.toString url) )
+            |> logEventForLabStudy "LinkClickedInternal" [ url.path ]
 
         Browser.External href ->
           ( model |> closePopup, Navigation.load href )
+          |> logEventForLabStudy "LinkClickedExternal" [ href ]
 
     UrlChanged ({path} as url) ->
       let
@@ -75,6 +78,7 @@ update msg ({nav, userProfileForm} as model) =
             { model | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage } |> closePopup |> resetUserProfileForm
       in
           ( newModel, cmd )
+          |> logEventForLabStudy "UrlChanged" [ path ]
 
     ClockTick time ->
       ( { model | currentTime = time, enrichmentsAnimating = anyBubblogramsAnimating model }, Cmd.none)
@@ -86,12 +90,14 @@ update msg ({nav, userProfileForm} as model) =
 
     ChangeSearchText str ->
       ( { model | searchInputTyping = str } |> closePopup, if String.length str > 1 then requestSearchSuggestions str else Cmd.none)
+      |> logEventForLabStudy "ChangeSearchText" [ str ]
 
     TriggerSearch str ->
       if str=="" then
         ( model, setBrowserFocus "SearchField")
       else
         ( { model | searchInputTyping = str, searchState = Just <| newSearch str, searchSuggestions = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers str)
+        |> logEventForLabStudy "TriggerSearch" [ str ]
 
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, Cmd.none )
@@ -107,9 +113,11 @@ update msg ({nav, userProfileForm} as model) =
       in
           ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> (updateUserState <| addFragmentAccess (Fragment oer.url fragmentStart fragmentLength) model.currentTime), openModalAnimation inspectorParams)
       |> saveUserState msg
+      |> logEventForLabStudy "InspectOer" [ oer.url ]
 
     UninspectSearchResult ->
       ( { model | inspectorState = Nothing}, Cmd.none)
+      |> logEventForLabStudy "UninspectSearchResult" []
 
     ModalAnimationStart animation ->
       ( { model | modalAnimation = Just animation }, Cmd.none )
@@ -119,6 +127,7 @@ update msg ({nav, userProfileForm} as model) =
 
     RequestSession (Ok session) ->
       ( { model | session = Just session } |> resetUserProfileForm, requestOersAsNeeded session.userState model)
+      |> logEventForLabStudy "RequestSession" []
 
     RequestSession (Err err) ->
       -- let
@@ -130,6 +139,7 @@ update msg ({nav, userProfileForm} as model) =
     RequestOerSearch (Ok oers) ->
       ( model |> updateSearch (insertSearchResults (oers |> List.map .url)) |> cacheOersFromList oers, [ Navigation.pushUrl nav.key "/search", setBrowserFocus "SearchField" ] |> Cmd.batch )
       |> requestWikichunkEnrichmentsIfNeeded
+      |> logEventForLabStudy "RequestOerSearch" (oers |> List.map .url)
 
     RequestOerSearch (Err err) ->
       -- let
@@ -226,29 +236,51 @@ update msg ({nav, userProfileForm} as model) =
       -- in
       ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
 
+    RequestLabStudyLogEvent (Ok _) ->
+      (model, Cmd.none)
+
+    RequestLabStudyLogEvent (Err err) ->
+      let
+          dummy =
+            err |> Debug.log "Error in RequestLabStudyLogEvent"
+      in
+      -- ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
+      (model, Cmd.none)
+
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
+      |> logEventForLabStudy "SetHover" [ maybeUrl |> Maybe.withDefault "" ]
 
     SetPopup popup ->
-      ( { model | popup = Just popup }, Cmd.none)
+      let
+          newModel =
+            { model | popup = Just popup }
+      in
+          (newModel, Cmd.none)
+          |> logEventForLabStudy "SetPopup" (popupToStrings newModel.popup)
 
     ClosePopup ->
       ( model |> closePopup, Cmd.none )
+      |> logEventForLabStudy "ClosePopup" []
 
     CloseInspector ->
       ( { model | inspectorState = Nothing }, Cmd.none )
+      |> logEventForLabStudy "CloseInspector" []
 
     ClickedOnDocument ->
       ( { model | searchSuggestions = [] }, Cmd.none )
 
     SelectSuggestion suggestion ->
       ( { model | selectedSuggestion = suggestion }, Cmd.none )
+      |> logEventForLabStudy "SelectSuggestion" [ suggestion ]
 
     MouseOverChunkTrigger mousePositionX ->
       ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX }, Cmd.none )
+      |> logEventForLabStudy "MouseOverChunkTrigger" [ mousePositionX |> String.fromFloat ]
 
     YoutubeSeekTo fragmentStart ->
       ( model, youtubeSeekTo fragmentStart)
+      |> logEventForLabStudy "YoutubeSeekTo" [ fragmentStart |> String.fromFloat ]
 
     EditUserProfile field value ->
       let
@@ -256,20 +288,19 @@ update msg ({nav, userProfileForm} as model) =
             { userProfileForm | userProfile = userProfileForm.userProfile |> updateUserProfileField field value, saved = False }
       in
           ( { model | userProfileForm = newForm }, Cmd.none )
+          |> logEventForLabStudy "EditUserProfile" []
 
     SubmittedUserProfile ->
       ( { model | userProfileFormSubmitted = Just userProfileForm }, requestSaveUserProfile model.userProfileForm.userProfile)
+      |> logEventForLabStudy "SubmittedUserProfile" []
 
     ChangedTextInNewNoteFormInOerNoteboard oerUrl str ->
       ( model |> setTextInNoteForm oerUrl str, Cmd.none)
 
     SubmittedNewNoteInOerNoteboard oerUrl ->
-      -- let
-      --     dummy =
-      --       oerUrl |> log "SubmittedNewNoteInOerNoteboard"
-      -- in
       (model |> updateUserState (addNoteToOer oerUrl (getOerNoteForm model oerUrl) model) |> setTextInNoteForm oerUrl "", Cmd.none)
       |> saveUserState msg
+      |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ oerUrl, getOerNoteForm model oerUrl ]
 
     PressedKeyInNewNoteFormInOerNoteboard oerUrl keyCode ->
       if keyCode==13 then
@@ -280,27 +311,42 @@ update msg ({nav, userProfileForm} as model) =
     ClickedQuickNoteButton oerUrl text ->
       (model |> updateUserState (addNoteToOer oerUrl text model) |> setTextInNoteForm oerUrl "" , Cmd.none)
       |> saveUserState msg
+      |> logEventForLabStudy "ClickedQuickNoteButtond" [ oerUrl, text ]
 
     RemoveNote time ->
       (model |> updateUserState (removeNoteAtTime time), Cmd.none)
       |> saveUserState msg
+      |> logEventForLabStudy "RemoveNote" [ time |> posixToMillis |> String.fromInt ]
 
     VideoIsPlayingAtPosition position ->
       (model |> updateUserState (expandCurrentFragmentOrCreateNewOne position model.inspectorState), Cmd.none)
       |> saveUserState msg
+      |> logEventForLabStudy "VideoIsPlayingAtPosition" [ position |> String.fromFloat]
 
     SubmitPostRegistrationForm keepData ->
       (model |> updateUserState completeRegistration, Cmd.none)
       |> saveUserState msg
 
     BubbleMouseOver entityId ->
-      ({model | hoveringBubbleEntityId = Just entityId }, Cmd.none)
+      let
+          oerUrl =
+            model.hoveringOerUrl
+            |> Maybe.withDefault ""
+      in
+          ({model | hoveringBubbleEntityId = Just entityId }, Cmd.none)
+          |> logEventForLabStudy "BubbleMouseOver" [ oerUrl, entityId ]
 
     BubbleMouseOut ->
       ({model | hoveringBubbleEntityId = Nothing } |> closePopup, Cmd.none)
+      |> logEventForLabStudy "BubbleMouseOut" []
 
     BubbleClicked oerUrl ->
-      ({model | popup = model.popup |> updateBubblePopupOnClick model oerUrl }, Cmd.none)
+      let
+          newModel =
+            {model | popup = model.popup |> updateBubblePopupOnClick model oerUrl }
+      in
+          (newModel, Cmd.none)
+          |> logEventForLabStudy "BubbleClicked" (popupToStrings newModel.popup)
 
 
 updateUserState : (UserState -> UserState) -> Model -> Model
@@ -551,3 +597,50 @@ updateBubblogramsIfNeeded model =
     model
   else
     { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.map (addBubblogram model) }
+
+
+logEventForLabStudy eventType params (model, cmd) =
+  if isLabStudy1 model then
+    let
+        time =
+          model.currentTime |> posixToMillis
+    in
+        (model, [ cmd, requestLabStudyLogEvent time eventType params ] |> Cmd.batch)
+  else
+    (model, cmd)
+
+
+popupToStrings : Maybe Popup -> List String
+popupToStrings maybePopup =
+  case maybePopup of
+    Nothing ->
+      []
+
+    Just popup ->
+      case popup of
+        ChunkOnBar {barId, oer, chunk, entityPopup} ->
+          let
+              entityIdStr =
+                case entityPopup of
+                  Nothing ->
+                    ""
+
+                  Just {entityId} ->
+                    entityId
+          in
+              [ "ChunkOnBar", barId, oer.url, chunk.entities |> List.map .id |> String.join ",", entityIdStr ]
+
+        UserMenu ->
+          [ "UserMenu" ]
+
+        BubblePopup {oerUrl, entityId, content} ->
+          let
+              contentString =
+                case content of
+                  DefinitionInBubblePopup ->
+                    "Definition"
+
+                  MentionInBubblePopup {positionInResource, sentence} ->
+                    "Mention " ++ (positionInResource |> String.fromFloat) ++ " " ++ sentence
+          in
+              [ oerUrl, entityId, contentString ]

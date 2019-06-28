@@ -123,8 +123,7 @@ bubbleFromEntity model occurrencesOfAllEntities rankedEntities entity =
         if isSearchTerm then
           (0.145, 0.9, 0.8)
         else
-          -- (0.536, 0, 0.6)
-          (0.536, 0, 0.01 + 0.3 * finalSize)
+          (0.536, 0, 0.05 + 0.3 * finalSize)
 
       initialCoordinates =
         { posX = initialPosX

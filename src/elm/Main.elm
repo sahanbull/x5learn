@@ -102,7 +102,7 @@ view model =
 
       page =
         body
-        |> el [ width fill, spacing 50, pageBodyBackground, height (fill |> maximum (model.windowHeight - pageHeaderHeight)), scrollbarY ]
+        |> el [ width fill, spacing 50, pageBodyBackground model, height (fill |> maximum (model.windowHeight - pageHeaderHeight)), scrollbarY ]
         |> layout (modal ++ [ header, paddingTop pageHeaderHeight, width fill ])
   in
       { title = "X5Learn"

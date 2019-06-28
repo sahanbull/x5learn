@@ -10,13 +10,13 @@ import Model exposing (..)
 
 
 addBubblogram : Model -> OerUrl -> WikichunkEnrichment -> WikichunkEnrichment
-addBubblogram model oerUrl enrichment =
-  if enrichment.errors || enrichment.bubblogram /= Nothing then
+addBubblogram model oerUrl ({chunks, bubblogram, errors} as enrichment) =
+  if errors || bubblogram /= Nothing then
     enrichment
   else
     let
         occurrences =
-          enrichment.chunks
+          chunks
           |> occurrencesFromChunks
 
         rankedEntities =
@@ -26,6 +26,9 @@ addBubblogram model oerUrl enrichment =
           |> List.sortBy (entityRelevance occurrences)
           |> List.reverse
           |> List.take 5
+
+        proximityMatrix =
+          proximityMatrixFromEntities rankedEntities chunks occurrences
 
         bubbles =
           rankedEntities
@@ -85,10 +88,10 @@ occurrenceFromEntity approximatePositionInText nEntitiesMinus1 entityIndex entit
 
 
 bubbleFromEntity : Model -> List Occurrence -> List Entity -> Entity -> Bubble
-bubbleFromEntity model occurrencesOfAllEntities rankedEntities entity =
+bubbleFromEntity model occurrences rankedEntities entity =
   let
       occurrencesOfThisEntity =
-        occurrencesOfAllEntities
+        occurrences
         |> List.filter (\o -> o.entity.id == entity.id)
 
       initialPosX =
@@ -201,3 +204,63 @@ layoutBubbles bubbles =
       |> List.reverse
       |> List.indexedMap setPosX
       |> List.indexedMap setPosY
+
+
+proximityMatrixFromEntities : List Entity -> List Chunk -> List Occurrence -> Dict (String, String) Float
+proximityMatrixFromEntities entities chunks occurrences =
+  let
+      countOccurrencesOfEntity id =
+        occurrences
+        |> List.filter (\{entity} -> entity.id == id)
+        |> List.length
+        |> toFloat
+
+      occurrenceCounts =
+        entities
+        |> List.map (\{id} -> (id, countOccurrencesOfEntity id))
+        |> Dict.fromList
+        |> Debug.log "occurrenceCounts"
+
+      entityNamesForDebugging =
+        entities
+        |> List.map .title
+        |> Debug.log "entityTitles"
+
+      entityIds =
+        entities
+        |> List.map .id
+        |> Debug.log "entityIds"
+
+      cooccurrenceCountBetween : String -> String -> Int
+      cooccurrenceCountBetween entityId otherEntityId =
+        chunks
+        |> List.foldl (\chunk sum -> sum + (if listContainsBoth entityId otherEntityId (chunk.entities |> List.map .id) then 1 else 0)) 0
+
+      proximityBetween : String -> Float -> String -> Float
+      proximityBetween otherEntityId otherOccurrenceCount entityId =
+        let
+            occurrenceCount =
+              Dict.get entityId occurrenceCounts |> Maybe.withDefault 1
+        in
+            (cooccurrenceCountBetween entityId otherEntityId |> toFloat) / (max occurrenceCount otherOccurrenceCount)
+
+      proximitiesPerEntity : String -> List Float
+      proximitiesPerEntity entityId =
+        let
+            occurrenceCount =
+              Dict.get entityId occurrenceCounts |> Maybe.withDefault 1
+        in
+            entityIds
+            |> List.map (proximityBetween entityId occurrenceCount)
+            -- |> Debug.log "proximitiesPerEntity"
+
+      proximities =
+        entityIds
+        |> List.map proximitiesPerEntity
+        |> Debug.log "proximities"
+  in
+      Dict.empty
+
+
+listContainsBoth a b list =
+  List.member a list && List.member b list

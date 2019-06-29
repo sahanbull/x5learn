@@ -602,3 +602,7 @@ isLabStudy1 model =
 
     Just {email} ->
       email |> String.endsWith ".lab"
+
+
+listContainsBoth a b list =
+  List.member a list && List.member b list

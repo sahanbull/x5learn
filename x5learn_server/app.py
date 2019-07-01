@@ -11,13 +11,15 @@ from random import randint
 import urllib
 from datetime import datetime, timedelta
 from sqlalchemy import or_, and_
+from flask_restplus import Api, Resource, fields, reqparse
+
 
 # instantiate the user management db classes
-from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET
+from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, LATEST_API_VERSION
 from x5learn_server.db.database import get_or_create_session_db
 get_or_create_session_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
-from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition
+from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, Note
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 
@@ -454,6 +456,159 @@ def find_oer_by_url(url):
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     db_session.remove()
+
+# Defining api for X5Learn to access various resources
+api = Api(app, title='X5Learn API', version=LATEST_API_VERSION, doc='/apidoc/',
+          description='An API to access resources related to X5Learn web application')
+
+ns_info = api.namespace('api/latest/info', description='Information relating to the API')
+
+
+@ns_info.route('/')
+class APIInfo(Resource):
+    def get(self):
+        return {'version': LATEST_API_VERSION,
+                'currency': 'latest',
+                'status': 'under development'}
+
+# Defining notes resource for API access
+ns_notes = api.namespace('api/v1/note', description='Notes')
+
+m_note = api.model('Note', {
+    'oer_id': fields.String(required=True, max_length=255, description='The material id of the note associated with'),
+    'text': fields.String(required=True, description='The content of the note')
+})
+
+
+@ns_notes.route('/')
+class NotesList(Resource):
+    '''Shows a list of all notes, and lets you POST to add new notes'''
+    @ns_notes.doc('list_notes', params={'oer_id': 'Filter by material id',
+                                        'sort': 'Sort results (Default: desc)',
+                                        'offset': 'Offset results',
+                                        'limit': 'Limit results'})
+    def get(self):
+        '''Fetches multiple notes from database based on params'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+        else:
+            # Declaring and processing params available for request
+            parser = reqparse.RequestParser()
+            parser.add_argument('oer_id', type=int)
+            parser.add_argument('sort', default='desc', choices=('asc', 'desc'), help='Bad choice')
+            parser.add_argument('offset', type=int)
+            parser.add_argument('limit', type=int)
+            args = parser.parse_args()
+
+            # Building and executing query object
+            query_object = db_session.query(Note)
+
+            if (args['oer_id']):
+                query_object = query_object.filter(Note.oer_id == args['oer_id'])
+
+            query_object = query_object.filter(Note.user_login_id == current_user.get_id())
+            query_object = query_object.filter(Note.is_deactivated == False)
+
+            if (args['sort'] == 'desc'):
+                query_object = query_object.order_by(Note.created_at.desc())
+            else:
+                query_object = query_object.order_by(Note.created_at.asc())
+
+            if (args['offset']):
+                query_object = query_object.offset(args['offset'])
+
+            if (args['limit']):
+                query_object = query_object.limit(args['limit'])
+
+            result_list = query_object.all()
+
+            # Converting result list to JSON friendly format
+            serializable_list = list()
+            if (result_list):
+                serializable_list = [i.serialize for i in result_list]
+
+            return serializable_list
+
+    @ns_notes.doc('create_note')
+    @ns_notes.expect(m_note, validate=True)
+    def post(self):
+        '''Creates a new note in database'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+        elif not api.payload['text'] or not api.payload['oer_id']:
+            return {'result': 'Material id and text params cannot be empty'}, 400
+        else:
+            note = Note(api.payload['oer_id'], api.payload['text'], current_user.get_id(), False)
+            db_session.add(note)
+            db_session.commit()
+            return {'result': 'Note added'}, 201
+
+
+@ns_notes.route('/<int:id>')
+@ns_notes.response(404, 'Note not found')
+@ns_notes.param('id', 'The note identifier')
+class Notes(Resource):
+    '''Show a single note item and lets you update or delete them'''
+    @ns_notes.doc('get_note')
+    def get(self, id):
+        '''Fetch requested note from database'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        query_object = db_session.query(Note)
+        query_object = query_object.filter(Note.id == id)
+        query_object = query_object.filter(Note.user_login_id == current_user.get_id())
+        query_object = query_object.filter(Note.is_deactivated == False)
+        note = query_object.one_or_none()
+
+        if not note:
+            return {}, 400
+
+        return note.serialize, 200
+
+    @ns_notes.doc('update_note', params={'text': 'Text to update'})
+    def put(self, id):
+        '''Update selected note'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        # Declaring and processing params available for request
+        parser = reqparse.RequestParser()
+        parser.add_argument('text', required=True)
+        args = parser.parse_args()
+
+        query_object = db_session.query(Note)
+        query_object = query_object.filter(Note.id == id)
+        query_object = query_object.filter(Note.user_login_id == current_user.get_id())
+        query_object = query_object.filter(Note.is_deactivated == False)
+        note = query_object.one_or_none()
+        
+        if not note:
+            return {}, 400
+
+        setattr(note, 'text', args['text'])
+        db_session.commit()
+        return {'result': 'Note updated'}, 201
+
+
+    @ns_notes.doc('delete_note')
+    def delete(self, id):
+        '''Delete selected note'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        query_object = db_session.query(Note)
+        query_object = query_object.filter(Note.id == id)
+        query_object = query_object.filter(Note.user_login_id == current_user.get_id())
+        query_object = query_object.filter(Note.is_deactivated == False)
+        note = query_object.one_or_none()
+        
+        if not note:
+            return {}, 400
+
+        setattr(note, 'is_deactivated', True)
+        db_session.commit()
+        return {'result': 'Note deleted'}, 201
 
 
 if __name__ == '__main__':

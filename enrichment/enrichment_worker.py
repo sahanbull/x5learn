@@ -53,6 +53,7 @@ def make_enrichment_data(oer_data):
     except EnrichmentError as err:
         error = err.message
         data['errors'] = True
+        print('EnrichmentError', err.message)
     return data, error
 
 

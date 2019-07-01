@@ -78,7 +78,7 @@ def extract_top_titles(chunks, mentions):
     for chunk in chunks:
         for entity in chunk['entities']:
             title = entity['title']
-            if len(title)>2: # Exclude topics that are too short, such as one-letter variable names
+            if len(title)>2 and entity['id'] in mentions: # Exclude topics that are too short, such as one-letter variable names
                 occurrences[title] += 1
     top_titles = [ x[0] for x in sorted(occurrences.items(), key=lambda k_v: k_v[1], reverse=True)[:5] ]
     print('top_titles:', top_titles)
@@ -100,6 +100,7 @@ def extract_mentions(chunks):
         title = title.strip()
         for chunk in chunks:
             text = chunk['text']
+            text = re.sub(r'\s+', ' ', text)
             positions = [ m.start() for m in re.finditer(re.escape(title), text.lower()) ]
             for position in positions:
                 position += int(len(title)/2) # Focus on the middle of the title to account for variations in surrounding blanks

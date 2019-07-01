@@ -606,3 +606,7 @@ isLabStudy1 model =
 
 listContainsBoth a b list =
   List.member a list && List.member b list
+
+
+bubbleZoom =
+  0.042

@@ -140,10 +140,6 @@ colorFromBubble {hue, alpha, saturation} =
   Color.hsla hue saturation 0.5 alpha
 
 
-bubbleZoom =
-  0.042
-
-
 hoveringBubbleOrFragmentsBarEntityId model =
   case model.hoveringBubbleEntityId of
     Just entityId ->

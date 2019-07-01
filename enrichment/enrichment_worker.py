@@ -45,7 +45,7 @@ def say(text):
 
 
 def make_enrichment_data(oer_data):
-    data = { 'chunks': [], 'mentions': [], 'errors': False }
+    data = { 'chunks': [], 'mentions': {}, 'errors': False }
     error = None
     try:
         data['chunks'] = make_wikichunks(oer_data)

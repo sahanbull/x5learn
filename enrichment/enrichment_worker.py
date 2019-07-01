@@ -1,6 +1,7 @@
 import os, requests, re, json
 
 from time import sleep
+from collections import defaultdict
 
 from langdetect import detect_langs
 
@@ -16,9 +17,8 @@ API_ROOT = os.environ["FLASK_API_ROOT"]
 def main():
     say('hello')
     while(True):
-        payload = {}
         try:
-            r = requests.post(API_ROOT+"most_urgent_unstarted_enrichment_task/", data=payload)
+            r = requests.post(API_ROOT+"most_urgent_unstarted_enrichment_task/", data={})
             j = json.loads(r.text)
             if 'data' in j:
                 oer_data = j['data']
@@ -50,6 +50,7 @@ def make_enrichment_data(oer_data):
     try:
         data['chunks'] = make_wikichunks(oer_data)
         data['mentions'] = extract_mentions(data['chunks'])
+        data['top_titles'] = extract_top_titles(data['chunks'], data['mentions'])
     except EnrichmentError as err:
         error = err.message
         data['errors'] = True
@@ -69,6 +70,17 @@ def make_wikichunks(oer_data):
     if 'youtu' in url and '/watch?v=' in url:
         return extract_chunks_from_youtube_video(url, oer_data)
     raise EnrichmentError('Unsupported file format')
+
+
+def extract_top_titles(chunks, mentions):
+    print('\n_____________________________ Top titles')
+    occurrences = defaultdict(int)
+    for chunk in chunks:
+        for entity in chunk['entities']:
+            occurrences[entity['title']] += 1
+    top_titles = [ x[0] for x in sorted(occurrences.items(), key=lambda k_v: k_v[1], reverse=True)[:5] ]
+    print('top_titles:', top_titles)
+    return top_titles
 
 
 def extract_mentions(chunks):

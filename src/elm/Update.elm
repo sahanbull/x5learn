@@ -186,7 +186,7 @@ update msg ({nav, userProfileForm} as model) =
           dummy =
             err |> Debug.log "Error in RequestWikichunkEnrichments"
       in
-      ( { model | userMessage = Just "There was a problem while fetching wikichunk enrichments", requestingWikichunkEnrichments = False }, Cmd.none )
+      ( { model | userMessage = Just "There was a problem. Please reload the page.", requestingWikichunkEnrichments = False }, Cmd.none )
 
     RequestEntityDefinitions (Ok definitionTexts) ->
       let

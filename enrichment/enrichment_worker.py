@@ -77,7 +77,9 @@ def extract_top_titles(chunks, mentions):
     occurrences = defaultdict(int)
     for chunk in chunks:
         for entity in chunk['entities']:
-            occurrences[entity['title']] += 1
+            title = entity['title']
+            if len(title)>2: # Exclude topics that are too short, such as one-letter variable names
+                occurrences[title] += 1
     top_titles = [ x[0] for x in sorted(occurrences.items(), key=lambda k_v: k_v[1], reverse=True)[:5] ]
     print('top_titles:', top_titles)
     return top_titles

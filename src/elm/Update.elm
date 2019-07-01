@@ -182,10 +182,10 @@ update msg ({nav, userProfileForm} as model) =
           ( { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.union enrichments, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, wikichunkEnrichmentRequestFailCount = failCount, wikichunkEnrichmentRetryTime = retryTime } |> registerUndefinedEntities (Dict.values enrichments), Cmd.none )
 
     RequestWikichunkEnrichments (Err err) ->
-      let
-          dummy =
-            err |> Debug.log "Error in RequestWikichunkEnrichments"
-      in
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestWikichunkEnrichments"
+      -- in
       ( { model | userMessage = Just "There was a problem. Please reload the page.", requestingWikichunkEnrichments = False }, Cmd.none )
 
     RequestEntityDefinitions (Ok definitionTexts) ->
@@ -240,10 +240,10 @@ update msg ({nav, userProfileForm} as model) =
       (model, Cmd.none)
 
     RequestLabStudyLogEvent (Err err) ->
-      let
-          dummy =
-            err |> Debug.log "Error in RequestLabStudyLogEvent"
-      in
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestLabStudyLogEvent"
+      -- in
       -- ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
       (model, Cmd.none)
 

@@ -110,13 +110,16 @@ inspectorContentDefault model userState {oer, fragmentStart} =
           title ->
             title |> headlineWrap []
 
+      linkToFile =
+        newTabLink [] { url = oer.url, label = oer.url |> bodyWrap [] }
+
       player =
         case getYoutubeVideoId oer.url of
           Nothing ->
             if isVideoFile oer.url then
               viewHtml5VideoPlayer model oer.url
             else
-              newTabLink [] { url = oer.url, label = oer.url |> bodyWrap [] }
+              none
 
           Just youtubeId ->
             let
@@ -153,7 +156,7 @@ inspectorContentDefault model userState {oer, fragmentStart} =
 
       fragmentsBarWrapper =
         [ description
-        , providerLink
+        , [ providerLink, linkToFile ] |> column [ width fill, spacing 15, paddingTop 30 ]
         , fragmentsBar
         ]
         |> column [ width (px playerWidth), height <| px fragmentsBarWrapperHeight ]
@@ -183,7 +186,7 @@ inspectorContentDefault model userState {oer, fragmentStart} =
             [ "Provider:" |> bodyNoWrap []
             , newTabLink [] { url = oer.url, label = provider |> bodyNoWrap [] }
             ]
-            |> row [ spacing 10, paddingTop 30 ]
+            |> row [ spacing 10 ]
         -- else
         --   actionButtonWithIcon IconRight "navigate_next" oer.provider (Just <| ShowProviderLinkInInspector)
         -- [ oer.provider |> bodyNoWrap [ alignLeft]

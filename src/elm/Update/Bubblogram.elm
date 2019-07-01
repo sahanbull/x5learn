@@ -9,14 +9,23 @@ import List.Extra
 import Model exposing (..)
 
 
+type alias EntityId = String
+
+type alias Cluster = List EntityId
+
+type alias Proximity = ((EntityId, EntityId), Float)
+
+type alias PositionedCluster = { posX : Float, cluster : Cluster }
+
+
 addBubblogram : Model -> OerUrl -> WikichunkEnrichment -> WikichunkEnrichment
-addBubblogram model oerUrl enrichment =
-  if enrichment.errors || enrichment.bubblogram /= Nothing then
+addBubblogram model oerUrl ({chunks, bubblogram, errors} as enrichment) =
+  if errors || bubblogram /= Nothing then
     enrichment
   else
     let
         occurrences =
-          enrichment.chunks
+          chunks
           |> occurrencesFromChunks
 
         rankedEntities =
@@ -27,10 +36,13 @@ addBubblogram model oerUrl enrichment =
           |> List.reverse
           |> List.take 5
 
+        clusters =
+          clustersFromEntities (rankedEntities |> List.map .id) occurrences chunks
+
         bubbles =
           rankedEntities
           |> List.map (bubbleFromEntity model occurrences rankedEntities)
-          |> layoutBubbles
+          |> layoutBubbles clusters
     in
         { enrichment | bubblogram = Just { createdAt = model.currentTime, bubbles = bubbles } }
 
@@ -85,10 +97,10 @@ occurrenceFromEntity approximatePositionInText nEntitiesMinus1 entityIndex entit
 
 
 bubbleFromEntity : Model -> List Occurrence -> List Entity -> Entity -> Bubble
-bubbleFromEntity model occurrencesOfAllEntities rankedEntities entity =
+bubbleFromEntity model occurrences rankedEntities entity =
   let
       occurrencesOfThisEntity =
-        occurrencesOfAllEntities
+        occurrences
         |> List.filter (\o -> o.entity.id == entity.id)
 
       initialPosX =
@@ -146,58 +158,303 @@ bubbleFromEntity model occurrencesOfAllEntities rankedEntities entity =
       }
 
 
--- fakeLexicalSimilarityToSearchTerm : String -> Float
--- fakeLexicalSimilarityToSearchTerm id =
---   if (String.length id) == 7 then 0.5 else 0
-
-
--- fakePredictedLevelOfKnowledgeFromEntity : String -> Float
--- fakePredictedLevelOfKnowledgeFromEntity id =
---   ((String.length id |> modBy 3) + 1 |> toFloat) / 3
-
-
--- fakePredictedLevelOfInterestFromEntity : String -> Float
--- fakePredictedLevelOfInterestFromEntity id =
---   (String.length id |> modBy 4 |> toFloat) / 3
-
-
--- fakedLevelOfTheSystemsConfidenceInHue : String -> Float
--- fakedLevelOfTheSystemsConfidenceInHue id =
---   (String.length id |> modBy 5 |> toFloat) / 5 * 100
-
-
-layoutBubbles : List Bubble -> List Bubble
-layoutBubbles bubbles =
+layoutBubbles : List Cluster -> List Bubble -> List Bubble
+layoutBubbles clusters bubbles =
   let
-      medianPosX =
-        case bubbles |> List.sortBy (\{initialCoordinates} -> initialCoordinates.posX) |> List.drop ((List.length bubbles)//2) |> List.head of
-          Nothing -> -- shouldn't happen
-            0.5
-
-          Just bubble ->
-            bubble.finalCoordinates.posX
-
       nBubblesMinus1max1 =
         (List.length bubbles) - 1 |> max 1 |> toFloat
 
-      setPosY index ({finalCoordinates} as bubble) =
-        { bubble | finalCoordinates = { finalCoordinates | posY = (toFloat index) / nBubblesMinus1max1 * 0.85 + 0.05 } }
-
-      setPosX index ({entity, finalCoordinates} as bubble) =
+      setPosY ({finalCoordinates} as bubble) =
         let
-            approximateLabelWidth =
-              (toFloat <| String.length entity.title) * 0.02
-
-            posX =
-              if finalCoordinates.posX < medianPosX then
-                0.03 * finalCoordinates.size + (if index==1 || index==((List.length bubbles) - 1) then 0.06 else 0)
-              else
-                0.95 - approximateLabelWidth - 0.03 * finalCoordinates.size
+            index =
+              indexOf bubble.entity.id (clusters |> List.concat)
         in
-            { bubble | finalCoordinates = { finalCoordinates | posX = posX } }
+            { bubble | finalCoordinates = { finalCoordinates | posY = (toFloat index) / nBubblesMinus1max1 * 0.85 + 0.05 } }
+
+      setPosXbyCluster ({entity, finalCoordinates} as bubble) =
+        let
+            {cluster, posX} =
+              getPositionedCluster entity.id
+
+            indexInCluster =
+              indexOf bubble.entity.id cluster
+
+            offsetX =
+              let
+                  n =
+                    List.length cluster
+                  amount =
+                    if n<3 then
+                      0.04
+                    else
+                      0.06
+              in
+                  amount * (indexInCluster + n + 1 |> modBy 2 |> toFloat)
+        in
+            { bubble | finalCoordinates = { finalCoordinates | posX = posX + offsetX } }
+
+      getPositionedCluster : EntityId -> PositionedCluster
+      getPositionedCluster entityId =
+        let
+            helper positionedClusters =
+              case positionedClusters of
+                positionedCluster :: rest ->
+                  if positionedCluster.cluster |> List.member entityId then
+                    positionedCluster
+                  else
+                    helper rest
+
+                [] ->
+                  PositionedCluster 0.5 []
+        in
+            helper clustersWithXpositions
+
+      clustersWithXpositions : List PositionedCluster
+      clustersWithXpositions =
+        let
+            getBubbleXposition : EntityId -> Float
+            getBubbleXposition entityId =
+              case bubbles |> List.filter (\{entity} -> entity.id == entityId) |> List.head of
+                Nothing ->
+                  0.5
+
+                Just bubble ->
+                  bubble.finalCoordinates.posX
+
+            meanXPosition : Cluster -> Float
+            meanXPosition entityIds =
+              entityIds
+              |> List.map getBubbleXposition
+              |> mean
+
+            measureBoundariesX {cluster, posX} =
+              let
+                  bubblesInThisCluster =
+                    bubbles
+                    |> List.filter (\{entity} -> List.member entity.id cluster)
+
+                  minX =
+                    posX - sizeOfBiggestBubble
+
+                  maxX =
+                    posX + widthOfWidestLabel
+
+                  sizeOfBiggestBubble : Float
+                  sizeOfBiggestBubble =
+                    bubblesInThisCluster
+                    |> List.map .finalCoordinates
+                    |> List.map .size
+                    |> List.map ((*) bubbleZoom)
+                    |> List.maximum
+                    |> Maybe.withDefault 0.1
+
+                  widthOfWidestLabel =
+                    bubblesInThisCluster
+                    |> List.filter (\{entity} -> List.member entity.id cluster)
+                    |> List.map approximateLabelWidth
+                    |> List.maximum
+                    |> Maybe.withDefault 0.2
+              in
+                  { cluster = cluster, posX = posX, minX = minX, maxX = maxX }
+
+            quantizeXposition index positionedCluster =
+              let
+                  posX =
+                    interp ((toFloat index) / ((clusters |> List.length |> toFloat) - 1)) 0.1 0.8
+              in
+                  { positionedCluster | posX = posX }
+
+            clustersWithPreliminaryXpositionsAndBoundaries =
+              clusters
+              |> List.map (\cluster -> { posX = meanXPosition cluster, cluster = cluster })
+              |> List.sortBy .posX
+              |> List.indexedMap quantizeXposition
+              |> List.map measureBoundariesX
+
+            overallMinX =
+              clustersWithPreliminaryXpositionsAndBoundaries
+              |> List.map .minX
+              |> List.minimum
+              |> Maybe.withDefault 0
+
+            overallMaxX =
+              clustersWithPreliminaryXpositionsAndBoundaries
+              |> List.map .maxX
+              |> List.maximum
+              |> Maybe.withDefault 1
+
+            transformToFitClusterToContainerX {cluster, posX} =
+              { cluster = cluster, posX = posX / (overallMaxX - overallMinX) * 0.85 - overallMinX + 0.05 }
+        in
+            clustersWithPreliminaryXpositionsAndBoundaries
+            |> List.map transformToFitClusterToContainerX
   in
       bubbles
       |> List.sortBy (\{finalCoordinates} -> finalCoordinates.size)
       |> List.reverse
-      |> List.indexedMap setPosX
-      |> List.indexedMap setPosY
+      |> List.map setPosY
+      |> List.map setPosXbyCluster
+
+
+proximitiesByCooccurrence : List EntityId -> List Occurrence -> List Chunk -> Dict (EntityId, EntityId) Float
+proximitiesByCooccurrence entityIds occurrences chunks =
+  let
+      countOccurrencesOfEntity id =
+        occurrences
+        |> List.filter (\{entity} -> entity.id == id)
+        |> List.length
+        |> toFloat
+
+      occurrenceCounts =
+        entityIds
+        |> List.map (\id -> (id, countOccurrencesOfEntity id))
+        |> Dict.fromList
+
+      cooccurrenceCountBetween : EntityId -> EntityId -> Int
+      cooccurrenceCountBetween entityId otherEntityId =
+        chunks
+        |> List.foldl (\chunk sum -> sum + (if listContainsBoth entityId otherEntityId (chunk.entities |> List.map .id) then 1 else 0)) 0
+
+      proximityBetween : EntityId -> Float -> EntityId -> Proximity
+      proximityBetween otherEntityId otherOccurrenceCount entityId =
+        let
+            occurrenceCount =
+              Dict.get entityId occurrenceCounts |> Maybe.withDefault 1
+
+            proximity =
+              (cooccurrenceCountBetween entityId otherEntityId |> toFloat) / (max occurrenceCount otherOccurrenceCount)
+        in
+            ((entityId, otherEntityId), proximity)
+
+      proximitiesPerEntity : Int -> EntityId -> List Proximity
+      proximitiesPerEntity index entityId =
+        let
+            occurrenceCount =
+              Dict.get entityId occurrenceCounts |> Maybe.withDefault 1
+        in
+            entityIds
+            |> List.drop (index+1)
+            |> List.map (proximityBetween entityId occurrenceCount)
+  in
+      entityIds
+      |> List.indexedMap proximitiesPerEntity
+      |> List.concat
+      |> Dict.fromList
+
+
+clustersFromEntities : List EntityId -> List Occurrence -> List Chunk -> List Cluster
+clustersFromEntities entityIds occurrences chunks =
+  let
+      proximities : Dict (EntityId, EntityId) Float
+      proximities =
+        proximitiesByCooccurrence entityIds occurrences chunks
+
+      getProximityBetweenEntityPair : (EntityId, EntityId) -> Float
+      getProximityBetweenEntityPair pair =
+        Dict.get pair proximities
+        |> Maybe.withDefault 0
+
+      nearestClusters : List Cluster -> List Cluster
+      nearestClusters clusters =
+        let
+            proximityOfNearestPairOfEntities : List (EntityId, EntityId) -> Float
+            proximityOfNearestPairOfEntities pairs =
+              pairs
+              |> List.map getProximityBetweenEntityPair
+              |> List.maximum
+              |> Maybe.withDefault 0
+
+            proximityBetweenClusterPair : (Cluster, Cluster) -> Float
+            proximityBetweenClusterPair (a, b) =
+              allPairsBetween a b
+              |> proximityOfNearestPairOfEntities
+        in
+            clusters
+            |> allPairsWithin
+            |> List.sortBy proximityBetweenClusterPair
+            |> List.reverse
+            |> tuplesToLists
+            |> List.take 1
+            |> List.concat
+
+      combineNearestClusters : List Cluster -> List Cluster
+      combineNearestClusters clusters =
+        clusters
+        |> combineClusters (nearestClusters clusters)
+  in
+      entityIds
+      |> List.map clusterFromEntityId
+      |> combineNearestClusters
+      |> combineNearestClusters
+
+
+combineClusters : List Cluster -> List Cluster -> List Cluster
+combineClusters clustersToBeCombined allClusters =
+  let
+      remainingClusters =
+        allClusters
+        |> List.filter (\cluster -> List.member cluster clustersToBeCombined |> not)
+  in
+      (clustersToBeCombined |> List.concat |> List.singleton) ++ remainingClusters
+
+
+clusterFromEntityId : EntityId -> Cluster
+clusterFromEntityId entityId =
+  [ entityId ]
+
+
+allPairsBetween : List a -> List b -> List (a, b)
+allPairsBetween xs ys =
+  let
+      pairsWith x =
+        ys
+        |> List.map (\y -> (x, y))
+  in
+      xs
+      |> List.concatMap pairsWith
+
+
+allPairsWithin : List a -> List (a, a)
+allPairsWithin xs =
+  let
+      pairsWith index otherX =
+        xs
+        |> List.drop (index+1)
+        |> List.map (\x -> (x, otherX))
+  in
+      xs
+      |> List.indexedMap pairsWith
+      |> List.concat
+
+
+tuplesToLists : List (a, a) -> List (List a)
+tuplesToLists tuples =
+  tuples
+  |> List.map (\(x,y) -> [ x, y ])
+
+
+indexOf : a -> List a -> Int
+indexOf element list =
+  let
+      helper index xs =
+        case xs of
+          x::rest ->
+            if x==element then
+              index
+            else
+              helper (index+1) rest
+
+          _ ->
+            -1
+  in
+      helper 0 list
+
+
+mean : List Float -> Float
+mean xs =
+  (List.sum xs) / (List.length xs |> toFloat)
+
+
+approximateLabelWidth : Bubble -> Float
+approximateLabelWidth {entity} =
+  (toFloat <| String.length entity.title) * 0.025

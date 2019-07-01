@@ -79,6 +79,8 @@ def extract_mentions(chunks):
     for entity in entities:
         entity_id = entity['id']
         title = entity['title'].lower()
+        title = remove_stuff_in_parentheses(title) # e.g. look for mentions of "strategy" if the concept is "strategy (game theory)"
+        title = title.strip()
         for chunk in chunks:
             text = chunk['text']
             positions = [ m.start() for m in re.finditer(re.escape(title), text.lower()) ]
@@ -127,6 +129,11 @@ def post_back_wikichunks(url, data, error):
 def looks_like_english(sentence):
     language = detect_langs(sentence)[0]
     return language.lang=='en' and language.prob > 0.9
+
+
+def remove_stuff_in_parentheses(text):
+    return re.sub(r'\([^)]*\)', '', text)
+
 
 
 if __name__ == '__main__':

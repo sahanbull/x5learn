@@ -15,6 +15,7 @@ import Msg exposing (..)
 
 import View.Shared exposing (..)
 import View.Noteboard exposing (..)
+import View.Html5VideoPlayer exposing (..)
 
 import Animation exposing (..)
 
@@ -112,7 +113,10 @@ inspectorContentDefault model userState {oer, fragmentStart} =
       player =
         case getYoutubeVideoId oer.url of
           Nothing ->
-            newTabLink [] { url = oer.url, label = oer.url |> bodyWrap [] }
+            if isVideoFile oer.url then
+              viewHtml5VideoPlayer model oer.url
+            else
+              newTabLink [] { url = oer.url, label = oer.url |> bodyWrap [] }
 
           Just youtubeId ->
             let

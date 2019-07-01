@@ -124,7 +124,7 @@ inspectorContentDefault model userState {oer, fragmentStart} =
       description =
         case oer.description of
           "" ->
-            "No description available" |> italicText
+            "No description available" |> italicText |> el [ paddingTop 30 ]
 
           desc ->
             desc

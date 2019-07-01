@@ -240,10 +240,10 @@ update msg ({nav, userProfileForm} as model) =
       (model, Cmd.none)
 
     RequestLabStudyLogEvent (Err err) ->
-      let
-          dummy =
-            err |> Debug.log "Error in RequestLabStudyLogEvent"
-      in
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestLabStudyLogEvent"
+      -- in
       -- ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
       (model, Cmd.none)
 

@@ -45,7 +45,7 @@ def say(text):
 
 
 def make_enrichment_data(oer_data):
-    data = { 'chunks': [], 'mentions': [], 'errors': False }
+    data = { 'chunks': [], 'mentions': {}, 'errors': False }
     error = None
     try:
         data['chunks'] = make_wikichunks(oer_data)
@@ -54,6 +54,7 @@ def make_enrichment_data(oer_data):
     except EnrichmentError as err:
         error = err.message
         data['errors'] = True
+        print('EnrichmentError', err.message)
     return data, error
 
 
@@ -64,6 +65,8 @@ def make_wikichunks(oer_data):
     print(oer_data['title'])
     if url.lower().endswith('.pdf'):
         return extract_chunks_from_pdf(url)
+    # if url.lower().endswith('.mp4'): TODO
+    #     return extract_chunks_from_video(url)
     if 'youtu' in url and '/watch?v=' in url:
         return extract_chunks_from_youtube_video(url, oer_data)
     raise EnrichmentError('Unsupported file format')
@@ -74,7 +77,9 @@ def extract_top_titles(chunks, mentions):
     occurrences = defaultdict(int)
     for chunk in chunks:
         for entity in chunk['entities']:
-            occurrences[entity['title']] += 1
+            title = entity['title']
+            if len(title)>2 and entity['id'] in mentions: # Exclude topics that are too short, such as one-letter variable names
+                occurrences[title] += 1
     top_titles = [ x[0] for x in sorted(occurrences.items(), key=lambda k_v: k_v[1], reverse=True)[:5] ]
     print('top_titles:', top_titles)
     return top_titles
@@ -95,6 +100,7 @@ def extract_mentions(chunks):
         title = title.strip()
         for chunk in chunks:
             text = chunk['text']
+            text = re.sub(r'\s+', ' ', text)
             positions = [ m.start() for m in re.finditer(re.escape(title), text.lower()) ]
             for position in positions:
                 position += int(len(title)/2) # Focus on the middle of the title to account for variations in surrounding blanks

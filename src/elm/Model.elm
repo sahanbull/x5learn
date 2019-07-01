@@ -610,3 +610,12 @@ listContainsBoth a b list =
 
 bubbleZoom =
   0.042
+
+
+isVideoFile : String -> Bool
+isVideoFile url =
+  let
+      lower =
+        url |> String.toLower
+  in
+     String.endsWith ".mp4" lower || String.endsWith ".webm" lower || String.endsWith ".ogg" lower

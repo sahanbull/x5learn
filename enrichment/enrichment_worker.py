@@ -64,6 +64,8 @@ def make_wikichunks(oer_data):
     print(oer_data['title'])
     if url.lower().endswith('.pdf'):
         return extract_chunks_from_pdf(url)
+    # if url.lower().endswith('.mp4'): TODO
+    #     return extract_chunks_from_video(url)
     if 'youtu' in url and '/watch?v=' in url:
         return extract_chunks_from_youtube_video(url, oer_data)
     raise EnrichmentError('Unsupported file format')

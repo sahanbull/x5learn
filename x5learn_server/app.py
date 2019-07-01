@@ -320,11 +320,12 @@ def search_results_from_x5gon_api(text):
     max_results = 18
     encoded_text = urllib.parse.quote(text)
     conn = http.client.HTTPSConnection("platform.x5gon.org")
-    conn.request('GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=text&text='+encoded_text)
+    conn.request('GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text='+encoded_text)
     response = conn.getresponse().read().decode("utf-8")
     materials = json.loads(response)['rec_materials'][:max_results]
-    materials = [ m for m in materials if m['url'].endswith('.pdf') and '/assignments/' not in m['url'] and '199' not in m['url'] and '200' not in m['url'] ] # crudely filter out materials from MIT OCW that are assignments or date back to the 90s or early 2000s
-    # print('__________________________', [ m['language'] for m in materials])
+    # materials = [ m for m in materials if m['url'].endswith('.pdf') ] # filter by suffix
+    materials = [ m for m in materials if m['url'].endswith('.pdf') or is_video(m['url']) ] # filter by suffix
+    materials = [ m for m in materials if '/assignments/' not in m['url'] and '199' not in m['url'] and '200' not in m['url'] ] # crudely filter out materials from MIT OCW that are assignments or date back to the 90s or early 2000s
     materials = [ m for m in materials if m['language']=='en' ] # Exclude non-english materials because they tend to come out poorly after wikification. X5GON search doesn't have a language parameter at the time of writing.
     materials = remove_duplicates_from_search_results(materials)
     oers = []
@@ -426,6 +427,10 @@ def find_oer_by_url(url):
         oer['url'] = url
         oer['mediatype'] = 'text'
         return oer
+
+
+def is_video(url):
+    return url.endswith('.mp4')
 
 
 # THUMBNAILS FOR X5GON (experimental)

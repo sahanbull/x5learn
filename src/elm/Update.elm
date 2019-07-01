@@ -182,10 +182,10 @@ update msg ({nav, userProfileForm} as model) =
           ( { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.union enrichments, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, wikichunkEnrichmentRequestFailCount = failCount, wikichunkEnrichmentRetryTime = retryTime } |> registerUndefinedEntities (Dict.values enrichments), Cmd.none )
 
     RequestWikichunkEnrichments (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestWikichunkEnrichments"
-      -- in
+      let
+          dummy =
+            err |> Debug.log "Error in RequestWikichunkEnrichments"
+      in
       ( { model | userMessage = Just "There was a problem while fetching wikichunk enrichments", requestingWikichunkEnrichments = False }, Cmd.none )
 
     RequestEntityDefinitions (Ok definitionTexts) ->

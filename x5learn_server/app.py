@@ -189,21 +189,8 @@ def api_save_user_state():
 @app.route("/api/v1/search/", methods=['GET'])
 def api_search():
     text = request.args['text'].lower().strip()
-    # results = search_results_from_experimental_local_oer_data(text) + search_results_from_x5gon_api(text)
     results = get_dataset_for_lab_study_one(text) or search_results_from_x5gon_api(text)
-    # For debugging only:
-    # for r in results:
-    #     enrichment = WikichunkEnrichment.query.filter_by(url=r['url']).first()
-    #     if enrichment is not None:
-    #         d = {'url': enrichment.url}
-    #         d['top_titles'] = enrichment.data['top_titles']
-    #         print(d)
-    #         # db_session.delete(enrichment)
-    #         # db_session.commit()
-    #         # print(r['url'])
-    # # import pdb; pdb.set_trace()
     return jsonify(results)
-
 
 
 @app.route("/api/v1/search_suggestions/", methods=['GET'])

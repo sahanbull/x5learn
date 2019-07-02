@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import or_, and_
 
 # instantiate the user management db classes
-from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET
+from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_USERNAME, MAIL_PASS, MAIL_SERVER, MAIL_PORT
 from x5learn_server.db.database import get_or_create_session_db
 get_or_create_session_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
@@ -39,7 +39,7 @@ app.config['SECURITY_CONFIRMABLE'] = True
 # user password configs
 app.config['SECURITY_CHANGEABLE'] = True
 app.config['SECURITY_CHANGE_URL'] = '/password_change'
-app.config['SECURITY_EMAIL_SENDER'] = 'x5learnmail@gmail.com'
+app.config['SECURITY_EMAIL_SENDER'] = MAIL_USERNAME
 app.config['SECURITY_SEND_PASSWORD_CHANGE_EMAIL'] = True
 app.config['SECURITY_RECOVERABLE'] = True
 app.config['SECURITY_RESET_URL'] = '/recover'
@@ -55,12 +55,12 @@ db = SQLAlchemy(app)
 security = Security(app, user_datastore)
 
 # Setup Flask-Mail Server
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 465
+app.config['MAIL_SERVER'] = MAIL_SERVER
+app.config['MAIL_PORT'] = MAIL_PORT
 app.config['MAIL_USE_SSL'] = True
-app.config['MAIL_USERNAME'] = 'x5learnmail@gmail.com'
-app.config['MAIL_PASSWORD'] = 'sahan123'
-app.config['MAIL_DEFAULT_SENDER'] = 'x5learnmail@gmail.com'
+app.config['MAIL_USERNAME'] = MAIL_USERNAME
+app.config['MAIL_PASSWORD'] = MAIL_PASS
+app.config['MAIL_DEFAULT_SENDER'] = MAIL_USERNAME
 
 mail.init_app(app)
 

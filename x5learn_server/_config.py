@@ -20,3 +20,9 @@ ROLES = [
     {"id": 0, "name": ADMIN_ROLE_NAME, "description": "Super user with administrative privileges"},
     {"id": 1, "name": LEARNER_ROLE_NAME, "description": "Learner with functions to enable learning"}
 ]
+
+# Mail server configuration
+MAIL_USERNAME = os.environ["X5LEARN_MAIL_USERNAME"]
+MAIL_PASS = os.environ["X5LEARN_MAIL_PASS"]
+MAIL_SERVER = os.environ["X5LEARN_MAIL_SERVER"]
+MAIL_PORT = os.environ["X5LEARN_MAIL_PORT"]

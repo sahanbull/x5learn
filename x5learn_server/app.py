@@ -703,7 +703,7 @@ class ActionList(Resource):
             return {'result': 'Action logged'}, 201
 
 # Defining user resource for API access
-ns_user = api.namespace('api/v1/user', description='Actions')
+ns_user = api.namespace('api/v1/user', description='User')
 
 @ns_user.route('/forget')
 class UserApi(Resource):

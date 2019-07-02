@@ -17,6 +17,7 @@ setup(
         'gunicorn>=19.9.0',
         'fuzzywuzzy>=0.17.0',
         'flask_sqlalchemy',
-        'langdetect'
+        'langdetect',
+        'bcrypt'
 ]
 )

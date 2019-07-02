@@ -702,6 +702,28 @@ class ActionList(Resource):
             db_session.commit()
             return {'result': 'Action logged'}, 201
 
+# Defining user resource for API access
+ns_user = api.namespace('api/v1/user', description='Actions')
+
+@ns_user.route('/forget')
+class UserApi(Resource):
+    '''Api to manage user'''
+
+    def delete(self):
+        '''Delete user actions, notes and user'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+        else:
+            id = current_user.get_id()
+            user = db_session.query(UserLogin).get(id)
+            Action.query.filter(Action.user_login_id == id).delete()
+            Note.query.filter(Note.user_login_id == id).delete()
+            User.query.filter(User.id == id).delete()
+            db_session.delete(user)
+            db_session.commit()
+            # Sending confirmation mail
+            return {'result': 'User deleted'}, 200
+
 
 if __name__ == '__main__':
     app.run()

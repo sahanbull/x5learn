@@ -95,6 +95,8 @@ type alias Bubblogram =
 
 type alias OerUrl = String
 
+type alias EntityId = String
+
 type alias EntityTitle = String
 
 type alias Noteboard = List Note
@@ -542,13 +544,6 @@ getMentions model oerUrl entityId =
       enrichment.mentions
       |> Dict.get entityId
       |> Maybe.withDefault []
-
-
-hasMentions : Model -> OerUrl -> String -> Bool
-hasMentions model oerUrl entityId =
-  getMentions model oerUrl entityId
-  |> List.isEmpty
-  |> not
 
 
 mentionInBubblePopup : Model -> Maybe MentionInOer

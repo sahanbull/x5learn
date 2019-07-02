@@ -9,8 +9,6 @@ import List.Extra
 import Model exposing (..)
 
 
-type alias EntityId = String
-
 type alias Cluster = List EntityId
 
 type alias Proximity = ((EntityId, EntityId), Float)
@@ -19,7 +17,7 @@ type alias PositionedCluster = { posX : Float, cluster : Cluster }
 
 
 addBubblogram : Model -> OerUrl -> WikichunkEnrichment -> WikichunkEnrichment
-addBubblogram model oerUrl ({chunks, bubblogram, errors} as enrichment) =
+addBubblogram model oerUrl ({chunks, graph, mentions, bubblogram, errors} as enrichment) =
   if errors || bubblogram /= Nothing then
     enrichment
   else
@@ -31,7 +29,7 @@ addBubblogram model oerUrl ({chunks, bubblogram, errors} as enrichment) =
         rankedEntities =
           occurrences
           |> entitiesFromOccurrences
-          |> List.filter (\entity -> (String.length entity.title)>1 && Dict.member entity.id model.entityDefinitions && hasMentions model oerUrl entity.id)
+          |> List.filter (\entity -> (String.length entity.title)>1 && Dict.member entity.id model.entityDefinitions && (mentions |> Dict.member entity.id))
           |> List.sortBy (entityRelevance occurrences)
           |> List.reverse
           |> List.take 5

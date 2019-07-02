@@ -193,6 +193,7 @@ def api_search():
     return jsonify(results)
 
 
+
 @app.route("/api/v1/search_suggestions/", methods=['GET'])
 def api_search_suggestions():
     text = request.args['text']
@@ -251,6 +252,11 @@ def ingest_wikichunk_enrichment():
     data = j['data']
     url = j['url']
     print('ingest_wikichunk_enrichment', url)
+
+    old_enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
+    if old_enrichment is not None:
+        db_session.delete(old_enrichment)
+
     task = WikichunkEnrichmentTask.query.filter_by(url=url).first()
     if error is not None:
         task.error = error

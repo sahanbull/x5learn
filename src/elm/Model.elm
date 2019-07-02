@@ -95,6 +95,8 @@ type alias Bubblogram =
 
 type alias OerUrl = String
 
+type alias EntityTitle = String
+
 type alias Noteboard = List Note
 
 type alias Note =
@@ -165,6 +167,7 @@ type alias WikichunkEnrichment =
   { bubblogram : Maybe Bubblogram
   , mentions : Dict String (List MentionInOer)
   , chunks : List Chunk
+  , graph : Dict EntityTitle (List EntityTitle)
   , errors : Bool
   }
 

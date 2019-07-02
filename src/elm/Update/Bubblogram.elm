@@ -29,10 +29,7 @@ addBubblogram model oerUrl ({chunks, graph, mentions, bubblogram, errors} as enr
         rankedEntities =
           occurrences
           |> entitiesFromOccurrences
-          |> List.filter (\entity -> (String.length entity.title)>1 && Dict.member entity.id model.entityDefinitions && (mentions |> Dict.member entity.id))
-          |> List.sortBy (entityRelevance occurrences)
-          |> List.reverse
-          |> List.take 5
+          |> List.filter (\entity -> Dict.member entity.title graph && Dict.member entity.id model.entityDefinitions && (mentions |> Dict.member entity.id))
 
         clusters =
           clustersFromEntities (rankedEntities |> List.map .id) occurrences chunks

@@ -19,7 +19,7 @@ from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, LATEST_API_VE
 from x5learn_server.db.database import get_or_create_session_db
 get_or_create_session_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
-from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, Note
+from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, Note, Action, ActionType
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 
@@ -609,6 +609,98 @@ class Notes(Resource):
         setattr(note, 'is_deactivated', True)
         db_session.commit()
         return {'result': 'Note deleted'}, 201
+
+
+# Defining actions resource for API access
+ns_action = api.namespace('api/v1/action', description='Actions')
+
+m_action = api.model('Action', {
+    'action_type_id': fields.Integer(required=True, description='The action type id for the action'),
+    'params': fields.String(required=True, description='A json object with params related to the action')
+})
+
+@ns_action.route('/')
+class ActionList(Resource):
+    '''Shows a list of all actions, and lets you POST to add new actions'''
+    @ns_action.doc('list_actions', params={'action_type_id': 'Filter by action type id',
+                                        'with_oer_id_only': 'Filter actions with material id (Default: false)',
+                                        'sort': 'Sort results (Default: desc)',
+                                        'offset': 'Offset results',
+                                        'limit': 'Limit results'})
+    def get(self):
+        '''Fetches multiple actions from database based on params'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+        else:
+            # Declaring and processing params available for request
+            parser = reqparse.RequestParser()
+            parser.add_argument('action_type_id', type=int)
+            parser.add_argument('sort', default='desc', choices=('asc', 'desc'), help='Bad choice')
+            parser.add_argument('with_oer_id_only', default='false', choices=('true', 'false'), help='Bad choice')
+            parser.add_argument('offset', type=int)
+            parser.add_argument('limit', type=int)
+            args = parser.parse_args()
+
+            # Building and executing query object
+            query_object = db_session.query(Action, ActionType).join(ActionType)
+
+            if (args['action_type_id']):
+                query_object = query_object.filter(Action.action_type_id == args['action_type_id'])
+
+            query_object = query_object.filter(Action.user_login_id == current_user.get_id())
+
+            if (args['sort'] == 'desc'):
+                query_object = query_object.order_by(Action.created_at.desc())
+            else:
+                query_object = query_object.order_by(Action.created_at.asc())
+
+            if (args['offset']):
+                query_object = query_object.offset(args['offset'])
+
+            if (args['limit']):
+                query_object = query_object.limit(args['limit'])
+
+            result_list = query_object.all()
+
+            # Eliminating actions without a material id
+            to_be_removed = list()
+            if args['with_oer_id_only'] == "true":
+                for i in result_list:
+                    if not i.Action.params:
+                        to_be_removed.append(i)
+                    else:
+                        temp_list = json.loads(i.Action.params)
+                        if not 'oer_id' in temp_list:
+                            to_be_removed.append(i)
+
+            if to_be_removed:
+                for i in to_be_removed:
+                    result_list.remove(i)
+            
+            # Converting result list to JSON friendly format
+            serializable_list = list()
+            if (result_list):
+                for i in result_list:
+                    tempObject = i.Action.serialize
+                    tempObject['action_type'] = i.ActionType.description
+                    serializable_list.append(tempObject)
+
+            return serializable_list
+
+
+    @ns_action.doc('log_action')
+    @ns_action.expect(m_action, validate=True)
+    def post(self):
+        '''Log action to database'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+        elif not api.payload['action_type_id']:
+            return {'result': 'Action type id is required'}, 400
+        else:
+            action = Action(api.payload['action_type_id'], api.payload['params'], current_user.get_id())
+            db_session.add(action)
+            db_session.commit()
+            return {'result': 'Action logged'}, 201
 
 
 if __name__ == '__main__':

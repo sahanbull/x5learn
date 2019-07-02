@@ -144,3 +144,47 @@ class Note(Base):
             'user_login_id': self.user_login_id,
             'is_deactivated': self.is_deactivated
         }
+
+
+class ActionType(Base):
+    __tablename__ = 'action_type'
+    __table_args__ = {'extend_existing': True}
+    id = Column(Integer(), primary_key=True)
+    description =  Column(String(255))
+
+    def __init__(self, description):
+        self.description = description
+
+    @property
+    def serialize(self):
+        """Return object data in easily serializable format"""
+        return {
+            'id': self.id,
+            'description': self.description
+        }
+
+
+class Action(Base):
+    __tablename__ = 'action'
+    __table_args__ = {'extend_existing': True}
+    id = Column(Integer(), primary_key=True)
+    action_type_id = Column(Integer, ForeignKey('action_type.id'))
+    params = Column(JSON)
+    created_at = Column(DateTime(), default=datetime.datetime.utcnow)
+    user_login_id = Column(Integer, ForeignKey('user_login.id'))
+
+    def __init__(self, action_type_id, params, user_login_id):
+        self.action_type_id = action_type_id
+        self.params = params
+        self.user_login_id = user_login_id
+
+    @property
+    def serialize(self):
+        """Return object data in easily serializable format"""
+        return {
+            'id': self.id,
+            'action_type_id': self.action_type_id,
+            'params': self.params,
+            'created_at': dump_datetime(self.created_at),
+            'user_login_id': self.user_login_id
+        }

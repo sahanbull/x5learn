@@ -442,7 +442,7 @@ def find_oer_by_url(url):
 
 def is_video(url):
     url = url.lower()
-    return url.endswith('.mp4') || url.endswith('.webm') || url.endswith('.ogg')
+    return url.endswith('.mp4') or url.endswith('.webm') or url.endswith('.ogg')
 
 
 # THUMBNAILS FOR X5GON (experimental)

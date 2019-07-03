@@ -1,6 +1,8 @@
 import Browser
 import Browser.Navigation as Navigation
 import Url
+import Json.Decode
+import Html.Events
 
 import Element exposing (..)
 
@@ -100,9 +102,13 @@ view model =
         viewPageHeader model
         |> inFront
 
+      scrollListener =
+        Html.Events.on "scroll" (Json.Decode.succeed PageScrolled)
+        |> htmlAttribute
+
       page =
         body
-        |> el [ width fill, spacing 50, pageBodyBackground model, height (fill |> maximum (model.windowHeight - pageHeaderHeight)), scrollbarY ]
+        |> el [ width fill, spacing 50, pageBodyBackground model, height (fill |> maximum (model.windowHeight - pageHeaderHeight)), scrollbarY, scrollListener ]
         |> layout (modal ++ [ header, paddingTop pageHeaderHeight, width fill ])
   in
       { title = "X5Learn"

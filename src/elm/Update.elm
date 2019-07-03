@@ -348,6 +348,10 @@ update msg ({nav, userProfileForm} as model) =
           (newModel, Cmd.none)
           |> logEventForLabStudy "BubbleClicked" (popupToStrings newModel.popup)
 
+    PageScrolled ->
+      (model, Cmd.none)
+      |> logEventForLabStudy "PageScrolled" []
+
 
 updateUserState : (UserState -> UserState) -> Model -> Model
 updateUserState fn model =
@@ -605,7 +609,8 @@ logEventForLabStudy eventType params (model, cmd) =
         time =
           model.currentTime |> posixToMillis
     in
-        (model, [ cmd, requestLabStudyLogEvent time eventType params ] |> Cmd.batch)
+        -- (model, [ cmd, requestLabStudyLogEvent time eventType params ] |> Cmd.batch)
+        (model, [ cmd, requestLabStudyLogEvent time (eventType |> Debug.log "eventType") (params |> Debug.log "params") ] |> Cmd.batch)
   else
     (model, cmd)
 

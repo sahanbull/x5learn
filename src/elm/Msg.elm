@@ -57,6 +57,7 @@ type Msg
   | BubbleMouseOver String
   | BubbleMouseOut
   | BubbleClicked OerUrl
+  | PageScrolled
 
 
 type UserProfileField

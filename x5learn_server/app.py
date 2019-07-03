@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, render_template, request, redirect
-from flask_mail import Mail
+from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required
 from flask_security.signals import user_registered
 from flask_sqlalchemy import SQLAlchemy
@@ -729,6 +729,7 @@ class UserApi(Resource):
         else:
             id = current_user.get_id()
             user = db_session.query(UserLogin).get(id)
+
             Action.query.filter(Action.user_login_id == id).delete()
             Note.query.filter(Note.user_login_id == id).delete()
             User.query.filter(User.id == id).delete()
@@ -736,8 +737,14 @@ class UserApi(Resource):
             db_session.commit()
 
             # Sending confirmation mail
-            
-
+            if user.email:
+                try:
+                    msg = Message("x5Learn Account Deleted", sender=MAIL_USERNAME, recipients=[user.email])
+                    msg.body = "Your account and related data has been deleted."
+                    msg.html = render_template('/security/email/base_message.html', user=user, app_name=MAIL_USERNAME, message=msg.body)
+                    mail.send(msg)
+                except Exception:
+                    return {'result': 'Mail server not configured'}, 400
 
             return {'result': 'User deleted'}, 200
 

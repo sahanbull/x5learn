@@ -9,6 +9,7 @@ from wikichunkifiers.pdf import extract_chunks_from_pdf
 from wikichunkifiers.youtube import extract_chunks_from_youtube_video
 from wikichunkifiers.lib.util import EnrichmentError
 
+import wikipedia
 
 API_ROOT = os.environ["FLASK_API_ROOT"]
 # API_ROOT = 'http://127.0.0.1:5000/api/v1/'
@@ -45,12 +46,12 @@ def say(text):
 
 
 def make_enrichment_data(oer_data):
-    data = { 'chunks': [], 'mentions': {}, 'errors': False }
+    data = { 'chunks': [], 'mentions': {}, 'graph': {}, 'errors': False }
     error = None
     try:
         data['chunks'] = make_wikichunks(oer_data)
         data['mentions'] = extract_mentions(data['chunks'])
-        data['top_titles'] = extract_top_titles(data['chunks'], data['mentions'])
+        data['graph'] = extract_concept_graph(data['chunks'], data['mentions'])
     except EnrichmentError as err:
         error = err.message
         data['errors'] = True
@@ -72,21 +73,27 @@ def make_wikichunks(oer_data):
     raise EnrichmentError('Unsupported file format')
 
 
-def extract_top_titles(chunks, mentions):
-    print('\n_____________________________ Top titles')
+def extract_concept_graph(chunks, mentions):
+    print('\n_____________________________ Concept graph')
     occurrences = defaultdict(int)
     for chunk in chunks:
         for entity in chunk['entities']:
             title = entity['title']
-            if len(title)>2 and entity['id'] in mentions: # Exclude topics that are too short, such as one-letter variable names
+            if len(title)>2 and entity['id'] in mentions: # Exclude titles that are too short, such as one-letter variable names
                 occurrences[title] += 1
-    top_titles = [ x[0] for x in sorted(occurrences.items(), key=lambda k_v: k_v[1], reverse=True)[:5] ]
-    print('top_titles:', top_titles)
-    return top_titles
+    titles = [ x[0] for x in sorted(occurrences.items(), key=lambda k_v: k_v[1], reverse=True)[:5] ]
+    print('Titles:', titles)
+    graph = {}
+    for title in titles:
+        links = wikipedia.page(title).links
+        graph[title] = list(set(titles) & set(links)) # Include only the links that are among the titles
+    print('Graph:', graph)
+    return graph
 
 
 def extract_mentions(chunks):
     # print('\n_____________________________ Mentions')
+    print('\nextracting mentions')
     mentions = {}
     entities = []
     for chunk in chunks:

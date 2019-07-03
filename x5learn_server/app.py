@@ -202,19 +202,7 @@ def api_save_user_state():
 @app.route("/api/v1/search/", methods=['GET'])
 def api_search():
     text = request.args['text'].lower().strip()
-    # results = search_results_from_experimental_local_oer_data(text) + search_results_from_x5gon_api(text)
     results = get_dataset_for_lab_study_one(text) or search_results_from_x5gon_api(text)
-    # For debugging only:
-    # for r in results:
-    #     enrichment = WikichunkEnrichment.query.filter_by(url=r['url']).first()
-    #     if enrichment is not None:
-    #         d = {'url': enrichment.url}
-    #         d['top_titles'] = enrichment.data['top_titles']
-    #         print(d)
-    #         # db_session.delete(enrichment)
-    #         # db_session.commit()
-    #         # print(r['url'])
-    # # import pdb; pdb.set_trace()
     return jsonify(results)
 
 
@@ -262,10 +250,10 @@ def most_urgent_unstarted_enrichment_task():
     if task is None:
         return jsonify({'info': 'No tasks available'})
     url = task.url
+    print('Starting task with priority:', task.priority, 'url:', url)
     task.started = datetime.now()
     task.priority = 0
     db_session.commit()
-    print('Started task with priority:', task.priority, 'url:', url)
     oer = Oer.query.filter_by(url=url).first()
     return jsonify({'data': oer.data})
 
@@ -277,6 +265,11 @@ def ingest_wikichunk_enrichment():
     data = j['data']
     url = j['url']
     print('ingest_wikichunk_enrichment', url)
+
+    old_enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
+    if old_enrichment is not None:
+        db_session.delete(old_enrichment)
+
     task = WikichunkEnrichmentTask.query.filter_by(url=url).first()
     if error is not None:
         task.error = error
@@ -364,7 +357,7 @@ def search_results_from_x5gon_api(text):
         oers.append(oer.data)
         enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
         if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION):
-            push_enrichment_task(url, int(1000/(index+1)))
+            push_enrichment_task(url, int(1000/(index+1)) + 1)
     return oers
 
 

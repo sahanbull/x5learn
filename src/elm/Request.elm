@@ -244,10 +244,15 @@ oerDecoder =
 
 
 wikichunkEnrichmentDecoder =
-  map3 (WikichunkEnrichment Nothing)
+  map4 (WikichunkEnrichment Nothing)
     (field "mentions" (dict (list mentionDecoder)))
     (field "chunks" (list chunkDecoder))
+    (field "graph" conceptGraphDecoder)
     (field "errors" bool)
+
+
+conceptGraphDecoder =
+  dict <| list string
 
 
 mentionDecoder =

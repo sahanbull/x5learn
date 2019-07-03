@@ -57,7 +57,7 @@ type Msg
   | BubbleMouseOver String
   | BubbleMouseOut
   | BubbleClicked OerUrl
-  | PageScrolled
+  | PageScrolled ScrollData
 
 
 type UserProfileField
@@ -90,6 +90,7 @@ subscriptions model =
       , Ports.clickedOnDocument (\_ -> ClickedOnDocument)
       , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
       , Ports.videoIsPlayingAtPosition VideoIsPlayingAtPosition
+      , Ports.pageScrolled PageScrolled
       , Time.every 500 ClockTick
       ] ++ (if anyBubblogramsAnimating model || isModalAnimating then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
       |> Sub.batch

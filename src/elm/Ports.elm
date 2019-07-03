@@ -5,6 +5,8 @@ import Json.Decode as Decode
 
 import Animation exposing (..)
 
+import Model exposing (..)
+
 port setBrowserFocus : String -> Cmd msg
 port copyClipboard : String -> Cmd msg
 port openModalAnimation : InspectorParams -> Cmd msg
@@ -18,7 +20,7 @@ port popupTriggerPosition : (Point -> msg) -> Sub msg
 port clickedOnDocument : (Int -> msg) -> Sub msg
 port mouseOverChunkTrigger : (Float -> msg) -> Sub msg
 port videoIsPlayingAtPosition : (Float -> msg) -> Sub msg
--- port  : (Float -> msg) -> Sub msg
+port pageScrolled : (ScrollData -> msg) -> Sub msg
 
 
 type alias InspectorParams =

@@ -1,6 +1,7 @@
 module Update.Bubblogram exposing (addBubblogram)
 
 import Dict exposing (Dict)
+import Set exposing (Set)
 import Time exposing (Posix, millisToPosix, posixToMillis)
 import Json.Decode
 
@@ -18,7 +19,7 @@ type alias PositionedCluster = { posX : Float, cluster : Cluster }
 
 addBubblogram : Model -> OerUrl -> WikichunkEnrichment -> WikichunkEnrichment
 addBubblogram model oerUrl ({chunks, graph, mentions, bubblogram, errors} as enrichment) =
-  if errors || bubblogram /= Nothing then
+  if errors || bubblogram /= Nothing || Dict.isEmpty graph then
     enrichment
   else
     let
@@ -26,17 +27,17 @@ addBubblogram model oerUrl ({chunks, graph, mentions, bubblogram, errors} as enr
           chunks
           |> occurrencesFromChunks
 
-        rankedEntities =
+        entities =
           occurrences
           |> entitiesFromOccurrences
           |> List.filter (\entity -> Dict.member entity.title graph && Dict.member entity.id model.entityDefinitions)
 
         clusters =
-          clustersFromEntities (rankedEntities |> List.map .title) graph
+          clustersFromGraph graph
 
         bubbles =
-          rankedEntities
-          |> List.map (bubbleFromEntity model occurrences rankedEntities)
+          entities
+          |> List.map (bubbleFromEntity model occurrences)
           |> layoutBubbles clusters
     in
         { enrichment | bubblogram = Just { createdAt = model.currentTime, bubbles = bubbles } }
@@ -91,8 +92,8 @@ occurrenceFromEntity approximatePositionInText nEntitiesMinus1 entityIndex entit
       Occurrence entity approximatePositionInText rank
 
 
-bubbleFromEntity : Model -> List Occurrence -> List Entity -> Entity -> Bubble
-bubbleFromEntity model occurrences rankedEntities entity =
+bubbleFromEntity : Model -> List Occurrence -> Entity -> Bubble
+bubbleFromEntity model occurrences entity =
   let
       occurrencesOfThisEntity =
         occurrences
@@ -221,7 +222,7 @@ layoutBubbles clusters bubbles =
             meanXPosition entityTitles =
               entityTitles
               |> List.map getBubbleXposition
-              |> mean
+              |> mean 0.5
 
             measureBoundariesX {cluster, posX} =
               let
@@ -255,14 +256,16 @@ layoutBubbles clusters bubbles =
 
             quantizeXposition index positionedCluster =
               let
+                  n =
+                    (clusters |> List.length |> toFloat) - 1 |> max 1
                   posX =
-                    interp ((toFloat index) / ((clusters |> List.length |> toFloat) - 1)) 0.1 0.8
+                    interp ((toFloat index) / n) 0.1 0.8
               in
                   { positionedCluster | posX = posX }
 
             clustersWithPreliminaryXpositionsAndBoundaries =
               clusters
-              |> List.map (\cluster -> { posX = meanXPosition cluster, cluster = cluster })
+              |> List.map (\cluster -> { posX = meanXPosition cluster, cluster = cluster } |> Debug.log "clustersWithPreliminaryXpositionsAndBoundaries")
               |> List.sortBy .posX
               |> List.indexedMap quantizeXposition
               |> List.map measureBoundariesX
@@ -329,97 +332,29 @@ proximitiesByGraph entityTitles graph =
       |> Dict.fromList
 
 
-clustersFromEntities : List EntityTitle -> Dict EntityTitle (List EntityTitle) -> List Cluster
-clustersFromEntities entityTitles graph =
+clustersFromGraph : Dict EntityTitle (List EntityTitle) -> List Cluster
+clustersFromGraph graph =
   let
-      proximities : Dict (EntityTitle, EntityTitle) Float
-      proximities =
-        proximitiesByGraph entityTitles graph
-
-      getProximityBetweenEntityPair : (EntityTitle, EntityTitle) -> Float
-      getProximityBetweenEntityPair pair =
-        Dict.get pair proximities
-        |> Maybe.withDefault 0
-
-      nearestClusters : List Cluster -> List Cluster
-      nearestClusters clusters =
-        let
-            proximityOfNearestPairOfEntities : List (EntityTitle, EntityTitle) -> Float
-            proximityOfNearestPairOfEntities pairs =
-              pairs
-              |> List.map getProximityBetweenEntityPair
-              |> List.maximum
-              |> Maybe.withDefault 0
-
-            proximityBetweenClusterPair : (Cluster, Cluster) -> Float
-            proximityBetweenClusterPair (a, b) =
-              allPairsBetween a b
-              |> proximityOfNearestPairOfEntities
-        in
-            clusters
-            |> allPairsWithin
-            |> List.sortBy proximityBetweenClusterPair
-            |> List.reverse
-            |> tuplesToLists
-            |> List.take 1
-            |> List.concat
-
-      combineNearestClusters : List Cluster -> List Cluster
-      combineNearestClusters clusters =
-        clusters
-        |> combineClusters (nearestClusters clusters)
+      merge : Cluster -> List Cluster -> List Cluster
+      merge cluster resultingClusters =
+        if doListsOverlap cluster (resultingClusters |> List.concat) then
+          resultingClusters
+          |> List.map (\c -> if doListsOverlap c cluster then (c++cluster) else c)
+        else
+          cluster :: resultingClusters
   in
-      entityTitles
-      |> List.map clusterFromEntityTitle
-      -- |> Debug.log "clusters1"
-      |> combineNearestClusters
-      |> combineNearestClusters
-      -- |> Debug.log "clusters3"
-
-
-combineClusters : List Cluster -> List Cluster -> List Cluster
-combineClusters clustersToBeCombined allClusters =
-  let
-      remainingClusters =
-        allClusters
-        |> List.filter (\cluster -> List.member cluster clustersToBeCombined |> not)
-  in
-      (clustersToBeCombined |> List.concat |> List.singleton) ++ remainingClusters
+      graph
+      |> Dict.foldl (\key links result -> (key :: links |> List.Extra.unique) :: result) []
+      |> Debug.log "proto clusters"
+      |> List.foldl merge []
+      |> Debug.log "merged clusters"
+      |> List.map List.Extra.unique
+      |> Debug.log "without duplicates"
 
 
 clusterFromEntityTitle : EntityTitle -> Cluster
 clusterFromEntityTitle entityTitle =
   [ entityTitle ]
-
-
-allPairsBetween : List a -> List b -> List (a, b)
-allPairsBetween xs ys =
-  let
-      pairsWith x =
-        ys
-        |> List.map (\y -> (x, y))
-  in
-      xs
-      |> List.concatMap pairsWith
-
-
-allPairsWithin : List a -> List (a, a)
-allPairsWithin xs =
-  let
-      pairsWith index otherX =
-        xs
-        |> List.drop (index+1)
-        |> List.map (\x -> (x, otherX))
-  in
-      xs
-      |> List.indexedMap pairsWith
-      |> List.concat
-
-
-tuplesToLists : List (a, a) -> List (List a)
-tuplesToLists tuples =
-  tuples
-  |> List.map (\(x,y) -> [ x, y ])
 
 
 indexOf : a -> List a -> Int
@@ -439,11 +374,21 @@ indexOf element list =
       helper 0 list
 
 
-mean : List Float -> Float
-mean xs =
-  (List.sum xs) / (List.length xs |> toFloat)
+mean : Float -> List Float -> Float
+mean default xs =
+  if xs == [] then
+     default
+  else
+    (List.sum xs) / (List.length xs |> toFloat)
 
 
 approximateLabelWidth : Bubble -> Float
 approximateLabelWidth {entity} =
   (toFloat <| String.length entity.title) * 0.025
+
+
+doListsOverlap : List comparable -> List comparable -> Bool
+doListsOverlap l1 l2 =
+  Set.intersect (l1 |> Set.fromList) (l2 |> Set.fromList)
+  |> Set.isEmpty
+  |> not

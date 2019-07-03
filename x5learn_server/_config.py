@@ -21,4 +21,11 @@ ROLES = [
     {"id": 1, "name": LEARNER_ROLE_NAME, "description": "Learner with functions to enable learning"}
 ]
 
+# Version for x5learn api
 LATEST_API_VERSION = "0.1"
+
+# Mail server configuration
+MAIL_USERNAME = os.environ["X5LEARN_MAIL_USERNAME"]
+MAIL_PASS = os.environ["X5LEARN_MAIL_PASS"]
+MAIL_SERVER = os.environ["X5LEARN_MAIL_SERVER"]
+MAIL_PORT = os.environ["X5LEARN_MAIL_PORT"]

@@ -20,6 +20,7 @@ setup(
         'langdetect',
         'flask-restplus',
         'pytest',
-        'pytest-flask'
+        'pytest-flask',
+        'wikipedia'
 ]
 )

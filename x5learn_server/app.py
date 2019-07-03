@@ -12,6 +12,7 @@ import urllib
 from datetime import datetime, timedelta
 from sqlalchemy import or_, and_
 from flask_restplus import Api, Resource, fields, reqparse
+import wikipedia
 
 
 # instantiate the user management db classes
@@ -77,6 +78,9 @@ CURRENT_ENRICHMENT_VERSION = 1
 def initiate_login_db():
     from x5learn_server.db.database import initiate_login_table_and_admin_profile
     initiate_login_table_and_admin_profile(user_datastore)
+
+# Setting wikipedia api language
+wikipedia.set_lang("en")
 
 
 @app.route("/")
@@ -718,6 +722,7 @@ class ActionList(Resource):
 # Defining user resource for API access
 ns_user = api.namespace('api/v1/user', description='User')
 
+
 @ns_user.route('/forget')
 class UserApi(Resource):
     '''Api to manage user'''
@@ -747,6 +752,62 @@ class UserApi(Resource):
                     return {'result': 'Mail server not configured'}, 400
 
             return {'result': 'User deleted'}, 200
+
+
+# Defining user resource for API access
+ns_definition = api.namespace('api/v1/definition', description='Definitions')
+
+
+@ns_definition.route('/')
+class Definition(Resource):
+    '''Api to get definitions of given titles from wikipedia'''
+
+    @ns_definition.doc('get_definition', params={'title': 'Title(s) to fetch definitions of. If multiple values use comma separated'})
+    def post(self):
+        '''Get definition for a single or list of titles'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        # Declaring and processing params available for request
+        parser = reqparse.RequestParser()
+        parser.add_argument('title', action='split', help="list or single title as strings")
+        args = parser.parse_args()
+
+        result = list()
+        if args['title']:
+            for i in args['title']:
+                temp_def = EntityDefinition.query.filter(EntityDefinition.title == i).one_or_none()
+                if temp_def:
+                    result.append({
+                        'title': temp_def.title,
+                        'definition': temp_def.extract,
+                        'url': temp_def.url
+                    })
+                    continue
+
+                try:
+                    # Fetching missing definitions from wikipedia api
+                    temp_wiki_def = wikipedia.summary(i, 1)
+                    temp_wiki_page = wikipedia.page(i)
+                    result.append({
+                        'title': i,
+                        'definition': temp_wiki_def,
+                        'url': temp_wiki_page.url
+                    })
+
+                    # Saving fetched data for next time
+                    entity_def = EntityDefinition(temp_wiki_page.pageid, i, temp_wiki_page.url, temp_wiki_def, "en")
+                    db_session.add(entity_def)
+                    db_session.commit()
+
+                except wikipedia.exceptions.PageError:
+                    result.append({
+                        'title': i,
+                        'definition': None,
+                        'url': None
+                    })
+
+        return result, 200
 
 
 if __name__ == '__main__':

@@ -99,12 +99,29 @@ class EntityDefinition(Base):
     title = Column(String(255))
     url = Column(String(255), unique=True)
     extract = Column(Text())
+    last_update_at = Column(DateTime(), default=datetime.datetime.utcnow)
+    lang = Column(String(20))
 
-    def __init__(self, entity_id, title, url, extract):
+    def __init__(self, entity_id, title, url, extract, lang):
         self.entity_id = entity_id
         self.title = title
         self.url = url
         self.extract = extract
+        self.last_update_at = datetime.datetime.utcnow()
+        self.lang = lang
+
+    @property
+    def serialize(self):
+        """Return object data in easily serializable format"""
+        return {
+            'id': self.id,
+            'entity_id': self.entity_id,
+            'title': self.title,
+            'url': self.params,
+            'extract': self.extract,
+            'last_update_at': dump_datetime(self.last_update_at),
+            'lang': self.lang
+        }
 
 
 def dump_datetime(value):

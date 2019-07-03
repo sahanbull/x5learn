@@ -265,7 +265,7 @@ layoutBubbles clusters bubbles =
 
             clustersWithPreliminaryXpositionsAndBoundaries =
               clusters
-              |> List.map (\cluster -> { posX = meanXPosition cluster, cluster = cluster } |> Debug.log "clustersWithPreliminaryXpositionsAndBoundaries")
+              |> List.map (\cluster -> { posX = meanXPosition cluster, cluster = cluster })
               |> List.sortBy .posX
               |> List.indexedMap quantizeXposition
               |> List.map measureBoundariesX
@@ -345,11 +345,8 @@ clustersFromGraph graph =
   in
       graph
       |> Dict.foldl (\key links result -> (key :: links |> List.Extra.unique) :: result) []
-      |> Debug.log "proto clusters"
       |> List.foldl merge []
-      |> Debug.log "merged clusters"
       |> List.map List.Extra.unique
-      |> Debug.log "without duplicates"
 
 
 clusterFromEntityTitle : EntityTitle -> Cluster

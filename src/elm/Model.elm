@@ -167,7 +167,7 @@ type alias Oer =
 
 type alias WikichunkEnrichment =
   { bubblogram : Maybe Bubblogram
-  , mentions : Dict String (List MentionInOer)
+  , mentions : Dict EntityId (List MentionInOer)
   , chunks : List Chunk
   , graph : Dict EntityTitle (List EntityTitle)
   , errors : Bool

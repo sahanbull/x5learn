@@ -101,6 +101,13 @@ type alias EntityTitle = String
 
 type alias Noteboard = List Note
 
+type alias ScrollData =
+  { scrollTop : Float
+  , viewHeight : Float
+  , contentHeight : Float
+  }
+
+
 type alias Note =
   { text : String
   , time : Posix

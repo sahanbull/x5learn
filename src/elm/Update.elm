@@ -348,6 +348,10 @@ update msg ({nav, userProfileForm} as model) =
           (newModel, Cmd.none)
           |> logEventForLabStudy "BubbleClicked" (popupToStrings newModel.popup)
 
+    PageScrolled {scrollTop, viewHeight, contentHeight} ->
+      (model, Cmd.none)
+      |> logEventForLabStudy "PageScrolled" [ scrollTop |> String.fromFloat, viewHeight |> String.fromFloat, contentHeight |> String.fromFloat ]
+
 
 updateUserState : (UserState -> UserState) -> Model -> Model
 updateUserState fn model =

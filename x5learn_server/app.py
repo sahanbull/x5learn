@@ -622,11 +622,11 @@ m_action = api.model('Action', {
 @ns_action.route('/')
 class ActionList(Resource):
     '''Shows a list of all actions, and lets you POST to add new actions'''
-    @ns_action.doc('list_actions', params={'action_type_id': 'Filter by action type id',
-                                        'with_oer_id_only': 'Filter actions with material id (Default: false)',
-                                        'sort': 'Sort results (Default: desc)',
-                                        'offset': 'Offset results',
-                                        'limit': 'Limit results'})
+    @ns_action.doc('list_actions', params={'action_type_id': 'Filter result set by action type id (Default: None)',
+                                        'with_oer_id_only': 'Fetch actions only with material id (Default: false)',
+                                        'sort': 'Sort result set by timestamp (Default: desc)',
+                                        'offset': 'Offset result set by the given number (Default: 0)',
+                                        'limit': 'Limit result set to a specific number of records (Default: None)'})
     def get(self):
         '''Fetches multiple actions from database based on params'''
         if not current_user.is_authenticated:
@@ -669,9 +669,10 @@ class ActionList(Resource):
                     if not i.Action.params:
                         to_be_removed.append(i)
                     else:
-                        temp_list = json.loads(i.Action.params)
-                        if not 'oer_id' in temp_list:
+                        temp_list = i.Action.params
+                        if 'oer_id' not in temp_list:
                             to_be_removed.append(i)
+
 
             if to_be_removed:
                 for i in to_be_removed:
@@ -683,7 +684,16 @@ class ActionList(Resource):
                 for i in result_list:
                     tempObject = i.Action.serialize
                     tempObject['action_type'] = i.ActionType.description
+
+                    temp_list = i.Action.params
+                    if 'oer_id' in temp_list:
+                        temp_oer = db_session.query(Oer).filter(Oer.id == temp_list['oer_id']).one_or_none()
+                        if temp_oer.data:
+                            if 'title' in temp_oer.data:
+                                tempObject['params']['title'] = temp_oer.data['title']
+
                     serializable_list.append(tempObject)
+
 
             return serializable_list
 
@@ -697,7 +707,7 @@ class ActionList(Resource):
         elif not api.payload['action_type_id']:
             return {'result': 'Action type id is required'}, 400
         else:
-            action = Action(api.payload['action_type_id'], api.payload['params'], current_user.get_id())
+            action = Action(api.payload['action_type_id'], json.loads(api.payload['params']), current_user.get_id())
             db_session.add(action)
             db_session.commit()
             return {'result': 'Action logged'}, 201

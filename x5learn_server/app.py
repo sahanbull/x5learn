@@ -483,10 +483,10 @@ m_note = api.model('Note', {
 @ns_notes.route('/')
 class NotesList(Resource):
     '''Shows a list of all notes, and lets you POST to add new notes'''
-    @ns_notes.doc('list_notes', params={'oer_id': 'Filter by material id',
-                                        'sort': 'Sort results (Default: desc)',
-                                        'offset': 'Offset results',
-                                        'limit': 'Limit results'})
+    @ns_notes.doc('list_notes', params={'oer_id': 'Filter result set by material id',
+                                        'sort': 'Sort results by timestamp (Default: desc)',
+                                        'offset': 'Offset result set by number specified (Default: 0)',
+                                        'limit': 'Limits the number of records in the result set (Default: None)'})
     def get(self):
         '''Fetches multiple notes from database based on params'''
         if not current_user.is_authenticated:

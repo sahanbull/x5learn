@@ -20,3 +20,5 @@ ROLES = [
     {"id": 0, "name": ADMIN_ROLE_NAME, "description": "Super user with administrative privileges"},
     {"id": 1, "name": LEARNER_ROLE_NAME, "description": "Learner with functions to enable learning"}
 ]
+
+LATEST_API_VERSION = "0.1"

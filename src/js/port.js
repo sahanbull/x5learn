@@ -2,6 +2,8 @@
 
 var timeOfLastMouseMove = new Date().getTime();
 
+var lastPageScrollOffset = 0;
+
 
 function positionAndSize(el) {
   var rect = el.getBoundingClientRect(), scrollLeft = window.pageXOffset || document.documentElement.scrollLeft, scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -43,6 +45,8 @@ function setupPorts(app){
   });
 
   setupEventHandlers();
+
+  setupScrollListener();
 }
 
 
@@ -88,7 +92,6 @@ function setupEventHandlers(){
     }
   });
 
-
   document.onkeydown = function checkKey(e) {
     e = e || window.event;
     if(e.target.closest('#SearchField') || e.target.closest('#SearchSuggestions')){
@@ -121,4 +124,20 @@ function changeFocusOnSearchSuggestions(direction){
   activeElement.blur();
   var newIndex = Math.max(0, Math.min(index + direction, n-1));
   options[newIndex].focus();
+}
+
+
+function setupScrollListener(){
+  window.setInterval(function(){
+    var el = document.getElementById('MainPageContent');
+    if(el){
+      var offset = el.scrollTop;
+      if(offset!=lastPageScrollOffset){
+        var contentHeight = el.childNodes[0].clientHeight;
+        var scrollData = {scrollTop: el.scrollTop, viewHeight: el.clientHeight, contentHeight: contentHeight};
+        app.ports.pageScrolled.send(scrollData);
+        lastPageScrollOffset = offset;
+      }
+    }
+  }, 300);
 }

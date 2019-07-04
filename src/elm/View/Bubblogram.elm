@@ -353,7 +353,7 @@ viewMentionDots model oerUrl bubble =
               circleRadius =
                 "5"
           in
-              circle [ cx circlePosX, cy circlePosY, r circleRadius, fill "orange" ] []
+              circle [ cx circlePosX, cy circlePosY, r circleRadius, fill "rgba(255,140,0,0.95)" ] []
 
         mentions =
           getMentions model oerUrl bubble.entity.id

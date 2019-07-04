@@ -140,10 +140,6 @@ colorFromBubble {hue, alpha, saturation} =
   Color.hsla hue saturation 0.5 alpha
 
 
-bubbleZoom =
-  0.042
-
-
 hoveringBubbleOrFragmentsBarEntityId model =
   case model.hoveringBubbleEntityId of
     Just entityId ->
@@ -355,9 +351,9 @@ viewMentionDots model oerUrl bubble =
                 |> String.fromFloat
 
               circleRadius =
-                "5"
+                "4.5"
           in
-              circle [ cx circlePosX, cy circlePosY, r circleRadius, fill "orange" ] []
+              circle [ cx circlePosX, cy circlePosY, r circleRadius, fill "rgba(255,140,0,0.95)" ] []
 
         mentions =
           getMentions model oerUrl bubble.entity.id

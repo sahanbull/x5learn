@@ -121,3 +121,16 @@ a:hover {
   -ms-user-select: none;
   user-select: none;
 }
+
+.Html5VideoPlayer {
+  font-size: 16px;
+}
+
+.Html5VideoPlayerMessage div {
+  background-color: #ffc390;
+  border-radius: 4px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  padding: 10px 20px;
+  display: inline-block;
+}

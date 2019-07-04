@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestSearchSuggestions, requestEntityDefinitions, requestSaveUserProfile, requestSaveUserState, requestOers)
+module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestSearchSuggestions, requestEntityDefinitions, requestSaveUserProfile, requestSaveUserState, requestOers, requestLabStudyLogEvent)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -110,6 +110,15 @@ requestSaveUserState userState =
     { url = Url.Builder.absolute [ apiRoot, "save_user_state/" ] []
     , body = Http.jsonBody <| userStateEncoder userState
     , expect = Http.expectString RequestSaveUserState
+    }
+
+
+requestLabStudyLogEvent : Int -> String -> List String -> Cmd Msg
+requestLabStudyLogEvent time eventType params =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "log_event_for_lab_study/" ] []
+    , body = Http.jsonBody <| Encode.object [ ("browserTime", Encode.int time), ("eventType", Encode.string eventType), ("params", Encode.list Encode.string params) ]
+    , expect = Http.expectString RequestLabStudyLogEvent
     }
 
 
@@ -235,10 +244,15 @@ oerDecoder =
 
 
 wikichunkEnrichmentDecoder =
-  map3 (WikichunkEnrichment Nothing)
+  map4 (WikichunkEnrichment Nothing)
     (field "mentions" (dict (list mentionDecoder)))
     (field "chunks" (list chunkDecoder))
+    (field "graph" conceptGraphDecoder)
     (field "errors" bool)
+
+
+conceptGraphDecoder =
+  dict <| list string
 
 
 mentionDecoder =

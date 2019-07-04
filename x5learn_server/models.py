@@ -5,6 +5,8 @@ from sqlalchemy import Boolean, DateTime, Column, Integer, \
     Text, String, JSON, Float, ForeignKey, Table, func
 import datetime
 
+from datetime import datetime
+
 
 class RolesUsers(Base):
     __tablename__ = 'roles_users'
@@ -35,7 +37,8 @@ class UserLogin(Base, UserMixin):
     login_count = Column(Integer)
     active = Column(Boolean())
     confirmed_at = Column(DateTime())
-    roles = relationship('Role', secondary='roles_users', backref=backref('user_login', lazy='dynamic'))
+    roles = relationship('Role', secondary='roles_users',
+                         backref=backref('user_login', lazy='dynamic'))
     user_profile = Column(JSON())
     user = relationship('User', uselist=False, backref='user_login')
 
@@ -74,7 +77,7 @@ class WikichunkEnrichment(Base):
         self.version = version
 
     def entities_to_string(self):
-        return '. '.join([ '. '.join([ e['title'] for e in chunk['entities'] ]) for chunk in self.data['chunks'] ])
+        return '. '.join(['. '.join([e['title'] for e in chunk['entities']]) for chunk in self.data['chunks']])
 
 
 class WikichunkEnrichmentTask(Base):
@@ -105,6 +108,9 @@ class EntityDefinition(Base):
         self.title = title
         self.url = url
         self.extract = extract
+
+
+<< << << < HEAD
 
 
 def dump_datetime(value):
@@ -150,7 +156,7 @@ class ActionType(Base):
     __tablename__ = 'action_type'
     __table_args__ = {'extend_existing': True}
     id = Column(Integer(), primary_key=True)
-    description =  Column(String(255))
+    description = Column(String(255))
 
     def __init__(self, description):
         self.description = description
@@ -188,3 +194,22 @@ class Action(Base):
             'created_at': dump_datetime(self.created_at),
             'user_login_id': self.user_login_id
         }
+
+# This table is only used for the purpose of conducting lab-based evaluations of user experience at UCL.
+
+
+class LabStudyLogEvent(Base):
+    __tablename__ = 'lab_study_log_event'
+    id = Column(Integer(), primary_key=True)
+    participant = Column(String(255))
+    event_type = Column(String(40))
+    params = Column(String())
+    browser_time = Column(BigInteger())
+    created_at = Column(DateTime())
+
+    def __init__(self, participant, event_type, params, browser_time):
+        self.participant = participant
+        self.event_type = event_type
+        self.params = params
+        self.browser_time = browser_time
+        self.created_at = datetime.now()

@@ -1,6 +1,7 @@
 import os, requests, re, json
 
 from time import sleep
+from collections import defaultdict
 
 from langdetect import detect_langs
 
@@ -8,6 +9,7 @@ from wikichunkifiers.pdf import extract_chunks_from_pdf
 from wikichunkifiers.youtube import extract_chunks_from_youtube_video
 from wikichunkifiers.lib.util import EnrichmentError
 
+import wikipedia
 
 API_ROOT = os.environ["FLASK_API_ROOT"]
 # API_ROOT = 'http://127.0.0.1:5000/api/v1/'
@@ -16,9 +18,8 @@ API_ROOT = os.environ["FLASK_API_ROOT"]
 def main():
     say('hello')
     while(True):
-        payload = {}
         try:
-            r = requests.post(API_ROOT+"most_urgent_unstarted_enrichment_task/", data=payload)
+            r = requests.post(API_ROOT+"most_urgent_unstarted_enrichment_task/", data={})
             j = json.loads(r.text)
             if 'data' in j:
                 oer_data = j['data']
@@ -45,14 +46,16 @@ def say(text):
 
 
 def make_enrichment_data(oer_data):
-    data = { 'chunks': [], 'mentions': [], 'errors': False }
+    data = { 'chunks': [], 'mentions': {}, 'graph': {}, 'errors': False }
     error = None
     try:
         data['chunks'] = make_wikichunks(oer_data)
         data['mentions'] = extract_mentions(data['chunks'])
+        data['graph'] = extract_concept_graph(data['chunks'], data['mentions'])
     except EnrichmentError as err:
         error = err.message
         data['errors'] = True
+        print('EnrichmentError', err.message)
     return data, error
 
 
@@ -63,13 +66,34 @@ def make_wikichunks(oer_data):
     print(oer_data['title'])
     if url.lower().endswith('.pdf'):
         return extract_chunks_from_pdf(url)
+    # if url.lower().endswith('.mp4'): TODO
+    #     return extract_chunks_from_video(url)
     if 'youtu' in url and '/watch?v=' in url:
         return extract_chunks_from_youtube_video(url, oer_data)
     raise EnrichmentError('Unsupported file format')
 
 
+def extract_concept_graph(chunks, mentions):
+    print('\n_____________________________ Concept graph')
+    occurrences = defaultdict(int)
+    for chunk in chunks:
+        for entity in chunk['entities']:
+            title = entity['title']
+            if len(title)>2 and entity['id'] in mentions: # Exclude titles that are too short, such as one-letter variable names
+                occurrences[title] += 1
+    titles = [ x[0] for x in sorted(occurrences.items(), key=lambda k_v: k_v[1], reverse=True)[:5] ]
+    print('Titles:', titles)
+    graph = {}
+    for title in titles:
+        links = wikipedia.page(title).links
+        graph[title] = list(set(titles) & set(links)) # Include only the links that are among the titles
+    print('Graph:', graph)
+    return graph
+
+
 def extract_mentions(chunks):
     # print('\n_____________________________ Mentions')
+    print('\nextracting mentions')
     mentions = {}
     entities = []
     for chunk in chunks:
@@ -79,8 +103,11 @@ def extract_mentions(chunks):
     for entity in entities:
         entity_id = entity['id']
         title = entity['title'].lower()
+        title = remove_stuff_in_parentheses(title) # e.g. look for mentions of "strategy" if the concept is "strategy (game theory)"
+        title = title.strip()
         for chunk in chunks:
             text = chunk['text']
+            text = re.sub(r'\s+', ' ', text)
             positions = [ m.start() for m in re.finditer(re.escape(title), text.lower()) ]
             for position in positions:
                 position += int(len(title)/2) # Focus on the middle of the title to account for variations in surrounding blanks
@@ -127,6 +154,11 @@ def post_back_wikichunks(url, data, error):
 def looks_like_english(sentence):
     language = detect_langs(sentence)[0]
     return language.lang=='en' and language.prob > 0.9
+
+
+def remove_stuff_in_parentheses(text):
+    return re.sub(r'\([^)]*\)', '', text)
+
 
 
 if __name__ == '__main__':

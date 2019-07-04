@@ -32,7 +32,7 @@ viewNoteboard model userState oerUrl =
             quickNotesButton str =
               actionButtonWithoutIcon [ Background.color x5colorSemiTransparent, whiteText, paddingXY 5 3 ] str (Just <| ClickedQuickNoteButton oerUrl str)
         in
-            [ "Too hard", "Just right", "Too easy", "Interested", "Not interested", "There is something wrong with this" ]
+            [ "Too hard", "Just right", "Too easy", "Interested", "Not interested", "Poor quality" ]
             |> List.map quickNotesButton
             |> wrappedRow [ spacing 8, width fill, alignRight ]
 

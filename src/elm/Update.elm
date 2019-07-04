@@ -353,7 +353,8 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "PageScrolled" [ scrollTop |> String.fromFloat, viewHeight |> String.fromFloat, contentHeight |> String.fromFloat ]
 
     StartLabStudyTask task ->
-      ({ model | startedLabStudyTask = Just (task, model.currentTime) }, setBrowserFocus "")
+      { model | startedLabStudyTask = Just (task, model.currentTime) }
+      |> update (TriggerSearch task.dataset)
       |> logEventForLabStudy "StartLabStudyTask" [ task.title, task.durationInMinutes |> String.fromInt ]
 
     StoppedLabStudyTask ->

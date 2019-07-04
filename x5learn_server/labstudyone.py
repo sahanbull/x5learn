@@ -1127,7 +1127,21 @@ datasets = {'a': {'channel': 'Artificial Intelligence - All in One',
    'https://www.youtube.com/watch?v=BqP4_4kr7-0&list=PLtdr2qSB8H94jFZJUwk99gPgK2Utv8RR1&index=19',
    'https://www.youtube.com/watch?v=_njf8jwEGRo&list=PLtdr2qSB8H94jFZJUwk99gPgK2Utv8RR1&index=20',
    'https://www.youtube.com/watch?v=o_ZuWbX-CyE&list=PLtdr2qSB8H94jFZJUwk99gPgK2Utv8RR1&index=21',
-   'https://www.youtube.com/watch?v=SIOQgY1tqrU&list=PLtdr2qSB8H94jFZJUwk99gPgK2Utv8RR1&index=22']}}
+   'https://www.youtube.com/watch?v=SIOQgY1tqrU&list=PLtdr2qSB8H94jFZJUwk99gPgK2Utv8RR1&index=22']},
+ 'w': {'channel': 'Youtube', # Warmup task
+  'title': 'Warmup task',
+  'video_urls': ['https://www.youtube.com/watch?v=_5O5ofHrXXk',
+   # 'https://www.youtube.com/watch?v=2y7V_2lD1lY', no transcript
+   'https://www.youtube.com/watch?v=gABLI51g_X4',
+   'https://www.youtube.com/watch?v=xzuv1vkOVl4',
+   'https://www.youtube.com/watch?v=71VIxSVRbgo',
+   'https://www.youtube.com/watch?v=u93U6ksqBLs',
+   'https://www.youtube.com/watch?v=S1EQSzA-Ehw',
+   'https://www.youtube.com/watch?v=L4FjdME6dI8',
+   'https://www.youtube.com/watch?v=keQvVOoKxos',
+   'https://www.youtube.com/watch?v=yVrRJvZdZHg',
+   'https://www.youtube.com/watch?v=G7VPhY0jMEU',
+   'https://www.youtube.com/watch?v=ofnJbAJcREQ']}}
 
 def get_dataset_for_lab_study_one(key):
     if key not in datasets:

@@ -70,6 +70,7 @@ type EntityDefinition
 type alias LabStudyTask =
   { title : String
   , durationInMinutes : Int
+  , dataset : String
   }
 
 

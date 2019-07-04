@@ -75,10 +75,10 @@ viewUserMenu model userProfile =
         link [ paddingXY 15 10, width fill ] { url = url, label = buttonText |> bodyNoWrap [] }
 
       labStudyTaskButtons =
-        [ labStudyTaskButton <| LabStudyTask "Warmup Task" 2
-        , labStudyTaskButton <| LabStudyTask "Task 1 (Choose)" 15
-        , labStudyTaskButton <| LabStudyTask "Task 2 (Gap)" 5
-        , labStudyTaskButton <| LabStudyTask "Task 3 (Other version)" 5
+        [ labStudyTaskButton <| LabStudyTask "Warmup Task" 2 "w"
+        , labStudyTaskButton <| LabStudyTask "Task 1 (Choose)" 20 "a"
+        , labStudyTaskButton <| LabStudyTask "Task 2 (Gap)" 5 "a"
+        , labStudyTaskButton <| LabStudyTask "Task 3 (Other version)" 5 "c"
         ]
 
       menu =
@@ -117,10 +117,14 @@ labStudyTaskTimer model =
             task.title |> captionNowrap [ greyTextDisabled ]
 
           countdown =
-            (task.durationInMinutes * 60) - ((millisSince model startTime) // 1000)
-            |> max 0
-            |> secondsToString
-            |> captionNowrap [ alignRight, width <| px 30 ]
+            let
+                seconds =
+                  (task.durationInMinutes * 60) - ((millisSince model startTime) // 1000)
+                  |> max 0
+            in
+                seconds
+                |> secondsToString
+                |> captionNowrap ([ alignRight, width <| px 30 ] ++ (if seconds==0 then [ greyTextDisabled ] else []))
 
           label =
             [ title

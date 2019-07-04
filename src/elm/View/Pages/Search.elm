@@ -49,4 +49,4 @@ viewSearchResults model userState searchState =
         Playlist ((oerUrls |> List.length |> String.fromInt) ++ " result" ++ (if List.length oerUrls == 1 then "" else "s") ++ " for \""++ searchState.lastSearch ++"\"") oerUrls
       )
       |> viewOerGrid model userState
-      |> el [ width fill, paddingTRBL 35 0 100 0 ]
+      |> el [ width fill, paddingTRBL 0 0 100 0 ]

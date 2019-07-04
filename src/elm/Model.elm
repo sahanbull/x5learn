@@ -95,7 +95,18 @@ type alias Bubblogram =
 
 type alias OerUrl = String
 
+type alias EntityId = String
+
+type alias EntityTitle = String
+
 type alias Noteboard = List Note
+
+type alias ScrollData =
+  { scrollTop : Float
+  , viewHeight : Float
+  , contentHeight : Float
+  }
+
 
 type alias Note =
   { text : String
@@ -163,8 +174,9 @@ type alias Oer =
 
 type alias WikichunkEnrichment =
   { bubblogram : Maybe Bubblogram
-  , mentions : Dict String (List MentionInOer)
+  , mentions : Dict EntityId (List MentionInOer)
   , chunks : List Chunk
+  , graph : Dict EntityTitle (List EntityTitle)
   , errors : Bool
   }
 
@@ -541,13 +553,6 @@ getMentions model oerUrl entityId =
       |> Maybe.withDefault []
 
 
-hasMentions : Model -> OerUrl -> String -> Bool
-hasMentions model oerUrl entityId =
-  getMentions model oerUrl entityId
-  |> List.isEmpty
-  |> not
-
-
 mentionInBubblePopup : Model -> Maybe MentionInOer
 mentionInBubblePopup model =
   case model.popup of
@@ -602,3 +607,20 @@ isLabStudy1 model =
 
     Just {email} ->
       email |> String.endsWith ".lab"
+
+
+listContainsBoth a b list =
+  List.member a list && List.member b list
+
+
+bubbleZoom =
+  0.042
+
+
+isVideoFile : String -> Bool
+isVideoFile url =
+  let
+      lower =
+        url |> String.toLower
+  in
+     String.endsWith ".mp4" lower || String.endsWith ".webm" lower || String.endsWith ".ogg" lower

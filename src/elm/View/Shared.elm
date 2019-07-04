@@ -195,8 +195,11 @@ whiteBackground =
   Background.color white
 
 
-pageBodyBackground =
-  Background.image <| imgPath "bg.jpg"
+pageBodyBackground model =
+  if isLabStudy1 model then
+    Background.color <| grey 224
+  else
+    Background.image <| imgPath "bg.jpg"
 
 
 imgPath str =

@@ -58,6 +58,8 @@ type Msg
   | BubbleMouseOut
   | BubbleClicked OerUrl
   | PageScrolled ScrollData
+  | StartLabStudyTask LabStudyTask
+  | StoppedLabStudyTask
 
 
 type UserProfileField

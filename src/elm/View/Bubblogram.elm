@@ -351,7 +351,7 @@ viewMentionDots model oerUrl bubble =
                 |> String.fromFloat
 
               circleRadius =
-                "5"
+                "4.5"
           in
               circle [ cx circlePosX, cy circlePosY, r circleRadius, fill "rgba(255,140,0,0.95)" ] []
 

@@ -352,6 +352,14 @@ update msg ({nav, userProfileForm} as model) =
       (model, Cmd.none)
       |> logEventForLabStudy "PageScrolled" [ scrollTop |> String.fromFloat, viewHeight |> String.fromFloat, contentHeight |> String.fromFloat ]
 
+    StartLabStudyTask task ->
+      ({ model | startedLabStudyTask = Just (task, model.currentTime) }, setBrowserFocus "")
+      |> logEventForLabStudy "StartLabStudyTask" [ task.title, task.durationInMinutes |> String.fromInt ]
+
+    StoppedLabStudyTask ->
+      ({ model | startedLabStudyTask = Nothing }, setBrowserFocus "")
+      |> logEventForLabStudy "StoppedLabStudyTask" []
+
 
 updateUserState : (UserState -> UserState) -> Model -> Model
 updateUserState fn model =

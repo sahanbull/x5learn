@@ -51,6 +51,7 @@ type alias Model =
   , wikichunkEnrichmentRequestFailCount : Int
   , wikichunkEnrichmentRetryTime : Posix
   , timeOfLastUrlChange : Posix
+  , startedLabStudyTask : Maybe (LabStudyTask, Posix)
   }
 
 
@@ -65,6 +66,12 @@ type EntityDefinition
   = DefinitionScheduledForLoading
   | DefinitionLoaded String
   -- | DefinitionUnavailable -- TODO consider appropriate error handling
+
+type alias LabStudyTask =
+  { title : String
+  , durationInMinutes : Int
+  }
+
 
 type alias Bubble =
   { entity : Entity
@@ -302,6 +309,7 @@ initialModel nav flags =
   , wikichunkEnrichmentRequestFailCount = 0
   , wikichunkEnrichmentRetryTime = initialTime
   , timeOfLastUrlChange = initialTime
+  , startedLabStudyTask = Nothing
   }
 
 

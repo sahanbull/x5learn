@@ -450,27 +450,6 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                 _ ->
                   False
 
-            -- bump =
-            --   case model.hoveringBubbleEntityId of
-            --     Nothing ->
-            --       []
-
-            --     Just entityId ->
-            --       if isPopupOpen || (anyMentionsOfEntityInThisChunk entityId) then
-            --         []
-            --       else if chunk.entities |> List.map .id |> List.member entityId then
-            --         image [ alpha 0.9, centerX, height <| px 12, moveDown 2 ] { src = svgPath "white_semicircle", description = "" }
-            --         |> el [ width fill ]
-            --         |> inFront
-            --         |> List.singleton
-            --       else
-            --         []
-
-            -- anyMentionsOfEntityInThisChunk entityId =
-            --   entityId
-            --   |> mentionsInThisChunk
-            --   |> List.any (\mention -> mention.chunkIndex==chunkIndex)
-
             chunkBackground =
               if isPopupOpen then
                 [ Background.color orange ]
@@ -498,7 +477,6 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
               floor <| chunk.length * (toFloat barWidth) + (if chunkIndex == (List.length chunks)-1 then 0 else 1)
         in
             none
-            -- |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
             |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ chunkBackground ++ popup ++ clickHandler)
             |> inFront
 
@@ -734,3 +712,16 @@ isAnyChunkPopupOpen model =
       False
 
 
+secondsToString : Int -> String
+secondsToString seconds =
+  let
+      secondsString =
+        seconds |> modBy 60
+        |> String.fromInt
+        |> String.padLeft 2 '0'
+
+      minutesString =
+        seconds // 60
+        |> String.fromInt
+  in
+      minutesString ++ ":" ++ secondsString

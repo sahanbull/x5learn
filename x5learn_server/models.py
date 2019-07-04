@@ -5,8 +5,6 @@ from sqlalchemy import Boolean, DateTime, Column, Integer, \
     Text, String, JSON, Float, ForeignKey, Table, func, BigInteger
 import datetime
 
-from datetime import datetime
-
 
 class RolesUsers(Base):
     __tablename__ = 'roles_users'
@@ -226,4 +224,4 @@ class LabStudyLogEvent(Base):
         self.event_type = event_type
         self.params = params
         self.browser_time = browser_time
-        self.created_at = datetime.now()
+        self.created_at = datetime.datetime.now()

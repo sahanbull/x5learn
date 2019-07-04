@@ -1,11 +1,3 @@
-from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, Note, Action, ActionType
-from x5learn_server.labstudyone import get_dataset_for_lab_study_one
-from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent
-from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_USERNAME, MAIL_PASS, MAIL_SERVER, MAIL_PORT
-from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, Note
-from x5learn_server.db.database import db_session
-from x5learn_server.db.database import get_or_create_session_db
-from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, LATEST_API_VERSION
 from flask import Flask, jsonify, render_template, request, redirect
 from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required
@@ -24,11 +16,13 @@ import wikipedia
 
 
 # instantiate the user management db classes
-from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, LATEST_API_VERSION, MAIL_USERNAME, MAIL_PASS, MAIL_SERVER, MAIL_PORT
+from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_USERNAME, MAIL_PASS, MAIL_SERVER, MAIL_PORT, LATEST_API_VERSION
 from x5learn_server.db.database import get_or_create_session_db
-
 get_or_create_session_db(DB_ENGINE_URI)
+from x5learn_server.db.database import db_session
+from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent
 
+from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 
 # Create app
 app = Flask(__name__)
@@ -856,7 +850,7 @@ class Definition(Resource):
                     temp_wiki_def = wikipedia.summary(i, 1)
                     temp_wiki_page = wikipedia.page(i)
                     result.append({
-                        'title': i,
+                        'title': temp_wiki_page.title,
                         'definition': temp_wiki_def,
                         'url': temp_wiki_page.url
                     })
@@ -868,7 +862,7 @@ class Definition(Resource):
 
                 except wikipedia.exceptions.PageError:
                     result.append({
-                        'title': i,
+                        'title': temp_wiki_page.title,
                         'definition': None,
                         'url': None
                     })

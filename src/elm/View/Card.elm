@@ -246,14 +246,17 @@ viewOerCard model userState recommendedFragments position barId oer =
 
       bottomInfo =
         let
+            provider =
+              oer.provider |> domainOnly |> truncateSentence 24 |> captionNowrap [ centerX ]
+
             content =
               if oer.duration=="" then
-                [ oer.provider |> domainOnly |> captionNowrap []
+                [ provider
                 , oer.date |> captionNowrap [ alignRight ]
                 ]
               else
                 [ oer.date |> captionNowrap []
-                , oer.provider |> domainOnly |> truncateSentence 24 |> captionNowrap [ centerX ]
+                , provider
                 , oer.duration |> captionNowrap [ alignRight ]
                 ]
         in

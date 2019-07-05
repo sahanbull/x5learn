@@ -109,11 +109,14 @@ def extract_mentions(chunks):
             text = chunk['text']
             text = re.sub(r'\s+', ' ', text)
             positions = [ m.start() for m in re.finditer(re.escape(title), text.lower()) ]
+            prev_position = None
             for position in positions:
                 position += int(len(title)/2) # Focus on the middle of the title to account for variations in surrounding blanks
+                if prev_position is not None and position-prev_position<200 and not contains_end_mark(text[prev_position:position]): # ignore adjacent mentions as described in issue #167
+                    continue
+                prev_position = position
                 sentence, pos_in_chunk = sentence_at_position(text, position)
                 if len(sentence)>200: # probably not a normal sentence
-                    # import pdb; pdb.set_trace()
                     sentence, pos_in_chunk = excerpt_at_position(text, position)
                 if not looks_like_english(sentence):
                     continue
@@ -122,7 +125,12 @@ def extract_mentions(chunks):
                     mentions[entity_id] = []
                 if len(mentions[entity_id])==0 or mentions[entity_id][-1]['positionInResource']!=position_in_resource: # don't create duplicates if an entity is mentioned twice in a sentence
                     mentions[entity_id].append({'sentence': sentence, 'positionInResource': position_in_resource})
+    print(len(mentions), 'mentions found')
     return mentions
+
+
+def contains_end_mark(text):
+    return re.search(r'[.?!]', text)
 
 
 def sentence_at_position(text, position):

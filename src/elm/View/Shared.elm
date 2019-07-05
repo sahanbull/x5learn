@@ -538,22 +538,25 @@ viewEntityButton model chunkPopup entity =
 
 
 viewEntityPopup model chunkPopup entityPopup entity =
-  if isLabStudy1 model then
-    []
-  else
-    let
-        actionButtons =
+  let
+      actionButtons =
+        if isLabStudy1 model then
+          []
+        else
           [ ("Search", TriggerSearch entity.title)
           ]
-          |> List.map (\item -> entityActionButton chunkPopup entityPopup item |> el [ padding 10 ])
+          |> List.map (\item -> entityActionButton chunkPopup entityPopup item |> el [ width fill ])
 
-        items =
-          actionButtons
-    in
-        items
-        |> menuColumn []
-        |> (if isHoverMenuNearRightEdge model 300 then onLeft else onRight)
-        |> List.singleton
+      definition =
+        viewDefinition model entity.id
+
+      items =
+        definition :: actionButtons
+  in
+      items
+      |> menuColumn []
+      |> (if isHoverMenuNearRightEdge model 300 then onLeft else onRight)
+      |> List.singleton
 
 
 entityActionButton chunkPopup entityPopup (title, clickAction) =
@@ -568,25 +571,31 @@ entityActionButton chunkPopup entityPopup (title, clickAction) =
           []
 
       attrs =
-        hoverAction :: ([ width fill ] ++ background)
+        hoverAction :: ([ width fill, padding 10 ] ++ background)
   in
       actionButtonWithoutIcon attrs title (Just clickAction)
 
 
--- viewDefinition model {title} =
---   let
---       definition =
---         title ++ " definition goes here"
---       -- blurb =
---       --   if definition=="" || definition=="(Definition unavailable)" then
---       --     "(Definition unavailable)"
---       --     |> captionNowrap []
---       --   else
---       --     ("“" ++ definition ++ "” (Wikidata)")
---         |> bodyWrap [ Font.italic ]
---   in
---       [ definition ]
---       |> column [ padding 10, spacing 16, width (px 240) ]
+viewDefinition : Model -> EntityId -> Element Msg
+viewDefinition model entityId =
+  let
+      unavailable =
+        "✗ Definition unavailable" |> bodyWrap []
+  in
+      case model.entityDefinitions |> Dict.get entityId of
+        Nothing -> -- shouldn't happen
+          unavailable
+
+        Just definition ->
+          case definition of
+            DefinitionScheduledForLoading ->
+              viewLoadingSpinner
+
+            DefinitionLoaded text ->
+              if text=="" then
+                unavailable
+              else
+                "“" ++ text ++ "” (Wikipedia)" |> bodyWrap [ Font.italic, padding 10, width <| px 200 ]
 
 
 fragmentsBarHeight = 16

@@ -16,11 +16,12 @@ import wikipedia
 
 
 # instantiate the user management db classes
+# NOTE WHEN PEP8'ING MODULE IMPORTS WILL MOVE TO THE TOP AND CAUSE EXCEPTION
 from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_USERNAME, MAIL_PASS, MAIL_SERVER, MAIL_PORT, LATEST_API_VERSION
-from x5learn_server.db.database import get_or_create_session_db
-get_or_create_session_db(DB_ENGINE_URI)
+from x5learn_server.db.database import get_or_create_db
+_ = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
-from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent
+from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent, Action, ActionType
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 
@@ -817,38 +818,54 @@ class UserApi(Resource):
 # Defining user resource for API access
 ns_definition = api.namespace('api/v1/definition', description='Definitions')
 
+m_definition = api.model("Definition", { 'titles': fields.String(description="Titles", required=True, help="List of titles as JSON") })
+
 
 @ns_definition.route('/')
 class Definition(Resource):
     '''Api to get definitions of given titles from wikipedia'''
 
-    @ns_definition.doc('get_definition', params={'title': 'Title(s) to fetch definitions of. If multiple values use comma separated'})
+    @ns_definition.doc('get_definition')
+    @ns_definition.expect(m_definition)
     def post(self):
         '''Get definition for a single or list of titles'''
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
 
         # Declaring and processing params available for request
-        parser = reqparse.RequestParser()
-        parser.add_argument('title', action='split', help="list or single title as strings")
-        args = parser.parse_args()
+        args = request.json
+
+        if 'titles' not in args:
+            return {'result': 'Titles are required'}, 400
+
+        args = json.loads(args['titles'])
+
+        if not args:
+            return {'result': 'Titles are required'}, 400
+
+        temp_db_defs = db_session.query(EntityDefinition).filter(EntityDefinition.title.in_(args)).all()
+
+        temp_db_lookup = dict()
+        if temp_db_defs:
+            for i in temp_db_defs:
+                temp_db_lookup[i.title] = i
 
         result = list()
-        if args['title']:
-            for i in args['title']:
-                temp_def = EntityDefinition.query.filter(EntityDefinition.title == i).one_or_none()
-                if temp_def:
+        if args:
+            for i in args:
+
+                if i in temp_db_lookup:
                     result.append({
-                        'title': temp_def.title,
-                        'definition': temp_def.extract,
-                        'url': temp_def.url
+                        'title': temp_db_lookup[i].title,
+                        'definition': temp_db_lookup[i].extract,
+                        'url': temp_db_lookup[i].url
                     })
                     continue
 
                 try:
                     # Fetching missing definitions from wikipedia api
-                    temp_wiki_def = wikipedia.summary(i, 1)
                     temp_wiki_page = wikipedia.page(i)
+                    temp_wiki_def = wikipedia.summary(temp_wiki_page.title, 1, None, True)
                     result.append({
                         'title': temp_wiki_page.title,
                         'definition': temp_wiki_def,
@@ -860,9 +877,9 @@ class Definition(Resource):
                     db_session.add(entity_def)
                     db_session.commit()
 
-                except wikipedia.exceptions.PageError:
+                except (wikipedia.exceptions.PageError, wikipedia.exceptions.DisambiguationError):
                     result.append({
-                        'title': temp_wiki_page.title,
+                        'title': i,
                         'definition': None,
                         'url': None
                     })

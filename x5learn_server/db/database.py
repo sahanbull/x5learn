@@ -10,7 +10,7 @@ db_session = None
 Base = None
 
 
-def get_or_create_session_db(db_engine_uri):
+def get_or_create_db(db_engine_uri):
     """creates a singleton session db instance for user session management
 
     Args:
@@ -27,6 +27,8 @@ def get_or_create_session_db(db_engine_uri):
 
         Base = declarative_base()
         Base.query = db_session.query_property()
+
+    return db_session
 
 
 def init_db():

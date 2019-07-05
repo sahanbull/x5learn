@@ -134,3 +134,8 @@ a:hover {
   padding: 10px 20px;
   display: inline-block;
 }
+
+#inspectorModal video {
+  width: 100%;
+  height: auto;
+}

@@ -29,6 +29,7 @@ ROLES = [
 LATEST_API_VERSION = "0.1"
 
 # Mail server configuration
+MAIL_SENDER = os.environ["X5LEARN_MAIL_SENDER"]
 MAIL_USERNAME = os.environ["X5LEARN_MAIL_USERNAME"]
 MAIL_PASS = os.environ["X5LEARN_MAIL_PASS"]
 MAIL_SERVER = os.environ["X5LEARN_MAIL_SERVER"]

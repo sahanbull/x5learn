@@ -17,7 +17,7 @@ import wikipedia
 
 # instantiate the user management db classes
 # NOTE WHEN PEP8'ING MODULE IMPORTS WILL MOVE TO THE TOP AND CAUSE EXCEPTION
-from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_USERNAME, MAIL_PASS, MAIL_SERVER, MAIL_PORT, LATEST_API_VERSION
+from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_SENDER, MAIL_USERNAME, MAIL_PASS, MAIL_SERVER, MAIL_PORT, LATEST_API_VERSION
 from x5learn_server.db.database import get_or_create_db
 _ = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
@@ -43,7 +43,7 @@ app.config['SECURITY_CONFIRMABLE'] = True
 # user password configs
 app.config['SECURITY_CHANGEABLE'] = True
 app.config['SECURITY_CHANGE_URL'] = '/password_change'
-app.config['SECURITY_EMAIL_SENDER'] = MAIL_USERNAME
+app.config['SECURITY_EMAIL_SENDER'] = MAIL_SENDER
 app.config['SECURITY_SEND_PASSWORD_CHANGE_EMAIL'] = True
 app.config['SECURITY_RECOVERABLE'] = True
 app.config['SECURITY_RESET_URL'] = '/recover'
@@ -64,7 +64,7 @@ app.config['MAIL_PORT'] = MAIL_PORT
 app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = MAIL_USERNAME
 app.config['MAIL_PASSWORD'] = MAIL_PASS
-app.config['MAIL_DEFAULT_SENDER'] = MAIL_USERNAME
+app.config['MAIL_DEFAULT_SENDER'] = MAIL_SENDER
 
 mail.init_app(app)
 
@@ -805,9 +805,9 @@ class UserApi(Resource):
             # Sending confirmation mail
             if user.email:
                 try:
-                    msg = Message("x5Learn Account Deleted", sender=MAIL_USERNAME, recipients=[user.email])
+                    msg = Message("x5Learn Account Deleted", sender=MAIL_SENDER, recipients=[user.email])
                     msg.body = "Your account and related data has been deleted."
-                    msg.html = render_template('/security/email/base_message.html', user=user, app_name=MAIL_USERNAME, message=msg.body)
+                    msg.html = render_template('/security/email/base_message.html', user=user, app_name=MAIL_SENDER, message=msg.body)
                     mail.send(msg)
                 except Exception:
                     return {'result': 'Mail server not configured'}, 400

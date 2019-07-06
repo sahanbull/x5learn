@@ -21,7 +21,7 @@ from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_SENDER, 
 from x5learn_server.db.database import get_or_create_db
 _ = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
-from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent, Action, ActionType, Note, Repository
+from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent, Action, ActionType, Note, Repository, NotesRepository
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 
@@ -561,29 +561,9 @@ class NotesList(Resource):
             parser.add_argument('limit', type=int)
             args = parser.parse_args()
 
-            # Building and executing query object
-            query_object = db_session.query(Note)
-
-            if (args['oer_id']):
-                query_object = query_object.filter(
-                    Note.oer_id == args['oer_id'])
-
-            query_object = query_object.filter(
-                Note.user_login_id == current_user.get_id())
-            query_object = query_object.filter(Note.is_deactivated == False)
-
-            if (args['sort'] == 'desc'):
-                query_object = query_object.order_by(Note.created_at.desc())
-            else:
-                query_object = query_object.order_by(Note.created_at.asc())
-
-            if (args['offset']):
-                query_object = query_object.offset(args['offset'])
-
-            if (args['limit']):
-                query_object = query_object.limit(args['limit'])
-
-            result_list = query_object.all()
+            # Creating a note repository for unique data fetch
+            notes_repository = NotesRepository()
+            result_list = notes_repository.get_notes(args['oer_id'], args['sort'], args['offset'], args['limit'])
 
             # Converting result list to JSON friendly format
             serializable_list = list()

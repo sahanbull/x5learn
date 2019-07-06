@@ -269,3 +269,32 @@ class Repository:
         global db_session
         db_session.delete(item)
         db_session.commit()
+
+
+class NotesRepository(Repository):
+
+    def __init__(self):
+        pass
+
+    def get_notes(self, oer_id=None, sort="desc", offset=None, limit=None):
+        global db_session
+        query_object = db_session.query(Note)
+
+        if (oer_id):
+            query_object = query_object.filter(Note.oer_id == oer_id)
+
+        query_object = query_object.filter_by(user_login_id=current_user.get_id())
+        query_object = query_object.filter_by(is_deactivated=False)
+
+        if (sort == 'desc'):
+            query_object = query_object.order_by(Note.created_at.desc())
+        else:
+            query_object = query_object.order_by(Note.created_at.asc())
+
+        if (offset):
+            query_object = query_object.offset(offset)
+
+        if (limit):
+            query_object = query_object.limit(limit)
+
+        return query_object.all()

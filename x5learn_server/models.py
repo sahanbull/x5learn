@@ -245,7 +245,8 @@ class Repository:
         query_object = db_session.query(item)
 
         if (auth_user):
-            query_object = query_object.filter_by(user_login_id=current_user.get_id())
+            query_object = query_object.filter_by(
+                user_login_id=current_user.get_id())
 
         return query_object.filter_by(id=id).one_or_none()
 
@@ -283,7 +284,8 @@ class NotesRepository(Repository):
         if (oer_id):
             query_object = query_object.filter(Note.oer_id == oer_id)
 
-        query_object = query_object.filter_by(user_login_id=current_user.get_id())
+        query_object = query_object.filter_by(
+            user_login_id=current_user.get_id())
         query_object = query_object.filter_by(is_deactivated=False)
 
         if (sort == 'desc'):
@@ -308,12 +310,14 @@ class ActionsRepository(Repository):
     def get_actions(self, action_type_id=None, sort="desc", offset=None, limit=None):
         global db_session
         query_object = db_session.query(
-                Action, ActionType).join(ActionType)
+            Action, ActionType).join(ActionType)
 
         if (action_type_id):
-            query_object = query_object.filter(Action.action_type_id == action_type_id)
+            query_object = query_object.filter(
+                Action.action_type_id == action_type_id)
 
-        query_object = query_object.filter(Action.user_login_id == current_user.get_id())
+        query_object = query_object.filter(
+            Action.user_login_id == current_user.get_id())
 
         if (sort == 'desc'):
             query_object = query_object.order_by(Action.created_at.desc())
@@ -337,10 +341,24 @@ class UserRepository(Repository):
     def forget_user(self, user):
         global db_session
 
-        db_session.query(Action).filter_by(user_login_id=current_user.get_id()).delete()
-        db_session.query(Note).filter_by(user_login_id=current_user.get_id()).delete()
-        db_session.query(User).filter_by(user_login_id=current_user.get_id()).delete()
+        db_session.query(Action).filter_by(
+            user_login_id=current_user.get_id()).delete()
+        db_session.query(Note).filter_by(
+            user_login_id=current_user.get_id()).delete()
+        db_session.query(User).filter_by(
+            user_login_id=current_user.get_id()).delete()
 
         db_session.delete(user)
         db_session.commit()
         return True
+
+
+class DefinitionsRepository(Repository):
+
+    def __init__(self):
+        pass
+
+    def get_definitions_list(self, titles):
+        global db_session
+
+        return db_session.query(EntityDefinition).filter(EntityDefinition.title.in_(titles)).all()

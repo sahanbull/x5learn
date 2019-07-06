@@ -452,6 +452,11 @@ displayName userProfile =
         name
 
 
+isLoggedIn : Model -> Bool
+isLoggedIn model =
+  loggedInUserProfile model /= Nothing
+
+
 loggedInUserProfile : Model -> Maybe UserProfile
 loggedInUserProfile {session} =
   case session of

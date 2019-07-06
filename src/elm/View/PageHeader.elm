@@ -51,8 +51,8 @@ viewPageHeader model =
                 ]
 
               GuestUser ->
-                [ link [ alignRight, paddingXY 15 10 ] { url = "/login", label = "Log in" |> bodyNoWrap [] }
-                , link [ alignRight, paddingXY 15 10 ] { url = "/signup", label = "Sign up" |> bodyNoWrap [] }
+                [ link [ alignRight, paddingXY 15 10 ] { url = loginPath, label = "Log in" |> bodyNoWrap [] }
+                , link [ alignRight, paddingXY 15 10 ] { url = signupPath, label = "Sign up" |> bodyNoWrap [] }
                 ]
   in
       [ link [] { url = "/", label = image [ height (px 26) ] { src = imgPath "x5learn_logo.png", description = "X5Learn logo" } } ] ++ loginLogoutSignup

@@ -136,6 +136,7 @@ inspectorContentDefault model userState {oer, fragmentStart} =
           desc ->
             desc
             |> String.split("\n")
+            |> List.filter (\line -> String.length line > 2)
             |> List.map (bodyWrap [])
             |> column [ spacing 7, height fill, scrollbarY, paddingTop 30 ]
 

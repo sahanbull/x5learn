@@ -247,12 +247,12 @@ wikichunkEnrichmentDecoder =
   map4 (WikichunkEnrichment Nothing)
     (field "mentions" (dict (list mentionDecoder)))
     (field "chunks" (list chunkDecoder))
-    (field "graph" conceptGraphDecoder)
+    (field "clusters" (list clusterDecoder))
     (field "errors" bool)
 
 
-conceptGraphDecoder =
-  dict <| list string
+clusterDecoder =
+  list string
 
 
 mentionDecoder =

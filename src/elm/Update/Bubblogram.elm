@@ -10,16 +10,12 @@ import List.Extra
 import Model exposing (..)
 
 
-type alias Cluster = List EntityTitle
-
-type alias Proximity = ((EntityTitle, EntityTitle), Float)
-
 type alias PositionedCluster = { posX : Float, cluster : Cluster }
 
 
 addBubblogram : Model -> OerUrl -> WikichunkEnrichment -> WikichunkEnrichment
-addBubblogram model oerUrl ({chunks, graph, mentions, bubblogram, errors} as enrichment) =
-  if errors || bubblogram /= Nothing || Dict.isEmpty graph then
+addBubblogram model oerUrl ({chunks, clusters, mentions, bubblogram, errors} as enrichment) =
+  if errors || bubblogram /= Nothing || List.isEmpty clusters then
     enrichment
   else
     let
@@ -30,10 +26,7 @@ addBubblogram model oerUrl ({chunks, graph, mentions, bubblogram, errors} as enr
         entities =
           occurrences
           |> entitiesFromOccurrences
-          |> List.filter (\entity -> Dict.member entity.title graph && Dict.member entity.id model.entityDefinitions)
-
-        clusters =
-          clustersFromGraph graph
+          |> List.filter (\entity -> List.member entity.title (clusters |> List.concat) && Dict.member entity.id model.entityDefinitions)
 
         bubbles =
           entities
@@ -295,65 +288,6 @@ layoutBubbles clusters bubbles =
       |> List.map setPosXbyCluster
 
 
-proximitiesByGraph : List EntityTitle -> Dict EntityTitle (List EntityTitle) -> Dict (EntityTitle, EntityTitle) Float
-proximitiesByGraph entityTitles graph =
-  let
-      areEntitiesConnected : EntityTitle -> EntityTitle -> Bool
-      areEntitiesConnected a b =
-        let
-            hasConnections : EntityTitle -> EntityTitle -> Bool
-            hasConnections entityTitle otherEntityTitle =
-              case graph |> Dict.get entityTitle of
-                Nothing ->
-                  False
-
-                Just links ->
-                  List.member otherEntityTitle links
-        in
-            hasConnections a b || hasConnections b a
-
-      proximityBetween : EntityTitle -> EntityTitle -> Proximity
-      proximityBetween otherEntityTitle entityTitle =
-        let
-            proximity =
-              if areEntitiesConnected entityTitle otherEntityTitle then 1 else 0
-        in
-            ((entityTitle, otherEntityTitle), proximity)
-
-      proximitiesPerEntity : Int -> EntityTitle -> List Proximity
-      proximitiesPerEntity index entityTitle =
-        entityTitles
-        |> List.drop (index+1)
-        |> List.map (proximityBetween entityTitle)
-  in
-      entityTitles
-      |> List.indexedMap proximitiesPerEntity
-      |> List.concat
-      |> Dict.fromList
-
-
-clustersFromGraph : Dict EntityTitle (List EntityTitle) -> List Cluster
-clustersFromGraph graph =
-  let
-      merge : Cluster -> List Cluster -> List Cluster
-      merge cluster resultingClusters =
-        if doListsOverlap cluster (resultingClusters |> List.concat) then
-          resultingClusters
-          |> List.map (\c -> if doListsOverlap c cluster then (c++cluster) else c)
-        else
-          cluster :: resultingClusters
-  in
-      graph
-      |> Dict.foldl (\key links result -> (key :: links |> List.Extra.unique) :: result) []
-      |> List.foldl merge []
-      |> List.map List.Extra.unique
-
-
-clusterFromEntityTitle : EntityTitle -> Cluster
-clusterFromEntityTitle entityTitle =
-  [ entityTitle ]
-
-
 indexOf : a -> List a -> Int
 indexOf element list =
   let
@@ -382,10 +316,3 @@ mean default xs =
 approximateLabelWidth : Bubble -> Float
 approximateLabelWidth {entity} =
   (toFloat <| String.length entity.title) * 0.025
-
-
-doListsOverlap : List comparable -> List comparable -> Bool
-doListsOverlap l1 l2 =
-  Set.intersect (l1 |> Set.fromList) (l2 |> Set.fromList)
-  |> Set.isEmpty
-  |> not

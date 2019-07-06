@@ -66,8 +66,6 @@ app.config['MAIL_DEFAULT_SENDER'] = MAIL_USERNAME
 mail.init_app(app)
 
 
-GUEST_COOKIE_NAME = 'x5learn_guest'
-
 CURRENT_ENRICHMENT_VERSION = 1
 
 
@@ -115,64 +113,25 @@ def profile():
 def api_session():
     if current_user.is_authenticated:
         resp = get_logged_in_user_profile_and_state()
-        if str(get_or_create_logged_in_user().id) == get_guest_id_from_cookie():
-            resp.delete_cookie(GUEST_COOKIE_NAME)
         return resp
-    return guest_session()
-
-
-def guest_session():
-    user_id = get_guest_id_from_cookie()
-    if user_id is None or user_id == '': # No cookie set
-        return new_guest_session()
-    user = User.query.get(user_id)
-    if user is None: # The cookie points to a row which no longer exists
-        return new_guest_session()
-    return jsonify({'guestUser': {'userState': user.frontend_state}})
-
-
-def get_guest_id_from_cookie():
-    return request.cookies.get(GUEST_COOKIE_NAME)
-
-
-def new_guest_session():
-    user = User()
-    db_session.add(user)
-    db_session.commit()
-    resp = jsonify({'guestUser': {'userState': None}})
-    resp.set_cookie(GUEST_COOKIE_NAME, str(user.id))
-    return resp
-
-
-def new_guest_ok():
-    user = User()
-    db_session.add(user)
-    db_session.commit()
-    resp = make_response('OK')
-    resp.set_cookie(GUEST_COOKIE_NAME, str(user.id))
-    return resp
+    return jsonify({'guestUser': {'userState': None}})
 
 
 def get_logged_in_user_profile_and_state():
     profile = current_user.user_profile if current_user.user_profile is not None else { 'email': current_user.email }
-    user = get_or_create_logged_in_user()
+    user = current_user.user
     logged_in_user = {'userState': user.frontend_state, 'userProfile': profile}
     return jsonify({'loggedInUser': logged_in_user})
 
 
-@user_registered.connect_via(app)
-def on_user_registered(sender, user, confirm_token):
-    # NB the "user" parameter takes a UserLogin object, not a User object
-    # The unfortunate naming results in "user.user" which looks weird although it is technically correct.
-    guest = User.query.get(get_guest_id_from_cookie())
-    guest.user_login_id = user.id
-    user.user = guest
-    db_session.commit()
+# @user_registered.connect_via(app)
+# def on_user_registered(sender, user, confirm_token):
+#     ...
 
 
 def get_or_create_logged_in_user():
     user = current_user.user
-    if user is None: # This will happen for the handful of people who have signed up before this change and have been warned that their user state will be reset. Other than that, there is no good reasons for current_user.user to ever be None. So at a later point, we may want to replace this entire function with simply current_user.user
+    if user is None:
         user = User()
         db_session.add(user)
         current_user.user = user
@@ -188,15 +147,7 @@ def api_save_user_state():
         db_session.commit()
         return 'OK'
     else:
-        user_id = request.cookies.get(GUEST_COOKIE_NAME)
-        if user_id == None or user_id == '': # If the user cleared their cookie while using the app
-            return new_guest_ok('OK')
-        user = User.query.get(user_id)
-        if user is None: # In the rare case that the cookie points to no-longer existent row
-            return new_guest_ok('OK')
-        user.frontend_state = frontend_state
-        db_session.commit()
-        return 'OK'
+        return 'Guest user state not saved.'
 
 
 @app.route("/api/v1/search/", methods=['GET'])

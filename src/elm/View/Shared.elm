@@ -155,6 +155,10 @@ recentBlue =
   rgb255 0 190 250
 
 
+linkBlue =
+  rgb255 0 120 250
+
+
 grey80 =
   grey 80
 
@@ -734,3 +738,25 @@ secondsToString seconds =
         |> String.fromInt
   in
       minutesString ++ ":" ++ secondsString
+
+
+guestDataLossWarning : Element Msg
+guestDataLossWarning =
+  let
+      linkAttrs =
+        [ paddingXY 5 0, Font.color linkBlue ]
+  in
+      [ "You are currently not logged in. To ensure that your changes are saved, please" |> text
+      , "log in" |> text |> linkTo linkAttrs loginPath
+      , "or" |> text
+      , "create an account" |> text |> linkTo linkAttrs signupPath
+      , "." |> text
+      ]
+      |> paragraph [ Font.size 14, Font.color materialDark ]
+
+
+loginPath =
+   "/login"
+
+signupPath =
+  "/signup"

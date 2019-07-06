@@ -31,7 +31,11 @@ viewRecentPage model userState =
   let
       page =
         if userState.fragmentAccesses |> Dict.isEmpty then
-          viewCenterNote "Your viewed items will appear here"
+          if isLoggedIn model then
+            viewCenterNote "Your viewed items will appear here"
+          else
+            guestDataLossWarning
+            |> milkyWhiteCenteredContainer
         else
           let
               oerUrls =

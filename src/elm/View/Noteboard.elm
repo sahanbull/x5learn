@@ -69,7 +69,7 @@ viewNoteboard model userState oerUrl =
 
       content : Element Msg
       content =
-        ([ headingRow ] ++ noteElements ++ [ newEntry ])
+        ([ headingRow ] ++ noteElements ++ [ newEntry ] ++ [ guestDataLossWarning ])
         |> column [ width fill, spacing 15 ]
   in
       [ (notes |> List.length |> String.fromInt, content) ]

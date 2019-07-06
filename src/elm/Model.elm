@@ -184,9 +184,11 @@ type alias WikichunkEnrichment =
   { bubblogram : Maybe Bubblogram
   , mentions : Dict EntityId (List MentionInOer)
   , chunks : List Chunk
-  , graph : Dict EntityTitle (List EntityTitle)
+  , clusters : List Cluster
   , errors : Bool
   }
+
+type alias Cluster = List EntityTitle
 
 type alias Chunk =
   { start : Float -- 0 to 1

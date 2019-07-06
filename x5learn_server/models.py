@@ -1,9 +1,11 @@
-from x5learn_server.db.database import Base
-from flask_security import UserMixin, RoleMixin
+from x5learn_server.db.database import Base, get_or_create_db
+from x5learn_server._config import DB_ENGINE_URI
+from flask_security import UserMixin, RoleMixin, current_user
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy import Boolean, DateTime, Column, Integer, \
     Text, String, JSON, Float, ForeignKey, Table, func, BigInteger
 import datetime
+from flask_sqlalchemy import SQLAlchemy
 
 
 class RolesUsers(Base):
@@ -225,3 +227,45 @@ class LabStudyLogEvent(Base):
         self.params = params
         self.browser_time = browser_time
         self.created_at = datetime.datetime.now()
+
+
+# Repository pattern implemented for CRUD
+
+db_session = None
+
+
+class Repository:
+
+    def __init__(self):
+        global db_session
+        db_session = get_or_create_db(DB_ENGINE_URI)
+
+    def get_by_id(self, item, id, auth_user=False):
+        global db_session
+        query_object = db_session.query(item)
+
+        if (auth_user):
+            query_object = query_object.filter_by(user_login_id=current_user.get_id())
+
+        return query_object.filter_by(id=id).one_or_none()
+
+    def get(self, item, filters, sort, order):
+        global db_session
+        result = db_session.query(item)
+        return result
+
+    def add(self, item):
+        global db_session
+        db_session.add(item)
+        db_session.commit()
+        return item
+
+    def update(self, item):
+        global db_session
+        db_session.commit()
+        return item
+
+    def delete(self, item):
+        global db_session
+        db_session.delete(item)
+        db_session.commit()

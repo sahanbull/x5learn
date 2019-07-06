@@ -21,7 +21,7 @@ from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_SENDER, 
 from x5learn_server.db.database import get_or_create_db
 _ = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
-from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent, Action, ActionType
+from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent, Action, ActionType, Note, Repository
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 
@@ -82,6 +82,9 @@ def initiate_login_db():
 
 # Setting wikipedia api language
 wikipedia.set_lang("en")
+
+# Creating a repository for accessing database
+repository = Repository()
 
 
 @app.route("/")
@@ -600,8 +603,8 @@ class NotesList(Resource):
         else:
             note = Note(
                 api.payload['oer_id'], api.payload['text'], current_user.get_id(), False)
-            db_session.add(note)
-            db_session.commit()
+
+            repository.add(note)
             return {'result': 'Note added'}, 201
 
 
@@ -616,12 +619,7 @@ class Notes(Resource):
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
 
-        query_object = db_session.query(Note)
-        query_object = query_object.filter(Note.id == id)
-        query_object = query_object.filter(
-            Note.user_login_id == current_user.get_id())
-        query_object = query_object.filter(Note.is_deactivated == False)
-        note = query_object.one_or_none()
+        note = repository.get_by_id(Note, id, True)
 
         if not note:
             return {}, 400
@@ -639,18 +637,13 @@ class Notes(Resource):
         parser.add_argument('text', required=True)
         args = parser.parse_args()
 
-        query_object = db_session.query(Note)
-        query_object = query_object.filter(Note.id == id)
-        query_object = query_object.filter(
-            Note.user_login_id == current_user.get_id())
-        query_object = query_object.filter(Note.is_deactivated == False)
-        note = query_object.one_or_none()
+        note = repository.get_by_id(Note, id, True)
 
         if not note:
             return {}, 400
 
         setattr(note, 'text', args['text'])
-        db_session.commit()
+        _ = repository.update(note)
         return {'result': 'Note updated'}, 201
 
     @ns_notes.doc('delete_note')
@@ -659,18 +652,13 @@ class Notes(Resource):
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
 
-        query_object = db_session.query(Note)
-        query_object = query_object.filter(Note.id == id)
-        query_object = query_object.filter(
-            Note.user_login_id == current_user.get_id())
-        query_object = query_object.filter(Note.is_deactivated == False)
-        note = query_object.one_or_none()
+        note = repository.get_by_id(Note, id, True)
 
         if not note:
             return {}, 400
 
         setattr(note, 'is_deactivated', True)
-        db_session.commit()
+        _ = repository.update(note)
         return {'result': 'Note deleted'}, 201
 
 

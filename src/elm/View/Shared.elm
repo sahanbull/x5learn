@@ -454,11 +454,11 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                 _ ->
                   False
 
-            chunkBackground =
+            appearance =
               if isPopupOpen then
                 [ Background.color orange ]
               else
-                []
+                [ none |> el [ width <| px 1, height <| px fragmentsBarHeight, Background.color veryTransparentWhite ] |> inFront ]
 
             popup =
               if isPopupOpen then
@@ -481,7 +481,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
               floor <| chunk.length * (toFloat barWidth) + (if chunkIndex == (List.length chunks)-1 then 0 else 1)
         in
             none
-            |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ chunkBackground ++ popup ++ clickHandler)
+            |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ appearance ++ popup ++ clickHandler)
             |> inFront
 
       chunkTriggers =
@@ -493,7 +493,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
 
       background =
         if darkBackground then
-          [ materialScrimBackground ]
+          [ Background.color materialDark ]
         else
           []
   in

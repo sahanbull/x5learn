@@ -159,7 +159,7 @@ inspectorContentDefault model userState {oer, fragmentStart} =
         , [ providerLink, linkToFile ] |> column [ width fill, spacing 15, paddingTop 30 ]
         , fragmentsBar
         ]
-        |> column [ width (px playerWidth), height <| px fragmentsBarWrapperHeight ]
+        |> column [ width (px playerWidth), height <| px fragmentsBarWrapperHeight, moveDown 1 ]
 
       fragmentsBar =
         if hasYoutubeVideo oer.url then

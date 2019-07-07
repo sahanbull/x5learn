@@ -216,21 +216,22 @@ viewOerCard model userState recommendedFragments position barId oer =
             , [])
 
           Just enrichment ->
-            let
-                error =
-                  (image [ alpha 0.5, centerX, centerY ] { src = svgPath "enrichment_error", description = "No preview available for this resource" }
-                   |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
-                  , [])
-            in
-                if enrichment.errors then
-                  error
-                else
-                  case enrichment.bubblogram of
-                    Nothing -> -- shouldn't happen
-                      (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color materialDark, inFront viewLoadingSpinner ], [])
+            if enrichment.errors then
+              if isVideoFile oer.url then
+                (image [ alpha 0.9, centerX, centerY ] { src = svgPath "playIcon", description = "Video file" }
+                 |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
+                , [])
+              else
+                (image [ alpha 0.5, centerX, centerY ] { src = svgPath "enrichment_error", description = "No preview available for this resource" }
+                 |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
+                , [])
+            else
+              case enrichment.bubblogram of
+                Nothing -> -- shouldn't happen
+                  (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color materialDark, inFront viewLoadingSpinner ], [])
 
-                    Just bubblogram ->
-                      viewBubblogram model oer.url bubblogram
+                Just bubblogram ->
+                  viewBubblogram model oer.url bubblogram
 
       title =
         oer.title

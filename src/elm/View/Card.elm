@@ -227,7 +227,7 @@ viewOerCard model userState recommendedFragments position barId oer =
                 else
                   case enrichment.bubblogram of
                     Nothing -> -- shouldn't happen
-                      error
+                      (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color materialDark, inFront viewLoadingSpinner ], [])
 
                     Just bubblogram ->
                       viewBubblogram model oer.url bubblogram

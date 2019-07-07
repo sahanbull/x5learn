@@ -753,10 +753,3 @@ guestDataLossWarning =
       , "." |> text
       ]
       |> paragraph [ Font.size 14, Font.color materialDark ]
-
-
-loginPath =
-   "/login"
-
-signupPath =
-  "/signup"

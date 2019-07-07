@@ -69,8 +69,12 @@ viewNoteboard model userState oerUrl =
 
       content : Element Msg
       content =
-        ([ headingRow ] ++ noteElements ++ [ newEntry ] ++ [ guestDataLossWarning ])
-        |> column [ width fill, spacing 15 ]
+        if isLoggedIn model then
+          [ headingRow ] ++ noteElements ++ [ newEntry ]
+          |> column [ width fill, spacing 15 ]
+        else
+          guestCallToSignup "In order to use all the features and save your changes"
+          |> el [ width fill, paddingXY 15 12, Background.color <| rgb 1 0.85 0.6 ]
   in
       [ (notes |> List.length |> String.fromInt, content) ]
       |> Keyed.column [ width fill ]

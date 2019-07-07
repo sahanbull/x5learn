@@ -647,12 +647,3 @@ isVideoFile url =
         url |> String.toLower
   in
      String.endsWith ".mp4" lower || String.endsWith ".webm" lower || String.endsWith ".ogg" lower
-
-
-lastSearchString model =
-  case model.searchState of
-    Nothing ->
-      ""
-
-    Just {lastSearch} ->
-      lastSearch

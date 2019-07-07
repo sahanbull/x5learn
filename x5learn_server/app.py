@@ -103,6 +103,11 @@ def recent():
     return render_template('home.html')
 
 
+@app.route("/material/<material_id>")
+def material(material_id):
+    return render_template('home.html')
+
+
 @app.route("/profile")
 @login_required
 def profile():
@@ -170,6 +175,13 @@ def api_oers():
     for url in request.get_json()['urls']:
         oers[url] = find_oer_by_url(url)
     return jsonify(oers)
+
+
+@app.route("/api/v1/material/", methods=['POST'])
+def api_material():
+    oer_id = request.get_json()['oerId']
+    oer = Oer.query.filter_by(id=oer_id).first()
+    return jsonify(oer.data)
 
 
 @app.route("/api/v1/save_user_profile/", methods=['POST'])

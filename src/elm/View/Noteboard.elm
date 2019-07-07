@@ -23,7 +23,7 @@ viewNoteboard model userState oerUrl =
   let
       heading : Element Msg
       heading =
-        "Private Notes" |> subheaderWrap []
+        "Your private notes" |> subheaderWrap []
 
       quickNotesWidget : Element Msg
       quickNotesWidget =

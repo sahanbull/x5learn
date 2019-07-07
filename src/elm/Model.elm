@@ -52,6 +52,7 @@ type alias Model =
   , wikichunkEnrichmentRetryTime : Posix
   , timeOfLastUrlChange : Posix
   , startedLabStudyTask : Maybe (LabStudyTask, Posix)
+  , currentMaterial : Maybe CurrentMaterial
   }
 
 
@@ -67,12 +68,15 @@ type EntityDefinition
   | DefinitionLoaded String
   -- | DefinitionUnavailable -- TODO consider appropriate error handling
 
+type CurrentMaterial
+  = Loaded OerUrl
+  | Error
+
 type alias LabStudyTask =
   { title : String
   , durationInMinutes : Int
   , dataset : String
   }
-
 
 type alias Bubble =
   { entity : Entity
@@ -153,6 +157,7 @@ type Subpage
   | Search
   | Notes
   | Recent
+  | Material
 
 
 type alias SearchState =
@@ -313,6 +318,7 @@ initialModel nav flags =
   , wikichunkEnrichmentRetryTime = initialTime
   , timeOfLastUrlChange = initialTime
   , startedLabStudyTask = Nothing
+  , currentMaterial = Nothing
   }
 
 
@@ -606,6 +612,8 @@ notesPath =
 recentPath =
   "/recent"
 
+materialPath =
+  "/material"
 
 loginPath =
    "/login"
@@ -650,3 +658,10 @@ isVideoFile url =
         url |> String.toLower
   in
      String.endsWith ".mp4" lower || String.endsWith ".webm" lower || String.endsWith ".ogg" lower
+
+
+trimTailingEllipsisIfNeeded str = -- This function is a temporary patch to fix a mistake I made whereby an additional character was erroneously added to the provider field. Only the youtube videos for the first lab study are affected. Delete this function after re-ingesting or removing those oers.
+  if str |> String.endsWith "…" then
+    str |> String.dropRight 1
+  else
+    str

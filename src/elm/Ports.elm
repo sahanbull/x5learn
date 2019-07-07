@@ -9,7 +9,8 @@ import Model exposing (..)
 
 port setBrowserFocus : String -> Cmd msg
 port copyClipboard : String -> Cmd msg
-port openModalAnimation : InspectorParams -> Cmd msg
+port openModalAnimation : YoutubeEmbedParams -> Cmd msg
+port embedYoutubePlayerOnMaterialPage : YoutubeEmbedParams -> Cmd msg
 port youtubeSeekTo : Float -> Cmd msg
 
 port modalAnimationStart : (BoxAnimation -> msg) -> Sub msg
@@ -23,7 +24,7 @@ port videoIsPlayingAtPosition : (Float -> msg) -> Sub msg
 port pageScrolled : (ScrollData -> msg) -> Sub msg
 
 
-type alias InspectorParams =
+type alias YoutubeEmbedParams =
   { modalId : String
   , videoId : String
   , fragmentStart : Float

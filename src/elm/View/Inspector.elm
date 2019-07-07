@@ -185,7 +185,7 @@ inspectorContentDefault model userState {oer, fragmentStart} =
 
           provider ->
             [ "Provider:" |> bodyNoWrap []
-            , newTabLink [] { url = oer.url, label = provider |> bodyNoWrap [] }
+            , newTabLink [] { url = oer.url, label = provider |> trimTailingEllipsisIfNeeded |> bodyNoWrap [] }
             ]
             |> row [ spacing 10 ]
         -- else

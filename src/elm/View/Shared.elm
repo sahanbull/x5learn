@@ -99,6 +99,10 @@ borderLeft px =
   Border.widthEach { allSidesZero | left = px }
 
 
+borderColorLayout =
+  Border.color <| rgb 0.8 0.8 0.8
+
+
 allSidesZero =
   { top = 0
   , right = 0

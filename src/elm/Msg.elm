@@ -36,6 +36,7 @@ type Msg
   | RequestSaveUserProfile (Result Http.Error String)
   | RequestSaveUserState (Result Http.Error String)
   | RequestLabStudyLogEvent (Result Http.Error String)
+  | RequestMaterial (Result Http.Error Oer)
   | SetHover (Maybe String)
   | SetPopup Popup
   | ClosePopup

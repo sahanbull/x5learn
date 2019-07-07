@@ -24,6 +24,7 @@ function setupPorts(app){
   // });
 
   app.ports.openModalAnimation.subscribe(startAnimationWhenModalIsReady);
+  app.ports.embedYoutubePlayerOnMaterialPage.subscribe(embedYoutubePlayerOnMaterialPage);
 
   app.ports.setBrowserFocus.subscribe(function(elementId) {
     document.activeElement.blur();
@@ -50,11 +51,11 @@ function setupPorts(app){
 }
 
 
-function startAnimationWhenModalIsReady(inspectorParams) {
-  var modalId = inspectorParams.modalId;
+function startAnimationWhenModalIsReady(youtubeEmbedParams) {
+  var modalId = youtubeEmbedParams.modalId;
   if(window.document.getElementById(modalId)==null) {
     setTimeout(function() {
-      startAnimationWhenModalIsReady(inspectorParams);
+      startAnimationWhenModalIsReady(youtubeEmbedParams);
     }, 15);
   }
   else{
@@ -64,11 +65,18 @@ function startAnimationWhenModalIsReady(inspectorParams) {
     app.ports.modalAnimationStart.send({frameCount: 0, start: positionAndSize(card), end: positionAndSize(modal)});
     setTimeout(function(){
       app.ports.modalAnimationStop.send(12345);
-      if(inspectorParams.videoId.length>0){
-        embedVideo(inspectorParams);
+      if(youtubeEmbedParams.videoId.length>0){
+        embedYoutubeVideo(youtubeEmbedParams);
       }
     }, 110);
     return;
+  }
+}
+
+
+function embedYoutubePlayerOnMaterialPage(youtubeEmbedParams) {
+  if(youtubeEmbedParams.videoId.length>0){
+    embedYoutubeVideo(youtubeEmbedParams);
   }
 }
 

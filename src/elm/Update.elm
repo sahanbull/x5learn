@@ -137,9 +137,13 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | userMessage = Just "There was a problem while requesting user data. Please try again later." }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
-      ( model |> updateSearch (insertSearchResults (oers |> List.map .url)) |> cacheOersFromList oers, [ Navigation.pushUrl nav.key "/search", setBrowserFocus "SearchField" ] |> Cmd.batch )
-      |> requestWikichunkEnrichmentsIfNeeded
-      |> logEventForLabStudy "RequestOerSearch" (oers |> List.map .url)
+      let
+          searchUrl =
+            Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" (lastSearchString model) ]
+      in
+          ( model |> updateSearch (insertSearchResults (oers |> List.map .url)) |> cacheOersFromList oers, [ Navigation.pushUrl nav.key searchUrl, setBrowserFocus "SearchField" ] |> Cmd.batch )
+          |> requestWikichunkEnrichmentsIfNeeded
+          |> logEventForLabStudy "RequestOerSearch" (oers |> List.map .url)
 
     RequestOerSearch (Err err) ->
       -- let

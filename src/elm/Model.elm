@@ -607,6 +607,13 @@ recentPath =
   "/recent"
 
 
+loginPath =
+   "/login"
+
+signupPath =
+  "/signup"
+
+
 averageOf getterFunction records =
   (records |> List.map getterFunction |> List.sum) / (records |> List.length |> toFloat)
 

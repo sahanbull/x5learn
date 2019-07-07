@@ -41,7 +41,7 @@ viewPageHeader model =
       loginLogoutSignup =
         case model.session of
           Nothing ->
-            []
+            [ link [ alignRight, paddingXY 15 10 ] { url = logoutPath, label = "Log out" |> bodyNoWrap [] } ]
 
           Just session ->
             case session.loginState of

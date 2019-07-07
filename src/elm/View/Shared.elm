@@ -744,13 +744,13 @@ secondsToString seconds =
       minutesString ++ ":" ++ secondsString
 
 
-guestDataLossWarning : Element Msg
-guestDataLossWarning =
+guestCallToSignup : String -> Element Msg
+guestCallToSignup incentive =
   let
       linkAttrs =
         [ paddingXY 5 0, Font.color linkBlue ]
   in
-      [ "You are currently not logged in. To ensure that your changes are saved, please" |> text
+      [ "You are currently not logged in. "++incentive++", please" |> text
       , "log in" |> text |> linkTo linkAttrs loginPath
       , "or" |> text
       , "create an account" |> text |> linkTo linkAttrs signupPath

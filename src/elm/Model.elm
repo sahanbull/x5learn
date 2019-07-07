@@ -621,6 +621,9 @@ loginPath =
 signupPath =
   "/signup"
 
+logoutPath =
+  "/logout"
+
 
 averageOf getterFunction records =
   (records |> List.map getterFunction |> List.sum) / (records |> List.length |> toFloat)

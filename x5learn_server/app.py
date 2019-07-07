@@ -365,13 +365,16 @@ def convert_x5_material_to_oer(material, url):
 
 def push_enrichment_task(url, priority):
     # print('push_enrichment_task')
-    task = WikichunkEnrichmentTask.query.filter_by(url=url).first()
-    if task is None:
-        task = WikichunkEnrichmentTask(url, priority)
-        db_session.add(task)
-    else:
-        task.priority += priority
-    db_session.commit()
+    try:
+        task = WikichunkEnrichmentTask.query.filter_by(url=url).first()
+        if task is None:
+            task = WikichunkEnrichmentTask(url, priority)
+            db_session.add(task)
+        else:
+            task.priority += priority
+        db_session.commit()
+    except sqlalchemy.orm.exc.StaleDataError:
+        print('sqlalchemy.orm.exc.StaleDataError caught and ignored.') # This error came up occasionally. I'm not 100% sure about what it entails but it didn't seem to affect the user experience so I'm suppressing it for now to prevent a pointless alert on the frontend. Grateful for any helpful tips. More information on this error: https://docs.sqlalchemy.org/en/13/orm/exceptions.html#sqlalchemy.orm.exc.StaleDataError
 
 
 def any_word_matches(words, text):

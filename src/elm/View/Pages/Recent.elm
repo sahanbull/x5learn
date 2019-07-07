@@ -33,7 +33,7 @@ viewRecentPage model userState =
           if isLoggedIn model then
             viewCenterNote "Your viewed items will appear here"
           else
-            guestDataLossWarning
+            guestCallToSignup "To ensure that your changes are saved"
             |> milkyWhiteCenteredContainer
         else
           let

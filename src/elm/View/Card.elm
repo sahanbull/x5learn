@@ -246,19 +246,20 @@ viewOerCard model userState recommendedFragments position barId oer =
 
       bottomInfo =
         let
+            dateStr =
+              if oer.date |> String.startsWith "Published on " then oer.date |> String.dropLeft ("Published on " |> String.length) else oer.date
+
+            date =
+              dateStr |> captionNowrap [ alignLeft ]
+
             provider =
-              oer.provider |> domainOnly |> truncateSentence 24 |> captionNowrap [ centerX ]
+              oer.provider |> domainOnly |> truncateSentence 24 |> captionNowrap [ if dateStr=="" then alignLeft else centerX ]
+
+            duration =
+              oer.duration |> captionNowrap [ alignRight ]
 
             content =
-              if oer.duration=="" then
-                [ provider
-                , oer.date |> captionNowrap [ alignRight ]
-                ]
-              else
-                [ oer.date |> captionNowrap []
-                , provider
-                , oer.duration |> captionNowrap [ alignRight ]
-                ]
+              [ date, provider, duration ]
         in
             content
             |> row [ width fill, paddingXY 16 0, moveDown 253 ]

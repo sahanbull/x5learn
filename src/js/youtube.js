@@ -41,15 +41,20 @@ function onPlayerStateChange(event) {
   }
 }
 
-
-function embedVideo(inspectorParams){
-  playerFragmentStart = inspectorParams.fragmentStart;
+function embedYoutubeVideo(youtubeEmbedParams){
+  if(typeof YT === 'undefined' || YT.loaded!=1){
+    setTimeout(function() { // try again after a short delay
+      embedYoutubeVideo(youtubeEmbedParams);
+    }, 20);
+    return;
+  }
+  playerFragmentStart = youtubeEmbedParams.fragmentStart;
   player = new YT.Player('player', {
     height: '400',
     width: '720',
-    videoId: inspectorParams.videoId,
+    videoId: youtubeEmbedParams.videoId,
     events: {
-      'onReady': inspectorParams.playWhenReady ? onReadySeekAndPlay : onReadySeek,
+      'onReady': youtubeEmbedParams.playWhenReady ? onReadySeekAndPlay : onReadySeek,
       'onStateChange': onPlayerStateChange
     }
   });

@@ -69,7 +69,7 @@ update msg ({nav, userProfileForm} as model) =
             else if path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
             else if path |> String.startsWith materialPath then
-              (Material, (model, cmdRequestOers))
+              (Material, model |> requestMaterialAfterUrlChanged url)
             else
               (Home, (model, cmdRequestOers))
       in
@@ -100,14 +100,15 @@ update msg ({nav, userProfileForm} as model) =
 
     InspectOer oer fragmentStart fragmentLength playWhenReady ->
       let
-          inspectorParams =
+          youtubeEmbedParams : YoutubeEmbedParams
+          youtubeEmbedParams =
             { modalId = modalId
             , videoId = getYoutubeVideoId oer.url |> Maybe.withDefault ""
             , fragmentStart = fragmentStart
             , playWhenReady = playWhenReady
             }
       in
-          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> (updateUserState <| addFragmentAccess (Fragment oer.url fragmentStart fragmentLength) model.currentTime), openModalAnimation inspectorParams)
+          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> (updateUserState <| addFragmentAccess (Fragment oer.url fragmentStart fragmentLength) model.currentTime), openModalAnimation youtubeEmbedParams)
       |> saveUserState msg
       |> logEventForLabStudy "InspectOer" [ oer.url ]
 
@@ -242,6 +243,21 @@ update msg ({nav, userProfileForm} as model) =
       -- in
       -- ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
       (model, Cmd.none)
+
+    RequestMaterial (Ok oer) ->
+      let
+          youtubeEmbedParams : YoutubeEmbedParams
+          youtubeEmbedParams =
+            { modalId = ""
+            , videoId = getYoutubeVideoId oer.url |> Maybe.withDefault ""
+            , fragmentStart = 0
+            , playWhenReady = False
+            }
+      in
+          ({ model | currentMaterial = Just <| Loaded oer.url } |> cacheOersFromList [ oer ], embedYoutubePlayerOnMaterialPage youtubeEmbedParams)
+
+    RequestMaterial (Err err) ->
+      ( { model | currentMaterial = Just Error }, Cmd.none )
 
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
@@ -668,3 +684,20 @@ executeSearchAfterUrlChanged model url =
       else
         ( { model | searchInputTyping = str, searchState = Just <| newSearch str, searchSuggestions = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers str)
         |> logEventForLabStudy "executeSearchAfterUrlChanged" [ str ]
+
+
+requestMaterialAfterUrlChanged : Url -> Model -> (Model, Cmd Msg)
+requestMaterialAfterUrlChanged url model =
+  let
+      materialId =
+        url.path
+        |> String.dropLeft 10 -- TODO A much cleaner method is to use Url.Query.parser
+        |> String.toInt
+        -- |> Debug.log "materialId"
+  in
+      case materialId of
+        Nothing ->
+          ({ model | currentMaterial = Just Error }, Cmd.none)
+
+        Just oerId ->
+          (model, requestMaterial oerId)

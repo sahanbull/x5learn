@@ -215,10 +215,3 @@ fragmentsBarWrapperHeight =
 
 sheetWidth =
   752+notesWidth+15
-
-
-trimTailingEllipsisIfNeeded str =
-  if str |> String.endsWith "…" then
-    str |> String.dropRight 1
-  else
-    str

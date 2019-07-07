@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestSearchSuggestions, requestEntityDefinitions, requestSaveUserProfile, requestSaveUserState, requestOers, requestLabStudyLogEvent)
+module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestSearchSuggestions, requestEntityDefinitions, requestSaveUserProfile, requestSaveUserState, requestOers, requestLabStudyLogEvent, requestMaterial)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -119,6 +119,15 @@ requestLabStudyLogEvent time eventType params =
     { url = Url.Builder.absolute [ apiRoot, "log_event_for_lab_study/" ] []
     , body = Http.jsonBody <| Encode.object [ ("browserTime", Encode.int time), ("eventType", Encode.string eventType), ("params", Encode.list Encode.string params) ]
     , expect = Http.expectString RequestLabStudyLogEvent
+    }
+
+
+requestMaterial : Int -> Cmd Msg
+requestMaterial oerId =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "material/" ] []
+    , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId) ]
+    , expect = Http.expectJson RequestMaterial oerDecoder
     }
 
 

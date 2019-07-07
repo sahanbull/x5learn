@@ -185,7 +185,7 @@ inspectorContentDefault model userState {oer, fragmentStart} =
 
           provider ->
             [ "Provider:" |> bodyNoWrap []
-            , newTabLink [] { url = oer.url, label = provider |> bodyNoWrap [] }
+            , newTabLink [] { url = oer.url, label = provider |> trimTailingEllipsisIfNeeded |> bodyNoWrap [] }
             ]
             |> row [ spacing 10 ]
         -- else
@@ -215,3 +215,10 @@ fragmentsBarWrapperHeight =
 
 sheetWidth =
   752+notesWidth+15
+
+
+trimTailingEllipsisIfNeeded str =
+  if str |> String.endsWith "…" then
+    str |> String.dropRight 1
+  else
+    str

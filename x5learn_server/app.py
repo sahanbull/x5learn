@@ -103,6 +103,11 @@ def recent():
     return render_template('home.html')
 
 
+@app.route("/material/<int:material_id>")
+def material(material_id):
+    return render_template('home.html')
+
+
 @app.route("/profile")
 @login_required
 def profile():

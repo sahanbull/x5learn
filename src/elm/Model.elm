@@ -153,6 +153,7 @@ type Subpage
   | Search
   | Notes
   | Recent
+  | Material
 
 
 type alias SearchState =
@@ -606,6 +607,8 @@ notesPath =
 recentPath =
   "/recent"
 
+materialPath =
+  "/material"
 
 loginPath =
    "/login"

@@ -68,6 +68,8 @@ update msg ({nav, userProfileForm} as model) =
               (Recent, (model, cmdRequestOers))
             else if path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
+            else if path |> String.startsWith materialPath then
+              (Material, (model, cmdRequestOers))
             else
               (Home, (model, cmdRequestOers))
       in

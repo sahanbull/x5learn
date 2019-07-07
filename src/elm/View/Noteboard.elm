@@ -115,7 +115,7 @@ humanReadableRelativeTime {currentTime} time =
         daysAgo // 365
   in
       if minutesAgo<7 then
-        "Just now"
+        "Now"
       else if minutesAgo<60 then
         "Last hour"
       else if hoursAgo<24 then

@@ -674,4 +674,4 @@ resourceUrlPath oerId =
 
 
 isSiteUnderMaintenance =
-  True
+  False

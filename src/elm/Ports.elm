@@ -10,7 +10,7 @@ import Model exposing (..)
 port setBrowserFocus : String -> Cmd msg
 port copyClipboard : String -> Cmd msg
 port openModalAnimation : YoutubeEmbedParams -> Cmd msg
-port embedYoutubePlayerOnMaterialPage : YoutubeEmbedParams -> Cmd msg
+port embedYoutubePlayerOnResourcePage : YoutubeEmbedParams -> Cmd msg
 port youtubeSeekTo : Float -> Cmd msg
 
 port modalAnimationStart : (BoxAnimation -> msg) -> Sub msg

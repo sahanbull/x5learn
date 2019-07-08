@@ -24,7 +24,7 @@ function setupPorts(app){
   // });
 
   app.ports.openModalAnimation.subscribe(startAnimationWhenModalIsReady);
-  app.ports.embedYoutubePlayerOnMaterialPage.subscribe(embedYoutubePlayerOnMaterialPage);
+  app.ports.embedYoutubePlayerOnResourcePage.subscribe(embedYoutubePlayerOnResourcePage);
 
   app.ports.setBrowserFocus.subscribe(function(elementId) {
     document.activeElement.blur();
@@ -74,7 +74,7 @@ function startAnimationWhenModalIsReady(youtubeEmbedParams) {
 }
 
 
-function embedYoutubePlayerOnMaterialPage(youtubeEmbedParams) {
+function embedYoutubePlayerOnResourcePage(youtubeEmbedParams) {
   if(youtubeEmbedParams.videoId.length>0){
     embedYoutubeVideo(youtubeEmbedParams);
   }

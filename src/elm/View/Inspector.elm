@@ -50,7 +50,7 @@ viewModal model userState inspectorState =
 
       fullPageButton =
         image [ alpha 0.8, hoverCircleBackground ] { src = svgPath "fullscreen", description = "View this resource in full-page mode" }
-        |> linkTo [ alignRight ] (materialUrlPath inspectorState.oer.id)
+        |> linkTo [ alignRight ] (resourceUrlPath inspectorState.oer.id)
 
       footer =
         content.footer

@@ -52,7 +52,7 @@ type alias Model =
   , wikichunkEnrichmentRetryTime : Posix
   , timeOfLastUrlChange : Posix
   , startedLabStudyTask : Maybe (LabStudyTask, Posix)
-  , currentMaterial : Maybe CurrentMaterial
+  , currentResource : Maybe CurrentResource
   }
 
 
@@ -68,7 +68,7 @@ type EntityDefinition
   | DefinitionLoaded String
   -- | DefinitionUnavailable -- TODO consider appropriate error handling
 
-type CurrentMaterial
+type CurrentResource
   = Loaded OerUrl
   | Error
 
@@ -157,7 +157,7 @@ type Subpage
   | Search
   | Notes
   | Recent
-  | Material
+  | Resource
 
 
 type alias SearchState =
@@ -319,7 +319,7 @@ initialModel nav flags =
   , wikichunkEnrichmentRetryTime = initialTime
   , timeOfLastUrlChange = initialTime
   , startedLabStudyTask = Nothing
-  , currentMaterial = Nothing
+  , currentResource = Nothing
   }
 
 
@@ -614,8 +614,8 @@ notesPath =
 recentPath =
   "/recent"
 
-materialPath =
-  "/material"
+resourcePath =
+  "/resource"
 
 loginPath =
    "/login"
@@ -669,5 +669,5 @@ trimTailingEllipsisIfNeeded str = -- This function is a temporary patch to fix a
     str
 
 
-materialUrlPath oerId =
-  materialPath ++ "/" ++ (String.fromInt oerId)
+resourceUrlPath oerId =
+  resourcePath ++ "/" ++ (String.fromInt oerId)

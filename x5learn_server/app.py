@@ -103,8 +103,8 @@ def recent():
     return render_template('home.html')
 
 
-@app.route("/material/<material_id>")
-def material(material_id):
+@app.route("/resource/<material_id>")
+def resource(material_id):
     return render_template('home.html')
 
 
@@ -177,7 +177,7 @@ def api_oers():
     return jsonify(oers)
 
 
-@app.route("/api/v1/material/", methods=['POST'])
+@app.route("/api/v1/resource/", methods=['POST'])
 def api_material():
     oer_id = request.get_json()['oerId']
     oer = Oer.query.filter_by(id=oer_id).first()

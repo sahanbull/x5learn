@@ -21,7 +21,7 @@ from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_SENDER, 
 from x5learn_server.db.database import get_or_create_db
 _ = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
-from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent, Action, ActionType, Note, Repository, NotesRepository, ActionsRepository, UserRepository
+from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent, Action, ActionType, Note, Repository, NotesRepository, ActionsRepository, UserRepository, DefinitionsRepository
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 
@@ -787,7 +787,9 @@ class Definition(Resource):
         if not args:
             return {'result': 'Titles are required'}, 400
 
-        temp_db_defs = db_session.query(EntityDefinition).filter(EntityDefinition.title.in_(args)).all()
+        # Creating a definitions repository for unique action
+        definitions_repository = DefinitionsRepository()
+        temp_db_defs = definitions_repository.get_definitions_list(args)
 
         temp_db_lookup = dict()
         if temp_db_defs:
@@ -818,8 +820,7 @@ class Definition(Resource):
 
                     # Saving fetched data for next time
                     entity_def = EntityDefinition(temp_wiki_page.pageid, i, temp_wiki_page.url, temp_wiki_def, "en")
-                    db_session.add(entity_def)
-                    db_session.commit()
+                    repository.add(entity_def)
 
                 except (wikipedia.exceptions.PageError, wikipedia.exceptions.DisambiguationError):
                     result.append({

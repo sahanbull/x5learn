@@ -75,7 +75,7 @@ viewUserMenu model userProfile =
         link [ paddingXY 15 10, width fill ] { url = url, label = buttonText |> bodyNoWrap [] }
 
       labStudyTaskButtons =
-        if isLabStudy1 then
+        if isLabStudy1 model then
           [ labStudyTaskButton <| LabStudyTask "Warmup Task" 2 "w"
           , labStudyTaskButton <| LabStudyTask "Task 1 (Choose)" 20 "a"
           , labStudyTaskButton <| LabStudyTask "Task 2 (Gap)" 5 "a"

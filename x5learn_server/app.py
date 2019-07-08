@@ -21,7 +21,7 @@ from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_SENDER, 
 from x5learn_server.db.database import get_or_create_db
 _ = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
-from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent, Action, ActionType, Note, Repository, NotesRepository, ActionsRepository
+from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent, Action, ActionType, Note, Repository, NotesRepository, ActionsRepository, UserRepository
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 
@@ -740,13 +740,11 @@ class UserApi(Resource):
             return {'result': 'User not logged in'}, 401
         else:
             id = current_user.get_id()
-            user = db_session.query(UserLogin).get(id)
+            user = repository.get_by_id(UserLogin, id)
 
-            Action.query.filter(Action.user_login_id == id).delete()
-            Note.query.filter(Note.user_login_id == id).delete()
-            User.query.filter(User.id == id).delete()
-            db_session.delete(user)
-            db_session.commit()
+            # Creating a user repository for unique action
+            user_repository = UserRepository()
+            _ = user_repository.forget_user(user)
 
             # Sending confirmation mail
             if user.email:

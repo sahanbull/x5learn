@@ -327,3 +327,20 @@ class ActionsRepository(Repository):
             query_object = query_object.limit(limit)
 
         return query_object.all()
+
+
+class UserRepository(Repository):
+
+    def __init__(self):
+        pass
+
+    def forget_user(self, user):
+        global db_session
+
+        db_session.query(Action).filter_by(user_login_id=current_user.get_id()).delete()
+        db_session.query(Note).filter_by(user_login_id=current_user.get_id()).delete()
+        db_session.query(User).filter_by(user_login_id=current_user.get_id()).delete()
+
+        db_session.delete(user)
+        db_session.commit()
+        return True

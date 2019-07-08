@@ -174,7 +174,8 @@ type alias InspectorState =
 
 
 type alias Oer =
-  { date : String
+  { id : Int
+  , date : String
   , description : String
   , duration : String
   , images : List String
@@ -491,7 +492,8 @@ getCachedOerWithBlankDefault model oerUrl =
 
 -- temporary solution. TODO: refactor Oer data type
 blankOer oerUrl =
-  { date = ""
+  { id = 0
+  , date = ""
   , description = ""
   , duration = ""
   , images = []

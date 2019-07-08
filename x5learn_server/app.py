@@ -181,7 +181,7 @@ def api_oers():
 def api_material():
     oer_id = request.get_json()['oerId']
     oer = Oer.query.filter_by(id=oer_id).first()
-    return jsonify(oer.data)
+    return jsonify(oer.data_and_id())
 
 
 @app.route("/api/v1/save_user_profile/", methods=['POST'])
@@ -317,7 +317,7 @@ def search_results_from_x5gon_api(text):
             oer = Oer(url, convert_x5_material_to_oer(material, url))
             db_session.add(oer)
             db_session.commit()
-        oers.append(oer.data)
+        oers.append(oer.data_and_id())
         enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
         if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION):
             push_enrichment_task(url, int(1000/(index+1)) + 1)
@@ -398,10 +398,11 @@ def search_suggestions(text):
 def find_oer_by_url(url):
     oer = Oer.query.filter_by(url=url).first()
     if oer is not None:
-        return oer.data
+        return oer.data_and_id()
     else:
         # Return a blank OER. This should not happen normally
         oer = {}
+        oer['id'] = 0
         oer['date'] = ''
         oer['description'] = '(Sorry, this resource is no longer accessible)'
         oer['duration'] = ''

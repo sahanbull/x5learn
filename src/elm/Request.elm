@@ -242,6 +242,7 @@ searchResultsDecoder =
 
 oerDecoder =
   Decode.succeed Oer
+  |> andMap (field "id" int)
   |> andMap (field "date" string)
   |> andMap (field "description" string)
   |> andMap (field "duration" string)

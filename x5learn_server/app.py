@@ -103,8 +103,8 @@ def recent():
     return render_template('home.html')
 
 
-@app.route("/resource/<material_id>")
-def resource(material_id):
+@app.route("/resource/<oer_id>")
+def resource(oer_id):
     return render_template('home.html')
 
 
@@ -162,6 +162,11 @@ def api_search():
     return jsonify(results)
 
 
+# @app.route("/api/v1/resource_recommendations/", methods=['GET'])
+# def api_resource_recommendations():
+#     oer_id = request.get_json()['oerId']
+#     return jsonify(results)
+
 
 @app.route("/api/v1/search_suggestions/", methods=['GET'])
 def api_search_suggestions():
@@ -181,6 +186,7 @@ def api_oers():
 def api_material():
     oer_id = request.get_json()['oerId']
     oer = Oer.query.filter_by(id=oer_id).first()
+    push_enrichment_task_if_needed(oer.data['url'], 10000)
     return jsonify(oer.data_and_id())
 
 
@@ -318,9 +324,7 @@ def search_results_from_x5gon_api(text):
             db_session.add(oer)
             db_session.commit()
         oers.append(oer.data_and_id())
-        enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
-        if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION):
-            push_enrichment_task(url, int(1000/(index+1)) + 1)
+        push_enrichment_task_if_needed(url, int(1000/(index+1)) + 1)
     return oers
 
 
@@ -361,6 +365,12 @@ def convert_x5_material_to_oer(material, url):
     data['images'] = []
     data['mediatype'] = material['type']
     return data
+
+
+def push_enrichment_task_if_needed(url, urgency):
+    enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
+    if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION):
+        push_enrichment_task(url, urgency)
 
 
 def push_enrichment_task(url, priority):

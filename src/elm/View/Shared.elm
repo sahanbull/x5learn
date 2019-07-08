@@ -127,6 +127,10 @@ bodyNoWrap attrs str =
   text str |> el ([ Font.size 14, Font.color materialDark ] ++ attrs)
 
 
+subSubheaderNoWrap attrs str =
+  text str |> el ([ Font.size 16, Font.color materialDark ] ++ attrs)
+
+
 subSubheaderWrap attrs str =
   [ text str ] |> paragraph ([ Font.size 16 ] ++ attrs)
 

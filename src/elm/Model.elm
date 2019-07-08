@@ -53,6 +53,8 @@ type alias Model =
   , timeOfLastUrlChange : Posix
   , startedLabStudyTask : Maybe (LabStudyTask, Posix)
   , currentResource : Maybe CurrentResource
+  , resourceSidebarTab : ResourceSidebarTab
+  , resourceRecommendations : List Oer
   }
 
 
@@ -67,6 +69,10 @@ type EntityDefinition
   = DefinitionScheduledForLoading
   | DefinitionLoaded String
   -- | DefinitionUnavailable -- TODO consider appropriate error handling
+
+type ResourceSidebarTab
+  = NotesTab
+  | RecommendationsTab
 
 type CurrentResource
   = Loaded OerUrl
@@ -320,6 +326,8 @@ initialModel nav flags =
   , timeOfLastUrlChange = initialTime
   , startedLabStudyTask = Nothing
   , currentResource = Nothing
+  , resourceSidebarTab = RecommendationsTab
+  , resourceRecommendations = []
   }
 
 
@@ -513,8 +521,8 @@ mostRecentFragmentAccess fragmentAccesses =
 
 
 chunksFromUrl : Model -> OerUrl -> List Chunk
-chunksFromUrl model url =
-  case model.wikichunkEnrichments |> Dict.get url of
+chunksFromUrl model oerUrl =
+  case model.wikichunkEnrichments |> Dict.get oerUrl of
     Nothing ->
       []
 
@@ -653,11 +661,11 @@ bubbleZoom =
   0.042
 
 
-isVideoFile : String -> Bool
-isVideoFile url =
+isVideoFile : OerUrl -> Bool
+isVideoFile oerUrl =
   let
       lower =
-        url |> String.toLower
+        oerUrl |> String.toLower
   in
      String.endsWith ".mp4" lower || String.endsWith ".webm" lower || String.endsWith ".ogg" lower
 
@@ -675,3 +683,25 @@ resourceUrlPath oerId =
 
 isSiteUnderMaintenance =
   False
+
+
+relatedSearchStringFromOer : Model -> OerUrl -> String
+relatedSearchStringFromOer model oerUrl =
+  case model.cachedOers |> Dict.get oerUrl of
+    Nothing ->
+      "kittens" -- this really shouldn't happen
+
+    Just {title} ->
+      title
+
+  -- case model.wikichunkEnrichments |> Dict.get oerUrl of
+  --   Nothing ->
+  --     case model.cachedOers |> Dict.get oerUrl of
+  --       Nothing ->
+  --         "kittens" -- this really shouldn't happen
+
+  --   Just {bubblogram, chunks} ->
+  --     case bubblogram of
+  --       Nothing ->
+
+  --     enrichment.BubblePopup

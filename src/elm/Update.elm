@@ -246,18 +246,46 @@ update msg ({nav, userProfileForm} as model) =
 
     RequestResource (Ok oer) ->
       let
-          youtubeEmbedParams : YoutubeEmbedParams
-          youtubeEmbedParams =
-            { modalId = ""
-            , videoId = getYoutubeVideoId oer.url |> Maybe.withDefault ""
-            , fragmentStart = 0
-            , playWhenReady = False
-            }
+          cmdYoutube =
+            case getYoutubeVideoId oer.url of
+              Nothing ->
+                Cmd.none
+
+              Just videoId ->
+                let
+                    youtubeEmbedParams : YoutubeEmbedParams
+                    youtubeEmbedParams =
+                      { modalId = ""
+                      , videoId = videoId
+                      , fragmentStart = 0
+                      , playWhenReady = False
+                      }
+                in
+                    embedYoutubePlayerOnResourcePage youtubeEmbedParams
+
+          newModel =
+            { model | currentResource = Just <| Loaded oer.url } |> cacheOersFromList [ oer ]
       in
-          ({ model | currentResource = Just <| Loaded oer.url } |> cacheOersFromList [ oer ], embedYoutubePlayerOnResourcePage youtubeEmbedParams)
+          (newModel, [ cmdYoutube, requestResourceRecommendations <| relatedSearchStringFromOer newModel oer.url ] |> Cmd.batch )
 
     RequestResource (Err err) ->
       ( { model | currentResource = Just Error }, Cmd.none )
+
+    RequestResourceRecommendations (Ok oersUnfiltered) ->
+      let
+          oers =
+            oersUnfiltered |> List.filter (\oer -> model.currentResource /= Just (Loaded oer.url)) -- ensure that the resource itself isn't included in the recommendations
+      in
+          ({ model | resourceRecommendations = oers } |> cacheOersFromList oers, setBrowserFocus "")
+          |> requestWikichunkEnrichmentsIfNeeded
+          |> logEventForLabStudy "RequestResourceRecommendations" (oers |> List.map .url)
+
+    RequestResourceRecommendations (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestResourceRecommendations"
+      -- in
+      ( { model | resourceRecommendations = [], userMessage = Just "An error occurred while loading recommendations" }, Cmd.none )
 
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )

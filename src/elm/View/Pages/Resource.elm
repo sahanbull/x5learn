@@ -5,7 +5,8 @@ import Dict
 import Set
 import List.Extra
 
-import Html.Attributes
+import Html
+import Html.Attributes as Attributes exposing (style)
 
 import Element exposing (..)
 import Element.Input as Input exposing (button)
@@ -95,11 +96,22 @@ viewResource model userState oer =
             , player
             , fragmentsBarWrapper
             ]
-            |> column [ width fill, moveLeft (sidebarWidth model |> toFloat), Background.color <| grey 230, height fill, borderLeft 1, borderColorLayout, paddingXY horizontalPadding 30 ]
+            |> column [ width fill, moveLeft (sidebarWidth model |> toFloat), Background.color <| grey 230, height fill, borderLeft 1, borderColorLayout, paddingXY horizontalPadding 30, scrollbarY ]
 
       sidebar =
-        viewNoteboard model userState oer.url
-        |> el [ width <| px (sidebarWidth model), height fill, alignTop, borderLeft 1, borderColorLayout, paddingTRBL 0 0 0 15, moveRight ((sheetWidth model) - (sidebarWidth model) |> toFloat), paddingXY 20 30, Background.color white ]
+        let
+            content =
+              case model.resourceSidebarTab of
+                NotesTab ->
+                  viewNoteboard model userState oer.url
+
+                RecommendationsTab ->
+                  model.resourceRecommendations
+                  |> List.map (viewRecommendationCard model)
+                  |> column [ spacing 10 ]
+        in
+            content
+            |> el [ width <| px (sidebarWidth model), height fill, alignTop, borderLeft 1, borderColorLayout, paddingTRBL 0 0 0 15, moveRight ((sheetWidth model) - (sidebarWidth model) |> toFloat), paddingXY 20 30, Background.color white ]
 
       body =
         [ sidebar
@@ -111,11 +123,19 @@ viewResource model userState oer =
         []
 
       fragmentsBarWrapper =
-        [ description
-        , [ providerLink, linkToFile ] |> column [ width fill, spacing 15, paddingTop 30 ]
-        , fragmentsBar
-        ]
-        |> column [ width (px playerWidth), height <| px fragmentsBarWrapperHeight, moveDown 1 ]
+        let
+            (x, y) =
+              -- if isVideoFile oer.url || hasYoutubeVideo oer.url then
+              if hasYoutubeVideo oer.url then
+                (px playerWidth, px fragmentsBarWrapperHeight)
+              else
+                (fill, fill)
+        in
+            [ description
+            , [ providerLink, linkToFile ] |> column [ width fill, spacing 15, paddingTop 30 ]
+            , fragmentsBar
+            ]
+            |> column [ width x, height y, moveDown 1 ]
 
       fragmentsBar =
         if hasYoutubeVideo oer.url then
@@ -158,3 +178,58 @@ fragmentsBarWrapperHeight =
 
 sheetWidth model =
   model.windowWidth - navigationDrawerWidth
+
+
+viewRecommendationCard : Model -> Oer -> Element Msg
+viewRecommendationCard model oer =
+  let
+      title =
+        -- |> subSubheaderNoWrap [ paddingXY 16 10, htmlClass "ClipEllipsis", width <| px (recommendationCardWidth - 52) ]
+        [ oer.title |> Html.text ]
+        |> Html.div [ style "width" (((recommendationCardWidth model) - 32 |> String.fromInt)++"px"), style "font-size" "16px", Attributes.class "ClipEllipsis" ]
+        |> html
+        |> el []
+
+      -- modalityIcon =
+      --   if hasYoutubeVideo oer.url then
+      --     image [ moveRight 280, moveUp 50, width (px 30) ] { src = svgPath "playIcon", description = "play icon" }
+      --   else
+      --     none
+
+      bottomInfo =
+        let
+            dateStr =
+              if oer.date |> String.startsWith "Published on " then oer.date |> String.dropLeft ("Published on " |> String.length) else oer.date
+
+            date =
+              dateStr |> captionNowrap [ alignLeft ]
+
+            provider =
+              oer.provider |> domainOnly |> truncateSentence 24 |> captionNowrap [ if dateStr=="" then alignLeft else centerX ]
+
+            duration =
+              oer.duration |> captionNowrap [ alignRight ]
+
+            content =
+              [ date, provider, duration ]
+        in
+            content
+            |> row [ width fill, height fill, alignBottom ]
+
+      widthOfCard =
+        width (px (recommendationCardWidth model))
+
+      heightOfCard =
+        height (px recommendationCardHeight)
+  in
+      [ title, bottomInfo ]
+      |> column [ widthOfCard, heightOfCard, paddingXY 15 12, spacing 15, htmlClass "materialCard" ]
+      |> linkTo [] (resourceUrlPath oer.id)
+
+
+recommendationCardHeight =
+  80
+
+
+recommendationCardWidth model =
+  sidebarWidth model - 50

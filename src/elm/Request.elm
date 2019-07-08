@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestSearchSuggestions, requestEntityDefinitions, requestSaveUserProfile, requestSaveUserState, requestOers, requestLabStudyLogEvent, requestResource)
+module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestSearchSuggestions, requestEntityDefinitions, requestSaveUserProfile, requestSaveUserState, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -32,7 +32,7 @@ searchOers : String -> Cmd Msg
 searchOers searchText =
   Http.get
     { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText ]
-    , expect = Http.expectJson RequestOerSearch searchResultsDecoder
+    , expect = Http.expectJson RequestOerSearch (list oerDecoder)
     }
 
 
@@ -128,6 +128,14 @@ requestResource oerId =
     { url = Url.Builder.absolute [ apiRoot, "resource/" ] []
     , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId) ]
     , expect = Http.expectJson RequestResource oerDecoder
+    }
+
+
+requestResourceRecommendations : String -> Cmd Msg
+requestResourceRecommendations searchText =
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText ]
+    , expect = Http.expectJson RequestResourceRecommendations (list oerDecoder)
     }
 
 

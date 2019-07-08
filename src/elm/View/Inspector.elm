@@ -43,9 +43,14 @@ viewModal model userState inspectorState =
 
       header =
         [ content.header
+        , fullPageButton
         , button [] { onPress = Just UninspectSearchResult, label = closeIcon }
         ]
-        |> row [ width fill, spacing 16 ]
+        |> row [ width fill, spacing 4 ]
+
+      fullPageButton =
+        image [ alpha 0.8, hoverCircleBackground ] { src = svgPath "fullscreen", description = "View this resource in full-page mode" }
+        |> linkTo [ alignRight ] (materialUrlPath inspectorState.oer.id)
 
       footer =
         content.footer
@@ -157,7 +162,7 @@ inspectorContentDefault model userState {oer, fragmentStart} =
 
       fragmentsBarWrapper =
         [ description
-        , [ linkToFile, [ providerLink, fullPageButton ] |> row [ width fill, spacing 20 ] ] |> column [ width fill, spacing 15, paddingTop 30 ]
+        , [ linkToFile, providerLink ] |> column [ width fill, spacing 15, paddingTop 30 ]
         , fragmentsBar
         ]
         |> column [ width (px playerWidth), height <| px fragmentsBarWrapperHeight, moveDown 1 ]
@@ -201,13 +206,6 @@ inspectorContentDefault model userState {oer, fragmentStart} =
       --   , footerButton <| svgIcon "more_vert"
       --   ]
       --   |> row [ spacing 20, alignRight ]
-
-      fullPageButton =
-        [ image [ alpha 0.8, hoverCircleBackground ] { src = svgPath "fullscreen", description = "View this resource in full-page mode" }
-        , "Full-page" |> bodyNoWrap []
-        ]
-        |> row [ spacing 5 ]
-        |> linkTo [ alignRight ] (materialUrlPath oer.id)
   in
       { header = header, body = body, footer = footer, fixed = none }
 

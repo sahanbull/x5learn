@@ -100,18 +100,22 @@ viewResource model userState oer =
 
       sidebar =
         let
-            content =
+            (heading, content) =
               case model.resourceSidebarTab of
                 NotesTab ->
-                  viewNoteboard model userState oer.url
+                  ("Your notes", viewNoteboard model userState oer.url)
 
                 RecommendationsTab ->
-                  model.resourceRecommendations
-                  |> List.map (viewRecommendationCard model)
-                  |> column [ spacing 10 ]
+                  ("Related material"
+                  , model.resourceRecommendations
+                    |> List.map (viewRecommendationCard model)
+                    |> column [ spacing 12 ]
+                  )
         in
-            content
-            |> el [ width <| px (sidebarWidth model), height fill, alignTop, borderLeft 1, borderColorLayout, paddingTRBL 0 0 0 15, moveRight ((sheetWidth model) - (sidebarWidth model) |> toFloat), paddingXY 20 30, Background.color white ]
+            [ heading |> headlineWrap []
+            , content |> el []
+            ]
+            |> column [ spacing 25, width <| px (sidebarWidth model), height fill, alignTop, borderLeft 1, borderColorLayout, paddingTRBL 0 0 0 15, moveRight ((sheetWidth model) - (sidebarWidth model) |> toFloat), paddingXY 20 30, Background.color white ]
 
       body =
         [ sidebar

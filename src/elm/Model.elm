@@ -667,3 +667,7 @@ trimTailingEllipsisIfNeeded str = -- This function is a temporary patch to fix a
     str |> String.dropRight 1
   else
     str
+
+
+materialUrlPath oerId =
+  materialPath ++ "/" ++ (String.fromInt oerId)

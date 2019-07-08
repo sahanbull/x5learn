@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='x5learn',
-    version='0.1',
+    version='0.9',
     packages=['x5learn_server', 'test-integration', 'test-integration.x5learn_server', 'test-integration.x5learn_server.db'],
     url='x5learn.org',
     license='',

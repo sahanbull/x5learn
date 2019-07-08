@@ -75,11 +75,14 @@ viewUserMenu model userProfile =
         link [ paddingXY 15 10, width fill ] { url = url, label = buttonText |> bodyNoWrap [] }
 
       labStudyTaskButtons =
-        [ labStudyTaskButton <| LabStudyTask "Warmup Task" 2 "w"
-        , labStudyTaskButton <| LabStudyTask "Task 1 (Choose)" 20 "a"
-        , labStudyTaskButton <| LabStudyTask "Task 2 (Gap)" 5 "a"
-        , labStudyTaskButton <| LabStudyTask "Task 3 (Other version)" 5 "c"
-        ]
+        if isLabStudy1 then
+          [ labStudyTaskButton <| LabStudyTask "Warmup Task" 2 "w"
+          , labStudyTaskButton <| LabStudyTask "Task 1 (Choose)" 20 "a"
+          , labStudyTaskButton <| LabStudyTask "Task 2 (Gap)" 5 "a"
+          , labStudyTaskButton <| LabStudyTask "Task 3 (Other version)" 5 "c"
+          ]
+        else
+          []
 
       menu =
         if model.popup == Just UserMenu then

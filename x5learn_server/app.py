@@ -124,7 +124,7 @@ def api_session():
 
 def get_logged_in_user_profile_and_state():
     profile = current_user.user_profile if current_user.user_profile is not None else { 'email': current_user.email }
-    user = current_user.user
+    user = get_or_create_logged_in_user()
     logged_in_user = {'userState': user.frontend_state, 'userProfile': profile}
     return jsonify({'loggedInUser': logged_in_user})
 

@@ -1,13 +1,10 @@
 from flask import Flask, jsonify, render_template, request, redirect
 from flask_mail import Mail
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required
-from flask_security.signals import user_registered
 from flask_sqlalchemy import SQLAlchemy
 import json
 import http.client
 from fuzzywuzzy import fuzz
-from collections import defaultdict
-from random import randint
 import urllib
 from datetime import datetime, timedelta
 from sqlalchemy import or_, and_
@@ -15,12 +12,13 @@ from sqlalchemy import or_, and_
 # instantiate the user management db classes
 from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_USERNAME, MAIL_PASS, MAIL_SERVER, MAIL_PORT
 from x5learn_server.db.database import get_or_create_session_db
+
 get_or_create_session_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
-from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent
+from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, \
+    EntityDefinition, LabStudyLogEvent
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
-
 
 # Create app
 app = Flask(__name__)
@@ -64,7 +62,6 @@ app.config['MAIL_PASSWORD'] = MAIL_PASS
 app.config['MAIL_DEFAULT_SENDER'] = MAIL_USERNAME
 
 mail.init_app(app)
-
 
 CURRENT_ENRICHMENT_VERSION = 1
 
@@ -123,7 +120,7 @@ def api_session():
 
 
 def get_logged_in_user_profile_and_state():
-    profile = current_user.user_profile if current_user.user_profile is not None else { 'email': current_user.email }
+    profile = current_user.user_profile if current_user.user_profile is not None else {'email': current_user.email}
     user = get_or_create_logged_in_user()
     logged_in_user = {'userState': user.frontend_state, 'userProfile': profile}
     return jsonify({'loggedInUser': logged_in_user})
@@ -160,7 +157,6 @@ def api_search():
     text = request.args['text'].lower().strip()
     results = get_dataset_for_lab_study_one(text) or search_results_from_x5gon_api(text)
     return jsonify(results)
-
 
 
 @app.route("/api/v1/search_suggestions/", methods=['GET'])
@@ -209,7 +205,10 @@ def api_wikichunk_enrichments():
 @app.route("/api/v1/most_urgent_unstarted_enrichment_task/", methods=['POST'])
 def most_urgent_unstarted_enrichment_task():
     timeout = datetime.now() - timedelta(minutes=10)
-    task = WikichunkEnrichmentTask.query.filter(and_(WikichunkEnrichmentTask.error == None, or_(WikichunkEnrichmentTask.started == None, WikichunkEnrichmentTask.started < timeout))).order_by(WikichunkEnrichmentTask.priority.desc()).first()
+    task = WikichunkEnrichmentTask.query.filter(and_(WikichunkEnrichmentTask.error == None,
+                                                     or_(WikichunkEnrichmentTask.started == None,
+                                                         WikichunkEnrichmentTask.started < timeout))).order_by(
+        WikichunkEnrichmentTask.priority.desc()).first()
     if task is None:
         return jsonify({'info': 'No tasks available'})
     url = task.url
@@ -286,10 +285,11 @@ def save_definitions(data):
             if definition is None:
                 encoded_title = urllib.parse.quote(title)
                 conn = http.client.HTTPSConnection('en.wikipedia.org')
-                conn.request('GET', '/w/api.php?action=query&prop=extracts&exintro&explaintext&exsentences=1&titles='+encoded_title+'&format=json')
+                conn.request('GET',
+                             '/w/api.php?action=query&prop=extracts&exintro&explaintext&exsentences=1&titles=' + encoded_title + '&format=json')
                 response = conn.getresponse().read().decode("utf-8")
                 pages = json.loads(response)['query']['pages']
-                (_,page) = pages.popitem()
+                (_, page) = pages.popitem()
                 extract = page['extract']
                 # print(extract)
                 definition = EntityDefinition(entity['id'], title, entity['url'], extract)
@@ -301,13 +301,15 @@ def search_results_from_x5gon_api(text):
     max_results = 18
     encoded_text = urllib.parse.quote(text)
     conn = http.client.HTTPSConnection("platform.x5gon.org")
-    conn.request('GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text='+encoded_text)
+    conn.request('GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text=' + encoded_text)
     response = conn.getresponse().read().decode("utf-8")
     materials = json.loads(response)['rec_materials'][:max_results]
     # materials = [ m for m in materials if m['url'].endswith('.pdf') ] # filter by suffix
-    materials = [ m for m in materials if m['url'].endswith('.pdf') or is_video(m['url']) ] # filter by suffix
-    materials = [ m for m in materials if '/assignments/' not in m['url'] and '199' not in m['url'] and '200' not in m['url'] ] # crudely filter out materials from MIT OCW that are assignments or date back to the 90s or early 2000s
-    materials = [ m for m in materials if m['language']=='en' ] # Exclude non-english materials because they tend to come out poorly after wikification. X5GON search doesn't have a language parameter at the time of writing.
+    materials = [m for m in materials if m['url'].endswith('.pdf') or is_video(m['url'])]  # filter by suffix
+    materials = [m for m in materials if '/assignments/' not in m['url'] and '199' not in m['url'] and '200' not in m[
+        'url']]  # crudely filter out materials from MIT OCW that are assignments or date back to the 90s or early 2000s
+    materials = [m for m in materials if m[
+        'language'] == 'en']  # Exclude non-english materials because they tend to come out poorly after wikification. X5GON search doesn't have a language parameter at the time of writing.
     materials = remove_duplicates_from_search_results(materials)
     oers = []
     for index, material in enumerate(materials):
@@ -320,26 +322,28 @@ def search_results_from_x5gon_api(text):
         oers.append(oer.data_and_id())
         enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
         if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION):
-            push_enrichment_task(url, int(1000/(index+1)) + 1)
+            push_enrichment_task(url, int(1000 / (index + 1)) + 1)
     return oers
 
 
 def remove_duplicates_from_search_results(materials):
     enrichments = {}
-    urls = [ m['url'] for m in materials ]
+    urls = [m['url'] for m in materials]
     for enrichment in WikichunkEnrichment.query.filter(WikichunkEnrichment.url.in_(urls)).all():
         enrichments[enrichment.url] = enrichment
     included_materials = []
     included_enrichments = []
+
     def is_duplicate(material):
         url = material['url']
-        if url not in enrichments: # For materials that haven't been enriched yet, we can't tell whether they are identical.
+        if url not in enrichments:  # For materials that haven't been enriched yet, we can't tell whether they are identical.
             return False
         enrichment = enrichments[url]
         for e in included_enrichments:
             if fuzz.ratio(e.entities_to_string(), enrichment.entities_to_string()) > 90:
                 return True
         return False
+
     for m in materials:
         if not is_duplicate(m):
             included_materials.append(m)
@@ -374,7 +378,8 @@ def push_enrichment_task(url, priority):
             task.priority += priority
         db_session.commit()
     except sqlalchemy.orm.exc.StaleDataError:
-        print('sqlalchemy.orm.exc.StaleDataError caught and ignored.') # This error came up occasionally. I'm not 100% sure about what it entails but it didn't seem to affect the user experience so I'm suppressing it for now to prevent a pointless alert on the frontend. Grateful for any helpful tips. More information on this error: https://docs.sqlalchemy.org/en/13/orm/exceptions.html#sqlalchemy.orm.exc.StaleDataError
+        print(
+            'sqlalchemy.orm.exc.StaleDataError caught and ignored.')  # This error came up occasionally. I'm not 100% sure about what it entails but it didn't seem to affect the user experience so I'm suppressing it for now to prevent a pointless alert on the frontend. Grateful for any helpful tips. More information on this error: https://docs.sqlalchemy.org/en/13/orm/exceptions.html#sqlalchemy.orm.exc.StaleDataError
 
 
 def any_word_matches(words, text):
@@ -385,7 +390,7 @@ def any_word_matches(words, text):
 
 
 def search_suggestions(text):
-    all_entity_titles = [] # TODO: use Topics table in db
+    all_entity_titles = []  # TODO: use Topics table in db
     matches = [(title, fuzz.partial_ratio(text, title) + fuzz.ratio(text, title)) for title in all_entity_titles]
     matches = sorted(matches, key=lambda k_v: k_v[1], reverse=True)[:20]
     print([v for k, v in matches])
@@ -453,7 +458,7 @@ def is_video(url):
 # https://stackoverflow.com/questions/3360951/sql-alchemy-connection-time-out/28040482
 # Related question:
 # https://stackoverflow.com/questions/24956894/sql-alchemy-queuepool-limit-overflow
-# (Not an expert on this - grateful for any clarification)
+#  (Not an expert on this - grateful for any clarification)
 @app.teardown_appcontext
 def shutdown_session(exception=None):
     db_session.remove()

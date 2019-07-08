@@ -10,6 +10,8 @@ from datetime import datetime, timedelta
 from sqlalchemy import or_, and_
 
 # instantiate the user management db classes
+from sqlalchemy.orm.exc import StaleDataError
+
 from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_USERNAME, MAIL_PASS, MAIL_SERVER, MAIL_PORT
 from x5learn_server.db.database import get_or_create_session_db
 
@@ -377,7 +379,7 @@ def push_enrichment_task(url, priority):
         else:
             task.priority += priority
         db_session.commit()
-    except sqlalchemy.orm.exc.StaleDataError:
+    except StaleDataError:
         print(
             'sqlalchemy.orm.exc.StaleDataError caught and ignored.')  # This error came up occasionally. I'm not 100% sure about what it entails but it didn't seem to affect the user experience so I'm suppressing it for now to prevent a pointless alert on the frontend. Grateful for any helpful tips. More information on this error: https://docs.sqlalchemy.org/en/13/orm/exceptions.html#sqlalchemy.orm.exc.StaleDataError
 

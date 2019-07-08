@@ -1,4 +1,4 @@
-module View.Pages.PostRegistration exposing (viewPostRegistrationPage)
+module View.Pages.Maintenance exposing (viewMaintenancePage)
 
 import Url
 import Dict
@@ -24,31 +24,17 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
-viewPostRegistrationPage : PageWithModal
-viewPostRegistrationPage =
+viewMaintenancePage : PageWithModal
+viewMaintenancePage =
   let
-      heading =
-        "Welcome 😊"
-        |> headlineWrap []
-
-      explanation =
-        "You have successfully signed up."
-        |> bodyWrap []
-
-      options =
-        [ confirmButton [ alignRight ] "Got it" (Just <| SubmitPostRegistrationForm True)
-        ]
-        |> row [ spacing 30, width fill ]
-
-      form =
-        [ heading
-        , explanation
-        , options
+      note =
+        [ "Hey 😊" |> headlineWrap []
+        , "This website is currently undergoing a major update during which the site will be offline. Please check back in a few days." |> bodyWrap []
         ]
         |> column [ padding 20, spacing 30, width (px 440) ]
 
       page =
-        form
+        note
         |> milkyWhiteCenteredContainer
   in
       (page, [])

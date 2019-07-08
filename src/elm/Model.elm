@@ -52,7 +52,7 @@ type alias Model =
   , wikichunkEnrichmentRetryTime : Posix
   , timeOfLastUrlChange : Posix
   , startedLabStudyTask : Maybe (LabStudyTask, Posix)
-  , currentMaterial : Maybe CurrentMaterial
+  , currentResource : Maybe CurrentResource
   }
 
 
@@ -68,7 +68,7 @@ type EntityDefinition
   | DefinitionLoaded String
   -- | DefinitionUnavailable -- TODO consider appropriate error handling
 
-type CurrentMaterial
+type CurrentResource
   = Loaded OerUrl
   | Error
 
@@ -157,7 +157,7 @@ type Subpage
   | Search
   | Notes
   | Recent
-  | Material
+  | Resource
 
 
 type alias SearchState =
@@ -174,7 +174,8 @@ type alias InspectorState =
 
 
 type alias Oer =
-  { date : String
+  { id : Int
+  , date : String
   , description : String
   , duration : String
   , images : List String
@@ -318,7 +319,7 @@ initialModel nav flags =
   , wikichunkEnrichmentRetryTime = initialTime
   , timeOfLastUrlChange = initialTime
   , startedLabStudyTask = Nothing
-  , currentMaterial = Nothing
+  , currentResource = Nothing
   }
 
 
@@ -491,7 +492,8 @@ getCachedOerWithBlankDefault model oerUrl =
 
 -- temporary solution. TODO: refactor Oer data type
 blankOer oerUrl =
-  { date = ""
+  { id = 0
+  , date = ""
   , description = ""
   , duration = ""
   , images = []
@@ -612,8 +614,8 @@ notesPath =
 recentPath =
   "/recent"
 
-materialPath =
-  "/material"
+resourcePath =
+  "/resource"
 
 loginPath =
    "/login"
@@ -665,3 +667,7 @@ trimTailingEllipsisIfNeeded str = -- This function is a temporary patch to fix a
     str |> String.dropRight 1
   else
     str
+
+
+resourceUrlPath oerId =
+  resourcePath ++ "/" ++ (String.fromInt oerId)

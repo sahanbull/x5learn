@@ -17,7 +17,7 @@ import View.Pages.Notes exposing (viewNotesPage)
 import View.Pages.Gains exposing (viewGainsPage)
 import View.Pages.Profile exposing (viewProfilePage)
 import View.Pages.Recent exposing (viewRecentPage)
-import View.Pages.Material exposing (viewMaterialPage)
+import View.Pages.Resource exposing (viewResourcePage)
 
 import Update exposing (..)
 import Request exposing (..)
@@ -97,8 +97,8 @@ view model =
                   Recent ->
                     viewRecentPage model userState |> withNavigationDrawer model
 
-                  Material ->
-                    viewMaterialPage model userState |> withNavigationDrawer model
+                  Resource ->
+                    viewResourcePage model userState |> withNavigationDrawer model
 
       header =
         viewPageHeader model

@@ -54,6 +54,11 @@ class Oer(Base):
         self.url = url
         self.data = data
 
+    def data_and_id(self):
+        result = {**self.data}
+        result['id'] = self.id
+        return result
+
 
 class WikichunkEnrichment(Base):
     __tablename__ = 'wikichunk_enrichment'

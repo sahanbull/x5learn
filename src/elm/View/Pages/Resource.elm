@@ -1,4 +1,4 @@
-module View.Pages.Material exposing (viewMaterialPage)
+module View.Pages.Resource exposing (viewResourcePage)
 
 import Url
 import Dict
@@ -25,25 +25,25 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
-viewMaterialPage : Model -> UserState -> PageWithModal
-viewMaterialPage model userState =
+viewResourcePage : Model -> UserState -> PageWithModal
+viewResourcePage model userState =
   let
       page =
-        case model.currentMaterial of
+        case model.currentResource of
           Nothing ->
             viewLoadingSpinner
 
           Just (Loaded oerUrl) ->
-            viewMaterial model userState (getCachedOerWithBlankDefault model oerUrl)
+            viewResource model userState (getCachedOerWithBlankDefault model oerUrl)
 
           Just Error ->
-            viewCenterNote "The requested material was not found."
+            viewCenterNote "The requested resource was not found."
   in
       (page, [])
 
 
-viewMaterial : Model -> UserState -> Oer -> Element Msg -- TODO remove some code duplication with Inspector.elm
-viewMaterial model userState oer =
+viewResource : Model -> UserState -> Oer -> Element Msg -- TODO remove some code duplication with Inspector.elm
+viewResource model userState oer =
   let
       header =
         case oer.title of

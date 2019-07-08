@@ -68,8 +68,8 @@ update msg ({nav, userProfileForm} as model) =
               (Recent, (model, cmdRequestOers))
             else if path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
-            else if path |> String.startsWith materialPath then
-              (Material, model |> requestMaterialAfterUrlChanged url)
+            else if path |> String.startsWith resourcePath then
+              (Resource, model |> requestResourceAfterUrlChanged url)
             else
               (Home, (model, cmdRequestOers))
       in
@@ -244,7 +244,7 @@ update msg ({nav, userProfileForm} as model) =
       -- ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
       (model, Cmd.none)
 
-    RequestMaterial (Ok oer) ->
+    RequestResource (Ok oer) ->
       let
           youtubeEmbedParams : YoutubeEmbedParams
           youtubeEmbedParams =
@@ -254,10 +254,10 @@ update msg ({nav, userProfileForm} as model) =
             , playWhenReady = False
             }
       in
-          ({ model | currentMaterial = Just <| Loaded oer.url } |> cacheOersFromList [ oer ], embedYoutubePlayerOnMaterialPage youtubeEmbedParams)
+          ({ model | currentResource = Just <| Loaded oer.url } |> cacheOersFromList [ oer ], embedYoutubePlayerOnResourcePage youtubeEmbedParams)
 
-    RequestMaterial (Err err) ->
-      ( { model | currentMaterial = Just Error }, Cmd.none )
+    RequestResource (Err err) ->
+      ( { model | currentResource = Just Error }, Cmd.none )
 
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
@@ -686,18 +686,18 @@ executeSearchAfterUrlChanged model url =
         |> logEventForLabStudy "executeSearchAfterUrlChanged" [ str ]
 
 
-requestMaterialAfterUrlChanged : Url -> Model -> (Model, Cmd Msg)
-requestMaterialAfterUrlChanged url model =
+requestResourceAfterUrlChanged : Url -> Model -> (Model, Cmd Msg)
+requestResourceAfterUrlChanged url model =
   let
-      materialId =
+      resourceId =
         url.path
         |> String.dropLeft 10 -- TODO A much cleaner method is to use Url.Query.parser
         |> String.toInt
-        -- |> Debug.log "materialId"
+        -- |> Debug.log "resourceId"
   in
-      case materialId of
+      case resourceId of
         Nothing ->
-          ({ model | currentMaterial = Just Error }, Cmd.none)
+          ({ model | currentResource = Just Error }, Cmd.none)
 
         Just oerId ->
-          (model, requestMaterial oerId)
+          (model, requestResource oerId)

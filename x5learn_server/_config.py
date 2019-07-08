@@ -3,8 +3,9 @@ import os
 
 db_user = os.environ["X5LEARN_DB_USERNAME"]
 db_pass = os.environ["X5LEARN_DB_PASSWORD"]
+db_name = os.environ["X5LEARN_DB_NAME"]
 
-DB_ENGINE_URI = 'postgresql://{}:{}@localhost:5432/x5learn'.format(db_user, db_pass)
+DB_ENGINE_URI = 'postgresql://{}:{}@localhost:5432/{}'.format(db_user, db_pass, db_name)
 
 #  admin credentials used to create a super user
 ADMIN_EMAIL = "admin@x5learn.x5gon.org"

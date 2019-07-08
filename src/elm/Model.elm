@@ -671,3 +671,7 @@ trimTailingEllipsisIfNeeded str = -- This function is a temporary patch to fix a
 
 resourceUrlPath oerId =
   resourcePath ++ "/" ++ (String.fromInt oerId)
+
+
+isSiteUnderMaintenance =
+  True

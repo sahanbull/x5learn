@@ -298,3 +298,32 @@ class NotesRepository(Repository):
             query_object = query_object.limit(limit)
 
         return query_object.all()
+
+
+class ActionsRepository(Repository):
+
+    def __init__(self):
+        pass
+
+    def get_actions(self, action_type_id=None, sort="desc", offset=None, limit=None):
+        global db_session
+        query_object = db_session.query(
+                Action, ActionType).join(ActionType)
+
+        if (action_type_id):
+            query_object = query_object.filter(Action.action_type_id == action_type_id)
+
+        query_object = query_object.filter(Action.user_login_id == current_user.get_id())
+
+        if (sort == 'desc'):
+            query_object = query_object.order_by(Action.created_at.desc())
+        else:
+            query_object = query_object.order_by(Action.created_at.asc())
+
+        if (offset):
+            query_object = query_object.offset(offset)
+
+        if (limit):
+            query_object = query_object.limit(limit)
+
+        return query_object.all()

@@ -21,7 +21,7 @@ from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_SENDER, 
 from x5learn_server.db.database import get_or_create_db
 _ = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
-from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent, Action, ActionType, Note, Repository, NotesRepository
+from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent, Action, ActionType, Note, Repository, NotesRepository, ActionsRepository
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 
@@ -675,29 +675,9 @@ class ActionList(Resource):
             parser.add_argument('limit', type=int)
             args = parser.parse_args()
 
-            # Building and executing query object
-            query_object = db_session.query(
-                Action, ActionType).join(ActionType)
-
-            if (args['action_type_id']):
-                query_object = query_object.filter(
-                    Action.action_type_id == args['action_type_id'])
-
-            query_object = query_object.filter(
-                Action.user_login_id == current_user.get_id())
-
-            if (args['sort'] == 'desc'):
-                query_object = query_object.order_by(Action.created_at.desc())
-            else:
-                query_object = query_object.order_by(Action.created_at.asc())
-
-            if (args['offset']):
-                query_object = query_object.offset(args['offset'])
-
-            if (args['limit']):
-                query_object = query_object.limit(args['limit'])
-
-            result_list = query_object.all()
+            # Creating a actions repository for unique data fetch
+            actions_repository = ActionsRepository()
+            result_list = actions_repository.get_actions(args['action_type_id'], args['sort'], args['offset'], args['limit'])
 
             # Eliminating actions without a material id
             to_be_removed = list()
@@ -723,8 +703,7 @@ class ActionList(Resource):
 
                     temp_list = i.Action.params
                     if 'oer_id' in temp_list:
-                        temp_oer = db_session.query(Oer).filter(
-                            Oer.id == temp_list['oer_id']).one_or_none()
+                        temp_oer = repository.get_by_id(temp_list['oer_id'])
                         if temp_oer.data:
                             if 'title' in temp_oer.data:
                                 tempObject['params']['title'] = temp_oer.data['title']
@@ -744,8 +723,7 @@ class ActionList(Resource):
         else:
             action = Action(api.payload['action_type_id'], json.loads(
                 api.payload['params']), current_user.get_id())
-            db_session.add(action)
-            db_session.commit()
+            repository.add(action)
             return {'result': 'Action logged'}, 201
 
 # Defining user resource for API access

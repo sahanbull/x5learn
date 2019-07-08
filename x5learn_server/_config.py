@@ -1,6 +1,8 @@
 # database related configs
 import os
 
+print(os.environ)
+
 db_user = os.environ["X5LEARN_DB_USERNAME"]
 db_pass = os.environ["X5LEARN_DB_PASSWORD"]
 db_name = os.environ["X5LEARN_DB_NAME"]

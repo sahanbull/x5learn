@@ -236,11 +236,26 @@ class LabStudyLogEvent(Base):
 
 # Repository pattern implemented for CRUD
 class Repository:
+    """
+    represents a data layer object for CRUD operations
+    """
 
     def __init__(self):
         self._db_session = get_or_create_db(DB_ENGINE_URI)
 
     def get_by_id(self, item, id, user_login_id=None):
+        """get a single designated item by id. Optionally can auth by user login id
+
+        Args:
+            item (object): type of db object to query (Required)
+            id (int): id to query object by (Required)
+            user_login_id (int): user login id to auth records belonging to the user
+
+        Returns:
+            (object): object of type item
+
+        """
+
         query_object = self._db_session.query(item)
 
         if (user_login_id):
@@ -249,20 +264,60 @@ class Repository:
 
         return query_object.filter_by(id=id).one_or_none()
 
-    def get(self, item, filters, sort, order):
+    def get(self, item, user_login_id, filters, sort):
+        """gets multiple items. Optionally can auth by user login id
+
+        Args:
+            item (object): type of db object to query (Required)
+            user_login_id (int): user login id to auth records belonging to the user
+            filters (dict{key:val}): keys will be columns to filter, values are the value to filter with
+            sort (dict{key:val}):  key will be column to sort by, value will be 'asc' or 'desc'
+
+        Returns:
+            (list(object)): list of objects of type item
+
+        """
+
         result = self._db_session.query(item)
         return result
 
     def add(self, item):
+        """add an a record of type item to the db.
+
+        Args:
+            item (object): type of db object to add (Required)
+
+        Returns:
+            (object): returns added item
+
+        """
+
         self._db_session.add(item)
         self._db_session.commit()
         return item
 
     def update(self, item):
+        """update an a record of type item to the db.
+
+        Args:
+            item (object): type of db object to update (Required)
+
+        Returns:
+            (object): returns updated item
+
+        """
+
         self._db_session.commit()
         return item
 
     def delete(self, item):
+        """deletes an a record of type item from the db.
+
+        Args:
+            item (object): type of db object to delete (Required)
+
+        """
+
         self._db_session.delete(item)
         self._db_session.commit()
 
@@ -270,6 +325,20 @@ class Repository:
 class NotesRepository(Repository):
 
     def get_notes(self, user_login_id, oer_id=None, sort="desc", offset=None, limit=None):
+        """gets multiple notes filtered by user logged in.
+
+        Args:
+            user_login_id (int): user login id to auth records belonging to the user
+            oer_id (int): filter notes attached to a specific material
+            sort (str): sort by 'asc' or 'desc'
+            offset (int): Number to offset result set with (Default: 0)
+            limit (int): Number to limit records of result set (Default: None)
+
+        Returns:
+            (list(object)): list of objects of type notes
+
+        """
+
         query_object = self._db_session.query(Note)
 
         if (oer_id):
@@ -296,6 +365,20 @@ class NotesRepository(Repository):
 class ActionsRepository(Repository):
 
     def get_actions(self, user_login_id, action_type_id=None, sort="desc", offset=None, limit=None):
+        """gets multiple actions filtered by user logged in.
+
+        Args:
+            user_login_id (int): user login id to auth records belonging to the user
+            action_type_id (int): filter actions attached to a specific action type
+            sort (str): sort by 'asc' or 'desc'
+            offset (int): Number to offset result set with (Default: 0)
+            limit (int): Number to limit records of result set (Default: None)
+
+        Returns:
+            (list(object)): list of objects of type actions
+
+        """
+
         query_object = self._db_session.query(
             Action, ActionType).join(ActionType)
 
@@ -323,6 +406,17 @@ class ActionsRepository(Repository):
 class UserRepository(Repository):
 
     def forget_user(self, user, user_login_id):
+        """deletes a user and any related info completely off the database.
+
+        Args:
+            user (object): user to be deleted (Required)
+            user_login_id (int): user login id to auth delete action (Required)
+
+        Returns:
+            (bool) : true
+
+        """
+
         self._db_session.query(Action).filter_by(
             user_login_id=user_login_id).delete()
         self._db_session.query(Note).filter_by(
@@ -338,4 +432,14 @@ class UserRepository(Repository):
 class DefinitionsRepository(Repository):
 
     def get_definitions_list(self, titles):
+        """fetches definitions from database for given list of titles.
+
+        Args:
+            titles (list(str)): list of string that should be queried from databse (Required)
+
+        Returns:
+            (list(objects)) : list of objects containing definition related data
+
+        """
+
         return self._db_session.query(EntityDefinition).filter(EntityDefinition.title.in_(titles)).all()

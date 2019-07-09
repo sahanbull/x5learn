@@ -347,7 +347,6 @@ update msg ({nav, userProfileForm} as model) =
 
     SubmittedResourceFeedback oerUrl ->
       ({ model | feedbackRecordedConfirmation = True } |> setTextInResourceFeedbackForm oerUrl "", Cmd.none)
-      |> saveUserState msg
       |> logEventForLabStudy "SubmittedResourceFeedback" [ oerUrl, getResourceFeedbackFormValue model oerUrl ]
 
     PressedKeyInNewNoteFormInOerNoteboard oerUrl keyCode ->
@@ -368,7 +367,6 @@ update msg ({nav, userProfileForm} as model) =
 
     VideoIsPlayingAtPosition position ->
       (model |> updateUserState (expandCurrentFragmentOrCreateNewOne position model.inspectorState), Cmd.none)
-      |> saveUserState msg
       |> logEventForLabStudy "VideoIsPlayingAtPosition" [ position |> String.fromFloat]
 
     SubmitPostRegistrationForm keepData ->

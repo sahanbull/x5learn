@@ -1153,4 +1153,4 @@ def get_dataset_for_lab_study_one(key):
     if key not in datasets:
         return []
     urls = datasets[key]['video_urls']
-    return [ o.data_and_id() for o in Oer.query.filter(Oer.url.in_(urls)) ]
+    return [ o.data_and_id() for o in Oer.query.filter(Oer.url.in_(urls)).order_by(Oer.id).all() ]

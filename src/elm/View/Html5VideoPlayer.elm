@@ -25,3 +25,4 @@ viewHtml5VideoPlayer model oerUrl =
         ]
         |> Html.video [ Attributes.controls True, Attributes.height (max 200 (model.windowHeight - 450)) ]
         |> Element.html
+        |> el [ width <| px 720 ]

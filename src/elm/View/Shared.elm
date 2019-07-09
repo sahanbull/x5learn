@@ -99,6 +99,10 @@ borderLeft px =
   Border.widthEach { allSidesZero | left = px }
 
 
+borderColorLayout =
+  Border.color <| rgb 0.8 0.8 0.8
+
+
 allSidesZero =
   { top = 0
   , right = 0
@@ -153,6 +157,10 @@ orange =
 
 recentBlue =
   rgb255 0 190 250
+
+
+linkBlue =
+  rgb255 0 120 250
 
 
 grey80 =
@@ -450,32 +458,11 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
                 _ ->
                   False
 
-            -- bump =
-            --   case model.hoveringBubbleEntityId of
-            --     Nothing ->
-            --       []
-
-            --     Just entityId ->
-            --       if isPopupOpen || (anyMentionsOfEntityInThisChunk entityId) then
-            --         []
-            --       else if chunk.entities |> List.map .id |> List.member entityId then
-            --         image [ alpha 0.9, centerX, height <| px 12, moveDown 2 ] { src = svgPath "white_semicircle", description = "" }
-            --         |> el [ width fill ]
-            --         |> inFront
-            --         |> List.singleton
-            --       else
-            --         []
-
-            -- anyMentionsOfEntityInThisChunk entityId =
-            --   entityId
-            --   |> mentionsInThisChunk
-            --   |> List.any (\mention -> mention.chunkIndex==chunkIndex)
-
-            chunkBackground =
+            appearance =
               if isPopupOpen then
                 [ Background.color orange ]
               else
-                []
+                [ none |> el [ width <| px 1, height <| px fragmentsBarHeight, Background.color veryTransparentWhite ] |> inFront ]
 
             popup =
               if isPopupOpen then
@@ -498,8 +485,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
               floor <| chunk.length * (toFloat barWidth) + (if chunkIndex == (List.length chunks)-1 then 0 else 1)
         in
             none
-            -- |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), borderLeft 1, Border.color <| rgba 0 0 0 0.2, popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ background ++ popup ++ clickHandler)
-            |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ chunkBackground ++ popup ++ clickHandler)
+            |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ appearance ++ popup ++ clickHandler)
             |> inFront
 
       chunkTriggers =
@@ -511,7 +497,7 @@ viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId 
 
       background =
         if darkBackground then
-          [ materialScrimBackground ]
+          [ Background.color materialDark ]
         else
           []
   in
@@ -560,22 +546,25 @@ viewEntityButton model chunkPopup entity =
 
 
 viewEntityPopup model chunkPopup entityPopup entity =
-  if isLabStudy1 model then
-    []
-  else
-    let
-        actionButtons =
+  let
+      actionButtons =
+        if isLabStudy1 model then
+          []
+        else
           [ ("Search", TriggerSearch entity.title)
           ]
-          |> List.map (\item -> entityActionButton chunkPopup entityPopup item |> el [ padding 10 ])
+          |> List.map (\item -> entityActionButton chunkPopup entityPopup item |> el [ width fill ])
 
-        items =
-          actionButtons
-    in
-        items
-        |> menuColumn []
-        |> (if isHoverMenuNearRightEdge model 300 then onLeft else onRight)
-        |> List.singleton
+      definition =
+        viewDefinition model entity.id
+
+      items =
+        definition :: actionButtons
+  in
+      items
+      |> menuColumn []
+      |> (if isHoverMenuNearRightEdge model 300 then onLeft else onRight)
+      |> List.singleton
 
 
 entityActionButton chunkPopup entityPopup (title, clickAction) =
@@ -590,25 +579,31 @@ entityActionButton chunkPopup entityPopup (title, clickAction) =
           []
 
       attrs =
-        hoverAction :: ([ width fill ] ++ background)
+        hoverAction :: ([ width fill, padding 10 ] ++ background)
   in
       actionButtonWithoutIcon attrs title (Just clickAction)
 
 
--- viewDefinition model {title} =
---   let
---       definition =
---         title ++ " definition goes here"
---       -- blurb =
---       --   if definition=="" || definition=="(Definition unavailable)" then
---       --     "(Definition unavailable)"
---       --     |> captionNowrap []
---       --   else
---       --     ("“" ++ definition ++ "” (Wikidata)")
---         |> bodyWrap [ Font.italic ]
---   in
---       [ definition ]
---       |> column [ padding 10, spacing 16, width (px 240) ]
+viewDefinition : Model -> EntityId -> Element Msg
+viewDefinition model entityId =
+  let
+      unavailable =
+        "✗ Definition unavailable" |> bodyWrap []
+  in
+      case model.entityDefinitions |> Dict.get entityId of
+        Nothing -> -- shouldn't happen
+          unavailable
+
+        Just definition ->
+          case definition of
+            DefinitionScheduledForLoading ->
+              viewLoadingSpinner
+
+            DefinitionLoaded text ->
+              if text=="" then
+                unavailable
+              else
+                "“" ++ text ++ "” (Wikipedia)" |> bodyWrap [ Font.italic, padding 10, width <| px 200 ]
 
 
 fragmentsBarHeight = 16
@@ -734,3 +729,31 @@ isAnyChunkPopupOpen model =
       False
 
 
+secondsToString : Int -> String
+secondsToString seconds =
+  let
+      secondsString =
+        seconds |> modBy 60
+        |> String.fromInt
+        |> String.padLeft 2 '0'
+
+      minutesString =
+        seconds // 60
+        |> String.fromInt
+  in
+      minutesString ++ ":" ++ secondsString
+
+
+guestCallToSignup : String -> Element Msg
+guestCallToSignup incentive =
+  let
+      linkAttrs =
+        [ paddingXY 5 0, Font.color linkBlue ]
+  in
+      [ "You are currently not logged in. "++incentive++", please" |> text
+      , "log in" |> text |> linkTo linkAttrs loginPath
+      , "or" |> text
+      , "create an account" |> text |> linkTo linkAttrs signupPath
+      , "." |> text
+      ]
+      |> paragraph [ Font.size 14, Font.color materialDark ]

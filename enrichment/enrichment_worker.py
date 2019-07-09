@@ -1,4 +1,4 @@
-import os, requests, re, json
+import os, requests, re, json, itertools
 
 from time import sleep
 from collections import defaultdict
@@ -46,12 +46,12 @@ def say(text):
 
 
 def make_enrichment_data(oer_data):
-    data = { 'chunks': [], 'mentions': {}, 'graph': {}, 'errors': False }
+    data = { 'chunks': [], 'mentions': {}, 'clusters': [], 'errors': False }
     error = None
     try:
         data['chunks'] = make_wikichunks(oer_data)
         data['mentions'] = extract_mentions(data['chunks'])
-        data['graph'] = extract_concept_graph(data['chunks'], data['mentions'])
+        data['clusters'] = extract_concept_clusters(data['chunks'], data['mentions'])
     except EnrichmentError as err:
         error = err.message
         data['errors'] = True
@@ -73,8 +73,8 @@ def make_wikichunks(oer_data):
     raise EnrichmentError('Unsupported file format')
 
 
-def extract_concept_graph(chunks, mentions):
-    print('\n_____________________________ Concept graph')
+def extract_concept_clusters(chunks, mentions):
+    print('\n_____________________________ Concept clusters')
     occurrences = defaultdict(int)
     for chunk in chunks:
         for entity in chunk['entities']:
@@ -83,12 +83,15 @@ def extract_concept_graph(chunks, mentions):
                 occurrences[title] += 1
     titles = [ x[0] for x in sorted(occurrences.items(), key=lambda k_v: k_v[1], reverse=True)[:5] ]
     print('Titles:', titles)
-    graph = {}
+    clusters = []
     for title in titles:
-        links = wikipedia.page(title).links
-        graph[title] = list(set(titles) & set(links)) # Include only the links that are among the titles
-    print('Graph:', graph)
-    return graph
+        links = [ link for link in wikipedia.page(title).links if link in titles ]
+        cluster = [ title ] + links
+        clusters.append(cluster)
+    print('Raw:', clusters)
+    clusters = merge_clusters(clusters)
+    print('Merged:', clusters)
+    return clusters
 
 
 def extract_mentions(chunks):
@@ -109,11 +112,14 @@ def extract_mentions(chunks):
             text = chunk['text']
             text = re.sub(r'\s+', ' ', text)
             positions = [ m.start() for m in re.finditer(re.escape(title), text.lower()) ]
+            prev_position = None
             for position in positions:
                 position += int(len(title)/2) # Focus on the middle of the title to account for variations in surrounding blanks
+                if prev_position is not None and position-prev_position<200 and not contains_end_mark(text[prev_position:position]): # ignore adjacent mentions as described in issue #167
+                    continue
+                prev_position = position
                 sentence, pos_in_chunk = sentence_at_position(text, position)
                 if len(sentence)>200: # probably not a normal sentence
-                    # import pdb; pdb.set_trace()
                     sentence, pos_in_chunk = excerpt_at_position(text, position)
                 if not looks_like_english(sentence):
                     continue
@@ -122,7 +128,12 @@ def extract_mentions(chunks):
                     mentions[entity_id] = []
                 if len(mentions[entity_id])==0 or mentions[entity_id][-1]['positionInResource']!=position_in_resource: # don't create duplicates if an entity is mentioned twice in a sentence
                     mentions[entity_id].append({'sentence': sentence, 'positionInResource': position_in_resource})
+    print(len(mentions), 'mentions found')
     return mentions
+
+
+def contains_end_mark(text):
+    return re.search(r'[.?!]', text)
 
 
 def sentence_at_position(text, position):
@@ -159,6 +170,27 @@ def looks_like_english(sentence):
 def remove_stuff_in_parentheses(text):
     return re.sub(r'\([^)]*\)', '', text)
 
+
+def merge_clusters(raw_clusters):
+    resulting_merged_clusters = []
+    # print('raw_clusters', raw_clusters)
+    for raw_cluster in raw_clusters:
+        # print('raw_cluster', raw_cluster)
+        overlapping_merged_clusters = [ c for c in resulting_merged_clusters if not set(c).isdisjoint(set(raw_cluster)) ]
+        # print('overlapping_merged_clusters', overlapping_merged_clusters)
+        for o in overlapping_merged_clusters:
+            resulting_merged_clusters.remove(o)
+        merged_cluster = raw_cluster + list(itertools.chain(*overlapping_merged_clusters))
+        # print("merged_cluster", merged_cluster)
+        resulting_merged_clusters.append(unique_list_of_lists(merged_cluster))
+        # print("without dupls:", merged_cluster)
+    # print(resulting_merged_clusters)
+    return resulting_merged_clusters
+
+
+def unique_list_of_lists(k): # https://stackoverflow.com/a/2213973/2237986
+    k.sort()
+    return list(k for k,_ in itertools.groupby(k))
 
 
 if __name__ == '__main__':

@@ -23,7 +23,7 @@ viewNoteboard model userState oerUrl =
   let
       heading : Element Msg
       heading =
-        "Private Notes" |> subheaderWrap []
+        "Your private notes" |> subheaderWrap []
 
       quickNotesWidget : Element Msg
       quickNotesWidget =
@@ -32,7 +32,7 @@ viewNoteboard model userState oerUrl =
             quickNotesButton str =
               actionButtonWithoutIcon [ Background.color x5colorSemiTransparent, whiteText, paddingXY 5 3 ] str (Just <| ClickedQuickNoteButton oerUrl str)
         in
-            [ "Too hard", "Just right", "Too easy", "Interested", "Not interested", "Poor quality" ]
+            ([ "Too hard", "Just right", "Too easy", "Interested", "Not interested", "Poor text quality" , "Poor image quality" ] ++ (if isVideoFile oerUrl || hasYoutubeVideo oerUrl then [ "Poor audio quality" ] else []))
             |> List.map quickNotesButton
             |> wrappedRow [ spacing 8, width fill, alignRight ]
 
@@ -69,8 +69,12 @@ viewNoteboard model userState oerUrl =
 
       content : Element Msg
       content =
-        ([ headingRow ] ++ noteElements ++ [ newEntry ])
-        |> column [ width fill, spacing 15 ]
+        if isLoggedIn model then
+          [ headingRow ] ++ noteElements ++ [ newEntry ]
+          |> column [ width fill, spacing 15 ]
+        else
+          guestCallToSignup "In order to use all the features and save your changes"
+          |> el [ width fill, paddingXY 15 12, Background.color <| rgb 1 0.85 0.6 ]
   in
       [ (notes |> List.length |> String.fromInt, content) ]
       |> Keyed.column [ width fill ]
@@ -115,7 +119,7 @@ humanReadableRelativeTime {currentTime} time =
         daysAgo // 365
   in
       if minutesAgo<7 then
-        "Just now"
+        "Now"
       else if minutesAgo<60 then
         "Last hour"
       else if hoursAgo<24 then

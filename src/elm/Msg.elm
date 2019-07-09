@@ -36,6 +36,7 @@ type Msg
   | RequestSaveUserProfile (Result Http.Error String)
   | RequestSaveUserState (Result Http.Error String)
   | RequestLabStudyLogEvent (Result Http.Error String)
+  | RequestResource (Result Http.Error Oer)
   | SetHover (Maybe String)
   | SetPopup Popup
   | ClosePopup
@@ -58,6 +59,8 @@ type Msg
   | BubbleMouseOut
   | BubbleClicked OerUrl
   | PageScrolled ScrollData
+  | StartLabStudyTask LabStudyTask
+  | StoppedLabStudyTask
 
 
 type UserProfileField

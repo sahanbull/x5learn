@@ -12,11 +12,13 @@ import View.PageHeader exposing (viewPageHeader)
 import View.NavigationDrawer exposing (..)
 import View.Pages.Intro exposing (viewIntroPage)
 import View.Pages.PostRegistration exposing (viewPostRegistrationPage)
+import View.Pages.Maintenance exposing (viewMaintenancePage)
 import View.Pages.Search exposing (viewSearchPage)
 import View.Pages.Notes exposing (viewNotesPage)
 import View.Pages.Gains exposing (viewGainsPage)
 import View.Pages.Profile exposing (viewProfilePage)
 import View.Pages.Recent exposing (viewRecentPage)
+import View.Pages.Resource exposing (viewResourcePage)
 
 import Update exposing (..)
 import Request exposing (..)
@@ -51,50 +53,56 @@ view model =
         (viewIntroPage model, [])
 
       (body, modal) =
-        case  model.session of
-          Nothing ->
-            (viewLoadingSpinner, [])
+        if isSiteUnderMaintenance then
+          viewMaintenancePage
+        else
+          case  model.session of
+            Nothing ->
+              (viewLoadingSpinner, [])
 
-          Just ({userState} as session) ->
-            let
-                defaultPage =
-                  case session.loginState of
-                    LoggedInUser userProfile ->
-                      viewNotesPage model userState |> withNavigationDrawer model
-
-                    GuestUser ->
-                      introPage
-            in
-                case model.subpage of
-                  Home ->
-                    if session.loginState /= GuestUser && (not userState.registrationComplete) then
-                      viewPostRegistrationPage model userState |> withNavigationDrawer model
-                    else if userState == initialUserState then
-                      introPage
-                    else
-                      defaultPage
-
-                  Profile ->
+            Just ({userState} as session) ->
+              let
+                  defaultPage =
                     case session.loginState of
                       LoggedInUser userProfile ->
-                        viewProfilePage model userProfile model.userProfileForm |> withNavigationDrawer model
+                        viewNotesPage model userState |> withNavigationDrawer model
 
                       GuestUser ->
                         introPage
-
-                  Search ->
-                    case model.searchState of
-                      Nothing ->
+              in
+                  case model.subpage of
+                    Home ->
+                      if session.loginState /= GuestUser && (not userState.registrationComplete) then
+                        viewPostRegistrationPage |> withNavigationDrawer model
+                      else if userState == initialUserState then
+                        introPage
+                      else
                         defaultPage
 
-                      Just searchState ->
-                        viewSearchPage model userState searchState |> withNavigationDrawer model
+                    Profile ->
+                      case session.loginState of
+                        LoggedInUser userProfile ->
+                          viewProfilePage model userProfile model.userProfileForm |> withNavigationDrawer model
 
-                  Notes ->
-                    viewNotesPage model userState |> withNavigationDrawer model
+                        GuestUser ->
+                          introPage
 
-                  Recent ->
-                    viewRecentPage model userState |> withNavigationDrawer model
+                    Search ->
+                      case model.searchState of
+                        Nothing ->
+                          defaultPage
+
+                        Just searchState ->
+                          viewSearchPage model userState searchState |> withNavigationDrawer model
+
+                    Notes ->
+                      viewNotesPage model userState |> withNavigationDrawer model
+
+                    Recent ->
+                      viewRecentPage model userState |> withNavigationDrawer model
+
+                    Resource ->
+                      viewResourcePage model userState |> withNavigationDrawer model
 
       header =
         viewPageHeader model

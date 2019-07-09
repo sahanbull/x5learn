@@ -2,16 +2,16 @@ module Update exposing (update)
 
 import Browser
 import Browser.Navigation as Navigation
-import Url
+import Url exposing (Url)
 import Url.Builder
+-- import Url.Parser
+-- import Url.Parser.Query
 import Json.Decode as Decode
 import Json.Encode as Encode
 import Dict exposing (Dict)
 import Set
 import Time exposing (Posix, millisToPosix, posixToMillis)
 import List.Extra
-
--- import Debug exposing (log)
 
 import Model exposing (..)
 import Update.BubblePopup exposing (..)
@@ -51,33 +51,29 @@ update msg ({nav, userProfileForm} as model) =
 
     UrlChanged ({path} as url) ->
       let
-          -- dummy =
-          --   path |> Debug.log "UrlChanged"
-
-          cmd =
+          cmdRequestOers =
             case model.session of
               Nothing ->
                 Cmd.none
 
-              Just session ->
-                requestOersAsNeeded session.userState newModel
+              Just {userState} ->
+                requestOersAsNeeded userState model
 
-          subpage =
+          (subpage, (newModel, cmd)) =
             if path |> String.startsWith profilePath then
-              Profile
+              (Profile, (model, Cmd.none))
             else if path |> String.startsWith notesPath then
-              Notes
+              (Notes, (model, cmdRequestOers))
             else if path |> String.startsWith recentPath then
-              Recent
+              (Recent, (model, cmdRequestOers))
             else if path |> String.startsWith searchPath then
-              Search
+              (Search, executeSearchAfterUrlChanged model url)
+            else if path |> String.startsWith resourcePath then
+              (Resource, model |> requestResourceAfterUrlChanged url)
             else
-              Home
-
-          newModel =
-            { model | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage } |> closePopup |> resetUserProfileForm
+              (Home, (model, cmdRequestOers))
       in
-          ( newModel, cmd )
+          ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage } |> closePopup |> resetUserProfileForm, cmd)
           |> logEventForLabStudy "UrlChanged" [ path ]
 
     ClockTick time ->
@@ -93,25 +89,26 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "ChangeSearchText" [ str ]
 
     TriggerSearch str ->
-      if str=="" then
-        ( model, setBrowserFocus "SearchField")
-      else
-        ( { model | searchInputTyping = str, searchState = Just <| newSearch str, searchSuggestions = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers str)
-        |> logEventForLabStudy "TriggerSearch" [ str ]
+      let
+          searchUrl =
+            Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" str ]
+      in
+          (model, Navigation.pushUrl nav.key searchUrl)
 
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, Cmd.none )
 
     InspectOer oer fragmentStart fragmentLength playWhenReady ->
       let
-          inspectorParams =
+          youtubeEmbedParams : YoutubeEmbedParams
+          youtubeEmbedParams =
             { modalId = modalId
             , videoId = getYoutubeVideoId oer.url |> Maybe.withDefault ""
             , fragmentStart = fragmentStart
             , playWhenReady = playWhenReady
             }
       in
-          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> (updateUserState <| addFragmentAccess (Fragment oer.url fragmentStart fragmentLength) model.currentTime), openModalAnimation inspectorParams)
+          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> (updateUserState <| addFragmentAccess (Fragment oer.url fragmentStart fragmentLength) model.currentTime), openModalAnimation youtubeEmbedParams)
       |> saveUserState msg
       |> logEventForLabStudy "InspectOer" [ oer.url ]
 
@@ -137,7 +134,7 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | userMessage = Just "There was a problem while requesting user data. Please try again later." }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
-      ( model |> updateSearch (insertSearchResults (oers |> List.map .url)) |> cacheOersFromList oers, [ Navigation.pushUrl nav.key "/search", setBrowserFocus "SearchField" ] |> Cmd.batch )
+      ( model |> updateSearch (insertSearchResults (oers |> List.map .url)) |> cacheOersFromList oers, setBrowserFocus "SearchField")
       |> requestWikichunkEnrichmentsIfNeeded
       |> logEventForLabStudy "RequestOerSearch" (oers |> List.map .url)
 
@@ -247,6 +244,21 @@ update msg ({nav, userProfileForm} as model) =
       -- ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
       (model, Cmd.none)
 
+    RequestResource (Ok oer) ->
+      let
+          youtubeEmbedParams : YoutubeEmbedParams
+          youtubeEmbedParams =
+            { modalId = ""
+            , videoId = getYoutubeVideoId oer.url |> Maybe.withDefault ""
+            , fragmentStart = 0
+            , playWhenReady = False
+            }
+      in
+          ({ model | currentResource = Just <| Loaded oer.url } |> cacheOersFromList [ oer ], embedYoutubePlayerOnResourcePage youtubeEmbedParams)
+
+    RequestResource (Err err) ->
+      ( { model | currentResource = Just Error }, Cmd.none )
+
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
       |> logEventForLabStudy "SetHover" [ maybeUrl |> Maybe.withDefault "" ]
@@ -351,6 +363,15 @@ update msg ({nav, userProfileForm} as model) =
     PageScrolled {scrollTop, viewHeight, contentHeight} ->
       (model, Cmd.none)
       |> logEventForLabStudy "PageScrolled" [ scrollTop |> String.fromFloat, viewHeight |> String.fromFloat, contentHeight |> String.fromFloat ]
+
+    StartLabStudyTask task ->
+      { model | startedLabStudyTask = Just (task, model.currentTime) }
+      |> update (TriggerSearch task.dataset)
+      |> logEventForLabStudy "StartLabStudyTask" [ task.title, task.durationInMinutes |> String.fromInt ]
+
+    StoppedLabStudyTask ->
+      ({ model | startedLabStudyTask = Nothing }, setBrowserFocus "")
+      |> logEventForLabStudy "StoppedLabStudyTask" []
 
 
 updateUserState : (UserState -> UserState) -> Model -> Model
@@ -648,3 +669,35 @@ popupToStrings maybePopup =
                     "Mention " ++ (positionInResource |> String.fromFloat) ++ " " ++ sentence
           in
               [ oerUrl, entityId, contentString ]
+
+
+executeSearchAfterUrlChanged : Model -> Url -> (Model, Cmd Msg)
+executeSearchAfterUrlChanged model url =
+  let
+      str =
+        url.query
+        |> Maybe.withDefault ""
+        |> String.dropLeft 2 -- TODO A much cleaner method is to use Url.Query.parser
+  in
+      if str=="" then
+        ( model, setBrowserFocus "SearchField")
+      else
+        ( { model | searchInputTyping = str, searchState = Just <| newSearch str, searchSuggestions = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers str)
+        |> logEventForLabStudy "executeSearchAfterUrlChanged" [ str ]
+
+
+requestResourceAfterUrlChanged : Url -> Model -> (Model, Cmd Msg)
+requestResourceAfterUrlChanged url model =
+  let
+      resourceId =
+        url.path
+        |> String.dropLeft 10 -- TODO A much cleaner method is to use Url.Query.parser
+        |> String.toInt
+        -- |> Debug.log "resourceId"
+  in
+      case resourceId of
+        Nothing ->
+          ({ model | currentResource = Just Error }, Cmd.none)
+
+        Just oerId ->
+          (model, requestResource oerId)

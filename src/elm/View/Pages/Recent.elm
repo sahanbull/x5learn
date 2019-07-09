@@ -17,7 +17,6 @@ import Element.Font as Font
 import Model exposing (..)
 import Animation exposing (..)
 import View.Shared exposing (..)
-import View.Card exposing (..)
 import View.Inspector exposing (..)
 import View.Card exposing (..)
 
@@ -31,7 +30,11 @@ viewRecentPage model userState =
   let
       page =
         if userState.fragmentAccesses |> Dict.isEmpty then
-          viewCenterNote "Your viewed items will appear here"
+          if isLoggedIn model then
+            viewCenterNote "Your viewed items will appear here"
+          else
+            guestCallToSignup "To ensure that your changes are saved"
+            |> milkyWhiteCenteredContainer
         else
           let
               oerUrls =

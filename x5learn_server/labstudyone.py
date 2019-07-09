@@ -1127,10 +1127,30 @@ datasets = {'a': {'channel': 'Artificial Intelligence - All in One',
    'https://www.youtube.com/watch?v=BqP4_4kr7-0&list=PLtdr2qSB8H94jFZJUwk99gPgK2Utv8RR1&index=19',
    'https://www.youtube.com/watch?v=_njf8jwEGRo&list=PLtdr2qSB8H94jFZJUwk99gPgK2Utv8RR1&index=20',
    'https://www.youtube.com/watch?v=o_ZuWbX-CyE&list=PLtdr2qSB8H94jFZJUwk99gPgK2Utv8RR1&index=21',
-   'https://www.youtube.com/watch?v=SIOQgY1tqrU&list=PLtdr2qSB8H94jFZJUwk99gPgK2Utv8RR1&index=22']}}
+   'https://www.youtube.com/watch?v=SIOQgY1tqrU&list=PLtdr2qSB8H94jFZJUwk99gPgK2Utv8RR1&index=22']},
+ 'w': {'channel': 'Youtube', # Warmup task - puffins and sea turtles
+  'title': 'Warmup task',
+  'video_urls': ['https://www.youtube.com/watch?v=gABLI51g_X4', # puffin
+   # 'https://www.youtube.com/watch?v=2y7V_2lD1lY', no transcript
+   'https://www.youtube.com/watch?v=xzuv1vkOVl4', # puffin
+   'https://www.youtube.com/watch?v=71VIxSVRbgo', # puffin
+   'https://www.youtube.com/watch?v=u93U6ksqBLs', # puffin
+   'https://www.youtube.com/watch?v=S1EQSzA-Ehw', # puffin
+   'https://www.youtube.com/watch?v=L4FjdME6dI8', # puffin
+   # 'https://www.youtube.com/watch?v=keQvVOoKxos', # puffin # no transcript
+   # 'https://www.youtube.com/watch?v=yVrRJvZdZHg', # puffin # no transcript
+   'https://www.youtube.com/watch?v=G7VPhY0jMEU', # puffin
+   'https://www.youtube.com/watch?v=G7VPhY0jMEU', # puffin
+   # 'https://www.youtube.com/watch?v=ofnJbAJcREQ', # puffin # no transcript
+   'https://www.youtube.com/watch?v=BDNnzLU7zZM', # sea turtle
+   'https://www.youtube.com/watch?v=stoZlVAj5e4', # sea turtle
+   'https://www.youtube.com/watch?v=Fo-GCgZRjCE', # sea turtle
+   # 'https://www.youtube.com/watch?v=nBTggT-07Hs', # sea turtle # no transcript
+   # 'https://www.youtube.com/watch?v=88Ix_dGMskc' # sea turtle # no transcript
+   ]}}
 
 def get_dataset_for_lab_study_one(key):
     if key not in datasets:
         return []
     urls = datasets[key]['video_urls']
-    return [ o.data for o in Oer.query.filter(Oer.url.in_(urls)) ]
+    return [ o.data_and_id() for o in Oer.query.filter(Oer.url.in_(urls)) ]

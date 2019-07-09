@@ -187,12 +187,13 @@ def ingest_oer_from_url(url):
         data['mediatype'] = 'video'
         data['url'] = url
         data['mediatype'] = 'video'
+
+        # clean up names for the initial lab study
         if data['provider']=='caltech':
             data['provider'] = 'Caltech'
         if data['provider']=='Machine Learning and AI':
             data['provider'] = 'Stanford'
-        if len(data['provider']) > 20:
-            data['provider'] = data['provider'] + '…'
+
         oer = Oer(url, data)
         db_session.add(oer)
         db_session.commit()

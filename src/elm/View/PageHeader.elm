@@ -34,23 +34,25 @@ viewPageHeader model =
         , paddingEach { allSidesZero | top = 0, left = 16, right = 16 }
         , Background.color <| rgb 1 1 1
         , borderBottom 1
-        , Border.color <| rgb 0.8 0.8 0.8
+        , borderColorLayout
         ] ++ userMessage
 
 
       loginLogoutSignup =
         case model.session of
           Nothing ->
-            []
+            [ link [ alignRight, paddingXY 15 10 ] { url = logoutPath, label = "Log out" |> bodyNoWrap [] } ]
 
           Just session ->
             case session.loginState of
               LoggedInUser userProfile ->
-                [ viewUserMenu model userProfile ]
+                [ labStudyTaskTimer model
+                , viewUserMenu model userProfile
+                ]
 
               GuestUser ->
-                [ link [ alignRight, paddingXY 15 10 ] { url = "/login", label = "Log in" |> bodyNoWrap [] }
-                , link [ alignRight, paddingXY 15 10 ] { url = "/signup", label = "Sign up" |> bodyNoWrap [] }
+                [ link [ alignRight, paddingXY 15 10 ] { url = loginPath, label = "Log in" |> bodyNoWrap [] }
+                , link [ alignRight, paddingXY 15 10 ] { url = signupPath, label = "Sign up" |> bodyNoWrap [] }
                 ]
   in
       [ link [] { url = "/", label = image [ height (px 26) ] { src = imgPath "x5learn_logo.png", description = "X5Learn logo" } } ] ++ loginLogoutSignup
@@ -67,16 +69,27 @@ viewUserMenu model userProfile =
 
       label =
         [ icon, triangle ]
+        |> row [ width fill, paddingXY 12 3, spacing 5 ]
 
       navButton url buttonText =
         link [ paddingXY 15 10, width fill ] { url = url, label = buttonText |> bodyNoWrap [] }
 
+      labStudyTaskButtons =
+        if isLabStudy1 model then
+          [ labStudyTaskButton <| LabStudyTask "Warmup Task" 2 "w"
+          , labStudyTaskButton <| LabStudyTask "Task 1 (Choose)" 20 "a"
+          , labStudyTaskButton <| LabStudyTask "Task 2 (Gap)" 5 "a"
+          , labStudyTaskButton <| LabStudyTask "Task 3 (Other version)" 5 "c"
+          ]
+        else
+          []
+
       menu =
         if model.popup == Just UserMenu then
-          [ link [] { url = "/profile", label = displayName userProfile |> captionNowrap [ padding 15 ] }
+          ([ link [] { url = "/profile", label = displayName userProfile |> captionNowrap [ padding 15 ] }
           , navButton "/profile" "My profile"
           , navButton "/logout" "Log out"
-          ]
+          ]++labStudyTaskButtons)
           |> menuColumn [ Background.color white, moveRight 67, moveDown 38 ]
           |> onLeft
           |> List.singleton
@@ -86,4 +99,41 @@ viewUserMenu model userProfile =
       clickMsg =
         if model.popup == Just UserMenu then ClosePopup else SetPopup UserMenu
   in
-      button ([ htmlClass "ClosePopupOnClickOutside", alignRight ] ++ menu) { onPress = Just <| clickMsg, label = label |> row [ width fill, paddingXY 12 3, spacing 5 ]}
+      button ([ htmlClass "ClosePopupOnClickOutside", alignRight ] ++ menu) { onPress = Just <| clickMsg, label = label }
+
+
+labStudyTaskButton : LabStudyTask -> Element Msg
+labStudyTaskButton task =
+  task.title |> bodyNoWrap []
+  |> el [ paddingXY 15 10, width fill, onClick <| StartLabStudyTask task ]
+
+
+labStudyTaskTimer : Model -> Element Msg
+labStudyTaskTimer model =
+  case model.startedLabStudyTask of
+    Nothing ->
+      none
+
+    Just (task, startTime) ->
+      let
+          title =
+            task.title |> captionNowrap [ greyTextDisabled ]
+
+          countdown =
+            let
+                seconds =
+                  (task.durationInMinutes * 60) - ((millisSince model startTime) // 1000)
+                  |> max 0
+            in
+                seconds
+                |> secondsToString
+                |> captionNowrap ([ alignRight, width <| px 30 ] ++ (if seconds==0 then [ greyTextDisabled ] else []))
+
+          label =
+            [ title
+            , countdown
+            ]
+            |> row [ spacing 10, alignRight ]
+      in
+            button [ alignRight ] { onPress = Just StoppedLabStudyTask, label = label }
+            |> el [ width fill, alignRight ]

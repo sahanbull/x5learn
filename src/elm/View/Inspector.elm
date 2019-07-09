@@ -43,9 +43,14 @@ viewModal model userState inspectorState =
 
       header =
         [ content.header
+        , fullPageButton
         , button [] { onPress = Just UninspectSearchResult, label = closeIcon }
         ]
-        |> row [ width fill, spacing 16 ]
+        |> row [ width fill, spacing 4 ]
+
+      fullPageButton =
+        image [ alpha 0.8, hoverCircleBackground ] { src = svgPath "fullscreen", description = "View this resource in full-page mode" }
+        |> linkTo [ alignRight ] (resourceUrlPath inspectorState.oer.id)
 
       footer =
         content.footer
@@ -136,6 +141,7 @@ inspectorContentDefault model userState {oer, fragmentStart} =
           desc ->
             desc
             |> String.split("\n")
+            |> List.filter (\line -> String.length line > 2)
             |> List.map (bodyWrap [])
             |> column [ spacing 7, height fill, scrollbarY, paddingTop 30 ]
 
@@ -156,10 +162,10 @@ inspectorContentDefault model userState {oer, fragmentStart} =
 
       fragmentsBarWrapper =
         [ description
-        , [ providerLink, linkToFile ] |> column [ width fill, spacing 15, paddingTop 30 ]
+        , [ linkToFile, providerLink ] |> column [ width fill, spacing 15, paddingTop 30 ]
         , fragmentsBar
         ]
-        |> column [ width (px playerWidth), height <| px fragmentsBarWrapperHeight ]
+        |> column [ width (px playerWidth), height <| px fragmentsBarWrapperHeight, moveDown 1 ]
 
       fragmentsBar =
         if hasYoutubeVideo oer.url then
@@ -184,7 +190,7 @@ inspectorContentDefault model userState {oer, fragmentStart} =
 
           provider ->
             [ "Provider:" |> bodyNoWrap []
-            , newTabLink [] { url = oer.url, label = provider |> bodyNoWrap [] }
+            , newTabLink [] { url = oer.url, label = provider |> trimTailingEllipsisIfNeeded |> bodyNoWrap [] }
             ]
             |> row [ spacing 10 ]
         -- else

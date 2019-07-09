@@ -51,6 +51,8 @@ type alias Model =
   , wikichunkEnrichmentRequestFailCount : Int
   , wikichunkEnrichmentRetryTime : Posix
   , timeOfLastUrlChange : Posix
+  , startedLabStudyTask : Maybe (LabStudyTask, Posix)
+  , currentResource : Maybe CurrentResource
   }
 
 
@@ -65,6 +67,16 @@ type EntityDefinition
   = DefinitionScheduledForLoading
   | DefinitionLoaded String
   -- | DefinitionUnavailable -- TODO consider appropriate error handling
+
+type CurrentResource
+  = Loaded OerUrl
+  | Error
+
+type alias LabStudyTask =
+  { title : String
+  , durationInMinutes : Int
+  , dataset : String
+  }
 
 type alias Bubble =
   { entity : Entity
@@ -145,6 +157,7 @@ type Subpage
   | Search
   | Notes
   | Recent
+  | Resource
 
 
 type alias SearchState =
@@ -161,7 +174,8 @@ type alias InspectorState =
 
 
 type alias Oer =
-  { date : String
+  { id : Int
+  , date : String
   , description : String
   , duration : String
   , images : List String
@@ -176,9 +190,11 @@ type alias WikichunkEnrichment =
   { bubblogram : Maybe Bubblogram
   , mentions : Dict EntityId (List MentionInOer)
   , chunks : List Chunk
-  , graph : Dict EntityTitle (List EntityTitle)
+  , clusters : List Cluster
   , errors : Bool
   }
+
+type alias Cluster = List EntityTitle
 
 type alias Chunk =
   { start : Float -- 0 to 1
@@ -302,6 +318,8 @@ initialModel nav flags =
   , wikichunkEnrichmentRequestFailCount = 0
   , wikichunkEnrichmentRetryTime = initialTime
   , timeOfLastUrlChange = initialTime
+  , startedLabStudyTask = Nothing
+  , currentResource = Nothing
   }
 
 
@@ -441,6 +459,11 @@ displayName userProfile =
         name
 
 
+isLoggedIn : Model -> Bool
+isLoggedIn model =
+  loggedInUserProfile model /= Nothing
+
+
 loggedInUserProfile : Model -> Maybe UserProfile
 loggedInUserProfile {session} =
   case session of
@@ -469,7 +492,8 @@ getCachedOerWithBlankDefault model oerUrl =
 
 -- temporary solution. TODO: refactor Oer data type
 blankOer oerUrl =
-  { date = ""
+  { id = 0
+  , date = ""
   , description = ""
   , duration = ""
   , images = []
@@ -590,6 +614,18 @@ notesPath =
 recentPath =
   "/recent"
 
+resourcePath =
+  "/resource"
+
+loginPath =
+   "/login"
+
+signupPath =
+  "/signup"
+
+logoutPath =
+  "/logout"
+
 
 averageOf getterFunction records =
   (records |> List.map getterFunction |> List.sum) / (records |> List.length |> toFloat)
@@ -624,3 +660,18 @@ isVideoFile url =
         url |> String.toLower
   in
      String.endsWith ".mp4" lower || String.endsWith ".webm" lower || String.endsWith ".ogg" lower
+
+
+trimTailingEllipsisIfNeeded str = -- This function is a temporary patch to fix a mistake I made whereby an additional character was erroneously added to the provider field. Only the youtube videos for the first lab study are affected. Delete this function after re-ingesting or removing those oers.
+  if str |> String.endsWith "…" then
+    str |> String.dropRight 1
+  else
+    str
+
+
+resourceUrlPath oerId =
+  resourcePath ++ "/" ++ (String.fromInt oerId)
+
+
+isSiteUnderMaintenance =
+  True

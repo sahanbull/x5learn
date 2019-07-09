@@ -69,8 +69,6 @@ app.config['MAIL_DEFAULT_SENDER'] = MAIL_SENDER
 mail.init_app(app)
 
 
-GUEST_COOKIE_NAME = 'x5learn_guest'
-
 CURRENT_ENRICHMENT_VERSION = 1
 
 
@@ -114,6 +112,11 @@ def recent():
     return render_template('home.html')
 
 
+@app.route("/resource/<material_id>")
+def resource(material_id):
+    return render_template('home.html')
+
+
 @app.route("/profile")
 @login_required
 def profile():
@@ -124,42 +127,8 @@ def profile():
 def api_session():
     if current_user.is_authenticated:
         resp = get_logged_in_user_profile_and_state()
-        if str(get_or_create_logged_in_user().id) == get_guest_id_from_cookie():
-            resp.delete_cookie(GUEST_COOKIE_NAME)
         return resp
-    return guest_session()
-
-
-def guest_session():
-    user_id = get_guest_id_from_cookie()
-    if user_id is None or user_id == '':  # No cookie set
-        return new_guest_session()
-    user = User.query.get(user_id)
-    if user is None:  # The cookie points to a row which no longer exists
-        return new_guest_session()
-    return jsonify({'guestUser': {'userState': user.frontend_state}})
-
-
-def get_guest_id_from_cookie():
-    return request.cookies.get(GUEST_COOKIE_NAME)
-
-
-def new_guest_session():
-    user = User()
-    db_session.add(user)
-    db_session.commit()
-    resp = jsonify({'guestUser': {'userState': None}})
-    resp.set_cookie(GUEST_COOKIE_NAME, str(user.id))
-    return resp
-
-
-def new_guest_ok():
-    user = User()
-    db_session.add(user)
-    db_session.commit()
-    resp = make_response('OK')
-    resp.set_cookie(GUEST_COOKIE_NAME, str(user.id))
-    return resp
+    return jsonify({'guestUser': {'userState': None}})
 
 
 def get_logged_in_user_profile_and_state():
@@ -170,19 +139,14 @@ def get_logged_in_user_profile_and_state():
     return jsonify({'loggedInUser': logged_in_user})
 
 
-@user_registered.connect_via(app)
-def on_user_registered(sender, user, confirm_token):
-    # NB the "user" parameter takes a UserLogin object, not a User object
-    # The unfortunate naming results in "user.user" which looks weird although it is technically correct.
-    guest = User.query.get(get_guest_id_from_cookie())
-    guest.user_login_id = user.id
-    user.user = guest
-    db_session.commit()
+# @user_registered.connect_via(app)
+# def on_user_registered(sender, user, confirm_token):
+#     ...
 
 
 def get_or_create_logged_in_user():
     user = current_user.user
-    if user is None:  #  This will happen for the handful of people who have signed up before this change and have been warned that their user state will be reset. Other than that, there is no good reasons for current_user.user to ever be None. So at a later point, we may want to replace this entire function with simply current_user.user
+    if user is None:
         user = User()
         db_session.add(user)
         current_user.user = user
@@ -198,15 +162,7 @@ def api_save_user_state():
         db_session.commit()
         return 'OK'
     else:
-        user_id = request.cookies.get(GUEST_COOKIE_NAME)
-        if user_id == None or user_id == '':  # If the user cleared their cookie while using the app
-            return new_guest_ok('OK')
-        user = User.query.get(user_id)
-        if user is None:  # In the rare case that the cookie points to no-longer existent row
-            return new_guest_ok('OK')
-        user.frontend_state = frontend_state
-        db_session.commit()
-        return 'OK'
+        return 'Guest user state not saved.'
 
 
 @app.route("/api/v1/search/", methods=['GET'])
@@ -229,6 +185,13 @@ def api_oers():
     for url in request.get_json()['urls']:
         oers[url] = find_oer_by_url(url)
     return jsonify(oers)
+
+
+@app.route("/api/v1/resource/", methods=['POST'])
+def api_material():
+    oer_id = request.get_json()['oerId']
+    oer = Oer.query.filter_by(id=oer_id).first()
+    return jsonify(oer.data_and_id())
 
 
 @app.route("/api/v1/save_user_profile/", methods=['POST'])
@@ -374,7 +337,7 @@ def search_results_from_x5gon_api(text):
             oer = Oer(url, convert_x5_material_to_oer(material, url))
             db_session.add(oer)
             db_session.commit()
-        oers.append(oer.data)
+        oers.append(oer.data_and_id())
         enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
         if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION):
             push_enrichment_task(url, int(1000/(index+1)) + 1)
@@ -424,13 +387,16 @@ def convert_x5_material_to_oer(material, url):
 
 def push_enrichment_task(url, priority):
     # print('push_enrichment_task')
-    task = WikichunkEnrichmentTask.query.filter_by(url=url).first()
-    if task is None:
-        task = WikichunkEnrichmentTask(url, priority)
-        db_session.add(task)
-    else:
-        task.priority += priority
-    db_session.commit()
+    try:
+        task = WikichunkEnrichmentTask.query.filter_by(url=url).first()
+        if task is None:
+            task = WikichunkEnrichmentTask(url, priority)
+            db_session.add(task)
+        else:
+            task.priority += priority
+        db_session.commit()
+    except sqlalchemy.orm.exc.StaleDataError:
+        print('sqlalchemy.orm.exc.StaleDataError caught and ignored.') # This error came up occasionally. I'm not 100% sure about what it entails but it didn't seem to affect the user experience so I'm suppressing it for now to prevent a pointless alert on the frontend. Grateful for any helpful tips. More information on this error: https://docs.sqlalchemy.org/en/13/orm/exceptions.html#sqlalchemy.orm.exc.StaleDataError
 
 
 def any_word_matches(words, text):
@@ -455,10 +421,11 @@ def search_suggestions(text):
 def find_oer_by_url(url):
     oer = Oer.query.filter_by(url=url).first()
     if oer is not None:
-        return oer.data
+        return oer.data_and_id()
     else:
         # Return a blank OER. This should not happen normally
         oer = {}
+        oer['id'] = 0
         oer['date'] = ''
         oer['description'] = '(Sorry, this resource is no longer accessible)'
         oer['duration'] = ''

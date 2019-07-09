@@ -17,7 +17,7 @@ from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_USERNAME
 from x5learn_server.db.database import get_or_create_session_db
 get_or_create_session_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
-from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent
+from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent, ResourceFeedback
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 
@@ -188,6 +188,17 @@ def api_material():
     oer = Oer.query.filter_by(id=oer_id).first()
     push_enrichment_task_if_needed(oer.data['url'], 10000)
     return jsonify(oer.data_and_id())
+
+
+@app.route("/api/v1/resource_feedback/", methods=['POST']) # to be replaced by Actions API
+def api_resource_feedback():
+    oer_id = request.get_json()['oerId']
+    text = request.get_json()['text']
+    user_login_id = current_user.get_id() # Assuming we are never going to allow feedback from logged-out users
+    feedback = ResourceFeedback(user_login_id, oer_id, text)
+    db_session.add(feedback)
+    db_session.commit()
+    return 'OK'
 
 
 @app.route("/api/v1/save_user_profile/", methods=['POST'])

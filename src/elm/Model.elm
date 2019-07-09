@@ -43,7 +43,7 @@ type alias Model =
   , userProfileForm : UserProfileForm
   , userProfileFormSubmitted : Maybe UserProfileForm
   , oerNoteForms : Dict OerUrl String
-  , feedbackForms : Dict OerUrl String
+  , feedbackForms : Dict OerId String
   , cachedOers : Dict OerUrl Oer
   , requestingOers : Bool
   , hoveringBubbleEntityId : Maybe String
@@ -115,6 +115,8 @@ type alias Bubblogram =
   }
 
 type alias OerUrl = String
+
+type alias OerId = Int
 
 type alias EntityId = String
 
@@ -712,5 +714,5 @@ relatedSearchStringFromOer model oerUrl =
   --     enrichment.BubblePopup
 
 
-getResourceFeedbackFormValue model oerUrl =
-  model.feedbackForms |> Dict.get oerUrl |> Maybe.withDefault ""
+getResourceFeedbackFormValue model oerId =
+  model.feedbackForms |> Dict.get oerId |> Maybe.withDefault ""

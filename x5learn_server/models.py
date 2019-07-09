@@ -104,6 +104,21 @@ class EntityDefinition(Base):
         self.extract = extract
 
 
+class ResourceFeedback(Base):
+    __tablename__ = 'resource_feedback'
+    id = Column(Integer(), primary_key=True)
+    user_login_id = Column(Integer())
+    oer_id = Column(Integer())
+    text = Column(Text())
+    created_at = Column(DateTime())
+
+    def __init__(self, user_login_id, oer_id, text):
+        self.user_login_id = user_login_id
+        self.oer_id = oer_id
+        self.text = text
+        self.created_at = datetime.now()
+
+
 # This table is only used for the purpose of conducting lab-based evaluations of user experience at UCL.
 class LabStudyLogEvent(Base):
     __tablename__ = 'lab_study_log_event'

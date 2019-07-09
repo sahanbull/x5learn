@@ -279,10 +279,10 @@ recommendationCardWidth model =
 viewFeedbackTab model oer =
   let
       formValue =
-        getResourceFeedbackFormValue model oer.url
+        getResourceFeedbackFormValue model oer.id
 
       textField =
-        Input.text [ width fill, onEnter <| (SubmittedResourceFeedback oer.url), Border.color x5color ] { onChange = ChangedTextInResourceFeedbackForm oer.url, text = formValue, placeholder = Just ("Let us know" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
+        Input.text [ width fill, onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5color ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Let us know" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
   in
       [ "Anything noteworthy about this resource?" |> bodyWrap []
       , textField

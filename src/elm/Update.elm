@@ -241,7 +241,12 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestLabStudyLogEvent"
       -- in
-      -- ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
+      ( { model | userMessage = Just "Some logs were not saved" }, Cmd.none )
+
+    RequestSendResourceFeedback (Ok _) ->
+      (model, Cmd.none)
+
+    RequestSendResourceFeedback (Err err) ->
       (model, Cmd.none)
 
     RequestResource (Ok oer) ->
@@ -337,17 +342,17 @@ update msg ({nav, userProfileForm} as model) =
     ChangedTextInNewNoteFormInOerNoteboard oerUrl str ->
       ( model |> setTextInNoteForm oerUrl str, Cmd.none)
 
-    ChangedTextInResourceFeedbackForm oerUrl str ->
-      ( model |> setTextInResourceFeedbackForm oerUrl str, Cmd.none)
+    ChangedTextInResourceFeedbackForm oerId str ->
+      ( model |> setTextInResourceFeedbackForm oerId str, Cmd.none)
 
     SubmittedNewNoteInOerNoteboard oerUrl ->
       (model |> updateUserState (addNoteToOer oerUrl (getOerNoteForm model oerUrl) model) |> setTextInNoteForm oerUrl "", Cmd.none)
       |> saveUserState msg
       |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ oerUrl, getOerNoteForm model oerUrl ]
 
-    SubmittedResourceFeedback oerUrl ->
-      ({ model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerUrl "", Cmd.none)
-      |> logEventForLabStudy "SubmittedResourceFeedback" [ oerUrl, getResourceFeedbackFormValue model oerUrl ]
+    SubmittedResourceFeedback oerId text ->
+      ({ model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", requestSendResourceFeedback oerId text)
+      |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, getResourceFeedbackFormValue model oerId ]
 
     PressedKeyInNewNoteFormInOerNoteboard oerUrl keyCode ->
       if keyCode==13 then
@@ -618,9 +623,9 @@ setTextInNoteForm oerUrl str model =
   { model | oerNoteForms = model.oerNoteForms |> Dict.insert oerUrl str }
 
 
-setTextInResourceFeedbackForm : OerUrl -> String -> Model -> Model
-setTextInResourceFeedbackForm oerUrl str model =
-  { model | feedbackForms = model.feedbackForms |> Dict.insert oerUrl str }
+setTextInResourceFeedbackForm : OerId -> String -> Model -> Model
+setTextInResourceFeedbackForm oerId str model =
+  { model | feedbackForms = model.feedbackForms |> Dict.insert oerId str }
 
 
 expandCurrentFragmentOrCreateNewOne : Float -> Maybe InspectorState -> UserState -> UserState

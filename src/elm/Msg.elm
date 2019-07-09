@@ -38,6 +38,7 @@ type Msg
   | RequestLabStudyLogEvent (Result Http.Error String)
   | RequestResource (Result Http.Error Oer)
   | RequestResourceRecommendations (Result Http.Error (List Oer))
+  | RequestSendResourceFeedback (Result Http.Error String)
   | SetHover (Maybe String)
   | SetPopup Popup
   | ClosePopup
@@ -49,10 +50,10 @@ type Msg
   | YoutubeSeekTo Float
   | EditUserProfile UserProfileField String
   | SubmittedUserProfile
-  | ChangedTextInNewNoteFormInOerNoteboard String String
-  | ChangedTextInResourceFeedbackForm String String
+  | ChangedTextInNewNoteFormInOerNoteboard OerUrl String
+  | ChangedTextInResourceFeedbackForm OerId String
   | SubmittedNewNoteInOerNoteboard String
-  | SubmittedResourceFeedback String
+  | SubmittedResourceFeedback OerId String
   | PressedKeyInNewNoteFormInOerNoteboard String Int
   | ClickedQuickNoteButton String String
   | RemoveNote Posix

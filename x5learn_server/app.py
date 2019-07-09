@@ -253,7 +253,7 @@ def ingest_wikichunk_enrichment():
     task = WikichunkEnrichmentTask.query.filter_by(url=url).first()
     if error is not None:
         task.error = error
-    else:
+    elif task is not None:
         db_session.delete(task)
     db_session.commit()
     save_enrichment(url, data)

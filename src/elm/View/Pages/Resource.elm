@@ -139,10 +139,15 @@ viewResource model userState oer =
               |> row [ width fill, paddingXY 20 0, spacing 25, Background.color x5colorDark ]
 
             tabContent =
-              [ heading |> headlineWrap []
-              , content
-              ]
-              |> column [ width fill, padding 20, spacing 25 ]
+              if isLoggedIn model then
+                [ heading |> headlineWrap []
+                , content
+                ]
+                |> column [ width fill, padding 20, spacing 25 ]
+              else
+                guestCallToSignup "In order to use all the features and save your changes"
+                |> el [ width fill, paddingXY 15 12, Background.color <| rgb 1 0.85 0.6 ]
+                |> el [ paddingTop 20 ]
         in
             [ tabsMenu |> el [ width fill ]
             , tabContent

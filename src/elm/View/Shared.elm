@@ -191,6 +191,10 @@ semiTransparent =
   alpha 0.5
 
 
+fullyTransparentColor =
+  rgba 0 0 0 0
+
+
 grey value =
   rgb255 value value value
 
@@ -336,6 +340,15 @@ actionButtonWithIcon iconPosition svgIconStub str onPress =
             [ title, icon ]
   in
       button [] { onPress = onPress, label = label |> row [ width fill, padding 12, spacing 3, Border.rounded 4 ]}
+
+
+simpleButton : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
+simpleButton attrs str onPress =
+  let
+      label =
+        str |> text
+  in
+      button attrs { onPress = onPress, label = label }
 
 
 actionButtonWithoutIcon : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg

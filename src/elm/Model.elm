@@ -326,7 +326,7 @@ initialModel nav flags =
   , timeOfLastUrlChange = initialTime
   , startedLabStudyTask = Nothing
   , currentResource = Nothing
-  , resourceSidebarTab = RecommendationsTab
+  , resourceSidebarTab = NotesTab
   , resourceRecommendations = []
   }
 

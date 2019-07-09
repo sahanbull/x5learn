@@ -18,12 +18,14 @@ import Msg exposing (..)
 import View.Shared exposing (..)
 
 
-viewNoteboard : Model -> UserState -> OerUrl -> Element Msg
-viewNoteboard model userState oerUrl =
+viewNoteboard : Model -> UserState -> Bool -> OerUrl -> Element Msg
+viewNoteboard model userState includeHeading oerUrl =
   let
-      heading : Element Msg
       heading =
-        "Your private notes" |> subheaderWrap []
+        if includeHeading then
+          [ "Your notes" |> subheaderWrap [] ]
+        else
+          []
 
       quickNotesWidget : Element Msg
       quickNotesWidget =
@@ -38,9 +40,7 @@ viewNoteboard model userState oerUrl =
 
       headingRow : Element Msg
       headingRow =
-        [ heading
-        , quickNotesWidget
-        ]
+        heading ++ [ quickNotesWidget ]
         |> column [ spacing 15, width fill ]
 
       formValue =

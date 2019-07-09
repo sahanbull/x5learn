@@ -103,7 +103,7 @@ viewResource model userState oer =
             (heading, content) =
               case model.resourceSidebarTab of
                 NotesTab ->
-                  ("Your notes", viewNoteboard model userState oer.url)
+                  ("Your notes", viewNoteboard model userState False oer.url)
 
                 RecommendationsTab ->
                   ("Related material"
@@ -111,11 +111,37 @@ viewResource model userState oer =
                     |> List.map (viewRecommendationCard model)
                     |> column [ spacing 12 ]
                   )
+
+            renderTab (tab, title) =
+              let
+                  isCurrent =
+                    model.resourceSidebarTab==tab
+
+                  (textColor, borderColor) =
+                    if isCurrent then
+                      (Font.color white, Border.color white)
+                    else
+                      (greyTextDisabled, Border.color fullyTransparentColor)
+              in
+                  simpleButton [ Font.size 16, paddingXY 1 20, borderBottom 4, centerX, borderColor, textColor ] title (Just <| SelectResourceSidebarTab tab)
+
+            tabsMenu =
+              [ (NotesTab, "Notes")
+              , (RecommendationsTab, "Recommendations")
+              ]
+              |> List.map renderTab
+              |> row [ width fill, paddingXY 20 0, spacing 15, Background.color x5colorDark ]
+
+            tabContent =
+              [ heading |> headlineWrap []
+              , content |> el []
+              ]
+              |> column [ padding 20, spacing 25 ]
         in
-            [ heading |> headlineWrap []
-            , content |> el []
+            [ tabsMenu |> el [ width fill ]
+            , tabContent
             ]
-            |> column [ spacing 25, width <| px (sidebarWidth model), height fill, alignTop, borderLeft 1, borderColorLayout, paddingTRBL 0 0 0 15, moveRight ((sheetWidth model) - (sidebarWidth model) |> toFloat), paddingXY 20 30, Background.color white ]
+            |> column [ spacing 25, width <| px (sidebarWidth model), height fill, alignTop, borderLeft 1, borderColorLayout, moveRight ((sheetWidth model) - (sidebarWidth model) |> toFloat), Background.color white ]
 
       body =
         [ sidebar

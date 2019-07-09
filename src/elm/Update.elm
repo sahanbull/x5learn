@@ -401,6 +401,10 @@ update msg ({nav, userProfileForm} as model) =
       ({ model | startedLabStudyTask = Nothing }, setBrowserFocus "")
       |> logEventForLabStudy "StoppedLabStudyTask" []
 
+    SelectResourceSidebarTab tab ->
+      ({ model | resourceSidebarTab = tab }, setBrowserFocus "")
+      |> logEventForLabStudy "SelectResourceSidebarTab" []
+
 
 updateUserState : (UserState -> UserState) -> Model -> Model
 updateUserState fn model =

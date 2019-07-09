@@ -62,6 +62,7 @@ type Msg
   | PageScrolled ScrollData
   | StartLabStudyTask LabStudyTask
   | StoppedLabStudyTask
+  | SelectResourceSidebarTab ResourceSidebarTab
 
 
 type UserProfileField

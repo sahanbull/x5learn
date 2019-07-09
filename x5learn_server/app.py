@@ -557,13 +557,13 @@ class NotesList(Resource):
             parser.add_argument('oer_id', type=int)
             parser.add_argument('sort', default='desc', choices=(
                 'asc', 'desc'), help='Bad choice')
-            parser.add_argument('offset', type=int)
-            parser.add_argument('limit', type=int)
+            parser.add_argument('offset', default=0, type=int)
+            parser.add_argument('limit', default=None, type=int)
             args = parser.parse_args()
 
             # Creating a note repository for unique data fetch
             notes_repository = NotesRepository()
-            result_list = notes_repository.get_notes(args['oer_id'], args['sort'], args['offset'], args['limit'])
+            result_list = notes_repository.get_notes(current_user.get_id(), args['oer_id'], args['sort'], args['offset'], args['limit'])
 
             # Converting result list to JSON friendly format
             serializable_list = list()
@@ -599,7 +599,7 @@ class Notes(Resource):
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
 
-        note = repository.get_by_id(Note, id, True)
+        note = repository.get_by_id(Note, id, current_user.get_id())
 
         if not note:
             return {}, 400
@@ -617,7 +617,7 @@ class Notes(Resource):
         parser.add_argument('text', required=True)
         args = parser.parse_args()
 
-        note = repository.get_by_id(Note, id, True)
+        note = repository.get_by_id(Note, id, current_user.get_id())
 
         if not note:
             return {}, 400
@@ -632,7 +632,7 @@ class Notes(Resource):
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
 
-        note = repository.get_by_id(Note, id, True)
+        note = repository.get_by_id(Note, id, current_user.get_id())
 
         if not note:
             return {}, 400
@@ -671,13 +671,13 @@ class ActionList(Resource):
                 'asc', 'desc'), help='Bad choice')
             parser.add_argument('with_oer_id_only', default='false', choices=(
                 'true', 'false'), help='Bad choice')
-            parser.add_argument('offset', type=int)
-            parser.add_argument('limit', type=int)
+            parser.add_argument('offset', default=0, type=int)
+            parser.add_argument('limit', default=None, type=int)
             args = parser.parse_args()
 
             # Creating a actions repository for unique data fetch
             actions_repository = ActionsRepository()
-            result_list = actions_repository.get_actions(args['action_type_id'], args['sort'], args['offset'], args['limit'])
+            result_list = actions_repository.get_actions(current_user.get_id(), args['action_type_id'], args['sort'], args['offset'], args['limit'])
 
             # Eliminating actions without a material id
             to_be_removed = list()
@@ -703,7 +703,7 @@ class ActionList(Resource):
 
                     temp_list = i.Action.params
                     if 'oer_id' in temp_list:
-                        temp_oer = repository.get_by_id(temp_list['oer_id'])
+                        temp_oer = repository.get_by_id(Oer, temp_list['oer_id'])
                         if temp_oer.data:
                             if 'title' in temp_oer.data:
                                 tempObject['params']['title'] = temp_oer.data['title']
@@ -744,7 +744,7 @@ class UserApi(Resource):
 
             # Creating a user repository for unique action
             user_repository = UserRepository()
-            _ = user_repository.forget_user(user)
+            _ = user_repository.forget_user(user, id)
 
             # Sending confirmation mail
             if user.email:
@@ -782,14 +782,14 @@ class Definition(Resource):
         if 'titles' not in args:
             return {'result': 'Titles are required'}, 400
 
-        args = json.loads(args['titles'])
+        titles = json.loads(args['titles'])
 
-        if not args:
+        if not titles:
             return {'result': 'Titles are required'}, 400
 
         # Creating a definitions repository for unique action
         definitions_repository = DefinitionsRepository()
-        temp_db_defs = definitions_repository.get_definitions_list(args)
+        temp_db_defs = definitions_repository.get_definitions_list(titles)
 
         temp_db_lookup = dict()
         if temp_db_defs:
@@ -797,8 +797,8 @@ class Definition(Resource):
                 temp_db_lookup[i.title] = i
 
         result = list()
-        if args:
-            for i in args:
+        if titles:
+            for i in titles:
 
                 if i in temp_db_lookup:
                     result.append({

@@ -1,6 +1,6 @@
 from x5learn_server.db.database import Base, get_or_create_db
 from x5learn_server._config import DB_ENGINE_URI
-from flask_security import UserMixin, RoleMixin, current_user
+from flask_security import UserMixin, RoleMixin
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy import Boolean, DateTime, Column, Integer, \
     Text, String, JSON, Float, ForeignKey, Table, func, BigInteger
@@ -230,62 +230,48 @@ class LabStudyLogEvent(Base):
 
 
 # Repository pattern implemented for CRUD
-
-db_session = None
-
-
 class Repository:
 
     def __init__(self):
-        global db_session
-        db_session = get_or_create_db(DB_ENGINE_URI)
+        self._db_session = get_or_create_db(DB_ENGINE_URI)
 
-    def get_by_id(self, item, id, auth_user=False):
-        global db_session
-        query_object = db_session.query(item)
+    def get_by_id(self, item, id, user_login_id=None):
+        query_object = self._db_session.query(item)
 
-        if (auth_user):
+        if (user_login_id):
             query_object = query_object.filter_by(
-                user_login_id=current_user.get_id())
+                user_login_id=user_login_id)
 
         return query_object.filter_by(id=id).one_or_none()
 
     def get(self, item, filters, sort, order):
-        global db_session
-        result = db_session.query(item)
+        result = self._db_session.query(item)
         return result
 
     def add(self, item):
-        global db_session
-        db_session.add(item)
-        db_session.commit()
+        self._db_session.add(item)
+        self._db_session.commit()
         return item
 
     def update(self, item):
-        global db_session
-        db_session.commit()
+        self._db_session.commit()
         return item
 
     def delete(self, item):
-        global db_session
-        db_session.delete(item)
-        db_session.commit()
+        self._db_session.delete(item)
+        self._db_session.commit()
 
 
 class NotesRepository(Repository):
 
-    def __init__(self):
-        pass
-
-    def get_notes(self, oer_id=None, sort="desc", offset=None, limit=None):
-        global db_session
-        query_object = db_session.query(Note)
+    def get_notes(self, user_login_id, oer_id=None, sort="desc", offset=None, limit=None):
+        query_object = self._db_session.query(Note)
 
         if (oer_id):
             query_object = query_object.filter(Note.oer_id == oer_id)
 
         query_object = query_object.filter_by(
-            user_login_id=current_user.get_id())
+            user_login_id=user_login_id)
         query_object = query_object.filter_by(is_deactivated=False)
 
         if (sort == 'desc'):
@@ -304,12 +290,8 @@ class NotesRepository(Repository):
 
 class ActionsRepository(Repository):
 
-    def __init__(self):
-        pass
-
-    def get_actions(self, action_type_id=None, sort="desc", offset=None, limit=None):
-        global db_session
-        query_object = db_session.query(
+    def get_actions(self, user_login_id, action_type_id=None, sort="desc", offset=None, limit=None):
+        query_object = self._db_session.query(
             Action, ActionType).join(ActionType)
 
         if (action_type_id):
@@ -317,7 +299,7 @@ class ActionsRepository(Repository):
                 Action.action_type_id == action_type_id)
 
         query_object = query_object.filter(
-            Action.user_login_id == current_user.get_id())
+            Action.user_login_id == user_login_id)
 
         if (sort == 'desc'):
             query_object = query_object.order_by(Action.created_at.desc())
@@ -335,30 +317,20 @@ class ActionsRepository(Repository):
 
 class UserRepository(Repository):
 
-    def __init__(self):
-        pass
+    def forget_user(self, user, user_login_id):
+        self._db_session.query(Action).filter_by(
+            user_login_id=user_login_id).delete()
+        self._db_session.query(Note).filter_by(
+            user_login_id=user_login_id).delete()
+        self._db_session.query(User).filter_by(
+            user_login_id=user_login_id).delete()
 
-    def forget_user(self, user):
-        global db_session
-
-        db_session.query(Action).filter_by(
-            user_login_id=current_user.get_id()).delete()
-        db_session.query(Note).filter_by(
-            user_login_id=current_user.get_id()).delete()
-        db_session.query(User).filter_by(
-            user_login_id=current_user.get_id()).delete()
-
-        db_session.delete(user)
-        db_session.commit()
+        self._db_session.delete(user)
+        self._db_session.commit()
         return True
 
 
 class DefinitionsRepository(Repository):
 
-    def __init__(self):
-        pass
-
     def get_definitions_list(self, titles):
-        global db_session
-
-        return db_session.query(EntityDefinition).filter(EntityDefinition.title.in_(titles)).all()
+        return self._db_session.query(EntityDefinition).filter(EntityDefinition.title.in_(titles)).all()

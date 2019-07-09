@@ -43,6 +43,7 @@ type alias Model =
   , userProfileForm : UserProfileForm
   , userProfileFormSubmitted : Maybe UserProfileForm
   , oerNoteForms : Dict OerUrl String
+  , feedbackForms : Dict OerUrl String
   , cachedOers : Dict OerUrl Oer
   , requestingOers : Bool
   , hoveringBubbleEntityId : Maybe String
@@ -55,6 +56,7 @@ type alias Model =
   , currentResource : Maybe CurrentResource
   , resourceSidebarTab : ResourceSidebarTab
   , resourceRecommendations : List Oer
+  , feedbackRecordedConfirmation : Bool
   }
 
 
@@ -73,6 +75,7 @@ type EntityDefinition
 type ResourceSidebarTab
   = NotesTab
   | RecommendationsTab
+  | FeedbackTab
 
 type CurrentResource
   = Loaded OerUrl
@@ -316,6 +319,7 @@ initialModel nav flags =
   , userProfileForm = freshUserProfileForm (initialUserProfile "")
   , userProfileFormSubmitted = Nothing
   , oerNoteForms = Dict.empty
+  , feedbackForms = Dict.empty
   , cachedOers = Dict.empty
   , requestingOers = False
   , hoveringBubbleEntityId = Nothing
@@ -328,6 +332,7 @@ initialModel nav flags =
   , currentResource = Nothing
   , resourceSidebarTab = NotesTab
   , resourceRecommendations = []
+  , feedbackRecordedConfirmation = False
   }
 
 
@@ -705,3 +710,7 @@ relatedSearchStringFromOer model oerUrl =
   --       Nothing ->
 
   --     enrichment.BubblePopup
+
+
+getResourceFeedbackFormValue model oerUrl =
+  model.feedbackForms |> Dict.get oerUrl |> Maybe.withDefault ""

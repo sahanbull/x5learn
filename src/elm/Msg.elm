@@ -50,7 +50,9 @@ type Msg
   | EditUserProfile UserProfileField String
   | SubmittedUserProfile
   | ChangedTextInNewNoteFormInOerNoteboard String String
+  | ChangedTextInResourceFeedbackForm String String
   | SubmittedNewNoteInOerNoteboard String
+  | SubmittedResourceFeedback String
   | PressedKeyInNewNoteFormInOerNoteboard String Int
   | ClickedQuickNoteButton String String
   | RemoveNote Posix

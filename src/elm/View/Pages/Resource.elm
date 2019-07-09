@@ -112,6 +112,11 @@ viewResource model userState oer =
                     |> column [ spacing 12 ]
                   )
 
+                FeedbackTab ->
+                  ("Feedback"
+                  , if model.feedbackRecordedConfirmation then viewFeedbackConfirmation else viewFeedbackTab model oer
+                  )
+
             renderTab (tab, title) =
               let
                   isCurrent =
@@ -128,15 +133,16 @@ viewResource model userState oer =
             tabsMenu =
               [ (NotesTab, "Notes")
               , (RecommendationsTab, "Recommendations")
+              , (FeedbackTab, "Feedback")
               ]
               |> List.map renderTab
-              |> row [ width fill, paddingXY 20 0, spacing 15, Background.color x5colorDark ]
+              |> row [ width fill, paddingXY 20 0, spacing 25, Background.color x5colorDark ]
 
             tabContent =
               [ heading |> headlineWrap []
-              , content |> el []
+              , content
               ]
-              |> column [ padding 20, spacing 25 ]
+              |> column [ width fill, padding 20, spacing 25 ]
         in
             [ tabsMenu |> el [ width fill ]
             , tabContent
@@ -263,3 +269,25 @@ recommendationCardHeight =
 
 recommendationCardWidth model =
   sidebarWidth model - 50
+
+
+viewFeedbackTab model oer =
+  let
+      formValue =
+        getResourceFeedbackFormValue model oer.url
+
+      textField =
+        Input.text [ width fill, onEnter <| (SubmittedResourceFeedback oer.url), Border.color x5color ] { onChange = ChangedTextInResourceFeedbackForm oer.url, text = formValue, placeholder = Just ("Let us know" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
+  in
+      [ "Anything noteworthy about this resource?" |> bodyWrap []
+      , textField
+      -- , "[ submit button goes here ]" |> bodyWrap [ greyTextDisabled ]
+      ]
+      |> column [ width fill, spacing 20 ]
+
+
+viewFeedbackConfirmation =
+  [ "Thanks 😊" |> headlineWrap [ Font.size 24 ]
+  , "✔ Your feedback has been recorded." |> bodyWrap []
+  ]
+  |> column [ spacing 30, paddingTop 30 ]

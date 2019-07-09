@@ -337,10 +337,18 @@ update msg ({nav, userProfileForm} as model) =
     ChangedTextInNewNoteFormInOerNoteboard oerUrl str ->
       ( model |> setTextInNoteForm oerUrl str, Cmd.none)
 
+    ChangedTextInResourceFeedbackForm oerUrl str ->
+      ( model |> setTextInResourceFeedbackForm oerUrl str, Cmd.none)
+
     SubmittedNewNoteInOerNoteboard oerUrl ->
       (model |> updateUserState (addNoteToOer oerUrl (getOerNoteForm model oerUrl) model) |> setTextInNoteForm oerUrl "", Cmd.none)
       |> saveUserState msg
       |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ oerUrl, getOerNoteForm model oerUrl ]
+
+    SubmittedResourceFeedback oerUrl ->
+      ({ model | feedbackRecordedConfirmation = True } |> setTextInResourceFeedbackForm oerUrl "", Cmd.none)
+      |> saveUserState msg
+      |> logEventForLabStudy "SubmittedResourceFeedback" [ oerUrl, getResourceFeedbackFormValue model oerUrl ]
 
     PressedKeyInNewNoteFormInOerNoteboard oerUrl keyCode ->
       if keyCode==13 then
@@ -610,6 +618,11 @@ addFragmentAccess fragment currentTime userState =
 setTextInNoteForm : OerUrl -> String -> Model -> Model
 setTextInNoteForm oerUrl str model =
   { model | oerNoteForms = model.oerNoteForms |> Dict.insert oerUrl str }
+
+
+setTextInResourceFeedbackForm : OerUrl -> String -> Model -> Model
+setTextInResourceFeedbackForm oerUrl str model =
+  { model | feedbackForms = model.feedbackForms |> Dict.insert oerUrl str }
 
 
 expandCurrentFragmentOrCreateNewOne : Float -> Maybe InspectorState -> UserState -> UserState

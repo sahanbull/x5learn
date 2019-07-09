@@ -287,6 +287,7 @@ viewFeedbackTab model oer =
       [ "Anything noteworthy about this resource?" |> bodyWrap []
       , textField
       -- , "[ submit button goes here ]" |> bodyWrap [ greyTextDisabled ]
+      -- TODO ([ "Too hard", "Just right", "Too easy", "Interested", "Not interested", "Poor text quality" , "Poor image quality" ] ++ (if isVideoFile oerUrl || hasYoutubeVideo oerUrl then [ "Poor audio quality" ] else []))
       ]
       |> column [ width fill, spacing 20 ]
 

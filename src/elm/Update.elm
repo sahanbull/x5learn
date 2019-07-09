@@ -346,7 +346,7 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ oerUrl, getOerNoteForm model oerUrl ]
 
     SubmittedResourceFeedback oerUrl ->
-      ({ model | feedbackRecordedConfirmation = True } |> setTextInResourceFeedbackForm oerUrl "", Cmd.none)
+      ({ model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerUrl "", Cmd.none)
       |> logEventForLabStudy "SubmittedResourceFeedback" [ oerUrl, getResourceFeedbackFormValue model oerUrl ]
 
     PressedKeyInNewNoteFormInOerNoteboard oerUrl keyCode ->

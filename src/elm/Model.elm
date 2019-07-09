@@ -56,7 +56,7 @@ type alias Model =
   , currentResource : Maybe CurrentResource
   , resourceSidebarTab : ResourceSidebarTab
   , resourceRecommendations : List Oer
-  , feedbackRecordedConfirmation : Bool
+  , timeOfLastFeedbackRecorded : Posix
   }
 
 
@@ -332,7 +332,7 @@ initialModel nav flags =
   , currentResource = Nothing
   , resourceSidebarTab = NotesTab
   , resourceRecommendations = []
-  , feedbackRecordedConfirmation = False
+  , timeOfLastFeedbackRecorded = initialTime
   }
 
 

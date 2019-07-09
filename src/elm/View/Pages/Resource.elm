@@ -114,7 +114,7 @@ viewResource model userState oer =
 
                 FeedbackTab ->
                   ("Feedback"
-                  , if model.feedbackRecordedConfirmation then viewFeedbackConfirmation else viewFeedbackTab model oer
+                  , if (millisSince model model.timeOfLastFeedbackRecorded) < 4000 then viewFeedbackConfirmation else viewFeedbackTab model oer
                   )
 
             renderTab (tab, title) =

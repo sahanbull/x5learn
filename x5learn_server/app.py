@@ -590,7 +590,7 @@ class Notes(Resource):
             return {}, 400
 
         setattr(note, 'text', args['text'])
-        _ = repository.update(note)
+        _ = repository.update()
         return {'result': 'Note updated'}, 201
 
     @ns_notes.doc('delete_note')
@@ -605,7 +605,7 @@ class Notes(Resource):
             return {}, 400
 
         setattr(note, 'is_deactivated', True)
-        _ = repository.update(note)
+        _ = repository.update()
         return {'result': 'Note deleted'}, 201
 
 

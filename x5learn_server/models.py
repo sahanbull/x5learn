@@ -307,8 +307,8 @@ class Repository:
         self._db_session.commit()
         return item
 
-    def update(self, item):
-        """update an a record of type item to the db.
+    def update(self):
+        """syncs modified records with the relevant database records.
 
         Args:
             item (object): type of db object to update (Required)
@@ -319,7 +319,7 @@ class Repository:
         """
 
         self._db_session.commit()
-        return item
+        return True
 
     def delete(self, item):
         """deletes an a record of type item from the db.

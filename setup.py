@@ -3,7 +3,8 @@ from setuptools import setup
 setup(
     name='x5learn',
     version='0.1',
-    packages=['x5learn_server', 'test-integration', 'test-integration.x5learn_server', 'test-integration.x5learn_server.db'],
+    packages=['x5learn_server', 'test-integration',
+              'test-integration.x5learn_server', 'test-integration.x5learn_server.db'],
     url='x5learn.org',
     license='',
     author='x5gon',
@@ -18,6 +19,10 @@ setup(
         'fuzzywuzzy>=0.17.0',
         'flask_sqlalchemy',
         'langdetect',
+        'flask-restplus',
+        'pytest',
+        'pytest-flask',
+        'wikipedia',
         'bcrypt'
-]
+    ]
 )

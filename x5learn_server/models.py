@@ -1,13 +1,16 @@
-from x5learn_server.db.database import Base
+from x5learn_server.db.database import Base, get_or_create_db
+from x5learn_server._config import DB_ENGINE_URI
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.orm import relationship, backref
-from sqlalchemy import Boolean, DateTime, Column, Integer, BigInteger, \
-    Text, String, JSON, Float, ForeignKey, Table
+from sqlalchemy import Boolean, DateTime, Column, Integer, \
+    Text, String, JSON, Float, ForeignKey, Table, func, BigInteger
+import datetime
+from flask_sqlalchemy import SQLAlchemy
 
-from datetime import datetime
 
 class RolesUsers(Base):
     __tablename__ = 'roles_users'
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer(), primary_key=True)
     user_id = Column('user_id', Integer(), ForeignKey('user_login.id'))
     role_id = Column('role_id', Integer(), ForeignKey('role.id'))
@@ -15,6 +18,7 @@ class RolesUsers(Base):
 
 class Role(Base, RoleMixin):
     __tablename__ = 'role'
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer(), primary_key=True)
     name = Column(String(80), unique=True)
     description = Column(String(255))
@@ -22,6 +26,7 @@ class Role(Base, RoleMixin):
 
 class UserLogin(Base, UserMixin):
     __tablename__ = 'user_login'
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer, primary_key=True)
     email = Column(String(255), unique=True)
     password = Column(String(255))
@@ -32,13 +37,15 @@ class UserLogin(Base, UserMixin):
     login_count = Column(Integer)
     active = Column(Boolean())
     confirmed_at = Column(DateTime())
-    roles = relationship('Role', secondary='roles_users', backref=backref('user_login', lazy='dynamic'))
+    roles = relationship('Role', secondary='roles_users',
+                         backref=backref('user_login', lazy='dynamic'))
     user_profile = Column(JSON())
     user = relationship('User', uselist=False, backref='user_login')
 
 
 class User(Base):
     __tablename__ = 'user'
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer(), primary_key=True)
     frontend_state = Column(JSON())
     user_login_id = Column(Integer, ForeignKey('user_login.id'))
@@ -46,6 +53,7 @@ class User(Base):
 
 class Oer(Base):
     __tablename__ = 'oer'
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer(), primary_key=True)
     url = Column(String(255), unique=True, nullable=False)
     data = Column(JSON())
@@ -62,6 +70,7 @@ class Oer(Base):
 
 class WikichunkEnrichment(Base):
     __tablename__ = 'wikichunk_enrichment'
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer(), primary_key=True)
     url = Column(String(255), unique=True, nullable=False)
     data = Column(JSON())
@@ -73,11 +82,12 @@ class WikichunkEnrichment(Base):
         self.version = version
 
     def entities_to_string(self):
-        return '. '.join([ '. '.join([ e['title'] for e in chunk['entities'] ]) for chunk in self.data['chunks'] ])
+        return '. '.join(['. '.join([e['title'] for e in chunk['entities']]) for chunk in self.data['chunks']])
 
 
 class WikichunkEnrichmentTask(Base):
     __tablename__ = 'wikichunk_enrichment_task'
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer(), primary_key=True)
     url = Column(String(255), unique=True, nullable=False)
     priority = Column(Integer())
@@ -91,18 +101,118 @@ class WikichunkEnrichmentTask(Base):
 
 class EntityDefinition(Base):
     __tablename__ = 'entity_definition'
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer(), primary_key=True)
     entity_id = Column(String(20))
     title = Column(String(255))
     url = Column(String(255), unique=True)
     extract = Column(Text())
+    last_update_at = Column(DateTime(), default=datetime.datetime.utcnow)
+    lang = Column(String(20))
 
-    def __init__(self, entity_id, title, url, extract):
+    def __init__(self, entity_id, title, url, extract, lang):
         self.entity_id = entity_id
         self.title = title
         self.url = url
         self.extract = extract
+        self.last_update_at = datetime.datetime.utcnow()
+        self.lang = lang
 
+    @property
+    def serialize(self):
+        """Return object data in easily serializable format"""
+        return {
+            'id': self.id,
+            'entity_id': self.entity_id,
+            'title': self.title,
+            'url': self.params,
+            'extract': self.extract,
+            'last_update_at': dump_datetime(self.last_update_at),
+            'lang': self.lang
+        }
+
+
+def dump_datetime(value):
+    """Deserialize datetime object into string form for JSON processing."""
+    if value is None:
+        return None
+    return [value.strftime("%Y-%m-%d"), value.strftime("%H:%M:%S")]
+
+
+class Note(Base):
+    __tablename__ = 'note'
+    __table_args__ = {'extend_existing': True}
+    id = Column(Integer(), primary_key=True)
+    text = Column(Text())
+    created_at = Column(DateTime(), default=datetime.datetime.utcnow)
+    last_updated_at = Column(DateTime())
+    user_login_id = Column(Integer, ForeignKey('user_login.id'))
+    oer_id = Column(Integer, ForeignKey('oer.id'))
+    is_deactivated = Column(Boolean())
+
+    def __init__(self, oer_id, text, user_login_id, is_deactivated):
+        self.oer_id = oer_id
+        self.text = text
+        self.last_updated_at = datetime.datetime.utcnow()
+        self.user_login_id = user_login_id
+        self.is_deactivated = is_deactivated
+
+    @property
+    def serialize(self):
+        """Return object data in easily serializable format"""
+        return {
+            'id': self.id,
+            'oer_id': self.oer_id,
+            'text': self.text,
+            'created_at': dump_datetime(self.created_at),
+            'last_updated_at': dump_datetime(self.last_updated_at),
+            'user_login_id': self.user_login_id,
+            'is_deactivated': self.is_deactivated
+        }
+
+
+class ActionType(Base):
+    __tablename__ = 'action_type'
+    __table_args__ = {'extend_existing': True}
+    id = Column(Integer(), primary_key=True)
+    description = Column(String(255))
+
+    def __init__(self, description):
+        self.description = description
+
+    @property
+    def serialize(self):
+        """Return object data in easily serializable format"""
+        return {
+            'id': self.id,
+            'description': self.description
+        }
+
+
+class Action(Base):
+    __tablename__ = 'action'
+    __table_args__ = {'extend_existing': True}
+    id = Column(Integer(), primary_key=True)
+    action_type_id = Column(Integer, ForeignKey('action_type.id'))
+    params = Column(JSON)
+    created_at = Column(DateTime(), default=datetime.datetime.utcnow)
+    user_login_id = Column(Integer, ForeignKey('user_login.id'))
+
+    def __init__(self, action_type_id, params, user_login_id):
+        self.action_type_id = action_type_id
+        self.params = params
+        self.user_login_id = user_login_id
+
+    @property
+    def serialize(self):
+        """Return object data in easily serializable format"""
+        return {
+            'id': self.id,
+            'action_type_id': self.action_type_id,
+            'params': self.params,
+            'created_at': dump_datetime(self.created_at),
+            'user_login_id': self.user_login_id
+        }
 
 class ResourceFeedback(Base):
     __tablename__ = 'resource_feedback'
@@ -120,6 +230,8 @@ class ResourceFeedback(Base):
 
 
 # This table is only used for the purpose of conducting lab-based evaluations of user experience at UCL.
+
+
 class LabStudyLogEvent(Base):
     __tablename__ = 'lab_study_log_event'
     id = Column(Integer(), primary_key=True)
@@ -134,4 +246,226 @@ class LabStudyLogEvent(Base):
         self.event_type = event_type
         self.params = params
         self.browser_time = browser_time
-        self.created_at = datetime.now()
+        self.created_at = datetime.datetime.now()
+
+
+# Repository pattern implemented for CRUD
+class Repository:
+    """
+    represents a data layer object for CRUD operations
+    """
+
+    def __init__(self):
+        self._db_session = get_or_create_db(DB_ENGINE_URI)
+
+    def get_by_id(self, item, id, user_login_id=None):
+        """get a single designated item by id. Optionally can auth by user login id
+
+        Args:
+            item (object): type of db object to query (Required)
+            id (int): id to query object by (Required)
+            user_login_id (int): user login id to auth records belonging to the user
+
+        Returns:
+            (object): object of type item
+
+        """
+
+        query_object = self._db_session.query(item)
+
+        if (user_login_id):
+            query_object = query_object.filter_by(
+                user_login_id=user_login_id)
+
+        return query_object.filter_by(id=id).one_or_none()
+
+    def get(self, item, user_login_id, filters=None, sort=None):
+        """gets multiple items. Optionally can auth by user login id
+
+        Args:
+            item (object): type of db object to query (Required)
+            user_login_id (int): user login id to auth records belonging to the user
+            filters (dict{key:val}): keys will be columns to filter, values are the value to filter with
+            sort (dict{key:val}):  key will be column to sort by, value will be 'asc' or 'desc'
+
+        Returns:
+            (list(object)): list of objects of type item
+
+        """
+
+        if filters:
+            for key, value in filters.iteritems():
+                self._db_session.filter_by(key=value)
+
+        if sort:
+            for key, value in sort.iteritems():
+                if value == "asc":
+                    self._db_session.order_by(key.asc)
+                else:
+                    self._db_session.order_by(key.desc)
+
+        result = self._db_session.query(item)
+        return result
+
+    def add(self, item):
+        """add an a record of type item to the db.
+
+        Args:
+            item (object): type of db object to add (Required)
+
+        Returns:
+            (object): returns added item
+
+        """
+
+        self._db_session.add(item)
+        self._db_session.commit()
+        return item
+
+    def update(self):
+        """syncs modified records with the relevant database records.
+
+        Args:
+            item (object): type of db object to update (Required)
+
+        Returns:
+            (object): returns updated item
+
+        """
+
+        self._db_session.commit()
+        return True
+
+    def delete(self, item):
+        """deletes an a record of type item from the db.
+
+        Args:
+            item (object): type of db object to delete (Required)
+
+        """
+
+        self._db_session.delete(item)
+        self._db_session.commit()
+
+
+class NotesRepository(Repository):
+
+    def get_notes(self, user_login_id, oer_id=None, sort="desc", offset=None, limit=None):
+        """gets multiple notes filtered by user logged in.
+
+        Args:
+            user_login_id (int): user login id to auth records belonging to the user
+            oer_id (int): filter notes attached to a specific material
+            sort (str): sort by 'asc' or 'desc'
+            offset (int): Number to offset result set with (Default: 0)
+            limit (int): Number to limit records of result set (Default: None)
+
+        Returns:
+            (list(object)): list of objects of type notes
+
+        """
+
+        query_object = self._db_session.query(Note)
+
+        if (oer_id):
+            query_object = query_object.filter(Note.oer_id == oer_id)
+
+        query_object = query_object.filter_by(
+            user_login_id=user_login_id)
+        query_object = query_object.filter_by(is_deactivated=False)
+
+        if (sort == 'desc'):
+            query_object = query_object.order_by(Note.created_at.desc())
+        else:
+            query_object = query_object.order_by(Note.created_at.asc())
+
+        if (offset):
+            query_object = query_object.offset(offset)
+
+        if (limit):
+            query_object = query_object.limit(limit)
+
+        return query_object.all()
+
+
+class ActionsRepository(Repository):
+
+    def get_actions(self, user_login_id, action_type_id=None, sort="desc", offset=None, limit=None):
+        """gets multiple actions filtered by user logged in.
+
+        Args:
+            user_login_id (int): user login id to auth records belonging to the user
+            action_type_id (int): filter actions attached to a specific action type
+            sort (str): sort by 'asc' or 'desc'
+            offset (int): Number to offset result set with (Default: 0)
+            limit (int): Number to limit records of result set (Default: None)
+
+        Returns:
+            (list(object)): list of objects of type actions
+
+        """
+
+        query_object = self._db_session.query(
+            Action, ActionType).join(ActionType)
+
+        if (action_type_id):
+            query_object = query_object.filter(
+                Action.action_type_id == action_type_id)
+
+        query_object = query_object.filter(
+            Action.user_login_id == user_login_id)
+
+        if (sort == 'desc'):
+            query_object = query_object.order_by(Action.created_at.desc())
+        else:
+            query_object = query_object.order_by(Action.created_at.asc())
+
+        if (offset):
+            query_object = query_object.offset(offset)
+
+        if (limit):
+            query_object = query_object.limit(limit)
+
+        return query_object.all()
+
+
+class UserRepository(Repository):
+
+    def forget_user(self, user, user_login_id):
+        """deletes a user and any related info completely off the database.
+
+        Args:
+            user (object): user to be deleted (Required)
+            user_login_id (int): user login id to auth delete action (Required)
+
+        Returns:
+            (bool) : true
+
+        """
+
+        self._db_session.query(Action).filter_by(
+            user_login_id=user_login_id).delete()
+        self._db_session.query(Note).filter_by(
+            user_login_id=user_login_id).delete()
+        self._db_session.query(User).filter_by(
+            user_login_id=user_login_id).delete()
+
+        self._db_session.delete(user)
+        self._db_session.commit()
+        return True
+
+
+class DefinitionsRepository(Repository):
+
+    def get_definitions_list(self, titles):
+        """fetches definitions from database for given list of titles.
+
+        Args:
+            titles (list(str)): list of string that should be queried from databse (Required)
+
+        Returns:
+            (list(objects)) : list of objects containing definition related data
+
+        """
+
+        return self._db_session.query(EntityDefinition).filter(EntityDefinition.title.in_(titles)).all()

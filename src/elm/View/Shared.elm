@@ -47,6 +47,10 @@ whiteText =
   Font.color white
 
 
+feedbackOptionButtonColor =
+  rgb255 80 170 120
+
+
 x5color =
   rgb255 82 134 148
 

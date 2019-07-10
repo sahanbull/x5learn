@@ -346,7 +346,7 @@ update msg ({nav, userProfileForm} as model) =
       ( model |> setTextInResourceFeedbackForm oerId str, Cmd.none)
 
     SubmittedNewNoteInOerNoteboard oerUrl ->
-      (model |> updateUserState (addNoteToOer oerUrl (getOerNoteForm model oerUrl) model) |> setTextInNoteForm oerUrl "", Cmd.none)
+      (model |> updateUserState (addNoteToOer oerUrl (getOerNoteForm model oerUrl) model) |> setTextInNoteForm oerUrl "", setBrowserFocus "textInputFieldForNotesOrFeedback")
       |> saveUserState msg
       |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ oerUrl, getOerNoteForm model oerUrl ]
 

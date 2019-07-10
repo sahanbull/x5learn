@@ -116,7 +116,7 @@ viewResource model userState oer =
 
                 FeedbackTab ->
                   ("Feedback"
-                  , if (millisSince model model.timeOfLastFeedbackRecorded) < 4000 then viewFeedbackConfirmation else viewFeedbackTab model oer
+                  , if (millisSince model model.timeOfLastFeedbackRecorded) < 2000 then viewFeedbackConfirmation else viewFeedbackTab model oer
                   )
 
             renderTab (tab, title) =
@@ -283,13 +283,29 @@ viewFeedbackTab model oer =
       formValue =
         getResourceFeedbackFormValue model oer.id
 
+      quickOptions =
+        ([ "Inspiring"
+        , "Boring"
+        , "Up-to-date"
+        , "Outdated"
+        , "Well explained"
+        , "Incomprehensible"
+        , "Factually inaccurate"
+        , "Inappropriate"
+        , "Poor text quality"
+        , "Poor visual quality"
+        ] ++ (if isVideoFile oer.url || hasYoutubeVideo oer.url then [ "Poor audio quality" ] else []))
+        |> List.map (\option -> simpleButton [ paddingXY 9 5, Background.color feedbackOptionButtonColor, Font.size 14, whiteText ] option (Just <| SubmittedResourceFeedback oer.id (">>>"++option)))
+        |> column [ spacing 10 ]
+
       textField =
         Input.text [ width fill, htmlId "textInputFieldForNotesOrFeedback", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5color ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Let us know" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
   in
       [ "Anything noteworthy about this resource?" |> bodyWrap []
+      , quickOptions
+      , "Other" |> bodyWrap []
       , textField
       -- , "[ submit button goes here ]" |> bodyWrap [ greyTextDisabled ]
-      -- TODO ([ "Too hard", "Just right", "Too easy", "Interested", "Not interested", "Poor text quality" , "Poor image quality" ] ++ (if isVideoFile oerUrl || hasYoutubeVideo oerUrl then [ "Poor audio quality" ] else []))
       ]
       |> column [ width fill, spacing 20 ]
 
@@ -298,4 +314,4 @@ viewFeedbackConfirmation =
   [ "Thanks 😊" |> headlineWrap [ Font.size 24 ]
   , "✔ Your feedback has been recorded." |> bodyWrap []
   ]
-  |> column [ spacing 30, paddingTop 30 ]
+  |> column [ spacing 30, paddingTop 200 ]

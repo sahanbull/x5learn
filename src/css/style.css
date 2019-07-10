@@ -139,3 +139,9 @@ a:hover {
   width: 100%;
   height: auto;
 }
+
+.ClipEllipsis {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}

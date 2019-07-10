@@ -18,12 +18,14 @@ import Msg exposing (..)
 import View.Shared exposing (..)
 
 
-viewNoteboard : Model -> UserState -> OerUrl -> Element Msg
-viewNoteboard model userState oerUrl =
+viewNoteboard : Model -> UserState -> Bool -> OerUrl -> Element Msg
+viewNoteboard model userState includeHeading oerUrl =
   let
-      heading : Element Msg
       heading =
-        "Your private notes" |> subheaderWrap []
+        if includeHeading then
+          [ "Your notes" |> subheaderWrap [] ]
+        else
+          []
 
       quickNotesWidget : Element Msg
       quickNotesWidget =
@@ -32,22 +34,20 @@ viewNoteboard model userState oerUrl =
             quickNotesButton str =
               actionButtonWithoutIcon [ Background.color x5colorSemiTransparent, whiteText, paddingXY 5 3 ] str (Just <| ClickedQuickNoteButton oerUrl str)
         in
-            ([ "Too hard", "Just right", "Too easy", "Interested", "Not interested", "Poor text quality" , "Poor image quality" ] ++ (if isVideoFile oerUrl || hasYoutubeVideo oerUrl then [ "Poor audio quality" ] else []))
+            [ "Too hard", "Just right", "Too easy", "Interested", "Not interested" ]
             |> List.map quickNotesButton
             |> wrappedRow [ spacing 8, width fill, alignRight ]
 
       headingRow : Element Msg
       headingRow =
-        [ heading
-        , quickNotesWidget
-        ]
+        heading ++ [ quickNotesWidget ]
         |> column [ spacing 15, width fill ]
 
       formValue =
         getOerNoteForm model oerUrl
 
       textField =
-        Input.text [ width fill, onEnter <| (SubmittedNewNoteInOerNoteboard oerUrl), Border.color x5color ] { onChange = ChangedTextInNewNoteFormInOerNoteboard oerUrl, text = formValue, placeholder = Just ("Write a note" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "note" }
+        Input.text [ width fill, htmlId "textInputFieldForNotesOrFeedback", onEnter <| (SubmittedNewNoteInOerNoteboard oerUrl), Border.color x5color ] { onChange = ChangedTextInNewNoteFormInOerNoteboard oerUrl, text = formValue, placeholder = Just ("Write a note" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "note" }
 
       newEntry =
         [ textField

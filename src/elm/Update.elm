@@ -413,7 +413,7 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "StoppedLabStudyTask" []
 
     SelectResourceSidebarTab tab ->
-      ({ model | resourceSidebarTab = tab }, setBrowserFocus "")
+      ({ model | resourceSidebarTab = tab }, setBrowserFocus "textInputFieldForNotesOrFeedback")
       |> logEventForLabStudy "SelectResourceSidebarTab" []
 
 

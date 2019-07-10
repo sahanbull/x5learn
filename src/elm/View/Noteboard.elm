@@ -47,7 +47,7 @@ viewNoteboard model userState includeHeading oerUrl =
         getOerNoteForm model oerUrl
 
       textField =
-        Input.text [ width fill, onEnter <| (SubmittedNewNoteInOerNoteboard oerUrl), Border.color x5color ] { onChange = ChangedTextInNewNoteFormInOerNoteboard oerUrl, text = formValue, placeholder = Just ("Write a note" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "note" }
+        Input.text [ width fill, htmlId "textInputFieldForNotesOrFeedback", onEnter <| (SubmittedNewNoteInOerNoteboard oerUrl), Border.color x5color ] { onChange = ChangedTextInNewNoteFormInOerNoteboard oerUrl, text = formValue, placeholder = Just ("Write a note" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "note" }
 
       newEntry =
         [ textField

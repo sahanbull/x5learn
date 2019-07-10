@@ -152,7 +152,7 @@ inspectorContentDefault model userState {oer, fragmentStart} =
         |> column [ width (px playerWidth), moveLeft notesWidth ]
 
       body =
-        [ viewNoteboard model userState oer.url |> el [ width <| px notesWidth, height fill, alignTop, borderLeft 1, paddingTRBL 0 0 0 15, moveRight (sheetWidth - notesWidth - 30 ) ]
+        [ viewNoteboard model userState True oer.url |> el [ width <| px notesWidth, height fill, alignTop, borderLeft 1, paddingTRBL 0 0 0 15, moveRight (sheetWidth - notesWidth - 30 ) ]
         , mainSection
         ]
         |> row []

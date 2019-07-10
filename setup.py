@@ -18,6 +18,10 @@ setup(
         'fuzzywuzzy>=0.17.0',
         'flask_sqlalchemy',
         'langdetect',
+        'flask-restplus',
+        'pytest',
+        'pytest-flask',
+        'wikipedia',
         'bcrypt'
-]
+    ]
 )

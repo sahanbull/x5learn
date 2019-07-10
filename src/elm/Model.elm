@@ -43,6 +43,7 @@ type alias Model =
   , userProfileForm : UserProfileForm
   , userProfileFormSubmitted : Maybe UserProfileForm
   , oerNoteForms : Dict OerUrl String
+  , feedbackForms : Dict OerId String
   , cachedOers : Dict OerUrl Oer
   , requestingOers : Bool
   , hoveringBubbleEntityId : Maybe String
@@ -53,6 +54,9 @@ type alias Model =
   , timeOfLastUrlChange : Posix
   , startedLabStudyTask : Maybe (LabStudyTask, Posix)
   , currentResource : Maybe CurrentResource
+  , resourceSidebarTab : ResourceSidebarTab
+  , resourceRecommendations : List Oer
+  , timeOfLastFeedbackRecorded : Posix
   }
 
 
@@ -67,6 +71,11 @@ type EntityDefinition
   = DefinitionScheduledForLoading
   | DefinitionLoaded String
   -- | DefinitionUnavailable -- TODO consider appropriate error handling
+
+type ResourceSidebarTab
+  = NotesTab
+  | RecommendationsTab
+  | FeedbackTab
 
 type CurrentResource
   = Loaded OerUrl
@@ -106,6 +115,8 @@ type alias Bubblogram =
   }
 
 type alias OerUrl = String
+
+type alias OerId = Int
 
 type alias EntityId = String
 
@@ -310,6 +321,7 @@ initialModel nav flags =
   , userProfileForm = freshUserProfileForm (initialUserProfile "")
   , userProfileFormSubmitted = Nothing
   , oerNoteForms = Dict.empty
+  , feedbackForms = Dict.empty
   , cachedOers = Dict.empty
   , requestingOers = False
   , hoveringBubbleEntityId = Nothing
@@ -320,6 +332,9 @@ initialModel nav flags =
   , timeOfLastUrlChange = initialTime
   , startedLabStudyTask = Nothing
   , currentResource = Nothing
+  , resourceSidebarTab = NotesTab
+  , resourceRecommendations = []
+  , timeOfLastFeedbackRecorded = initialTime
   }
 
 
@@ -513,8 +528,8 @@ mostRecentFragmentAccess fragmentAccesses =
 
 
 chunksFromUrl : Model -> OerUrl -> List Chunk
-chunksFromUrl model url =
-  case model.wikichunkEnrichments |> Dict.get url of
+chunksFromUrl model oerUrl =
+  case model.wikichunkEnrichments |> Dict.get oerUrl of
     Nothing ->
       []
 
@@ -653,11 +668,11 @@ bubbleZoom =
   0.042
 
 
-isVideoFile : String -> Bool
-isVideoFile url =
+isVideoFile : OerUrl -> Bool
+isVideoFile oerUrl =
   let
       lower =
-        url |> String.toLower
+        oerUrl |> String.toLower
   in
      String.endsWith ".mp4" lower || String.endsWith ".webm" lower || String.endsWith ".ogg" lower
 
@@ -675,3 +690,29 @@ resourceUrlPath oerId =
 
 isSiteUnderMaintenance =
   False
+
+
+relatedSearchStringFromOer : Model -> OerUrl -> String
+relatedSearchStringFromOer model oerUrl =
+  case model.cachedOers |> Dict.get oerUrl of
+    Nothing ->
+      "kittens" -- this really shouldn't happen
+
+    Just {title} ->
+      title
+
+  -- case model.wikichunkEnrichments |> Dict.get oerUrl of
+  --   Nothing ->
+  --     case model.cachedOers |> Dict.get oerUrl of
+  --       Nothing ->
+  --         "kittens" -- this really shouldn't happen
+
+  --   Just {bubblogram, chunks} ->
+  --     case bubblogram of
+  --       Nothing ->
+
+  --     enrichment.BubblePopup
+
+
+getResourceFeedbackFormValue model oerId =
+  model.feedbackForms |> Dict.get oerId |> Maybe.withDefault ""

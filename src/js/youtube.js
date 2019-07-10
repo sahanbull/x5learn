@@ -49,7 +49,7 @@ function embedYoutubeVideo(youtubeEmbedParams){
     return;
   }
   playerFragmentStart = youtubeEmbedParams.fragmentStart;
-  player = new YT.Player('player', {
+  player = new YT.Player('playerElement', {
     height: '400',
     width: '720',
     videoId: youtubeEmbedParams.videoId,

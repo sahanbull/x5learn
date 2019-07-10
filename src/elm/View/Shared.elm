@@ -252,7 +252,7 @@ hoverCircleBackground =
 
 embedYoutubePlayer youtubeId startTime =
   none
-  |> el [ htmlId "player", width (px playerWidth), height (px 410) ]
+  |> el [ htmlId "playerElement", width (px playerWidth), height (px 410) ]
 
 
 dialogShadow =

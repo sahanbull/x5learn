@@ -14,6 +14,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Element.Font as Font
+import Element.Keyed as Keyed
 
 import Model exposing (..)
 import View.Shared exposing (..)
@@ -96,7 +97,8 @@ viewResource model userState oer =
             , player
             , fragmentsBarWrapper
             ]
-            |> column [ width fill, moveLeft (sidebarWidth model |> toFloat), Background.color <| grey 230, height fill, borderLeft 1, borderColorLayout, paddingXY horizontalPadding 30, scrollbarY ]
+            |> List.indexedMap (\index e -> (oer.url ++ (String.fromInt index), e))
+            |> Keyed.column [ width fill, moveLeft (sidebarWidth model |> toFloat), Background.color <| grey 230, height fill, borderLeft 1, borderColorLayout, paddingXY horizontalPadding 30, scrollbarY ]
 
       sidebar =
         let

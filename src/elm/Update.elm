@@ -254,7 +254,7 @@ update msg ({nav, userProfileForm} as model) =
           cmdYoutube =
             case getYoutubeVideoId oer.url of
               Nothing ->
-                Cmd.none
+                youtubeDestroyPlayer True
 
               Just videoId ->
                 let
@@ -741,7 +741,6 @@ requestResourceAfterUrlChanged url model =
         url.path
         |> String.dropLeft 10 -- TODO A much cleaner method is to use Url.Query.parser
         |> String.toInt
-        -- |> Debug.log "resourceId"
   in
       case resourceId of
         Nothing ->

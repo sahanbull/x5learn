@@ -45,6 +45,12 @@ function setupPorts(app){
     player.playVideo();
   });
 
+  app.ports.youtubeDestroyPlayer.subscribe(function(dummy) {
+    if(typeof player !== 'undefined' && player.getIframe()!==null){
+      player.destroy();
+    }
+  });
+
   setupEventHandlers();
 
   setupScrollListener();
@@ -75,9 +81,11 @@ function startAnimationWhenModalIsReady(youtubeEmbedParams) {
 
 
 function embedYoutubePlayerOnResourcePage(youtubeEmbedParams) {
-  if(youtubeEmbedParams.videoId.length>0){
-    embedYoutubeVideo(youtubeEmbedParams);
-  }
+    setTimeout(function(){
+      if(youtubeEmbedParams.videoId.length>0){
+        embedYoutubeVideo(youtubeEmbedParams);
+      }
+    }, 200);
 }
 
 

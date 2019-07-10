@@ -12,6 +12,7 @@ port copyClipboard : String -> Cmd msg
 port openModalAnimation : YoutubeEmbedParams -> Cmd msg
 port embedYoutubePlayerOnResourcePage : YoutubeEmbedParams -> Cmd msg
 port youtubeSeekTo : Float -> Cmd msg
+port youtubeDestroyPlayer : Bool -> Cmd msg
 
 port modalAnimationStart : (BoxAnimation -> msg) -> Sub msg
 port modalAnimationStop : (Int -> msg) -> Sub msg

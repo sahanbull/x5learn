@@ -264,7 +264,7 @@ class Repository:
 
         return query_object.filter_by(id=id).one_or_none()
 
-    def get(self, item, user_login_id, filters, sort):
+    def get(self, item, user_login_id, filters=None, sort=None):
         """gets multiple items. Optionally can auth by user login id
 
         Args:
@@ -277,6 +277,17 @@ class Repository:
             (list(object)): list of objects of type item
 
         """
+
+        if filters:
+            for key, value in filters.iteritems():
+                self._db_session.filter_by(key=value)
+
+        if sort:
+            for key, value in sort.iteritems():
+                if value == "asc":
+                    self._db_session.order_by(key.asc)
+                else:
+                    self._db_session.order_by(key.desc)
 
         result = self._db_session.query(item)
         return result

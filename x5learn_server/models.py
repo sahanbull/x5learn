@@ -216,6 +216,7 @@ class Action(Base):
 
 class ResourceFeedback(Base):
     __tablename__ = 'resource_feedback'
+    __table_args__ = {'extend_existing': True}
     id = Column(Integer(), primary_key=True)
     user_login_id = Column(Integer())
     oer_id = Column(Integer())

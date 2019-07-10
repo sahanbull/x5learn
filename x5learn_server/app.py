@@ -21,7 +21,7 @@ from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_SENDER, 
 from x5learn_server.db.database import get_or_create_db
 _ = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
-from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent, Action, ActionType, Note, Repository, NotesRepository, ActionsRepository, UserRepository, DefinitionsRepository
+from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent, ResourceFeedback, Action, ActionType, Note, Repository, NotesRepository, ActionsRepository, UserRepository, DefinitionsRepository
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 
@@ -112,8 +112,8 @@ def recent():
     return render_template('home.html')
 
 
-@app.route("/resource/<material_id>")
-def resource(material_id):
+@app.route("/resource/<oer_id>")
+def resource(oer_id):
     return render_template('home.html')
 
 
@@ -173,6 +173,12 @@ def api_search():
     return jsonify(results)
 
 
+# @app.route("/api/v1/resource_recommendations/", methods=['GET'])
+# def api_resource_recommendations():
+#     oer_id = request.get_json()['oerId']
+#     return jsonify(results)
+
+
 @app.route("/api/v1/search_suggestions/", methods=['GET'])
 def api_search_suggestions():
     text = request.args['text']
@@ -191,7 +197,19 @@ def api_oers():
 def api_material():
     oer_id = request.get_json()['oerId']
     oer = Oer.query.filter_by(id=oer_id).first()
+    push_enrichment_task_if_needed(oer.data['url'], 10000)
     return jsonify(oer.data_and_id())
+
+
+@app.route("/api/v1/resource_feedback/", methods=['POST']) # to be replaced by Actions API
+def api_resource_feedback():
+    oer_id = request.get_json()['oerId']
+    text = request.get_json()['text']
+    user_login_id = current_user.get_id() # Assuming we are never going to allow feedback from logged-out users
+    feedback = ResourceFeedback(user_login_id, oer_id, text)
+    db_session.add(feedback)
+    db_session.commit()
+    return 'OK'
 
 
 @app.route("/api/v1/save_user_profile/", methods=['POST'])
@@ -247,7 +265,7 @@ def ingest_wikichunk_enrichment():
     task = WikichunkEnrichmentTask.query.filter_by(url=url).first()
     if error is not None:
         task.error = error
-    else:
+    elif task is not None:
         db_session.delete(task)
     db_session.commit()
     save_enrichment(url, data)
@@ -338,9 +356,7 @@ def search_results_from_x5gon_api(text):
             db_session.add(oer)
             db_session.commit()
         oers.append(oer.data_and_id())
-        enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
-        if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION):
-            push_enrichment_task(url, int(1000/(index+1)) + 1)
+        push_enrichment_task_if_needed(url, int(1000/(index+1)) + 1)
     return oers
 
 
@@ -383,6 +399,12 @@ def convert_x5_material_to_oer(material, url):
     data['images'] = []
     data['mediatype'] = material['type']
     return data
+
+
+def push_enrichment_task_if_needed(url, urgency):
+    enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
+    if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION):
+        push_enrichment_task(url, urgency)
 
 
 def push_enrichment_task(url, priority):

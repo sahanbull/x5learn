@@ -47,6 +47,10 @@ whiteText =
   Font.color white
 
 
+feedbackOptionButtonColor =
+  rgb255 80 170 120
+
+
 x5color =
   rgb255 82 134 148
 
@@ -127,6 +131,10 @@ bodyNoWrap attrs str =
   text str |> el ([ Font.size 14, Font.color materialDark ] ++ attrs)
 
 
+subSubheaderNoWrap attrs str =
+  text str |> el ([ Font.size 16, Font.color materialDark ] ++ attrs)
+
+
 subSubheaderWrap attrs str =
   [ text str ] |> paragraph ([ Font.size 16 ] ++ attrs)
 
@@ -187,6 +195,10 @@ semiTransparent =
   alpha 0.5
 
 
+fullyTransparentColor =
+  rgba 0 0 0 0
+
+
 grey value =
   rgb255 value value value
 
@@ -244,7 +256,7 @@ hoverCircleBackground =
 
 embedYoutubePlayer youtubeId startTime =
   none
-  |> el [ htmlId "player", width (px playerWidth), height (px 410) ]
+  |> el [ htmlId "playerElement", width (px playerWidth), height (px 410) ]
 
 
 dialogShadow =
@@ -332,6 +344,15 @@ actionButtonWithIcon iconPosition svgIconStub str onPress =
             [ title, icon ]
   in
       button [] { onPress = onPress, label = label |> row [ width fill, padding 12, spacing 3, Border.rounded 4 ]}
+
+
+simpleButton : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
+simpleButton attrs str onPress =
+  let
+      label =
+        str |> text
+  in
+      button attrs { onPress = onPress, label = label }
 
 
 actionButtonWithoutIcon : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg

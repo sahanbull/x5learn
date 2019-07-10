@@ -241,23 +241,56 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestLabStudyLogEvent"
       -- in
-      -- ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
+      ( { model | userMessage = Just "Some logs were not saved" }, Cmd.none )
+
+    RequestSendResourceFeedback (Ok _) ->
+      (model, Cmd.none)
+
+    RequestSendResourceFeedback (Err err) ->
       (model, Cmd.none)
 
     RequestResource (Ok oer) ->
       let
-          youtubeEmbedParams : YoutubeEmbedParams
-          youtubeEmbedParams =
-            { modalId = ""
-            , videoId = getYoutubeVideoId oer.url |> Maybe.withDefault ""
-            , fragmentStart = 0
-            , playWhenReady = False
-            }
+          cmdYoutube =
+            case getYoutubeVideoId oer.url of
+              Nothing ->
+                youtubeDestroyPlayer True
+
+              Just videoId ->
+                let
+                    youtubeEmbedParams : YoutubeEmbedParams
+                    youtubeEmbedParams =
+                      { modalId = ""
+                      , videoId = videoId
+                      , fragmentStart = 0
+                      , playWhenReady = False
+                      }
+                in
+                    embedYoutubePlayerOnResourcePage youtubeEmbedParams
+
+          newModel =
+            { model | currentResource = Just <| Loaded oer.url } |> cacheOersFromList [ oer ]
       in
-          ({ model | currentResource = Just <| Loaded oer.url } |> cacheOersFromList [ oer ], embedYoutubePlayerOnResourcePage youtubeEmbedParams)
+          (newModel, [ cmdYoutube, requestResourceRecommendations <| relatedSearchStringFromOer newModel oer.url ] |> Cmd.batch )
 
     RequestResource (Err err) ->
       ( { model | currentResource = Just Error }, Cmd.none )
+
+    RequestResourceRecommendations (Ok oersUnfiltered) ->
+      let
+          oers =
+            oersUnfiltered |> List.filter (\oer -> model.currentResource /= Just (Loaded oer.url)) -- ensure that the resource itself isn't included in the recommendations
+      in
+          ({ model | resourceRecommendations = oers } |> cacheOersFromList oers, setBrowserFocus "")
+          |> requestWikichunkEnrichmentsIfNeeded
+          |> logEventForLabStudy "RequestResourceRecommendations" (oers |> List.map .url)
+
+    RequestResourceRecommendations (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestResourceRecommendations"
+      -- in
+      ( { model | resourceRecommendations = [], userMessage = Just "An error occurred while loading recommendations" }, Cmd.none )
 
     SetHover maybeUrl ->
       ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
@@ -309,10 +342,17 @@ update msg ({nav, userProfileForm} as model) =
     ChangedTextInNewNoteFormInOerNoteboard oerUrl str ->
       ( model |> setTextInNoteForm oerUrl str, Cmd.none)
 
+    ChangedTextInResourceFeedbackForm oerId str ->
+      ( model |> setTextInResourceFeedbackForm oerId str, Cmd.none)
+
     SubmittedNewNoteInOerNoteboard oerUrl ->
-      (model |> updateUserState (addNoteToOer oerUrl (getOerNoteForm model oerUrl) model) |> setTextInNoteForm oerUrl "", Cmd.none)
+      (model |> updateUserState (addNoteToOer oerUrl (getOerNoteForm model oerUrl) model) |> setTextInNoteForm oerUrl "", setBrowserFocus "textInputFieldForNotesOrFeedback")
       |> saveUserState msg
       |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ oerUrl, getOerNoteForm model oerUrl ]
+
+    SubmittedResourceFeedback oerId text ->
+      ({ model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", requestSendResourceFeedback oerId text)
+      |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, getResourceFeedbackFormValue model oerId ]
 
     PressedKeyInNewNoteFormInOerNoteboard oerUrl keyCode ->
       if keyCode==13 then
@@ -332,7 +372,6 @@ update msg ({nav, userProfileForm} as model) =
 
     VideoIsPlayingAtPosition position ->
       (model |> updateUserState (expandCurrentFragmentOrCreateNewOne position model.inspectorState), Cmd.none)
-      |> saveUserState msg
       |> logEventForLabStudy "VideoIsPlayingAtPosition" [ position |> String.fromFloat]
 
     SubmitPostRegistrationForm keepData ->
@@ -372,6 +411,10 @@ update msg ({nav, userProfileForm} as model) =
     StoppedLabStudyTask ->
       ({ model | startedLabStudyTask = Nothing }, setBrowserFocus "")
       |> logEventForLabStudy "StoppedLabStudyTask" []
+
+    SelectResourceSidebarTab tab ->
+      ({ model | resourceSidebarTab = tab }, setBrowserFocus "textInputFieldForNotesOrFeedback")
+      |> logEventForLabStudy "SelectResourceSidebarTab" []
 
 
 updateUserState : (UserState -> UserState) -> Model -> Model
@@ -580,6 +623,11 @@ setTextInNoteForm oerUrl str model =
   { model | oerNoteForms = model.oerNoteForms |> Dict.insert oerUrl str }
 
 
+setTextInResourceFeedbackForm : OerId -> String -> Model -> Model
+setTextInResourceFeedbackForm oerId str model =
+  { model | feedbackForms = model.feedbackForms |> Dict.insert oerId str }
+
+
 expandCurrentFragmentOrCreateNewOne : Float -> Maybe InspectorState -> UserState -> UserState
 expandCurrentFragmentOrCreateNewOne position inspectorState userState =
   case inspectorState of
@@ -693,7 +741,6 @@ requestResourceAfterUrlChanged url model =
         url.path
         |> String.dropLeft 10 -- TODO A much cleaner method is to use Url.Query.parser
         |> String.toInt
-        -- |> Debug.log "resourceId"
   in
       case resourceId of
         Nothing ->

@@ -20,6 +20,7 @@ import Msg exposing (..)
 import Ports exposing (..)
 import Request exposing (..)
 import ActionApi exposing (..)
+import NotesApi exposing (..)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -253,11 +254,13 @@ update msg ({nav, userProfileForm} as model) =
       (model, Cmd.none)
 
     RequestSaveAction (Err err) ->
-      let
-          dummy =
-            err |> Debug.log "Error in RequestSaveAction"
-      in
+      ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
+
+    RequestSaveNote (Ok _) ->
       (model, Cmd.none)
+
+    RequestSaveNote (Err err) ->
+      ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
 
     RequestResource (Ok oer) ->
       let
@@ -356,7 +359,14 @@ update msg ({nav, userProfileForm} as model) =
       ( model |> setTextInResourceFeedbackForm oerId str, Cmd.none)
 
     SubmittedNewNoteInOerNoteboard oerUrl ->
-      (model |> addNoteToOer oerUrl (getOerNoteForm model oerUrl) |> setTextInNoteForm oerUrl "", setBrowserFocus "textInputFieldForNotesOrFeedback")
+      let
+          text =
+            getOerNoteForm model oerUrl
+
+          oerId =
+            getOerIdFromOerUrl model oerUrl
+      in
+      (model |> addNoteToOer oerUrl text |> setTextInNoteForm oerUrl "", [ setBrowserFocus "textInputFieldForNotesOrFeedback", saveNote oerId text ] |> Cmd.batch)
       |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ oerUrl, getOerNoteForm model oerUrl ]
 
     SubmittedResourceFeedback oerId text ->
@@ -370,7 +380,11 @@ update msg ({nav, userProfileForm} as model) =
         (model, Cmd.none)
 
     ClickedQuickNoteButton oerUrl text ->
-      (model |> addNoteToOer oerUrl text |> setTextInNoteForm oerUrl "" , Cmd.none)
+      let
+          oerId =
+            getOerIdFromOerUrl model oerUrl
+      in
+      (model |> addNoteToOer oerUrl text |> setTextInNoteForm oerUrl "" , saveNote oerId text)
       |> logEventForLabStudy "ClickedQuickNoteButtond" [ oerUrl, text ]
 
     RemoveNote time ->

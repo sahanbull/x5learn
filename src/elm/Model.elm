@@ -345,11 +345,21 @@ getOerNoteboard model oerUrl =
   |> Maybe.withDefault []
 
 
-getOerNoteForm : Model -> String -> String
+getOerNoteForm : Model -> OerUrl -> String
 getOerNoteForm model oerUrl =
   model.oerNoteForms
   |> Dict.get oerUrl
   |> Maybe.withDefault ""
+
+
+getOerIdFromOerUrl : Model -> OerUrl -> OerId
+getOerIdFromOerUrl model oerUrl =
+  case model.cachedOers |> Dict.get oerUrl of
+    Just oer ->
+      oer.id
+
+    Nothing ->
+      0
 
 
 initialTime =

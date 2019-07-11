@@ -515,7 +515,7 @@ class APIInfo(Resource):
 ns_notes = api.namespace('api/v1/note', description='Notes')
 
 m_note = api.model('Note', {
-    'oer_id': fields.String(required=True, max_length=255, description='The material id of the note associated with'),
+    'oer_id': fields.Integer(required=True, description='The material id of the note associated with'),
     'text': fields.String(required=True, description='The content of the note')
 })
 

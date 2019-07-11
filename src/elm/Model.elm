@@ -57,13 +57,13 @@ type alias Model =
   , resourceSidebarTab : ResourceSidebarTab
   , resourceRecommendations : List Oer
   , timeOfLastFeedbackRecorded : Posix
+  , oerNoteboards : Dict String (List Note)
   }
 
 
 -- persisted on backend
 type alias UserState =
   { fragmentAccesses : Dict Int Fragment
-  , oerNoteboards : Dict String (List Note)
   , registrationComplete : Bool
   }
 
@@ -335,12 +335,12 @@ initialModel nav flags =
   , resourceSidebarTab = NotesTab
   , resourceRecommendations = []
   , timeOfLastFeedbackRecorded = initialTime
+  , oerNoteboards = Dict.empty
   }
 
 
 initialUserState =
   { fragmentAccesses = Dict.empty
-  , oerNoteboards = Dict.empty
   , registrationComplete = False
   }
 
@@ -349,9 +349,9 @@ initialUserProfile email =
   UserProfile email "" ""
 
 
-getOerNoteboard : UserState -> String -> Noteboard
-getOerNoteboard userState oerUrl =
-  userState.oerNoteboards
+getOerNoteboard : Model -> String -> Noteboard
+getOerNoteboard model oerUrl =
+  model.oerNoteboards
   |> Dict.get oerUrl
   |> Maybe.withDefault []
 

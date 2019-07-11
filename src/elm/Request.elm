@@ -152,7 +152,6 @@ userStateEncoder : UserState -> Encode.Value
 userStateEncoder userState =
   Encode.object
     [ ("viewings", dictEncoder fragmentEncoder (userState.fragmentAccesses |> convertKeysFromIntToString) )
-    , ("notes", dictEncoder (Encode.list noteEncoder) userState.oerNoteboards)
     , ("registrationComplete", Encode.bool userState.registrationComplete)
     ]
 

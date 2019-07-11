@@ -346,8 +346,7 @@ update msg ({nav, userProfileForm} as model) =
       ( model |> setTextInResourceFeedbackForm oerId str, Cmd.none)
 
     SubmittedNewNoteInOerNoteboard oerUrl ->
-      (model |> updateUserState (addNoteToOer oerUrl (getOerNoteForm model oerUrl) model) |> setTextInNoteForm oerUrl "", setBrowserFocus "textInputFieldForNotesOrFeedback")
-      |> saveUserState msg
+      (model |> addNoteToOer oerUrl (getOerNoteForm model oerUrl) |> setTextInNoteForm oerUrl "", setBrowserFocus "textInputFieldForNotesOrFeedback")
       |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ oerUrl, getOerNoteForm model oerUrl ]
 
     SubmittedResourceFeedback oerId text ->
@@ -361,13 +360,11 @@ update msg ({nav, userProfileForm} as model) =
         (model, Cmd.none)
 
     ClickedQuickNoteButton oerUrl text ->
-      (model |> updateUserState (addNoteToOer oerUrl text model) |> setTextInNoteForm oerUrl "" , Cmd.none)
-      |> saveUserState msg
+      (model |> addNoteToOer oerUrl text |> setTextInNoteForm oerUrl "" , Cmd.none)
       |> logEventForLabStudy "ClickedQuickNoteButtond" [ oerUrl, text ]
 
     RemoveNote time ->
-      (model |> updateUserState (removeNoteAtTime time), Cmd.none)
-      |> saveUserState msg
+      (model |> removeNoteAtTime time, Cmd.none)
       |> logEventForLabStudy "RemoveNote" [ time |> posixToMillis |> String.fromInt ]
 
     VideoIsPlayingAtPosition position ->
@@ -427,11 +424,11 @@ updateUserState fn model =
       { model | session = Just { session | userState = session.userState |> fn } }
 
 
-addNoteToOer : String -> String -> Model -> UserState -> UserState
-addNoteToOer oerUrl text {currentTime} userState =
+addNoteToOer : OerUrl -> String -> Model -> Model
+addNoteToOer oerUrl text model =
   let
       newNote =
-        Note text currentTime
+        Note text model.currentTime
 
       oldNoteboard =
         getOerNoteboard userState oerUrl
@@ -439,18 +436,18 @@ addNoteToOer oerUrl text {currentTime} userState =
       newNoteboard =
         newNote :: oldNoteboard
   in
-      { userState | oerNoteboards = userState.oerNoteboards |> Dict.insert oerUrl newNoteboard }
+      { model | oerNoteboards = model.oerNoteboards |> Dict.insert oerUrl newNoteboard }
 
 
-removeNoteAtTime : Posix -> UserState -> UserState
-removeNoteAtTime time userState =
+removeNoteAtTime : Posix -> Model -> Model
+removeNoteAtTime time model =
   let
       filter : OerUrl -> Noteboard -> Noteboard
       filter _ notes =
         notes
         |> List.filter (\note -> note.time /= time)
   in
-     { userState | oerNoteboards = userState.oerNoteboards |> Dict.map filter }
+     { model | oerNoteboards = model.oerNoteboards |> Dict.map filter }
 
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model
@@ -500,7 +497,7 @@ requestOersAsNeeded userState model =
       neededUrls =
         case model.subpage of
           Notes ->
-            userState.oerNoteboards |> Dict.keys
+            model.oerNoteboards |> Dict.keys
 
           Recent ->
             userState.fragmentAccesses |> Dict.values |> List.map .oerUrl

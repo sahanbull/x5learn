@@ -38,6 +38,7 @@ type Msg
   | RequestResource (Result Http.Error Oer)
   | RequestResourceRecommendations (Result Http.Error (List Oer))
   | RequestSendResourceFeedback (Result Http.Error String)
+  | RequestSaveAction (Result Http.Error String)
   | SetHover (Maybe String)
   | SetPopup Popup
   | ClosePopup

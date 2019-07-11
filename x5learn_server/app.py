@@ -78,6 +78,7 @@ CURRENT_ENRICHMENT_VERSION = 1
 def initiate_login_db():
     from x5learn_server.db.database import initiate_login_table_and_admin_profile
     initiate_login_table_and_admin_profile(user_datastore)
+    initiate_action_types_table()
 
 # Setting wikipedia api language
 wikipedia.set_lang("en")
@@ -315,7 +316,7 @@ def save_definitions(data):
                 extract = page['extract']
                 # print(extract)
                 definition = EntityDefinition(
-                    entity['id'], title, entity['url'], extract)
+                    entity['id'], title, entity['url'], extract, lang='en')
                 db_session.add(definition)
                 db_session.commit()
 
@@ -809,6 +810,15 @@ class Definition(Resource):
                     })
 
         return result, 200
+
+
+def initiate_action_types_table():
+    # TODO Define a comprehensive set of actions and keep it in sync with the frontend
+    action_type = ActionType.query.filter_by(id=1).first()
+    if action_type is None:
+        action_type = ActionType('User clicked on an OER card')
+        db_session.add(action_type)
+        db_session.commit()
 
 
 if __name__ == '__main__':

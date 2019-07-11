@@ -19,6 +19,7 @@ import Update.Bubblogram exposing (..)
 import Msg exposing (..)
 import Ports exposing (..)
 import Request exposing (..)
+import ActionApi exposing (..)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -101,6 +102,7 @@ update msg ({nav, userProfileForm} as model) =
             }
       in
           ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> addFragmentAccess (Fragment oer.url fragmentStart fragmentLength) model.currentTime, openModalAnimation youtubeEmbedParams)
+      |> saveAction 1 [ ("oerId", Encode.int oer.id), ("oerUrl", Encode.string oer.url) ]
       |> logEventForLabStudy "InspectOer" [ oer.url ]
 
     UninspectSearchResult ->
@@ -228,6 +230,16 @@ update msg ({nav, userProfileForm} as model) =
       (model, Cmd.none)
 
     RequestSendResourceFeedback (Err err) ->
+      (model, Cmd.none)
+
+    RequestSaveAction (Ok _) ->
+      (model, Cmd.none)
+
+    RequestSaveAction (Err err) ->
+      let
+          dummy =
+            err |> Debug.log "Error in RequestSaveAction"
+      in
       (model, Cmd.none)
 
     RequestResource (Ok oer) ->
@@ -698,3 +710,13 @@ requestResourceAfterUrlChanged url model =
 
         Just oerId ->
           (model, requestResource oerId)
+
+
+
+saveAction : Int -> List (String, Encode.Value) -> (Model, Cmd Msg)-> (Model, Cmd Msg)
+saveAction actionTypeId params (model, oldCmd) =
+  let
+      cmd =
+        ActionApi.save actionTypeId params
+  in
+      (model, [ oldCmd, cmd ] |> Cmd.batch)

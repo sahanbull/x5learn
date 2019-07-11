@@ -18,8 +18,8 @@ import Msg exposing (..)
 import View.Shared exposing (..)
 
 
-viewNoteboard : Model -> UserState -> Bool -> OerUrl -> Element Msg
-viewNoteboard model userState includeHeading oerUrl =
+viewNoteboard : Model -> Bool -> OerUrl -> Element Msg
+viewNoteboard model includeHeading oerUrl =
   let
       heading =
         if includeHeading then
@@ -55,7 +55,7 @@ viewNoteboard model userState includeHeading oerUrl =
         |> row [ spacing 10, width fill ]
 
       notes =
-        getOerNoteboard userState oerUrl
+        getOerNoteboard model oerUrl
 
       noteElements =
         if List.isEmpty notes then

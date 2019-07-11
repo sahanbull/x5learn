@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestSearchSuggestions, requestEntityDefinitions, requestSaveUserProfile, requestSaveUserState, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations, requestSendResourceFeedback)
+module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestSearchSuggestions, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations, requestSendResourceFeedback)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -104,15 +104,6 @@ userProfileEncoder userProfile =
     ]
 
 
-requestSaveUserState : UserState -> Cmd Msg
-requestSaveUserState userState =
-  Http.post
-    { url = Url.Builder.absolute [ apiRoot, "save_user_state/" ] []
-    , body = Http.jsonBody <| userStateEncoder userState
-    , expect = Http.expectString RequestSaveUserState
-    }
-
-
 requestLabStudyLogEvent : Int -> String -> List String -> Cmd Msg
 requestLabStudyLogEvent time eventType params =
   Http.post
@@ -148,14 +139,6 @@ requestSendResourceFeedback oerId text =
     }
 
 
-userStateEncoder : UserState -> Encode.Value
-userStateEncoder userState =
-  Encode.object
-    [ ("viewings", dictEncoder fragmentEncoder (userState.fragmentAccesses |> convertKeysFromIntToString) )
-    , ("registrationComplete", Encode.bool userState.registrationComplete)
-    ]
-
-
 fragmentEncoder : Fragment -> Encode.Value
 fragmentEncoder fragment =
   Encode.object
@@ -181,29 +164,13 @@ sessionDecoder =
 
 
 loggedInUserDecoder =
-  map2 (\userState userProfile -> Session userState (LoggedInUser userProfile))
-    (field "userState" userStateDecoder)
+  map (\userProfile -> Session (LoggedInUser userProfile))
     (field "userProfile" userProfileDecoder)
 
 
 guestUserDecoder =
-  map (\userState -> Session userState GuestUser)
-    (field "userState" userStateDecoder)
-
-
-userStateDecoder =
-  oneOf
-    [ null initialUserState
-    , map3 UserState
-        viewingsDecoder
-        (field "notes" (dict noteboardDecoder))
-        registrationCompleteDecoder
-    ]
-
-
-registrationCompleteDecoder =
-  map (\optionalField -> optionalField |> Maybe.withDefault False)
-    (field "registrationComplete" bool |> maybe)
+  map (\_ -> Session GuestUser)
+    string
 
 
 viewingsDecoder =

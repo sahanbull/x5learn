@@ -22,16 +22,16 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
-viewSearchPage : Model -> UserState -> SearchState -> PageWithModal
-viewSearchPage model userState searchState =
+viewSearchPage : Model -> SearchState -> PageWithModal
+viewSearchPage model searchState =
   let
       modal =
-        viewInspectorModalOrEmpty model userState
+        viewInspectorModalOrEmpty model
   in
-      (viewSearchResults model userState searchState, modal)
+      (viewSearchResults model searchState, modal)
 
 
-viewSearchResults model userState searchState =
+viewSearchResults model searchState =
   case searchState.searchResults of
     Nothing ->
       viewLoadingSpinner
@@ -48,5 +48,5 @@ viewSearchResults model userState searchState =
       else
         Playlist ((oerUrls |> List.length |> String.fromInt) ++ " result" ++ (if List.length oerUrls == 1 then "" else "s") ++ " for \""++ searchState.lastSearch ++"\"") oerUrls
       )
-      |> viewOerGrid model userState
+      |> viewOerGrid model
       |> el [ width fill, paddingTRBL 0 0 100 0 ]

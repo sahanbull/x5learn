@@ -46,8 +46,8 @@ viewPathway model pathway =
 
 
 
-viewOerGrid : Model -> UserState -> Playlist -> Element Msg
-viewOerGrid model userState playlist =
+viewOerGrid : Model -> Playlist -> Element Msg
+viewOerGrid model playlist =
   let
       helper url result =
         case Dict.get url model.cachedOers of
@@ -92,7 +92,7 @@ viewOerGrid model userState playlist =
 
             cards =
               oers
-              |> List.indexedMap (\index oer -> viewOerCard model userState [] (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) oer)
+              |> List.indexedMap (\index oer -> viewOerCard model [] (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) oer)
               |> List.reverse
               |> List.map inFront
         in
@@ -103,8 +103,8 @@ viewOerGrid model userState playlist =
             |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
 
 
-viewOerCard : Model -> UserState -> List Fragment -> Point -> String -> Oer -> Element Msg
-viewOerCard model userState recommendedFragments position barId oer =
+viewOerCard : Model -> List Fragment -> Point -> String -> Oer -> Element Msg
+viewOerCard model recommendedFragments position barId oer =
   let
       hovering =
         model.hoveringOerUrl == Just oer.url
@@ -144,7 +144,7 @@ viewOerCard model userState recommendedFragments position barId oer =
               if enrichment.errors then
                 none
               else
-                viewFragmentsBar model userState oer enrichment.chunks recommendedFragments cardWidth barId False
+                viewFragmentsBar model oer enrichment.chunks recommendedFragments cardWidth barId False
                 |> el [ width fill, moveDown imageHeight ]
 
       preloadImage url =

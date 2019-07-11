@@ -25,11 +25,11 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
-viewRecentPage : Model -> UserState -> PageWithModal
-viewRecentPage model userState =
+viewRecentPage : Model -> PageWithModal
+viewRecentPage model =
   let
       page =
-        if userState.fragmentAccesses |> Dict.isEmpty then
+        if model.fragmentAccesses |> Dict.isEmpty then
           if isLoggedIn model then
             viewCenterNote "Your viewed items will appear here"
           else
@@ -38,19 +38,19 @@ viewRecentPage model userState =
         else
           let
               oerUrls =
-                userState.fragmentAccesses
+                model.fragmentAccesses
                 |> Dict.toList
                 |> List.map (\(time, fragment) -> fragment.oerUrl)
                 |> List.reverse
                 |> List.Extra.unique
           in
-              viewVerticalListOfCards model userState oerUrls
+              viewVerticalListOfCards model oerUrls
   in
-      (page, viewInspectorModalOrEmpty model userState)
+      (page, viewInspectorModalOrEmpty model)
 
 
-viewVerticalListOfCards : Model -> UserState -> List OerUrl -> Element Msg
-viewVerticalListOfCards model userState oerUrls =
+viewVerticalListOfCards : Model -> List OerUrl -> Element Msg
+viewVerticalListOfCards model oerUrls =
   let
       rowHeight =
         cardHeight + verticalSpacingBetweenCards
@@ -67,7 +67,7 @@ viewVerticalListOfCards model userState oerUrls =
               oerUrl
               |> getCachedOerWithBlankDefault model
         in
-            viewOerCard model userState [] (cardPositionAtIndex index) ("recent-"++ (String.fromInt index)) oer |> el [ centerX ]
+            viewOerCard model [] (cardPositionAtIndex index) ("recent-"++ (String.fromInt index)) oer |> el [ centerX ]
 
       cards =
         oerUrls

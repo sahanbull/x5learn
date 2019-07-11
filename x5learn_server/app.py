@@ -129,14 +129,14 @@ def api_session():
     if current_user.is_authenticated:
         resp = get_logged_in_user_profile_and_state()
         return resp
-    return jsonify({'guestUser': {'userState': None}})
+    return jsonify({'guestUser': 'OK'})
 
 
 def get_logged_in_user_profile_and_state():
     profile = current_user.user_profile if current_user.user_profile is not None else {
         'email': current_user.email}
     user = get_or_create_logged_in_user()
-    logged_in_user = {'userState': user.frontend_state, 'userProfile': profile}
+    logged_in_user = {'userProfile': profile}
     return jsonify({'loggedInUser': logged_in_user})
 
 
@@ -153,17 +153,6 @@ def get_or_create_logged_in_user():
         current_user.user = user
         db_session.commit()
     return user
-
-
-@app.route("/api/v1/save_user_state/", methods=['POST'])
-def api_save_user_state():
-    frontend_state = request.get_json()
-    if current_user.is_authenticated:
-        get_or_create_logged_in_user().frontend_state = frontend_state
-        db_session.commit()
-        return 'OK'
-    else:
-        return 'Guest user state not saved.'
 
 
 @app.route("/api/v1/search/", methods=['GET'])

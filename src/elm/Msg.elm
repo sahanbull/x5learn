@@ -34,7 +34,6 @@ type Msg
   | RequestEntityDefinitions (Result Http.Error (Dict String String))
   | RequestSearchSuggestions (Result Http.Error (List String))
   | RequestSaveUserProfile (Result Http.Error String)
-  | RequestSaveUserState (Result Http.Error String)
   | RequestLabStudyLogEvent (Result Http.Error String)
   | RequestResource (Result Http.Error Oer)
   | RequestResourceRecommendations (Result Http.Error (List Oer))
@@ -58,7 +57,6 @@ type Msg
   | ClickedQuickNoteButton String String
   | RemoveNote Posix
   | VideoIsPlayingAtPosition Float
-  | SubmitPostRegistrationForm Bool
   | BubbleMouseOver String
   | BubbleMouseOut
   | BubbleClicked OerUrl

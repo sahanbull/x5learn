@@ -441,10 +441,9 @@ menuColumn attrs =
   column ([ Background.color white, Border.rounded 4, Border.color <| grey80, dialogShadow ] ++ attrs)
 
 
-viewFragmentsBar model userState oer chunks recommendedFragments barWidth barId darkBackground =
+viewFragmentsBar model oer chunks recommendedFragments barWidth barId darkBackground =
   let
       markers =
-        -- [ fragmentMarkers (userState.fragmentAccesses |> Dict.values) recentBlue
         [ fragmentMarkers recommendedFragments yellow
         ]
         |> List.concat

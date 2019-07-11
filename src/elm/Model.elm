@@ -58,14 +58,9 @@ type alias Model =
   , resourceRecommendations : List Oer
   , timeOfLastFeedbackRecorded : Posix
   , oerNoteboards : Dict String (List Note)
+  , fragmentAccesses : Dict Int Fragment
   }
 
-
--- persisted on backend
-type alias UserState =
-  { fragmentAccesses : Dict Int Fragment
-  , registrationComplete : Bool
-  }
 
 type EntityDefinition
   = DefinitionScheduledForLoading
@@ -280,8 +275,7 @@ type InspectorMenu
 
 
 type alias Session =
-  { userState : UserState
-  , loginState : LoginState
+  { loginState : LoginState
   }
 
 
@@ -336,12 +330,7 @@ initialModel nav flags =
   , resourceRecommendations = []
   , timeOfLastFeedbackRecorded = initialTime
   , oerNoteboards = Dict.empty
-  }
-
-
-initialUserState =
-  { fragmentAccesses = Dict.empty
-  , registrationComplete = False
+  , fragmentAccesses = Dict.empty
   }
 
 

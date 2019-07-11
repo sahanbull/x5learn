@@ -27,8 +27,8 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
-viewResourcePage : Model -> UserState -> PageWithModal
-viewResourcePage model userState =
+viewResourcePage : Model -> PageWithModal
+viewResourcePage model =
   let
       page =
         case model.currentResource of
@@ -36,7 +36,7 @@ viewResourcePage model userState =
             viewLoadingSpinner
 
           Just (Loaded oerUrl) ->
-            viewResource model userState (getCachedOerWithBlankDefault model oerUrl)
+            viewResource model (getCachedOerWithBlankDefault model oerUrl)
 
           Just Error ->
             viewCenterNote "The requested resource was not found."
@@ -44,8 +44,8 @@ viewResourcePage model userState =
       (page, [])
 
 
-viewResource : Model -> UserState -> Oer -> Element Msg -- TODO remove some code duplication with Inspector.elm
-viewResource model userState oer =
+viewResource : Model -> Oer -> Element Msg -- TODO remove some code duplication with Inspector.elm
+viewResource model oer =
   let
       header =
         case oer.title of
@@ -105,7 +105,7 @@ viewResource model userState oer =
             (heading, content) =
               case model.resourceSidebarTab of
                 NotesTab ->
-                  ("Your notes", viewNoteboard model userState False oer.url)
+                  ("Your notes", viewNoteboard model False oer.url)
 
                 RecommendationsTab ->
                   ("Related material"
@@ -189,7 +189,7 @@ viewResource model userState oer =
             wikichunks ->
               let
                   content =
-                    viewFragmentsBar model userState oer wikichunks (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth "inspector" True
+                    viewFragmentsBar model oer wikichunks (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth "inspector" True
                     |> el [ width (px playerWidth), height (px 16) ]
               in
                   none |> el [ inFront content, moveUp (fragmentsBarWrapperHeight - fragmentsBarHeight) ]

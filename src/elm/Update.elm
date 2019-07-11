@@ -51,27 +51,19 @@ update msg ({nav, userProfileForm} as model) =
 
     UrlChanged ({path} as url) ->
       let
-          cmdRequestOers =
-            case model.session of
-              Nothing ->
-                Cmd.none
-
-              Just {userState} ->
-                requestOersAsNeeded userState model
-
           (subpage, (newModel, cmd)) =
             if path |> String.startsWith profilePath then
               (Profile, (model, Cmd.none))
             else if path |> String.startsWith notesPath then
-              (Notes, (model, cmdRequestOers))
+              (Notes, (model, Cmd.none))
             else if path |> String.startsWith recentPath then
-              (Recent, (model, cmdRequestOers))
+              (Recent, (model, Cmd.none))
             else if path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
             else if path |> String.startsWith resourcePath then
               (Resource, model |> requestResourceAfterUrlChanged url)
             else
-              (Home, (model, cmdRequestOers))
+              (Home, (model, Cmd.none))
       in
           ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage } |> closePopup |> resetUserProfileForm, cmd)
           |> logEventForLabStudy "UrlChanged" [ path ]
@@ -108,8 +100,7 @@ update msg ({nav, userProfileForm} as model) =
             , playWhenReady = playWhenReady
             }
       in
-          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> (updateUserState <| addFragmentAccess (Fragment oer.url fragmentStart fragmentLength) model.currentTime), openModalAnimation youtubeEmbedParams)
-      |> saveUserState msg
+          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> addFragmentAccess (Fragment oer.url fragmentStart fragmentLength) model.currentTime, openModalAnimation youtubeEmbedParams)
       |> logEventForLabStudy "InspectOer" [ oer.url ]
 
     UninspectSearchResult ->
@@ -123,7 +114,7 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | modalAnimation = Nothing, animationsPending = model.animationsPending |> Set.remove modalId }, Cmd.none )
 
     RequestSession (Ok session) ->
-      ( { model | session = Just session } |> resetUserProfileForm, requestOersAsNeeded session.userState model)
+      ( { model | session = Just session } |> resetUserProfileForm, requestOersAsNeeded model)
       |> logEventForLabStudy "RequestSession" []
 
     RequestSession (Err err) ->
@@ -222,16 +213,6 @@ update msg ({nav, userProfileForm} as model) =
       --       err |> Debug.log "Error in RequestSaveUserProfile"
       -- in
       ( { model | userMessage = Just "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
-
-    RequestSaveUserState (Ok _) ->
-      (model, Cmd.none)
-
-    RequestSaveUserState (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestSaveUserState"
-      -- in
-      ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
 
     RequestLabStudyLogEvent (Ok _) ->
       (model, Cmd.none)
@@ -368,12 +349,8 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "RemoveNote" [ time |> posixToMillis |> String.fromInt ]
 
     VideoIsPlayingAtPosition position ->
-      (model |> updateUserState (expandCurrentFragmentOrCreateNewOne position model.inspectorState), Cmd.none)
+      (model |> expandCurrentFragmentOrCreateNewOne position model.inspectorState, Cmd.none)
       |> logEventForLabStudy "VideoIsPlayingAtPosition" [ position |> String.fromFloat]
-
-    SubmitPostRegistrationForm keepData ->
-      (model |> updateUserState completeRegistration, Cmd.none)
-      |> saveUserState msg
 
     BubbleMouseOver entityId ->
       let
@@ -414,16 +391,6 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "SelectResourceSidebarTab" []
 
 
-updateUserState : (UserState -> UserState) -> Model -> Model
-updateUserState fn model =
-  case model.session of
-    Nothing ->
-      model
-
-    Just session ->
-      { model | session = Just { session | userState = session.userState |> fn } }
-
-
 addNoteToOer : OerUrl -> String -> Model -> Model
 addNoteToOer oerUrl text model =
   let
@@ -431,7 +398,7 @@ addNoteToOer oerUrl text model =
         Note text model.currentTime
 
       oldNoteboard =
-        getOerNoteboard userState oerUrl
+        getOerNoteboard model oerUrl
 
       newNoteboard =
         newNote :: oldNoteboard
@@ -491,8 +458,8 @@ requestWikichunkEnrichmentsIfNeeded (model, oldCmd) =
           (model, [ oldCmd, requestWikichunkEnrichments missing ] |> Cmd.batch)
 
 
-requestOersAsNeeded : UserState -> Model -> Cmd Msg
-requestOersAsNeeded userState model =
+requestOersAsNeeded : Model -> Cmd Msg
+requestOersAsNeeded model =
   let
       neededUrls =
         case model.subpage of
@@ -500,7 +467,7 @@ requestOersAsNeeded userState model =
             model.oerNoteboards |> Dict.keys
 
           Recent ->
-            userState.fragmentAccesses |> Dict.values |> List.map .oerUrl
+            model.fragmentAccesses |> Dict.values |> List.map .oerUrl
 
           _ ->
             []
@@ -572,15 +539,6 @@ updateUserProfileField field value userProfile =
       { userProfile | lastName = value }
 
 
-saveUserState lastAction (model, cmd) =
-  case model.session of
-    Nothing ->
-      (model, cmd)
-
-    Just session ->
-      (model, [ cmd, requestSaveUserState session.userState ] |> Cmd.batch)
-
-
 cacheOersFromDict : Dict OerUrl Oer -> Model -> Model
 cacheOersFromDict oers model =
   { model | cachedOers = Dict.union oers model.cachedOers }
@@ -596,23 +554,23 @@ cacheOersFromList oers model =
       { model | cachedOers = Dict.union oersDict model.cachedOers }
 
 
-addFragmentAccess : Fragment -> Posix -> UserState -> UserState
-addFragmentAccess fragment currentTime userState =
-  if List.member fragment (Dict.values userState.fragmentAccesses) then
-    userState
+addFragmentAccess : Fragment -> Posix -> Model -> Model
+addFragmentAccess fragment currentTime model =
+  if List.member fragment (Dict.values model.fragmentAccesses) then
+    model
   else
       let
           maxNumberOfItemsToKeep =
             10 -- arbitrary value. I'm keeping this fairly small to avoid long loading times. At the time of writing, I figure that we could speed things up by removing redundant entity titles and urls from the chunk data. See issue #115
 
           fragmentAccesses =
-            userState.fragmentAccesses
+            model.fragmentAccesses
             |> Dict.toList
-            |> List.drop ((Dict.size userState.fragmentAccesses) - maxNumberOfItemsToKeep)
+            |> List.drop ((Dict.size model.fragmentAccesses) - maxNumberOfItemsToKeep)
             |> Dict.fromList
             |> Dict.insert (posixToMillis currentTime) fragment
       in
-          { userState | fragmentAccesses = fragmentAccesses }
+          { model | fragmentAccesses = fragmentAccesses }
 
 
 setTextInNoteForm : OerUrl -> String -> Model -> Model
@@ -625,16 +583,16 @@ setTextInResourceFeedbackForm oerId str model =
   { model | feedbackForms = model.feedbackForms |> Dict.insert oerId str }
 
 
-expandCurrentFragmentOrCreateNewOne : Float -> Maybe InspectorState -> UserState -> UserState
-expandCurrentFragmentOrCreateNewOne position inspectorState userState =
+expandCurrentFragmentOrCreateNewOne : Float -> Maybe InspectorState -> Model -> Model
+expandCurrentFragmentOrCreateNewOne position inspectorState model =
   case inspectorState of
     Nothing ->
-      userState
+      model
 
     Just {oer} ->
-      case mostRecentFragmentAccess userState.fragmentAccesses of
+      case mostRecentFragmentAccess model.fragmentAccesses of
         Nothing ->
-          userState
+          model
 
         Just (time, fragment) ->
           let
@@ -645,20 +603,15 @@ expandCurrentFragmentOrCreateNewOne position inspectorState userState =
                 if position >= fragmentEnd && position < fragmentEnd + 0.05 then
                   -- The video appears to be playing normally.
                   -- -> Extend the current fragment to the current play position.
-                  userState.fragmentAccesses
+                  model.fragmentAccesses
                   |> Dict.insert time { fragment | length = position - fragment.start }
                 else
                   -- The user appears to have skipped within the video, using the player's controls (rather than the fragmentsBar)
                   -- -> Create a new fragment, starting with the current position
-                  userState.fragmentAccesses
+                  model.fragmentAccesses
                   |> Dict.insert time (Fragment oer.url position 0)
           in
-              { userState | fragmentAccesses = newFragmentAccesses }
-
-
-completeRegistration : UserState -> UserState
-completeRegistration userState =
-  { userState | registrationComplete = True }
+              { model | fragmentAccesses = newFragmentAccesses }
 
 
 updateBubblogramsIfNeeded : Model -> Model

@@ -816,7 +816,7 @@ def initiate_action_types_table():
     # TODO Define a comprehensive set of actions and keep it in sync with the frontend
     action_type = ActionType.query.filter_by(id=1).first()
     if action_type is None:
-        action_type = ActionType('User clicked on an OER card')
+        action_type = ActionType('OER card opened')
         db_session.add(action_type)
         db_session.commit()
 

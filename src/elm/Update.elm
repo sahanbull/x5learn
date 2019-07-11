@@ -58,7 +58,7 @@ update msg ({nav, userProfileForm} as model) =
             else if path |> String.startsWith notesPath then
               (Notes, (model, Cmd.none))
             else if path |> String.startsWith recentPath then
-              (Recent, (model, Cmd.none))
+              (Recent, (model, ActionApi.requestRecentViews))
             else if path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
             else if path |> String.startsWith resourcePath then
@@ -124,7 +124,24 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestSession"
       -- in
-      ( { model | userMessage = Just "There was a problem while requesting user data. Please try again later." }, Cmd.none )
+      ( { model | userMessage = Just "An error occurred. Please reload the page." }, Cmd.none )
+
+    RequestRecentViews (Ok oerUrls) ->
+      let
+          newModel =
+            oerUrls
+            |> List.indexedMap (\index oerUrl -> (100000-index, oerUrl)) -- lazy trick to avoid having to decode the date from the JSON (which we don't really need at this point)
+            |> List.foldl (\(index, oerUrl) resultingModel -> resultingModel |> addFragmentAccess (Fragment oerUrl 0 0.01) (millisToPosix index)) model
+      in
+          ( newModel, requestOersAsNeeded newModel)
+          |> logEventForLabStudy "RequestRecentViews" []
+
+    RequestRecentViews (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestRecentViews"
+      -- in
+      ( { model | userMessage = Just "An error occurred. Please reload the page." }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
       ( model |> updateSearch (insertSearchResults (oers |> List.map .url)) |> cacheOersFromList oers, setBrowserFocus "SearchField")
@@ -567,20 +584,22 @@ cacheOersFromList oers model =
 
 
 addFragmentAccess : Fragment -> Posix -> Model -> Model
-addFragmentAccess fragment currentTime model =
+addFragmentAccess fragment time model =
   if List.member fragment (Dict.values model.fragmentAccesses) then
     model
   else
       let
           maxNumberOfItemsToKeep =
-            10 -- arbitrary value. I'm keeping this fairly small to avoid long loading times. At the time of writing, I figure that we could speed things up by removing redundant entity titles and urls from the chunk data. See issue #115
+            30 -- arbitrary value. There used to be some performance implications associated with this number but I forgot what the issue was and I'm unsure whether it still applies. Should test empirically.
 
           fragmentAccesses =
             model.fragmentAccesses
             |> Dict.toList
-            |> List.drop ((Dict.size model.fragmentAccesses) - maxNumberOfItemsToKeep)
+            |> List.reverse
+            |> List.take maxNumberOfItemsToKeep
+            |> List.reverse
             |> Dict.fromList
-            |> Dict.insert (posixToMillis currentTime) fragment
+            |> Dict.insert (posixToMillis time) fragment
       in
           { model | fragmentAccesses = fragmentAccesses }
 
@@ -717,6 +736,6 @@ saveAction : Int -> List (String, Encode.Value) -> (Model, Cmd Msg)-> (Model, Cm
 saveAction actionTypeId params (model, oldCmd) =
   let
       cmd =
-        ActionApi.save actionTypeId params
+        ActionApi.saveAction actionTypeId params
   in
       (model, [ oldCmd, cmd ] |> Cmd.batch)

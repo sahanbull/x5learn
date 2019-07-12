@@ -57,7 +57,7 @@ type alias Model =
   , resourceSidebarTab : ResourceSidebarTab
   , resourceRecommendations : List Oer
   , timeOfLastFeedbackRecorded : Posix
-  , oerNoteboards : Dict String (List Note)
+  , oerNoteboards : Dict String Noteboard
   , fragmentAccesses : Dict Int Fragment
   }
 
@@ -129,6 +129,7 @@ type alias ScrollData =
 type alias Note =
   { text : String
   , time : Posix
+  , oerId : OerId
   }
 
 
@@ -360,6 +361,23 @@ getOerIdFromOerUrl model oerUrl =
 
     Nothing ->
       0
+
+
+getOerUrlFromOerId : Model -> OerId -> OerUrl
+getOerUrlFromOerId model oerId =
+  let
+      helper oers =
+        case oers of
+          [] ->
+            ""
+
+          oer::rest ->
+            if oer.id==oerId then
+              oer.url
+            else
+              helper rest
+  in
+      model.cachedOers |> Dict.values |> helper
 
 
 initialTime =

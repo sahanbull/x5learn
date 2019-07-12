@@ -27,6 +27,7 @@ type Msg
   | ModalAnimationStop Int
   | RequestSession (Result Http.Error Session)
   | RequestRecentViews (Result Http.Error (List OerUrl))
+  | RequestNotes (Result Http.Error (List Note))
   | RequestOerSearch (Result Http.Error (List Oer))
   -- | RequestNextSteps (Result Http.Error (List Pathway))
   | RequestOers (Result Http.Error (Dict String Oer))

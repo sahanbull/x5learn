@@ -117,8 +117,12 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | modalAnimation = Nothing, animationsPending = model.animationsPending |> Set.remove modalId }, Cmd.none )
 
     RequestSession (Ok session) ->
-      ( { model | session = Just session } |> resetUserProfileForm, requestOersAsNeeded model)
-      |> logEventForLabStudy "RequestSession" []
+      let
+          newModel =
+            { model | session = Just session }
+      in
+          ( newModel |> resetUserProfileForm, requestNotes)
+          |> logEventForLabStudy "RequestSession" []
 
     RequestSession (Err err) ->
       -- let
@@ -141,6 +145,35 @@ update msg ({nav, userProfileForm} as model) =
       -- let
       --     dummy =
       --       err |> Debug.log "Error in RequestRecentViews"
+      -- in
+      ( { model | userMessage = Just "An error occurred. Please reload the page." }, Cmd.none )
+
+    RequestNotes (Ok notes) ->
+      let
+          addNoteToNoteboard : OerUrl -> Note -> Dict OerUrl Noteboard -> Dict OerUrl Noteboard
+          addNoteToNoteboard oerUrl note oerNoteboards =
+            let
+                oldNoteboard =
+                  getOerNoteboard model oerUrl
+            in
+                oerNoteboards |> Dict.insert oerUrl (note::oldNoteboard)
+
+          newOerNoteboards : Dict OerUrl Noteboard
+          newOerNoteboards =
+            notes
+            |> Debug.log "notes"
+            |> List.foldl (\note noteboards -> noteboards |> addNoteToNoteboard (getOerUrlFromOerId model note.oerId) note) model.oerNoteboards
+
+          newModel =
+            { model | oerNoteboards = newOerNoteboards}
+      in
+          ( newModel, requestOersAsNeeded newModel)
+          |> logEventForLabStudy "RequestNotes" []
+
+    RequestNotes (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestNotes"
       -- in
       ( { model | userMessage = Just "An error occurred. Please reload the page." }, Cmd.none )
 
@@ -366,7 +399,7 @@ update msg ({nav, userProfileForm} as model) =
           oerId =
             getOerIdFromOerUrl model oerUrl
       in
-      (model |> addNoteToOer oerUrl text |> setTextInNoteForm oerUrl "", [ setBrowserFocus "textInputFieldForNotesOrFeedback", saveNote oerId text ] |> Cmd.batch)
+      (model |> addNewNoteToOer oerUrl text |> setTextInNoteForm oerUrl "", [ setBrowserFocus "textInputFieldForNotesOrFeedback", saveNote oerId text ] |> Cmd.batch)
       |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ oerUrl, getOerNoteForm model oerUrl ]
 
     SubmittedResourceFeedback oerId text ->
@@ -384,7 +417,7 @@ update msg ({nav, userProfileForm} as model) =
           oerId =
             getOerIdFromOerUrl model oerUrl
       in
-      (model |> addNoteToOer oerUrl text |> setTextInNoteForm oerUrl "" , saveNote oerId text)
+      (model |> addNewNoteToOer oerUrl text |> setTextInNoteForm oerUrl "" , saveNote oerId text)
       |> logEventForLabStudy "ClickedQuickNoteButtond" [ oerUrl, text ]
 
     RemoveNote time ->
@@ -434,11 +467,11 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "SelectResourceSidebarTab" []
 
 
-addNoteToOer : OerUrl -> String -> Model -> Model
-addNoteToOer oerUrl text model =
+addNewNoteToOer : OerUrl -> String -> Model -> Model
+addNewNoteToOer oerUrl text model =
   let
       newNote =
-        Note text model.currentTime
+        Note text model.currentTime (oerUrl |> getOerIdFromOerUrl model)
 
       oldNoteboard =
         getOerNoteboard model oerUrl

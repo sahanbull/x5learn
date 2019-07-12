@@ -131,23 +131,6 @@ requestSendResourceFeedback oerId text =
     }
 
 
-fragmentEncoder : Fragment -> Encode.Value
-fragmentEncoder fragment =
-  Encode.object
-    [ ("oerUrl", Encode.string fragment.oerUrl)
-    , ("start", Encode.float fragment.start)
-    , ("length", Encode.float fragment.length)
-    ]
-
-
-noteEncoder : Note -> Encode.Value
-noteEncoder note =
-  Encode.object
-    [ ("text", Encode.string note.text)
-    , ("time", Encode.int (note.time |> posixToMillis))
-    ]
-
-
 sessionDecoder =
   oneOf
     [ field "loggedInUser" loggedInUserDecoder
@@ -181,16 +164,6 @@ gainDecoder =
     (field "title" string)
     (field "level" float)
     (field "confidence" float)
-
-
-noteboardDecoder =
-  list noteDecoder
-
-
-noteDecoder =
-  map2 (\text time -> Note text (millisToPosix time))
-    (field "text" string)
-    (field "time" int)
 
 
 searchResultsDecoder =
@@ -241,25 +214,3 @@ entityDecoder =
     (field "id" string)
     (field "title" string)
     (field "url" string)
-
-
-dictEncoder enc dict =
-  Dict.toList dict
-    |> List.map (\(k,v) -> (k, enc v))
-    |> Encode.object
-
-
-convertKeysFromIntToString : Dict Int v -> Dict String v
-convertKeysFromIntToString d =
-  d
-  |> Dict.toList
-  |> List.map (\(k, v) -> (k |> String.fromInt, v))
-  |> Dict.fromList
-
-
-convertKeysFromStringToInt : Dict String v -> Dict Int v
-convertKeysFromStringToInt d =
-  d
-  |> Dict.toList
-  |> List.map (\(k, v) -> (k |> String.toInt |> Maybe.withDefault 0, v))
-  |> Dict.fromList

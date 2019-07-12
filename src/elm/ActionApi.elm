@@ -9,6 +9,7 @@ import Url.Builder
 import Http
 
 import Msg exposing (..)
+import Model exposing (OerUrl)
 
 
 apiRoot =
@@ -32,7 +33,7 @@ requestRecentViews =
     }
 
 
-recentViewDecoder : Decoder String
+recentViewDecoder : Decoder OerUrl
 recentViewDecoder =
   (field "params" (field "oerUrl" string))
 

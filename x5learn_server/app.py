@@ -316,6 +316,12 @@ def save_definitions(data):
             definition = EntityDefinition.query.filter_by(title=title).first()
             if definition is None:
                 encoded_title = urllib.parse.quote(title)
+                # Request definitions from wikipedia.
+                # This should probably happen in the enrichment worker
+                # rather than the flask app for at least three reasons:
+                # 1. keeping requests times short
+                # 2. better error handling
+                # 3. guaranteeing that definitions are available together with enrichment
                 conn = http.client.HTTPSConnection('en.wikipedia.org')
                 conn.request(
                     'GET', '/w/api.php?action=query&prop=extracts&exintro&explaintext&exsentences=1&titles='+encoded_title+'&format=json')

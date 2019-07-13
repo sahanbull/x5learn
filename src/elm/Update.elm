@@ -59,7 +59,7 @@ update msg ({nav, userProfileForm} as model) =
             else if path |> String.startsWith notesPath then
               (Notes, (model, Cmd.none))
             else if path |> String.startsWith recentPath then
-              (Recent, (model, requestRecentViewsIfLoggedIn model))
+              (Recent, (model, Cmd.none))
             else if path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
             else if path |> String.startsWith resourcePath then
@@ -120,8 +120,16 @@ update msg ({nav, userProfileForm} as model) =
       let
           newModel =
             { model | session = Just session }
+
+          cmd =
+            case session.loginState of
+              GuestUser ->
+                Cmd.none
+
+              LoggedInUser userProfile ->
+                [ requestNotes, ActionApi.requestRecentViews ] |> Cmd.batch
       in
-          ( newModel |> resetUserProfileForm, requestNotesIfLoggedIn model)
+          ( newModel |> resetUserProfileForm, cmd)
           |> logEventForLabStudy "RequestSession" []
 
     RequestSession (Err err) ->
@@ -767,7 +775,7 @@ requestResourceAfterUrlChanged url model =
           ({ model | currentResource = Just Error }, Cmd.none)
 
         Just oerId ->
-          (model, [ requestResource oerId, requestNotesIfLoggedIn model ] |> Cmd.batch)
+          (model, requestResource oerId)
 
 
 
@@ -777,17 +785,3 @@ saveAction actionTypeId params (model, oldCmd) =
     (model, [ oldCmd, ActionApi.saveAction actionTypeId params ] |> Cmd.batch)
   else
     (model, oldCmd)
-
-
-requestNotesIfLoggedIn model =
-  if isLoggedIn model then
-    requestNotes
-  else
-    Cmd.none
-
-
-requestRecentViewsIfLoggedIn model =
-  if isLoggedIn model then
-    ActionApi.requestRecentViews
-  else
-    Cmd.none

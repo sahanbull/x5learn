@@ -322,6 +322,9 @@ def save_definitions(data):
                 response = conn.getresponse().read().decode("utf-8")
                 pages = json.loads(response)['query']['pages']
                 (_, page) = pages.popitem()
+                if 'extract' not in page:
+                    print('Could not save definition for', title)
+                    return
                 extract = page['extract']
                 # print(extract)
                 definition = EntityDefinition(

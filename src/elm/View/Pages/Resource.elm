@@ -20,6 +20,7 @@ import Model exposing (..)
 import View.Shared exposing (..)
 import View.Noteboard exposing (..)
 import View.Html5VideoPlayer exposing (..)
+import View.HtmlPdfViewer exposing (..)
 
 
 import Msg exposing (..)
@@ -68,6 +69,8 @@ viewResource model oer =
           Nothing ->
             if isVideoFile oer.url then
               viewHtml5VideoPlayer model oer.url
+            else if isPdfFile oer.url then
+              viewHtmlPdfPlayer oer.url "60vh"
             else
               none
 

@@ -10,7 +10,7 @@ from collections import defaultdict
 from random import randint
 import urllib
 from datetime import datetime, timedelta
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, cast, Integer
 from flask_restplus import Api, Resource, fields, reqparse
 import wikipedia
 
@@ -178,9 +178,7 @@ def api_search_suggestions():
 
 @app.route("/api/v1/oers/", methods=['POST'])
 def api_oers():
-    oers = {}
-    for url in request.get_json()['urls']:
-        oers[url] = find_oer_by_url(url)
+    oers = [ find_oer_by_id(oer_id) for oer_id in request.get_json()['ids'] ]
     return jsonify(oers)
 
 
@@ -215,13 +213,16 @@ def api_save_user_profile():
 
 @app.route("/api/v1/wikichunk_enrichments/", methods=['POST'])
 def api_wikichunk_enrichments():
-    enrichments = {}
-    for url in request.get_json()['urls']:
-        enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
+    enrichments = []
+    for oer_id in request.get_json()['ids']:
+        # enrichment = WikichunkEnrichment.query.filter_by(oer_id=oer_id).first()
+        enrichment = WikichunkEnrichment.query.filter(WikichunkEnrichment.data['oerId'].astext.cast(Integer)==oer_id).first()
         if enrichment is not None:
-            enrichments[url] = enrichment.data
+            enrichments.append(enrichment.data)
         else:
-            push_enrichment_task(url, 1)
+            oer = Oer.query.get(oer_id)
+            if oer is not None:
+                push_enrichment_task(oer.url, 1)
     return jsonify(enrichments)
 
 
@@ -238,6 +239,10 @@ def most_urgent_unstarted_enrichment_task():
     task.priority = 0
     db_session.commit()
     oer = Oer.query.filter_by(url=url).first()
+    if oer is None:
+        msg = 'Missing OER: '+str(url)
+        print(msg)
+        return jsonify({'info': msg})
     return jsonify({'data': oer.data})
 
 
@@ -289,6 +294,10 @@ def log_event_for_lab_study():
 
 
 def save_enrichment(url, data):
+    oer = Oer.query.filter_by(url=url).first()
+    if oer is None:
+        return
+    data['oerId'] = oer.id
     enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
     if enrichment is None:
         enrichment = WikichunkEnrichment(url, data, CURRENT_ENRICHMENT_VERSION)
@@ -431,12 +440,13 @@ def search_suggestions(text):
     return jsonify(matches)
 
 
-def find_oer_by_url(url):
-    oer = Oer.query.filter_by(url=url).first()
+def find_oer_by_id(oer_id):
+    oer = Oer.query.get(oer_id)
     if oer is not None:
         return oer.data_and_id()
     else:
         # Return a blank OER. This should not happen normally
+        print('Missing OER with id', oer_id)
         oer = {}
         oer['id'] = 0
         oer['date'] = ''

@@ -102,9 +102,9 @@ update msg ({nav, userProfileForm} as model) =
             , playWhenReady = playWhenReady
             }
       in
-          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> addFragmentAccess (Fragment oer.url fragmentStart fragmentLength) model.currentTime, openModalAnimation youtubeEmbedParams)
-      |> saveAction 1 [ ("oerId", Encode.int oer.id), ("oerUrl", Encode.string oer.url) ]
-      |> logEventForLabStudy "InspectOer" [ oer.url ]
+          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> addFragmentAccess (Fragment oer.id fragmentStart fragmentLength) model.currentTime, openModalAnimation youtubeEmbedParams)
+      |> saveAction 1 [ ("oerId", Encode.int oer.id), ("oerId", Encode.int oer.id) ]
+      |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt ]
 
     UninspectSearchResult ->
       ( { model | inspectorState = Nothing}, Cmd.none)
@@ -131,12 +131,12 @@ update msg ({nav, userProfileForm} as model) =
       -- in
       ( { model | userMessage = Just "An error occurred. Please reload the page." }, Cmd.none )
 
-    RequestRecentViews (Ok oerUrls) ->
+    RequestRecentViews (Ok oerIds) ->
       let
           newModel =
-            oerUrls
-            |> List.indexedMap (\index oerUrl -> (100000-index, oerUrl)) -- lazy trick to avoid having to decode the date from the JSON (which we don't really need at this point)
-            |> List.foldl (\(index, oerUrl) resultingModel -> resultingModel |> addFragmentAccess (Fragment oerUrl 0 0.01) (millisToPosix index)) model
+            oerIds
+            |> List.indexedMap (\index oerId -> (100000-index, oerId)) -- lazy trick to avoid having to decode the date from the JSON (which we don't really need at this point)
+            |> List.foldl (\(index, oerId) resultingModel -> resultingModel |> addFragmentAccess (Fragment oerId 0 0.01) (millisToPosix index)) model
       in
           ( newModel, requestOersAsNeeded newModel)
           |> logEventForLabStudy "RequestRecentViews" []
@@ -150,19 +150,18 @@ update msg ({nav, userProfileForm} as model) =
 
     RequestNotes (Ok notes) ->
       let
-          addNoteToNoteboard : OerUrl -> Note -> Dict OerUrl Noteboard -> Dict OerUrl Noteboard
-          addNoteToNoteboard oerUrl note oerNoteboards =
+          addNoteToNoteboard : Note -> Dict OerId Noteboard -> Dict OerId Noteboard
+          addNoteToNoteboard note oerNoteboards =
             let
                 oldNoteboard =
-                  getOerNoteboard model oerUrl
+                  getOerNoteboard model note.oerId
             in
-                oerNoteboards |> Dict.insert oerUrl (note::oldNoteboard)
+                oerNoteboards |> Dict.insert note.oerId (note::oldNoteboard)
 
-          newOerNoteboards : Dict OerUrl Noteboard
+          newOerNoteboards : Dict OerId Noteboard
           newOerNoteboards =
             notes
-            |> Debug.log "notes"
-            |> List.foldl (\note noteboards -> noteboards |> addNoteToNoteboard (getOerUrlFromOerId model note.oerId) note) model.oerNoteboards
+            |> List.foldl (\note noteboards -> noteboards |> addNoteToNoteboard note) model.oerNoteboards
 
           newModel =
             { model | oerNoteboards = newOerNoteboards}
@@ -178,9 +177,9 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | userMessage = Just "An error occurred. Please reload the page." }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
-      ( model |> updateSearch (insertSearchResults (oers |> List.map .url)) |> cacheOersFromList oers, setBrowserFocus "SearchField")
+      ( model |> updateSearch (insertSearchResults (oers |> List.map .id)) |> cacheOersFromList oers, setBrowserFocus "SearchField")
       |> requestWikichunkEnrichmentsIfNeeded
-      |> logEventForLabStudy "RequestOerSearch" (oers |> List.map .url)
+      |> logEventForLabStudy "RequestOerSearch" (oers |> List.map .id |> List.map String.fromInt)
 
     RequestOerSearch (Err err) ->
       -- let
@@ -190,13 +189,13 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | userMessage = Just "There was a problem while fetching the search data" }, Cmd.none )
 
     RequestOers (Ok oers) ->
-      ( { model | requestingOers = False } |> cacheOersFromDict oers, Cmd.none)
+      ( { model | requestingOers = False } |> cacheOersFromList oers, Cmd.none)
 
     RequestOers (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestOers"
-      -- in
+      let
+          dummy =
+            err |> Debug.log "Error in RequestOers"
+      in
       ( { model | requestingOers = False, userMessage = Just "There was a problem while fetching OER data" }, Cmd.none)
 
     RequestGains (Ok gains) ->
@@ -209,25 +208,30 @@ update msg ({nav, userProfileForm} as model) =
       -- in
       ( { model | userMessage = Just "There was a problem while fetching the gains data" }, Cmd.none)
 
-    RequestWikichunkEnrichments (Ok enrichments) ->
+    RequestWikichunkEnrichments (Ok listOfEnrichments) ->
       let
           failCount =
-            if Dict.isEmpty enrichments then
+            if List.isEmpty listOfEnrichments then
               model.wikichunkEnrichmentRequestFailCount + 1
             else
               0
 
+          dictOfEnrichments =
+            listOfEnrichments
+            |> List.map (\enrichment -> (enrichment.oerId, enrichment))
+            |> Dict.fromList
+
           retryTime =
-            (posixToMillis model.currentTime) + (failCount*2000 |> min 10000) |> millisToPosix
+            (posixToMillis model.currentTime) + (failCount*2000 |> min 5000) |> millisToPosix
       in
-          ( { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.union enrichments, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, wikichunkEnrichmentRequestFailCount = failCount, wikichunkEnrichmentRetryTime = retryTime } |> registerUndefinedEntities (Dict.values enrichments), Cmd.none )
+          ( { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.union dictOfEnrichments, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, wikichunkEnrichmentRequestFailCount = failCount, wikichunkEnrichmentRetryTime = retryTime } |> registerUndefinedEntities listOfEnrichments, Cmd.none )
 
     RequestWikichunkEnrichments (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestWikichunkEnrichments"
-      -- in
-      ( { model | userMessage = Just "There was a problem. Please reload the page.", requestingWikichunkEnrichments = False }, Cmd.none )
+      let
+          dummy =
+            err |> Debug.log "Error in RequestWikichunkEnrichments"
+      in
+      ( { model | userMessage = Just "There was a problem - please reload the page.", requestingWikichunkEnrichments = False }, Cmd.none )
 
     RequestEntityDefinitions (Ok definitionTexts) ->
       let
@@ -315,9 +319,9 @@ update msg ({nav, userProfileForm} as model) =
                     embedYoutubePlayerOnResourcePage youtubeEmbedParams
 
           newModel =
-            { model | currentResource = Just <| Loaded oer.url } |> cacheOersFromList [ oer ]
+            { model | currentResource = Just <| Loaded oer.id } |> cacheOersFromList [ oer ]
       in
-          (newModel, [ cmdYoutube, requestResourceRecommendations <| relatedSearchStringFromOer newModel oer.url ] |> Cmd.batch )
+          (newModel, [ cmdYoutube, requestResourceRecommendations <| relatedSearchStringFromOer newModel oer.id ] |> Cmd.batch )
 
     RequestResource (Err err) ->
       ( { model | currentResource = Just Error }, Cmd.none )
@@ -325,7 +329,7 @@ update msg ({nav, userProfileForm} as model) =
     RequestResourceRecommendations (Ok oersUnfiltered) ->
       let
           oers =
-            oersUnfiltered |> List.filter (\oer -> model.currentResource /= Just (Loaded oer.url)) -- ensure that the resource itself isn't included in the recommendations
+            oersUnfiltered |> List.filter (\oer -> model.currentResource /= Just (Loaded oer.id)) -- ensure that the resource itself isn't included in the recommendations
       in
           ({ model | resourceRecommendations = oers } |> cacheOersFromList oers, setBrowserFocus "")
           |> requestWikichunkEnrichmentsIfNeeded
@@ -339,7 +343,7 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | resourceRecommendations = [], userMessage = Just "An error occurred while loading recommendations" }, Cmd.none )
 
     SetHover maybeUrl ->
-      ( { model | hoveringOerUrl = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
+      ( { model | hoveringOerId = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
       |> logEventForLabStudy "SetHover" [ maybeUrl |> Maybe.withDefault "" ]
 
     SetPopup popup ->
@@ -385,40 +389,33 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | userProfileFormSubmitted = Just userProfileForm }, requestSaveUserProfile model.userProfileForm.userProfile)
       |> logEventForLabStudy "SubmittedUserProfile" []
 
-    ChangedTextInNewNoteFormInOerNoteboard oerUrl str ->
-      ( model |> setTextInNoteForm oerUrl str, Cmd.none)
+    ChangedTextInNewNoteFormInOerNoteboard oerId str ->
+      ( model |> setTextInNoteForm oerId str, Cmd.none)
 
     ChangedTextInResourceFeedbackForm oerId str ->
       ( model |> setTextInResourceFeedbackForm oerId str, Cmd.none)
 
-    SubmittedNewNoteInOerNoteboard oerUrl ->
+    SubmittedNewNoteInOerNoteboard oerId ->
       let
           text =
-            getOerNoteForm model oerUrl
-
-          oerId =
-            getOerIdFromOerUrl model oerUrl
+            getOerNoteForm model oerId
       in
-      (model |> addNewNoteToOer oerUrl text |> setTextInNoteForm oerUrl "", [ setBrowserFocus "textInputFieldForNotesOrFeedback", saveNote oerId text ] |> Cmd.batch)
-      |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ oerUrl, getOerNoteForm model oerUrl ]
+      (model |> addNewNoteToOer oerId text |> setTextInNoteForm oerId "", [ setBrowserFocus "textInputFieldForNotesOrFeedback", saveNote oerId text ] |> Cmd.batch)
+      |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ String.fromInt oerId, getOerNoteForm model oerId ]
 
     SubmittedResourceFeedback oerId text ->
       ({ model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", requestSendResourceFeedback oerId text)
       |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, getResourceFeedbackFormValue model oerId ]
 
-    PressedKeyInNewNoteFormInOerNoteboard oerUrl keyCode ->
+    PressedKeyInNewNoteFormInOerNoteboard oerId keyCode ->
       if keyCode==13 then
-        model |> update (SubmittedNewNoteInOerNoteboard oerUrl)
+        model |> update (SubmittedNewNoteInOerNoteboard oerId)
       else
         (model, Cmd.none)
 
-    ClickedQuickNoteButton oerUrl text ->
-      let
-          oerId =
-            getOerIdFromOerUrl model oerUrl
-      in
-      (model |> addNewNoteToOer oerUrl text |> setTextInNoteForm oerUrl "" , saveNote oerId text)
-      |> logEventForLabStudy "ClickedQuickNoteButtond" [ oerUrl, text ]
+    ClickedQuickNoteButton oerId text ->
+      (model |> addNewNoteToOer oerId text |> setTextInNoteForm oerId "" , saveNote oerId text)
+      |> logEventForLabStudy "ClickedQuickNoteButtond" [ String.fromInt oerId, text ]
 
     RemoveNote time ->
       (model |> removeNoteAtTime time, Cmd.none)
@@ -430,21 +427,21 @@ update msg ({nav, userProfileForm} as model) =
 
     BubbleMouseOver entityId ->
       let
-          oerUrl =
-            model.hoveringOerUrl
+          oerId =
+            model.hoveringOerId
             |> Maybe.withDefault ""
       in
           ({model | hoveringBubbleEntityId = Just entityId }, Cmd.none)
-          |> logEventForLabStudy "BubbleMouseOver" [ oerUrl, entityId ]
+          |> logEventForLabStudy "BubbleMouseOver" [ oerId, entityId ]
 
     BubbleMouseOut ->
       ({model | hoveringBubbleEntityId = Nothing } |> closePopup, Cmd.none)
       |> logEventForLabStudy "BubbleMouseOut" []
 
-    BubbleClicked oerUrl ->
+    BubbleClicked oerId ->
       let
           newModel =
-            {model | popup = model.popup |> updateBubblePopupOnClick model oerUrl }
+            {model | popup = model.popup |> updateBubblePopupOnClick model oerId }
       in
           (newModel, Cmd.none)
           |> logEventForLabStudy "BubbleClicked" (popupToStrings newModel.popup)
@@ -467,25 +464,25 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "SelectResourceSidebarTab" []
 
 
-addNewNoteToOer : OerUrl -> String -> Model -> Model
-addNewNoteToOer oerUrl text model =
+addNewNoteToOer : OerId -> String -> Model -> Model
+addNewNoteToOer oerId text model =
   let
       newNote =
-        Note text model.currentTime (oerUrl |> getOerIdFromOerUrl model)
+        Note text model.currentTime oerId
 
       oldNoteboard =
-        getOerNoteboard model oerUrl
+        getOerNoteboard model oerId
 
       newNoteboard =
         newNote :: oldNoteboard
   in
-      { model | oerNoteboards = model.oerNoteboards |> Dict.insert oerUrl newNoteboard }
+      { model | oerNoteboards = model.oerNoteboards |> Dict.insert oerId newNoteboard }
 
 
 removeNoteAtTime : Posix -> Model -> Model
 removeNoteAtTime time model =
   let
-      filter : OerUrl -> Noteboard -> Noteboard
+      filter : OerId -> Noteboard -> Noteboard
       filter _ notes =
         notes
         |> List.filter (\note -> note.time /= time)
@@ -503,8 +500,8 @@ updateSearch transformFunction model =
       { model | searchState = Just (searchState |> transformFunction) }
 
 
-insertSearchResults oerUrls searchState =
-  { searchState | searchResults = Just oerUrls }
+insertSearchResults oerIds searchState =
+  { searchState | searchResults = Just oerIds }
 
 
 incrementFrameCountInModalAnimation : Model -> Model
@@ -543,7 +540,7 @@ requestOersAsNeeded model =
             model.oerNoteboards |> Dict.keys
 
           Recent ->
-            model.fragmentAccesses |> Dict.values |> List.map .oerUrl
+            model.fragmentAccesses |> Dict.values |> List.map .oerId
 
           _ ->
             []
@@ -615,17 +612,12 @@ updateUserProfileField field value userProfile =
       { userProfile | lastName = value }
 
 
-cacheOersFromDict : Dict OerUrl Oer -> Model -> Model
-cacheOersFromDict oers model =
-  { model | cachedOers = Dict.union oers model.cachedOers }
-
-
 cacheOersFromList : List Oer -> Model -> Model
 cacheOersFromList oers model =
   let
       oersDict =
         oers
-        |> List.foldl (\oer output -> output |> Dict.insert oer.url oer) Dict.empty
+        |> List.foldl (\oer output -> output |> Dict.insert oer.id oer) Dict.empty
   in
       { model | cachedOers = Dict.union oersDict model.cachedOers }
 
@@ -651,9 +643,9 @@ addFragmentAccess fragment time model =
           { model | fragmentAccesses = fragmentAccesses }
 
 
-setTextInNoteForm : OerUrl -> String -> Model -> Model
-setTextInNoteForm oerUrl str model =
-  { model | oerNoteForms = model.oerNoteForms |> Dict.insert oerUrl str }
+setTextInNoteForm : OerId -> String -> Model -> Model
+setTextInNoteForm oerId str model =
+  { model | oerNoteForms = model.oerNoteForms |> Dict.insert oerId str }
 
 
 setTextInResourceFeedbackForm : OerId -> String -> Model -> Model
@@ -687,7 +679,7 @@ expandCurrentFragmentOrCreateNewOne position inspectorState model =
                   -- The user appears to have skipped within the video, using the player's controls (rather than the fragmentsBar)
                   -- -> Create a new fragment, starting with the current position
                   model.fragmentAccesses
-                  |> Dict.insert time (Fragment oer.url position 0)
+                  |> Dict.insert time (Fragment oer.id position 0)
           in
               { model | fragmentAccesses = newFragmentAccesses }
 
@@ -734,7 +726,7 @@ popupToStrings maybePopup =
         UserMenu ->
           [ "UserMenu" ]
 
-        BubblePopup {oerUrl, entityId, content} ->
+        BubblePopup {oerId, entityId, content} ->
           let
               contentString =
                 case content of
@@ -744,7 +736,7 @@ popupToStrings maybePopup =
                   MentionInBubblePopup {positionInResource, sentence} ->
                     "Mention " ++ (positionInResource |> String.fromFloat) ++ " " ++ sentence
           in
-              [ oerUrl, entityId, contentString ]
+              [ oerId |> String.fromInt, entityId, contentString ]
 
 
 executeSearchAfterUrlChanged : Model -> Url -> (Model, Cmd Msg)

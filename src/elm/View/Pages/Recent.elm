@@ -37,40 +37,40 @@ viewRecentPage model =
             |> milkyWhiteCenteredContainer
         else
           let
-              oerUrls =
+              oerIds =
                 model.fragmentAccesses
                 |> Dict.toList
-                |> List.map (\(time, fragment) -> fragment.oerUrl)
+                |> List.map (\(time, fragment) -> fragment.oerId)
                 |> List.reverse
                 |> List.Extra.unique
           in
-              viewVerticalListOfCards model oerUrls
+              viewVerticalListOfCards model oerIds
   in
       (page, viewInspectorModalOrEmpty model)
 
 
-viewVerticalListOfCards : Model -> List OerUrl -> Element Msg
-viewVerticalListOfCards model oerUrls =
+viewVerticalListOfCards : Model -> List OerId -> Element Msg
+viewVerticalListOfCards model oerIds =
   let
       rowHeight =
         cardHeight + verticalSpacingBetweenCards
 
       nrows =
-        List.length oerUrls
+        List.length oerIds
 
       cardPositionAtIndex index =
         { x = 0, y = index * rowHeight + 70 |> toFloat }
 
-      viewCard index oerUrl =
+      viewCard index oerId =
         let
             oer =
-              oerUrl
+              oerId
               |> getCachedOerWithBlankDefault model
         in
             viewOerCard model [] (cardPositionAtIndex index) ("recent-"++ (String.fromInt index)) oer |> el [ centerX ]
 
       cards =
-        oerUrls
+        oerIds
         |> List.indexedMap viewCard
         |> List.reverse
         |> List.map inFront

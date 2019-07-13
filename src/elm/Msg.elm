@@ -26,13 +26,12 @@ type Msg
   | ModalAnimationStart BoxAnimation
   | ModalAnimationStop Int
   | RequestSession (Result Http.Error Session)
-  | RequestRecentViews (Result Http.Error (List OerUrl))
+  | RequestRecentViews (Result Http.Error (List OerId))
   | RequestNotes (Result Http.Error (List Note))
   | RequestOerSearch (Result Http.Error (List Oer))
-  -- | RequestNextSteps (Result Http.Error (List Pathway))
-  | RequestOers (Result Http.Error (Dict String Oer))
+  | RequestOers (Result Http.Error (List Oer))
   | RequestGains (Result Http.Error (List Gain))
-  | RequestWikichunkEnrichments (Result Http.Error (Dict OerUrl WikichunkEnrichment))
+  | RequestWikichunkEnrichments (Result Http.Error (List WikichunkEnrichment))
   | RequestEntityDefinitions (Result Http.Error (Dict String String))
   | RequestSearchSuggestions (Result Http.Error (List String))
   | RequestSaveUserProfile (Result Http.Error String)
@@ -53,17 +52,17 @@ type Msg
   | YoutubeSeekTo Float
   | EditUserProfile UserProfileField String
   | SubmittedUserProfile
-  | ChangedTextInNewNoteFormInOerNoteboard OerUrl String
+  | ChangedTextInNewNoteFormInOerNoteboard OerId String
   | ChangedTextInResourceFeedbackForm OerId String
-  | SubmittedNewNoteInOerNoteboard String
+  | SubmittedNewNoteInOerNoteboard OerId
   | SubmittedResourceFeedback OerId String
-  | PressedKeyInNewNoteFormInOerNoteboard String Int
-  | ClickedQuickNoteButton String String
+  | PressedKeyInNewNoteFormInOerNoteboard OerId Int
+  | ClickedQuickNoteButton OerId String
   | RemoveNote Posix
   | VideoIsPlayingAtPosition Float
   | BubbleMouseOver String
   | BubbleMouseOut
-  | BubbleClicked OerUrl
+  | BubbleClicked OerId
   | PageScrolled ScrollData
   | StartLabStudyTask LabStudyTask
   | StoppedLabStudyTask

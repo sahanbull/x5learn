@@ -33,7 +33,7 @@ viewNotesPage model =
       noteCards =
         model.oerNoteboards
         |> Dict.toList
-        |> List.concatMap (\(oerUrl, noteboard) -> noteboard |> List.map (\note -> (note, oerUrl |> getCachedOerWithBlankDefault model)))
+        |> List.concatMap (\(oerId, noteboard) -> noteboard |> List.map (\note -> (note, oerId |> getCachedOerWithBlankDefault model)))
         |> List.sortBy (\(note, _) -> (posixToMillis note.time))
         |> List.reverse
         |> List.map (viewNoteCard model)

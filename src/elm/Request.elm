@@ -5,7 +5,7 @@ import Dict exposing (Dict)
 import Time exposing (millisToPosix, posixToMillis)
 
 import Http exposing (expectStringResponse)
-import Json.Decode as Decode exposing (Value,map,map2,map3,map4,map8,field,bool,int,float,string,list,dict,oneOf,maybe,null)
+import Json.Decode as Decode exposing (Value,map,map2,map3,map4,map5,map8,field,bool,int,float,string,list,dict,oneOf,maybe,null)
 import Json.Decode.Extra exposing (andMap)
 import Json.Encode as Encode
 import Url
@@ -44,12 +44,12 @@ requestSearchSuggestions searchText =
     }
 
 
-requestOers : Set OerUrl -> Cmd Msg
-requestOers urls =
+requestOers : Set OerId -> Cmd Msg
+requestOers ids =
   Http.post
     { url = Url.Builder.absolute [ apiRoot, "oers/" ] []
-    , body = Http.jsonBody <| Encode.object [ ("urls", (Encode.list Encode.string) (urls |> Set.toList)) ]
-    , expect = Http.expectJson RequestOers (dict oerDecoder)
+    , body = Http.jsonBody <| Encode.object [ ("ids", (Encode.list Encode.int) (ids |> Set.toList)) ]
+    , expect = Http.expectJson RequestOers (list oerDecoder)
     }
 
 
@@ -61,12 +61,12 @@ requestGains =
     }
 
 
-requestWikichunkEnrichments : List OerUrl -> Cmd Msg
-requestWikichunkEnrichments urls =
+requestWikichunkEnrichments : List OerId -> Cmd Msg
+requestWikichunkEnrichments ids =
   Http.post
     { url = Url.Builder.absolute [ apiRoot, "wikichunk_enrichments/" ] []
-    , body = Http.jsonBody <| Encode.object [ ("urls", (Encode.list Encode.string) urls) ]
-    , expect = Http.expectJson RequestWikichunkEnrichments (dict wikichunkEnrichmentDecoder)
+    , body = Http.jsonBody <| Encode.object [ ("ids", (Encode.list Encode.int) ids) ]
+    , expect = Http.expectJson RequestWikichunkEnrichments (list wikichunkEnrichmentDecoder)
     }
 
 
@@ -184,11 +184,12 @@ oerDecoder =
 
 
 wikichunkEnrichmentDecoder =
-  map4 (WikichunkEnrichment Nothing)
+  map5 (WikichunkEnrichment Nothing)
     (field "mentions" (dict (list mentionDecoder)))
     (field "chunks" (list chunkDecoder))
     (field "clusters" (list clusterDecoder))
     (field "errors" bool)
+    (field "oerId" int)
 
 
 clusterDecoder =

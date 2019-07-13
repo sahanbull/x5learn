@@ -152,7 +152,7 @@ inspectorContentDefault model {oer, fragmentStart} =
         |> column [ width (px playerWidth), moveLeft notesWidth ]
 
       body =
-        [ viewNoteboard model True oer.url |> el [ width <| px notesWidth, height fill, alignTop, borderLeft 1, paddingTRBL 0 0 0 15, moveRight (sheetWidth - notesWidth - 30 ) ]
+        [ viewNoteboard model True oer.id |> el [ width <| px notesWidth, height fill, alignTop, borderLeft 1, paddingTRBL 0 0 0 15, moveRight (sheetWidth - notesWidth - 30 ) ]
         , mainSection
         ]
         |> row []
@@ -169,7 +169,7 @@ inspectorContentDefault model {oer, fragmentStart} =
 
       fragmentsBar =
         if hasYoutubeVideo oer.url then
-          case chunksFromUrl model oer.url of
+          case chunksFromOerId model oer.id of
             [] ->
               none
 

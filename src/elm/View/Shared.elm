@@ -443,15 +443,15 @@ menuColumn attrs =
 
 viewFragmentsBar model oer chunks recommendedFragments barWidth barId darkBackground =
   let
-      markers =
-        [ fragmentMarkers recommendedFragments yellow
-        ]
-        |> List.concat
+      -- markers =
+      --   [ fragmentMarkers recommendedFragments yellow
+      --   ]
+      --   |> List.concat
 
-      fragmentMarkers fragments color =
-        fragments
-        |> List.filter (\fragment -> fragment.oerUrl == oer.url)
-        |> List.map (\{start,length} -> none |> el [ width (length |> pxFromFraction |> round |> px), height fill, Background.color color, moveRight (start |> pxFromFraction) ] |> inFront)
+      -- fragmentMarkers fragments color =
+      --   fragments
+      --   |> List.filter (\fragment -> fragment.oerId == oer.url)
+      --   |> List.map (\{start,length} -> none |> el [ width (length |> pxFromFraction |> round |> px), height fill, Background.color color, moveRight (start |> pxFromFraction) ] |> inFront)
 
       pxFromFraction fraction =
         (barWidth |> toFloat) * fraction
@@ -522,7 +522,7 @@ viewFragmentsBar model oer chunks recommendedFragments barWidth barId darkBackgr
           []
   in
     none
-    |> el ([ width fill, height <| px <| fragmentsBarHeight,  moveUp fragmentsBarHeight ] ++ markers ++ chunkTriggers ++ border ++ background)
+    |> el ([ width fill, height <| px <| fragmentsBarHeight,  moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background)
 
 
 viewChunkPopup model chunkPopup =
@@ -701,7 +701,7 @@ avatarImage =
 openInspectorOnPress model oer =
   let
       fragmentLength =
-        case chunksFromUrl model oer.url |> List.head of
+        case chunksFromOerId model oer.id |> List.head of
           Nothing ->
             1
 

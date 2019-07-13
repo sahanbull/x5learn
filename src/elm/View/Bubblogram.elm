@@ -26,8 +26,8 @@ import View.Shared exposing (..)
 import Msg exposing (..)
 
 
-viewBubblogram : Model -> OerUrl -> Bubblogram -> (Element Msg, List (Element.Attribute Msg))
-viewBubblogram model oerUrl {createdAt, bubbles} =
+viewBubblogram : Model -> OerId -> Bubblogram -> (Element Msg, List (Element.Attribute Msg))
+viewBubblogram model oerId {createdAt, bubbles} =
   let
       animationPhase =
         bubblogramAnimationPhase model createdAt
@@ -37,7 +37,7 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
 
       svgBubbles =
         bubbles
-        |> List.concatMap (viewBubble model oerUrl animationPhase)
+        |> List.concatMap (viewBubble model oerId animationPhase)
 
       background =
         rect [ width widthString, height heightString, fill "#191919" ] []
@@ -68,14 +68,14 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
                 [ Element.alpha (interp (size/3) (1.8*labelPhase-1) 0.8) ]
         in
             entity.title
-            |> captionNowrap ([ whiteText, moveRight <| (posX + 0*size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY + 0.1 -  0*size*1.1*bubbleZoom) * contentHeight + marginTop - 15, Events.onMouseEnter <| BubbleMouseOver entity.id, Events.onMouseLeave BubbleMouseOut, onClickNoBubble (BubbleClicked oerUrl), htmlClass hoverableClass ] ++ highlight)
+            |> captionNowrap ([ whiteText, moveRight <| (posX + 0*size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY + 0.1 -  0*size*1.1*bubbleZoom) * contentHeight + marginTop - 15, Events.onMouseEnter <| BubbleMouseOver entity.id, Events.onMouseLeave BubbleMouseOut, onClickNoBubble (BubbleClicked oerId), htmlClass hoverableClass ] ++ highlight)
             |> inFront
             |> List.singleton
 
       popup =
         case model.popup of
           Just (BubblePopup state) ->
-            if state.oerUrl==oerUrl then
+            if state.oerId==oerId then
               case findBubbleByEntityId state.entityId of
                 Nothing -> -- shouldn't happen
                   []
@@ -97,8 +97,8 @@ viewBubblogram model oerUrl {createdAt, bubbles} =
       (graphic, popup)
 
 
-viewBubble : Model -> OerUrl -> Float -> Bubble -> List (Svg Msg)
-viewBubble model oerUrl animationPhase ({entity} as bubble) =
+viewBubble : Model -> OerId -> Float -> Bubble -> List (Svg Msg)
+viewBubble model oerId animationPhase ({entity} as bubble) =
   let
       {posX, posY, size} =
         animatedBubbleCurrentCoordinates animationPhase bubble
@@ -115,7 +115,7 @@ viewBubble model oerUrl animationPhase ({entity} as bubble) =
 
       mentionDots =
         if isHovering then
-          viewMentionDots model oerUrl bubble
+          viewMentionDots model oerId bubble
         else
           []
 
@@ -127,7 +127,7 @@ viewBubble model oerUrl animationPhase ({entity} as bubble) =
           , fill <| Color.toCssString <| colorFromBubble bubble
           , onMouseOver <| BubbleMouseOver entity.id
           , onMouseLeave <| BubbleMouseOut
-          , custom "click" (Json.Decode.succeed { message = BubbleClicked oerUrl, stopPropagation = True, preventDefault = True })
+          , custom "click" (Json.Decode.succeed { message = BubbleClicked oerId, stopPropagation = True, preventDefault = True })
           , class hoverableClass
           ] ++ outline)
           []
@@ -160,7 +160,7 @@ hoveringBubbleOrFragmentsBarEntityId model =
 
 
 viewPopup : Model -> BubblePopupState -> BubbleCoordinates -> List (Element.Attribute Msg)
-viewPopup model {oerUrl, entityId, content} {posX, posY, size} =
+viewPopup model {oerId, entityId, content} {posX, posY, size} =
   let
       zoomFromText text =
         (String.length text |> toFloat) / 200 - posY*0.5 |> Basics.min 1
@@ -316,8 +316,8 @@ hoverableClass =
   "UserSelectNone CursorPointer"
 
 
-viewMentionDots : Model -> OerUrl -> Bubble -> List (Svg Msg)
-viewMentionDots model oerUrl bubble =
+viewMentionDots : Model -> OerId -> Bubble -> List (Svg Msg)
+viewMentionDots model oerId bubble =
   if isAnyChunkPopupOpen model then
     []
   else
@@ -332,7 +332,7 @@ viewMentionDots model oerUrl bubble =
               isInPopup =
                 case model.popup of
                   Just (BubblePopup state) ->
-                    if state.oerUrl==oerUrl && state.entityId==bubble.entity.id then
+                    if state.oerId==oerId && state.entityId==bubble.entity.id then
                       case state.content of
                         MentionInBubblePopup mention ->
                           mention.sentence==sentence
@@ -356,7 +356,7 @@ viewMentionDots model oerUrl bubble =
               circle [ cx circlePosX, cy circlePosY, r circleRadius, fill "rgba(255,140,0,0.95)" ] []
 
         mentions =
-          getMentions model oerUrl bubble.entity.id
+          getMentions model oerId bubble.entity.id
     in
         mentions
         |> List.map dot

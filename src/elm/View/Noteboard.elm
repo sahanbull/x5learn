@@ -18,8 +18,8 @@ import Msg exposing (..)
 import View.Shared exposing (..)
 
 
-viewNoteboard : Model -> Bool -> OerUrl -> Element Msg
-viewNoteboard model includeHeading oerUrl =
+viewNoteboard : Model -> Bool -> OerId -> Element Msg
+viewNoteboard model includeHeading oerId =
   let
       heading =
         if includeHeading then
@@ -32,7 +32,7 @@ viewNoteboard model includeHeading oerUrl =
         let
             quickNotesButton : String -> Element Msg
             quickNotesButton str =
-              actionButtonWithoutIcon [ Background.color x5colorSemiTransparent, whiteText, paddingXY 5 3 ] str (Just <| ClickedQuickNoteButton oerUrl str)
+              actionButtonWithoutIcon [ Background.color x5colorSemiTransparent, whiteText, paddingXY 5 3 ] str (Just <| ClickedQuickNoteButton oerId str)
         in
             [ "Too hard", "Just right", "Too easy", "Interested", "Not interested" ]
             |> List.map quickNotesButton
@@ -44,10 +44,10 @@ viewNoteboard model includeHeading oerUrl =
         |> column [ spacing 15, width fill ]
 
       formValue =
-        getOerNoteForm model oerUrl
+        getOerNoteForm model oerId
 
       textField =
-        Input.text [ width fill, htmlId "textInputFieldForNotesOrFeedback", onEnter <| (SubmittedNewNoteInOerNoteboard oerUrl), Border.color x5color ] { onChange = ChangedTextInNewNoteFormInOerNoteboard oerUrl, text = formValue, placeholder = Just ("Write a note" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "note" }
+        Input.text [ width fill, htmlId "textInputFieldForNotesOrFeedback", onEnter <| (SubmittedNewNoteInOerNoteboard oerId), Border.color x5color ] { onChange = ChangedTextInNewNoteFormInOerNoteboard oerId, text = formValue, placeholder = Just ("Write a note" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "note" }
 
       newEntry =
         [ textField
@@ -55,7 +55,7 @@ viewNoteboard model includeHeading oerUrl =
         |> row [ spacing 10, width fill ]
 
       notes =
-        getOerNoteboard model oerUrl
+        getOerNoteboard model oerId
 
       noteElements =
         if List.isEmpty notes then

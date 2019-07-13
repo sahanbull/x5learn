@@ -3,7 +3,8 @@ from x5learn_server._config import DB_ENGINE_URI
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy import Boolean, DateTime, Column, Integer, \
-    Text, String, JSON, Float, ForeignKey, Table, func, BigInteger
+    Text, String, Float, ForeignKey, Table, func, BigInteger
+from sqlalchemy.dialects.postgresql import JSON
 import datetime
 from flask_sqlalchemy import SQLAlchemy
 
@@ -72,8 +73,8 @@ class WikichunkEnrichment(Base):
     __tablename__ = 'wikichunk_enrichment'
     __table_args__ = {'extend_existing': True}
     id = Column(Integer(), primary_key=True)
-    url = Column(String(255), unique=True, nullable=False)
-    data = Column(JSON())
+    url = Column(String(255), nullable=False)
+    data = Column(JSON)
     version = Column(Integer())
 
     def __init__(self, url, data, version):

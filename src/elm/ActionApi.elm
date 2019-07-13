@@ -1,7 +1,7 @@
 module ActionApi exposing (saveAction, requestRecentViews)
 
 import Json.Encode as Encode exposing (encode, object)
-import Json.Decode as Decode exposing (Decoder, at, field, list, string)
+import Json.Decode as Decode exposing (Decoder, at, field, list, string, int)
 
 import Url
 import Url.Builder
@@ -9,7 +9,7 @@ import Url.Builder
 import Http
 
 import Msg exposing (..)
-import Model exposing (OerUrl)
+import Model exposing (OerId)
 
 
 apiRoot =
@@ -33,9 +33,9 @@ requestRecentViews =
     }
 
 
-recentViewDecoder : Decoder OerUrl
+recentViewDecoder : Decoder OerId
 recentViewDecoder =
-  (field "params" (field "oerUrl" string))
+  (field "params" (field "oerId" int))
 
 
 actionTypeForWhenTheUserOpensAnOerCard =

@@ -9,14 +9,16 @@ import Element.Border as Border
 import Element.Font as Font
 
 import View.Shared exposing (..)
+import Msg exposing (Msg)
+import Model exposing (..)
 
 
+viewHtml5VideoPlayer : Model -> OerUrl -> Element Msg
 viewHtml5VideoPlayer model oerUrl =
   let
 
       fallbackMessage =
         [ [ "Your browser does not support HTML5 video." |> Html.text ] |> Html.div []
-        -- , [ oerUrl |> Html.text ] |> Html.a [ Attributes.href oerUrl, Attributes.target "_blank" ] |> List.singleton |> Html.p []
         ]
         |> Html.div [ Attributes.class "Html5VideoPlayerMessage" ]
   in

@@ -25,7 +25,7 @@ type alias Model =
   , searchState : Maybe SearchState
   , inspectorState : Maybe InspectorState
   , userMessage : Maybe String
-  , hoveringOerUrl : Maybe String
+  , hoveringOerId : Maybe String
   , timeOfLastMouseEnterOnCard : Posix
   , modalAnimation : Maybe BoxAnimation
   , animationsPending : Set String
@@ -33,7 +33,7 @@ type alias Model =
   , nextSteps : Maybe (List Pathway)
   , popup : Maybe Popup
   , requestingWikichunkEnrichments : Bool
-  , wikichunkEnrichments : Dict OerUrl WikichunkEnrichment
+  , wikichunkEnrichments : Dict OerId WikichunkEnrichment
   , enrichmentsAnimating : Bool
   , tagClouds : Dict String (List String)
   , searchSuggestions : List String
@@ -42,9 +42,9 @@ type alias Model =
   , timeOfLastSearch : Posix
   , userProfileForm : UserProfileForm
   , userProfileFormSubmitted : Maybe UserProfileForm
-  , oerNoteForms : Dict OerUrl String
+  , oerNoteForms : Dict OerId String
   , feedbackForms : Dict OerId String
-  , cachedOers : Dict OerUrl Oer
+  , cachedOers : Dict OerId Oer
   , requestingOers : Bool
   , hoveringBubbleEntityId : Maybe String
   , entityDefinitions : Dict String EntityDefinition
@@ -57,7 +57,7 @@ type alias Model =
   , resourceSidebarTab : ResourceSidebarTab
   , resourceRecommendations : List Oer
   , timeOfLastFeedbackRecorded : Posix
-  , oerNoteboards : Dict String Noteboard
+  , oerNoteboards : Dict OerId Noteboard
   , fragmentAccesses : Dict Int Fragment
   }
 
@@ -73,7 +73,7 @@ type ResourceSidebarTab
   | FeedbackTab
 
 type CurrentResource
-  = Loaded OerUrl
+  = Loaded OerId
   | Error
 
 type alias LabStudyTask =
@@ -169,7 +169,7 @@ type Subpage
 
 type alias SearchState =
   { lastSearch : String
-  , searchResults : Maybe (List OerUrl)
+  , searchResults : Maybe (List OerId)
   }
 
 
@@ -199,7 +199,9 @@ type alias WikichunkEnrichment =
   , chunks : List Chunk
   , clusters : List Cluster
   , errors : Bool
+  , oerId : OerId
   }
+
 
 type alias Cluster = List EntityTitle
 
@@ -228,7 +230,7 @@ type alias ChunkPopup = { barId : String, oer : Oer, chunk : Chunk, entityPopup 
 
 type alias EntityPopup = { entityId : String, hoveringAction : Maybe String }
 
-type alias BubblePopupState = { oerUrl : OerUrl, entityId : String, content : BubblePopupContent, nextContents : List BubblePopupContent }
+type alias BubblePopupState = { oerId : OerId, entityId : String, content : BubblePopupContent, nextContents : List BubblePopupContent }
 
 type BubblePopupContent
   = DefinitionInBubblePopup
@@ -247,7 +249,7 @@ type alias Gain =
 
 
 type alias Fragment =
-  { oerUrl : OerUrl
+  { oerId : OerId
   , start : Float -- 0 to 1
   , length : Float -- 0 to 1
   }
@@ -255,7 +257,7 @@ type alias Fragment =
 
 type alias Playlist =
   { title : String
-  , oerUrls : List OerUrl
+  , oerIds : List OerId
   }
 
 
@@ -298,7 +300,7 @@ initialModel nav flags =
   , searchState = Nothing
   , inspectorState = Nothing
   , userMessage = Nothing
-  , hoveringOerUrl = Nothing
+  , hoveringOerId = Nothing
   , timeOfLastMouseEnterOnCard = initialTime
   , modalAnimation = Nothing
   , animationsPending = Set.empty
@@ -339,45 +341,28 @@ initialUserProfile email =
   UserProfile email "" ""
 
 
-getOerNoteboard : Model -> String -> Noteboard
-getOerNoteboard model oerUrl =
+getOerNoteboard : Model -> OerId -> Noteboard
+getOerNoteboard model oerId =
   model.oerNoteboards
-  |> Dict.get oerUrl
+  |> Dict.get oerId
   |> Maybe.withDefault []
 
 
-getOerNoteForm : Model -> OerUrl -> String
-getOerNoteForm model oerUrl =
+getOerNoteForm : Model -> OerId -> String
+getOerNoteForm model oerId =
   model.oerNoteForms
-  |> Dict.get oerUrl
+  |> Dict.get oerId
   |> Maybe.withDefault ""
 
 
-getOerIdFromOerUrl : Model -> OerUrl -> OerId
-getOerIdFromOerUrl model oerUrl =
-  case model.cachedOers |> Dict.get oerUrl of
-    Just oer ->
-      oer.id
+-- getOerIdFromOerId : Model -> OerId -> OerId
+-- getOerIdFromOerId model oerId =
+--   case model.cachedOers |> Dict.get oerId of
+--     Just oer ->
+--       oer.id
 
-    Nothing ->
-      0
-
-
-getOerUrlFromOerId : Model -> OerId -> OerUrl
-getOerUrlFromOerId model oerId =
-  let
-      helper oers =
-        case oers of
-          [] ->
-            ""
-
-          oer::rest ->
-            if oer.id==oerId then
-              oer.url
-            else
-              helper rest
-  in
-      model.cachedOers |> Dict.values |> helper
+    -- Nothing ->
+    --   0
 
 
 initialTime =
@@ -449,9 +434,9 @@ isFromVideoLecturesNet oer =
   String.startsWith "http://videolectures.net/" oer.url
 
 
-isInPlaylist : OerUrl -> Playlist -> Bool
-isInPlaylist oerUrl playlist =
-  List.member oerUrl playlist.oerUrls
+isInPlaylist : OerId -> Playlist -> Bool
+isInPlaylist oerId playlist =
+  List.member oerId playlist.oerIds
 
 
 durationInSecondsFromOer : Oer -> Int
@@ -515,25 +500,24 @@ freshUserProfileForm userProfile =
   { userProfile = userProfile, saved = False }
 
 
-getCachedOerWithBlankDefault : Model -> OerUrl -> Oer
-getCachedOerWithBlankDefault model oerUrl =
-  model.cachedOers
-  |> Dict.get oerUrl
-  |> Maybe.withDefault (blankOer oerUrl)
-
-
--- temporary solution. TODO: refactor Oer data type
-blankOer oerUrl =
-  { id = 0
-  , date = ""
-  , description = ""
-  , duration = ""
-  , images = []
-  , provider = ""
-  , title = ""
-  , url = oerUrl
-  , mediatype = ""
-  }
+getCachedOerWithBlankDefault : Model -> OerId -> Oer -- terrible convenience hack
+getCachedOerWithBlankDefault model oerId =
+  let
+      blankOer =
+        { id = 0
+        , date = ""
+        , description = ""
+        , duration = ""
+        , images = []
+        , provider = ""
+        , title = ""
+        , url = ""
+        , mediatype = ""
+        }
+  in
+      model.cachedOers
+      |> Dict.get oerId
+      |> Maybe.withDefault blankOer -- shouldn't happen
 
 
 mostRecentFragmentAccess : Dict Int Fragment -> Maybe (Int, Fragment)
@@ -544,9 +528,9 @@ mostRecentFragmentAccess fragmentAccesses =
   |> List.head
 
 
-chunksFromUrl : Model -> OerUrl -> List Chunk
-chunksFromUrl model oerUrl =
-  case model.wikichunkEnrichments |> Dict.get oerUrl of
+chunksFromOerId : Model -> OerId -> List Chunk
+chunksFromOerId model oerId =
+  case model.wikichunkEnrichments |> Dict.get oerId of
     Nothing ->
       []
 
@@ -597,9 +581,9 @@ isEqualToSearchString model entityTitle =
       (entityTitle |> String.toLower) == (searchState.lastSearch |> String.toLower)
 
 
-getMentions : Model -> OerUrl -> String -> List MentionInOer
-getMentions model oerUrl entityId =
-  case model.wikichunkEnrichments |> Dict.get oerUrl of
+getMentions : Model -> OerId -> String -> List MentionInOer
+getMentions model oerId entityId =
+  case model.wikichunkEnrichments |> Dict.get oerId of
     Nothing ->
       []
 
@@ -701,6 +685,7 @@ trimTailingEllipsisIfNeeded str = -- This function is a temporary patch to fix a
     str
 
 
+resourceUrlPath : OerId -> String
 resourceUrlPath oerId =
   resourcePath ++ "/" ++ (String.fromInt oerId)
 
@@ -709,26 +694,31 @@ isSiteUnderMaintenance =
   False
 
 
-relatedSearchStringFromOer : Model -> OerUrl -> String
-relatedSearchStringFromOer model oerUrl =
-  case model.cachedOers |> Dict.get oerUrl of
-    Nothing ->
-      "kittens" -- this really shouldn't happen
+relatedSearchStringFromOer : Model -> OerId -> String
+relatedSearchStringFromOer model oerId =
+  let
+      fallbackString =
+        case model.cachedOers |> Dict.get oerId of
+          Nothing ->
+            "learning" -- shouldn't happen
 
-    Just {title} ->
-      title
+          Just {title} ->
+            title
+  in
+      case model.wikichunkEnrichments |> Dict.get oerId of
+        Nothing ->
+          fallbackString
 
-  -- case model.wikichunkEnrichments |> Dict.get oerUrl of
-  --   Nothing ->
-  --     case model.cachedOers |> Dict.get oerUrl of
-  --       Nothing ->
-  --         "kittens" -- this really shouldn't happen
+        Just {bubblogram, chunks} ->
+          case bubblogram of
+            Nothing ->
+              fallbackString
 
-  --   Just {bubblogram, chunks} ->
-  --     case bubblogram of
-  --       Nothing ->
-
-  --     enrichment.BubblePopup
+            Just {bubbles} ->
+              bubbles
+              |> List.map .entity
+              |> List.map .title
+              |> String.join ","
 
 
 getResourceFeedbackFormValue model oerId =

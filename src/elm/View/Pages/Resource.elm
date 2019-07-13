@@ -35,8 +35,13 @@ viewResourcePage model =
           Nothing ->
             viewLoadingSpinner
 
-          Just (Loaded oerUrl) ->
-            viewResource model (getCachedOerWithBlankDefault model oerUrl)
+          Just (Loaded oerId) ->
+            case model.cachedOers |> Dict.get oerId of
+              Nothing ->
+                viewCenterNote "The requested resource was not found."
+
+              Just oer ->
+                viewResource model oer
 
           Just Error ->
             viewCenterNote "The requested resource was not found."
@@ -105,7 +110,7 @@ viewResource model oer =
             (heading, content) =
               case model.resourceSidebarTab of
                 NotesTab ->
-                  ("Your notes", viewNoteboard model False oer.url)
+                  ("Your notes", viewNoteboard model False oer.id)
 
                 RecommendationsTab ->
                   ("Related material"
@@ -182,7 +187,7 @@ viewResource model oer =
 
       fragmentsBar =
         if hasYoutubeVideo oer.url then
-          case chunksFromUrl model oer.url of
+          case chunksFromOerId model oer.id of
             [] ->
               none
 

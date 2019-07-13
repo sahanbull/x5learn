@@ -49,8 +49,8 @@ viewPathway model pathway =
 viewOerGrid : Model -> Playlist -> Element Msg
 viewOerGrid model playlist =
   let
-      helper url result =
-        case Dict.get url model.cachedOers of
+      helper id result =
+        case Dict.get id model.cachedOers of
           Nothing ->
             result
 
@@ -58,7 +58,7 @@ viewOerGrid model playlist =
             oer :: result
 
       oers =
-        playlist.oerUrls
+        playlist.oerIds
         |> List.foldr helper []
   in
       if oers |> List.isEmpty then
@@ -107,7 +107,7 @@ viewOerCard : Model -> List Fragment -> Point -> String -> Oer -> Element Msg
 viewOerCard model recommendedFragments position barId oer =
   let
       hovering =
-        model.hoveringOerUrl == Just oer.url
+        model.hoveringOerId == Just oer.url
 
       upperImage attrs url =
         none
@@ -136,7 +136,7 @@ viewOerCard model recommendedFragments position barId oer =
 
       fragmentsBar =
         inFront <|
-          case Dict.get oer.url model.wikichunkEnrichments of
+          case Dict.get oer.id model.wikichunkEnrichments of
             Nothing ->
               viewLoadingSpinner |> el [ moveDown 80, width fill ]
 
@@ -210,7 +210,7 @@ viewOerCard model recommendedFragments position barId oer =
       --           |> upperImage [ preloadImage nextImageUrl, imageCounter <| (imageIndex+1 |> String.fromInt) ++ " / " ++ (oer.images |> List.length |> String.fromInt) ]
 
       (graphic, popup) =
-        case Dict.get oer.url model.wikichunkEnrichments of
+        case Dict.get oer.id model.wikichunkEnrichments of
           Nothing ->
             (none |> el [ width fill, height (px imageHeight), Background.color x5color ]
             , [])
@@ -231,7 +231,7 @@ viewOerCard model recommendedFragments position barId oer =
                   (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color materialDark, inFront viewLoadingSpinner ], [])
 
                 Just bubblogram ->
-                  viewBubblogram model oer.url bubblogram
+                  viewBubblogram model oer.id bubblogram
 
       title =
         oer.title
@@ -273,10 +273,10 @@ viewOerCard model recommendedFragments position barId oer =
         |> el [ paddingBottom 16 ]
 
       -- hoverPreview =
-      --   if chunksFromUrl model oer.url |> List.isEmpty then
+      --   if chunksFromOerId model oer.url |> List.isEmpty then
       --     carousel
       --   else
-      --     case model.tagClouds |> Dict.get oer.url of
+      --     case model.tagClouds |> Dict.get oer.id of
       --       Nothing ->
       --         carousel
 

@@ -157,7 +157,7 @@ viewResource model oer =
               else
                 guestCallToSignup "In order to use all the features and save your changes"
                 |> el [ width fill, paddingXY 15 12, Background.color <| rgb 1 0.85 0.6 ]
-                |> el [ paddingTop 20 ]
+                |> el [ padding 20 ]
         in
             [ tabsMenu |> el [ width fill ]
             , tabContent

@@ -448,14 +448,14 @@ def find_oer_by_id(oer_id):
         # Return a blank OER. This should not happen normally
         print('Missing OER with id', oer_id)
         oer = {}
-        oer['id'] = 0
+        oer['id'] = oer_id
         oer['date'] = ''
         oer['description'] = '(Sorry, this resource is no longer accessible)'
         oer['duration'] = ''
         oer['images'] = []
         oer['provider'] = ''
         oer['title'] = '(not found)'
-        oer['url'] = url
+        oer['url'] = ''
         oer['mediatype'] = 'text'
         return oer
 

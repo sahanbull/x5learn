@@ -678,6 +678,11 @@ isVideoFile oerUrl =
      String.endsWith ".mp4" lower || String.endsWith ".webm" lower || String.endsWith ".ogg" lower
 
 
+isPdfFile : OerUrl -> Bool
+isPdfFile oerUrl =
+  String.endsWith ".pdf" (oerUrl |> String.toLower)
+
+
 trimTailingEllipsisIfNeeded str = -- This function is a temporary patch to fix a mistake I made whereby an additional character was erroneously added to the provider field. Only the youtube videos for the first lab study are affected. Delete this function after re-ingesting or removing those oers.
   if str |> String.endsWith "…" then
     str |> String.dropRight 1

@@ -20,6 +20,7 @@ import Model exposing (..)
 import View.Shared exposing (..)
 import View.Noteboard exposing (..)
 import View.Html5VideoPlayer exposing (..)
+import View.HtmlPdfViewer exposing (..)
 
 
 import Msg exposing (..)
@@ -68,6 +69,8 @@ viewResource model oer =
           Nothing ->
             if isVideoFile oer.url then
               viewHtml5VideoPlayer model oer.url
+            else if isPdfFile oer.url then
+              viewHtmlPdfPlayer oer.url "60vh"
             else
               none
 
@@ -154,7 +157,7 @@ viewResource model oer =
               else
                 guestCallToSignup "In order to use all the features and save your changes"
                 |> el [ width fill, paddingXY 15 12, Background.color <| rgb 1 0.85 0.6 ]
-                |> el [ paddingTop 20 ]
+                |> el [ padding 20 ]
         in
             [ tabsMenu |> el [ width fill ]
             , tabContent

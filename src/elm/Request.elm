@@ -10,6 +10,7 @@ import Json.Decode.Extra exposing (andMap)
 import Json.Encode as Encode
 import Url
 import Url.Builder
+import List.Extra
 
 import Model exposing (..)
 
@@ -44,13 +45,18 @@ requestSearchSuggestions searchText =
     }
 
 
-requestOers : Set OerId -> Cmd Msg
-requestOers ids =
-  Http.post
-    { url = Url.Builder.absolute [ apiRoot, "oers/" ] []
-    , body = Http.jsonBody <| Encode.object [ ("ids", (Encode.list Encode.int) (ids |> Set.toList)) ]
-    , expect = Http.expectJson RequestOers (list oerDecoder)
-    }
+requestOers : List OerId -> Cmd Msg
+requestOers oerIds =
+  let
+      uniqueOerIds =
+        oerIds
+        |> List.Extra.unique
+  in
+      Http.post
+        { url = Url.Builder.absolute [ apiRoot, "oers/" ] []
+        , body = Http.jsonBody <| Encode.object [ ("ids", (Encode.list Encode.int) oerIds) ]
+        , expect = Http.expectJson RequestOers (list oerDecoder)
+        }
 
 
 requestGains : Cmd Msg

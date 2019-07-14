@@ -28,6 +28,7 @@ type Msg
   | RequestSession (Result Http.Error Session)
   | RequestRecentViews (Result Http.Error (List OerId))
   | RequestNotes (Result Http.Error (List Note))
+  | RequestDeleteNote (Result Http.Error String)
   | RequestOerSearch (Result Http.Error (List Oer))
   | RequestOers (Result Http.Error (List Oer))
   | RequestGains (Result Http.Error (List Gain))
@@ -58,12 +59,13 @@ type Msg
   | SubmittedResourceFeedback OerId String
   | PressedKeyInNewNoteFormInOerNoteboard OerId Int
   | ClickedQuickNoteButton OerId String
-  | RemoveNote Posix
+  | RemoveNote Note
   | VideoIsPlayingAtPosition Float
   | BubbleMouseOver String
   | BubbleMouseOut
   | BubbleClicked OerId
   | PageScrolled ScrollData
+  | OerCardPlaceholderPositionsReceived (List OerCardPlaceholderPosition)
   | StartLabStudyTask LabStudyTask
   | StoppedLabStudyTask
   | SelectResourceSidebarTab ResourceSidebarTab
@@ -100,6 +102,7 @@ subscriptions model =
       , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
       , Ports.videoIsPlayingAtPosition VideoIsPlayingAtPosition
       , Ports.pageScrolled PageScrolled
+      , Ports.receiveCardPlaceholderPositions OerCardPlaceholderPositionsReceived
       , Time.every 500 ClockTick
       ] ++ (if anyBubblogramsAnimating model || isModalAnimating then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
       |> Sub.batch

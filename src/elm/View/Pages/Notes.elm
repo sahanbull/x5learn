@@ -30,34 +30,41 @@ import Json.Decode as Decode
 viewNotesPage : Model -> PageWithModal
 viewNotesPage model =
   let
-      noteCards =
+      oerBoxesAndCards =
         model.oerNoteboards
         |> Dict.toList
-        |> List.concatMap (\(oerId, noteboard) -> noteboard |> List.map (\note -> (note, oerId |> getCachedOerWithBlankDefault model)))
-        |> List.sortBy (\(note, _) -> (posixToMillis note.time))
-        |> List.reverse
-        |> List.map (viewNoteCard model)
+        |> List.filter (\(oerId, noteboard) -> isOerLoaded model oerId && List.length noteboard>0)
+        |> List.filterMap (\(oerId, _) -> model.cachedOers |> Dict.get oerId)
+        |> List.indexedMap (viewOerBoxAndDetachedCard model)
+
+      oerBoxes =
+        oerBoxesAndCards
+        |> List.map .box
+
+      oerCards =
+        oerBoxesAndCards
+        |> List.filterMap .card
 
       content =
         if model.requestingOers then
           viewLoadingSpinner
         else
-          case noteCards of
+          case oerBoxes of
             [] ->
               viewCenterNote "Your notes will appear here. Look at some resources to create your first note."
 
-            cards ->
-              cards
-              |> column [ width fill, height fill, spacing 20 ]
+            boxes ->
+              boxes
+              |> column [ width fill, height fill, spacing 50 ]
 
       page =
         content
-        |> el [ centerX, centerY ]
+        |> el ([ centerY, width fill, paddingXY 20 140, htmlId "OerCardsContainer" ] ++ oerCards)
   in
       (page, viewInspectorModalOrEmpty model)
 
 
-viewNoteCard model (note, oer) =
+viewNoteCard model oer note =
   let
       date =
         note.time
@@ -65,16 +72,52 @@ viewNoteCard model (note, oer) =
         |> captionNowrap [ greyTextDisabled, alignRight ]
         |> el [ width (px 60) ]
 
-      oerTitle =
-        oer.title
-        |> bodyWrap [ Font.bold ]
-
       card =
         [ avatarImage |> el [ alignTop ]
-        , note.text |> bodyWrap [ width (px 400) ]
-        , oerTitle |> el [ paddingLeft 40, width fill ]
+        , note.text |> bodyWrap [ width fill ]
         , date
         ]
-        |> row [ spacing 10, width (px 800) ]
+        |> row [ spacing 10, width (boxWidth - cardWidth - 65 |> px) ]
   in
       button [ htmlClass "materialCard", htmlClass "CloseInspectorOnClickOutside", padding 10 ] { onPress = openInspectorOnPress model oer, label = card }
+
+
+viewOerBoxAndDetachedCard : Model -> Int -> Oer -> { box : Element Msg, card : Maybe (Attribute Msg) }
+viewOerBoxAndDetachedCard model index oer =
+  let
+      rowHeight =
+        cardHeight + verticalSpacingBetweenCards
+
+      card =
+        case model.oerCardPlaceholderPositions |> List.filter (\{oerId} -> oerId==oer.id) |> List.head of
+          Nothing ->
+            Nothing
+
+          Just {x, y } ->
+            viewOerCard model [] (Point (x - navigationDrawerWidth) y) ("notes-"++ (String.fromInt index)) False oer
+            |> inFront
+            |> Just
+
+      notes =
+        getOerNoteboard model oer.id
+        |> List.map (viewNoteCard model oer)
+        |> column [ spacing 15, alignTop ]
+
+      cardPlaceholder =
+        none
+        |> el [ width (px cardWidth), height (cardHeight |> px), htmlClass "OerCardPlaceholder", htmlDataAttribute <| String.fromInt oer.id ]
+
+      boxContent =
+        [ cardPlaceholder
+        , notes
+        ]
+        |> row [ spacing 15, padding 15 ]
+
+      box =
+        button [ width (px boxWidth), Border.rounded 2, htmlClass "materialCard", htmlClass "CloseInspectorOnClickOutside", Background.color semiTransparentWhite, centerX ] { onPress = openInspectorOnPress model oer, label = boxContent }
+  in
+      { box = box, card = card }
+
+
+boxWidth =
+  960

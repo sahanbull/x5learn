@@ -62,7 +62,6 @@ viewNoteboard model includeHeading oerId =
           []
         else
           notes
-          |> List.reverse
           |> List.map (viewNote model)
           |> column [ spacing 10, width fill ]
           |> List.singleton
@@ -82,20 +81,23 @@ viewNoteboard model includeHeading oerId =
 
 viewNote : Model -> Note -> Element Msg
 viewNote model note =
-  let
-      date =
-        note.time
-        |> humanReadableRelativeTime model
-        |> captionNowrap [ greyTextDisabled ]
+  if note.id==0 then -- hide new notes until they are persisted on the db
+    viewLoadingSpinner
+  else
+    let
+        date =
+          note.time
+          |> humanReadableRelativeTime model
+          |> captionNowrap [ greyTextDisabled ]
 
-      actions =
-        button [] { onPress = Just <| RemoveNote note.time, label = trashIcon }
-  in
-      [ avatarImage |> el [ alignTop ]
-      , note.text |> bodyWrap [ width fill ] |> el [ width fill ]
-      , [ date, actions ] |> row [ spacing 5, alignTop, moveUp 4 ]
-      ]
-      |> row [ spacing 10, width fill ]
+        actions =
+          button [] { onPress = Just <| RemoveNote note, label = trashIcon }
+    in
+        [ avatarImage |> el [ alignTop ]
+        , note.text |> bodyWrap [ width fill ] |> el [ width fill ]
+        , [ date, actions ] |> row [ spacing 5, alignTop, moveUp 4 ]
+        ]
+        |> row [ spacing 10, width fill ]
 
 
 humanReadableRelativeTime {currentTime} time =

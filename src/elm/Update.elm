@@ -57,7 +57,7 @@ update msg ({nav, userProfileForm} as model) =
             if path |> String.startsWith profilePath then
               (Profile, (model, Cmd.none))
             else if path |> String.startsWith notesPath then
-              (Notes, (model, Cmd.none))
+              (Notes, ({ model | oerCardPlaceholderPositions = [] }, getOerCardPlaceholderPositions True))
             else if path |> String.startsWith recentPath then
               (Recent, (model, Cmd.none))
             else if path |> String.startsWith searchPath then
@@ -71,7 +71,7 @@ update msg ({nav, userProfileForm} as model) =
           |> logEventForLabStudy "UrlChanged" [ path ]
 
     ClockTick time ->
-      ( { model | currentTime = time, enrichmentsAnimating = anyBubblogramsAnimating model }, Cmd.none)
+      ( { model | currentTime = time, enrichmentsAnimating = anyBubblogramsAnimating model }, getOerCardPlaceholderPositions True)
       |> requestWikichunkEnrichmentsIfNeeded
       |> requestEntityDefinitionsIfNeeded
 
@@ -146,7 +146,7 @@ update msg ({nav, userProfileForm} as model) =
             |> List.indexedMap (\index oerId -> (100000-index, oerId)) -- lazy trick to avoid having to decode the date from the JSON (which we don't really need at this point)
             |> List.foldl (\(index, oerId) resultingModel -> resultingModel |> addFragmentAccess (Fragment oerId 0 0.01) (millisToPosix index)) model
       in
-          ( newModel, requestOersAsNeeded newModel)
+          ( newModel, requestOersByIds newModel oerIds)
           |> logEventForLabStudy "RequestRecentViews" []
 
     RequestRecentViews (Err err) ->
@@ -162,19 +162,24 @@ update msg ({nav, userProfileForm} as model) =
           addNoteToNoteboard note oerNoteboards =
             let
                 oldNoteboard =
-                  getOerNoteboard model note.oerId
+                  oerNoteboards |> Dict.get note.oerId |> Maybe.withDefault []
             in
                 oerNoteboards |> Dict.insert note.oerId (note::oldNoteboard)
 
           newOerNoteboards : Dict OerId Noteboard
           newOerNoteboards =
             notes
-            |> List.foldl (\note noteboards -> noteboards |> addNoteToNoteboard note) model.oerNoteboards
+            |> List.foldl (\note noteboards -> noteboards |> addNoteToNoteboard note) Dict.empty
 
           newModel =
             { model | oerNoteboards = newOerNoteboards}
+
+          oerIds =
+            notes
+            |> List.map .oerId
+            |> List.Extra.unique
       in
-          ( newModel, requestOersAsNeeded newModel)
+          ( newModel, requestOersByIds newModel oerIds)
           |> logEventForLabStudy "RequestNotes" []
 
     RequestNotes (Err err) ->
@@ -183,6 +188,17 @@ update msg ({nav, userProfileForm} as model) =
       --       err |> Debug.log "Error in RequestNotes"
       -- in
       ( { model | userMessage = Just "An error occurred. Please reload the page." }, Cmd.none )
+
+    RequestDeleteNote (Ok _) ->
+      ( model, requestNotes)
+      |> logEventForLabStudy "RequestDeleteNote" []
+
+    RequestDeleteNote (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestDeleteNote"
+      -- in
+      ( { model | userMessage = Just "Some changes were not saved." }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
       ( model |> updateSearch (insertSearchResults (oers |> List.map .id)) |> cacheOersFromList oers, setBrowserFocus "SearchField")
@@ -200,10 +216,10 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | requestingOers = False } |> cacheOersFromList oers, Cmd.none)
 
     RequestOers (Err err) ->
-      let
-          dummy =
-            err |> Debug.log "Error in RequestOers"
-      in
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestOers"
+      -- in
       ( { model | requestingOers = False, userMessage = Just "There was a problem while fetching OER data" }, Cmd.none)
 
     RequestGains (Ok gains) ->
@@ -235,10 +251,10 @@ update msg ({nav, userProfileForm} as model) =
           ( { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.union dictOfEnrichments, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, wikichunkEnrichmentRequestFailCount = failCount, wikichunkEnrichmentRetryTime = retryTime } |> registerUndefinedEntities listOfEnrichments, Cmd.none )
 
     RequestWikichunkEnrichments (Err err) ->
-      let
-          dummy =
-            err |> Debug.log "Error in RequestWikichunkEnrichments"
-      in
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestWikichunkEnrichments"
+      -- in
       ( { model | userMessage = Just "There was a problem - please reload the page.", requestingWikichunkEnrichments = False }, Cmd.none )
 
     RequestEntityDefinitions (Ok definitionTexts) ->
@@ -302,7 +318,7 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
 
     RequestSaveNote (Ok _) ->
-      (model, Cmd.none)
+      (model, requestNotes)
 
     RequestSaveNote (Err err) ->
       ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
@@ -408,7 +424,7 @@ update msg ({nav, userProfileForm} as model) =
           text =
             getOerNoteForm model oerId
       in
-      (model |> addNewNoteToOer oerId text |> setTextInNoteForm oerId "", [ setBrowserFocus "textInputFieldForNotesOrFeedback", saveNote oerId text ] |> Cmd.batch)
+      (model |> createNote oerId text |> setTextInNoteForm oerId "", [ setBrowserFocus "textInputFieldForNotesOrFeedback", saveNote oerId text ] |> Cmd.batch)
       |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ String.fromInt oerId, getOerNoteForm model oerId ]
 
     SubmittedResourceFeedback oerId text ->
@@ -422,12 +438,12 @@ update msg ({nav, userProfileForm} as model) =
         (model, Cmd.none)
 
     ClickedQuickNoteButton oerId text ->
-      (model |> addNewNoteToOer oerId text |> setTextInNoteForm oerId "" , saveNote oerId text)
+      (model |> createNote oerId text |> setTextInNoteForm oerId "" , saveNote oerId text)
       |> logEventForLabStudy "ClickedQuickNoteButtond" [ String.fromInt oerId, text ]
 
-    RemoveNote time ->
-      (model |> removeNoteAtTime time, Cmd.none)
-      |> logEventForLabStudy "RemoveNote" [ time |> posixToMillis |> String.fromInt ]
+    RemoveNote note ->
+      (model |> removeNote note, NotesApi.deleteNote note)
+      |> logEventForLabStudy "RemoveNote" [ note.oerId |> String.fromInt, note.text ]
 
     VideoIsPlayingAtPosition position ->
       (model |> expandCurrentFragmentOrCreateNewOne position model.inspectorState, Cmd.none)
@@ -458,6 +474,9 @@ update msg ({nav, userProfileForm} as model) =
       (model, Cmd.none)
       |> logEventForLabStudy "PageScrolled" [ scrollTop |> String.fromFloat, viewHeight |> String.fromFloat, contentHeight |> String.fromFloat ]
 
+    OerCardPlaceholderPositionsReceived positions ->
+      ({ model | oerCardPlaceholderPositions = positions }, Cmd.none)
+
     StartLabStudyTask task ->
       { model | startedLabStudyTask = Just (task, model.currentTime) }
       |> update (TriggerSearch task.dataset)
@@ -472,28 +491,30 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "SelectResourceSidebarTab" []
 
 
-addNewNoteToOer : OerId -> String -> Model -> Model
-addNewNoteToOer oerId text model =
+createNote : OerId -> String -> Model -> Model
+createNote oerId text model =
   let
       newNote =
-        Note text model.currentTime oerId
+        Note text model.currentTime oerId 0
 
+      oldNoteboard : Noteboard
       oldNoteboard =
         getOerNoteboard model oerId
 
+      newNoteboard : Noteboard
       newNoteboard =
         newNote :: oldNoteboard
   in
       { model | oerNoteboards = model.oerNoteboards |> Dict.insert oerId newNoteboard }
 
 
-removeNoteAtTime : Posix -> Model -> Model
-removeNoteAtTime time model =
+removeNote : Note -> Model -> Model
+removeNote note model =
   let
       filter : OerId -> Noteboard -> Noteboard
       filter _ notes =
         notes
-        |> List.filter (\note -> note.time /= time)
+        |> List.filter (\n -> n /= note)
   in
      { model | oerNoteboards = model.oerNoteboards |> Dict.map filter }
 
@@ -539,27 +560,11 @@ requestWikichunkEnrichmentsIfNeeded (model, oldCmd) =
           (model, [ oldCmd, requestWikichunkEnrichments missing ] |> Cmd.batch)
 
 
-requestOersAsNeeded : Model -> Cmd Msg
-requestOersAsNeeded model =
-  let
-      neededUrls =
-        case model.subpage of
-          Notes ->
-            model.oerNoteboards |> Dict.keys
-
-          Recent ->
-            model.fragmentAccesses |> Dict.values |> List.map .oerId
-
-          _ ->
-            []
-
-      missingUrls =
-        neededUrls
-        |> Set.fromList
-        |> Set.filter (\url -> not <| List.member url (model.cachedOers |> Dict.keys))
-  in
-      missingUrls
-      |> requestOers
+requestOersByIds : Model -> List OerId -> Cmd Msg
+requestOersByIds model oerIds =
+  oerIds
+  |> List.filter (\oerId -> isOerLoaded model oerId |> not)
+  |> requestOers
 
 
 requestEntityDefinitionsIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)

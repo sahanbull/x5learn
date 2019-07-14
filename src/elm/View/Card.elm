@@ -92,7 +92,7 @@ viewOerGrid model playlist =
 
             cards =
               oers
-              |> List.indexedMap (\index oer -> viewOerCard model [] (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) oer)
+              |> List.indexedMap (\index oer -> viewOerCard model [] (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) True oer)
               |> List.reverse
               |> List.map inFront
         in
@@ -103,8 +103,8 @@ viewOerGrid model playlist =
             |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
 
 
-viewOerCard : Model -> List Fragment -> Point -> String -> Oer -> Element Msg
-viewOerCard model recommendedFragments position barId oer =
+viewOerCard : Model -> List Fragment -> Point -> String -> Bool -> Oer -> Element Msg
+viewOerCard model recommendedFragments position barId enableShadow oer =
   let
       hovering =
         model.hoveringOerId == Just oer.url
@@ -297,15 +297,18 @@ viewOerCard model recommendedFragments position barId oer =
           Nothing ->
             []
 
+      shadow =
+        if enableShadow then [ htmlClass "materialCard" ] else [ Border.width 1, borderColorLayout ]
+
       card =
         -- [ (if hovering then hoverPreview else carousel)
         -- ]
         [ graphic ]
-        |> column ([ widthOfCard, heightOfCard, htmlClass "materialCard", onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing), title, bottomInfo, fragmentsBar ] ++ clickHandler ++ popup)
+        |> column ([ widthOfCard, heightOfCard, onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing), title, bottomInfo, fragmentsBar ] ++ shadow ++ clickHandler ++ popup)
 
       wrapperAttrs =
         -- [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| button [] { onPress = openInspectorOnPress model oer, label = card }, moveRight position.x, moveDown position.y ]
-        [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y ]
+        [ htmlClass "CloseInspectorOnClickOutside OerCard", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y, htmlDataAttribute <| String.fromInt oer.id ]
   in
       none
       |> el wrapperAttrs

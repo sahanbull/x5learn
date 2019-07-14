@@ -59,6 +59,7 @@ type alias Model =
   , timeOfLastFeedbackRecorded : Posix
   , oerNoteboards : Dict OerId Noteboard
   , fragmentAccesses : Dict Int Fragment
+  , oerCardPlaceholderPositions : List OerCardPlaceholderPosition
   }
 
 
@@ -126,10 +127,18 @@ type alias ScrollData =
   }
 
 
+type alias OerCardPlaceholderPosition =
+  { x : Float
+  , y : Float
+  , oerId : Int
+  }
+
+
 type alias Note =
   { text : String
   , time : Posix
   , oerId : OerId
+  , id : Int
   }
 
 
@@ -334,6 +343,7 @@ initialModel nav flags =
   , timeOfLastFeedbackRecorded = initialTime
   , oerNoteboards = Dict.empty
   , fragmentAccesses = Dict.empty
+  , oerCardPlaceholderPositions = []
   }
 
 
@@ -498,26 +508,6 @@ loggedInUserProfile {session} =
 
 freshUserProfileForm userProfile =
   { userProfile = userProfile, saved = False }
-
-
-getCachedOerWithBlankDefault : Model -> OerId -> Oer -- terrible convenience hack
-getCachedOerWithBlankDefault model oerId =
-  let
-      blankOer =
-        { id = 0
-        , date = ""
-        , description = ""
-        , duration = ""
-        , images = []
-        , provider = ""
-        , title = ""
-        , url = ""
-        , mediatype = ""
-        }
-  in
-      model.cachedOers
-      |> Dict.get oerId
-      |> Maybe.withDefault blankOer -- shouldn't happen
 
 
 mostRecentFragmentAccess : Dict Int Fragment -> Maybe (Int, Fragment)
@@ -697,6 +687,16 @@ resourceUrlPath oerId =
 
 isSiteUnderMaintenance =
   False
+
+
+isOerLoaded : Model -> OerId -> Bool
+isOerLoaded model oerId =
+  case model.cachedOers |> Dict.get oerId of
+    Nothing ->
+      False
+
+    Just _ ->
+      True
 
 
 relatedSearchStringFromOer : Model -> OerId -> String

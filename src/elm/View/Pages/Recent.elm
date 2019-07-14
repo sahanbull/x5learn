@@ -36,41 +36,34 @@ viewRecentPage model =
             guestCallToSignup "To ensure that your changes are saved"
             |> milkyWhiteCenteredContainer
         else
-          let
-              oerIds =
-                model.fragmentAccesses
-                |> Dict.toList
-                |> List.map (\(time, fragment) -> fragment.oerId)
-                |> List.reverse
-                |> List.Extra.unique
-          in
-              viewVerticalListOfCards model oerIds
+          model.fragmentAccesses
+          |> Dict.toList
+          |> List.map (\(time, fragment) -> fragment.oerId)
+          |> List.filterMap (\oerId -> model.cachedOers |> Dict.get oerId)
+          |> List.reverse
+          |> List.Extra.uniqueBy .id
+          |> viewOerCardsVertically model
   in
       (page, viewInspectorModalOrEmpty model)
 
 
-viewVerticalListOfCards : Model -> List OerId -> Element Msg
-viewVerticalListOfCards model oerIds =
+viewOerCardsVertically : Model -> List Oer -> Element Msg
+viewOerCardsVertically model oers =
   let
       rowHeight =
         cardHeight + verticalSpacingBetweenCards
 
       nrows =
-        List.length oerIds
+        List.length oers
 
       cardPositionAtIndex index =
         { x = 0, y = index * rowHeight + 70 |> toFloat }
 
-      viewCard index oerId =
-        let
-            oer =
-              oerId
-              |> getCachedOerWithBlankDefault model
-        in
-            viewOerCard model [] (cardPositionAtIndex index) ("recent-"++ (String.fromInt index)) oer |> el [ centerX ]
+      viewCard index oer =
+        viewOerCard model [] (cardPositionAtIndex index) ("vertical-"++ (String.fromInt index)) True oer |> el [ centerX ]
 
       cards =
-        oerIds
+        oers
         |> List.indexedMap viewCard
         |> List.reverse
         |> List.map inFront

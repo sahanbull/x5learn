@@ -59,7 +59,7 @@ viewNotesPage model =
 
       page =
         content
-        |> el ([ centerY, width fill, paddingXY 20 140 ] ++ oerCards)
+        |> el ([ centerY, width fill, paddingXY 20 140, htmlId "OerCardsContainer" ] ++ oerCards)
   in
       (page, viewInspectorModalOrEmpty model)
 
@@ -94,7 +94,7 @@ viewOerBoxAndDetachedCard model index oer =
             Nothing
 
           Just {x, y } ->
-            viewOerCard model [] (Point (x - navigationDrawerWidth) (y - pageHeaderHeight)) ("notes-"++ (String.fromInt index)) oer
+            viewOerCard model [] (Point (x - navigationDrawerWidth) y) ("notes-"++ (String.fromInt index)) oer
             |> inFront
             |> Just
 

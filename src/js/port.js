@@ -167,6 +167,7 @@ function setupScrollListener(){
 
 
 function getCardPlaceholderPosition(ph){
-    var rect = ph.getBoundingClientRect();
-	  return { x: rect.left, y: rect.top, oerId: parseInt(ph.getAttribute("data-oerid")) };
+  var rect = ph.getBoundingClientRect();
+  var scrollY = document.getElementById('OerCardsContainer').getBoundingClientRect().top;
+  return { x: rect.left, y: rect.top - scrollY, oerId: parseInt(ph.getAttribute("data-oerid")) };
 }

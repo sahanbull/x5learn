@@ -500,26 +500,6 @@ freshUserProfileForm userProfile =
   { userProfile = userProfile, saved = False }
 
 
-getCachedOerWithBlankDefault : Model -> OerId -> Oer -- terrible convenience hack
-getCachedOerWithBlankDefault model oerId =
-  let
-      blankOer =
-        { id = 0
-        , date = ""
-        , description = ""
-        , duration = ""
-        , images = []
-        , provider = ""
-        , title = ""
-        , url = ""
-        , mediatype = ""
-        }
-  in
-      model.cachedOers
-      |> Dict.get oerId
-      |> Maybe.withDefault blankOer -- shouldn't happen
-
-
 mostRecentFragmentAccess : Dict Int Fragment -> Maybe (Int, Fragment)
 mostRecentFragmentAccess fragmentAccesses =
   fragmentAccesses
@@ -697,6 +677,16 @@ resourceUrlPath oerId =
 
 isSiteUnderMaintenance =
   False
+
+
+isOerLoaded : Model -> OerId -> Bool
+isOerLoaded model oerId =
+  case model.cachedOers |> Dict.get oerId of
+    Nothing ->
+      False
+
+    Just _ ->
+      True
 
 
 relatedSearchStringFromOer : Model -> OerId -> String

@@ -146,7 +146,7 @@ update msg ({nav, userProfileForm} as model) =
             |> List.indexedMap (\index oerId -> (100000-index, oerId)) -- lazy trick to avoid having to decode the date from the JSON (which we don't really need at this point)
             |> List.foldl (\(index, oerId) resultingModel -> resultingModel |> addFragmentAccess (Fragment oerId 0 0.01) (millisToPosix index)) model
       in
-          ( newModel, requestOersAsNeeded newModel)
+          ( newModel, requestOersByIds newModel oerIds)
           |> logEventForLabStudy "RequestRecentViews" []
 
     RequestRecentViews (Err err) ->
@@ -162,7 +162,7 @@ update msg ({nav, userProfileForm} as model) =
           addNoteToNoteboard note oerNoteboards =
             let
                 oldNoteboard =
-                  getOerNoteboard model note.oerId
+                  oerNoteboards |> Dict.get note.oerId |> Maybe.withDefault []
             in
                 oerNoteboards |> Dict.insert note.oerId (note::oldNoteboard)
 
@@ -170,11 +170,17 @@ update msg ({nav, userProfileForm} as model) =
           newOerNoteboards =
             notes
             |> List.foldl (\note noteboards -> noteboards |> addNoteToNoteboard note) model.oerNoteboards
+            |> Debug.log "newOerNoteboards"
 
           newModel =
             { model | oerNoteboards = newOerNoteboards}
+
+          oerIds =
+            notes
+            |> List.map .oerId
+            |> List.Extra.unique
       in
-          ( newModel, requestOersAsNeeded newModel)
+          ( newModel, requestOersByIds newModel oerIds)
           |> logEventForLabStudy "RequestNotes" []
 
     RequestNotes (Err err) ->
@@ -539,27 +545,11 @@ requestWikichunkEnrichmentsIfNeeded (model, oldCmd) =
           (model, [ oldCmd, requestWikichunkEnrichments missing ] |> Cmd.batch)
 
 
-requestOersAsNeeded : Model -> Cmd Msg
-requestOersAsNeeded model =
-  let
-      neededUrls =
-        case model.subpage of
-          Notes ->
-            model.oerNoteboards |> Dict.keys
-
-          Recent ->
-            model.fragmentAccesses |> Dict.values |> List.map .oerId
-
-          _ ->
-            []
-
-      missingUrls =
-        neededUrls
-        |> Set.fromList
-        |> Set.filter (\url -> not <| List.member url (model.cachedOers |> Dict.keys))
-  in
-      missingUrls
-      |> requestOers
+requestOersByIds : Model -> List OerId -> Cmd Msg
+requestOersByIds model oerIds =
+  oerIds
+  |> List.filter (\oerId -> isOerLoaded model oerId |> not)
+  |> requestOers
 
 
 requestEntityDefinitionsIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)

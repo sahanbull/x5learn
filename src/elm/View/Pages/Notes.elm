@@ -101,7 +101,7 @@ viewOerBoxAndDetachedCard model index oer =
       notes =
         getOerNoteboard model oer.id
         |> List.map (viewNoteCard model oer)
-        |> column [ spacing 15 ]
+        |> column [ spacing 15, alignTop ]
 
       cardPlaceholder =
         none

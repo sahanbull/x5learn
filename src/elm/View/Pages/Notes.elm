@@ -77,7 +77,7 @@ viewNoteCard model oer note =
         , note.text |> bodyWrap [ width fill ]
         , date
         ]
-        |> row [ spacing 10, width (boxWidth - cardWidth - 69 |> px) ]
+        |> row [ spacing 10, width (boxWidth - cardWidth - 65 |> px) ]
   in
       button [ htmlClass "materialCard", htmlClass "CloseInspectorOnClickOutside", padding 10 ] { onPress = openInspectorOnPress model oer, label = card }
 
@@ -94,7 +94,7 @@ viewOerBoxAndDetachedCard model index oer =
             Nothing
 
           Just {x, y } ->
-            viewOerCard model [] (Point (x - navigationDrawerWidth) y) ("notes-"++ (String.fromInt index)) oer
+            viewOerCard model [] (Point (x - navigationDrawerWidth) y) ("notes-"++ (String.fromInt index)) False oer
             |> inFront
             |> Just
 
@@ -107,12 +107,14 @@ viewOerBoxAndDetachedCard model index oer =
         none
         |> el [ width (px cardWidth), height (cardHeight |> px), htmlClass "OerCardPlaceholder", htmlDataAttribute <| String.fromInt oer.id ]
 
-      box =
+      boxContent =
         [ cardPlaceholder
         , notes
         ]
         |> row [ spacing 15, padding 15 ]
-        |> el [  spacing 20, width (px boxWidth), Border.rounded 2, Background.color semiTransparentWhite, centerX ]
+
+      box =
+        button [ width (px boxWidth), Border.rounded 2, htmlClass "materialCard", htmlClass "CloseInspectorOnClickOutside", Background.color semiTransparentWhite, centerX ] { onPress = openInspectorOnPress model oer, label = boxContent }
   in
       { box = box, card = card }
 

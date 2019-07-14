@@ -60,7 +60,7 @@ viewOerCardsVertically model oers =
         { x = 0, y = index * rowHeight + 70 |> toFloat }
 
       viewCard index oer =
-        viewOerCard model [] (cardPositionAtIndex index) ("vertical-"++ (String.fromInt index)) oer |> el [ centerX ]
+        viewOerCard model [] (cardPositionAtIndex index) ("vertical-"++ (String.fromInt index)) True oer |> el [ centerX ]
 
       cards =
         oers

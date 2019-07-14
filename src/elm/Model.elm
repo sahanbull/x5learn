@@ -130,6 +130,7 @@ type alias Note =
   { text : String
   , time : Posix
   , oerId : OerId
+  , id : Int
   }
 
 

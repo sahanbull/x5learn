@@ -28,6 +28,7 @@ type Msg
   | RequestSession (Result Http.Error Session)
   | RequestRecentViews (Result Http.Error (List OerId))
   | RequestNotes (Result Http.Error (List Note))
+  | RequestDeleteNote (Result Http.Error String)
   | RequestOerSearch (Result Http.Error (List Oer))
   | RequestOers (Result Http.Error (List Oer))
   | RequestGains (Result Http.Error (List Gain))

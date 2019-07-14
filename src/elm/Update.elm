@@ -169,8 +169,7 @@ update msg ({nav, userProfileForm} as model) =
           newOerNoteboards : Dict OerId Noteboard
           newOerNoteboards =
             notes
-            |> List.foldl (\note noteboards -> noteboards |> addNoteToNoteboard note) model.oerNoteboards
-            |> Debug.log "newOerNoteboards"
+            |> List.foldl (\note noteboards -> noteboards |> addNoteToNoteboard note) Dict.empty
 
           newModel =
             { model | oerNoteboards = newOerNoteboards}
@@ -189,6 +188,17 @@ update msg ({nav, userProfileForm} as model) =
       --       err |> Debug.log "Error in RequestNotes"
       -- in
       ( { model | userMessage = Just "An error occurred. Please reload the page." }, Cmd.none )
+
+    RequestDeleteNote (Ok _) ->
+      ( model, requestNotes)
+      |> logEventForLabStudy "RequestDeleteNote" []
+
+    RequestDeleteNote (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestDeleteNote"
+      -- in
+      ( { model | userMessage = Just "Some changes were not saved." }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
       ( model |> updateSearch (insertSearchResults (oers |> List.map .id)) |> cacheOersFromList oers, setBrowserFocus "SearchField")
@@ -308,7 +318,7 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
 
     RequestSaveNote (Ok _) ->
-      (model, Cmd.none)
+      (model, requestNotes)
 
     RequestSaveNote (Err err) ->
       ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
@@ -414,7 +424,7 @@ update msg ({nav, userProfileForm} as model) =
           text =
             getOerNoteForm model oerId
       in
-      (model |> addNewNoteToOer oerId text |> setTextInNoteForm oerId "", [ setBrowserFocus "textInputFieldForNotesOrFeedback", saveNote oerId text ] |> Cmd.batch)
+      (model |> createNote oerId text |> setTextInNoteForm oerId "", [ setBrowserFocus "textInputFieldForNotesOrFeedback", saveNote oerId text ] |> Cmd.batch)
       |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ String.fromInt oerId, getOerNoteForm model oerId ]
 
     SubmittedResourceFeedback oerId text ->
@@ -428,11 +438,11 @@ update msg ({nav, userProfileForm} as model) =
         (model, Cmd.none)
 
     ClickedQuickNoteButton oerId text ->
-      (model |> addNewNoteToOer oerId text |> setTextInNoteForm oerId "" , saveNote oerId text)
+      (model |> createNote oerId text |> setTextInNoteForm oerId "" , saveNote oerId text)
       |> logEventForLabStudy "ClickedQuickNoteButtond" [ String.fromInt oerId, text ]
 
     RemoveNote note ->
-      (model |> removeNote note, Cmd.none)
+      (model |> removeNote note, NotesApi.deleteNote note)
       |> logEventForLabStudy "RemoveNote" [ note.oerId |> String.fromInt, note.text ]
 
     VideoIsPlayingAtPosition position ->
@@ -478,15 +488,17 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "SelectResourceSidebarTab" []
 
 
-addNewNoteToOer : OerId -> String -> Model -> Model
-addNewNoteToOer oerId text model =
+createNote : OerId -> String -> Model -> Model
+createNote oerId text model =
   let
       newNote =
-        Note text model.currentTime oerId
+        Note text model.currentTime oerId 0
 
+      oldNoteboard : Noteboard
       oldNoteboard =
         getOerNoteboard model oerId
 
+      newNoteboard : Noteboard
       newNoteboard =
         newNote :: oldNoteboard
   in

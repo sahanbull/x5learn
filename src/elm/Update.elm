@@ -216,10 +216,10 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | requestingOers = False } |> cacheOersFromList oers, Cmd.none)
 
     RequestOers (Err err) ->
-      let
-          dummy =
-            err |> Debug.log "Error in RequestOers"
-      in
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestOers"
+      -- in
       ( { model | requestingOers = False, userMessage = Just "There was a problem while fetching OER data" }, Cmd.none)
 
     RequestGains (Ok gains) ->
@@ -251,10 +251,10 @@ update msg ({nav, userProfileForm} as model) =
           ( { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.union dictOfEnrichments, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, wikichunkEnrichmentRequestFailCount = failCount, wikichunkEnrichmentRetryTime = retryTime } |> registerUndefinedEntities listOfEnrichments, Cmd.none )
 
     RequestWikichunkEnrichments (Err err) ->
-      let
-          dummy =
-            err |> Debug.log "Error in RequestWikichunkEnrichments"
-      in
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestWikichunkEnrichments"
+      -- in
       ( { model | userMessage = Just "There was a problem - please reload the page.", requestingWikichunkEnrichments = False }, Cmd.none )
 
     RequestEntityDefinitions (Ok definitionTexts) ->
@@ -475,7 +475,7 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "PageScrolled" [ scrollTop |> String.fromFloat, viewHeight |> String.fromFloat, contentHeight |> String.fromFloat ]
 
     OerCardPlaceholderPositionsReceived positions ->
-      ({ model | oerCardPlaceholderPositions = positions |> Debug.log "oerCardPlaceholderPositions"}, Cmd.none)
+      ({ model | oerCardPlaceholderPositions = positions }, Cmd.none)
 
     StartLabStudyTask task ->
       { model | startedLabStudyTask = Just (task, model.currentTime) }

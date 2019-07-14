@@ -71,7 +71,7 @@ update msg ({nav, userProfileForm} as model) =
           |> logEventForLabStudy "UrlChanged" [ path ]
 
     ClockTick time ->
-      ( { model | currentTime = time, enrichmentsAnimating = anyBubblogramsAnimating model }, Cmd.none)
+      ( { model | currentTime = time, enrichmentsAnimating = anyBubblogramsAnimating model }, getOerCardPlaceholderPositions True)
       |> requestWikichunkEnrichmentsIfNeeded
       |> requestEntityDefinitionsIfNeeded
 

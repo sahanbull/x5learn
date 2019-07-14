@@ -43,10 +43,8 @@ function setupPorts(app){
     setTimeout(function(){
       var placeholders = document.getElementsByClassName('OerCardPlaceholder');
       positions = [].slice.call(placeholders).map(getCardPlaceholderPosition);
-      console.log('getOerCardPlaceholderPositions');
-      console.log(positions);
       app.ports.receiveCardPlaceholderPositions.send(positions);
-    }, 1000);
+    }, 100);
   });
 
   app.ports.youtubeSeekTo.subscribe(function(fragmentStart) {

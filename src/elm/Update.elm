@@ -57,7 +57,7 @@ update msg ({nav, userProfileForm} as model) =
             if path |> String.startsWith profilePath then
               (Profile, (model, Cmd.none))
             else if path |> String.startsWith notesPath then
-              (Notes, (model, Cmd.none))
+              (Notes, ({ model | oerCardPlaceholderPositions = [] }, getOerCardPlaceholderPositions True))
             else if path |> String.startsWith recentPath then
               (Recent, (model, Cmd.none))
             else if path |> String.startsWith searchPath then
@@ -473,6 +473,9 @@ update msg ({nav, userProfileForm} as model) =
     PageScrolled {scrollTop, viewHeight, contentHeight} ->
       (model, Cmd.none)
       |> logEventForLabStudy "PageScrolled" [ scrollTop |> String.fromFloat, viewHeight |> String.fromFloat, contentHeight |> String.fromFloat ]
+
+    OerCardPlaceholderPositionsReceived positions ->
+      ({ model | oerCardPlaceholderPositions = positions |> Debug.log "oerCardPlaceholderPositions"}, Cmd.none)
 
     StartLabStudyTask task ->
       { model | startedLabStudyTask = Just (task, model.currentTime) }

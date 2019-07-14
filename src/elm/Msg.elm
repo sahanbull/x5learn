@@ -65,6 +65,7 @@ type Msg
   | BubbleMouseOut
   | BubbleClicked OerId
   | PageScrolled ScrollData
+  | OerCardPlaceholderPositionsReceived (List OerCardPlaceholderPosition)
   | StartLabStudyTask LabStudyTask
   | StoppedLabStudyTask
   | SelectResourceSidebarTab ResourceSidebarTab
@@ -101,6 +102,7 @@ subscriptions model =
       , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
       , Ports.videoIsPlayingAtPosition VideoIsPlayingAtPosition
       , Ports.pageScrolled PageScrolled
+      , Ports.receiveCardPlaceholderPositions OerCardPlaceholderPositionsReceived
       , Time.every 500 ClockTick
       ] ++ (if anyBubblogramsAnimating model || isModalAnimating then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
       |> Sub.batch

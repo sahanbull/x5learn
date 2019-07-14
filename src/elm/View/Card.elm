@@ -305,7 +305,7 @@ viewOerCard model recommendedFragments position barId oer =
 
       wrapperAttrs =
         -- [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| button [] { onPress = openInspectorOnPress model oer, label = card }, moveRight position.x, moveDown position.y ]
-        [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y ]
+        [ htmlClass "CloseInspectorOnClickOutside OerCard", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y, htmlDataAttribute <| String.fromInt oer.id ]
   in
       none
       |> el wrapperAttrs

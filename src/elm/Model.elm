@@ -59,6 +59,7 @@ type alias Model =
   , timeOfLastFeedbackRecorded : Posix
   , oerNoteboards : Dict OerId Noteboard
   , fragmentAccesses : Dict Int Fragment
+  , oerCardPlaceholderPositions : List OerCardPlaceholderPosition
   }
 
 
@@ -123,6 +124,13 @@ type alias ScrollData =
   { scrollTop : Float
   , viewHeight : Float
   , contentHeight : Float
+  }
+
+
+type alias OerCardPlaceholderPosition =
+  { x : Float
+  , y : Float
+  , oerId : Int
   }
 
 
@@ -335,6 +343,7 @@ initialModel nav flags =
   , timeOfLastFeedbackRecorded = initialTime
   , oerNoteboards = Dict.empty
   , fragmentAccesses = Dict.empty
+  , oerCardPlaceholderPositions = []
   }
 
 

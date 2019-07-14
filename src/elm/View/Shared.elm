@@ -211,6 +211,10 @@ htmlId name =
   Html.Attributes.id name |> htmlAttribute
 
 
+htmlDataAttribute str =
+  Html.Attributes.attribute "data-oerid" str |> htmlAttribute
+
+
 whiteBackground =
   Background.color white
 

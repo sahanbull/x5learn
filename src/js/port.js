@@ -39,6 +39,15 @@ function setupPorts(app){
     }
   });
 
+  app.ports.getOerCardPlaceholderPositions.subscribe(function(dummy) {
+    setTimeout(function(){
+      var placeholders = document.getElementsByClassName('OerCardPlaceholder');
+      positions = [].slice.call(placeholders).map(getCardPlaceholderPosition);
+      console.log('getOerCardPlaceholderPositions');
+      console.log(positions);
+      app.ports.receiveCardPlaceholderPositions.send(positions);
+    }, 1000);
+  });
 
   app.ports.youtubeSeekTo.subscribe(function(fragmentStart) {
     player.seekTo(fragmentStart * player.getDuration());
@@ -156,4 +165,10 @@ function setupScrollListener(){
       }
     }
   }, 300);
+}
+
+
+function getCardPlaceholderPosition(ph){
+    var rect = ph.getBoundingClientRect();
+	  return { x: rect.left, y: rect.top, oerId: parseInt(ph.getAttribute("data-oerid")) };
 }

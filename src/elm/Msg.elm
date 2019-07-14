@@ -58,7 +58,7 @@ type Msg
   | SubmittedResourceFeedback OerId String
   | PressedKeyInNewNoteFormInOerNoteboard OerId Int
   | ClickedQuickNoteButton OerId String
-  | RemoveNote Posix
+  | RemoveNote Note
   | VideoIsPlayingAtPosition Float
   | BubbleMouseOver String
   | BubbleMouseOut

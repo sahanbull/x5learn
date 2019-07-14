@@ -431,9 +431,9 @@ update msg ({nav, userProfileForm} as model) =
       (model |> addNewNoteToOer oerId text |> setTextInNoteForm oerId "" , saveNote oerId text)
       |> logEventForLabStudy "ClickedQuickNoteButtond" [ String.fromInt oerId, text ]
 
-    RemoveNote time ->
-      (model |> removeNoteAtTime time, Cmd.none)
-      |> logEventForLabStudy "RemoveNote" [ time |> posixToMillis |> String.fromInt ]
+    RemoveNote note ->
+      (model |> removeNote note, Cmd.none)
+      |> logEventForLabStudy "RemoveNote" [ note.oerId |> String.fromInt, note.text ]
 
     VideoIsPlayingAtPosition position ->
       (model |> expandCurrentFragmentOrCreateNewOne position model.inspectorState, Cmd.none)
@@ -493,13 +493,13 @@ addNewNoteToOer oerId text model =
       { model | oerNoteboards = model.oerNoteboards |> Dict.insert oerId newNoteboard }
 
 
-removeNoteAtTime : Posix -> Model -> Model
-removeNoteAtTime time model =
+removeNote : Note -> Model -> Model
+removeNote note model =
   let
       filter : OerId -> Noteboard -> Noteboard
       filter _ notes =
         notes
-        |> List.filter (\note -> note.time /= time)
+        |> List.filter (\n -> n /= note)
   in
      { model | oerNoteboards = model.oerNoteboards |> Dict.map filter }
 

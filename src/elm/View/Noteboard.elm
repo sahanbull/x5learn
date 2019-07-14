@@ -89,7 +89,7 @@ viewNote model note =
         |> captionNowrap [ greyTextDisabled ]
 
       actions =
-        button [] { onPress = Just <| RemoveNote note.time, label = trashIcon }
+        button [] { onPress = Just <| RemoveNote note, label = trashIcon }
   in
       [ avatarImage |> el [ alignTop ]
       , note.text |> bodyWrap [ width fill ] |> el [ width fill ]

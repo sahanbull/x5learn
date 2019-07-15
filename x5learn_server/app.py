@@ -349,6 +349,8 @@ def search_results_from_x5gon_api(text):
     oers = []
     for index, material in enumerate(materials):
         url = material['url']
+        if len(url)>255: # temporary fix before changing Oer.url column type from String(255) to Text()
+            continue
         oer = Oer.query.filter_by(url=url).first()
         if oer is None:
             oer = Oer(url, convert_x5_material_to_oer(material, url))

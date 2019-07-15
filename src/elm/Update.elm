@@ -87,7 +87,7 @@ update msg ({nav, userProfileForm} as model) =
           searchUrl =
             Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" str ]
       in
-          (model, Navigation.pushUrl nav.key searchUrl)
+          ({ model | inspectorState = Nothing } |> closePopup, Navigation.pushUrl nav.key searchUrl)
 
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, Cmd.none )

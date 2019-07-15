@@ -368,6 +368,13 @@ actionButtonWithoutIcon attrs str onPress =
       button attrs { onPress = onPress, label = label }
 
 
+actionButtonWithoutIconNoBobble : List (Attribute Msg) -> String -> Msg -> Element Msg
+actionButtonWithoutIconNoBobble attrs str onPress =
+  str
+  |> bodyNoWrap []
+  |> el (attrs ++ [ onClickNoBubble onPress ])
+
+
 confirmButton : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
 confirmButton attrs str onPress =
   let
@@ -605,7 +612,7 @@ entityActionButton chunkPopup entityPopup (title, clickAction) =
       attrs =
         hoverAction :: ([ width fill, padding 10 ] ++ background)
   in
-      actionButtonWithoutIcon attrs title (Just clickAction)
+      actionButtonWithoutIconNoBobble attrs title clickAction
 
 
 viewDefinition : Model -> EntityId -> Element Msg

@@ -44,6 +44,7 @@ viewNotesPage model =
       oerCards =
         oerBoxesAndCards
         |> List.filterMap .card
+        |> List.reverse
 
       content =
         if model.requestingOers then

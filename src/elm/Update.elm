@@ -759,6 +759,8 @@ executeSearchAfterUrlChanged model url =
         url.query
         |> Maybe.withDefault ""
         |> String.dropLeft 2 -- TODO A much cleaner method is to use Url.Query.parser
+        |> Url.percentDecode
+        |> Maybe.withDefault ""
   in
       if str=="" then
         ( model, setBrowserFocus "SearchField")

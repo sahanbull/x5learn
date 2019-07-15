@@ -46,11 +46,11 @@ viewPathway model pathway =
 
 
 
-viewOerGrid : Model -> UserState -> Playlist -> Element Msg
-viewOerGrid model userState playlist =
+viewOerGrid : Model -> Playlist -> Element Msg
+viewOerGrid model playlist =
   let
-      helper url result =
-        case Dict.get url model.cachedOers of
+      helper id result =
+        case Dict.get id model.cachedOers of
           Nothing ->
             result
 
@@ -58,7 +58,7 @@ viewOerGrid model userState playlist =
             oer :: result
 
       oers =
-        playlist.oerUrls
+        playlist.oerIds
         |> List.foldr helper []
   in
       if oers |> List.isEmpty then
@@ -92,7 +92,7 @@ viewOerGrid model userState playlist =
 
             cards =
               oers
-              |> List.indexedMap (\index oer -> viewOerCard model userState [] (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) oer)
+              |> List.indexedMap (\index oer -> viewOerCard model [] (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) True oer)
               |> List.reverse
               |> List.map inFront
         in
@@ -103,11 +103,11 @@ viewOerGrid model userState playlist =
             |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
 
 
-viewOerCard : Model -> UserState -> List Fragment -> Point -> String -> Oer -> Element Msg
-viewOerCard model userState recommendedFragments position barId oer =
+viewOerCard : Model -> List Fragment -> Point -> String -> Bool -> Oer -> Element Msg
+viewOerCard model recommendedFragments position barId enableShadow oer =
   let
       hovering =
-        model.hoveringOerUrl == Just oer.url
+        model.hoveringOerId == Just oer.url
 
       upperImage attrs url =
         none
@@ -136,7 +136,7 @@ viewOerCard model userState recommendedFragments position barId oer =
 
       fragmentsBar =
         inFront <|
-          case Dict.get oer.url model.wikichunkEnrichments of
+          case Dict.get oer.id model.wikichunkEnrichments of
             Nothing ->
               viewLoadingSpinner |> el [ moveDown 80, width fill ]
 
@@ -144,7 +144,7 @@ viewOerCard model userState recommendedFragments position barId oer =
               if enrichment.errors then
                 none
               else
-                viewFragmentsBar model userState oer enrichment.chunks recommendedFragments cardWidth barId False
+                viewFragmentsBar model oer enrichment.chunks recommendedFragments cardWidth barId False
                 |> el [ width fill, moveDown imageHeight ]
 
       preloadImage url =
@@ -210,7 +210,7 @@ viewOerCard model userState recommendedFragments position barId oer =
       --           |> upperImage [ preloadImage nextImageUrl, imageCounter <| (imageIndex+1 |> String.fromInt) ++ " / " ++ (oer.images |> List.length |> String.fromInt) ]
 
       (graphic, popup) =
-        case Dict.get oer.url model.wikichunkEnrichments of
+        case Dict.get oer.id model.wikichunkEnrichments of
           Nothing ->
             (none |> el [ width fill, height (px imageHeight), Background.color x5color ]
             , [])
@@ -231,7 +231,7 @@ viewOerCard model userState recommendedFragments position barId oer =
                   (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color materialDark, inFront viewLoadingSpinner ], [])
 
                 Just bubblogram ->
-                  viewBubblogram model oer.url bubblogram
+                  viewBubblogram model oer.id bubblogram
 
       title =
         oer.title
@@ -273,10 +273,10 @@ viewOerCard model userState recommendedFragments position barId oer =
         |> el [ paddingBottom 16 ]
 
       -- hoverPreview =
-      --   if chunksFromUrl model oer.url |> List.isEmpty then
+      --   if chunksFromOerId model oer.url |> List.isEmpty then
       --     carousel
       --   else
-      --     case model.tagClouds |> Dict.get oer.url of
+      --     case model.tagClouds |> Dict.get oer.id of
       --       Nothing ->
       --         carousel
 
@@ -297,15 +297,18 @@ viewOerCard model userState recommendedFragments position barId oer =
           Nothing ->
             []
 
+      shadow =
+        if enableShadow then [ htmlClass "materialCard" ] else [ Border.width 1, borderColorLayout ]
+
       card =
         -- [ (if hovering then hoverPreview else carousel)
         -- ]
         [ graphic ]
-        |> column ([ widthOfCard, heightOfCard, htmlClass "materialCard", onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing), title, bottomInfo, fragmentsBar ] ++ clickHandler ++ popup)
+        |> column ([ widthOfCard, heightOfCard, onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing), title, bottomInfo, fragmentsBar ] ++ shadow ++ clickHandler ++ popup)
 
       wrapperAttrs =
         -- [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| button [] { onPress = openInspectorOnPress model oer, label = card }, moveRight position.x, moveDown position.y ]
-        [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y ]
+        [ htmlClass "CloseInspectorOnClickOutside OerCard", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y, htmlDataAttribute <| String.fromInt oer.id ]
   in
       none
       |> el wrapperAttrs

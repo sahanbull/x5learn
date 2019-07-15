@@ -22,31 +22,29 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
-viewSearchPage : Model -> UserState -> SearchState -> PageWithModal
-viewSearchPage model userState searchState =
+viewSearchPage : Model -> SearchState -> PageWithModal
+viewSearchPage model searchState =
   let
       modal =
-        viewInspectorModalOrEmpty model userState
+        viewInspectorModalOrEmpty model
   in
-      (viewSearchResults model userState searchState, modal)
+      (viewSearchResults model searchState, modal)
 
 
-viewSearchResults model userState searchState =
+viewSearchResults model searchState =
   case searchState.searchResults of
     Nothing ->
       viewLoadingSpinner
 
     Just [] ->
-      -- "Sorry, no results were found for \""++ searchState.lastSearch ++"\"" |> viewCenterNote
-      -- "No results were found for \"" ++ searchState.lastSearch ++ "\". Try using the topic suggestions." |> viewCenterNote
       "No results were found for \"" ++ searchState.lastSearch ++ "\". Please try a different search term." |> viewCenterNote
 
-    Just oerUrls ->
-      -- Playlist ("Search results for \""++ searchState.lastSearch ++"\"") oerUrls
+    Just oerIds ->
+      -- Playlist ("Search results for \""++ searchState.lastSearch ++"\"") oerIds
       (if isLabStudy1 model then
-        Playlist (searchState.lastSearch ++" ("++(oerUrls |> List.length |> String.fromInt) ++ " video" ++ (if List.length oerUrls == 1 then "" else "s")++")") oerUrls
+        Playlist (searchState.lastSearch ++" ("++(oerIds |> List.length |> String.fromInt) ++ " video" ++ (if List.length oerIds == 1 then "" else "s")++")") oerIds
       else
-        Playlist ((oerUrls |> List.length |> String.fromInt) ++ " result" ++ (if List.length oerUrls == 1 then "" else "s") ++ " for \""++ searchState.lastSearch ++"\"") oerUrls
+        Playlist ((oerIds |> List.length |> String.fromInt) ++ " result" ++ (if List.length oerIds == 1 then "" else "s") ++ " for \""++ searchState.lastSearch ++"\"") oerIds
       )
-      |> viewOerGrid model userState
+      |> viewOerGrid model
       |> el [ width fill, paddingTRBL 0 0 100 0 ]

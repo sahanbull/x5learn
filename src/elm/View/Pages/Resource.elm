@@ -20,6 +20,7 @@ import Model exposing (..)
 import View.Shared exposing (..)
 import View.Noteboard exposing (..)
 import View.Html5VideoPlayer exposing (..)
+import View.HtmlPdfViewer exposing (..)
 
 
 import Msg exposing (..)
@@ -27,16 +28,21 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
-viewResourcePage : Model -> UserState -> PageWithModal
-viewResourcePage model userState =
+viewResourcePage : Model -> PageWithModal
+viewResourcePage model =
   let
       page =
         case model.currentResource of
           Nothing ->
             viewLoadingSpinner
 
-          Just (Loaded oerUrl) ->
-            viewResource model userState (getCachedOerWithBlankDefault model oerUrl)
+          Just (Loaded oerId) ->
+            case model.cachedOers |> Dict.get oerId of
+              Nothing ->
+                viewCenterNote "The requested resource was not found."
+
+              Just oer ->
+                viewResource model oer
 
           Just Error ->
             viewCenterNote "The requested resource was not found."
@@ -44,8 +50,8 @@ viewResourcePage model userState =
       (page, [])
 
 
-viewResource : Model -> UserState -> Oer -> Element Msg -- TODO remove some code duplication with Inspector.elm
-viewResource model userState oer =
+viewResource : Model -> Oer -> Element Msg -- TODO remove some code duplication with Inspector.elm
+viewResource model oer =
   let
       header =
         case oer.title of
@@ -63,6 +69,8 @@ viewResource model userState oer =
           Nothing ->
             if isVideoFile oer.url then
               viewHtml5VideoPlayer model oer.url
+            else if isPdfFile oer.url then
+              viewHtmlPdfPlayer oer.url "60vh"
             else
               none
 
@@ -105,7 +113,7 @@ viewResource model userState oer =
             (heading, content) =
               case model.resourceSidebarTab of
                 NotesTab ->
-                  ("Your notes", viewNoteboard model userState False oer.url)
+                  ("Your notes", viewNoteboard model False oer.id)
 
                 RecommendationsTab ->
                   ("Related material"
@@ -149,7 +157,7 @@ viewResource model userState oer =
               else
                 guestCallToSignup "In order to use all the features and save your changes"
                 |> el [ width fill, paddingXY 15 12, Background.color <| rgb 1 0.85 0.6 ]
-                |> el [ paddingTop 20 ]
+                |> el [ padding 20 ]
         in
             [ tabsMenu |> el [ width fill ]
             , tabContent
@@ -182,14 +190,14 @@ viewResource model userState oer =
 
       fragmentsBar =
         if hasYoutubeVideo oer.url then
-          case chunksFromUrl model oer.url of
+          case chunksFromOerId model oer.id of
             [] ->
               none
 
             wikichunks ->
               let
                   content =
-                    viewFragmentsBar model userState oer wikichunks (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth "inspector" True
+                    viewFragmentsBar model oer wikichunks (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth "inspector" True
                     |> el [ width (px playerWidth), height (px 16) ]
               in
                   none |> el [ inFront content, moveUp (fragmentsBarWrapperHeight - fragmentsBarHeight) ]

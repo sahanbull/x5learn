@@ -18,8 +18,8 @@ import Msg exposing (..)
 import View.Shared exposing (..)
 
 
-viewNoteboard : Model -> UserState -> Bool -> OerUrl -> Element Msg
-viewNoteboard model userState includeHeading oerUrl =
+viewNoteboard : Model -> Bool -> OerId -> Element Msg
+viewNoteboard model includeHeading oerId =
   let
       heading =
         if includeHeading then
@@ -32,7 +32,7 @@ viewNoteboard model userState includeHeading oerUrl =
         let
             quickNotesButton : String -> Element Msg
             quickNotesButton str =
-              actionButtonWithoutIcon [ Background.color x5colorSemiTransparent, whiteText, paddingXY 5 3 ] str (Just <| ClickedQuickNoteButton oerUrl str)
+              actionButtonWithoutIcon [ Background.color x5colorSemiTransparent, whiteText, paddingXY 5 3 ] str (Just <| ClickedQuickNoteButton oerId str)
         in
             [ "Too hard", "Just right", "Too easy", "Interested", "Not interested" ]
             |> List.map quickNotesButton
@@ -44,10 +44,10 @@ viewNoteboard model userState includeHeading oerUrl =
         |> column [ spacing 15, width fill ]
 
       formValue =
-        getOerNoteForm model oerUrl
+        getOerNoteForm model oerId
 
       textField =
-        Input.text [ width fill, htmlId "textInputFieldForNotesOrFeedback", onEnter <| (SubmittedNewNoteInOerNoteboard oerUrl), Border.color x5color ] { onChange = ChangedTextInNewNoteFormInOerNoteboard oerUrl, text = formValue, placeholder = Just ("Write a note" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "note" }
+        Input.text [ width fill, htmlId "textInputFieldForNotesOrFeedback", onEnter <| (SubmittedNewNoteInOerNoteboard oerId), Border.color x5color ] { onChange = ChangedTextInNewNoteFormInOerNoteboard oerId, text = formValue, placeholder = Just ("Write a note" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "note" }
 
       newEntry =
         [ textField
@@ -55,14 +55,13 @@ viewNoteboard model userState includeHeading oerUrl =
         |> row [ spacing 10, width fill ]
 
       notes =
-        getOerNoteboard userState oerUrl
+        getOerNoteboard model oerId
 
       noteElements =
         if List.isEmpty notes then
           []
         else
           notes
-          |> List.reverse
           |> List.map (viewNote model)
           |> column [ spacing 10, width fill ]
           |> List.singleton
@@ -82,20 +81,23 @@ viewNoteboard model userState includeHeading oerUrl =
 
 viewNote : Model -> Note -> Element Msg
 viewNote model note =
-  let
-      date =
-        note.time
-        |> humanReadableRelativeTime model
-        |> captionNowrap [ greyTextDisabled ]
+  if note.id==0 then -- hide new notes until they are persisted on the db
+    viewLoadingSpinner
+  else
+    let
+        date =
+          note.time
+          |> humanReadableRelativeTime model
+          |> captionNowrap [ greyTextDisabled ]
 
-      actions =
-        button [] { onPress = Just <| RemoveNote note.time, label = trashIcon }
-  in
-      [ avatarImage |> el [ alignTop ]
-      , note.text |> bodyWrap [ width fill ] |> el [ width fill ]
-      , [ date, actions ] |> row [ spacing 5, alignTop, moveUp 4 ]
-      ]
-      |> row [ spacing 10, width fill ]
+        actions =
+          button [] { onPress = Just <| RemoveNote note, label = trashIcon }
+    in
+        [ avatarImage |> el [ alignTop ]
+        , note.text |> bodyWrap [ width fill ] |> el [ width fill ]
+        , [ date, actions ] |> row [ spacing 5, alignTop, moveUp 4 ]
+        ]
+        |> row [ spacing 10, width fill ]
 
 
 humanReadableRelativeTime {currentTime} time =

@@ -7,7 +7,7 @@ import http.client
 from fuzzywuzzy import fuzz
 import urllib
 from datetime import datetime, timedelta
-from sqlalchemy import or_, and_
+from sqlalchemy import or_, and_, cast, Integer
 from flask_restplus import Api, Resource, fields, reqparse
 import wikipedia
 
@@ -74,6 +74,7 @@ CURRENT_ENRICHMENT_VERSION = 1
 def initiate_login_db():
     from x5learn_server.db.database import initiate_login_table_and_admin_profile
     initiate_login_table_and_admin_profile(user_datastore)
+    initiate_action_types_table()
 
 # Setting wikipedia api language
 wikipedia.set_lang("en")
@@ -125,14 +126,14 @@ def api_session():
     if current_user.is_authenticated:
         resp = get_logged_in_user_profile_and_state()
         return resp
-    return jsonify({'guestUser': {'userState': None}})
+    return jsonify({'guestUser': 'OK'})
 
 
 def get_logged_in_user_profile_and_state():
     profile = current_user.user_profile if current_user.user_profile is not None else {
         'email': current_user.email}
     user = get_or_create_logged_in_user()
-    logged_in_user = {'userState': user.frontend_state, 'userProfile': profile}
+    logged_in_user = {'userProfile': profile}
     return jsonify({'loggedInUser': logged_in_user})
 
 
@@ -151,17 +152,6 @@ def get_or_create_logged_in_user():
     return user
 
 
-@app.route("/api/v1/save_user_state/", methods=['POST'])
-def api_save_user_state():
-    frontend_state = request.get_json()
-    if current_user.is_authenticated:
-        get_or_create_logged_in_user().frontend_state = frontend_state
-        db_session.commit()
-        return 'OK'
-    else:
-        return 'Guest user state not saved.'
-
-
 @app.route("/api/v1/search/", methods=['GET'])
 def api_search():
     text = request.args['text'].lower().strip()
@@ -178,9 +168,7 @@ def api_search_suggestions():
 
 @app.route("/api/v1/oers/", methods=['POST'])
 def api_oers():
-    oers = {}
-    for url in request.get_json()['urls']:
-        oers[url] = find_oer_by_url(url)
+    oers = [ find_oer_by_id(oer_id) for oer_id in request.get_json()['ids'] ]
     return jsonify(oers)
 
 
@@ -215,13 +203,16 @@ def api_save_user_profile():
 
 @app.route("/api/v1/wikichunk_enrichments/", methods=['POST'])
 def api_wikichunk_enrichments():
-    enrichments = {}
-    for url in request.get_json()['urls']:
-        enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
+    enrichments = []
+    for oer_id in request.get_json()['ids']:
+        # enrichment = WikichunkEnrichment.query.filter_by(oer_id=oer_id).first()
+        enrichment = WikichunkEnrichment.query.filter(WikichunkEnrichment.data['oerId'].astext.cast(Integer)==oer_id).first()
         if enrichment is not None:
-            enrichments[url] = enrichment.data
+            enrichments.append(enrichment.data)
         else:
-            push_enrichment_task(url, 1)
+            oer = Oer.query.get(oer_id)
+            if oer is not None:
+                push_enrichment_task(oer.url, 1)
     return jsonify(enrichments)
 
 
@@ -238,6 +229,10 @@ def most_urgent_unstarted_enrichment_task():
     task.priority = 0
     db_session.commit()
     oer = Oer.query.filter_by(url=url).first()
+    if oer is None:
+        msg = 'Missing OER: '+str(url)
+        print(msg)
+        return jsonify({'info': msg})
     return jsonify({'data': oer.data})
 
 
@@ -289,6 +284,10 @@ def log_event_for_lab_study():
 
 
 def save_enrichment(url, data):
+    oer = Oer.query.filter_by(url=url).first()
+    if oer is None:
+        return
+    data['oerId'] = oer.id
     enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
     if enrichment is None:
         enrichment = WikichunkEnrichment(url, data, CURRENT_ENRICHMENT_VERSION)
@@ -307,16 +306,25 @@ def save_definitions(data):
             definition = EntityDefinition.query.filter_by(title=title).first()
             if definition is None:
                 encoded_title = urllib.parse.quote(title)
+                # Request definitions from wikipedia.
+                # This should probably happen in the enrichment worker
+                # rather than the flask app for at least three reasons:
+                # 1. keeping requests times short
+                # 2. better error handling
+                # 3. guaranteeing that definitions are available together with enrichment
                 conn = http.client.HTTPSConnection('en.wikipedia.org')
                 conn.request(
                     'GET', '/w/api.php?action=query&prop=extracts&exintro&explaintext&exsentences=1&titles='+encoded_title+'&format=json')
                 response = conn.getresponse().read().decode("utf-8")
                 pages = json.loads(response)['query']['pages']
                 (_, page) = pages.popitem()
+                if 'extract' not in page:
+                    print('Could not save definition for', title)
+                    return
                 extract = page['extract']
                 # print(extract)
                 definition = EntityDefinition(
-                    entity['id'], title, entity['url'], extract)
+                    entity['id'], title, entity['url'], extract, lang='en')
                 db_session.add(definition)
                 db_session.commit()
 
@@ -433,21 +441,22 @@ def search_suggestions(text):
     return jsonify(matches)
 
 
-def find_oer_by_url(url):
-    oer = Oer.query.filter_by(url=url).first()
+def find_oer_by_id(oer_id):
+    oer = Oer.query.get(oer_id)
     if oer is not None:
         return oer.data_and_id()
     else:
         # Return a blank OER. This should not happen normally
+        print('Missing OER with id', oer_id)
         oer = {}
-        oer['id'] = 0
+        oer['id'] = oer_id
         oer['date'] = ''
         oer['description'] = '(Sorry, this resource is no longer accessible)'
         oer['duration'] = ''
         oer['images'] = []
         oer['provider'] = ''
         oer['title'] = '(not found)'
-        oer['url'] = url
+        oer['url'] = ''
         oer['mediatype'] = 'text'
         return oer
 
@@ -517,7 +526,7 @@ class APIInfo(Resource):
 ns_notes = api.namespace('api/v1/note', description='Notes')
 
 m_note = api.model('Note', {
-    'oer_id': fields.String(required=True, max_length=255, description='The material id of the note associated with'),
+    'oer_id': fields.Integer(required=True, description='The material id of the note associated with'),
     'text': fields.String(required=True, description='The content of the note')
 })
 
@@ -812,6 +821,15 @@ class Definition(Resource):
                     })
 
         return result, 200
+
+
+def initiate_action_types_table():
+    # TODO Define a comprehensive set of actions and keep it in sync with the frontend
+    action_type = ActionType.query.filter_by(id=1).first()
+    if action_type is None:
+        action_type = ActionType('OER card opened')
+        db_session.add(action_type)
+        db_session.commit()
 
 
 if __name__ == '__main__':

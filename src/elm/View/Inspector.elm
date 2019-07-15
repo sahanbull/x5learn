@@ -16,30 +16,31 @@ import Msg exposing (..)
 import View.Shared exposing (..)
 import View.Noteboard exposing (..)
 import View.Html5VideoPlayer exposing (..)
+import View.HtmlPdfViewer exposing (..)
 
 import Animation exposing (..)
 
 
-viewInspectorModalOrEmpty : Model -> UserState -> List (Attribute Msg)
-viewInspectorModalOrEmpty model userState =
+viewInspectorModalOrEmpty : Model -> List (Attribute Msg)
+viewInspectorModalOrEmpty model =
   case model.inspectorState of
     Nothing ->
       []
 
     Just inspectorState ->
-      [ inFront <| viewModal model userState inspectorState ]
+      [ inFront <| viewModal model inspectorState ]
 
 
-viewModal : Model -> UserState -> InspectorState -> Element Msg
-viewModal model userState inspectorState =
+viewModal : Model -> InspectorState -> Element Msg
+viewModal model inspectorState =
   let
       content =
         case inspectorState.activeMenu of
           Nothing ->
-            inspectorContentDefault model userState inspectorState
+            inspectorContentDefault model inspectorState
 
           Just QualitySurvey ->
-            inspectorContentDefault model userState inspectorState -- TODO
+            inspectorContentDefault model inspectorState -- TODO
 
       header =
         [ content.header
@@ -105,7 +106,7 @@ viewModal model userState inspectorState =
       |> el [ width fill, height fill, behindContent scrim, inFront animatingBox ]
 
 
-inspectorContentDefault model userState {oer, fragmentStart} =
+inspectorContentDefault model {oer, fragmentStart} =
   let
       header =
         case oer.title of
@@ -123,6 +124,8 @@ inspectorContentDefault model userState {oer, fragmentStart} =
           Nothing ->
             if isVideoFile oer.url then
               viewHtml5VideoPlayer model oer.url
+            else if isPdfFile oer.url then
+              viewHtmlPdfPlayer oer.url "45vh"
             else
               none
 
@@ -152,7 +155,7 @@ inspectorContentDefault model userState {oer, fragmentStart} =
         |> column [ width (px playerWidth), moveLeft notesWidth ]
 
       body =
-        [ viewNoteboard model userState True oer.url |> el [ width <| px notesWidth, height fill, alignTop, borderLeft 1, paddingTRBL 0 0 0 15, moveRight (sheetWidth - notesWidth - 30 ) ]
+        [ viewNoteboard model True oer.id |> el [ width <| px notesWidth, height fill, alignTop, borderLeft 1, paddingTRBL 0 0 0 15, moveRight (sheetWidth - notesWidth - 30 ) ]
         , mainSection
         ]
         |> row []
@@ -169,14 +172,14 @@ inspectorContentDefault model userState {oer, fragmentStart} =
 
       fragmentsBar =
         if hasYoutubeVideo oer.url then
-          case chunksFromUrl model oer.url of
+          case chunksFromOerId model oer.id of
             [] ->
               none
 
             wikichunks ->
               let
                   content =
-                    viewFragmentsBar model userState oer wikichunks (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth "inspector" True
+                    viewFragmentsBar model oer wikichunks (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth "inspector" True
                     |> el [ width (px playerWidth), height (px 16) ]
               in
                   none |> el [ inFront content, moveUp (fragmentsBarWrapperHeight - fragmentsBarHeight) ]

@@ -26,19 +26,22 @@ type Msg
   | ModalAnimationStart BoxAnimation
   | ModalAnimationStop Int
   | RequestSession (Result Http.Error Session)
+  | RequestRecentViews (Result Http.Error (List OerId))
+  | RequestNotes (Result Http.Error (List Note))
+  | RequestDeleteNote (Result Http.Error String)
   | RequestOerSearch (Result Http.Error (List Oer))
-  -- | RequestNextSteps (Result Http.Error (List Pathway))
-  | RequestOers (Result Http.Error (Dict String Oer))
+  | RequestOers (Result Http.Error (List Oer))
   | RequestGains (Result Http.Error (List Gain))
-  | RequestWikichunkEnrichments (Result Http.Error (Dict OerUrl WikichunkEnrichment))
+  | RequestWikichunkEnrichments (Result Http.Error (List WikichunkEnrichment))
   | RequestEntityDefinitions (Result Http.Error (Dict String String))
   | RequestSearchSuggestions (Result Http.Error (List String))
   | RequestSaveUserProfile (Result Http.Error String)
-  | RequestSaveUserState (Result Http.Error String)
   | RequestLabStudyLogEvent (Result Http.Error String)
   | RequestResource (Result Http.Error Oer)
   | RequestResourceRecommendations (Result Http.Error (List Oer))
   | RequestSendResourceFeedback (Result Http.Error String)
+  | RequestSaveAction (Result Http.Error String)
+  | RequestSaveNote (Result Http.Error String)
   | SetHover (Maybe String)
   | SetPopup Popup
   | ClosePopup
@@ -50,19 +53,19 @@ type Msg
   | YoutubeSeekTo Float
   | EditUserProfile UserProfileField String
   | SubmittedUserProfile
-  | ChangedTextInNewNoteFormInOerNoteboard OerUrl String
+  | ChangedTextInNewNoteFormInOerNoteboard OerId String
   | ChangedTextInResourceFeedbackForm OerId String
-  | SubmittedNewNoteInOerNoteboard String
+  | SubmittedNewNoteInOerNoteboard OerId
   | SubmittedResourceFeedback OerId String
-  | PressedKeyInNewNoteFormInOerNoteboard String Int
-  | ClickedQuickNoteButton String String
-  | RemoveNote Posix
+  | PressedKeyInNewNoteFormInOerNoteboard OerId Int
+  | ClickedQuickNoteButton OerId String
+  | RemoveNote Note
   | VideoIsPlayingAtPosition Float
-  | SubmitPostRegistrationForm Bool
   | BubbleMouseOver String
   | BubbleMouseOut
-  | BubbleClicked OerUrl
+  | BubbleClicked OerId
   | PageScrolled ScrollData
+  | OerCardPlaceholderPositionsReceived (List OerCardPlaceholderPosition)
   | StartLabStudyTask LabStudyTask
   | StoppedLabStudyTask
   | SelectResourceSidebarTab ResourceSidebarTab
@@ -99,6 +102,7 @@ subscriptions model =
       , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
       , Ports.videoIsPlayingAtPosition VideoIsPlayingAtPosition
       , Ports.pageScrolled PageScrolled
+      , Ports.receiveCardPlaceholderPositions OerCardPlaceholderPositionsReceived
       , Time.every 500 ClockTick
       ] ++ (if anyBubblogramsAnimating model || isModalAnimating then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
       |> Sub.batch

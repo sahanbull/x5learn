@@ -13,8 +13,8 @@ import Model exposing (..)
 type alias PositionedCluster = { posX : Float, cluster : Cluster }
 
 
-addBubblogram : Model -> OerUrl -> WikichunkEnrichment -> WikichunkEnrichment
-addBubblogram model oerUrl ({chunks, clusters, mentions, bubblogram, errors} as enrichment) =
+addBubblogram : Model -> OerId -> WikichunkEnrichment -> WikichunkEnrichment
+addBubblogram model oerId ({chunks, clusters, mentions, bubblogram, errors} as enrichment) =
   if errors || bubblogram /= Nothing || List.isEmpty clusters then
     enrichment
   else

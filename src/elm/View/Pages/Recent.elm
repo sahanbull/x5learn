@@ -25,52 +25,45 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
-viewRecentPage : Model -> UserState -> PageWithModal
-viewRecentPage model userState =
+viewRecentPage : Model -> PageWithModal
+viewRecentPage model =
   let
       page =
-        if userState.fragmentAccesses |> Dict.isEmpty then
+        if model.fragmentAccesses |> Dict.isEmpty then
           if isLoggedIn model then
             viewCenterNote "Your viewed items will appear here"
           else
             guestCallToSignup "To ensure that your changes are saved"
             |> milkyWhiteCenteredContainer
         else
-          let
-              oerUrls =
-                userState.fragmentAccesses
-                |> Dict.toList
-                |> List.map (\(time, fragment) -> fragment.oerUrl)
-                |> List.reverse
-                |> List.Extra.unique
-          in
-              viewVerticalListOfCards model userState oerUrls
+          model.fragmentAccesses
+          |> Dict.toList
+          |> List.map (\(time, fragment) -> fragment.oerId)
+          |> List.filterMap (\oerId -> model.cachedOers |> Dict.get oerId)
+          |> List.reverse
+          |> List.Extra.uniqueBy .id
+          |> viewOerCardsVertically model
   in
-      (page, viewInspectorModalOrEmpty model userState)
+      (page, viewInspectorModalOrEmpty model)
 
 
-viewVerticalListOfCards : Model -> UserState -> List OerUrl -> Element Msg
-viewVerticalListOfCards model userState oerUrls =
+viewOerCardsVertically : Model -> List Oer -> Element Msg
+viewOerCardsVertically model oers =
   let
       rowHeight =
         cardHeight + verticalSpacingBetweenCards
 
       nrows =
-        List.length oerUrls
+        List.length oers
 
       cardPositionAtIndex index =
         { x = 0, y = index * rowHeight + 70 |> toFloat }
 
-      viewCard index oerUrl =
-        let
-            oer =
-              oerUrl
-              |> getCachedOerWithBlankDefault model
-        in
-            viewOerCard model userState [] (cardPositionAtIndex index) ("recent-"++ (String.fromInt index)) oer |> el [ centerX ]
+      viewCard index oer =
+        viewOerCard model [] (cardPositionAtIndex index) ("vertical-"++ (String.fromInt index)) True oer |> el [ centerX ]
 
       cards =
-        oerUrls
+        oers
         |> List.indexedMap viewCard
         |> List.reverse
         |> List.map inFront

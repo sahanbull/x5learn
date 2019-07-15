@@ -6,8 +6,8 @@ import Dict
 import Model exposing (..)
 
 
-updateBubblePopupOnClick : Model -> OerUrl -> Maybe Popup -> Maybe Popup
-updateBubblePopupOnClick model oerUrl oldPopup =
+updateBubblePopupOnClick : Model -> OerId -> Maybe Popup -> Maybe Popup
+updateBubblePopupOnClick model oerId oldPopup =
   case model.hoveringBubbleEntityId of
     Nothing -> -- shouldn't happen
       oldPopup
@@ -17,7 +17,7 @@ updateBubblePopupOnClick model oerUrl oldPopup =
           existingState =
             case model.popup of
               Just (BubblePopup state) ->
-                if state.oerUrl==oerUrl && state.entityId==entityId then
+                if state.oerId==oerId && state.entityId==entityId then
                   Just state
                 else
                   Nothing
@@ -30,18 +30,18 @@ updateBubblePopupOnClick model oerUrl oldPopup =
               updatedPopup state
 
             Nothing ->
-              Just <| initialPopup model oerUrl entityId
+              Just <| initialPopup model oerId entityId
 
 
-initialPopup : Model -> OerUrl -> String -> Popup
-initialPopup model oerUrl entityId =
+initialPopup : Model -> OerId -> String -> Popup
+initialPopup model oerId entityId =
   let
       nextContents : List BubblePopupContent
       nextContents =
-        getMentions model oerUrl entityId
+        getMentions model oerId entityId
         |> List.map MentionInBubblePopup
   in
-      BubblePopup <| BubblePopupState oerUrl entityId DefinitionInBubblePopup nextContents
+      BubblePopup <| BubblePopupState oerId entityId DefinitionInBubblePopup nextContents
 
 
 updatedPopup : BubblePopupState -> Maybe Popup

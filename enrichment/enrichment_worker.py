@@ -26,6 +26,10 @@ def main():
                 url = oer_data['url']
                 enrichment_data, error = make_enrichment_data(oer_data)
                 post_back_wikichunks(url, enrichment_data, error)
+                if error is None:
+                    print('NO ERRORS')
+                else:
+                    print('ERROR:', error)
             elif 'info' in j:
                 say(j['info'])
                 sleep(2)
@@ -60,7 +64,7 @@ def make_enrichment_data(oer_data):
 
 
 def make_wikichunks(oer_data):
-    print('\n_______________________________________________________________________________')
+    print('\n________________________________________________________________________________________________________________________________')
     url = oer_data['url']
     print(url)
     print(oer_data['title'])
@@ -74,7 +78,7 @@ def make_wikichunks(oer_data):
 
 
 def extract_concept_clusters(chunks, mentions):
-    print('\n_____________________________ Concept clusters')
+    # print('\n_____________________________ Concept clusters')
     occurrences = defaultdict(int)
     for chunk in chunks:
         for entity in chunk['entities']:

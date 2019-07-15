@@ -612,7 +612,7 @@ viewDefinition : Model -> EntityId -> Element Msg
 viewDefinition model entityId =
   let
       unavailable =
-        "✗ Definition unavailable" |> bodyWrap []
+        "✗ Definition unavailable" |> bodyWrap [ padding 10 ]
   in
       case model.entityDefinitions |> Dict.get entityId of
         Nothing -> -- shouldn't happen

@@ -25,7 +25,7 @@ def main():
                 oer_data = j['data']
                 url = oer_data['url']
                 enrichment_data, error = make_enrichment_data(oer_data)
-                post_back_wikichunks(url, enrichment_data, textwrap.shorten(error, width=255))
+                post_back_wikichunks(url, enrichment_data, error[:255])
                 if error is None:
                     print('NO ERRORS')
                 else:

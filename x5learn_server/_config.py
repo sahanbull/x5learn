@@ -18,7 +18,7 @@ ADMIN_PASSWORD = "admin"
 ADMIN_ROLE_NAME = "admin"
 LEARNER_ROLE_NAME = "learner"
 
-PASSWORD_SECRET = 'super-secret'
+PASSWORD_SECRET = 'kFGnOO0J8vhT2wlSZ4ti'
 
 ROLES = [
     {"id": 0, "name": ADMIN_ROLE_NAME,

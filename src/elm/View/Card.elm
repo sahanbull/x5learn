@@ -222,7 +222,7 @@ viewOerCard model recommendedFragments position barId enableShadow oer =
                  |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
                 , [])
               else
-                (image [ alpha 0.5, centerX, centerY ] { src = svgPath "enrichment_error", description = "No preview available for this resource" }
+                ("no preview available" |> captionNowrap [ alpha 0.75, whiteText, centerX, centerY ]
                  |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
                 , [])
             else

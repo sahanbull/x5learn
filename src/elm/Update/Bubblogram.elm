@@ -23,17 +23,26 @@ addBubblogram model oerId ({chunks, clusters, mentions, bubblogram, errors} as e
           chunks
           |> occurrencesFromChunks
 
-        entities =
+        entitiesWithAndWithoutDefinitions =
           occurrences
           |> entitiesFromOccurrences
-          |> List.filter (\entity -> List.member entity.title (clusters |> List.concat) && Dict.member entity.id model.entityDefinitions)
+          |> List.filter (\entity -> List.member entity.title (clusters |> List.concat))
 
-        bubbles =
-          entities
-          |> List.map (bubbleFromEntity model occurrences)
-          |> layoutBubbles clusters
+        entitiesWithDefinitions =
+          entitiesWithAndWithoutDefinitions
+          |> List.filter (\entity -> Dict.member entity.id model.entityDefinitions)
     in
-        { enrichment | bubblogram = Just { createdAt = model.currentTime, bubbles = bubbles } }
+        -- if (List.length entitiesWithDefinitions) == (List.length entitiesWithAndWithoutDefinitions) then
+        if (List.length entitiesWithDefinitions) > 0 then
+          let
+              bubbles =
+                entitiesWithDefinitions
+                |> List.map (bubbleFromEntity model occurrences)
+                |> layoutBubbles clusters
+          in
+              { enrichment | bubblogram = Just { createdAt = model.currentTime, bubbles = bubbles } }
+        else
+          enrichment
 
 
 entitiesFromOccurrences : List Occurrence -> List Entity

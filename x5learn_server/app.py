@@ -359,7 +359,10 @@ def search_results_from_x5gon_api(text):
     oers = []
     for index, material in enumerate(materials):
         url = material['url']
-        if len(url)>255: # temporary fix before changing Oer.url column type from String(255) to Text()
+        # Some urls that were longer than 255 caused errors.
+        # TODO: change the type of all url colums from String(255) to Text()
+        # Temporary fix: ignore search results with very long urls
+        if len(url)>255:
             continue
         oer = Oer.query.filter_by(url=url).first()
         if oer is None:

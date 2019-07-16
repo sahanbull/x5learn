@@ -699,10 +699,7 @@ expandCurrentFragmentOrCreateNewOne position inspectorState model =
 
 updateBubblogramsIfNeeded : Model -> Model
 updateBubblogramsIfNeeded model =
-  if model.entityDefinitions |> Dict.values |> List.any (\definition -> definition == DefinitionScheduledForLoading) then
-    model
-  else
-    { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.map (addBubblogram model) }
+  { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.map (addBubblogram model) }
 
 
 logEventForLabStudy eventType params (model, cmd) =

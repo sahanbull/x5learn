@@ -25,7 +25,7 @@ def main():
                 oer_data = j['data']
                 url = oer_data['url']
                 enrichment_data, error = make_enrichment_data(oer_data)
-                post_back_wikichunks(url, enrichment_data, error)
+                post_back_wikichunks(url, enrichment_data, textwrap.shorten(error, width=255))
                 if error is None:
                     print('NO ERRORS')
                 else:
@@ -40,7 +40,7 @@ def main():
             say('ConnectionError caught - waiting for main app to respond.')
             sleep(5)
         except Exception as err:
-            print("Error: {0}".format(err))
+            print("\nError : {0}".format(err))
             say('Something went wrong. Waiting.')
             sleep(5)
 
@@ -59,7 +59,11 @@ def make_enrichment_data(oer_data):
     except EnrichmentError as err:
         error = err.message
         data['errors'] = True
-        print('EnrichmentError', err.message)
+        print('\nEnrichmentError', error)
+    except Exception as err:
+        error = str(err)
+        data['errors'] = True
+        print('\nException', error)
     return data, error
 
 

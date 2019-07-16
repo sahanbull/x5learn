@@ -32,7 +32,7 @@ addBubblogram model oerId ({chunks, clusters, mentions, bubblogram, errors} as e
           entitiesWithAndWithoutDefinitions
           |> List.filter (\entity -> Dict.member entity.id model.entityDefinitions)
     in
-        if (List.length entitiesWithDefinitions) == (List.length entitiesWithAndWithoutDefinitions) then
+        if (List.length entitiesWithDefinitions) > 0 then
           let
               bubbles =
                 entitiesWithDefinitions

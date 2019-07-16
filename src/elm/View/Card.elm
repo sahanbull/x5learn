@@ -227,7 +227,7 @@ viewOerCard model recommendedFragments position barId enableShadow oer =
                 , [])
             else
               case enrichment.bubblogram of
-                Nothing -> -- shouldn't happen
+                Nothing -> -- shouldn't happen for more than a second
                   (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color materialDark, inFront viewLoadingSpinner ], [])
 
                 Just bubblogram ->

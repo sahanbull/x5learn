@@ -87,7 +87,7 @@ update msg ({nav, userProfileForm} as model) =
           searchUrl =
             Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" str ]
       in
-          (model, Navigation.pushUrl nav.key searchUrl)
+          ({ model | inspectorState = Nothing } |> closePopup, Navigation.pushUrl nav.key searchUrl)
 
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, Cmd.none )
@@ -699,10 +699,7 @@ expandCurrentFragmentOrCreateNewOne position inspectorState model =
 
 updateBubblogramsIfNeeded : Model -> Model
 updateBubblogramsIfNeeded model =
-  if model.entityDefinitions |> Dict.values |> List.any (\definition -> definition == DefinitionScheduledForLoading) then
-    model
-  else
-    { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.map (addBubblogram model) }
+  { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.map (addBubblogram model) }
 
 
 logEventForLabStudy eventType params (model, cmd) =
@@ -759,6 +756,8 @@ executeSearchAfterUrlChanged model url =
         url.query
         |> Maybe.withDefault ""
         |> String.dropLeft 2 -- TODO A much cleaner method is to use Url.Query.parser
+        |> Url.percentDecode
+        |> Maybe.withDefault ""
   in
       if str=="" then
         ( model, setBrowserFocus "SearchField")

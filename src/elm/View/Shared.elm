@@ -368,6 +368,13 @@ actionButtonWithoutIcon attrs str onPress =
       button attrs { onPress = onPress, label = label }
 
 
+actionButtonWithoutIconNoBobble : List (Attribute Msg) -> String -> Msg -> Element Msg
+actionButtonWithoutIconNoBobble attrs str onPress =
+  str
+  |> bodyNoWrap []
+  |> el (attrs ++ [ onClickNoBubble onPress ])
+
+
 confirmButton : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
 confirmButton attrs str onPress =
   let
@@ -605,14 +612,14 @@ entityActionButton chunkPopup entityPopup (title, clickAction) =
       attrs =
         hoverAction :: ([ width fill, padding 10 ] ++ background)
   in
-      actionButtonWithoutIcon attrs title (Just clickAction)
+      actionButtonWithoutIconNoBobble attrs title clickAction
 
 
 viewDefinition : Model -> EntityId -> Element Msg
 viewDefinition model entityId =
   let
       unavailable =
-        "✗ Definition unavailable" |> bodyWrap []
+        "✗ Definition unavailable" |> bodyWrap [ padding 10 ]
   in
       case model.entityDefinitions |> Dict.get entityId of
         Nothing -> -- shouldn't happen

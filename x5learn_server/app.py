@@ -554,7 +554,6 @@ class NotesList(Resource):
             # Creating a note repository for unique data fetch
             notes_repository = NotesRepository()
             result_list = notes_repository.get_notes(current_user.get_id(), args['oer_id'], args['sort'], args['offset'], args['limit'])
-
             # Converting result list to JSON friendly format
             serializable_list = list()
             if (result_list):
@@ -568,7 +567,8 @@ class NotesList(Resource):
         '''Creates a new note in database'''
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
-        elif not api.payload['text'] or not api.payload['oer_id']:
+
+        if not api.payload['text'] or not api.payload['oer_id']:
             return {'result': 'Material id and text params cannot be empty'}, 400
         else:
             note = Note(

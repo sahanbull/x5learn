@@ -11,12 +11,10 @@ def test_list_notes_unauthorized(client):
 
 
 def test_create_note_unauthorized(client):
-    response = client.post('/api/v1/note/', data=dict(
-        oer_id=1,
-        text="test string"
-    ), follow_redirects=True)
+    response = client.post('/api/v1/note/', json={'oer_id': '1', 'text': 'test string'}, follow_redirects=True)
 
-    assert response.status_code == 400
+
+    assert response.status_code == 401
 
 
 def test_get_note_unauthorized(client):
@@ -47,18 +45,15 @@ def test_list_actions_unauthorized(client):
 
 
 def test_log_action_unauthorized(client):
-    response = client.post('/api/v1/action/', data=dict(
-        action_type_id=1,
-        params="{}"
-    ), follow_redirects=True)
+    response = client.post('/api/v1/action/', json={'action_type_id': 1, 'params': '{}'}, follow_redirects=True)
 
-    assert response.status_code == 400
+    assert response.status_code == 401
 
 
 def test_forget_user_unauthorized(client):
-    response = client.delete('/api/v1/delete/')
+    response = client.delete('/api/v1/user/forget')
 
-    assert response.status_code == 404
+    assert response.status_code == 401
 
 
 def test_get_definition_unauthorized(client):

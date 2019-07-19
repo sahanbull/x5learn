@@ -11,14 +11,17 @@ from sqlalchemy import or_, and_, cast, Integer
 from flask_restplus import Api, Resource, fields, reqparse
 import wikipedia
 
-
 # instantiate the user management db classes
 # NOTE WHEN PEP8'ING MODULE IMPORTS WILL MOVE TO THE TOP AND CAUSE EXCEPTION
-from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_SENDER, MAIL_USERNAME, MAIL_PASS, MAIL_SERVER, MAIL_PORT, LATEST_API_VERSION
+from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_SENDER, MAIL_USERNAME, MAIL_PASS, MAIL_SERVER, \
+    MAIL_PORT, LATEST_API_VERSION
 from x5learn_server.db.database import get_or_create_db
+
 _ = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
-from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, EntityDefinition, LabStudyLogEvent, ResourceFeedback, Action, ActionType, Note, Repository, NotesRepository, ActionsRepository, UserRepository, DefinitionsRepository
+from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, \
+    EntityDefinition, LabStudyLogEvent, ResourceFeedback, Action, ActionType, Note, Repository, NotesRepository, \
+    ActionsRepository, UserRepository, DefinitionsRepository
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 
@@ -26,7 +29,7 @@ from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 app = Flask(__name__)
 mail = Mail()
 
-app.config['DEBUG'] = True
+app.config['DEBUG'] = False
 app.config['SECRET_KEY'] = PASSWORD_SECRET
 app.config['SECURITY_PASSWORD_HASH'] = "bcrypt"
 app.config['SECURITY_PASSWORD_SALT'] = PASSWORD_SECRET
@@ -75,6 +78,7 @@ def initiate_login_db():
     from x5learn_server.db.database import initiate_login_table_and_admin_profile
     initiate_login_table_and_admin_profile(user_datastore)
     initiate_action_types_table()
+
 
 # Setting wikipedia api language
 wikipedia.set_lang("en")
@@ -168,7 +172,7 @@ def api_search_suggestions():
 
 @app.route("/api/v1/oers/", methods=['POST'])
 def api_oers():
-    oers = [ find_oer_by_id(oer_id) for oer_id in request.get_json()['ids'] ]
+    oers = [find_oer_by_id(oer_id) for oer_id in request.get_json()['ids']]
     return jsonify(oers)
 
 
@@ -180,11 +184,11 @@ def api_material():
     return jsonify(oer.data_and_id())
 
 
-@app.route("/api/v1/resource_feedback/", methods=['POST']) # to be replaced by Actions API
+@app.route("/api/v1/resource_feedback/", methods=['POST'])  # to be replaced by Actions API
 def api_resource_feedback():
     oer_id = request.get_json()['oerId']
     text = request.get_json()['text']
-    user_login_id = current_user.get_id() # Assuming we are never going to allow feedback from logged-out users
+    user_login_id = current_user.get_id()  # Assuming we are never going to allow feedback from logged-out users
     feedback = ResourceFeedback(user_login_id, oer_id, text)
     db_session.add(feedback)
     db_session.commit()
@@ -206,7 +210,8 @@ def api_wikichunk_enrichments():
     enrichments = []
     for oer_id in request.get_json()['ids']:
         # enrichment = WikichunkEnrichment.query.filter_by(oer_id=oer_id).first()
-        enrichment = WikichunkEnrichment.query.filter(WikichunkEnrichment.data['oerId'].astext.cast(Integer)==oer_id).first()
+        enrichment = WikichunkEnrichment.query.filter(
+            WikichunkEnrichment.data['oerId'].astext.cast(Integer) == oer_id).first()
         if enrichment is not None:
             enrichments.append(enrichment.data)
         else:
@@ -220,7 +225,8 @@ def api_wikichunk_enrichments():
 def most_urgent_unstarted_enrichment_task():
     timeout = datetime.now() - timedelta(minutes=10)
     task = WikichunkEnrichmentTask.query.filter(and_(WikichunkEnrichmentTask.error == None, or_(
-        WikichunkEnrichmentTask.started == None, WikichunkEnrichmentTask.started < timeout))).order_by(WikichunkEnrichmentTask.priority.desc()).first()
+        WikichunkEnrichmentTask.started == None, WikichunkEnrichmentTask.started < timeout))).order_by(
+        WikichunkEnrichmentTask.priority.desc()).first()
     if task is None:
         return jsonify({'info': 'No tasks available'})
     url = task.url
@@ -230,7 +236,7 @@ def most_urgent_unstarted_enrichment_task():
     db_session.commit()
     oer = Oer.query.filter_by(url=url).first()
     if oer is None:
-        msg = 'Missing OER: '+str(url)
+        msg = 'Missing OER: ' + str(url)
         print(msg)
         return jsonify({'info': msg})
     return jsonify({'data': oer.data})
@@ -314,7 +320,8 @@ def save_definitions(data):
                 # 3. guaranteeing that definitions are available together with enrichment
                 conn = http.client.HTTPSConnection('en.wikipedia.org')
                 conn.request(
-                    'GET', '/w/api.php?action=query&prop=extracts&exintro&explaintext&exsentences=1&titles='+encoded_title+'&format=json')
+                    'GET',
+                    '/w/api.php?action=query&prop=extracts&exintro&explaintext&exsentences=1&titles=' + encoded_title + '&format=json')
                 response = conn.getresponse().read().decode("utf-8")
                 pages = json.loads(response)['query']['pages']
                 (_, page) = pages.popitem()
@@ -334,7 +341,7 @@ def search_results_from_x5gon_api(text):
     encoded_text = urllib.parse.quote(text)
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request(
-        'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text='+encoded_text)
+        'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text=' + encoded_text)
     response = conn.getresponse().read().decode("utf-8")
     materials = json.loads(response)['rec_materials'][:max_results]
     # materials = [ m for m in materials if m['url'].endswith('.pdf') ] # filter by suffix
@@ -352,7 +359,7 @@ def search_results_from_x5gon_api(text):
         # Some urls that were longer than 255 caused errors.
         # TODO: change the type of all url colums from String(255) to Text()
         # Temporary fix: ignore search results with very long urls
-        if len(url)>255:
+        if len(url) > 255:
             continue
         oer = Oer.query.filter_by(url=url).first()
         if oer is None:
@@ -360,7 +367,7 @@ def search_results_from_x5gon_api(text):
             db_session.add(oer)
             db_session.commit()
         oers.append(oer.data_and_id())
-        push_enrichment_task_if_needed(url, int(1000/(index+1)) + 1)
+        push_enrichment_task_if_needed(url, int(1000 / (index + 1)) + 1)
     return oers
 
 
@@ -539,6 +546,7 @@ m_note = api.model('Note', {
 @ns_notes.route('/')
 class NotesList(Resource):
     '''Shows a list of all notes, and lets you POST to add new notes'''
+
     @ns_notes.doc('list_notes', params={'oer_id': 'Filter result set by material id',
                                         'sort': 'Sort results by timestamp (Default: desc)',
                                         'offset': 'Offset result set by number specified (Default: 0)',
@@ -559,7 +567,8 @@ class NotesList(Resource):
 
             # Creating a note repository for unique data fetch
             notes_repository = NotesRepository()
-            result_list = notes_repository.get_notes(current_user.get_id(), args['oer_id'], args['sort'], args['offset'], args['limit'])
+            result_list = notes_repository.get_notes(current_user.get_id(), args['oer_id'], args['sort'],
+                                                     args['offset'], args['limit'])
             # Converting result list to JSON friendly format
             serializable_list = list()
             if (result_list):
@@ -589,6 +598,7 @@ class NotesList(Resource):
 @ns_notes.param('id', 'The note identifier')
 class Notes(Resource):
     '''Show a single note item and lets you update or delete them'''
+
     @ns_notes.doc('get_note')
     def get(self, id):
         '''Fetch requested note from database'''
@@ -650,6 +660,7 @@ m_action = api.model('Action', {
 @ns_action.route('/')
 class ActionList(Resource):
     '''Shows a list of all actions, and lets you POST to add new actions'''
+
     @ns_action.doc('list_actions', params={'action_type_id': 'Filter result set by action type id (Default: None)',
                                            'with_oer_id_only': 'Fetch actions only with material id (Default: false)',
                                            'sort': 'Sort result set by timestamp (Default: desc)',
@@ -673,7 +684,8 @@ class ActionList(Resource):
 
             # Creating a actions repository for unique data fetch
             actions_repository = ActionsRepository()
-            result_list = actions_repository.get_actions(current_user.get_id(), args['action_type_id'], args['sort'], args['offset'], args['limit'])
+            result_list = actions_repository.get_actions(current_user.get_id(), args['action_type_id'], args['sort'],
+                                                         args['offset'], args['limit'])
 
             # Eliminating actions without a material id
             to_be_removed = list()
@@ -722,6 +734,7 @@ class ActionList(Resource):
             repository.add(action)
             return {'result': 'Action logged'}, 201
 
+
 # Defining user resource for API access
 ns_user = api.namespace('api/v1/user', description='User')
 
@@ -747,7 +760,8 @@ class UserApi(Resource):
                 try:
                     msg = Message("x5Learn Account Deleted", sender=MAIL_SENDER, recipients=[user.email])
                     msg.body = "Your account and related data has been deleted."
-                    msg.html = render_template('/security/email/base_message.html', user=user, app_name=MAIL_SENDER, message=msg.body)
+                    msg.html = render_template('/security/email/base_message.html', user=user, app_name=MAIL_SENDER,
+                                               message=msg.body)
                     mail.send(msg)
                 except Exception:
                     return {'result': 'Mail server not configured'}, 400
@@ -758,7 +772,8 @@ class UserApi(Resource):
 # Defining user resource for API access
 ns_definition = api.namespace('api/v1/definition', description='Definitions')
 
-m_definition = api.model("Definition", { 'titles': fields.String(description="Titles", required=True, help="List of titles as JSON") })
+m_definition = api.model("Definition",
+                         {'titles': fields.String(description="Titles", required=True, help="List of titles as JSON")})
 
 
 @ns_definition.route('/')

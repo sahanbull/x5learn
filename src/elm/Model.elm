@@ -24,7 +24,7 @@ type alias Model =
   , searchInputTyping : String
   , searchState : Maybe SearchState
   , inspectorState : Maybe InspectorState
-  , userMessage : Maybe String
+  , snackbar : Maybe Snackbar
   , hoveringOerId : Maybe String
   , timeOfLastMouseEnterOnCard : Posix
   , modalAnimation : Maybe BoxAnimation
@@ -126,6 +126,10 @@ type alias ScrollData =
   , contentHeight : Float
   }
 
+type alias Snackbar =
+  { startTime : Posix
+  , text : String
+  }
 
 type alias OerCardPlaceholderPosition =
   { x : Float
@@ -308,7 +312,7 @@ initialModel nav flags =
   , searchInputTyping = ""
   , searchState = Nothing
   , inspectorState = Nothing
-  , userMessage = Nothing
+  , snackbar = Nothing
   , hoveringOerId = Nothing
   , timeOfLastMouseEnterOnCard = initialTime
   , modalAnimation = Nothing
@@ -728,3 +732,7 @@ relatedSearchStringFromOer model oerId =
 
 getResourceFeedbackFormValue model oerId =
   model.feedbackForms |> Dict.get oerId |> Maybe.withDefault ""
+
+
+snackbarDuration =
+  3000

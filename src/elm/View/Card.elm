@@ -144,7 +144,7 @@ viewOerCard model recommendedFragments position barId enableShadow oer =
               if enrichment.errors then
                 none
               else
-                viewFragmentsBar model oer enrichment.chunks recommendedFragments cardWidth barId False
+                viewFragmentsBar model oer enrichment.chunks recommendedFragments cardWidth barId
                 |> el [ width fill, moveDown imageHeight ]
 
       preloadImage url =

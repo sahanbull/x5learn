@@ -452,7 +452,7 @@ menuColumn attrs =
   column ([ Background.color white, Border.rounded 4, Border.color <| grey80, dialogShadow ] ++ attrs)
 
 
-viewFragmentsBar model oer chunks recommendedFragments barWidth barId darkBackground =
+viewFragmentsBar model oer chunks recommendedFragments barWidth barId =
   let
       -- markers =
       --   [ fragmentMarkers recommendedFragments yellow
@@ -527,10 +527,7 @@ viewFragmentsBar model oer chunks recommendedFragments barWidth barId darkBackgr
         [ none |> el [ width fill , Background.color veryTransparentWhite, height <| px 1 ] |> above ]
 
       background =
-        if darkBackground then
-          [ Background.color materialDark ]
-        else
-          []
+        [ Background.color materialDark ]
   in
     none
     |> el ([ width fill, height <| px <| fragmentsBarHeight,  moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background)

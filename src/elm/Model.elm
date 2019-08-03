@@ -60,6 +60,7 @@ type alias Model =
   , oerNoteboards : Dict OerId Noteboard
   , fragmentAccesses : Dict Int Fragment
   , oerCardPlaceholderPositions : List OerCardPlaceholderPosition
+  , overviewType : OverviewType
   }
 
 
@@ -77,6 +78,10 @@ type CurrentResource
   = Loaded OerId
   | Error
 
+type OverviewType
+  = BubblogramOverview
+  | StoryOverview
+
 type alias LabStudyTask =
   { title : String
   , durationInMinutes : Int
@@ -85,6 +90,7 @@ type alias LabStudyTask =
 
 type alias Bubble =
   { entity : Entity
+  , index : Int
   , hue : Float
   , alpha : Float
   , saturation : Float
@@ -344,6 +350,7 @@ initialModel nav flags =
   , oerNoteboards = Dict.empty
   , fragmentAccesses = Dict.empty
   , oerCardPlaceholderPositions = []
+  , overviewType = StoryOverview --BubblogramOverview
   }
 
 

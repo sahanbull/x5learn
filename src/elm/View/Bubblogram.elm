@@ -37,7 +37,7 @@ viewBubblogram model oerId {createdAt, bubbles} =
 
       svgBubbles =
         bubbles
-        |> List.concatMap (viewBubble model oerId animationPhase)
+        |> List.concatMap (viewTag model oerId animationPhase)
 
       background =
         rect [ width widthString, height heightString, fill "#191919" ] []
@@ -55,8 +55,17 @@ viewBubblogram model oerId {createdAt, bubbles} =
 
       entityLabel ({entity} as bubble) =
         let
-            {posX, posY, size} =
-              animatedBubbleCurrentCoordinates animationPhase bubble
+            {px, py} =
+              case model.overviewType of
+                BubblogramOverview ->
+                  let
+                      {posX, posY, size} =
+                        animatedBubbleCurrentCoordinates animationPhase bubble
+                  in
+                      { px = posX + 0*size*1.1*bubbleZoom * contentWidth + marginX, py = posY + 0.1 -  0*size*1.1*bubbleZoom * contentHeight + marginTop - 15 }
+
+                StoryOverview ->
+                  { px = 10, py = bubblePosYfromIndex bubble + 3 }
 
             isHovering =
               hoveringBubbleOrFragmentsBarEntityId model == Just entity.id
@@ -65,10 +74,10 @@ viewBubblogram model oerId {createdAt, bubbles} =
               if isHovering then
                 [ Font.underline ]
               else
-                [ Element.alpha (interp (size/3) (1.8*labelPhase-1) 0.8) ]
+                [ Element.alpha 0.8 ]
         in
             entity.title
-            |> captionNowrap ([ whiteText, moveRight <| (posX + 0*size*1.1*bubbleZoom) * contentWidth + marginX, moveDown <| (posY + 0.1 -  0*size*1.1*bubbleZoom) * contentHeight + marginTop - 15, Events.onMouseEnter <| BubbleMouseOver entity.id, Events.onMouseLeave BubbleMouseOut, onClickNoBubble (BubbleClicked oerId), htmlClass hoverableClass ] ++ highlight)
+            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| BubbleMouseOver entity.id, Events.onMouseLeave BubbleMouseOut, onClickNoBubble (BubbleClicked oerId), htmlClass hoverableClass ] ++ highlight)
             |> inFront
             |> List.singleton
 
@@ -81,7 +90,7 @@ viewBubblogram model oerId {createdAt, bubbles} =
                   []
 
                 Just bubble ->
-                  viewPopup model state (animatedBubbleCurrentCoordinates animationPhase bubble)
+                  viewPopup model state bubble
             else
               []
 
@@ -97,8 +106,8 @@ viewBubblogram model oerId {createdAt, bubbles} =
       (graphic, popup)
 
 
-viewBubble : Model -> OerId -> Float -> Bubble -> List (Svg Msg)
-viewBubble model oerId animationPhase ({entity} as bubble) =
+viewTag : Model -> OerId -> Float -> Bubble -> List (Svg Msg)
+viewTag model oerId animationPhase ({entity, index} as bubble) =
   let
       {posX, posY, size} =
         animatedBubbleCurrentCoordinates animationPhase bubble
@@ -108,8 +117,12 @@ viewBubble model oerId animationPhase ({entity} as bubble) =
 
       outline =
         if isHovering then
-          -- [ stroke "#fff", strokeWidth "2", fill "#f93" ]
-          [ fill "#f93" ]
+          case model.overviewType of
+            BubblogramOverview ->
+              -- [ stroke "#fff", strokeWidth "2", fill "#f93" ]
+              [ fill "#f93" ]
+            StoryOverview ->
+              [ fill "rgba(255,255,255,0.1)" ]
         else
           []
 
@@ -120,17 +133,34 @@ viewBubble model oerId animationPhase ({entity} as bubble) =
           []
 
       body =
-        circle
-          ([ cx (posX * (toFloat contentWidth) + marginX |> String.fromFloat)
-          , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
-          , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
-          , fill <| Color.toCssString <| colorFromBubble bubble
-          , onMouseOver <| BubbleMouseOver entity.id
-          , onMouseLeave <| BubbleMouseOut
-          , custom "click" (Json.Decode.succeed { message = BubbleClicked oerId, stopPropagation = True, preventDefault = True })
-          , class hoverableClass
-          ] ++ outline)
-          []
+        case model.overviewType of
+          BubblogramOverview ->
+            circle
+              ([ cx (posX * (toFloat contentWidth) + marginX |> String.fromFloat)
+              , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
+              , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
+              , fill <| Color.toCssString <| colorFromBubble bubble
+              , onMouseOver <| BubbleMouseOver entity.id
+              , onMouseLeave <| BubbleMouseOut
+              , custom "click" (Json.Decode.succeed { message = BubbleClicked oerId, stopPropagation = True, preventDefault = True })
+              , class hoverableClass
+              ] ++ outline)
+              []
+
+          StoryOverview ->
+            rect
+              ([ x "0"
+              , y (bubblePosYfromIndex bubble |> String.fromFloat)
+              , width (containerWidth |> String.fromInt)
+              , height (containerHeight // 5 |> String.fromInt)
+              , stroke <| Color.toCssString <| colorFromBubble bubble
+              , onMouseOver <| BubbleMouseOver entity.id
+              , onMouseLeave <| BubbleMouseOut
+              , custom "click" (Json.Decode.succeed { message = BubbleClicked oerId, stopPropagation = True, preventDefault = True })
+              , class hoverableClass
+              ] ++ outline)
+              []
+
   in
       mentionDots ++ [ body ]
 
@@ -159,9 +189,12 @@ hoveringBubbleOrFragmentsBarEntityId model =
           Nothing
 
 
-viewPopup : Model -> BubblePopupState -> BubbleCoordinates -> List (Element.Attribute Msg)
-viewPopup model {oerId, entityId, content} {posX, posY, size} =
+viewPopup : Model -> BubblePopupState -> Bubble -> List (Element.Attribute Msg)
+viewPopup model {oerId, entityId, content} bubble =
   let
+      {posX, posY, size} =
+        animatedBubbleCurrentCoordinates 1 bubble
+
       zoomFromText text =
         (String.length text |> toFloat) / 200 - posY*0.5 |> Basics.min 1
 
@@ -265,7 +298,12 @@ viewPopup model {oerId, entityId, content} {posX, posY, size} =
             , interp zoom smallest.popupWidth largest.popupWidth)
 
       verticalOffset =
-        popupVerticalPositionFromBubble posY size
+        case model.overviewType of
+          BubblogramOverview ->
+            Basics.max 10 <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5
+
+          StoryOverview ->
+            bubblePosYfromIndex bubble
   in
       none
       |> el ([ above box, moveRight <| horizontalOffset, moveDown <| verticalOffset ]++tail)
@@ -278,7 +316,7 @@ containerWidth =
 
 
 containerHeight =
-  imageHeight
+  imageHeight - fragmentsBarHeight
 
 
 contentWidth =
@@ -323,8 +361,13 @@ viewMentionDots model oerId bubble =
   else
     let
         circlePosY =
-          containerHeight - 8
-          |> String.fromFloat
+          String.fromFloat <|
+            case model.overviewType of
+              BubblogramOverview ->
+                containerHeight - 8
+
+              StoryOverview ->
+                (bubblePosYfromIndex bubble) + 23
 
         dot : MentionInOer -> Svg Msg
         dot {positionInResource, sentence} =
@@ -374,5 +417,7 @@ onMouseLeave msg =
   Html.Events.on "mouseleave" (Json.Decode.succeed msg)
 
 
-popupVerticalPositionFromBubble posY size =
-  Basics.max 10 <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5
+bubblePosYfromIndex : Bubble -> Float
+bubblePosYfromIndex bubble =
+  bubble.index * containerHeight // 5
+  |> toFloat

@@ -77,10 +77,16 @@ viewBubblogram model oerId {createdAt, bubbles} =
                 [ Element.alpha 0.8 ]
 
             labelClickHandler =
-              onClickNoBubble (OverviewTagLabelClicked entity.id)
+              case model.cachedOers |> Dict.get oerId of
+                Nothing ->
+                  []
+
+                Just oer ->
+                  [ onClickNoBubble <| InspectOer oer 0 0.01 True ]
+                  -- onClickNoBubble (OverviewTagLabelClicked entity.id)
         in
             entity.title
-            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| OverviewTagLabelMouseOver entity.id, labelClickHandler, htmlClass hoverableClass ] ++ highlight)
+            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| OverviewTagLabelMouseOver entity.id, htmlClass hoverableClass ] ++ highlight ++ labelClickHandler)
             |> inFront
             |> List.singleton
 

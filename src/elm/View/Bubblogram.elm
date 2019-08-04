@@ -65,7 +65,7 @@ viewBubblogram model oerId {createdAt, bubbles} =
                       { px = posX + 0*size*1.1*bubbleZoom * contentWidth + marginX, py = posY + 0.1 -  0*size*1.1*bubbleZoom * contentHeight + marginTop - 15 }
 
                 StoryOverview ->
-                  { px = 10, py = bubblePosYfromIndex bubble + 3 }
+                  { px = 9, py = bubblePosYfromIndex bubble + 3 }
 
             isHovering =
               hoveringBubbleOrFragmentsBarEntityId model == Just entity.id
@@ -77,7 +77,7 @@ viewBubblogram model oerId {createdAt, bubbles} =
                 [ Element.alpha 0.8 ]
         in
             entity.title
-            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| OverviewTagMouseOver entity.id, Events.onMouseLeave OverviewTagMouseOut, onClickNoBubble (OverviewTagClicked oerId), htmlClass hoverableClass ] ++ highlight)
+            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| OverviewTagMouseOver entity.id, Events.onMouseLeave OverviewTagMouseOut, onClickNoBubble (OverviewClicked oerId), htmlClass hoverableClass ] ++ highlight)
             |> inFront
             |> List.singleton
 
@@ -97,11 +97,28 @@ viewBubblogram model oerId {createdAt, bubbles} =
           _ ->
             []
 
+      clickHandler =
+        case model.cachedOers |> Dict.get oerId of
+          Nothing ->
+            []
+
+          Just oer ->
+            let
+                fragmentStart =
+                  case model.selectedMentionInStory of
+                    Nothing ->
+                      0
+
+                    Just (_, {positionInResource}) ->
+                      positionInResource - 0.0007
+            in
+                [ onClickNoBubble <| InspectOer oer fragmentStart 0.01 True ]
+
       graphic =
         [ background ] ++ svgBubbles
         |> svg [ width widthString, height heightString, viewBox <| "0 0 " ++ ([ widthString, heightString ] |> String.join " ") ]
         |> html
-        |> el entityLabels
+        |> el (clickHandler ++ entityLabels)
   in
       (graphic, popup)
 
@@ -142,7 +159,6 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
               , fill <| Color.toCssString <| colorFromBubble bubble
               , onMouseOver <| OverviewTagMouseOver entity.id
               , onMouseLeave <| OverviewTagMouseOut
-              , custom "click" (Decode.succeed { message = OverviewTagClicked oerId, stopPropagation = True, preventDefault = True })
               , class hoverableClass
               ] ++ outline)
               []
@@ -156,7 +172,6 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
               , stroke <| Color.toCssString <| colorFromBubble bubble
               , onMouseOver <| OverviewTagMouseOver entity.id
               , onMouseLeave <| OverviewTagMouseOut
-              , custom "click" (Decode.succeed { message = OverviewTagClicked oerId, stopPropagation = True, preventDefault = True })
               , class <| hoverableClass ++ (if isHovering then " HoveringStoryTag" else "")
               ] ++ outline)
               []

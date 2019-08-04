@@ -104,7 +104,7 @@ update msg ({nav, userProfileForm} as model) =
       in
           ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> addFragmentAccess (Fragment oer.id fragmentStart fragmentLength) model.currentTime, openModalAnimation youtubeEmbedParams)
       |> saveAction 1 [ ("oerId", Encode.int oer.id), ("oerId", Encode.int oer.id) ]
-      |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt ]
+      |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat ]
 
     UninspectSearchResult ->
       ( { model | inspectorState = Nothing}, Cmd.none)
@@ -463,13 +463,13 @@ update msg ({nav, userProfileForm} as model) =
       ({model | hoveringBubbleEntityId = Nothing } |> unselectMentionInStory |> closePopup, Cmd.none)
       |> logEventForLabStudy "OverviewTagMouseOut" []
 
-    OverviewTagClicked oerId ->
+    OverviewClicked oerId ->
       let
           newModel =
             {model | popup = model.popup |> updateBubblePopupOnClick model oerId }
       in
           (newModel, Cmd.none)
-          |> logEventForLabStudy "OverviewTagClicked" (popupToStrings newModel.popup)
+          |> logEventForLabStudy "OverviewClicked" (popupToStrings newModel.popup)
 
     PageScrolled {scrollTop, viewHeight, contentHeight} ->
       (model, Cmd.none)
@@ -710,7 +710,8 @@ updateBubblogramsIfNeeded model =
 logEventForLabStudy eventType params (model, cmd) =
   -- let
   --     dummy =
-  --       eventType
+  --       eventType :: params
+  --       |> String.join " "
   --       |> Debug.log "logEventForLabStudy"
   -- in
   if isLabStudy1 model then
@@ -836,4 +837,4 @@ selectOrUnselectMentionInStory mousePosXonCard model =
 
                     Just mention ->
                       ({ model | selectedMentionInStory = Just (oerId, mention), hoveringBubbleEntityId = Just entityId, popup = model.popup |> updateBubblePopupOnClick model oerId }, setBrowserFocus "")
-                      |> logEventForLabStudy "UnselectMentionInStory" []
+                      |> logEventForLabStudy "SelectMentionInStory" [ oerId |> String.fromInt, mousePosXonCard |> String.fromFloat, mention.positionInResource |> String.fromFloat, mention.sentence ]

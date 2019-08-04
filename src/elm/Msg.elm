@@ -63,7 +63,7 @@ type Msg
   | VideoIsPlayingAtPosition Float
   | OverviewTagMouseOver String
   | OverviewTagMouseOut
-  | OverviewTagClicked OerId
+  | OverviewClicked OerId
   | PageScrolled ScrollData
   | OerCardPlaceholderPositionsReceived (List OerCardPlaceholderPosition)
   | StartLabStudyTask LabStudyTask

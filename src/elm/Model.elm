@@ -351,7 +351,7 @@ initialModel nav flags =
   , oerNoteboards = Dict.empty
   , fragmentAccesses = Dict.empty
   , oerCardPlaceholderPositions = []
-  , overviewType = StoryOverview --BubblogramOverview
+  , overviewType = StoryOverview
   , selectedMentionInStory = Nothing
   }
 

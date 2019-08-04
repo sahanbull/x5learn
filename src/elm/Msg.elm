@@ -61,8 +61,9 @@ type Msg
   | ClickedQuickNoteButton OerId String
   | RemoveNote Note
   | VideoIsPlayingAtPosition Float
-  | OverviewTagMouseOver String
+  | OverviewTagMouseOver EntityId
   | OverviewTagMouseOut
+  | OverviewTagLabelMouseOver EntityId
   | OverviewClicked OerId
   | PageScrolled ScrollData
   | OerCardPlaceholderPositionsReceived (List OerCardPlaceholderPosition)

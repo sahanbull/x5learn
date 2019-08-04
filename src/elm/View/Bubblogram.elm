@@ -77,7 +77,7 @@ viewBubblogram model oerId {createdAt, bubbles} =
                 [ Element.alpha 0.8 ]
         in
             entity.title
-            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| OverviewTagMouseOver entity.id, Events.onMouseLeave OverviewTagMouseOut, onClickNoBubble (OverviewClicked oerId), htmlClass hoverableClass ] ++ highlight)
+            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| OverviewTagLabelMouseOver entity.id, htmlClass hoverableClass ] ++ highlight)
             |> inFront
             |> List.singleton
 

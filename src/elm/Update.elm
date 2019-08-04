@@ -450,14 +450,21 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "VideoIsPlayingAtPosition" [ position |> String.fromFloat]
 
     OverviewTagMouseOver entityId ->
-      let
-          oerIdLogString =
-            model.hoveringOerId
-            |> Maybe.withDefault 0
-            |> String.fromInt
-      in
-          ({model | hoveringBubbleEntityId = Just entityId }, Cmd.none)
-          |> logEventForLabStudy "OverviewTagMouseOver" [ oerIdLogString, entityId ]
+      ({model | hoveringBubbleEntityId = Just entityId }, Cmd.none)
+      |> logEventForLabStudy "OverviewTagMouseOver" [ entityId ]
+
+    OverviewTagLabelMouseOver entityId ->
+      case model.hoveringOerId of
+        Nothing ->
+          (model, Cmd.none)
+
+        Just oerId ->
+          let
+              popup =
+                BubblePopup <| BubblePopupState oerId entityId DefinitionInBubblePopup []
+          in
+              ({model | hoveringBubbleEntityId = Just entityId, popup = Just popup }, Cmd.none)
+              |> logEventForLabStudy "OverviewTagLabelMouseOver" [ oerId |> String.fromInt, entityId ]
 
     OverviewTagMouseOut ->
       ({model | hoveringBubbleEntityId = Nothing } |> unselectMentionInStory |> closePopup, Cmd.none)

@@ -25,7 +25,7 @@ type alias Model =
   , searchState : Maybe SearchState
   , inspectorState : Maybe InspectorState
   , userMessage : Maybe String
-  , hoveringOerId : Maybe String
+  , hoveringOerId : Maybe OerId
   , timeOfLastMouseEnterOnCard : Posix
   , modalAnimation : Maybe BoxAnimation
   , animationsPending : Set String
@@ -61,6 +61,7 @@ type alias Model =
   , fragmentAccesses : Dict Int Fragment
   , oerCardPlaceholderPositions : List OerCardPlaceholderPosition
   , overviewType : OverviewType
+  , selectedMentionInStory : Maybe (OerId, MentionInOer)
   }
 
 
@@ -351,6 +352,7 @@ initialModel nav flags =
   , fragmentAccesses = Dict.empty
   , oerCardPlaceholderPositions = []
   , overviewType = StoryOverview --BubblogramOverview
+  , selectedMentionInStory = Nothing
   }
 
 

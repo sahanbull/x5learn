@@ -366,9 +366,9 @@ update msg ({nav, userProfileForm} as model) =
       -- in
       ( { model | resourceRecommendations = [], userMessage = Just "An error occurred while loading recommendations" }, Cmd.none )
 
-    SetHover maybeUrl ->
-      ( { model | hoveringOerId = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
-      |> logEventForLabStudy "SetHover" [ maybeUrl |> Maybe.withDefault "" ]
+    SetHover maybeId ->
+      ( { model | hoveringOerId = maybeId, timeOfLastMouseEnterOnCard = model.currentTime } |> unselectMentionInStory, Cmd.none )
+      |> logEventForLabStudy "SetHover" [ maybeId |> Maybe.withDefault 0 |> String.fromInt ]
 
     SetPopup popup ->
       let
@@ -394,7 +394,7 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "SelectSuggestion" [ suggestion ]
 
     MouseOverChunkTrigger mousePositionX ->
-      ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX }, Cmd.none )
+      ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX } |> unselectMentionInStory, Cmd.none )
       |> logEventForLabStudy "MouseOverChunkTrigger" [ mousePositionX |> String.fromFloat ]
 
     YoutubeSeekTo fragmentStart ->
@@ -449,26 +449,27 @@ update msg ({nav, userProfileForm} as model) =
       (model |> expandCurrentFragmentOrCreateNewOne position model.inspectorState, Cmd.none)
       |> logEventForLabStudy "VideoIsPlayingAtPosition" [ position |> String.fromFloat]
 
-    BubbleMouseOver entityId ->
+    OverviewTagMouseOver entityId ->
       let
-          oerId =
+          oerIdLogString =
             model.hoveringOerId
-            |> Maybe.withDefault ""
+            |> Maybe.withDefault 0
+            |> String.fromInt
       in
           ({model | hoveringBubbleEntityId = Just entityId }, Cmd.none)
-          |> logEventForLabStudy "BubbleMouseOver" [ oerId, entityId ]
+          |> logEventForLabStudy "OverviewTagMouseOver" [ oerIdLogString, entityId ]
 
-    BubbleMouseOut ->
-      ({model | hoveringBubbleEntityId = Nothing } |> closePopup, Cmd.none)
-      |> logEventForLabStudy "BubbleMouseOut" []
+    OverviewTagMouseOut ->
+      ({model | hoveringBubbleEntityId = Nothing } |> unselectMentionInStory |> closePopup, Cmd.none)
+      |> logEventForLabStudy "OverviewTagMouseOut" []
 
-    BubbleClicked oerId ->
+    OverviewTagClicked oerId ->
       let
           newModel =
             {model | popup = model.popup |> updateBubblePopupOnClick model oerId }
       in
           (newModel, Cmd.none)
-          |> logEventForLabStudy "BubbleClicked" (popupToStrings newModel.popup)
+          |> logEventForLabStudy "OverviewTagClicked" (popupToStrings newModel.popup)
 
     PageScrolled {scrollTop, viewHeight, contentHeight} ->
       (model, Cmd.none)
@@ -489,6 +490,10 @@ update msg ({nav, userProfileForm} as model) =
     SelectResourceSidebarTab tab ->
       ({ model | resourceSidebarTab = tab }, setBrowserFocus "textInputFieldForNotesOrFeedback")
       |> logEventForLabStudy "SelectResourceSidebarTab" []
+
+    MouseMovedOnHoveringStoryTag mousePosXonCard ->
+      model
+      |> selectOrUnselectMentionInStory mousePosXonCard
 
 
 createNote : OerId -> String -> Model -> Model
@@ -703,6 +708,11 @@ updateBubblogramsIfNeeded model =
 
 
 logEventForLabStudy eventType params (model, cmd) =
+  -- let
+  --     dummy =
+  --       eventType
+  --       |> Debug.log "logEventForLabStudy"
+  -- in
   if isLabStudy1 model then
     let
         time =
@@ -789,3 +799,41 @@ saveAction actionTypeId params (model, oldCmd) =
     (model, [ oldCmd, ActionApi.saveAction actionTypeId params ] |> Cmd.batch)
   else
     (model, oldCmd)
+
+
+unselectMentionInStory : Model -> Model
+unselectMentionInStory model =
+  { model | selectedMentionInStory = Nothing }
+
+
+selectOrUnselectMentionInStory : Float -> Model -> (Model, Cmd Msg)
+selectOrUnselectMentionInStory mousePosXonCard model =
+  let
+      unselect =
+        (model |> unselectMentionInStory, setBrowserFocus "")
+        |> logEventForLabStudy "UnselectMentionInStory" []
+  in
+      case model.hoveringBubbleEntityId of
+        Nothing ->
+          unselect
+
+        Just entityId ->
+          case model.hoveringOerId of
+            Nothing ->
+              unselect
+
+            Just oerId ->
+              let
+                  closestMentionInRange =
+                    getMentions model oerId entityId
+                    |> List.filter (\{positionInResource} -> (abs (positionInResource - mousePosXonCard) < 0.05))
+                    |> List.sortBy (\{positionInResource} -> (abs (positionInResource - mousePosXonCard)))
+                    |> List.head
+              in
+                  case closestMentionInRange of
+                    Nothing ->
+                      unselect
+
+                    Just mention ->
+                      ({ model | selectedMentionInStory = Just (oerId, mention), hoveringBubbleEntityId = Just entityId, popup = model.popup |> updateBubblePopupOnClick model oerId }, setBrowserFocus "")
+                      |> logEventForLabStudy "UnselectMentionInStory" []

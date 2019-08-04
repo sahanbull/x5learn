@@ -13,24 +13,34 @@ updateBubblePopupOnClick model oerId oldPopup =
       oldPopup
 
     Just entityId ->
-      let
-          existingState =
-            case model.popup of
-              Just (BubblePopup state) ->
-                if state.oerId==oerId && state.entityId==entityId then
-                  Just state
-                else
-                  Nothing
+      case model.overviewType of
+        BubblogramOverview ->
+          let
+              existingState =
+                case model.popup of
+                  Just (BubblePopup state) ->
+                    if state.oerId==oerId && state.entityId==entityId then
+                      Just state
+                    else
+                      Nothing
 
-              _ ->
-                Nothing
-      in
-          case existingState of
-            Just state ->
-              updatedPopup state
+                  _ ->
+                    Nothing
+          in
+              case existingState of
+                Just state ->
+                  updatedPopup state
+
+                Nothing ->
+                  Just <| initialPopup model oerId entityId
+
+        StoryOverview ->
+          case model.selectedMentionInStory of
+            Just (_,mention) ->
+              Just <| BubblePopup <| BubblePopupState oerId entityId (MentionInBubblePopup mention) []
 
             Nothing ->
-              Just <| initialPopup model oerId entityId
+              Nothing
 
 
 initialPopup : Model -> OerId -> String -> Popup

@@ -2,7 +2,7 @@ module View.Bubblogram exposing (viewBubblogram)
 
 import Dict exposing (Dict)
 import Time exposing (Posix, millisToPosix, posixToMillis)
-import Json.Decode
+import Json.Decode as Decode
 
 import List.Extra
 
@@ -77,7 +77,7 @@ viewBubblogram model oerId {createdAt, bubbles} =
                 [ Element.alpha 0.8 ]
         in
             entity.title
-            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| BubbleMouseOver entity.id, Events.onMouseLeave BubbleMouseOut, onClickNoBubble (BubbleClicked oerId), htmlClass hoverableClass ] ++ highlight)
+            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| OverviewTagMouseOver entity.id, Events.onMouseLeave OverviewTagMouseOut, onClickNoBubble (OverviewTagClicked oerId), htmlClass hoverableClass ] ++ highlight)
             |> inFront
             |> List.singleton
 
@@ -128,7 +128,7 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
 
       mentionDots =
         if isHovering then
-          viewMentionDots model oerId bubble
+          viewMentionDots model oerId entity.id bubble
         else
           []
 
@@ -140,9 +140,9 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
               , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
               , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
               , fill <| Color.toCssString <| colorFromBubble bubble
-              , onMouseOver <| BubbleMouseOver entity.id
-              , onMouseLeave <| BubbleMouseOut
-              , custom "click" (Json.Decode.succeed { message = BubbleClicked oerId, stopPropagation = True, preventDefault = True })
+              , onMouseOver <| OverviewTagMouseOver entity.id
+              , onMouseLeave <| OverviewTagMouseOut
+              , custom "click" (Decode.succeed { message = OverviewTagClicked oerId, stopPropagation = True, preventDefault = True })
               , class hoverableClass
               ] ++ outline)
               []
@@ -154,10 +154,10 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
               , width (containerWidth |> String.fromInt)
               , height (containerHeight // 5 |> String.fromInt)
               , stroke <| Color.toCssString <| colorFromBubble bubble
-              , onMouseOver <| BubbleMouseOver entity.id
-              , onMouseLeave <| BubbleMouseOut
-              , custom "click" (Json.Decode.succeed { message = BubbleClicked oerId, stopPropagation = True, preventDefault = True })
-              , class hoverableClass
+              , onMouseOver <| OverviewTagMouseOver entity.id
+              , onMouseLeave <| OverviewTagMouseOut
+              , custom "click" (Decode.succeed { message = OverviewTagClicked oerId, stopPropagation = True, preventDefault = True })
+              , class <| hoverableClass ++ (if isHovering then " HoveringStoryTag" else "")
               ] ++ outline)
               []
 
@@ -196,7 +196,12 @@ viewPopup model {oerId, entityId, content} bubble =
         animatedBubbleCurrentCoordinates 1 bubble
 
       zoomFromText text =
-        (String.length text |> toFloat) / 200 - posY*0.5 |> Basics.min 1
+        case model.overviewType of
+          BubblogramOverview ->
+            (String.length text |> toFloat) / 200 - posY*0.5 |> Basics.min 1
+
+          StoryOverview ->
+            (String.length text |> toFloat) / 200 - ((toFloat bubble.index)*0.05) |> Basics.min 1
 
       (contentElement, zoom) =
         case content of
@@ -248,9 +253,9 @@ viewPopup model {oerId, entityId, content} bubble =
           MentionInBubblePopup {positionInResource} ->
             let
                 sizeY =
-                  containerHeight - verticalOffset
+                  35
 
-                hs =
+                tailHeightString =
                   sizeY
                   |> String.fromFloat
 
@@ -258,7 +263,10 @@ viewPopup model {oerId, entityId, content} bubble =
                   positionInResource * containerWidth
 
                 rootX =
-                  horizontalOffset + (if positionInResource<0.5 then rootMargin else popupWidth-rootMargin-rootWidth) |> Basics.max 5 |> Basics.min (containerWidth - rootMargin - 15)
+                  tipX * 3 / 4 + (containerWidth/8)
+                  |> Basics.min (popupWidth-rootMargin-rootWidth - 30)
+                  |> Basics.min (containerWidth - rootMargin - 35)
+                  |> Basics.max 25
 
                 rootWidth =
                   20
@@ -274,7 +282,7 @@ viewPopup model {oerId, entityId, content} bubble =
                   |> svgPointsFromCorners
             in
                 [ polygon [ fill "white", points corners, class "PointerEventsNone" ] [] ]
-                |> svg [ width widthString, height hs, viewBox <| "0 0 " ++ ([ widthString, hs ] |> String.join " ") ]
+                |> svg [ width widthString, height tailHeightString, viewBox <| "0 0 " ++ ([ widthString, tailHeightString ] |> String.join " ") ]
                 |> html
                 |> el [ moveDown <| sizeY-1, moveLeft horizontalOffset, pointerEventsNone ]
                 |> above
@@ -354,8 +362,8 @@ hoverableClass =
   "UserSelectNone CursorPointer"
 
 
-viewMentionDots : Model -> OerId -> Bubble -> List (Svg Msg)
-viewMentionDots model oerId bubble =
+viewMentionDots : Model -> OerId -> EntityId -> Bubble -> List (Svg Msg)
+viewMentionDots model oerId entityId bubble =
   if isAnyChunkPopupOpen model then
     []
   else
@@ -370,25 +378,8 @@ viewMentionDots model oerId bubble =
                 (bubblePosYfromIndex bubble) + 23
 
         dot : MentionInOer -> Svg Msg
-        dot {positionInResource, sentence} =
+        dot ({positionInResource, sentence} as mention) =
           let
-              isInPopup =
-                case model.popup of
-                  Just (BubblePopup state) ->
-                    if state.oerId==oerId && state.entityId==bubble.entity.id then
-                      case state.content of
-                        MentionInBubblePopup mention ->
-                          mention.sentence==sentence
-
-                        _ ->
-                          False
-
-                    else
-                      False
-
-                  _ ->
-                    False
-
               circlePosX =
                 positionInResource * containerWidth
                 |> String.fromFloat
@@ -414,7 +405,7 @@ svgPointsFromCorners corners =
 
 onMouseLeave : msg -> Attribute msg
 onMouseLeave msg =
-  Html.Events.on "mouseleave" (Json.Decode.succeed msg)
+  Html.Events.on "mouseleave" (Decode.succeed msg)
 
 
 bubblePosYfromIndex : Bubble -> Float

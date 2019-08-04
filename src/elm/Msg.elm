@@ -42,7 +42,7 @@ type Msg
   | RequestSendResourceFeedback (Result Http.Error String)
   | RequestSaveAction (Result Http.Error String)
   | RequestSaveNote (Result Http.Error String)
-  | SetHover (Maybe String)
+  | SetHover (Maybe OerId)
   | SetPopup Popup
   | ClosePopup
   | CloseInspector
@@ -61,14 +61,15 @@ type Msg
   | ClickedQuickNoteButton OerId String
   | RemoveNote Note
   | VideoIsPlayingAtPosition Float
-  | BubbleMouseOver String
-  | BubbleMouseOut
-  | BubbleClicked OerId
+  | OverviewTagMouseOver String
+  | OverviewTagMouseOut
+  | OverviewTagClicked OerId
   | PageScrolled ScrollData
   | OerCardPlaceholderPositionsReceived (List OerCardPlaceholderPosition)
   | StartLabStudyTask LabStudyTask
   | StoppedLabStudyTask
   | SelectResourceSidebarTab ResourceSidebarTab
+  | MouseMovedOnHoveringStoryTag Float
 
 
 type UserProfileField
@@ -100,6 +101,7 @@ subscriptions model =
       , Ports.closeInspector (\_ -> CloseInspector)
       , Ports.clickedOnDocument (\_ -> ClickedOnDocument)
       , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
+      , Ports.mouseMovedOnHoveringStoryTag MouseMovedOnHoveringStoryTag
       , Ports.videoIsPlayingAtPosition VideoIsPlayingAtPosition
       , Ports.pageScrolled PageScrolled
       , Ports.receiveCardPlaceholderPositions OerCardPlaceholderPositionsReceived

@@ -136,21 +136,21 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
         hoveringBubbleOrFragmentsBarEntityId model == Just entity.id
 
       outline =
-        if isHovering then
-          case model.overviewType of
-            BubblogramOverview ->
-              -- [ stroke "#fff", strokeWidth "2", fill "#f93" ]
+        case model.overviewType of
+          BubblogramOverview ->
+            if isHovering then
               [ fill "#f93" ]
-            StoryOverview ->
+            else
+              []
+
+          StoryOverview ->
+            if isHovering then
               [ fill "rgba(255,255,255,0.1)" ]
-        else
-          []
+            else
+              [ fill "rgba(255,255,255,0)" ]
 
       mentionDots =
-        if isHovering then
-          viewMentionDots model oerId entity.id bubble
-        else
-          []
+        viewMentionDots model oerId entity.id bubble isHovering
 
       body =
         case model.overviewType of
@@ -380,38 +380,44 @@ hoverableClass =
   "UserSelectNone CursorPointer"
 
 
-viewMentionDots : Model -> OerId -> EntityId -> Bubble -> List (Svg Msg)
-viewMentionDots model oerId entityId bubble =
-  if isAnyChunkPopupOpen model then
-    []
-  else
-    let
-        circlePosY =
-          String.fromFloat <|
-            case model.overviewType of
-              BubblogramOverview ->
-                containerHeight - 8
+viewMentionDots : Model -> OerId -> EntityId -> Bubble -> Bool -> List (Svg Msg)
+viewMentionDots model oerId entityId bubble isHoveringOnCurrentTag =
+  let
+      circlePosY =
+        String.fromFloat <|
+          case model.overviewType of
+            BubblogramOverview ->
+              containerHeight - 8
 
-              StoryOverview ->
-                (bubblePosYfromIndex bubble) + 23
+            StoryOverview ->
+              (bubblePosYfromIndex bubble) + 23
 
-        dot : MentionInOer -> Svg Msg
-        dot ({positionInResource, sentence} as mention) =
-          let
-              circlePosX =
-                positionInResource * containerWidth
-                |> String.fromFloat
+      dot : MentionInOer -> Svg Msg
+      dot ({positionInResource, sentence} as mention) =
+        let
+            circlePosX =
+              positionInResource * containerWidth
+              |> String.fromFloat
 
-              circleRadius =
+            circleRadius =
+              if isHoveringOnCurrentTag then
                 "4.5"
-          in
-              circle [ cx circlePosX, cy circlePosY, r circleRadius, fill "rgba(255,140,0,0.95)" ] []
+              else
+                "2.5"
 
-        mentions =
-          getMentions model oerId bubble.entity.id
-    in
-        mentions
-        |> List.map dot
+            color =
+              if isHoveringOnCurrentTag then
+                "rgba(255,140,0,1)"
+              else
+                "rgba(255,140,0,0.3)"
+        in
+            circle [ cx circlePosX, cy circlePosY, r circleRadius, fill color ] []
+
+      mentions =
+        getMentions model oerId bubble.entity.id
+  in
+      mentions
+      |> List.map dot
 
 
 svgPointsFromCorners : List (Float, Float) -> String

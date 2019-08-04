@@ -748,15 +748,6 @@ pointerEventsNone =
   htmlClass "PointerEventsNone"
 
 
-isAnyChunkPopupOpen model =
-  case model.popup of
-    Just (ChunkOnBar _) ->
-      True
-
-    _ ->
-      False
-
-
 secondsToString : Int -> String
 secondsToString seconds =
   let

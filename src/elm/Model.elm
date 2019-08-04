@@ -614,6 +614,24 @@ uniqueEntitiesFromEnrichments enrichments =
   |> List.Extra.uniqueBy .id
 
 
+getEntityTitleFromEntityId : Model -> EntityId -> Maybe String
+getEntityTitleFromEntityId model entityId =
+  let
+      maybeEntity =
+        model.wikichunkEnrichments
+        |> Dict.values
+        |> uniqueEntitiesFromEnrichments
+        |> List.filter (\{id} -> id==entityId)
+        |> List.head
+  in
+      case maybeEntity of
+        Nothing ->
+          Nothing
+
+        Just entity ->
+          Just entity.title
+
+
 homePath =
   "/"
 

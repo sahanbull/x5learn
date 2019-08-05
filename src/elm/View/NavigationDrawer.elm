@@ -7,6 +7,7 @@ import Element exposing (..)
 import Element.Input as Input exposing (button)
 import Element.Background as Background
 import Element.Border as Border
+import Element.Font as Font
 import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
 
 import Model exposing (..)
@@ -48,6 +49,7 @@ withNavigationDrawer model (pageContent, modal) =
 
       drawer =
         [ model.searchInputTyping |> (if isLabStudy1 model then dataSetSelectionWidget model else viewSearchWidget model fill "Search")
+        , viewOverviewSelectionWidget model
         , navButtons
         ]
         |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 14, spacing 30, whiteBackground ]
@@ -75,3 +77,19 @@ dataSetSelectionWidget model searchInputTyping =
         |> el [ width fill, centerX ]
   in
       searchField
+
+
+viewOverviewSelectionWidget : Model -> Element Msg
+viewOverviewSelectionWidget model =
+  Input.radio
+    [ padding 10
+    , spacing 20
+    ]
+    { onChange = SelectedOverviewType
+    , selected = Just model.overviewType
+    , label = Input.labelAbove captionTextAttrs (text "Overview")
+    , options =
+        [ Input.option BubblogramOverview (text "Bubbles")
+        , Input.option StoryOverview (text "Lines")
+        ]
+    }

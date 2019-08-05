@@ -119,16 +119,24 @@ wrapText attrs str =
   [ text str ] |> paragraph attrs
 
 
+captionTextAttrs =
+  [ Font.size 12, Font.color materialDark ]
+
+
+bodyTextAttrs =
+  [ Font.size 14, Font.color materialDark ]
+
+
 captionNowrap attrs str =
-  text str |> el ([ Font.size 12 ] ++ attrs)
+  text str |> el (captionTextAttrs ++ attrs)
 
 
 bodyWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 14 ] ++ attrs)
+  [ text str ] |> paragraph (bodyTextAttrs ++ attrs)
 
 
 bodyNoWrap attrs str =
-  text str |> el ([ Font.size 14, Font.color materialDark ] ++ attrs)
+  text str |> el (bodyTextAttrs ++ attrs)
 
 
 subSubheaderNoWrap attrs str =
@@ -136,15 +144,15 @@ subSubheaderNoWrap attrs str =
 
 
 subSubheaderWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 16 ] ++ attrs)
+  [ text str ] |> paragraph ([ Font.size 16, Font.color materialDark ] ++ attrs)
 
 
 subheaderWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 21 ] ++ attrs)
+  [ text str ] |> paragraph ([ Font.size 21, Font.color materialDark ] ++ attrs)
 
 
 headlineWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 24 ] ++ attrs)
+  [ text str ] |> paragraph ([ Font.size 24, Font.color materialDark ] ++ attrs)
 
 
 italicText =

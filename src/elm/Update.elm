@@ -524,6 +524,18 @@ update msg ({nav, userProfileForm} as model) =
       model
       |> selectOrUnselectMentionInStory mousePosXonCard
 
+    SelectedOverviewType overviewType ->
+      let
+          logTitle =
+            case overviewType of
+              BubblogramOverview ->
+                "BubblogramOverview"
+              StoryOverview ->
+                "StoryOverview"
+      in
+          ({ model | overviewType = overviewType }, Cmd.none)
+          |> logEventForLabStudy "SelectedOverviewType" [ logTitle ]
+
 
 createNote : OerId -> String -> Model -> Model
 createNote oerId text model =

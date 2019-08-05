@@ -73,6 +73,7 @@ type Msg
   | StoppedLabStudyTask
   | SelectResourceSidebarTab ResourceSidebarTab
   | MouseMovedOnHoveringStoryTag Float
+  | SelectedOverviewType OverviewType
 
 
 type UserProfileField

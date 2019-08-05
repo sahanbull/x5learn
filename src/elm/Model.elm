@@ -64,7 +64,6 @@ type alias Model =
   , selectedMentionInStory : Maybe (OerId, MentionInOer)
   }
 
-
 type EntityDefinition
   = DefinitionScheduledForLoading
   | DefinitionLoaded String
@@ -352,7 +351,6 @@ initialModel nav flags =
   , fragmentAccesses = Dict.empty
   , oerCardPlaceholderPositions = []
   , overviewType = BubblogramOverview
-  -- , overviewType = StoryOverview
   , selectedMentionInStory = Nothing
   }
 

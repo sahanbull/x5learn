@@ -62,7 +62,7 @@ viewBubblogram model oerId {createdAt, bubbles} =
                       {posX, posY, size} =
                         animatedBubbleCurrentCoordinates animationPhase bubble
                   in
-                      { px = posX + 0*size*1.1*bubbleZoom * contentWidth + marginX, py = posY + 0.1 -  0*size*1.1*bubbleZoom * contentHeight + marginTop - 15 }
+                      { px = (posX + 0*size*1.1*bubbleZoom) * contentWidth + marginX, py = (posY + 0.1 -  0*size*1.1*bubbleZoom) * contentHeight + marginTop - 15 }
 
                 StoryOverview ->
                   { px = 9, py = bubblePosYfromIndex bubble + 3 }
@@ -77,13 +77,18 @@ viewBubblogram model oerId {createdAt, bubbles} =
                 [ Element.alpha 0.8 ]
 
             labelClickHandler =
-              case model.cachedOers |> Dict.get oerId of
-                Nothing ->
-                  []
+              case model.overviewType of
+                BubblogramOverview ->
+                  [ onClickNoBubble (BubbleClicked oerId) ]
 
-                Just oer ->
-                  [ onClickNoBubble <| InspectOer oer 0 0.01 True ]
-                  -- onClickNoBubble (OverviewTagLabelClicked entity.id)
+                StoryOverview ->
+                  case model.cachedOers |> Dict.get oerId of
+                    Nothing ->
+                      []
+
+                    Just oer ->
+                      [ onClickNoBubble <| InspectOer oer 0 0.01 True ]
+                      -- onClickNoBubble (OverviewTagLabelClicked entity.id)
         in
             entity.title
             |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| OverviewTagLabelMouseOver entity.id, htmlClass hoverableClass ] ++ highlight ++ labelClickHandler)
@@ -166,8 +171,9 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
               , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
               , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
               , fill <| Color.toCssString <| colorFromBubble bubble
-              , onMouseOver <| OverviewTagMouseOver entity.id
+              , onMouseOver <| OverviewTagLabelMouseOver entity.id
               , onMouseLeave <| OverviewTagMouseOut
+              , custom "click" (Decode.succeed { message = BubbleClicked oerId, stopPropagation = True, preventDefault = True })
               , class hoverableClass
               ] ++ outline)
               []
@@ -277,7 +283,12 @@ viewPopup model {oerId, entityId, content} bubble =
           MentionInBubblePopup {positionInResource} ->
             let
                 sizeY =
-                  35
+                  case model.overviewType of
+                    BubblogramOverview ->
+                      containerHeight - verticalOffset
+
+                    StoryOverview ->
+                      35
 
                 tailHeightString =
                   sizeY

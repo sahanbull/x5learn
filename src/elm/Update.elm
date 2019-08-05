@@ -367,7 +367,7 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | resourceRecommendations = [], userMessage = Just "An error occurred while loading recommendations" }, Cmd.none )
 
     SetHover maybeId ->
-      ( { model | hoveringOerId = maybeId, timeOfLastMouseEnterOnCard = model.currentTime } |> unselectMentionInStory, Cmd.none )
+      ( { model | hoveringOerId = maybeId, timeOfLastMouseEnterOnCard = model.currentTime } |> unselectMentionInStory |> closePopup, Cmd.none )
       |> logEventForLabStudy "SetHover" [ maybeId |> Maybe.withDefault 0 |> String.fromInt ]
 
     SetPopup popup ->
@@ -480,12 +480,25 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "OverviewTagMouseOut" []
 
     OverviewClicked oerId ->
+      case model.overviewType of
+        StoryOverview ->
+          let
+              newModel =
+                {model | popup = model.popup |> updateBubblePopupOnClick model oerId }
+          in
+              (newModel, Cmd.none)
+              |> logEventForLabStudy "OverviewClicked" (popupToStrings newModel.popup)
+
+        _ ->
+          (model, Cmd.none)
+
+    BubbleClicked oerId ->
       let
           newModel =
             {model | popup = model.popup |> updateBubblePopupOnClick model oerId }
       in
           (newModel, Cmd.none)
-          |> logEventForLabStudy "OverviewClicked" (popupToStrings newModel.popup)
+          |> logEventForLabStudy "BubbleClicked" (popupToStrings newModel.popup)
 
     PageScrolled {scrollTop, viewHeight, contentHeight} ->
       (model, Cmd.none)

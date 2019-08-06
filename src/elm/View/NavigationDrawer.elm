@@ -87,9 +87,9 @@ viewOverviewSelectionWidget model =
     ]
     { onChange = SelectedOverviewType
     , selected = Just model.overviewType
-    , label = Input.labelAbove captionTextAttrs (text "Overview")
+    , label = Input.labelAbove captionTextAttrs (text "Overview style")
     , options =
-        [ Input.option BubblogramOverview (text "Bubbles")
-        , Input.option StoryOverview (text "Lines")
+        [ Input.option BubblogramOverview (bodyNoWrap [] "Compact")
+        , Input.option StoryOverview (bodyNoWrap [] "Detailed")
         ]
     }

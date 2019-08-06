@@ -179,16 +179,24 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
               []
 
           StoryOverview ->
+            let
+                strokeAttrs =
+                  if index==0 then
+                    []
+                  else
+                    [ stroke "#444"
+                    , strokeDasharray <| (cardWidth |> String.fromInt) ++ " 1000" -- only draw the top border of the rectangle
+                    ]
+            in
             rect
               ([ x "0"
-              , y (bubblePosYfromIndex bubble |> String.fromFloat)
+              , y (bubblePosYfromIndex bubble |> floor |> String.fromInt)
               , width (containerWidth |> String.fromInt)
               , height (containerHeight // 5 |> String.fromInt)
-              , stroke <| Color.toCssString <| colorFromBubble bubble
               , onMouseOver <| OverviewTagMouseOver entity.id oerId
               , onMouseLeave <| OverviewTagMouseOut
               , class <| hoverableClass ++ " StoryTag"
-              ] ++ outline)
+              ] ++ outline ++ strokeAttrs)
               []
 
   in
@@ -371,7 +379,7 @@ contentHeight =
 
 
 marginTop =
-  marginX + 18
+  marginX + 10
 
 
 marginX =

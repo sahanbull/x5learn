@@ -167,7 +167,7 @@ layoutBubbles clusters bubbles =
             index =
               indexOf bubble.entity.title (clusters |> List.concat)
         in
-            { bubble | finalCoordinates = { finalCoordinates | posY = (toFloat index) / nBubblesMinus1max1 * 0.85 + 0.05 } }
+            { bubble | finalCoordinates = { finalCoordinates | posY = (toFloat index) / nBubblesMinus1max1 * 0.85 + 0.0 } }
 
       setPosXbyCluster ({entity, finalCoordinates} as bubble) =
         let

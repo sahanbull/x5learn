@@ -82,14 +82,16 @@ dataSetSelectionWidget model searchInputTyping =
 viewOverviewSelectionWidget : Model -> Element Msg
 viewOverviewSelectionWidget model =
   Input.radio
-    [ padding 10
+    [ padding 20
     , spacing 20
+    , width fill
     ]
     { onChange = SelectedOverviewType
     , selected = Just model.overviewType
-    , label = Input.labelAbove captionTextAttrs (text "Overview style")
+    , label = Input.labelAbove captionTextAttrs (text "Preview")
     , options =
         [ Input.option BubblogramOverview (bodyNoWrap [] "Compact")
         , Input.option StoryOverview (bodyNoWrap [] "Detailed")
         ]
     }
+    |> el [ width fill, padding 10, borderBottom 1, Border.color greyMedium ]

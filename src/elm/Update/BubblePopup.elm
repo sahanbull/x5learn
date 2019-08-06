@@ -8,7 +8,7 @@ import Model exposing (..)
 
 updateBubblePopupOnClick : Model -> OerId -> Maybe Popup -> Maybe Popup
 updateBubblePopupOnClick model oerId oldPopup =
-  case model.hoveringBubbleEntityId of
+  case model.hoveringTagEntityId of
     Nothing -> -- shouldn't happen
       oldPopup
 

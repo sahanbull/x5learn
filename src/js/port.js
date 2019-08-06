@@ -117,11 +117,11 @@ function setupEventHandlers(){
 
   document.addEventListener("mousemove", function(e){
     var element = event.target;
-    if((" " + element.getAttribute("class") + " ").replace(/[\n\t]/g, " ").indexOf(" HoveringStoryTag ") > -1 ){
+    if((" " + element.getAttribute("class") + " ").replace(/[\n\t]/g, " ").indexOf(" StoryTag ") > -1 ){
       var rect = element.getBoundingClientRect();
       var posX = window.scrollX + rect.left;
       var positionInResource = (e.pageX - posX) / rect.width;
-      app.ports.mouseMovedOnHoveringStoryTag.send(positionInResource);
+      app.ports.mouseMovedOnStoryTag.send(positionInResource);
     }
   });
 

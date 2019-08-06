@@ -91,7 +91,7 @@ viewBubblogram model oerId {createdAt, bubbles} =
                       -- onClickNoBubble (OverviewTagLabelClicked entity.id)
         in
             entity.title
-            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| OverviewTagLabelMouseOver entity.id, htmlClass hoverableClass ] ++ highlight ++ labelClickHandler)
+            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| OverviewTagLabelMouseOver entity.id oerId, htmlClass hoverableClass ] ++ highlight ++ labelClickHandler)
             |> inFront
             |> List.singleton
 
@@ -171,7 +171,7 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
               , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
               , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
               , fill <| Color.toCssString <| colorFromBubble bubble
-              , onMouseOver <| OverviewTagLabelMouseOver entity.id
+              , onMouseOver <| OverviewTagLabelMouseOver entity.id oerId
               , onMouseLeave <| OverviewTagMouseOut
               , custom "click" (Decode.succeed { message = BubbleClicked oerId, stopPropagation = True, preventDefault = True })
               , class hoverableClass
@@ -185,9 +185,9 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
               , width (containerWidth |> String.fromInt)
               , height (containerHeight // 5 |> String.fromInt)
               , stroke <| Color.toCssString <| colorFromBubble bubble
-              , onMouseOver <| OverviewTagMouseOver entity.id
+              , onMouseOver <| OverviewTagMouseOver entity.id oerId
               , onMouseLeave <| OverviewTagMouseOut
-              , class <| hoverableClass ++ (if isHovering then " HoveringStoryTag" else "")
+              , class <| hoverableClass ++ " StoryTag"
               ] ++ outline)
               []
 
@@ -201,7 +201,7 @@ colorFromBubble {hue, alpha, saturation} =
 
 
 hoveringBubbleOrFragmentsBarEntityId model =
-  case model.hoveringBubbleEntityId of
+  case model.hoveringTagEntityId of
     Just entityId ->
       Just entityId
 

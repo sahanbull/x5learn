@@ -46,7 +46,7 @@ type alias Model =
   , feedbackForms : Dict OerId String
   , cachedOers : Dict OerId Oer
   , requestingOers : Bool
-  , hoveringBubbleEntityId : Maybe String
+  , hoveringTagEntityId : Maybe String
   , entityDefinitions : Dict String EntityDefinition
   , requestingEntityDefinitions : Bool
   , wikichunkEnrichmentRequestFailCount : Int
@@ -336,7 +336,7 @@ initialModel nav flags =
   , feedbackForms = Dict.empty
   , cachedOers = Dict.empty
   , requestingOers = False
-  , hoveringBubbleEntityId = Nothing
+  , hoveringTagEntityId = Nothing
   , entityDefinitions = Dict.empty
   , requestingEntityDefinitions = False
   , wikichunkEnrichmentRequestFailCount = 0
@@ -350,6 +350,7 @@ initialModel nav flags =
   , oerNoteboards = Dict.empty
   , fragmentAccesses = Dict.empty
   , oerCardPlaceholderPositions = []
+  -- , overviewType = StoryOverview
   , overviewType = BubblogramOverview
   , selectedMentionInStory = Nothing
   }

@@ -61,9 +61,9 @@ type Msg
   | ClickedQuickNoteButton OerId String
   | RemoveNote Note
   | VideoIsPlayingAtPosition Float
-  | OverviewTagMouseOver EntityId
+  | OverviewTagMouseOver EntityId OerId
   | OverviewTagMouseOut
-  | OverviewTagLabelMouseOver EntityId
+  | OverviewTagLabelMouseOver EntityId OerId
   -- | OverviewTagLabelClicked EntityId
   | OverviewClicked OerId
   | BubbleClicked OerId
@@ -72,7 +72,7 @@ type Msg
   | StartLabStudyTask LabStudyTask
   | StoppedLabStudyTask
   | SelectResourceSidebarTab ResourceSidebarTab
-  | MouseMovedOnHoveringStoryTag Float
+  | MouseMovedOnStoryTag Float
   | SelectedOverviewType OverviewType
 
 
@@ -105,7 +105,7 @@ subscriptions model =
       , Ports.closeInspector (\_ -> CloseInspector)
       , Ports.clickedOnDocument (\_ -> ClickedOnDocument)
       , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
-      , Ports.mouseMovedOnHoveringStoryTag MouseMovedOnHoveringStoryTag
+      , Ports.mouseMovedOnStoryTag MouseMovedOnStoryTag
       , Ports.videoIsPlayingAtPosition VideoIsPlayingAtPosition
       , Ports.pageScrolled PageScrolled
       , Ports.receiveCardPlaceholderPositions OerCardPlaceholderPositionsReceived

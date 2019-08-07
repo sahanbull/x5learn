@@ -488,7 +488,7 @@ update msg ({nav, userProfileForm} as model) =
         StoryOverview ->
           let
               newModel =
-                {model | popup = model.popup |> updateBubblePopupOnClick model oerId }
+                {model | popup = model.popup |> updateBubblePopup model oerId }
           in
               (newModel, Cmd.none)
               |> logEventForLabStudy "OverviewClicked" (popupToStrings newModel.popup)
@@ -499,7 +499,7 @@ update msg ({nav, userProfileForm} as model) =
     BubbleClicked oerId ->
       let
           newModel =
-            {model | popup = model.popup |> updateBubblePopupOnClick model oerId }
+            {model | popup = model.popup |> updateBubblePopup model oerId }
       in
           (newModel, Cmd.none)
           |> logEventForLabStudy "BubbleClicked" (popupToStrings newModel.popup)
@@ -881,5 +881,5 @@ selectOrUnselectMentionInStory mousePosXonCard model =
                       unselect
 
                     Just mention ->
-                      ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId, popup = model.popup |> updateBubblePopupOnClick model oerId }, setBrowserFocus "")
+                      ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId, popup = model.popup |> updateBubblePopup model oerId }, setBrowserFocus "")
                       |> logEventForLabStudy "SelectMentionInStory" [ oerId |> String.fromInt, mousePosXonCard |> String.fromFloat, mention.positionInResource |> String.fromFloat, mention.sentence ]

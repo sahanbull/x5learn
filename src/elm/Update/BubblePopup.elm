@@ -6,8 +6,8 @@ import Dict
 import Model exposing (..)
 
 
-updateBubblePopupOnClick : Model -> OerId -> Maybe Popup -> Maybe Popup
-updateBubblePopupOnClick model oerId oldPopup =
+updateBubblePopup : Model -> OerId -> Maybe Popup -> Maybe Popup
+updateBubblePopup model oerId oldPopup =
   case model.hoveringTagEntityId of
     Nothing -> -- shouldn't happen
       oldPopup

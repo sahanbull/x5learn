@@ -176,8 +176,8 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
               , fill <| Color.toCssString <| colorFromBubble bubble
               -- , onMouseOver <| OverviewTagLabelMouseOver entity.id oerId
               -- , onMouseLeave <| OverviewTagMouseOut
-              , custom "click" (Decode.succeed { message = BubbleClicked oerId, stopPropagation = True, preventDefault = True })
-              , class hoverableClass
+              -- , custom "click" (Decode.succeed { message = BubbleClicked oerId, stopPropagation = True, preventDefault = True })
+              -- , class hoverableClass
               ] ++ outline)
               []
 

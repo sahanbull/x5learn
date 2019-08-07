@@ -107,7 +107,7 @@ viewOerCard : Model -> List Fragment -> Point -> String -> Bool -> Oer -> Elemen
 viewOerCard model recommendedFragments position barId enableShadow oer =
   let
       hovering =
-        model.hoveringOerId == Just oer.url
+        model.hoveringOerId == Just oer.id
 
       upperImage attrs url =
         none
@@ -144,7 +144,7 @@ viewOerCard model recommendedFragments position barId enableShadow oer =
               if enrichment.errors then
                 none
               else
-                viewFragmentsBar model oer enrichment.chunks recommendedFragments cardWidth barId False
+                viewFragmentsBar model oer enrichment.chunks recommendedFragments cardWidth barId
                 |> el [ width fill, moveDown imageHeight ]
 
       preloadImage url =
@@ -304,7 +304,7 @@ viewOerCard model recommendedFragments position barId enableShadow oer =
         -- [ (if hovering then hoverPreview else carousel)
         -- ]
         [ graphic ]
-        |> column ([ widthOfCard, heightOfCard, onMouseEnter (SetHover (Just oer.url)), onMouseLeave (SetHover Nothing), title, bottomInfo, fragmentsBar ] ++ shadow ++ clickHandler ++ popup)
+        |> column ([ widthOfCard, heightOfCard, onMouseEnter (SetHover (Just oer.id)), onMouseLeave (SetHover Nothing), title, bottomInfo, fragmentsBar ] ++ shadow ++ clickHandler ++ popup)
 
       wrapperAttrs =
         -- [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| button [] { onPress = openInspectorOnPress model oer, label = card }, moveRight position.x, moveDown position.y ]

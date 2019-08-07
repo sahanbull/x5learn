@@ -209,9 +209,7 @@ def api_save_user_profile():
 def api_wikichunk_enrichments():
     enrichments = []
     for oer_id in request.get_json()['ids']:
-        # enrichment = WikichunkEnrichment.query.filter_by(oer_id=oer_id).first()
-        enrichment = WikichunkEnrichment.query.filter(
-            WikichunkEnrichment.data['oerId'].astext.cast(Integer) == oer_id).first()
+        enrichment = find_enrichment_by_oer_id(oer_id)
         if enrichment is not None:
             enrichments.append(enrichment.data)
         else:
@@ -429,7 +427,7 @@ def push_enrichment_task(url, priority):
         else:
             task.priority += priority
         db_session.commit()
-    except StaleDataError:
+    except sqlalchemy.orm.exc.StaleDataError:
         print(
             'sqlalchemy.orm.exc.StaleDataError caught and ignored.')  # This error came up occasionally. I'm not 100% sure about what it entails but it didn't seem to affect the user experience so I'm suppressing it for now to prevent a pointless alert on the frontend. Grateful for any helpful tips. More information on this error: https://docs.sqlalchemy.org/en/13/orm/exceptions.html#sqlalchemy.orm.exc.StaleDataError
 
@@ -850,6 +848,19 @@ def initiate_action_types_table():
         action_type = ActionType('OER card opened')
         db_session.add(action_type)
         db_session.commit()
+
+
+def find_enrichment_by_oer_id(oer_id):
+    # Querying the JSON field this way resulted in bizarre CPU load on my Mac.
+    # enrichment = WikichunkEnrichment.query.filter(
+    #     WikichunkEnrichment.data['oerId'].astext.cast(Integer) == oer_id).first()
+    # The following quick fix takes a small detour by loading the OER.
+    # NB a more performant solution would be to add an oer_id column
+    # to WikichunkEnrichment but is beyond the scope of this issue.
+    oer = Oer.query.get(oer_id)
+    if oer is None:
+        return None
+    return WikichunkEnrichment.query.filter_by(url=oer.url).first()
 
 
 if __name__ == '__main__':

@@ -30,9 +30,8 @@ from selenium.webdriver.firefox.options import Options
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET
-from x5learn_server.db.database import get_or_create_session_db
-get_or_create_session_db(DB_ENGINE_URI)
-from x5learn_server.db.database import db_session
+from x5learn_server.db.database import Base, get_or_create_db
+db_session = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.models import Oer
 
 

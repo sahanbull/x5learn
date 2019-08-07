@@ -36,7 +36,7 @@ addBubblogram model oerId ({chunks, clusters, mentions, bubblogram, errors} as e
           let
               bubbles =
                 entitiesWithDefinitions
-                |> List.map (bubbleFromEntity model occurrences)
+                |> List.indexedMap (bubbleFromEntity model occurrences)
                 |> layoutBubbles clusters
           in
               { enrichment | bubblogram = Just { createdAt = model.currentTime, bubbles = bubbles } }
@@ -93,8 +93,8 @@ occurrenceFromEntity approximatePositionInText nEntitiesMinus1 entityIndex entit
       Occurrence entity approximatePositionInText rank
 
 
-bubbleFromEntity : Model -> List Occurrence -> Entity -> Bubble
-bubbleFromEntity model occurrences entity =
+bubbleFromEntity : Model -> List Occurrence -> Int -> Entity -> Bubble
+bubbleFromEntity model occurrences index entity =
   let
       occurrencesOfThisEntity =
         occurrences
@@ -147,6 +147,7 @@ bubbleFromEntity model occurrences entity =
         }
   in
       { entity = entity
+      , index = index
       , hue = hue
       , saturation = saturation
       , alpha = alpha
@@ -166,7 +167,7 @@ layoutBubbles clusters bubbles =
             index =
               indexOf bubble.entity.title (clusters |> List.concat)
         in
-            { bubble | finalCoordinates = { finalCoordinates | posY = (toFloat index) / nBubblesMinus1max1 * 0.85 + 0.05 } }
+            { bubble | finalCoordinates = { finalCoordinates | posY = (toFloat index) / nBubblesMinus1max1 * 0.85 + 0.0 } }
 
       setPosXbyCluster ({entity, finalCoordinates} as bubble) =
         let

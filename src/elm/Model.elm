@@ -25,7 +25,7 @@ type alias Model =
   , searchState : Maybe SearchState
   , inspectorState : Maybe InspectorState
   , snackbar : Maybe Snackbar
-  , hoveringOerId : Maybe String
+  , hoveringOerId : Maybe OerId
   , timeOfLastMouseEnterOnCard : Posix
   , modalAnimation : Maybe BoxAnimation
   , animationsPending : Set String
@@ -46,7 +46,7 @@ type alias Model =
   , feedbackForms : Dict OerId String
   , cachedOers : Dict OerId Oer
   , requestingOers : Bool
-  , hoveringBubbleEntityId : Maybe String
+  , hoveringTagEntityId : Maybe String
   , entityDefinitions : Dict String EntityDefinition
   , requestingEntityDefinitions : Bool
   , wikichunkEnrichmentRequestFailCount : Int
@@ -60,8 +60,9 @@ type alias Model =
   , oerNoteboards : Dict OerId Noteboard
   , fragmentAccesses : Dict Int Fragment
   , oerCardPlaceholderPositions : List OerCardPlaceholderPosition
+  , overviewType : OverviewType
+  , selectedMentionInStory : Maybe (OerId, MentionInOer)
   }
-
 
 type EntityDefinition
   = DefinitionScheduledForLoading
@@ -77,6 +78,10 @@ type CurrentResource
   = Loaded OerId
   | Error
 
+type OverviewType
+  = BubblogramOverview
+  | StoryOverview
+
 type alias LabStudyTask =
   { title : String
   , durationInMinutes : Int
@@ -85,6 +90,7 @@ type alias LabStudyTask =
 
 type alias Bubble =
   { entity : Entity
+  , index : Int
   , hue : Float
   , alpha : Float
   , saturation : Float
@@ -334,7 +340,7 @@ initialModel nav flags =
   , feedbackForms = Dict.empty
   , cachedOers = Dict.empty
   , requestingOers = False
-  , hoveringBubbleEntityId = Nothing
+  , hoveringTagEntityId = Nothing
   , entityDefinitions = Dict.empty
   , requestingEntityDefinitions = False
   , wikichunkEnrichmentRequestFailCount = 0
@@ -348,6 +354,9 @@ initialModel nav flags =
   , oerNoteboards = Dict.empty
   , fragmentAccesses = Dict.empty
   , oerCardPlaceholderPositions = []
+  -- , overviewType = StoryOverview
+  , overviewType = BubblogramOverview
+  , selectedMentionInStory = Nothing
   }
 
 
@@ -607,6 +616,24 @@ uniqueEntitiesFromEnrichments enrichments =
   |> List.concatMap .chunks
   |> List.concatMap .entities
   |> List.Extra.uniqueBy .id
+
+
+getEntityTitleFromEntityId : Model -> EntityId -> Maybe String
+getEntityTitleFromEntityId model entityId =
+  let
+      maybeEntity =
+        model.wikichunkEnrichments
+        |> Dict.values
+        |> uniqueEntitiesFromEnrichments
+        |> List.filter (\{id} -> id==entityId)
+        |> List.head
+  in
+      case maybeEntity of
+        Nothing ->
+          Nothing
+
+        Just entity ->
+          Just entity.title
 
 
 homePath =

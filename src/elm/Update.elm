@@ -27,7 +27,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg ({nav, userProfileForm} as model) =
   -- let
   --     actionlog =
-  --       msg |> log "action"
+  --       msg |> Debug.log "action"
   -- in
   case msg of
     Initialized url ->
@@ -105,7 +105,7 @@ update msg ({nav, userProfileForm} as model) =
       in
           ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> addFragmentAccess (Fragment oer.id fragmentStart fragmentLength) model.currentTime, openModalAnimation youtubeEmbedParams)
       |> saveAction 1 [ ("oerId", Encode.int oer.id), ("oerId", Encode.int oer.id) ]
-      |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt ]
+      |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat ]
 
     UninspectSearchResult ->
       ( { model | inspectorState = Nothing}, Cmd.none)
@@ -382,9 +382,18 @@ update msg ({nav, userProfileForm} as model) =
       -- ( { model | resourceRecommendations = [], snackbar = createSnackbar model "An error occurred while loading recommendations" }, Cmd.none )
       ( { model | resourceRecommendations = [], snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
-    SetHover maybeUrl ->
-      ( { model | hoveringOerId = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
-      |> logEventForLabStudy "SetHover" [ maybeUrl |> Maybe.withDefault "" ]
+    SetHover maybeOerId ->
+      let
+          hoveringTagEntityId =
+            case maybeOerId of
+              Nothing ->
+                Nothing
+
+              Just _ ->
+                model.hoveringTagEntityId
+      in
+      ( { model | hoveringOerId = maybeOerId, timeOfLastMouseEnterOnCard = model.currentTime, hoveringTagEntityId = hoveringTagEntityId } |> unselectMentionInStory |> closePopup, Cmd.none )
+      |> logEventForLabStudy "SetHover" [ maybeOerId |> Maybe.withDefault 0 |> String.fromInt ]
 
     SetPopup popup ->
       let
@@ -410,7 +419,7 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "SelectSuggestion" [ suggestion ]
 
     MouseOverChunkTrigger mousePositionX ->
-      ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX }, Cmd.none )
+      ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX } |> unselectMentionInStory, Cmd.none )
       |> logEventForLabStudy "MouseOverChunkTrigger" [ mousePositionX |> String.fromFloat ]
 
     YoutubeSeekTo fragmentStart ->
@@ -465,26 +474,29 @@ update msg ({nav, userProfileForm} as model) =
       (model |> expandCurrentFragmentOrCreateNewOne position model.inspectorState, Cmd.none)
       |> logEventForLabStudy "VideoIsPlayingAtPosition" [ position |> String.fromFloat]
 
-    BubbleMouseOver entityId ->
+    OverviewTagMouseOver entityId oerId ->
+      ({model | hoveringTagEntityId = Just entityId }, Cmd.none)
+      |> logEventForLabStudy "OverviewTagMouseOver" [ oerId |> String.fromInt, entityId ]
+
+    OverviewTagLabelMouseOver entityId oerId ->
       let
-          oerId =
-            model.hoveringOerId
-            |> Maybe.withDefault ""
+          popup =
+            BubblePopup <| BubblePopupState oerId entityId DefinitionInBubblePopup []
       in
-          ({model | hoveringBubbleEntityId = Just entityId }, Cmd.none)
-          |> logEventForLabStudy "BubbleMouseOver" [ oerId, entityId ]
+          ({model | hoveringTagEntityId = Just entityId, popup = Just popup }, Cmd.none)
+          |> logEventForLabStudy "OverviewTagLabelMouseOver" [ oerId |> String.fromInt, entityId ]
 
-    BubbleMouseOut ->
-      ({model | hoveringBubbleEntityId = Nothing } |> closePopup, Cmd.none)
-      |> logEventForLabStudy "BubbleMouseOut" []
+    OverviewTagMouseOut ->
+      ({model | hoveringTagEntityId = Nothing } |> unselectMentionInStory |> closePopup, Cmd.none)
+      |> logEventForLabStudy "OverviewTagMouseOut" []
 
-    BubbleClicked oerId ->
+    OverviewTagLabelClicked oerId ->
       let
           newModel =
-            {model | popup = model.popup |> updateBubblePopupOnClick model oerId }
+            {model | popup = model.popup |> updateBubblePopupOnTagLabelClicked model oerId }
       in
           (newModel, Cmd.none)
-          |> logEventForLabStudy "BubbleClicked" (popupToStrings newModel.popup)
+          |> logEventForLabStudy "OverviewTagLabelClicked" (popupToStrings newModel.popup)
 
     PageScrolled {scrollTop, viewHeight, contentHeight} ->
       (model, Cmd.none)
@@ -505,6 +517,25 @@ update msg ({nav, userProfileForm} as model) =
     SelectResourceSidebarTab tab ->
       ({ model | resourceSidebarTab = tab }, setBrowserFocus "textInputFieldForNotesOrFeedback")
       |> logEventForLabStudy "SelectResourceSidebarTab" []
+
+    MouseMovedOnStoryTag mousePosXonCard ->
+      model
+      |> selectOrUnselectMentionInStory mousePosXonCard
+
+    SelectedOverviewType overviewType ->
+      let
+          logTitle =
+            case overviewType of
+              BubblogramOverview ->
+                "BubblogramOverview"
+              StoryOverview ->
+                "StoryOverview"
+      in
+          ({ model | overviewType = overviewType, hoveringTagEntityId = Nothing } |> closePopup, Cmd.none)
+          |> logEventForLabStudy "SelectedOverviewType" [ logTitle ]
+
+    MouseEnterMentionInBubbblogramOverview oerId entityId mention ->
+      ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
 
 
 createNote : OerId -> String -> Model -> Model
@@ -618,7 +649,7 @@ registerUndefinedEntities enrichments model =
 
 closePopup : Model -> Model
 closePopup model =
-  { model | popup = Nothing, hoveringBubbleEntityId = Nothing }
+  { model | popup = Nothing }
 
 
 resetUserProfileForm : Model -> Model
@@ -719,6 +750,12 @@ updateBubblogramsIfNeeded model =
 
 
 logEventForLabStudy eventType params (model, cmd) =
+  -- let
+  --     dummy =
+  --       eventType :: params
+  --       |> String.join " "
+  --       |> Debug.log "logEventForLabStudy"
+  -- in
   if isLabStudy1 model then
     let
         time =
@@ -827,3 +864,41 @@ updateSnackbar model =
 
 snackbarMessageReloadPage =
   "There was a problem - please reload the page"
+
+
+unselectMentionInStory : Model -> Model
+unselectMentionInStory model =
+  { model | selectedMentionInStory = Nothing }
+
+
+selectOrUnselectMentionInStory : Float -> Model -> (Model, Cmd Msg)
+selectOrUnselectMentionInStory mousePosXonCard model =
+  let
+      unselect =
+        (model |> unselectMentionInStory, setBrowserFocus "")
+        |> logEventForLabStudy "UnselectMentionInStory" []
+  in
+      case model.hoveringTagEntityId of
+        Nothing ->
+          unselect
+
+        Just entityId ->
+          case model.hoveringOerId of
+            Nothing ->
+              unselect
+
+            Just oerId ->
+              let
+                  closestMentionInRange =
+                    getMentions model oerId entityId
+                    |> List.filter (\{positionInResource} -> (abs (positionInResource - mousePosXonCard) < 0.05))
+                    |> List.sortBy (\{positionInResource} -> (abs (positionInResource - mousePosXonCard)))
+                    |> List.head
+              in
+                  case closestMentionInRange of
+                    Nothing ->
+                      unselect
+
+                    Just mention ->
+                      ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
+                      |> logEventForLabStudy "SelectMentionInStory" [ oerId |> String.fromInt, mousePosXonCard |> String.fromFloat, mention.positionInResource |> String.fromFloat, mention.sentence ]

@@ -119,16 +119,24 @@ wrapText attrs str =
   [ text str ] |> paragraph attrs
 
 
+captionTextAttrs =
+  [ Font.size 12, Font.color materialDark ]
+
+
+bodyTextAttrs =
+  [ Font.size 14, Font.color materialDark ]
+
+
 captionNowrap attrs str =
-  text str |> el ([ Font.size 12 ] ++ attrs)
+  text str |> el (captionTextAttrs ++ attrs)
 
 
 bodyWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 14 ] ++ attrs)
+  [ text str ] |> paragraph (bodyTextAttrs ++ attrs)
 
 
 bodyNoWrap attrs str =
-  text str |> el ([ Font.size 14, Font.color materialDark ] ++ attrs)
+  text str |> el (bodyTextAttrs ++ attrs)
 
 
 subSubheaderNoWrap attrs str =
@@ -136,15 +144,15 @@ subSubheaderNoWrap attrs str =
 
 
 subSubheaderWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 16 ] ++ attrs)
+  [ text str ] |> paragraph ([ Font.size 16, Font.color materialDark ] ++ attrs)
 
 
 subheaderWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 21 ] ++ attrs)
+  [ text str ] |> paragraph ([ Font.size 21, Font.color materialDark ] ++ attrs)
 
 
 headlineWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 24 ] ++ attrs)
+  [ text str ] |> paragraph ([ Font.size 24, Font.color materialDark ] ++ attrs)
 
 
 italicText =
@@ -452,7 +460,7 @@ menuColumn attrs =
   column ([ Background.color white, Border.rounded 4, Border.color <| grey80, dialogShadow ] ++ attrs)
 
 
-viewFragmentsBar model oer chunks recommendedFragments barWidth barId darkBackground =
+viewFragmentsBar model oer chunks recommendedFragments barWidth barId =
   let
       -- markers =
       --   [ fragmentMarkers recommendedFragments yellow
@@ -527,10 +535,7 @@ viewFragmentsBar model oer chunks recommendedFragments barWidth barId darkBackgr
         [ none |> el [ width fill , Background.color veryTransparentWhite, height <| px 1 ] |> above ]
 
       background =
-        if darkBackground then
-          [ Background.color materialDark ]
-        else
-          []
+        [ Background.color materialDark ]
   in
     none
     |> el ([ width fill, height <| px <| fragmentsBarHeight,  moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background)
@@ -749,15 +754,6 @@ verticalSpacingBetweenCards =
 
 pointerEventsNone =
   htmlClass "PointerEventsNone"
-
-
-isAnyChunkPopupOpen model =
-  case model.popup of
-    Just (ChunkOnBar _) ->
-      True
-
-    _ ->
-      False
 
 
 secondsToString : Int -> String

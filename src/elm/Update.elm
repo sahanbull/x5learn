@@ -486,7 +486,7 @@ update msg ({nav, userProfileForm} as model) =
     BubbleClicked oerId ->
       let
           newModel =
-            {model | popup = model.popup |> updateBubblePopup model oerId }
+            {model | popup = model.popup |> updateBubblePopupOnBubbleClick model oerId }
       in
           (newModel, Cmd.none)
           |> logEventForLabStudy "BubbleClicked" (popupToStrings newModel.popup)
@@ -526,6 +526,9 @@ update msg ({nav, userProfileForm} as model) =
       in
           ({ model | overviewType = overviewType, hoveringTagEntityId = Nothing } |> closePopup, Cmd.none)
           |> logEventForLabStudy "SelectedOverviewType" [ logTitle ]
+
+    MouseEnterMentionInBubbblogramOverview oerId entityId mention ->
+      ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
 
 
 createNote : OerId -> String -> Model -> Model
@@ -868,5 +871,5 @@ selectOrUnselectMentionInStory mousePosXonCard model =
                       unselect
 
                     Just mention ->
-                      ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId, popup = model.popup |> updateBubblePopup model oerId }, setBrowserFocus "")
+                      ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
                       |> logEventForLabStudy "SelectMentionInStory" [ oerId |> String.fromInt, mousePosXonCard |> String.fromFloat, mention.positionInResource |> String.fromFloat, mention.sentence ]

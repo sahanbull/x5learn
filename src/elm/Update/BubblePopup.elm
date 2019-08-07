@@ -1,4 +1,4 @@
-module Update.BubblePopup exposing (..)
+module Update.BubblePopup exposing (updateBubblePopupOnBubbleClick, setBubblePopupToMention)
 
 import List.Extra
 import Dict
@@ -6,37 +6,36 @@ import Dict
 import Model exposing (..)
 
 
-updateBubblePopup : Model -> OerId -> Maybe Popup -> Maybe Popup
-updateBubblePopup model oerId oldPopup =
+updateBubblePopupOnBubbleClick : Model -> OerId -> Maybe Popup -> Maybe Popup
+updateBubblePopupOnBubbleClick model oerId oldPopup =
   case model.hoveringTagEntityId of
     Nothing -> -- shouldn't happen
       oldPopup
 
     Just entityId ->
-      case model.overviewType of
-        BubblogramOverview ->
-          case model.popup of
-            Just (BubblePopup state) ->
-              if state.oerId==oerId && state.entityId==entityId then
-                case state.content of
-                  MentionInBubblePopup _ ->
-                    updatedPopup state
+      case model.popup of
+        Just (BubblePopup state) ->
+          if state.oerId==oerId && state.entityId==entityId then
+            case state.content of
+              MentionInBubblePopup _ ->
+                updatedPopup state
 
-                  _ ->
-                    initialPopup model oerId entityId
-              else
+              _ ->
                 initialPopup model oerId entityId
+          else
+            initialPopup model oerId entityId
 
-            _ ->
-              initialPopup model oerId entityId
+        _ ->
+          initialPopup model oerId entityId
 
-        StoryOverview ->
-          case model.selectedMentionInStory of
-            Just (_,mention) ->
-              Just <| BubblePopup <| BubblePopupState oerId entityId (MentionInBubblePopup mention) []
 
-            Nothing ->
-              Nothing
+setBubblePopupToMention : OerId -> EntityId -> MentionInOer -> Model -> Model
+setBubblePopupToMention oerId entityId mention model =
+  let
+      popup =
+            Just <| BubblePopup <| BubblePopupState oerId entityId (MentionInBubblePopup mention) []
+  in
+      { model | popup = popup }
 
 
 initialPopup : Model -> OerId -> String -> Maybe Popup

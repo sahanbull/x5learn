@@ -73,6 +73,7 @@ type Msg
   | SelectResourceSidebarTab ResourceSidebarTab
   | MouseMovedOnStoryTag Float
   | SelectedOverviewType OverviewType
+  | MouseEnterMentionInBubbblogramOverview OerId EntityId MentionInOer
 
 
 type UserProfileField

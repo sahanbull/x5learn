@@ -175,7 +175,7 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
               , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
               , fill <| Color.toCssString <| colorFromBubble bubble
               , onMouseOver <| OverviewTagLabelMouseOver entity.id oerId
-              , onMouseLeave <| OverviewTagMouseOut
+              -- , onMouseLeave <| OverviewTagMouseOut
               , custom "click" (Decode.succeed { message = BubbleClicked oerId, stopPropagation = True, preventDefault = True })
               , class hoverableClass
               ] ++ outline)
@@ -448,8 +448,16 @@ viewMentionDots model oerId entityId bubble isHoveringOnCurrentTag =
                 "rgba(255,140,0,1)"
               else
                 "rgba(255,140,0,0.3)"
+
+            hoverHandler =
+              case model.overviewType of
+                BubblogramOverview ->
+                  [ onMouseOver <| MouseEnterMentionInBubbblogramOverview oerId entityId mention ]
+
+                StoryOverview ->
+                  []
         in
-            circle [ cx circlePosX, cy circlePosY, r circleRadius, fill color ] []
+            circle ([ cx circlePosX, cy circlePosY, r circleRadius, fill color ]++hoverHandler) []
 
       mentions =
         getMentions model oerId bubble.entity.id

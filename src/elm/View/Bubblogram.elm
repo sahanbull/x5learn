@@ -417,6 +417,14 @@ viewMentionDots model oerId entityId bubble isHoveringOnCurrentTag =
             StoryOverview ->
               (bubblePosYfromIndex bubble) + 23
 
+      isSearchTerm =
+        case getEntityTitleFromEntityId model entityId of
+          Nothing ->
+            False
+
+          Just title ->
+            isEqualToSearchString model title
+
       dot : MentionInOer -> Svg Msg
       dot ({positionInResource, sentence} as mention) =
         let
@@ -426,12 +434,14 @@ viewMentionDots model oerId entityId bubble isHoveringOnCurrentTag =
 
             circleRadius =
               if isHoveringOnCurrentTag then
-                "4.5"
+                "5"
               else
                 "2.5"
 
             color =
-              if isHoveringOnCurrentTag then
+              if isSearchTerm then
+                "rgba(255,240,0,1)"
+              else if isHoveringOnCurrentTag then
                 "rgba(255,140,0,1)"
               else
                 "rgba(255,140,0,0.3)"

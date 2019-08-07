@@ -161,7 +161,10 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
               [ fill "rgba(255,255,255,0)" ]
 
       mentionDots =
-        viewMentionDots model oerId entity.id bubble isHovering
+        if isHovering || model.overviewType==StoryOverview then
+          viewMentionDots model oerId entity.id bubble isHovering
+        else
+          []
 
       body =
         case model.overviewType of

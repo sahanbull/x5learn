@@ -27,7 +27,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg ({nav, userProfileForm} as model) =
   -- let
   --     actionlog =
-  --       msg |> log "action"
+  --       msg |> Debug.log "action"
   -- in
   case msg of
     Initialized url ->

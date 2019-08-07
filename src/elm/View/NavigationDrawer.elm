@@ -49,6 +49,7 @@ withNavigationDrawer model (pageContent, modal) =
 
       drawer =
         [ model.searchInputTyping |> (if isLabStudy1 model then dataSetSelectionWidget model else viewSearchWidget model fill "Search")
+        , viewCollectionSelectionWidget model
         , viewOverviewSelectionWidget model
         , navButtons
         ]
@@ -77,6 +78,25 @@ dataSetSelectionWidget model searchInputTyping =
         |> el [ width fill, centerX ]
   in
       searchField
+
+
+viewCollectionSelectionWidget : Model -> Element Msg
+viewCollectionSelectionWidget model =
+  Input.radio
+    [ padding 20
+    , spacing 20
+    , width fill
+    ]
+    { onChange = SelectedOerCollection
+    , selected = Just model.oerCollection
+    , label = Input.labelAbove captionTextAttrs (text "Collection")
+    , options =
+        [ Input.option DefaultX5GON (bodyNoWrap [] "X5GON")
+        , Input.option AlanTuringInstitute (bodyNoWrap [] "Alan Turing Institute")
+        , Input.option NIMHgov (bodyNoWrap [] "NIMHgov")
+        ]
+    }
+    |> el [ width fill, padding 10, borderBottom 1, Border.color greyMedium ]
 
 
 viewOverviewSelectionWidget : Model -> Element Msg

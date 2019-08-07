@@ -522,6 +522,11 @@ update msg ({nav, userProfileForm} as model) =
       ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
 
 
+    SelectedOerCollection oerCollection ->
+      ({ model | oerCollection = oerCollection } |> closePopup, Cmd.none)
+      |> logEventForLabStudy "SelectedOerCollection" [ oerCollectionToString oerCollection ]
+
+
 createNote : OerId -> String -> Model -> Model
 createNote oerId text model =
   let
@@ -799,7 +804,7 @@ executeSearchAfterUrlChanged model url =
       if str=="" then
         ( model, setBrowserFocus "SearchField")
       else
-        ( { model | searchInputTyping = str, searchState = Just <| newSearch str, searchSuggestions = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers str)
+        ( { model | searchInputTyping = str, searchState = Just <| newSearch str, searchSuggestions = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers str model.oerCollection)
         |> logEventForLabStudy "executeSearchAfterUrlChanged" [ str ]
 
 

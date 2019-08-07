@@ -29,10 +29,10 @@ requestSession =
     }
 
 
-searchOers : String -> Cmd Msg
-searchOers searchText =
+searchOers : String -> OerCollection -> Cmd Msg
+searchOers searchText oerCollection =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText ]
+    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText, Url.Builder.string "collection" (oerCollectionToString oerCollection) ]
     , expect = Http.expectJson RequestOerSearch (list oerDecoder)
     }
 

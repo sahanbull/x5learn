@@ -24,6 +24,7 @@ from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichmen
     ActionsRepository, UserRepository, DefinitionsRepository
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
+from x5learn_server.oer_collections import search_in_oer_collection
 
 # Create app
 app = Flask(__name__)
@@ -159,8 +160,13 @@ def get_or_create_logged_in_user():
 @app.route("/api/v1/search/", methods=['GET'])
 def api_search():
     text = request.args['text'].lower().strip()
-    results = get_dataset_for_lab_study_one(
-        text) or search_results_from_x5gon_api(text)
+    collection = request.args['collection'].strip()
+    print(collection)
+    if collection=='DefaultX5GON':
+        results = get_dataset_for_lab_study_one(
+            text) or search_results_from_x5gon_api(text)
+    else:
+        results = search_in_oer_collection(collection)
     return jsonify(results)
 
 

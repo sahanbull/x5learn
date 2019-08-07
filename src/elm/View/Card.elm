@@ -254,7 +254,7 @@ viewOerCard model recommendedFragments position barId enableShadow oer =
               dateStr |> captionNowrap [ alignLeft ]
 
             provider =
-              oer.provider |> domainOnly |> truncateSentence 24 |> captionNowrap [ if dateStr=="" then alignLeft else centerX ]
+              oer.provider |> domainOnly |> truncateSentence 32 |> captionNowrap [ if dateStr=="" then alignLeft else centerX ]
 
             duration =
               oer.duration |> captionNowrap [ alignRight ]

@@ -65,7 +65,6 @@ type Msg
   | OverviewTagMouseOut
   | OverviewTagLabelMouseOver EntityId OerId
   -- | OverviewTagLabelClicked EntityId
-  | OverviewClicked OerId
   | BubbleClicked OerId
   | PageScrolled ScrollData
   | OerCardPlaceholderPositionsReceived (List OerCardPlaceholderPosition)

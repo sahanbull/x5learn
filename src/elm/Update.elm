@@ -483,19 +483,6 @@ update msg ({nav, userProfileForm} as model) =
       ({model | hoveringTagEntityId = Nothing } |> unselectMentionInStory |> closePopup, Cmd.none)
       |> logEventForLabStudy "OverviewTagMouseOut" []
 
-    OverviewClicked oerId ->
-      case model.overviewType of
-        StoryOverview ->
-          let
-              newModel =
-                {model | popup = model.popup |> updateBubblePopup model oerId }
-          in
-              (newModel, Cmd.none)
-              |> logEventForLabStudy "OverviewClicked" (popupToStrings newModel.popup)
-
-        _ ->
-          (model, Cmd.none)
-
     BubbleClicked oerId ->
       let
           newModel =

@@ -1,4 +1,4 @@
-module Update.BubblePopup exposing (updateBubblePopupOnBubbleClick, setBubblePopupToMention)
+module Update.BubblePopup exposing (updateBubblePopupOnTagLabelClicked, setBubblePopupToMention)
 
 import List.Extra
 import Dict
@@ -6,8 +6,8 @@ import Dict
 import Model exposing (..)
 
 
-updateBubblePopupOnBubbleClick : Model -> OerId -> Maybe Popup -> Maybe Popup
-updateBubblePopupOnBubbleClick model oerId oldPopup =
+updateBubblePopupOnTagLabelClicked : Model -> OerId -> Maybe Popup -> Maybe Popup
+updateBubblePopupOnTagLabelClicked model oerId oldPopup =
   case model.hoveringTagEntityId of
     Nothing -> -- shouldn't happen
       oldPopup

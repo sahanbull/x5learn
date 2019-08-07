@@ -470,26 +470,17 @@ update msg ({nav, userProfileForm} as model) =
           ({model | hoveringTagEntityId = Just entityId, popup = Just popup }, Cmd.none)
           |> logEventForLabStudy "OverviewTagLabelMouseOver" [ oerId |> String.fromInt, entityId ]
 
-    -- OverviewTagLabelClicked entityId ->
-    --   case getEntityTitleFromEntityId model entityId of
-    --     Nothing ->
-    --       (model, Cmd.none)
-
-    --     Just title ->
-    --       model
-    --       |> update (TriggerSearch title)
-
     OverviewTagMouseOut ->
       ({model | hoveringTagEntityId = Nothing } |> unselectMentionInStory |> closePopup, Cmd.none)
       |> logEventForLabStudy "OverviewTagMouseOut" []
 
-    BubbleClicked oerId ->
+    OverviewTagLabelClicked oerId ->
       let
           newModel =
-            {model | popup = model.popup |> updateBubblePopupOnBubbleClick model oerId }
+            {model | popup = model.popup |> updateBubblePopupOnTagLabelClicked model oerId }
       in
           (newModel, Cmd.none)
-          |> logEventForLabStudy "BubbleClicked" (popupToStrings newModel.popup)
+          |> logEventForLabStudy "OverviewTagLabelClicked" (popupToStrings newModel.popup)
 
     PageScrolled {scrollTop, viewHeight, contentHeight} ->
       (model, Cmd.none)

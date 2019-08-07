@@ -77,18 +77,7 @@ viewBubblogram model oerId {createdAt, bubbles} =
                 [ Element.alpha 0.8 ]
 
             labelClickHandler =
-              case model.overviewType of
-                BubblogramOverview ->
-                  [ onClickNoBubble (BubbleClicked oerId) ]
-
-                StoryOverview ->
-                  case model.cachedOers |> Dict.get oerId of
-                    Nothing ->
-                      []
-
-                    Just oer ->
-                      [ onClickNoBubble <| InspectOer oer 0 0.01 True ]
-                      -- onClickNoBubble (OverviewTagLabelClicked entity.id)
+              [ onClickNoBubble (OverviewTagLabelClicked oerId) ]
         in
             entity.title
             |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| OverviewTagLabelMouseOver entity.id oerId, htmlClass hoverableClass ] ++ highlight ++ labelClickHandler)
@@ -174,10 +163,6 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
               , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
               , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
               , fill <| Color.toCssString <| colorFromBubble bubble
-              -- , onMouseOver <| OverviewTagLabelMouseOver entity.id oerId
-              -- , onMouseLeave <| OverviewTagMouseOut
-              -- , custom "click" (Decode.succeed { message = BubbleClicked oerId, stopPropagation = True, preventDefault = True })
-              -- , class hoverableClass
               ] ++ outline)
               []
 

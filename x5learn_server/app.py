@@ -24,7 +24,7 @@ from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichmen
     ActionsRepository, UserRepository, DefinitionsRepository
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
-from x5learn_server.oer_collections import search_in_oer_collection
+from x5learn_server.oer_collections import search_in_oer_collection, autocomplete_terms_from_oer_collection
 
 # Create app
 app = Flask(__name__)
@@ -160,20 +160,19 @@ def get_or_create_logged_in_user():
 @app.route("/api/v1/search/", methods=['GET'])
 def api_search():
     text = request.args['text'].lower().strip()
-    collection = request.args['collection'].strip()
-    print(collection)
+    collection = request.args['collection']
     if collection=='DefaultX5GON':
         results = get_dataset_for_lab_study_one(
             text) or search_results_from_x5gon_api(text)
     else:
-        results = search_in_oer_collection(collection)
-    return jsonify(results)
+        results = search_in_oer_collection(collection, text)
+    return jsonify([ oer.data_and_id() for oer in results ])
 
 
-@app.route("/api/v1/search_suggestions/", methods=['GET'])
-def api_search_suggestions():
-    text = request.args['text']
-    return search_suggestions(text.lower().strip())
+@app.route("/api/v1/autocomplete_terms/", methods=['GET'])
+def api_autocomplete_terms():
+    collection = request.args['collection']
+    return jsonify(list(autocomplete_terms_from_oer_collection(collection)))
 
 
 @app.route("/api/v1/oers/", methods=['POST'])
@@ -370,7 +369,7 @@ def search_results_from_x5gon_api(text):
             oer = Oer(url, convert_x5_material_to_oer(material, url))
             db_session.add(oer)
             db_session.commit()
-        oers.append(oer.data_and_id())
+        oers.append(oer)
         push_enrichment_task_if_needed(url, int(1000 / (index + 1)) + 1)
     return oers
 
@@ -443,18 +442,6 @@ def any_word_matches(words, text):
         if word in text.lower():
             return True
     return False
-
-
-def search_suggestions(text):
-    all_entity_titles = []  # TODO: use Topics table in db
-    matches = [(title, fuzz.partial_ratio(text, title) +
-                fuzz.ratio(text, title)) for title in all_entity_titles]
-    matches = sorted(matches, key=lambda k_v: k_v[1], reverse=True)[:20]
-    print([v for k, v in matches])
-    matches = [k for k, v in matches]
-    # import pdb; pdb.set_trace()
-    # print(matches)
-    return jsonify(matches)
 
 
 def find_oer_by_id(oer_id):

@@ -1,4 +1,9 @@
-from x5learn_server.models import Oer
+import re
+
+from x5learn_server.models import Oer, WikichunkEnrichment
+
+
+autocomplete_cache = {}
 
 oer_collections = {'AlanTuringInstitute': {'channel': 'https://www.youtube.com/channel/UCcr5vuAH5TPlYox-QLj4ySw/videos',
   'title': 'Alan Turing Institute',
@@ -650,8 +655,45 @@ oer_collections = {'AlanTuringInstitute': {'channel': 'https://www.youtube.com/c
     'https://www.youtube.com/watch?v=gK3dcjBaJyo'
 ]}}
 
-def search_in_oer_collection(key):
+
+def search_in_oer_collection(key, text):
+    max_n_results = 12
     if key not in oer_collections:
         return []
     urls = oer_collections[key]['video_urls']
-    return [ o.data_and_id() for o in Oer.query.filter(Oer.url.in_(urls)).order_by(Oer.id).all() ]
+    oers = Oer.query.filter(Oer.url.in_(urls)).order_by(Oer.id).all()
+    if text=='':
+        return oers[:max_n_results]
+    # Exclude urls of missing oers
+    urls = [ oer.url for oer in oers ]
+    relevance_scores_per_url = {}
+    for enrichment in WikichunkEnrichment.query.filter(WikichunkEnrichment.url.in_(urls)).all():
+        relevance_scores_per_url[enrichment.url] = relevance_score(enrichment, text)
+    ranked = sorted(relevance_scores_per_url.items(), key=lambda x: x[1], reverse=True)
+    urls = [ k for k,v in ranked ][:max_n_results]
+    return [ [ o for o in oers if o.url==url ][0] for url in urls ]
+
+
+def autocomplete_terms_from_oer_collection(key):
+    if key not in oer_collections:
+        return []
+    if key in autocomplete_cache:
+        return autocomplete_cache[key]
+    urls = oer_collections[key]['video_urls']
+    enrichments = [ w for w in WikichunkEnrichment.query.filter(WikichunkEnrichment.url.in_(urls)).all() ]
+    autocomplete_cache[key] = set([])
+    for enrichment in enrichments:
+        for title in enrichment.get_entity_titles():
+            autocomplete_cache[key].add(title)
+    return autocomplete_cache[key]
+
+
+def relevance_score(enrichment, text):
+    if enrichment.data['errors']:
+        return 0
+    p = re.compile(r'\b'+text+r'\b')
+    n_text_matches = len(p.findall(enrichment.full_text().lower()))
+    if n_text_matches==0:
+        return 0
+    n_chunk_matches = len(p.findall(enrichment.entities_to_string().lower()))
+    return (n_text_matches + 10*n_chunk_matches) / len(enrichment.data['chunks'])

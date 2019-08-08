@@ -79,7 +79,7 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
 
     ChangeSearchText str ->
-      ( { model | searchInputTyping = str } |> closePopup, if String.length str > 1 then requestSearchSuggestions str else Cmd.none)
+      ( { model | searchInputTyping = str } |> closePopup, Cmd.none)
       |> logEventForLabStudy "ChangeSearchText" [ str ]
 
     TriggerSearch str ->
@@ -272,16 +272,16 @@ update msg ({nav, userProfileForm} as model) =
       -- in
       ( { model | userMessage = Just "There was a problem while fetching the wiki definitions data", requestingEntityDefinitions = False }, Cmd.none )
 
-    RequestSearchSuggestions (Ok suggestions) ->
+    RequestAutocompleteTerms (Ok suggestions) ->
       if (millisSince model model.timeOfLastSearch) < 2000 then
         (model, Cmd.none)
       else
-        ({ model | searchSuggestions = suggestions, suggestionSelectionOnHoverEnabled = False }, Cmd.none)
+        ({ model | autocompleteTerms = suggestions, suggestionSelectionOnHoverEnabled = False }, Cmd.none)
 
-    RequestSearchSuggestions (Err err) ->
+    RequestAutocompleteTerms (Err err) ->
       -- let
       --     dummy =
-      --       err |> Debug.log "Error in RequestSearchSuggestions"
+      --       err |> Debug.log "Error in RequestAutocompleteTerms"
       -- in
       ( { model | userMessage = Just "There was a problem while fetching search suggestions" }, Cmd.none )
 
@@ -396,14 +396,15 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "CloseInspector" []
 
     ClickedOnDocument ->
-      ( { model | searchSuggestions = [] }, Cmd.none )
+      ( { model | autocompleteTerms = [] }, Cmd.none )
 
     SelectSuggestion suggestion ->
       ( { model | selectedSuggestion = suggestion }, Cmd.none )
       |> logEventForLabStudy "SelectSuggestion" [ suggestion ]
 
     MouseOverChunkTrigger mousePositionX ->
-      ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX } |> unselectMentionInStory, Cmd.none )
+      -- ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX } |> unselectMentionInStory, Cmd.none )
+      ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX, hoveringTagEntityId = Nothing } |> unselectMentionInStory, Cmd.none )
       |> logEventForLabStudy "MouseOverChunkTrigger" [ mousePositionX |> String.fromFloat ]
 
     YoutubeSeekTo fragmentStart ->
@@ -523,7 +524,19 @@ update msg ({nav, userProfileForm} as model) =
 
 
     SelectedOerCollection oerCollection ->
-      ({ model | oerCollection = oerCollection } |> closePopup, Cmd.none)
+      let
+          cmd =
+            case oerCollection of
+              DefaultX5GON ->
+                Cmd.none
+
+              _ ->
+                [ requestAutocompleteTerms oerCollection
+                , searchOers model.searchInputTyping oerCollection
+                ]
+                |> Cmd.batch
+      in
+      ({ model | oerCollection = oerCollection } |> closePopup, cmd)
       |> logEventForLabStudy "SelectedOerCollection" [ oerCollectionToString oerCollection ]
 
 
@@ -804,7 +817,7 @@ executeSearchAfterUrlChanged model url =
       if str=="" then
         ( model, setBrowserFocus "SearchField")
       else
-        ( { model | searchInputTyping = str, searchState = Just <| newSearch str, searchSuggestions = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers str model.oerCollection)
+        ( { model | searchInputTyping = str, searchState = Just <| newSearch str, autocompleteTerms = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers str model.oerCollection)
         |> logEventForLabStudy "executeSearchAfterUrlChanged" [ str ]
 
 

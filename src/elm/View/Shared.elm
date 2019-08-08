@@ -320,13 +320,13 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
             button ([ width fill, clipX, onFocus <| SelectSuggestion str ]++background++mouseEnterHandler) { onPress = Just <| TriggerSearch str, label = label }
 
       suggestions =
-        if List.isEmpty model.searchSuggestions || String.length searchInputTyping < 2 then
+        if List.isEmpty model.autocompleteTerms || String.length searchInputTyping < 2 then
           none
         else
-          model.searchSuggestions
+          model.autocompleteTerms
           |> List.map (\suggestion -> suggestionButton suggestion)
           |> menuColumn [ width fill, clipY, height <| px (39*7) ]
-          |> el [ width fill, htmlId "SearchSuggestions" ]
+          |> el [ width fill, htmlId "AutocompleteTerms" ]
   in
       searchField
 

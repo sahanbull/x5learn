@@ -36,7 +36,7 @@ type alias Model =
   , wikichunkEnrichments : Dict OerId WikichunkEnrichment
   , enrichmentsAnimating : Bool
   , tagClouds : Dict String (List String)
-  , searchSuggestions : List String
+  , autocompleteTerms : List String
   , selectedSuggestion : String
   , suggestionSelectionOnHoverEnabled : Bool
   , timeOfLastSearch : Posix
@@ -333,7 +333,7 @@ initialModel nav flags =
   , wikichunkEnrichments = Dict.empty
   , enrichmentsAnimating = False
   , tagClouds = Dict.empty
-  , searchSuggestions = []
+  , autocompleteTerms = []
   , selectedSuggestion = ""
   , suggestionSelectionOnHoverEnabled = True -- prevent accidental selection when user doesn't move the pointer but the menu appears on the pointer
   , timeOfLastSearch = initialTime

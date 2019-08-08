@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestSearchSuggestions, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations, requestSendResourceFeedback)
+module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestAutocompleteTerms, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations, requestSendResourceFeedback)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -37,11 +37,11 @@ searchOers searchText oerCollection =
     }
 
 
-requestSearchSuggestions : String -> Cmd Msg
-requestSearchSuggestions searchText =
+requestAutocompleteTerms : OerCollection -> Cmd Msg
+requestAutocompleteTerms oerCollection =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "search_suggestions/" ] [ Url.Builder.string "text" searchText ]
-    , expect = Http.expectJson RequestSearchSuggestions (list string)
+    { url = Url.Builder.absolute [ apiRoot, "autocomplete_terms/" ] [ Url.Builder.string "collection" (oerCollectionToString oerCollection) ]
+    , expect = Http.expectJson RequestAutocompleteTerms (list string)
     }
 
 

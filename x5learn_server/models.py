@@ -83,8 +83,18 @@ class WikichunkEnrichment(Base):
         self.data = data
         self.version = version
 
+    def get_entity_titles(self):
+        titles = []
+        for chunk in self.data['chunks']:
+            for entity in chunk['entities']:
+                titles.append(entity['title'])
+        return titles
+
     def entities_to_string(self):
-        return '. '.join(['. '.join([e['title'] for e in chunk['entities']]) for chunk in self.data['chunks']])
+        return ', '.join(['. '.join([e['title'] for e in chunk['entities']]) for chunk in self.data['chunks']])
+
+    def full_text(self):
+        return ' '.join([ chunk['text'] for chunk in self.data['chunks'] ])
 
 
 class WikichunkEnrichmentTask(Base):

@@ -1,12 +1,11 @@
 import re
 
 from x5learn_server.models import Oer, WikichunkEnrichment
-
+from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed
 
 autocomplete_cache = {}
 
-oer_collections = {'AlanTuringInstitute': {'channel': 'https://www.youtube.com/channel/UCcr5vuAH5TPlYox-QLj4ySw/videos',
-  'title': 'Alan Turing Institute',
+oer_collections = {'Alan Turing Institute': {'channel': 'https://www.youtube.com/channel/UCcr5vuAH5TPlYox-QLj4ySw/videos',
   'video_urls': ['https://www.youtube.com/watch?v=vDl5NVStQwU',
     'https://www.youtube.com/watch?v=mku33qVeNUY',
     'https://www.youtube.com/watch?v=TebxQ2P7feA',
@@ -417,7 +416,6 @@ oer_collections = {'AlanTuringInstitute': {'channel': 'https://www.youtube.com/c
     'https://www.youtube.com/watch?v=KIrrA1-O6LE'
   ]},
   'NIMHgov': {'channel': 'https://www.youtube.com/user/NIMHgov/videos',
-  'title': 'NIMHgov',
   'video_urls': ['https://www.youtube.com/watch?v=m9M23WDpjwc',
     'https://www.youtube.com/watch?v=00Pl3xIJxu0',
     'https://www.youtube.com/watch?v=CNxEjT2hMiU',
@@ -657,6 +655,7 @@ oer_collections = {'AlanTuringInstitute': {'channel': 'https://www.youtube.com/c
 
 
 def search_in_oer_collection(key, text):
+    text = text.lower()
     max_n_results = 12
     if key not in oer_collections:
         return []
@@ -673,25 +672,39 @@ def search_in_oer_collection(key, text):
             relevance_scores_per_url[enrichment.url] = score
     ranked = sorted(relevance_scores_per_url.items(), key=lambda x: x[1], reverse=True)
     urls = [ k for k,v in ranked ][:max_n_results]
+    # print(urls)
     return [ [ o for o in oers if o.url==url ][0] for url in urls ]
 
 
 def autocomplete_terms_from_oer_collection(key):
     if key not in oer_collections:
         return []
-    if key in autocomplete_cache:
-        return autocomplete_cache[key]
+    if key not in autocomplete_cache:
+        return []
+    return autocomplete_cache[key]
+
+
+def initialise_caches_for_all_oer_collections():
+    print('Initialising all collection caches.')
+    for key in oer_collections:
+        initialise_cache(key)
+
+
+def initialise_cache(key):
+    print('Initialising cache for collection', key)
     urls = oer_collections[key]['video_urls']
     enrichments = [ w for w in WikichunkEnrichment.query.filter(WikichunkEnrichment.url.in_(urls)).all() ]
     autocomplete_cache[key] = set([])
+    # print(len(enrichments), 'enrichments')
     for enrichment in enrichments:
         for title in enrichment.get_entity_titles():
             # NB it would be nice if we could guarantee that every
             # autocomplete suggestion definitely leads to >0 search results
             # but trying each one out takes a long time.
-            # if len(search_in_oer_collection(key, title)) > 0:
+            # n = len(search_in_oer_collection(key, title))
+            # print(n, title)
+            # if n > 0:
             autocomplete_cache[key].add(title)
-    return autocomplete_cache[key]
 
 
 def relevance_score(enrichment, text):

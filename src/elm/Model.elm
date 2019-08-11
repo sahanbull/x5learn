@@ -770,6 +770,6 @@ defaultOerCollectionTitle =
   "X5GON Platform"
 
 additionalOerCollectionTitles =
-  [ "AlanTuringInstitute"
+  [ "Alan Turing Institute"
   , "NIMHgov"
   ]

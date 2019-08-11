@@ -39,6 +39,10 @@ superLightBackground =
   Background.color <| rgb255 242 242 242
 
 
+greyDivider =
+  rgb 0.8 0.8 0.8
+
+
 materialDarkAlpha =
   alpha 0.87
 
@@ -104,7 +108,7 @@ borderLeft px =
 
 
 borderColorLayout =
-  Border.color <| rgb 0.8 0.8 0.8
+  Border.color <| greyDivider
 
 
 allSidesZero =

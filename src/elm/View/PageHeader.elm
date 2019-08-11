@@ -31,7 +31,7 @@ viewPageHeader model =
         [ width fill
         , height (px pageHeaderHeight)
         , spacing 20
-        , paddingEach { allSidesZero | top = 0, left = 16, right = 16 }
+        , paddingEach { allSidesZero | top = 0, left = 13, right = 16 }
         , Background.color <| rgb 1 1 1
         , borderBottom 1
         , borderColorLayout

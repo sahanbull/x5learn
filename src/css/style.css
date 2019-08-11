@@ -223,10 +223,10 @@ a:hover {
 /* active state */
 .MaterialSelectText:focus ~ .MaterialSelectLabel, .MaterialSelectText:valid ~ .MaterialSelectLabel {
 	/* color: #5b96a6; */
-	color: #181818;
+	color: rgba(0,0,0,0.87);
 	top: -20px;
 	transition: 0.2s ease all;
-	font-size: 14px;
+	font-size: 12px;
 }
 
 /* BOTTOM BARS ================================= */

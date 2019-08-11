@@ -24,7 +24,8 @@ from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichmen
     ActionsRepository, UserRepository, DefinitionsRepository
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
-from x5learn_server.oer_collections import search_in_oer_collection, autocomplete_terms_from_oer_collection
+from x5learn_server.oer_collections import search_in_oer_collection, autocomplete_terms_from_oer_collection, initialise_caches_for_all_oer_collections
+from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
 
 # Create app
 app = Flask(__name__)
@@ -70,15 +71,13 @@ app.config['MAIL_DEFAULT_SENDER'] = MAIL_SENDER
 
 mail.init_app(app)
 
-CURRENT_ENRICHMENT_VERSION = 1
-
-
 # create database when starting the app
 @app.before_first_request
 def initiate_login_db():
     from x5learn_server.db.database import initiate_login_table_and_admin_profile
     initiate_login_table_and_admin_profile(user_datastore)
     initiate_action_types_table()
+    initialise_caches_for_all_oer_collections()
 
 
 # Setting wikipedia api language
@@ -292,21 +291,6 @@ def log_event_for_lab_study():
     return 'OK'
 
 
-def save_enrichment(url, data):
-    oer = Oer.query.filter_by(url=url).first()
-    if oer is None:
-        return
-    data['oerId'] = oer.id
-    enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
-    if enrichment is None:
-        enrichment = WikichunkEnrichment(url, data, CURRENT_ENRICHMENT_VERSION)
-        db_session.add(enrichment)
-    else:
-        enrichment.data = data
-        enrichment.version = CURRENT_ENRICHMENT_VERSION
-    db_session.commit()
-
-
 def save_definitions(data):
     for chunk in data['chunks']:
         for entity in chunk['entities']:
@@ -414,27 +398,6 @@ def convert_x5_material_to_oer(material, url):
     data['images'] = []
     data['mediatype'] = material['type']
     return data
-
-
-def push_enrichment_task_if_needed(url, urgency):
-    enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
-    if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION):
-        push_enrichment_task(url, urgency)
-
-
-def push_enrichment_task(url, priority):
-    # print('push_enrichment_task')
-    try:
-        task = WikichunkEnrichmentTask.query.filter_by(url=url).first()
-        if task is None:
-            task = WikichunkEnrichmentTask(url, priority)
-            db_session.add(task)
-        else:
-            task.priority += priority
-        db_session.commit()
-    except sqlalchemy.orm.exc.StaleDataError:
-        print(
-            'sqlalchemy.orm.exc.StaleDataError caught and ignored.')  # This error came up occasionally. I'm not 100% sure about what it entails but it didn't seem to affect the user experience so I'm suppressing it for now to prevent a pointless alert on the frontend. Grateful for any helpful tips. More information on this error: https://docs.sqlalchemy.org/en/13/orm/exceptions.html#sqlalchemy.orm.exc.StaleDataError
 
 
 def any_word_matches(words, text):

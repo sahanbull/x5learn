@@ -538,8 +538,15 @@ update msg ({nav, userProfileForm} as model) =
               , searchOers model.searchInputTyping collectionTitle
               ]
               |> Cmd.batch
+
+          searchInputTyping =
+            case model.searchState of
+              Nothing ->
+                ""
+              Just {lastSearch} ->
+                lastSearch
       in
-      ({ model | oerCollection = collectionTitle, autocompleteTerms = [], searchInputTyping = "" } |> closePopup, cmd)
+      ({ model | oerCollection = collectionTitle, autocompleteTerms = [], searchInputTyping = searchInputTyping } |> closePopup, cmd)
       |> logEventForLabStudy "SelectedOerCollection" [ collectionTitle ]
 
 

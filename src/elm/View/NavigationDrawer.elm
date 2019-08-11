@@ -35,7 +35,7 @@ withNavigationDrawer model (pageContent, modal) =
             [ image [ width (px 20), alpha 0.66 ] { src = svgPath svgIconStub, description = "" }
             , label |> bodyNoWrap [ width fill ]
             ]
-            |> row ([ width fill, padding 12, spacing 30, Border.rounded 4 ] ++ background)
+            |> row ([ width fill, paddingXY 0 12, spacing 30, Border.rounded 4 ] ++ background)
             |> if enabled then linkTo [ width fill ] url else el [ semiTransparent, htmlClass "CursorNotAllowed" ]
 
       navButtons =
@@ -99,16 +99,17 @@ viewCollectionSelectionWidget model =
       [ selectElement
       , Html.span [ Html.Attributes.class "MaterialSelectBar" ] []
       , Html.span [ Html.Attributes.class "MaterialSelectHighlight" ] []
-      , Html.label [ Html.Attributes.class "MaterialSelectLabel" ] [ Html.text "Search database" ]
+      , Html.label [ Html.Attributes.class "MaterialSelectLabel" ] [ Html.text "Content database" ]
       ]
       |> Html.div [ Html.Attributes.class "MaterialSelect" ]
       |> html
       |> el [ htmlClass "MaterialSelectWrap", paddingTop 15 ]
 
+
 viewOverviewSelectionWidget : Model -> Element Msg
 viewOverviewSelectionWidget model =
   Input.radio
-    [ padding 20
+    [ paddingXY 0 20
     , spacing 20
     , width fill
     ]
@@ -120,4 +121,4 @@ viewOverviewSelectionWidget model =
         , Input.option StoryOverview (bodyNoWrap [] "Detailed")
         ]
     }
-    |> el [ width fill, padding 10, borderBottom 1, Border.color greyMedium ]
+    |> el [ width fill, padding 10, borderBottom 1, borderColorLayout ]

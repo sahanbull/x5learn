@@ -686,6 +686,10 @@ def autocomplete_terms_from_oer_collection(key):
     autocomplete_cache[key] = set([])
     for enrichment in enrichments:
         for title in enrichment.get_entity_titles():
+            # NB it would be nice if we could guarantee that every
+            # autocomplete suggestion definitely leads to >0 search results
+            # but trying each one out takes a long time.
+            # if len(search_in_oer_collection(key, title)) > 0:
             autocomplete_cache[key].add(title)
     return autocomplete_cache[key]
 

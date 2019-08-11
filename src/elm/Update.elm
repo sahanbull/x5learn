@@ -79,8 +79,13 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
 
     ChangeSearchText str ->
-      ( { model | searchInputTyping = str } |> closePopup, Cmd.none)
-      |> logEventForLabStudy "ChangeSearchText" [ str ]
+      let
+          autocompleteSuggestions =
+            model.autocompleteTerms
+            |> List.filter (\term -> String.startsWith (String.toLower str) (String.toLower term))
+      in
+          ( { model | searchInputTyping = str, autocompleteSuggestions = autocompleteSuggestions } |> closePopup, Cmd.none)
+          |> logEventForLabStudy "ChangeSearchText" [ str ]
 
     TriggerSearch str ->
       let
@@ -272,11 +277,11 @@ update msg ({nav, userProfileForm} as model) =
       -- in
       ( { model | userMessage = Just "There was a problem while fetching the wiki definitions data", requestingEntityDefinitions = False }, Cmd.none )
 
-    RequestAutocompleteTerms (Ok suggestions) ->
+    RequestAutocompleteTerms (Ok autocompleteTerms) ->
       if (millisSince model model.timeOfLastSearch) < 2000 then
         (model, Cmd.none)
       else
-        ({ model | autocompleteTerms = suggestions, suggestionSelectionOnHoverEnabled = False }, Cmd.none)
+        ({ model | autocompleteTerms = autocompleteTerms, suggestionSelectionOnHoverEnabled = False }, Cmd.none)
 
     RequestAutocompleteTerms (Err err) ->
       -- let
@@ -396,7 +401,7 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "CloseInspector" []
 
     ClickedOnDocument ->
-      ( { model | autocompleteTerms = [] }, Cmd.none )
+      ( { model | autocompleteSuggestions = [] }, Cmd.none )
 
     SelectSuggestion suggestion ->
       ( { model | selectedSuggestion = suggestion }, Cmd.none )
@@ -536,7 +541,7 @@ update msg ({nav, userProfileForm} as model) =
                 ]
                 |> Cmd.batch
       in
-      ({ model | oerCollection = oerCollection } |> closePopup, cmd)
+      ({ model | oerCollection = oerCollection, autocompleteTerms = [] } |> closePopup, cmd)
       |> logEventForLabStudy "SelectedOerCollection" [ oerCollectionToString oerCollection ]
 
 
@@ -817,7 +822,7 @@ executeSearchAfterUrlChanged model url =
       if str=="" then
         ( model, setBrowserFocus "SearchField")
       else
-        ( { model | searchInputTyping = str, searchState = Just <| newSearch str, autocompleteTerms = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers str model.oerCollection)
+        ( { model | searchInputTyping = str, searchState = Just <| newSearch str, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers str model.oerCollection)
         |> logEventForLabStudy "executeSearchAfterUrlChanged" [ str ]
 
 

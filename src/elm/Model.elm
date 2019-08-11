@@ -37,6 +37,7 @@ type alias Model =
   , enrichmentsAnimating : Bool
   , tagClouds : Dict String (List String)
   , autocompleteTerms : List String
+  , autocompleteSuggestions : List String
   , selectedSuggestion : String
   , suggestionSelectionOnHoverEnabled : Bool
   , timeOfLastSearch : Posix
@@ -334,6 +335,7 @@ initialModel nav flags =
   , enrichmentsAnimating = False
   , tagClouds = Dict.empty
   , autocompleteTerms = []
+  , autocompleteSuggestions = []
   , selectedSuggestion = ""
   , suggestionSelectionOnHoverEnabled = True -- prevent accidental selection when user doesn't move the pointer but the menu appears on the pointer
   , timeOfLastSearch = initialTime

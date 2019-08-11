@@ -668,7 +668,9 @@ def search_in_oer_collection(key, text):
     urls = [ oer.url for oer in oers ]
     relevance_scores_per_url = {}
     for enrichment in WikichunkEnrichment.query.filter(WikichunkEnrichment.url.in_(urls)).all():
-        relevance_scores_per_url[enrichment.url] = relevance_score(enrichment, text)
+        score = relevance_score(enrichment, text)
+        if score>0:
+            relevance_scores_per_url[enrichment.url] = score
     ranked = sorted(relevance_scores_per_url.items(), key=lambda x: x[1], reverse=True)
     urls = [ k for k,v in ranked ][:max_n_results]
     return [ [ o for o in oers if o.url==url ][0] for url in urls ]

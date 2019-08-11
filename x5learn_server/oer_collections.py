@@ -1,4 +1,4 @@
-import re
+import re, math
 
 from x5learn_server.models import Oer, WikichunkEnrichment
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed
@@ -715,4 +715,4 @@ def relevance_score(enrichment, text):
     if n_text_matches==0:
         return 0
     n_chunk_matches = len(p.findall(enrichment.entities_to_string().lower()))
-    return (n_text_matches + 10*n_chunk_matches) / len(enrichment.data['chunks'])
+    return (n_text_matches + 10*n_chunk_matches) / math.sqrt(len(enrichment.data['chunks']))

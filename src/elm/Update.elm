@@ -528,21 +528,19 @@ update msg ({nav, userProfileForm} as model) =
       ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
 
 
-    SelectedOerCollection oerCollection ->
+    SelectedOerCollection collectionTitle ->
       let
           cmd =
-            case oerCollection of
-              DefaultX5GON ->
-                Cmd.none
-
-              _ ->
-                [ requestAutocompleteTerms oerCollection
-                , searchOers model.searchInputTyping oerCollection
-                ]
-                |> Cmd.batch
+            if collectionTitle == defaultOerCollectionTitle then
+              Cmd.none
+            else
+              [ requestAutocompleteTerms collectionTitle
+              , searchOers model.searchInputTyping collectionTitle
+              ]
+              |> Cmd.batch
       in
-      ({ model | oerCollection = oerCollection, autocompleteTerms = [] } |> closePopup, cmd)
-      |> logEventForLabStudy "SelectedOerCollection" [ oerCollectionToString oerCollection ]
+      ({ model | oerCollection = collectionTitle, autocompleteTerms = [], searchInputTyping = "" } |> closePopup, cmd)
+      |> logEventForLabStudy "SelectedOerCollection" [ collectionTitle ]
 
 
 createNote : OerId -> String -> Model -> Model

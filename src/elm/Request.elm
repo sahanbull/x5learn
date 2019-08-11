@@ -29,18 +29,18 @@ requestSession =
     }
 
 
-searchOers : String -> OerCollection -> Cmd Msg
-searchOers searchText oerCollection =
+searchOers : String -> String -> Cmd Msg
+searchOers searchText collectionTitle =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText, Url.Builder.string "collection" (oerCollectionToString oerCollection) ]
+    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText, Url.Builder.string "collection" collectionTitle ]
     , expect = Http.expectJson RequestOerSearch (list oerDecoder)
     }
 
 
-requestAutocompleteTerms : OerCollection -> Cmd Msg
-requestAutocompleteTerms oerCollection =
+requestAutocompleteTerms : String -> Cmd Msg
+requestAutocompleteTerms collectionTitle =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "autocomplete_terms/" ] [ Url.Builder.string "collection" (oerCollectionToString oerCollection) ]
+    { url = Url.Builder.absolute [ apiRoot, "autocomplete_terms/" ] [ Url.Builder.string "collection" collectionTitle ]
     , expect = Http.expectJson RequestAutocompleteTerms (list string)
     }
 

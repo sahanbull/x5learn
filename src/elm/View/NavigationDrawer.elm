@@ -2,6 +2,7 @@ module View.NavigationDrawer exposing (withNavigationDrawer)
 
 import Dict
 import Set
+import Json.Decode as Decode
 
 import Element exposing (..)
 import Element.Input as Input exposing (button)
@@ -9,6 +10,10 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
+
+import Html
+import Html.Events
+import Html.Attributes
 
 import Model exposing (..)
 import View.Shared exposing (..)
@@ -82,22 +87,23 @@ dataSetSelectionWidget model searchInputTyping =
 
 viewCollectionSelectionWidget : Model -> Element Msg
 viewCollectionSelectionWidget model =
-  Input.radio
-    [ padding 20
-    , spacing 20
-    , width fill
-    ]
-    { onChange = SelectedOerCollection
-    , selected = Just model.oerCollection
-    , label = Input.labelAbove captionTextAttrs (text "Collection")
-    , options =
-        [ Input.option DefaultX5GON (bodyNoWrap [] "X5GON")
-        , Input.option AlanTuringInstitute (bodyNoWrap [] "Alan Turing Institute")
-        , Input.option NIMHgov (bodyNoWrap [] "NIMHgov")
-        ]
-    }
-    |> el [ width fill, padding 10, borderBottom 1, Border.color greyMedium ]
+  let
+      option collectionTitle =
+        Html.option [ Html.Attributes.value collectionTitle ] [ Html.text collectionTitle ]
 
+      selectElement =
+        oerCollectionTitles
+        |> List.map option
+        |> Html.select [ Html.Attributes.class "MaterialSelectText", Html.Events.on "change" (Decode.map SelectedOerCollection <| Decode.at ["target", "value"] Decode.string) ]
+  in
+      [ selectElement
+      , Html.span [ Html.Attributes.class "MaterialSelectBar" ] []
+      , Html.span [ Html.Attributes.class "MaterialSelectHighlight" ] []
+      , Html.label [ Html.Attributes.class "MaterialSelectLabel" ] [ Html.text "Search database" ]
+      ]
+      |> Html.div [ Html.Attributes.class "MaterialSelect" ]
+      |> html
+      |> el [ htmlClass "MaterialSelectWrap", paddingTop 15 ]
 
 viewOverviewSelectionWidget : Model -> Element Msg
 viewOverviewSelectionWidget model =

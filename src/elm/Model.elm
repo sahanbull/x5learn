@@ -63,14 +63,9 @@ type alias Model =
   , oerCardPlaceholderPositions : List OerCardPlaceholderPosition
   , overviewType : OverviewType
   , selectedMentionInStory : Maybe (OerId, MentionInOer)
-  , oerCollection : OerCollection
+  , oerCollection : String
   }
 
-
-type OerCollection
-  = DefaultX5GON
-  | AlanTuringInstitute
-  | NIMHgov
 
 type EntityDefinition
   = DefinitionScheduledForLoading
@@ -362,7 +357,7 @@ initialModel nav flags =
   -- , overviewType = StoryOverview
   , overviewType = BubblogramOverview
   , selectedMentionInStory = Nothing
-  , oerCollection = DefaultX5GON
+  , oerCollection = defaultOerCollectionTitle
   }
 
 
@@ -767,11 +762,14 @@ getResourceFeedbackFormValue model oerId =
   model.feedbackForms |> Dict.get oerId |> Maybe.withDefault ""
 
 
-oerCollectionToString oerCollection =
-  case oerCollection of
-    DefaultX5GON ->
-      "DefaultX5GON"
-    AlanTuringInstitute ->
-      "AlanTuringInstitute"
-    NIMHgov ->
-      "NIMHgov"
+oerCollectionTitles =
+  defaultOerCollectionTitle :: additionalOerCollectionTitles
+
+
+defaultOerCollectionTitle =
+  "X5GON Platform"
+
+additionalOerCollectionTitles =
+  [ "AlanTuringInstitute"
+  , "NIMHgov"
+  ]

@@ -161,7 +161,7 @@ def get_or_create_logged_in_user():
 def api_search():
     text = request.args['text'].lower().strip()
     collection = request.args['collection']
-    if collection=='DefaultX5GON':
+    if collection=='X5GON Platform':
         results = get_dataset_for_lab_study_one(
             text) or search_results_from_x5gon_api(text)
     else:

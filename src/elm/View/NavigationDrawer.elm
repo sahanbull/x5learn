@@ -99,7 +99,7 @@ viewCollectionSelectionWidget model =
       [ selectElement
       , Html.span [ Html.Attributes.class "MaterialSelectBar" ] []
       , Html.span [ Html.Attributes.class "MaterialSelectHighlight" ] []
-      , Html.label [ Html.Attributes.class "MaterialSelectLabel" ] [ Html.text "Content database" ]
+      , Html.label [ Html.Attributes.class "MaterialSelectLabel" ] [ Html.text "Data corpus" ]
       ]
       |> Html.div [ Html.Attributes.class "MaterialSelect" ]
       |> html

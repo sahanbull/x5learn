@@ -82,7 +82,7 @@ def make_wikichunks(oer_data):
 
 
 def extract_concept_clusters(chunks, mentions):
-    # print('\n_____________________________ Concept clusters')
+    print('\n_____________________________ Concept clusters')
     occurrences = defaultdict(int)
     for chunk in chunks:
         for entity in chunk['entities']:
@@ -93,7 +93,12 @@ def extract_concept_clusters(chunks, mentions):
     print('Titles:', titles)
     clusters = []
     for title in titles:
-        links = [ link for link in wikipedia.page(title).links if link in titles ]
+        try:
+            links = wikipedia.page(title).links
+        except Exception as err:
+            links = []
+            print('Ignoring error: ', err)
+        links = [ link for link in links if link in titles ]
         cluster = [ title ] + links
         clusters.append(cluster)
     print('Raw:', clusters)

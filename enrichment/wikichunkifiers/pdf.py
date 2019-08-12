@@ -9,6 +9,7 @@ def extract_chunks_from_pdf(url):
     download_file(url)
     # create_thumbnail_and_post_back(url)
     text = convert_to_text()
+    text = filter_blacklisted_terms(text)
     if len(text) < 500:
         raise EnrichmentError('Text too short')
 
@@ -48,6 +49,13 @@ def convert_to_text():
         text = res.stdout.decode('utf-8')
     except UnicodeDecodeError as err:
         raise EnrichmentError('UnicodeDecodeError after pdf conversion')
+    return text
+
+
+def filter_blacklisted_terms(text):
+    blacklist = 'RenderX', 'MEDLINE', 'Medline', 'MedLine', 'medline', 'MEDLAR' # Journal publishing related
+    for term in blacklist:
+        text = text.replace(term, '')
     return text
 
 

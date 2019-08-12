@@ -824,9 +824,9 @@ executeSearchAfterUrlChanged model url =
         |> Url.percentDecode
         |> Maybe.withDefault ""
   in
-      if str=="" then
-        ( model, setBrowserFocus "SearchField")
-      else
+      -- if str=="" then
+      --   ( model, setBrowserFocus "SearchField")
+      -- else
         ( { model | searchInputTyping = str, searchState = Just <| newSearch str, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers str model.oerCollection)
         |> logEventForLabStudy "executeSearchAfterUrlChanged" [ str ]
 

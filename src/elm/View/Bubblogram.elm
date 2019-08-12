@@ -336,7 +336,7 @@ viewPopup model {oerId, entityId, content} bubble =
               horizontalSpacingBetweenCards - 5
 
             smallest =
-              { horizontalOffset = (posX/2 + 1/4) * contentWidth + marginX - 220/2, popupWidth = 220 }
+              { horizontalOffset = (posX/2 + 1/4) * contentWidth + marginX - 300/2, popupWidth = 300 }
 
             largest =
               { horizontalOffset = -allowedMargin, popupWidth = cardWidth + 2*allowedMargin }

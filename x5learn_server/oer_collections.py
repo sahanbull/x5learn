@@ -712,8 +712,6 @@ def search_in_oer_collection(key, text):
         return []
     urls = oer_collections[key]['video_urls']
     oers = Oer.query.filter(Oer.url.in_(urls)).order_by(Oer.id).all()
-    if text=='':
-        return oers[:max_n_results]
     # Exclude urls of missing oers
     urls = [ oer.url for oer in oers ]
     relevance_scores_per_url = {}
@@ -745,8 +743,7 @@ def initialise_cache(key):
     print('Initialising cache for collection', key)
     urls = oer_collections[key]['video_urls']
     for url in urls:
-        if 'youtu' not in url:
-            push_enrichment_task_if_needed(url, 10000)
+        push_enrichment_task_if_needed(url, 10000)
     enrichments = [ w for w in WikichunkEnrichment.query.filter(WikichunkEnrichment.url.in_(urls)).all() ]
     autocomplete_cache[key] = set([])
     # print(len(enrichments), 'enrichments')
@@ -764,6 +761,8 @@ def initialise_cache(key):
 def relevance_score(enrichment, text):
     if enrichment.data['errors']:
         return 0
+    if text=='':
+        return 1
     p = re.compile(r'\b'+text+r'\b')
     n_text_matches = len(p.findall(enrichment.full_text().lower()))
     if n_text_matches==0:

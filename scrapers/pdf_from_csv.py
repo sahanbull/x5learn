@@ -51,6 +51,7 @@ if __name__ == '__main__':
     failed = []
 
     df = pd.read_csv(open(args.filepath))
+    df = df.replace(pd.np.nan, '', regex=True)
     rows = df.to_dict(orient='records')
     for row in rows:
         print('\n______________________________________________________________')
@@ -59,10 +60,12 @@ if __name__ == '__main__':
         oer = db_session.query(Oer).filter_by(url=url).first()
         if oer is not None:
             print('Exists already -> skipping.')
+            # db_session.delete(oer)
+            # db_session.commit()
             skipped.append(url)
-        elif ingest_oer_from_csv(url):
+        elif ingest_oer_from_csv(row):
             succeeded_at_first_try.append(url)
-        elif ingest_oer_from_csv(url):
+        elif ingest_oer_from_csv(row):
             succeeded_at_second_try.append(url)
         else:
             print('Giving up.')

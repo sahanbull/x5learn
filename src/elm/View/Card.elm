@@ -234,10 +234,17 @@ viewOerCard model recommendedFragments position barId enableShadow oer =
                   viewBubblogram model oer.id bubblogram
 
       title =
-        oer.title
-        |> subSubheaderWrap [ paddingXY 16 0, centerY ]
-        |> el [ height <| px 70, clipY, moveDown 181 ]
-        |> inFront
+        let
+            fontSize =
+              if String.length oer.title < 90 then
+                Font.size 16
+              else
+                Font.size 14
+        in
+            oer.title
+            |> subSubheaderWrap [ paddingXY 16 0, centerY, fontSize ]
+            |> el [ height <| px 72, clipY, moveDown 181 ]
+            |> inFront
 
       -- modalityIcon =
       --   if hasYoutubeVideo oer.url then
@@ -263,7 +270,7 @@ viewOerCard model recommendedFragments position barId enableShadow oer =
               [ date, provider, duration ]
         in
             content
-            |> row [ width fill, paddingXY 16 0, moveDown 253 ]
+            |> row [ width fill, paddingXY 16 0, moveDown 255 ]
             |> inFront
 
       tagCloudView tagCloud =

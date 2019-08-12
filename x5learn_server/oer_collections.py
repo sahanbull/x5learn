@@ -651,6 +651,57 @@ oer_collections = {'Alan Turing Institute': {'channel': 'https://www.youtube.com
     'https://www.youtube.com/watch?v=zbUl2hZNlKY',
     'https://www.youtube.com/watch?v=zl6R6w1WvZk',
     'https://www.youtube.com/watch?v=gK3dcjBaJyo'
+  ]},
+  'Conference Programme': {'channel': 'n/a',
+  'video_urls': ['https://static1.squarespace.com/static/587b44e1d1758e3ceffe18c6/t/5d4f20712dc6a70001f6879c/1565466740313/Full+Programme+DIMH2019+Final.pdf'
+  ]},
+  'JMIR Journal': {'channel': 'https://www.jmir.org/2019/8',
+  'video_urls': [ 'https://www.jmir.org/2019/8/e12775/PDF',
+    'https://www.jmir.org/2019/8/e14145/PDF',
+    'https://www.jmir.org/2019/8/e13363/PDF',
+    'https://www.jmir.org/2019/8/e14374/PDF',
+    'https://www.jmir.org/2019/8/e14821/PDF',
+    'https://www.jmir.org/2019/8/e13003/PDF',
+    'https://www.jmir.org/2019/8/e13921/PDF',
+    'https://www.jmir.org/2019/8/e12483/PDF',
+    'https://www.jmir.org/2019/8/e14634/PDF',
+    'https://www.jmir.org/2019/8/e14127/PDF',
+    'https://www.jmir.org/2019/8/e13432/PDF',
+    'https://www.jmir.org/2019/8/e14587/PDF',
+    'https://www.jmir.org/2019/8/e14126/PDF',
+    'https://www.jmir.org/2019/8/e13652/PDF',
+    'https://www.jmir.org/2019/8/e13228/PDF',
+    'https://www.jmir.org/2019/8/e12914/PDF',
+    'https://www.researchprotocols.org/2019/8/e13151/PDF',
+    'https://www.researchprotocols.org/2019/8/e13653/PDF',
+    'https://www.researchprotocols.org/2019/8/e13973/PDF',
+    'https://www.researchprotocols.org/2019/8/e12620/PDF',
+    'https://www.researchprotocols.org/2019/8/e12836/PDF',
+    'https://www.researchprotocols.org/2019/8/e13625/PDF',
+    'https://www.researchprotocols.org/2019/8/e13744/PDF',
+    'https://www.researchprotocols.org/2019/8/e13797/PDF',
+    'https://www.researchprotocols.org/2019/8/e11165/PDF',
+    'https://mhealth.jmir.org/2019/8/e11966/PDF',
+    'https://mhealth.jmir.org/2019/8/e11734/PDF',
+    'https://mhealth.jmir.org/2019/8/e12672/PDF',
+    'https://mhealth.jmir.org/2019/8/e13519/PDF',
+    'https://mhealth.jmir.org/2019/8/e13712/PDF',
+    'https://mhealth.jmir.org/2019/8/e14991/PDF',
+    'https://mhealth.jmir.org/2019/8/e13452/PDF',
+    'https://mhealth.jmir.org/2019/8/e13491/PDF',
+    'https://mhealth.jmir.org/2019/8/e12771/PDF',
+    'https://mhealth.jmir.org/2019/8/e13938/PDF',
+    'https://medinform.jmir.org/2019/3/e13802/PDF',
+    'https://medinform.jmir.org/2019/3/e9510/PDF',
+    'https://mental.jmir.org/2019/8/e14724/PDF',
+    'https://mental.jmir.org/2019/8/e14029/PDF',
+    'https://games.jmir.org/2019/3/e13993/PDF',
+    'https://diabetes.jmir.org/2019/3/e13724/PDF',
+    'https://formative.jmir.org/2019/3/e13621/PDF',
+    'https://formative.jmir.org/2019/3/e12675/PDF',
+    'https://aging.jmir.org/2019/2/e13939/PDF',
+    'https://periop.jmir.org/2019/2/e13559/PDF',
+    'https://nursing.jmir.org/2019/1/e14279/PDF',
 ]}}
 
 
@@ -693,6 +744,9 @@ def initialise_caches_for_all_oer_collections():
 def initialise_cache(key):
     print('Initialising cache for collection', key)
     urls = oer_collections[key]['video_urls']
+    for url in urls:
+        if 'youtu' not in url:
+            push_enrichment_task_if_needed(url, 10000)
     enrichments = [ w for w in WikichunkEnrichment.query.filter(WikichunkEnrichment.url.in_(urls)).all() ]
     autocomplete_cache[key] = set([])
     # print(len(enrichments), 'enrichments')

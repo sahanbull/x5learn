@@ -45,12 +45,6 @@ from x5learn_server.models import Oer
 waittime = 10                       # seconds browser waits before giving up
 headless = True                     # select True if you want the browser window to be invisible (but not inaudible)
 
-oers_csv_path = '/Users/stefan/x5/data/scenario_lab1/oers.csv'
-
-
-def backup_and_save(df, path):
-    copy(path, '/'.join(path.split('/')[:-1])+'/auto_backup/'+str(int(time.time()))+'_'+path.split('/')[-1])
-    df.to_csv(path, sep='\t', encoding='utf-8', index=False)
 
 def get_duration_from_youtube(url):
     txt = get(url).text
@@ -63,7 +57,7 @@ def get_duration_from_youtube(url):
 
 def scrape_youtube_page(videoid):
         print('Scraping Youtube video', videoid)
-                # Create a new instance of the Firefox driver
+        # Create a new instance of the Firefox driver
         if headless:
             options = Options()
             options.headless = True

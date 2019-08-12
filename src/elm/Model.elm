@@ -772,4 +772,6 @@ defaultOerCollectionTitle =
 additionalOerCollectionTitles =
   [ "Alan Turing Institute"
   , "NIMHgov"
+  , "Conference Programme"
+  , "JMIR Journal"
   ]

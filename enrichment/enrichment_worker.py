@@ -72,7 +72,7 @@ def make_wikichunks(oer_data):
     url = oer_data['url']
     print(url)
     print(oer_data['title'])
-    if url.lower().endswith('.pdf'):
+    if url.lower().endswith('pdf'):
         return extract_chunks_from_pdf(url)
     # if url.lower().endswith('.mp4'): TODO
     #     return extract_chunks_from_video(url)

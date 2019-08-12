@@ -71,7 +71,7 @@ update msg ({nav, userProfileForm} as model) =
           |> logEventForLabStudy "UrlChanged" [ path ]
 
     ClockTick time ->
-      ( { model | currentTime = time, enrichmentsAnimating = anyBubblogramsAnimating model }, getOerCardPlaceholderPositions True)
+      ( { model | currentTime = time, enrichmentsAnimating = anyBubblogramsAnimating model }, Cmd.none)
       |> requestWikichunkEnrichmentsIfNeeded
       |> requestEntityDefinitionsIfNeeded
 
@@ -206,7 +206,7 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | userMessage = Just "Some changes were not saved." }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
-      ( model |> updateSearch (insertSearchResults (oers |> List.map .id)) |> cacheOersFromList oers, setBrowserFocus "SearchField")
+      ( model |> updateSearch (insertSearchResults (oers |> List.map .id)) |> cacheOersFromList oers, [ setBrowserFocus "SearchField", getOerCardPlaceholderPositions True ] |> Cmd.batch)
       |> requestWikichunkEnrichmentsIfNeeded
       |> logEventForLabStudy "RequestOerSearch" (oers |> List.map .id |> List.map String.fromInt)
 

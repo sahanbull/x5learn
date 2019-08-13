@@ -35,7 +35,7 @@ update msg ({nav, userProfileForm} as model) =
           (newModel, cmd) =
             model |> update (UrlChanged url)
       in
-          (newModel, [ cmd, requestSession ] |> Cmd.batch )
+          (newModel, [ cmd, requestSession, askPageScrollState True ] |> Cmd.batch )
 
     LinkClicked urlRequest ->
       case urlRequest of
@@ -57,9 +57,9 @@ update msg ({nav, userProfileForm} as model) =
             if path |> String.startsWith profilePath then
               (Profile, (model, Cmd.none))
             else if path |> String.startsWith notesPath then
-              (Notes, ({ model | oerCardPlaceholderPositions = [] }, getOerCardPlaceholderPositions True))
+              (Notes, ({ model | oerCardPlaceholderPositions = [] }, [ getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch))
             else if path |> String.startsWith recentPath then
-              (Recent, (model, Cmd.none))
+              (Recent, (model, askPageScrollState True))
             else if path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
             else if path |> String.startsWith resourcePath then
@@ -95,7 +95,7 @@ update msg ({nav, userProfileForm} as model) =
           ({ model | inspectorState = Nothing } |> closePopup, Navigation.pushUrl nav.key searchUrl)
 
     ResizeBrowser x y ->
-      ( { model | windowWidth = x, windowHeight = y } |> closePopup, Cmd.none )
+      ( { model | windowWidth = x, windowHeight = y } |> closePopup, askPageScrollState True)
 
     InspectOer oer fragmentStart fragmentLength playWhenReady ->
       let
@@ -206,7 +206,7 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | userMessage = Just "Some changes were not saved." }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
-      ( model |> updateSearch (insertSearchResults (oers |> List.map .id)) |> cacheOersFromList oers, [ setBrowserFocus "SearchField", getOerCardPlaceholderPositions True ] |> Cmd.batch)
+      ( model |> updateSearch (insertSearchResults (oers |> List.map .id)) |> cacheOersFromList oers, [ setBrowserFocus "SearchField", getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch)
       |> requestWikichunkEnrichmentsIfNeeded
       |> logEventForLabStudy "RequestOerSearch" (oers |> List.map .id |> List.map String.fromInt)
 
@@ -488,9 +488,9 @@ update msg ({nav, userProfileForm} as model) =
           (newModel, Cmd.none)
           |> logEventForLabStudy "OverviewTagLabelClicked" (popupToStrings newModel.popup)
 
-    PageScrolled {scrollTop, viewHeight, contentHeight} ->
-      (model, Cmd.none)
-      |> logEventForLabStudy "PageScrolled" [ scrollTop |> String.fromFloat, viewHeight |> String.fromFloat, contentHeight |> String.fromFloat ]
+    PageScrolled ({scrollTop, viewHeight, contentHeight, requestedByElm} as pageScrollState) ->
+      ({ model | pageScrollState = pageScrollState }, Cmd.none)
+      |> logEventForLabStudy "PageScrolled" [ scrollTop |> String.fromFloat, viewHeight |> String.fromFloat, contentHeight |> String.fromFloat, if requestedByElm then "elm" else "user" ]
 
     OerCardPlaceholderPositionsReceived positions ->
       ({ model | oerCardPlaceholderPositions = positions }, Cmd.none)

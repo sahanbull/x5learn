@@ -65,7 +65,7 @@ type Msg
   | OverviewTagMouseOut
   | OverviewTagLabelMouseOver EntityId OerId
   | OverviewTagLabelClicked OerId
-  | PageScrolled ScrollData
+  | PageScrolled PageScrollState
   | OerCardPlaceholderPositionsReceived (List OerCardPlaceholderPosition)
   | StartLabStudyTask LabStudyTask
   | StoppedLabStudyTask

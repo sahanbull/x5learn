@@ -104,7 +104,19 @@ viewOerGrid model playlist =
 
 
 viewOerCard : Model -> List Fragment -> Point -> String -> Bool -> Oer -> Element Msg
-viewOerCard model recommendedFragments position barId enableShadow oer =
+viewOerCard ({pageScrollState} as model) recommendedFragments position barId enableShadow oer =
+  let
+      isCardInView =
+        position.y + cardHeight > pageScrollState.scrollTop && position.y < pageScrollState.scrollTop + pageScrollState.viewHeight
+  in
+      if isCardInView then
+        viewOerCardVisibleContent model recommendedFragments position barId enableShadow oer
+      else
+        none
+
+
+viewOerCardVisibleContent : Model -> List Fragment -> Point -> String -> Bool -> Oer -> Element Msg
+viewOerCardVisibleContent model recommendedFragments position barId enableShadow oer =
   let
       hovering =
         model.hoveringOerId == Just oer.id

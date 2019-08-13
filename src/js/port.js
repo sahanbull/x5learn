@@ -47,6 +47,12 @@ function setupPorts(app){
     }, 100);
   });
 
+  app.ports.askPageScrollState.subscribe(function(dummy) {
+    setTimeout(function(){
+      sendPageScrollState(true);
+    }, 100);
+  });
+
   app.ports.youtubeSeekTo.subscribe(function(fragmentStart) {
     player.seekTo(fragmentStart * player.getDuration());
     player.playVideo();
@@ -60,7 +66,21 @@ function setupPorts(app){
 
   setupEventHandlers();
 
-  setupScrollListener();
+  setupScrollDetector();
+}
+
+
+function sendPageScrollState(requestedByElm){
+  var el = document.getElementById('MainPageContent');
+  if(el){
+    var offset = el.pageYOffset !== undefined ? el.pageYOffset : el.scrollTop;
+    if(requestedByElm || offset!=lastPageScrollOffset){
+      var contentHeight = el.childNodes[0].clientHeight;
+      var pageScrollState = {scrollTop: el.scrollTop, viewHeight: el.clientHeight, contentHeight: contentHeight, requestedByElm: requestedByElm};
+      app.ports.pageScrolled.send(pageScrollState);
+      lastPageScrollOffset = offset;
+    }
+  }
 }
 
 
@@ -160,18 +180,9 @@ function changeFocusOnAutocompleteSuggestions(direction){
 }
 
 
-function setupScrollListener(){
+function setupScrollDetector(){
   window.setInterval(function(){
-    var el = document.getElementById('MainPageContent');
-    if(el){
-      var offset = el.pageYOffset !== undefined ? el.pageYOffset : el.scrollTop;
-      if(offset!=lastPageScrollOffset){
-        var contentHeight = el.childNodes[0].clientHeight;
-        var scrollData = {scrollTop: el.scrollTop, viewHeight: el.clientHeight, contentHeight: contentHeight};
-        app.ports.pageScrolled.send(scrollData);
-        lastPageScrollOffset = offset;
-      }
-    }
+    sendPageScrollState(false);
   }, 300);
 }
 

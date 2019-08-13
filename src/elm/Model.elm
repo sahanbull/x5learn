@@ -64,6 +64,7 @@ type alias Model =
   , overviewType : OverviewType
   , selectedMentionInStory : Maybe (OerId, MentionInOer)
   , oerCollection : String
+  , pageScrollState : PageScrollState
   }
 
 
@@ -129,10 +130,11 @@ type alias EntityTitle = String
 
 type alias Noteboard = List Note
 
-type alias ScrollData =
+type alias PageScrollState =
   { scrollTop : Float
   , viewHeight : Float
   , contentHeight : Float
+  , requestedByElm : Bool -- for analytics
   }
 
 
@@ -358,6 +360,7 @@ initialModel nav flags =
   , overviewType = BubblogramOverview
   , selectedMentionInStory = Nothing
   , oerCollection = defaultOerCollectionTitle
+  , pageScrollState = PageScrollState 0 0 0 False
   }
 
 

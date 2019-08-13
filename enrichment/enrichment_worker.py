@@ -7,6 +7,7 @@ from langdetect import detect_langs
 
 from wikichunkifiers.pdf import extract_chunks_from_pdf
 from wikichunkifiers.youtube import extract_chunks_from_youtube_video
+from wikichunkifiers.generic import extract_chunks_from_generic_text
 from wikichunkifiers.lib.util import EnrichmentError
 
 import wikipedia
@@ -78,6 +79,8 @@ def make_wikichunks(oer_data):
     #     return extract_chunks_from_video(url)
     if 'youtu' in url and '/watch?v=' in url:
         return extract_chunks_from_youtube_video(url, oer_data)
+    if 'meetup.com/' in url:
+        return extract_chunks_from_generic_text(url, oer_data)
     raise EnrichmentError('Unsupported file format')
 
 

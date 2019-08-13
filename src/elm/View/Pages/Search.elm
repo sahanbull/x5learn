@@ -44,7 +44,17 @@ viewSearchResults model searchState =
       (if isLabStudy1 model then
         Playlist (searchState.lastSearch ++" ("++(oerIds |> List.length |> String.fromInt) ++ " video" ++ (if List.length oerIds == 1 then "" else "s")++")") oerIds
       else
-        Playlist ((oerIds |> List.length |> String.fromInt) ++ " result" ++ (if List.length oerIds == 1 then "" else "s") ++ " for \""++ searchState.lastSearch ++"\"") oerIds
+        let
+            searchTerm =
+              if searchState.lastSearch=="" then
+                ""
+              else
+                " for \""++ searchState.lastSearch ++"\""
+
+            heading =
+              (oerIds |> List.length |> String.fromInt) ++ " result" ++ (if List.length oerIds == 1 then "" else "s") ++ searchTerm ++ " from " ++ (oerCollectionLongTitle model.oerCollection)
+        in
+        Playlist heading oerIds
       )
       |> viewOerGrid model
       |> el [ width fill, paddingTRBL 0 0 100 0 ]

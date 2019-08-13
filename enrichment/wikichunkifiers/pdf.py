@@ -2,14 +2,13 @@ import subprocess, requests, math, json
 import textwrap
 
 from wikichunkifiers.lib.util import temp_file_path, EnrichmentError, make_chunk
-from wikichunkifiers.lib.wikify import get_entities, WIKIFIER_CHARACTER_LIMIT
+from wikichunkifiers.lib.wikify import get_entities, WIKIFIER_CHARACTER_LIMIT, WIKIFIER_BLACKLIST
 
 def extract_chunks_from_pdf(url):
     print('\nin extract_chunks_from_pdf\n')
     download_file(url)
     # create_thumbnail_and_post_back(url)
     text = convert_to_text()
-    text = filter_blacklisted_terms(text)
     if len(text) < 500:
         raise EnrichmentError('Text too short')
 
@@ -49,13 +48,6 @@ def convert_to_text():
         text = res.stdout.decode('utf-8')
     except UnicodeDecodeError as err:
         raise EnrichmentError('UnicodeDecodeError after pdf conversion')
-    return text
-
-
-def filter_blacklisted_terms(text):
-    blacklist = 'RenderX', 'MEDLINE', 'Medline', 'MedLine', 'medline', 'MEDLAR' # Journal publishing related
-    for term in blacklist:
-        text = text.replace(term, '')
     return text
 
 

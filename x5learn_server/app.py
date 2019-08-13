@@ -8,6 +8,7 @@ from fuzzywuzzy import fuzz
 import urllib
 from datetime import datetime, timedelta
 from sqlalchemy import or_, and_, cast, Integer
+from sqlalchemy.orm.attributes import flag_modified
 from flask_restplus import Api, Resource, fields, reqparse
 import wikipedia
 
@@ -26,6 +27,7 @@ from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichmen
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 from x5learn_server.oer_collections import search_in_oer_collection, autocomplete_terms_from_oer_collection, initialise_caches_for_all_oer_collections
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
+
 
 # Create app
 app = Flask(__name__)
@@ -78,6 +80,23 @@ def initiate_login_db():
     initiate_login_table_and_admin_profile(user_datastore)
     initiate_action_types_table()
     initialise_caches_for_all_oer_collections()
+    cleanup_enrichment_errors()
+
+
+def cleanup_enrichment_errors():
+    WIKIFIER_BLACKLIST = ['Forward (association football)' , 'RenderX', 'MEDLINE', 'Medline', 'MedLine', 'medline', 'MEDLAR']
+    print('\nin cleanup_enrichment_errors')
+    enrichments = WikichunkEnrichment.query.all()
+    for enrichment in enrichments:
+        for chunk in enrichment.data['chunks']:
+            filtered_entities = [ entity for entity in chunk['entities'] if entity['title'] not in WIKIFIER_BLACKLIST ]
+        if filtered_entities != chunk['entities']:
+            print(chunk['entities'])
+            print(filtered_entities)
+            chunk['entities'] = filtered_entities
+            flag_modified(enrichment, 'data')
+            db_session.commit()
+    print('done.\n')
 
 
 # Setting wikipedia api language

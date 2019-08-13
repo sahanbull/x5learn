@@ -164,7 +164,7 @@ function setupScrollListener(){
   window.setInterval(function(){
     var el = document.getElementById('MainPageContent');
     if(el){
-      var offset = el.scrollTop;
+      var offset = el.pageYOffset !== undefined ? el.pageYOffset : el.scrollTop;
       if(offset!=lastPageScrollOffset){
         var contentHeight = el.childNodes[0].clientHeight;
         var scrollData = {scrollTop: el.scrollTop, viewHeight: el.clientHeight, contentHeight: contentHeight};

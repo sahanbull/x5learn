@@ -768,10 +768,31 @@ oerCollectionTitles =
 
 defaultOerCollectionTitle =
   "X5GON Platform"
+  -- "Alan Turing Institute"
+
 
 additionalOerCollectionTitles =
-  [ "Alan Turing Institute"
-  , "NIMHgov"
-  , "Conference Programme"
-  , "JMIR Journal"
+  -- [ "JMIR Journal" -- less useful since the main topics are usually in the paper title already. typical research paper structure -> few surprises regarding narrative.
+  [ "MH Meetups London"
+  , "Mindfulness meditation"
+  -- , "Digital Innovation in MH"
+  , "Nat. Inst. M. Health"
+  , "Alan Turing Institute"
+  -- , "X5GON Platform"
   ]
+
+
+oerCollectionLongTitle shortTitle =
+  case shortTitle of
+    "Nat. Inst. M. Health" ->
+      "National Institute of Mental Health - YouTube channel"
+    "JMIR Journal" ->
+      "JMIR - Journal of Medical Internet Research"
+    "Mindfulness meditation" ->
+      "\"Mindfulness meditation\" playlist https://www.youtube.com/playlist?list=PLpb1DIPqFFN195vv7pnDFKtM9y5feLFp4"
+    "MH Meetups London" ->
+      "Mental Health Meetup Groups in London"
+    "Digital Innovation in MH" ->
+      "Digital Innovation in Mental Health - Conference Programme"
+    _ ->
+      shortTitle

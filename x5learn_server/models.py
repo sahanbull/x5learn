@@ -65,6 +65,13 @@ class Oer(Base):
         self.data = data
 
     def data_and_id(self):
+        # Ensure that image and date fields have the correct types.
+        # This is just a lazy patch for pdfs that were poorly imported from csv.
+        # TODO remove the if statements below after re-importing the pdfs.
+        if self.data['images']=='[]':
+            self.data['images']=[]
+        if not isinstance(self.data['date'], str):
+            self.data['date'] = str(self.data['date'])
         result = {**self.data}
         result['id'] = self.id
         return result

@@ -432,7 +432,7 @@ viewMentionDots model oerId entityId bubble isHoveringOnCurrentTag isSearchTerm 
               else if isHoveringOnCurrentTag then
                 "rgba(255,140,0,1)"
               else
-                "rgba(255,140,0,0.3)"
+                "rgba(255,140,0,0.4)"
 
             hoverHandler =
               case model.overviewType of

@@ -70,7 +70,7 @@ app.config['MAIL_DEFAULT_SENDER'] = MAIL_SENDER
 mail.init_app(app)
 
 CURRENT_ENRICHMENT_VERSION = 1
-
+MAX_SEARCH_RESULTS = 24 # number divisible by 2 and 3 to fit nicely into grid
 
 # create database when starting the app
 @app.before_first_request
@@ -372,9 +372,10 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
             db_session.commit()
         oers.append(oer.data_and_id())
         push_enrichment_task_if_needed(url, int(1000 / (index + 1)) + 1)
-    if len(oers)==n_initial_oers: # no more usable results on page -> stop querying
+    oers = oers[:MAX_SEARCH_RESULTS]
+    if len(oers)==n_initial_oers: # no more results on page -> stop querying
         return oers
-    if len(oers)>=24: # number divisible by 2 and 3 to fit nicely into grid
+    if len(oers)>=MAX_SEARCH_RESULTS:
         return oers
     return search_results_from_x5gon_api_pages(text, page_number+1, oers)
 

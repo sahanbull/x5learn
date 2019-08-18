@@ -335,13 +335,20 @@ def save_definitions(data):
 
 
 def search_results_from_x5gon_api(text):
-    max_results = 18
-    encoded_text = urllib.parse.quote(text)
+    text = urllib.parse.quote(text)
+    return search_results_from_x5gon_api_pages(text, 1, [])
+
+
+# This function is called recursively
+# until the number of search results hits a certain minimum or stops increasing
+def search_results_from_x5gon_api_pages(text, page_number, oers):
+    n_initial_oers = len(oers)
+    print('page_number', page_number)
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request(
-        'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text=' + encoded_text)
+        'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text=' + text + '&page=' + str(page_number))
     response = conn.getresponse().read().decode("utf-8")
-    materials = json.loads(response)['rec_materials'][:max_results]
+    materials = json.loads(response)['rec_materials']
     # materials = [ m for m in materials if m['url'].endswith('.pdf') ] # filter by suffix
     materials = [m for m in materials if m['url'].endswith(
         '.pdf') or is_video(m['url'])]  # filter by suffix
@@ -351,7 +358,6 @@ def search_results_from_x5gon_api(text):
     # Exclude non-english materials because they tend to come out poorly after wikification. X5GON search doesn't have a language parameter at the time of writing.
     materials = [m for m in materials if m['language'] == 'en']
     materials = remove_duplicates_from_search_results(materials)
-    oers = []
     for index, material in enumerate(materials):
         url = material['url']
         # Some urls that were longer than 255 caused errors.
@@ -366,7 +372,11 @@ def search_results_from_x5gon_api(text):
             db_session.commit()
         oers.append(oer.data_and_id())
         push_enrichment_task_if_needed(url, int(1000 / (index + 1)) + 1)
-    return oers
+    if len(oers)==n_initial_oers: # no more usable results on page -> stop querying
+        return oers
+    if len(oers)>=24: # number divisible by 2 and 3 to fit nicely into grid
+        return oers
+    return search_results_from_x5gon_api_pages(text, page_number+1, oers)
 
 
 def remove_duplicates_from_search_results(materials):

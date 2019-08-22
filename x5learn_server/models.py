@@ -124,7 +124,7 @@ class EntityDefinition(Base):
     id = Column(Integer(), primary_key=True)
     entity_id = Column(String(20))
     title = Column(String(255))
-    url = Column(String(255), unique=True)
+    url = Column(String(255))
     extract = Column(Text())
     last_update_at = Column(DateTime(), default=datetime.datetime.utcnow)
     lang = Column(String(20))

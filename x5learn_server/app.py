@@ -311,12 +311,13 @@ def log_event_for_lab_study():
 
 
 def save_definitions(data):
+    definitions = set([])
     for chunk in data['chunks']:
         for entity in chunk['entities']:
             title = entity['title']
             # print(title, '...')
             definition = EntityDefinition.query.filter_by(title=title).first()
-            if definition is None:
+            if definition is None and definition not in definitions:
                 encoded_title = urllib.parse.quote(title)
                 # Request definitions from wikipedia.
                 # This should probably happen in the enrichment worker
@@ -338,8 +339,10 @@ def save_definitions(data):
                 # print(extract)
                 definition = EntityDefinition(
                     entity['id'], title, entity['url'], extract, lang='en')
-                db_session.add(definition)
-                db_session.commit()
+                definitions.add(definition)
+    for definition in definitions:
+        db_session.add(definition)
+        db_session.commit()
 
 
 def search_results_from_x5gon_api(text):

@@ -63,7 +63,7 @@ type alias Model =
   , oerCardPlaceholderPositions : List OerCardPlaceholderPosition
   , overviewType : OverviewType
   , selectedMentionInStory : Maybe (OerId, MentionInOer)
-  , oerCollection : String
+  , oerCollection : OerCollection
   , pageScrollState : PageScrollState
   , collectionsMenuOpen : Bool
   }
@@ -136,6 +136,13 @@ type alias PageScrollState =
   , viewHeight : Float
   , contentHeight : Float
   , requestedByElm : Bool -- for analytics
+  }
+
+
+type alias OerCollection =
+  { title : String
+  , description : String
+  , url : String
   }
 
 
@@ -360,7 +367,7 @@ initialModel nav flags =
   -- , overviewType = StoryOverview
   , overviewType = BubblogramOverview
   , selectedMentionInStory = Nothing
-  , oerCollection = defaultOerCollectionTitle
+  , oerCollection = defaultOerCollection
   , pageScrollState = PageScrollState 0 0 0 False
   , collectionsMenuOpen = False
   }
@@ -768,38 +775,27 @@ getResourceFeedbackFormValue model oerId =
 
 
 oerCollectionTitles =
-  defaultOerCollectionTitle :: additionalOerCollectionTitles
+  defaultOerCollection :: additionalOerCollections
+  |> List.map .title
 
 
-defaultOerCollectionTitle =
-  "X5GON Platform"
-  -- "Alan Turing Institute"
+defaultOerCollection =
+  OerCollection "X5GON Platform" "" ""
 
 
-additionalOerCollectionTitles =
-  -- [ "JMIR Journal" -- less useful since the main topics are usually in the paper title already. typical research paper structure -> few surprises regarding narrative.
-  [ "MH Meetups London"
-  , "Mindfulness meditation"
-  -- , "Digital Innovation in MH"
-  , "Nat. Inst. M. Health"
-  , "Alan Turing Institute"
-  , "TED Talks"
-  , "Numberphile"
-  -- , "X5GON Platform"
+additionalOerCollections =
+  [ OerCollection "Journal of Medical Internet Research (JMIR)" "" ""
+  , OerCollection "Mental Health Meetups London" "" ""
+  , OerCollection "Mindfulness meditation" "" ""
+  , OerCollection "National Institute of Mental Health (NIMH)" "" ""
+  , OerCollection "Alan Turing Institute" "" ""
+  , OerCollection "TED Talks" "" ""
+  , OerCollection "Numberphile" "" ""
   ]
 
 
-oerCollectionLongTitle shortTitle =
-  case shortTitle of
-    "Nat. Inst. M. Health" ->
-      "National Institute of Mental Health - YouTube channel"
-    "JMIR Journal" ->
-      "JMIR - Journal of Medical Internet Research"
-    "Mindfulness meditation" ->
-      "\"Mindfulness meditation\" playlist https://www.youtube.com/playlist?list=PLpb1DIPqFFN195vv7pnDFKtM9y5feLFp4"
-    "MH Meetups London" ->
-      "Mental Health Meetup Groups in London"
-    "Digital Innovation in MH" ->
-      "Digital Innovation in Mental Health - Conference Programme"
-    _ ->
-      shortTitle
+getOerCollectionByTitle title =
+  additionalOerCollections
+  |> List.filter (\collection -> collection.title == title)
+  |> List.head
+  |> Maybe.withDefault defaultOerCollection

@@ -90,7 +90,7 @@ update msg ({nav, userProfileForm} as model) =
     TriggerSearch str ->
       let
           searchUrl =
-            Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" str, Url.Builder.string "collection" model.oerCollection ]
+            Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" str, Url.Builder.string "collection" model.oerCollection.title ]
       in
           ({ model | inspectorState = Nothing } |> closePopup, Navigation.pushUrl nav.key searchUrl)
 
@@ -537,7 +537,7 @@ update msg ({nav, userProfileForm} as model) =
                 lastSearch
 
           (newModel, cmd) =
-            { model | oerCollection = collectionTitle, autocompleteTerms = [], collectionsMenuOpen = False } |> closePopup
+            { model | oerCollection = getOerCollectionByTitle collectionTitle, autocompleteTerms = [], collectionsMenuOpen = False } |> closePopup
             |> update (TriggerSearch searchInputTyping)
 
           newCmd =
@@ -830,22 +830,21 @@ executeSearchAfterUrlChanged model url =
         |> Url.percentDecode
         |> Maybe.withDefault ""
 
-      collectionParam =
+      oerCollection =
         case url.query of
           Nothing ->
-            defaultOerCollectionTitle
+            defaultOerCollection
 
           Just query ->
-            query
-            |> String.split "&collection="
-            |> List.drop 1
-            |> List.head
-            |> Maybe.withDefault defaultOerCollectionTitle
-            |> Url.percentDecode
-            |> Maybe.withDefault defaultOerCollectionTitle
+            case query |> String.split "&collection=" |> List.drop 1 |> List.head of
+              Nothing ->
+                defaultOerCollection
+
+              Just value ->
+                value |> Url.percentDecode |> Maybe.withDefault "" |> getOerCollectionByTitle
   in
-        ( { model | searchInputTyping = textParam, oerCollection = collectionParam, searchState = Just <| newSearch textParam, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers textParam collectionParam)
-        |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam, collectionParam ]
+        ( { model | searchInputTyping = textParam, oerCollection = oerCollection, searchState = Just <| newSearch textParam, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers textParam oerCollection.title)
+        |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam, oerCollection.title ]
 
 
 requestResourceAfterUrlChanged : Url -> Model -> (Model, Cmd Msg)

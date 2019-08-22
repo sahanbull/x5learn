@@ -415,7 +415,7 @@ oer_collections = {'Alan Turing Institute': {'channel': 'https://www.youtube.com
     'https://www.youtube.com/watch?v=RbkhWrTbrKs',
     'https://www.youtube.com/watch?v=KIrrA1-O6LE'
   ]},
-  'Nat. Inst. M. Health': {'channel': 'https://www.youtube.com/user/NIMHgov/videos',
+  'National Institute of Mental Health (NIMH)': {'channel': 'https://www.youtube.com/user/NIMHgov/videos',
   'video_urls': ['https://www.youtube.com/watch?v=m9M23WDpjwc',
     'https://www.youtube.com/watch?v=00Pl3xIJxu0',
     'https://www.youtube.com/watch?v=CNxEjT2hMiU',
@@ -652,10 +652,10 @@ oer_collections = {'Alan Turing Institute': {'channel': 'https://www.youtube.com
     'https://www.youtube.com/watch?v=zl6R6w1WvZk',
     'https://www.youtube.com/watch?v=gK3dcjBaJyo'
   ]},
-  'Digital Innovation in MH': {'channel': 'n/a',
+  'Digital Innovation in Mental Health': {'channel': 'n/a',
   'video_urls': ['https://static1.squarespace.com/static/587b44e1d1758e3ceffe18c6/t/5d4f20712dc6a70001f6879c/1565466740313/Full+Programme+DIMH2019+Final.pdf'
   ]},
-  'JMIR Journal': {'channel': 'https://www.jmir.org/2019/8',
+  'Journal of Medical Internet Research (JMIR)': {'channel': 'https://www.jmir.org/2019/8',
   'video_urls': [ 'https://www.jmir.org/2019/8/e12775/PDF',
     'https://www.jmir.org/2019/8/e14145/PDF',
     'https://www.jmir.org/2019/8/e13363/PDF',
@@ -764,7 +764,7 @@ oer_collections = {'Alan Turing Institute': {'channel': 'https://www.youtube.com
     'https://www.youtube.com/watch?v=cXIjTgTnCBY&list=PLpb1DIPqFFN195vv7pnDFKtM9y5feLFp4&index=59&t=0s',
     'https://www.youtube.com/watch?v=anoAW_vs3kc&list=PLpb1DIPqFFN195vv7pnDFKtM9y5feLFp4&index=60&t=0s'
   ]},
-  'MH Meetups London': {'channel': 'https://www.meetup.com/find/?allMeetups=false&keywords=mental+health&radius=5&userFreeform=Greater+London%2C+United+Kingdom&mcId=z2827702&mcName=Greater+London%2C+England%2C+GB&sort=default',
+  'Mental Health Meetups London': {'channel': 'https://www.meetup.com/find/?allMeetups=false&keywords=mental+health&radius=5&userFreeform=Greater+London%2C+United+Kingdom&mcId=z2827702&mcName=Greater+London%2C+England%2C+GB&sort=default',
   'video_urls': [ 'https://www.meetup.com/art-mindfulness-and-creativity/',
     'https://www.meetup.com/Wellness-at-work/',
     'https://www.meetup.com/Londons-Biohacker-Bulletproof-Mindset-Social-Circle/',
@@ -2978,7 +2978,7 @@ def search_in_oer_collection(key, text):
     text = text.lower()
     max_n_results = 30
     # For demo
-    if key=='MH Meetups London':
+    if key=='Mental Health Meetups London':
         max_n_results = 100
     if key not in oer_collections:
         return []

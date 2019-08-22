@@ -53,7 +53,7 @@ viewTopBar : Model -> SearchState -> Element Msg
 viewTopBar model searchState =
   let
       collectionTitle =
-        oerCollectionLongTitle model.oerCollection
+        model.oerCollection.title
 
       topRow =
         let

@@ -51,6 +51,14 @@ whiteText =
   Font.color white
 
 
+greyText =
+  Font.color <| grey 160
+
+
+greyTextDisabled =
+  Font.color <| grey 180
+
+
 feedbackOptionButtonColor =
   rgb255 80 170 120
 
@@ -65,10 +73,6 @@ x5colorSemiTransparent =
 
 x5colorDark =
   rgb255 38 63 71
-
-
-greyTextDisabled =
-  Font.color <| grey 180
 
 
 pageHeaderHeight =
@@ -181,6 +185,10 @@ recentBlue =
 
 linkBlue =
   rgb255 0 120 250
+
+
+grey40 =
+  grey 40
 
 
 grey80 =
@@ -343,13 +351,13 @@ navigationDrawerWidth =
   230
 
 
-actionButtonWithIcon iconPosition svgIconStub str onPress =
+actionButtonWithIcon textAttrs iconPosition svgIconStub str onPress =
   let
       icon =
         image [ alpha 0.5 ] { src = svgPath svgIconStub, description = "" }
 
       title =
-        str |> bodyNoWrap [ width fill ]
+        str |> bodyNoWrap (textAttrs ++ [ width fill ])
 
       label =
         case iconPosition of
@@ -359,7 +367,7 @@ actionButtonWithIcon iconPosition svgIconStub str onPress =
           IconRight ->
             [ title, icon ]
   in
-      button [] { onPress = onPress, label = label |> row [ width fill, padding 12, spacing 3, Border.rounded 4 ]}
+      button [] { onPress = onPress, label = label |> row [ width fill, spacing 3, Border.rounded 4 ]}
 
 
 simpleButton : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
@@ -371,13 +379,13 @@ simpleButton attrs str onPress =
       button attrs { onPress = onPress, label = label }
 
 
-actionButtonWithoutIcon : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
-actionButtonWithoutIcon attrs str onPress =
+actionButtonWithoutIcon : List (Attribute Msg) -> List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
+actionButtonWithoutIcon labelAttrs buttonAttrs str onPress =
   let
       label =
-        str |> bodyNoWrap []
+        str |> bodyNoWrap labelAttrs
   in
-      button attrs { onPress = onPress, label = label }
+      button buttonAttrs { onPress = onPress, label = label }
 
 
 actionButtonWithoutIconNoBobble : List (Attribute Msg) -> String -> Msg -> Element Msg

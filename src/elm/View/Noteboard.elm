@@ -32,7 +32,7 @@ viewNoteboard model includeHeading oerId =
         let
             quickNotesButton : String -> Element Msg
             quickNotesButton str =
-              actionButtonWithoutIcon [ Background.color x5colorSemiTransparent, whiteText, paddingXY 5 3 ] str (Just <| ClickedQuickNoteButton oerId str)
+              actionButtonWithoutIcon [] [ Background.color x5colorSemiTransparent, whiteText, paddingXY 5 3 ] str (Just <| ClickedQuickNoteButton oerId str)
         in
             [ "Too hard", "Just right", "Too easy", "Interested", "Not interested" ]
             |> List.map quickNotesButton

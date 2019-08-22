@@ -90,7 +90,7 @@ update msg ({nav, userProfileForm} as model) =
     TriggerSearch str ->
       let
           searchUrl =
-            Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" str ]
+            Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" str, Url.Builder.string "collection" model.oerCollection ]
       in
           ({ model | inspectorState = Nothing } |> closePopup, Navigation.pushUrl nav.key searchUrl)
 
@@ -527,27 +527,30 @@ update msg ({nav, userProfileForm} as model) =
     MouseEnterMentionInBubbblogramOverview oerId entityId mention ->
       ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
 
-
     SelectedOerCollection collectionTitle ->
       let
-          cmd =
-            if collectionTitle == defaultOerCollectionTitle then
-              Cmd.none
-            else
-              [ requestAutocompleteTerms collectionTitle
-              , searchOers model.searchInputTyping collectionTitle
-              ]
-              |> Cmd.batch
-
           searchInputTyping =
             case model.searchState of
               Nothing ->
                 ""
               Just {lastSearch} ->
                 lastSearch
+
+          (newModel, cmd) =
+            { model | oerCollection = collectionTitle, autocompleteTerms = [], collectionsMenuOpen = False } |> closePopup
+            |> update (TriggerSearch searchInputTyping)
+
+          newCmd =
+            [ cmd
+            , requestAutocompleteTerms collectionTitle
+            ]
+            |> Cmd.batch
       in
-      ({ model | oerCollection = collectionTitle, autocompleteTerms = [], searchInputTyping = searchInputTyping } |> closePopup, cmd)
-      |> logEventForLabStudy "SelectedOerCollection" [ collectionTitle ]
+          (newModel, newCmd)
+          |> logEventForLabStudy "SelectedOerCollection" [ collectionTitle ]
+
+    ToggleCollectionsMenu ->
+      ({model | collectionsMenuOpen = not model.collectionsMenuOpen }, Cmd.none)
 
 
 createNote : OerId -> String -> Model -> Model
@@ -817,18 +820,32 @@ popupToStrings maybePopup =
 executeSearchAfterUrlChanged : Model -> Url -> (Model, Cmd Msg)
 executeSearchAfterUrlChanged model url =
   let
-      str =
+      textParam =
         url.query
         |> Maybe.withDefault ""
         |> String.dropLeft 2 -- TODO A much cleaner method is to use Url.Query.parser
+        |> String.split "&"
+        |> List.head
+        |> Maybe.withDefault ""
         |> Url.percentDecode
         |> Maybe.withDefault ""
+
+      collectionParam =
+        case url.query of
+          Nothing ->
+            defaultOerCollectionTitle
+
+          Just query ->
+            query
+            |> String.split "&collection="
+            |> List.drop 1
+            |> List.head
+            |> Maybe.withDefault defaultOerCollectionTitle
+            |> Url.percentDecode
+            |> Maybe.withDefault defaultOerCollectionTitle
   in
-      -- if str=="" then
-      --   ( model, setBrowserFocus "SearchField")
-      -- else
-        ( { model | searchInputTyping = str, searchState = Just <| newSearch str, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers str model.oerCollection)
-        |> logEventForLabStudy "executeSearchAfterUrlChanged" [ str ]
+        ( { model | searchInputTyping = textParam, oerCollection = collectionParam, searchState = Just <| newSearch textParam, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers textParam collectionParam)
+        |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam, collectionParam ]
 
 
 requestResourceAfterUrlChanged : Url -> Model -> (Model, Cmd Msg)

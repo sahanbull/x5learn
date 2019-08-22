@@ -11,10 +11,6 @@ import Element.Border as Border
 import Element.Font as Font
 import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
 
-import Html
-import Html.Events
-import Html.Attributes
-
 import Model exposing (..)
 import View.Shared exposing (..)
 
@@ -54,7 +50,6 @@ withNavigationDrawer model (pageContent, modal) =
 
       drawer =
         [ model.searchInputTyping |> (if isLabStudy1 model then dataSetSelectionWidget model else viewSearchWidget model fill "Search")
-        , viewCollectionSelectionWidget model
         , viewOverviewSelectionWidget model
         , navButtons
         ]
@@ -83,27 +78,6 @@ dataSetSelectionWidget model searchInputTyping =
         |> el [ width fill, centerX ]
   in
       searchField
-
-
-viewCollectionSelectionWidget : Model -> Element Msg
-viewCollectionSelectionWidget model =
-  let
-      option collectionTitle =
-        Html.option [ Html.Attributes.value collectionTitle ] [ Html.text collectionTitle ]
-
-      selectElement =
-        oerCollectionTitles
-        |> List.map option
-        |> Html.select [ Html.Attributes.class "MaterialSelectText", Html.Events.on "change" (Decode.map SelectedOerCollection <| Decode.at ["target", "value"] Decode.string) ]
-  in
-      [ selectElement
-      , Html.span [ Html.Attributes.class "MaterialSelectBar" ] []
-      , Html.span [ Html.Attributes.class "MaterialSelectHighlight" ] []
-      , Html.label [ Html.Attributes.class "MaterialSelectLabel" ] [ Html.text "Data corpus" ]
-      ]
-      |> Html.div [ Html.Attributes.class "MaterialSelect" ]
-      |> html
-      |> el [ htmlClass "MaterialSelectWrap", paddingTop 15 ]
 
 
 viewOverviewSelectionWidget : Model -> Element Msg

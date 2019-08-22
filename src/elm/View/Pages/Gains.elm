@@ -73,8 +73,8 @@ viewTable gains =
             , width = fillPortion 4
             , view =
                 \_ ->
-                  [ actionButtonWithIcon IconLeft "test_me" "Test me" <| Nothing
-                  , actionButtonWithIcon IconLeft "train_me" "Train me" <| Nothing
+                  [ actionButtonWithIcon [] IconLeft "test_me" "Test me" <| Nothing
+                  , actionButtonWithIcon [] IconLeft "train_me" "Train me" <| Nothing
                   ]
                   |> row [ spacing 20 ]
             }

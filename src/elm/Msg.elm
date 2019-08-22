@@ -74,6 +74,7 @@ type Msg
   | SelectedOverviewType OverviewType
   | SelectedOerCollection String -- Name of OerCollection
   | MouseEnterMentionInBubbblogramOverview OerId EntityId MentionInOer
+  | ToggleCollectionsMenu
 
 
 type UserProfileField

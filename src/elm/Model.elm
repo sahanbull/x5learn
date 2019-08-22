@@ -65,6 +65,7 @@ type alias Model =
   , selectedMentionInStory : Maybe (OerId, MentionInOer)
   , oerCollection : String
   , pageScrollState : PageScrollState
+  , collectionsMenuOpen : Bool
   }
 
 
@@ -361,6 +362,7 @@ initialModel nav flags =
   , selectedMentionInStory = Nothing
   , oerCollection = defaultOerCollectionTitle
   , pageScrollState = PageScrollState 0 0 0 False
+  , collectionsMenuOpen = False
   }
 
 

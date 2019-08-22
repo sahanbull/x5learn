@@ -28,7 +28,7 @@ type IconPosition
 
 
 materialDark =
-  rgba 0 0 0 0.87
+  grey 11
 
 
 materialScrimBackground =

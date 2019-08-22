@@ -550,7 +550,7 @@ update msg ({nav, userProfileForm} as model) =
           |> logEventForLabStudy "SelectedOerCollection" [ collectionTitle ]
 
     ToggleCollectionsMenu ->
-      ({model | collectionsMenuOpen = not model.collectionsMenuOpen }, Cmd.none)
+      ({model | collectionsMenuOpen = not model.collectionsMenuOpen }, setBrowserFocus "")
 
 
 createNote : OerId -> String -> Model -> Model

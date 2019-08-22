@@ -56,25 +56,30 @@ viewTopBar model searchState =
         oerCollectionLongTitle model.oerCollection
 
       topRow =
-        row [ width fill, paddingXY 15 8 ]
+        let
+            table =
+              if model.collectionsMenuOpen then
+                [ below <| viewCollectionsTable model ]
+              else
+                []
+        in
+            row ([ width fill, paddingXY 15 8 ] ++ table)
+
+      toggleButton =
+        let
+            str =
+              if model.collectionsMenuOpen then
+                "Hide"
+              else
+                "Collections"
+        in
+            actionButtonWithoutIcon [ greyText ] [] str (Just ToggleCollectionsMenu)
 
       content =
-        if model.collectionsMenuOpen then
-          [ [ info
-            -- , actionButtonWithoutIcon [ greyText ] [] "Hide" (Just ToggleCollectionsMenu)
-            , actionButtonWithoutIcon [ greyText ] [] "Hide" (Just ToggleCollectionsMenu)
-            ]
-            |> topRow
-            , viewCollectionsTable model
-          ]
-          -- , actionButtonWithIcon [ greyText ] IconRight "white_arrow_up" "Close" (Just ToggleCollectionsMenu) |> el [ width fill ]
-          |> column [ width fill ]
-        else
-          [ info
-          -- , actionButtonWithIcon [ greyText ] IconRight "white_arrow_down" "Other collections" (Just ToggleCollectionsMenu)
-          , actionButtonWithoutIcon [ greyText ] [] "Other collections" (Just ToggleCollectionsMenu)
-          ]
-          |> topRow
+        [ info
+        , toggleButton
+        ]
+        |> topRow
 
       info =
         case searchState.searchResults of

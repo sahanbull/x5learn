@@ -107,16 +107,18 @@ viewTopBar model searchState =
 
 viewCollectionsTable : Model -> Element Msg
 viewCollectionsTable model =
-  oerCollectionTitles
+  oerCollections
   |> List.map viewCollection
   |> column [ width fill, spacing 8, padding 8, Background.color materialDark ]
 
 
-viewCollection : String -> Element Msg
-viewCollection title =
+viewCollection : OerCollection -> Element Msg
+viewCollection {title, description, url} =
   let
       label =
         [ title |> bodyWrap [ greyText ]
+        , description |> bodyWrap [ greyText ]
+        , url |> bodyWrap [ greyText ]
         ]
         |> row [ width fill ]
   in

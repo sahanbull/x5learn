@@ -781,6 +781,8 @@ additionalOerCollectionTitles =
   -- , "Digital Innovation in MH"
   , "Nat. Inst. M. Health"
   , "Alan Turing Institute"
+  , "TED Talks"
+  , "Numberphile"
   -- , "X5GON Platform"
   ]
 

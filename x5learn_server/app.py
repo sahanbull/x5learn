@@ -25,7 +25,7 @@ from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichmen
     ActionsRepository, UserRepository, DefinitionsRepository
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
-from x5learn_server.oer_collections import search_in_oer_collection, autocomplete_terms_from_oer_collection, initialise_caches_for_all_oer_collections
+from x5learn_server.oer_collections import search_in_oer_collection, autocomplete_terms_from_oer_collection, initialise_caches_for_all_oer_collections, predict_number_of_search_results_in_collection
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
 
 
@@ -183,7 +183,7 @@ def api_search():
         results = get_dataset_for_lab_study_one(
             text) or search_results_from_x5gon_api(text)
     else:
-        results = search_in_oer_collection(collection, text)
+        results = search_in_oer_collection(collection, text, 30)
     return jsonify([ oer.data_and_id() for oer in results ])
 
 
@@ -191,6 +191,17 @@ def api_search():
 def api_autocomplete_terms():
     collection = request.args['collection']
     return jsonify(list(autocomplete_terms_from_oer_collection(collection)))
+
+
+@app.route("/api/v1/collections_search_prediction/", methods=['GET'])
+def api_collections_search_prediction():
+    text = request.args['text'].lower().strip()
+    collection_titles = request.args['collectionTitles'].split(',')
+    numbers = {}
+    for collection_title in collection_titles:
+        # print('prediction for',text,'in', collection_title)
+        numbers[collection_title] = predict_number_of_search_results_in_collection(text, collection_title)
+    return jsonify({'searchText': text, 'prediction': numbers})
 
 
 @app.route("/api/v1/oers/", methods=['POST'])

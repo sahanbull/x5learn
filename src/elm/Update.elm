@@ -90,7 +90,7 @@ update msg ({nav, userProfileForm} as model) =
     TriggerSearch str ->
       let
           searchUrl =
-            Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" str, Url.Builder.string "collection" model.oerCollection.title ]
+            Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" (String.trim str), Url.Builder.string "collection" model.oerCollection.title ]
       in
           ({ model | inspectorState = Nothing } |> closePopup, Navigation.pushUrl nav.key searchUrl)
 
@@ -206,8 +206,9 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | userMessage = Just "Some changes were not saved." }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
-      ( model |> updateSearch (insertSearchResults (oers |> List.map .id)) |> cacheOersFromList oers, [ setBrowserFocus "SearchField", getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch)
+      (model |> updateSearch (insertSearchResults (oers |> List.map .id)) |> cacheOersFromList oers, [ setBrowserFocus "SearchField", getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch)
       |> requestWikichunkEnrichmentsIfNeeded
+      |> requestCollectionsSearchPredictionIfNeeded
       |> logEventForLabStudy "RequestOerSearch" (oers |> List.map .id |> List.map String.fromInt)
 
     RequestOerSearch (Err err) ->
@@ -371,6 +372,17 @@ update msg ({nav, userProfileForm} as model) =
       -- in
       ( { model | resourceRecommendations = [], userMessage = Just "An error occurred while loading recommendations" }, Cmd.none )
 
+    RequestCollectionsSearchPrediction (Ok response) ->
+      ({ model | cachedCollectionsSearchPredictions = model.cachedCollectionsSearchPredictions |> Dict.insert response.searchText response.prediction }, Cmd.none)
+      |> logEventForLabStudy "RequestCollectionsSearchPrediction" []
+
+    RequestCollectionsSearchPrediction (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestCollectionsSearchPrediction"
+      -- in
+      ( { model | userMessage = Just "An error occurred while trying to predict search results" }, Cmd.none )
+
     SetHover maybeOerId ->
       let
           hoveringTagEntityId =
@@ -387,7 +399,7 @@ update msg ({nav, userProfileForm} as model) =
     SetPopup popup ->
       let
           newModel =
-            { model | popup = Just popup }
+            { model | popup = Just popup, collectionsMenuOpen = False }
       in
           (newModel, Cmd.none)
           |> logEventForLabStudy "SetPopup" (popupToStrings newModel.popup)
@@ -551,6 +563,25 @@ update msg ({nav, userProfileForm} as model) =
 
     ToggleCollectionsMenu ->
       ({model | collectionsMenuOpen = not model.collectionsMenuOpen }, setBrowserFocus "")
+      |> requestCollectionsSearchPredictionIfNeeded
+
+
+requestCollectionsSearchPredictionIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
+requestCollectionsSearchPredictionIfNeeded ((oldModel, oldCmd) as input) =
+  if oldModel.collectionsMenuOpen |> not then
+    input
+  else
+    case oldModel.searchState of
+      Nothing ->
+        input
+
+      Just {lastSearch} ->
+        case Dict.get lastSearch oldModel.cachedCollectionsSearchPredictions of
+          Nothing ->
+            (oldModel, [ requestCollectionsSearchPrediction lastSearch, oldCmd ] |> Cmd.batch)
+
+          _ ->
+            input
 
 
 createNote : OerId -> String -> Model -> Model

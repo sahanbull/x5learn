@@ -110,25 +110,31 @@ viewCollectionsTable model =
   let
       header =
         let
-            genericHeadingText =
-              "Explore material from different sources"
+            results : Element Msg
+            results =
+              case model.searchState of
+                Nothing ->
+                  none
 
-            generic =
-              genericHeadingText
-              |> bodyWrap [ greyText, padding 15, width fill ]
+                Just {lastSearch} ->
+                  if lastSearch=="" then
+                     none
+                  else
+                    let
+                        content =
+                          "Results for \""++ lastSearch ++"\""
+                          |> bodyNoWrap [ greyText, alignRight, moveLeft 40 ]
+                    in
+                        none
+                        |> el [ onLeft <| content ]
         in
-            case model.searchState of
-              Nothing ->
-                generic
-
-              Just {lastSearch} ->
-                if (String.trim lastSearch)=="" then
-                  generic
-                else
-                  [ genericHeadingText |> bodyNoWrap [ greyText, width fill ]
-                  , "Results for \""++ lastSearch ++"\"" |> bodyNoWrap [ greyText, alignRight ] |> el [ width fill, paddingEach { allSidesZero | right = 17 } ]
-                  ]
-                  |> row [ width fill, padding 15 ]
+            [ "Collection title" |> bodyWrap [ greyText, padding 15, width <| px collectionTitleWidth ]
+            , [ "Description" |> bodyWrap [ greyText, padding 15, width <| fillPortion 2 ]
+              , results
+              ]
+              |> row [ width fill ]
+            ]
+            |> row [ width fill ]
 
       body =
         oerCollections
@@ -144,10 +150,18 @@ viewCollectionsTable model =
 viewCollection : Model -> OerCollection -> Element Msg
 viewCollection model ({title, description, url} as collection) =
   let
+      numberString =
+        case predictedNumberOfSearchResults model title of
+          Nothing ->
+            "..."
+
+          Just number ->
+            if number<0 then "n/a" else (number |> String.fromInt)
+
       label =
-        [ title |> bodyWrap [ whiteText ]
-        , description |> bodyWrap [ greyText, width <| fillPortion 3 ]
-        , "n/a" |> bodyNoWrap [ greyText, alignRight ]
+        [ title |> bodyWrap [ whiteText, width (px collectionTitleWidth) ]
+        , description |> bodyWrap [ greyText, width fill ]
+        , numberString |> bodyNoWrap [ greyText, alignRight ]
         ]
         |> row [ width fill ]
 
@@ -161,3 +175,7 @@ viewCollection model ({title, description, url} as collection) =
       , image [ width (px 16), alpha 0.5 ] { src = svgPath "white_external_link", description = "external link" } |> newTabLinkTo [] url
       ]
       |> row [ width fill, spacing 15 ]
+
+
+collectionTitleWidth =
+  450

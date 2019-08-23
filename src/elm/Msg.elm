@@ -39,6 +39,7 @@ type Msg
   | RequestLabStudyLogEvent (Result Http.Error String)
   | RequestResource (Result Http.Error Oer)
   | RequestResourceRecommendations (Result Http.Error (List Oer))
+  | RequestCollectionsSearchPrediction (Result Http.Error CollectionsSearchPredictionResponse)
   | RequestSendResourceFeedback (Result Http.Error String)
   | RequestSaveAction (Result Http.Error String)
   | RequestSaveNote (Result Http.Error String)

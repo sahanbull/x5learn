@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestAutocompleteTerms, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations, requestSendResourceFeedback)
+module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestAutocompleteTerms, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestCollectionsSearchPrediction)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -128,6 +128,14 @@ requestResourceRecommendations searchText =
     }
 
 
+requestCollectionsSearchPrediction : String -> Cmd Msg
+requestCollectionsSearchPrediction searchText =
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "collections_search_prediction/" ] [ Url.Builder.string "text" searchText, Url.Builder.string "collectionTitles" (oerCollections |> List.map .title |> String.join ",") ]
+    , expect = Http.expectJson RequestCollectionsSearchPrediction collectionsSearchPredictionDecoder
+    }
+
+
 requestSendResourceFeedback : Int -> String -> Cmd Msg
 requestSendResourceFeedback oerId text =
   Http.post
@@ -135,6 +143,12 @@ requestSendResourceFeedback oerId text =
     , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId), ("text", Encode.string text) ]
     , expect = Http.expectString RequestSendResourceFeedback
     }
+
+
+collectionsSearchPredictionDecoder =
+  map2 CollectionsSearchPredictionResponse
+    (field "searchText" string)
+    (field "prediction" (dict int))
 
 
 sessionDecoder =

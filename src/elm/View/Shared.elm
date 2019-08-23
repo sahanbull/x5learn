@@ -296,6 +296,10 @@ linkTo attrs url label =
   link attrs { url = url, label = label }
 
 
+newTabLinkTo attrs url label =
+  newTabLink attrs { url = url, label = label }
+
+
 viewSearchWidget model widthAttr placeholder searchInputTyping =
   let
       submit =

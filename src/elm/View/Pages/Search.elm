@@ -107,19 +107,51 @@ viewTopBar model searchState =
 
 viewCollectionsTable : Model -> Element Msg
 viewCollectionsTable model =
-  oerCollections
-  |> List.map viewCollection
-  |> column [ width fill, spacing 8, padding 8, Background.color materialDark ]
+  let
+      header =
+        let
+            genericHeadingText =
+              "Explore material from different sources"
+
+            generic =
+              genericHeadingText
+              |> bodyWrap [ greyText, padding 15, width fill ]
+        in
+            case model.searchState of
+              Nothing ->
+                generic
+
+              Just {lastSearch} ->
+                if (String.trim lastSearch)=="" then
+                  generic
+                else
+                  [ genericHeadingText |> bodyNoWrap [ greyText, width fill ]
+                  , "Results for \""++ lastSearch ++"\"" |> bodyNoWrap [ greyText, alignRight ] |> el [ width fill, paddingEach { allSidesZero | right = 17 } ]
+                  ]
+                  |> row [ width fill, padding 15 ]
+
+      body =
+        oerCollections
+        |> List.map viewCollection
+        |> column [ width fill, spacing 8 ]
+  in
+      [ header
+      , body
+      ]
+      |> column [ width fill, Background.color materialDark, padding 8 ]
 
 
 viewCollection : OerCollection -> Element Msg
 viewCollection {title, description, url} =
   let
       label =
-        [ title |> bodyWrap [ greyText ]
-        , description |> bodyWrap [ greyText ]
-        , url |> bodyWrap [ greyText ]
+        [ title |> bodyWrap [ whiteText ]
+        , description |> bodyWrap [ greyText, width <| fillPortion 3 ]
+        , "n/a" |> bodyNoWrap [ greyText, alignRight ]
         ]
         |> row [ width fill ]
   in
-      button [ padding 15, width fill, Background.color grey40, Border.rounded 4 ] { onPress = Just (SelectedOerCollection title), label = label }
+      [ button [ padding 15, width fill, Background.color grey40, Border.rounded 4 ] { onPress = Just (SelectedOerCollection title), label = label }
+      , image [ width (px 16), alpha 0.5 ] { src = svgPath "white_external_link", description = "external link" } |> newTabLinkTo [] url
+      ]
+      |> row [ width fill, spacing 15 ]

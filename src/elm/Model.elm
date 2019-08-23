@@ -779,11 +779,11 @@ oerCollections =
 
 
 defaultOerCollection =
-  OerCollection "X5GON Platform" "" ""
+  OerCollection "X5GON Platform" "Millions of lecture materials, videos and slide decks" "https://x5gon.org"
 
 
 additionalOerCollections =
-  [ OerCollection "Journal of Medical Internet Research (JMIR)" "Open Access Journal" "https://www.jmir.org/2019/8"
+  [ OerCollection "Journal of Medical Internet Research (JMIR)" "Peer-reviewed Open Access Journal - 45 recent papers" "https://www.jmir.org/2019/8"
   , OerCollection "Mental Health Meetups London" "100 Meetup groups" "https://www.meetup.com/find/?allMeetups=false&keywords=mental+health&radius=5&userFreeform=Greater+London%2C+United+Kingdom&mcId=z2827702&mcName=Greater+London%2C+England%2C+GB&sort=default"
   , OerCollection "Mindfulness meditation" "Guided meditation videos on YouTube" "https://www.youtube.com/playlist?list=PLpb1DIPqFFN195vv7pnDFKtM9y5feLFp4"
   , OerCollection "National Institute of Mental Health (NIMH)" "200+ videos on YouTube" "https://www.youtube.com/user/NIMHgov/videos"

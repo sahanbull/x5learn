@@ -145,3 +145,12 @@ a:hover {
   overflow: hidden !important;
   text-overflow: ellipsis !important;
 }
+
+.OerCollectionListItem{
+  background-color: #141414;
+  transition: all 0.2s;
+}
+
+.OerCollectionListItem:hover{
+  background-color: #585858;
+}

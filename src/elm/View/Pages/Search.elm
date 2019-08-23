@@ -132,8 +132,8 @@ viewCollectionsTable model =
 
       body =
         oerCollections
-        |> List.map viewCollection
-        |> column [ width fill, spacing 8 ]
+        |> List.map (viewCollection model)
+        |> column [ width fill, spacing 0 ]
   in
       [ header
       , body
@@ -141,8 +141,8 @@ viewCollectionsTable model =
       |> column [ width fill, Background.color materialDark, padding 8 ]
 
 
-viewCollection : OerCollection -> Element Msg
-viewCollection {title, description, url} =
+viewCollection : Model -> OerCollection -> Element Msg
+viewCollection model ({title, description, url} as collection) =
   let
       label =
         [ title |> bodyWrap [ whiteText ]
@@ -150,8 +150,14 @@ viewCollection {title, description, url} =
         , "n/a" |> bodyNoWrap [ greyText, alignRight ]
         ]
         |> row [ width fill ]
+
+      border =
+        [ Border.color grey40, borderTop 1 ]
+
+      background =
+        [ Background.color (if collection == model.oerCollection then grey40 else materialDark) ]
   in
-      [ button [ padding 15, width fill, Background.color grey40, Border.rounded 4 ] { onPress = Just (SelectedOerCollection title), label = label }
+      [ button ([ padding 15, width fill, htmlClass "OerCollectionListItem" ] ++ border ++ background) { onPress = Just (SelectedOerCollection title), label = label }
       , image [ width (px 16), alpha 0.5 ] { src = svgPath "white_external_link", description = "external link" } |> newTabLinkTo [] url
       ]
       |> row [ width fill, spacing 15 ]

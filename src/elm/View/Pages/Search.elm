@@ -63,7 +63,8 @@ viewTopBar model ({lastSearch} as searchState) =
               else
                 []
         in
-            row ([ width fill, paddingXY 15 8 ] ++ table)
+            -- row ([ width fill, paddingXY 15 8 ] ++ table)
+            row ([ width fill, paddingXY 15 24 ] ++ table)
 
       toggleButton =
         let

@@ -67,7 +67,7 @@ update msg ({nav, userProfileForm} as model) =
             else
               (Home, (model, Cmd.none))
       in
-          ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage } |> closePopup |> resetUserProfileForm, cmd)
+          ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage, collectionsMenuOpen = False } |> closePopup |> resetUserProfileForm, cmd)
           |> logEventForLabStudy "UrlChanged" [ path ]
 
     ClockTick time ->
@@ -563,25 +563,21 @@ update msg ({nav, userProfileForm} as model) =
 
     ToggleCollectionsMenu ->
       ({model | collectionsMenuOpen = not model.collectionsMenuOpen }, setBrowserFocus "")
-      |> requestCollectionsSearchPredictionIfNeeded
 
 
 requestCollectionsSearchPredictionIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
 requestCollectionsSearchPredictionIfNeeded ((oldModel, oldCmd) as input) =
-  if oldModel.collectionsMenuOpen |> not then
-    input
-  else
-    case oldModel.searchState of
-      Nothing ->
-        input
+  case getCollectionsSearchPredictionOfLastSearch oldModel of
+    Nothing ->
+      case oldModel.searchState of
+        Nothing ->
+          input
 
-      Just {lastSearch} ->
-        case Dict.get lastSearch oldModel.cachedCollectionsSearchPredictions of
-          Nothing ->
-            (oldModel, [ requestCollectionsSearchPrediction lastSearch, oldCmd ] |> Cmd.batch)
+        Just {lastSearch} ->
+          (oldModel, [ requestCollectionsSearchPrediction lastSearch, oldCmd ] |> Cmd.batch)
 
-          _ ->
-            input
+    _ ->
+      input
 
 
 createNote : OerId -> String -> Model -> Model

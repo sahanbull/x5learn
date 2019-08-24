@@ -809,16 +809,21 @@ getOerCollectionByTitle title =
   |> Maybe.withDefault defaultOerCollection
 
 
-predictedNumberOfSearchResults : Model -> String -> Maybe Int
-predictedNumberOfSearchResults model collectionTitle =
+getPredictedNumberOfSearchResults : Model -> String -> Maybe Int
+getPredictedNumberOfSearchResults model collectionTitle =
+  case getCollectionsSearchPredictionOfLastSearch model of
+    Nothing ->
+      Nothing
+
+    Just prediction ->
+      Dict.get collectionTitle prediction
+
+
+getCollectionsSearchPredictionOfLastSearch : Model -> Maybe CollectionsSearchPrediction
+getCollectionsSearchPredictionOfLastSearch model =
   case model.searchState of
     Nothing ->
       Nothing
 
     Just {lastSearch} ->
-      case model.cachedCollectionsSearchPredictions |> Dict.get lastSearch of
-        Nothing ->
-          Nothing
-
-        Just prediction ->
-          Dict.get collectionTitle prediction
+      Dict.get lastSearch model.cachedCollectionsSearchPredictions

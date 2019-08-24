@@ -50,7 +50,7 @@ viewBody model searchState =
 
 
 viewTopBar : Model -> SearchState -> Element Msg
-viewTopBar model searchState =
+viewTopBar model ({lastSearch} as searchState) =
   let
       collectionTitle =
         model.oerCollection.title
@@ -67,16 +67,39 @@ viewTopBar model searchState =
 
       toggleButton =
         let
-            str =
+            label =
               if model.collectionsMenuOpen then
-                "Hide"
+                "Close" |> bodyNoWrap [ greyText ]
               else
-                "Collections"
+                case Dict.get lastSearch model.cachedCollectionsSearchPredictions of
+                  Nothing ->
+                    "Other collections" |> bodyNoWrap [ whiteText ]
+
+                  Just prediction ->
+                    case getPredictedNumberOfSearchResults model model.oerCollection.title of
+                      Nothing ->
+                        "Other collections" |> bodyNoWrap [ whiteText ] -- shouldn't happen
+
+                      Just nThis ->
+                        let
+                            nTotal =
+                              prediction
+                              |> Dict.values
+                              |> List.sum
+
+                            nOther =
+                              nTotal - nThis
+                        in
+                            [ (numberOfResultsText nOther) ++ " in" |> bodyNoWrap [ greyText ]
+                            , "other collections" |> bodyNoWrap [ whiteText ]
+                            ]
+                            |> row [ spacing 5, alignRight ]
         in
-            actionButtonWithoutIcon [ greyText ] [] str (Just ToggleCollectionsMenu)
+            button [] { label = label, onPress = (Just ToggleCollectionsMenu) }
 
       content =
         [ info
+        -- , if model.collectionsMenuOpen then none else otherCollectionsSummary
         , toggleButton
         ]
         |> topRow
@@ -88,18 +111,9 @@ viewTopBar model searchState =
             |> bodyWrap [ whiteText ]
 
           Just oerIds ->
-            let
-                numberText =
-                  case oerIds |> List.length of
-                    0 ->
-                      "No"
-
-                    n ->
-                      n
-                      |> String.fromInt
-            in
-                numberText ++ " result" ++ (if List.length oerIds == 1 then "" else "s") ++ " for \""++ searchState.lastSearch ++"\" in " ++ collectionTitle
-                |> bodyWrap [ whiteText ]
+            collectionTitle ++ ": " ++ (numberOfResultsText <| List.length oerIds) ++ " for \""++ lastSearch ++ "\""
+            -- (numberOfResultsText <| List.length oerIds) ++ " for \""++ lastSearch ++"\" in " ++ collectionTitle
+            |> bodyWrap [ whiteText ]
   in
       content
       |> el [ width fill, Background.color grey40 ]
@@ -151,7 +165,7 @@ viewCollection : Model -> OerCollection -> Element Msg
 viewCollection model ({title, description, url} as collection) =
   let
       numberString =
-        case predictedNumberOfSearchResults model title of
+        case getPredictedNumberOfSearchResults model title of
           Nothing ->
             "..."
 
@@ -179,3 +193,17 @@ viewCollection model ({title, description, url} as collection) =
 
 collectionTitleWidth =
   450
+
+
+numberOfResultsText nResults =
+  let
+      numberText =
+        case nResults of
+          0 ->
+            "No"
+
+          n ->
+            n
+            |> String.fromInt
+  in
+      numberText ++ " result" ++ (if nResults==1 then "" else "s")

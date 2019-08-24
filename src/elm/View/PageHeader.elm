@@ -34,7 +34,7 @@ viewPageHeader model =
         , paddingEach { allSidesZero | top = 0, left = 13, right = 16 }
         , Background.color <| rgb 1 1 1
         , borderBottom 1
-        , borderColorLayout
+        , borderColorDivider
         ] ++ userMessage
 
 

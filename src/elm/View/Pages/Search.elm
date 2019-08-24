@@ -2,6 +2,7 @@ module View.Pages.Search exposing (viewSearchPage)
 
 import Url
 import Dict
+import Set
 
 import Element exposing (..)
 import Element.Input as Input exposing (button)
@@ -52,9 +53,6 @@ viewBody model searchState =
 viewTopBar : Model -> SearchState -> Element Msg
 viewTopBar model ({lastSearch} as searchState) =
   let
-      collectionTitle =
-        model.oerCollection.title
-
       topRow =
         let
             table =
@@ -63,8 +61,7 @@ viewTopBar model ({lastSearch} as searchState) =
               else
                 []
         in
-            -- row ([ width fill, paddingXY 15 8 ] ++ table)
-            row ([ width fill, paddingXY 15 24 ] ++ table)
+            row ([ width fill, paddingXY 15 23 ] ++ table)
 
       toggleButton =
         let
@@ -72,29 +69,30 @@ viewTopBar model ({lastSearch} as searchState) =
               if model.collectionsMenuOpen then
                 "Close" |> bodyNoWrap [ greyText ]
               else
-                case Dict.get lastSearch model.cachedCollectionsSearchPredictions of
-                  Nothing ->
-                    "Other collections" |> bodyNoWrap [ whiteText ]
+                "Other collections" |> bodyNoWrap [ whiteText ]
+                -- case Dict.get lastSearch model.cachedCollectionsSearchPredictions of
+                --   Nothing ->
+                --     "Other collections" |> bodyNoWrap [ whiteText ]
 
-                  Just prediction ->
-                    case getPredictedNumberOfSearchResults model model.oerCollection.title of
-                      Nothing ->
-                        "Other collections" |> bodyNoWrap [ whiteText ] -- shouldn't happen
+                --   Just prediction ->
+                --     case getPredictedNumberOfSearchResults model model.selectedOerCollections.title of
+                --       Nothing ->
+                --         "Other collections" |> bodyNoWrap [ whiteText ] -- shouldn't happen
 
-                      Just nThis ->
-                        let
-                            nTotal =
-                              prediction
-                              |> Dict.values
-                              |> List.sum
+                --       Just nThis ->
+                --         let
+                --             nTotal =
+                --               prediction
+                --               |> Dict.values
+                --               |> List.sum
 
-                            nOther =
-                              nTotal - nThis
-                        in
-                            [ (numberOfResultsText nOther) ++ " in" |> bodyNoWrap [ greyText ]
-                            , "other collections" |> bodyNoWrap [ whiteText ]
-                            ]
-                            |> row [ spacing 5, alignRight ]
+                --             nOther =
+                --               nTotal - nThis
+                --         in
+                --             [ (numberOfResultsText nOther) ++ " in" |> bodyNoWrap [ greyText ]
+                --             , "other collections" |> bodyNoWrap [ whiteText ]
+                --             ]
+                --             |> row [ spacing 5, alignRight ]
         in
             button [] { label = label, onPress = (Just ToggleCollectionsMenu) }
 
@@ -106,18 +104,23 @@ viewTopBar model ({lastSearch} as searchState) =
         |> topRow
 
       info =
-        case searchState.searchResults of
-          Nothing ->
-            "Searching in " ++ collectionTitle ++ " ..."
-            |> bodyWrap [ whiteText ]
+        let
+            summaryString =
+              selectedOerCollectionsToSummaryString model
+        in
+            case searchState.searchResults of
+              Nothing ->
+                "Searching in " ++ summaryString ++ " ..."
+                |> bodyWrap [ whiteText ]
 
-          Just oerIds ->
-            collectionTitle ++ ": " ++ (numberOfResultsText <| List.length oerIds) ++ " for \""++ lastSearch ++ "\""
-            -- (numberOfResultsText <| List.length oerIds) ++ " for \""++ lastSearch ++"\" in " ++ collectionTitle
-            |> bodyWrap [ whiteText ]
+              Just oerIds ->
+                -- collectionTitle ++ ": " ++ (numberOfResultsText <| List.length oerIds) ++ " for \""++ lastSearch ++ "\""
+                (numberOfResultsText <| List.length oerIds) ++ " for \""++ lastSearch ++"\" in " ++ summaryString
+                |> bodyWrap [ whiteText ]
   in
       content
       |> el [ width fill, Background.color grey40 ]
+      -- |> el [ width fill, materialScrimBackground ]
 
 
 viewCollectionsTable : Model -> Element Msg
@@ -138,12 +141,12 @@ viewCollectionsTable model =
                     let
                         content =
                           "Results for \""++ lastSearch ++"\""
-                          |> bodyNoWrap [ greyText, alignRight, moveLeft 40 ]
+                          |> bodyNoWrap [ greyText, alignRight, moveLeft 40, moveUp 8 ]
                     in
                         none
                         |> el [ onLeft <| content ]
         in
-            [ "Collection title" |> bodyWrap [ greyText, padding 15, width <| px collectionTitleWidth ]
+            [ "Collection title" |> bodyWrap [ greyText, padding 15, paddingLeft 43 ] |> el [ width <| px (collectionTitleWidth + 30) ]
             , [ "Description" |> bodyWrap [ greyText, padding 15, width <| fillPortion 2 ]
               , results
               ]
@@ -173,27 +176,40 @@ viewCollection model ({title, description, url} as collection) =
           Just number ->
             if number<0 then "n/a" else (number |> String.fromInt)
 
-      label =
-        [ title |> bodyWrap [ whiteText, width (px collectionTitleWidth) ]
+      isChecked =
+        Set.member title model.selectedOerCollections
+
+      clickHandler =
+        [ onClick (SelectedOerCollection title (not isChecked)), htmlClass "CursorPointer" ]
+
+      item =
+        [ checkbox |> el [ width <| px 30 ]
+        , title |> bodyWrap [ whiteText, width (px collectionTitleWidth) ]
         , description |> bodyWrap [ greyText, width fill ]
-        , numberString |> bodyNoWrap [ greyText, alignRight ]
+        , numberString |> bodyNoWrap [ greyText, alignRight ] |> el [ width <| px 50 ]
         ]
         |> row [ width fill ]
 
       border =
         [ Border.color grey40, borderTop 1 ]
 
-      background =
-        [ Background.color (if collection == model.oerCollection then grey40 else materialDark) ]
+      checkbox =
+        Input.checkbox []
+          { onChange = SelectedOerCollection title
+          , icon = Input.defaultCheckbox
+          , checked = isChecked
+          , label = Input.labelHidden title
+          }
   in
-      [ button ([ padding 15, width fill, htmlClass "OerCollectionListItem" ] ++ border ++ background) { onPress = Just (SelectedOerCollection title), label = label }
+      -- [ button ([ padding 15, width fill, htmlClass "OerCollectionListItem" ] ++ border) { onPress = Just (SelectedOerCollection title True), label = label }
+      [ item |> el ([ padding 15, width fill, htmlClass "OerCollectionListItem" ] ++ border)
       , image [ width (px 16), alpha 0.5 ] { src = svgPath "white_external_link", description = "external link" } |> newTabLinkTo [] url
       ]
-      |> row [ width fill, spacing 15 ]
+      |> row ([ width fill, spacing 15 ] ++ clickHandler)
 
 
 collectionTitleWidth =
-  450
+  400
 
 
 numberOfResultsText nResults =

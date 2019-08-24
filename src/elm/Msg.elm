@@ -73,7 +73,7 @@ type Msg
   | SelectResourceSidebarTab ResourceSidebarTab
   | MouseMovedOnStoryTag Float
   | SelectedOverviewType OverviewType
-  | SelectedOerCollection String -- Name of OerCollection
+  | SelectedOerCollection String Bool
   | MouseEnterMentionInBubbblogramOverview OerId EntityId MentionInOer
   | ToggleCollectionsMenu
 

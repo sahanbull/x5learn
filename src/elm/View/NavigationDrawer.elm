@@ -95,4 +95,4 @@ viewOverviewSelectionWidget model =
         , Input.option StoryOverview (bodyNoWrap [] "Detailed")
         ]
     }
-    |> el [ width fill, padding 10, borderBottom 1, borderColorLayout ]
+    |> el [ width fill, padding 10, borderBottom 1, borderColorDivider ]

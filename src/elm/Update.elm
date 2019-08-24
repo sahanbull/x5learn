@@ -90,7 +90,7 @@ update msg ({nav, userProfileForm} as model) =
     TriggerSearch str ->
       let
           searchUrl =
-            Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" (String.trim str), Url.Builder.string "collection" model.oerCollection.title ]
+            Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" (String.trim str), Url.Builder.string "collections" (selectedOerCollectionsToCommaSeparatedString model) ]
       in
           ({ model | inspectorState = Nothing } |> closePopup, Navigation.pushUrl nav.key searchUrl)
 
@@ -539,27 +539,18 @@ update msg ({nav, userProfileForm} as model) =
     MouseEnterMentionInBubbblogramOverview oerId entityId mention ->
       ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
 
-    SelectedOerCollection collectionTitle ->
+    SelectedOerCollection collectionTitle isChecked ->
       let
-          searchInputTyping =
-            case model.searchState of
-              Nothing ->
-                ""
-              Just {lastSearch} ->
-                lastSearch
-
-          (newModel, cmd) =
-            { model | oerCollection = getOerCollectionByTitle collectionTitle, autocompleteTerms = [], collectionsMenuOpen = False } |> closePopup
-            |> update (TriggerSearch searchInputTyping)
-
-          newCmd =
-            [ cmd
-            , requestAutocompleteTerms collectionTitle
-            ]
-            |> Cmd.batch
+          selectedOerCollections =
+            if (isChecked |> Debug.log "isChecked") then
+              Set.insert collectionTitle model.selectedOerCollections
+            else
+              if Set.size model.selectedOerCollections == 1 then
+                setOfAllCollectionTitles
+              else
+                Set.remove collectionTitle model.selectedOerCollections
       in
-          (newModel, newCmd)
-          |> logEventForLabStudy "SelectedOerCollection" [ collectionTitle ]
+          ({ model | selectedOerCollections = selectedOerCollections }, Cmd.none)
 
     ToggleCollectionsMenu ->
       ({model | collectionsMenuOpen = not model.collectionsMenuOpen }, setBrowserFocus "")
@@ -857,21 +848,28 @@ executeSearchAfterUrlChanged model url =
         |> Url.percentDecode
         |> Maybe.withDefault ""
 
-      oerCollection =
+      selectedOerCollections =
         case url.query of
           Nothing ->
-            defaultOerCollection
+            setOfAllCollectionTitles
 
           Just query ->
-            case query |> String.split "&collection=" |> List.drop 1 |> List.head of
+            case query |> String.split "&collections=" |> List.drop 1 |> List.head of
               Nothing ->
-                defaultOerCollection
+                setOfAllCollectionTitles
 
               Just value ->
-                value |> Url.percentDecode |> Maybe.withDefault "" |> getOerCollectionByTitle
+                let
+                    collections =
+                      value |> Url.percentDecode |> Maybe.withDefault "" |> String.split "," |> Set.fromList |> Set.filter (\collectionTitle -> Set.member collectionTitle setOfAllCollectionTitles)
+                in
+                    if Set.isEmpty collections then
+                       setOfAllCollectionTitles
+                     else
+                       collections
   in
-        ( { model | searchInputTyping = textParam, oerCollection = oerCollection, searchState = Just <| newSearch textParam, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers textParam oerCollection.title)
-        |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam, oerCollection.title ]
+        ( { model | searchInputTyping = textParam, selectedOerCollections = selectedOerCollections, searchState = Just <| newSearch textParam, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers textParam (selectedOerCollectionsToCommaSeparatedString model))
+        |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam, (selectedOerCollectionsToCommaSeparatedString model) ]
 
 
 requestResourceAfterUrlChanged : Url -> Model -> (Model, Cmd Msg)

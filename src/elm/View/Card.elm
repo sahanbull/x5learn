@@ -317,7 +317,7 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
             []
 
       shadow =
-        if enableShadow then [ htmlClass "materialCard" ] else [ Border.width 1, borderColorLayout ]
+        if enableShadow then [ htmlClass "materialCard" ] else [ Border.width 1, borderColorDivider ]
 
       card =
         -- [ (if hovering then hoverPreview else carousel)

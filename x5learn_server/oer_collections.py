@@ -7,14 +7,17 @@ from x5learn_server.oer_collections_data import oer_collections
 autocomplete_cache = {}
 
 
-def search_in_oer_collection(collection_title, text, max_n_results=0):
-    text = text.lower()
-    if collection_title not in oer_collections:
-        return []
-    urls = oer_collections[collection_title]['video_urls']
+def search_in_oer_collections(collection_titles, text, max_n_results=0):
+    # print('search_in_oer_collections', collection_titles)
+    urls = []
+    for collection_title in collection_titles:
+        if collection_title in oer_collections:
+            urls += oer_collections[collection_title]['video_urls']
     oers = Oer.query.filter(Oer.url.in_(urls)).order_by(Oer.id).all()
     # Exclude urls of missing oers
     urls = [ oer.url for oer in oers ]
+    # Exclude duplicates
+    urls = list(set(urls))
     relevance_scores_per_url = {}
     for enrichment in WikichunkEnrichment.query.filter(WikichunkEnrichment.url.in_(urls)).all():
         score = relevance_score(enrichment, text)
@@ -24,7 +27,6 @@ def search_in_oer_collection(collection_title, text, max_n_results=0):
     urls = [ k for k,v in ranked ]
     if max_n_results>0:
         urls = urls[:max_n_results]
-    # print(urls)
     return [ [ o for o in oers if o.url==url ][0] for url in urls ]
 
 
@@ -49,7 +51,6 @@ def initialise_cache(collection_title):
         push_enrichment_task_if_needed(url, 10000)
     enrichments = [ w for w in WikichunkEnrichment.query.filter(WikichunkEnrichment.url.in_(urls)).all() ]
     autocomplete_cache[collection_title] = set([])
-    # print(len(enrichments), 'enrichments')
     for enrichment in enrichments:
         for title in enrichment.get_entity_titles():
             # NB it would be nice if we could guarantee that every
@@ -80,4 +81,4 @@ def predict_number_of_search_results_in_collection(text, collection_title):
     if collection_title not in oer_collections:
         return -1
     else:
-        return len(search_in_oer_collection(collection_title, text, 0))
+        return len(search_in_oer_collections([collection_title], text, 0))

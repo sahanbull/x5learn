@@ -111,7 +111,7 @@ borderLeft px =
   Border.widthEach { allSidesZero | left = px }
 
 
-borderColorLayout =
+borderColorDivider =
   Border.color <| greyDivider
 
 
@@ -184,7 +184,7 @@ recentBlue =
 
 
 linkBlue =
-  rgb255 0 120 250
+  rgb255 0 115 230
 
 
 grey40 =
@@ -343,8 +343,19 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
           |> List.map (\suggestion -> suggestionButton suggestion)
           |> menuColumn [ width fill, clipY, height (px 39 |> maximum (39*7)) ]
           |> el [ width fill, htmlId "AutocompleteTerms" ]
+
+      collectionInfo =
+        [ "Search in" |> captionNowrap []
+        , selectedOerCollectionsToSummaryString model |> bodyWrap []
+        , button [] { label = (if model.collectionsMenuOpen then "Hide menu" else "Change") |> captionNowrap [ Font.color linkBlue ], onPress = Just <| ToggleCollectionsMenu }
+        ]
+        |> column [ spacing 10, paddingBottom 13 ]
+        |> el [ width fill, padding 10, borderBottom 1, borderColorDivider ]
   in
-      searchField
+      [ searchField
+      , collectionInfo
+      ]
+      |> column [ spacing 10 ]
 
 
 svgIcon stub=

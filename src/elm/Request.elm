@@ -30,17 +30,17 @@ requestSession =
 
 
 searchOers : String -> String -> Cmd Msg
-searchOers searchText collectionTitle =
+searchOers searchText collectionTitlesCommaSeparated =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText, Url.Builder.string "collection" collectionTitle ]
+    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText, Url.Builder.string "collections" collectionTitlesCommaSeparated ]
     , expect = Http.expectJson RequestOerSearch (list oerDecoder)
     }
 
 
 requestAutocompleteTerms : String -> Cmd Msg
-requestAutocompleteTerms collectionTitle =
+requestAutocompleteTerms collectionTitlesCommaSeparated =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "autocomplete_terms/" ] [ Url.Builder.string "collection" collectionTitle ]
+    { url = Url.Builder.absolute [ apiRoot, "autocomplete_terms/" ] [ Url.Builder.string "collections" collectionTitlesCommaSeparated ]
     , expect = Http.expectJson RequestAutocompleteTerms (list string)
     }
 
@@ -131,7 +131,7 @@ requestResourceRecommendations searchText =
 requestCollectionsSearchPrediction : String -> Cmd Msg
 requestCollectionsSearchPrediction searchText =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "collections_search_prediction/" ] [ Url.Builder.string "text" searchText, Url.Builder.string "collectionTitles" (oerCollections |> List.map .title |> String.join ",") ]
+    { url = Url.Builder.absolute [ apiRoot, "collections_search_prediction/" ] [ Url.Builder.string "text" searchText, Url.Builder.string "collectionTitles" (setOfAllCollectionTitles |> Set.toList |> String.join ",") ]
     , expect = Http.expectJson RequestCollectionsSearchPrediction collectionsSearchPredictionDecoder
     }
 

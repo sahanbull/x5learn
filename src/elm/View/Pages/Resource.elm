@@ -106,7 +106,7 @@ viewResource model oer =
             , fragmentsBarWrapper
             ]
             |> List.indexedMap (\index e -> (oer.url ++ (String.fromInt index), e))
-            |> Keyed.column [ width fill, moveLeft (sidebarWidth model |> toFloat), Background.color <| grey 230, height fill, borderLeft 1, borderColorLayout, paddingXY horizontalPadding 30, scrollbarY ]
+            |> Keyed.column [ width fill, moveLeft (sidebarWidth model |> toFloat), Background.color <| grey 230, height fill, borderLeft 1, borderColorDivider, paddingXY horizontalPadding 30, scrollbarY ]
 
       sidebar =
         let
@@ -162,7 +162,7 @@ viewResource model oer =
             [ tabsMenu |> el [ width fill ]
             , tabContent
             ]
-            |> column [ spacing 25, width <| px (sidebarWidth model), height fill, alignTop, borderLeft 1, borderColorLayout, moveRight ((sheetWidth model) - (sidebarWidth model) |> toFloat), Background.color white ]
+            |> column [ spacing 25, width <| px (sidebarWidth model), height fill, alignTop, borderLeft 1, borderColorDivider, moveRight ((sheetWidth model) - (sidebarWidth model) |> toFloat), Background.color white ]
 
       body =
         [ sidebar

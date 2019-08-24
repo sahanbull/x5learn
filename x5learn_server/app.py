@@ -25,7 +25,7 @@ from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichmen
     ActionsRepository, UserRepository, DefinitionsRepository
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
-from x5learn_server.oer_collections import search_in_oer_collection, autocomplete_terms_from_oer_collection, initialise_caches_for_all_oer_collections, predict_number_of_search_results_in_collection
+from x5learn_server.oer_collections import search_in_oer_collections, autocomplete_terms_from_oer_collection, initialise_caches_for_all_oer_collections, predict_number_of_search_results_in_collection
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
 
 
@@ -178,12 +178,10 @@ def get_or_create_logged_in_user():
 @app.route("/api/v1/search/", methods=['GET'])
 def api_search():
     text = request.args['text'].lower().strip()
-    collection = request.args['collection']
-    if collection=='X5GON Platform':
-        results = get_dataset_for_lab_study_one(
-            text) or search_results_from_x5gon_api(text)
-    else:
-        results = search_in_oer_collection(collection, text, 30)
+    collections = request.args['collections'].split(',')
+    results = search_in_oer_collections(collections, text, 30)
+    if 'X5GON Platform' in collections:
+        results += search_results_from_x5gon_api(text)
     return jsonify([ oer.data_and_id() for oer in results ])
 
 
@@ -199,7 +197,6 @@ def api_collections_search_prediction():
     collection_titles = request.args['collectionTitles'].split(',')
     numbers = {}
     for collection_title in collection_titles:
-        # print('prediction for',text,'in', collection_title)
         numbers[collection_title] = predict_number_of_search_results_in_collection(text, collection_title)
     return jsonify({'searchText': text, 'prediction': numbers})
 
@@ -321,41 +318,6 @@ def log_event_for_lab_study():
     return 'OK'
 
 
-def save_definitions(data):
-    definitions = set([])
-    for chunk in data['chunks']:
-        for entity in chunk['entities']:
-            title = entity['title']
-            # print(title, '...')
-            definition = EntityDefinition.query.filter_by(title=title).first()
-            if definition is None and definition not in definitions:
-                encoded_title = urllib.parse.quote(title)
-                # Request definitions from wikipedia.
-                # This should probably happen in the enrichment worker
-                # rather than the flask app for at least three reasons:
-                # 1. keeping requests times short
-                # 2. better error handling
-                # 3. guaranteeing that definitions are available together with enrichment
-                conn = http.client.HTTPSConnection('en.wikipedia.org')
-                conn.request(
-                    'GET',
-                    '/w/api.php?action=query&prop=extracts&exintro&explaintext&exsentences=1&titles=' + encoded_title + '&format=json')
-                response = conn.getresponse().read().decode("utf-8")
-                pages = json.loads(response)['query']['pages']
-                (_, page) = pages.popitem()
-                if 'extract' not in page:
-                    print('Could not save definition for', title)
-                    return
-                extract = page['extract']
-                # print(extract)
-                definition = EntityDefinition(
-                    entity['id'], title, entity['url'], extract, lang='en')
-                definitions.add(definition)
-    for definition in definitions:
-        db_session.add(definition)
-        db_session.commit()
-
-
 def search_results_from_x5gon_api(text):
     max_results = 18
     encoded_text = urllib.parse.quote(text)
@@ -372,7 +334,7 @@ def search_results_from_x5gon_api(text):
                  and '199' not in m['url'] and '200' not in m['url']]
     # Exclude non-english materials because they tend to come out poorly after wikification. X5GON search doesn't have a language parameter at the time of writing.
     materials = [m for m in materials if m['language'] == 'en']
-    materials = remove_duplicates_from_search_results(materials)
+    materials = remove_duplicates_from_x5gon_search_results(materials)
     oers = []
     for index, material in enumerate(materials):
         url = material['url']
@@ -388,10 +350,11 @@ def search_results_from_x5gon_api(text):
             db_session.commit()
         oers.append(oer)
         push_enrichment_task_if_needed(url, int(1000 / (index + 1)) + 1)
+    print(len(oers), 'results from x5gon search')
     return oers
 
 
-def remove_duplicates_from_search_results(materials):
+def remove_duplicates_from_x5gon_search_results(materials):
     enrichments = {}
     urls = [m['url'] for m in materials]
     for enrichment in WikichunkEnrichment.query.filter(WikichunkEnrichment.url.in_(urls)).all():
@@ -433,11 +396,39 @@ def convert_x5_material_to_oer(material, url):
     return data
 
 
-def any_word_matches(words, text):
-    for word in words:
-        if word in text.lower():
-            return True
-    return False
+def save_definitions(data):
+    definitions = set([])
+    for chunk in data['chunks']:
+        for entity in chunk['entities']:
+            title = entity['title']
+            # print(title, '...')
+            definition = EntityDefinition.query.filter_by(title=title).first()
+            if definition is None and definition not in definitions:
+                encoded_title = urllib.parse.quote(title)
+                # Request definitions from wikipedia.
+                # This should probably happen in the enrichment worker
+                # rather than the flask app for at least three reasons:
+                # 1. keeping requests times short
+                # 2. better error handling
+                # 3. guaranteeing that definitions are available together with enrichment
+                conn = http.client.HTTPSConnection('en.wikipedia.org')
+                conn.request(
+                    'GET',
+                    '/w/api.php?action=query&prop=extracts&exintro&explaintext&exsentences=1&titles=' + encoded_title + '&format=json')
+                response = conn.getresponse().read().decode("utf-8")
+                pages = json.loads(response)['query']['pages']
+                (_, page) = pages.popitem()
+                if 'extract' not in page:
+                    print('Could not save definition for', title)
+                    return
+                extract = page['extract']
+                # print(extract)
+                definition = EntityDefinition(
+                    entity['id'], title, entity['url'], extract, lang='en')
+                definitions.add(definition)
+    for definition in definitions:
+        db_session.add(definition)
+        db_session.commit()
 
 
 def find_oer_by_id(oer_id):

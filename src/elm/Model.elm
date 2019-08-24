@@ -63,7 +63,7 @@ type alias Model =
   , oerCardPlaceholderPositions : List OerCardPlaceholderPosition
   , overviewType : OverviewType
   , selectedMentionInStory : Maybe (OerId, MentionInOer)
-  , oerCollection : OerCollection
+  , selectedOerCollections : Set String
   , pageScrollState : PageScrollState
   , collectionsMenuOpen : Bool
   , cachedCollectionsSearchPredictions : Dict String CollectionsSearchPrediction -- key = Search term
@@ -375,7 +375,7 @@ initialModel nav flags =
   -- , overviewType = StoryOverview
   , overviewType = BubblogramOverview
   , selectedMentionInStory = Nothing
-  , oerCollection = defaultOerCollection
+  , selectedOerCollections = setOfAllCollectionTitles
   , pageScrollState = PageScrollState 0 0 0 False
   , collectionsMenuOpen = False
   , cachedCollectionsSearchPredictions = Dict.empty
@@ -827,3 +827,30 @@ getCollectionsSearchPredictionOfLastSearch model =
 
     Just {lastSearch} ->
       Dict.get lastSearch model.cachedCollectionsSearchPredictions
+
+
+setOfAllCollectionTitles : Set String
+setOfAllCollectionTitles =
+  oerCollections
+  |> List.map .title
+  |> Set.fromList
+
+
+selectedOerCollectionsToCommaSeparatedString : Model -> String
+selectedOerCollectionsToCommaSeparatedString model =
+  model.selectedOerCollections
+  |> Set.toList
+  |> String.join ","
+
+
+selectedOerCollectionsToSummaryString : Model -> String
+selectedOerCollectionsToSummaryString model =
+  if model.selectedOerCollections == setOfAllCollectionTitles then
+    "All collections"
+  else
+    case Set.toList model.selectedOerCollections of
+      [ only ] ->
+        only
+
+      _ ->
+        "Selected collections"

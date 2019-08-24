@@ -345,12 +345,15 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
           |> el [ width fill, htmlId "AutocompleteTerms" ]
 
       collectionInfo =
-        [ "Search in" |> captionNowrap []
-        , selectedOerCollectionsToSummaryString model |> bodyWrap []
-        , button [] { label = (if model.collectionsMenuOpen then "Hide menu" else "Change") |> captionNowrap [ Font.color linkBlue ], onPress = Just <| ToggleCollectionsMenu }
-        ]
-        |> column [ spacing 10, paddingBottom 13 ]
-        |> el [ width fill, padding 10, borderBottom 1, borderColorDivider ]
+        if model.nav.url.path |> String.startsWith searchPath then
+          [ "Search in" |> captionNowrap []
+          , selectedOerCollectionsToSummaryString model |> bodyWrap []
+          , button [] { label = (if model.collectionsMenuOpen then "Hide menu" else "Change") |> captionNowrap [ Font.color linkBlue ], onPress = Just <| ToggleCollectionsMenu }
+          ]
+          |> column [ spacing 10, paddingBottom 13 ]
+          |> el [ width fill, padding 10, borderBottom 1, borderColorDivider ]
+        else
+          none
   in
       [ searchField
       , collectionInfo

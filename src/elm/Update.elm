@@ -553,7 +553,7 @@ update msg ({nav, userProfileForm} as model) =
           ({ model | selectedOerCollections = selectedOerCollections }, Cmd.none)
 
     ToggleCollectionsMenu ->
-      ({model | collectionsMenuOpen = not model.collectionsMenuOpen }, setBrowserFocus "")
+      ({ model | collectionsMenuOpen = not model.collectionsMenuOpen }, setBrowserFocus "")
 
 
 requestCollectionsSearchPredictionIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)

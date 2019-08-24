@@ -793,12 +793,12 @@ defaultOerCollection =
 
 additionalOerCollections =
   [ OerCollection "Journal of Medical Internet Research (JMIR)" "Peer-reviewed Open Access Journal" "https://www.jmir.org/2019/8"
-  , OerCollection "Mental Health Meetups London" "100 Meetup groups" "https://www.meetup.com/find/?allMeetups=false&keywords=mental+health&radius=5&userFreeform=Greater+London%2C+United+Kingdom&mcId=z2827702&mcName=Greater+London%2C+England%2C+GB&sort=default"
+  , OerCollection "Mental Health Meetups London" "74 Meetup groups" "https://www.meetup.com/find/?allMeetups=false&keywords=mental+health&radius=5&userFreeform=Greater+London%2C+United+Kingdom&mcId=z2827702&mcName=Greater+London%2C+England%2C+GB&sort=default"
   , OerCollection "Mindfulness meditation" "Guided meditation videos on YouTube" "https://www.youtube.com/playlist?list=PLpb1DIPqFFN195vv7pnDFKtM9y5feLFp4"
-  , OerCollection "National Institute of Mental Health (NIMH)" "200+ videos on YouTube" "https://www.youtube.com/user/NIMHgov/videos"
-  , OerCollection "Alan Turing Institute" "400+ videos on YouTube" "https://www.youtube.com/channel/UCcr5vuAH5TPlYox-QLj4ySw/videos"
+  , OerCollection "National Institute of Mental Health (NIMH)" "180+ videos on YouTube" "https://www.youtube.com/user/NIMHgov/videos"
+  , OerCollection "Alan Turing Institute" "350+ videos on YouTube" "https://www.youtube.com/channel/UCcr5vuAH5TPlYox-QLj4ySw/videos"
   , OerCollection "TED Talks" "2000+ videos on YouTube" "https://www.youtube.com/user/TEDtalksDirector/videos"
-  , OerCollection "Numberphile" "400+ videos on YouTube" "https://www.youtube.com/user/numberphile/videos"
+  , OerCollection "Numberphile" "400 videos on YouTube" "https://www.youtube.com/user/numberphile/videos"
   ]
 
 

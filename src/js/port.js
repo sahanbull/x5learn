@@ -183,7 +183,7 @@ function changeFocusOnAutocompleteSuggestions(direction){
 function setupScrollDetector(){
   window.setInterval(function(){
     sendPageScrollState(false);
-  }, 300);
+  }, 100);
 }
 
 

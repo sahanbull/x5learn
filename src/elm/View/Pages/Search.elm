@@ -135,16 +135,19 @@ viewCollectionsTable model =
                   none
 
                 Just {lastSearch} ->
-                  if lastSearch=="" then
-                     none
-                  else
-                    let
-                        content =
+                  let
+                      str =
+                        if lastSearch=="" then
+                          "Number of resources"
+                        else
                           "Results for \""++ lastSearch ++"\""
-                          |> bodyNoWrap [ greyText, alignRight, moveLeft 40, moveUp 8 ]
-                    in
-                        none
-                        |> el [ onLeft <| content ]
+
+                      content =
+                        str
+                        |> bodyNoWrap [ greyText, alignRight, moveLeft 40, moveUp 8 ]
+                  in
+                      none
+                      |> el [ onLeft <| content ]
         in
             [ "Collection title" |> bodyWrap [ greyText, padding 15, paddingLeft 43 ] |> el [ width <| px (collectionTitleWidth + 30) ]
             , [ "Description" |> bodyWrap [ greyText, padding 15, width <| fillPortion 2 ]

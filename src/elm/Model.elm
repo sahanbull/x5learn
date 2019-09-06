@@ -24,7 +24,7 @@ type alias Model =
   , searchInputTyping : String
   , searchState : Maybe SearchState
   , inspectorState : Maybe InspectorState
-  , userMessage : Maybe String
+  , snackbar : Maybe Snackbar
   , hoveringOerId : Maybe OerId
   , timeOfLastMouseEnterOnCard : Posix
   , modalAnimation : Maybe BoxAnimation
@@ -153,6 +153,10 @@ type alias OerCollection =
   , url : String
   }
 
+type alias Snackbar =
+  { startTime : Posix
+  , text : String
+  }
 
 type alias OerCardPlaceholderPosition =
   { x : Float
@@ -335,7 +339,7 @@ initialModel nav flags =
   , searchInputTyping = ""
   , searchState = Nothing
   , inspectorState = Nothing
-  , userMessage = Nothing
+  , snackbar = Nothing
   , hoveringOerId = Nothing
   , timeOfLastMouseEnterOnCard = initialTime
   , modalAnimation = Nothing
@@ -854,3 +858,7 @@ selectedOerCollectionsToSummaryString model =
 
       _ ->
         "selected collections"
+
+
+snackbarDuration =
+  3000

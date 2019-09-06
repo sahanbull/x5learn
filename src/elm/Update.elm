@@ -71,7 +71,7 @@ update msg ({nav, userProfileForm} as model) =
           |> logEventForLabStudy "UrlChanged" [ path ]
 
     ClockTick time ->
-      ( { model | currentTime = time, enrichmentsAnimating = anyBubblogramsAnimating model }, Cmd.none)
+      ( { model | currentTime = time, enrichmentsAnimating = anyBubblogramsAnimating model, snackbar = updateSnackbar model }, getOerCardPlaceholderPositions True)
       |> requestWikichunkEnrichmentsIfNeeded
       |> requestEntityDefinitionsIfNeeded
 
@@ -142,7 +142,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestSession"
       -- in
-      ( { model | userMessage = Just "An error occurred. Please reload the page." }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "An error occurred. Please reload the page." }, Cmd.none )
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     RequestRecentViews (Ok oerIds) ->
       let
@@ -159,7 +160,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestRecentViews"
       -- in
-      ( { model | userMessage = Just "An error occurred. Please reload the page." }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "An error occurred. Please reload the page." }, Cmd.none )
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     RequestNotes (Ok notes) ->
       let
@@ -192,7 +194,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestNotes"
       -- in
-      ( { model | userMessage = Just "An error occurred. Please reload the page." }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "An error occurred. Please reload the page." }, Cmd.none )
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     RequestDeleteNote (Ok _) ->
       ( model, requestNotes)
@@ -203,7 +206,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestDeleteNote"
       -- in
-      ( { model | userMessage = Just "Some changes were not saved." }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "Some changes were not saved." }, Cmd.none )
+      ( { model | snackbar = createSnackbar model "Some changes were not saved." }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
       (model |> updateSearch (insertSearchResults (oers |> List.map .id)) |> cacheOersFromList oers, [ setBrowserFocus "SearchField", getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch)
@@ -216,7 +220,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestOerSearch"
       -- in
-      ( { model | userMessage = Just "There was a problem while fetching the search data" }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "There was a problem while fetching the search data" }, Cmd.none )
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     RequestOers (Ok oers) ->
       ( { model | requestingOers = False } |> cacheOersFromList oers, Cmd.none)
@@ -226,7 +231,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestOers"
       -- in
-      ( { model | requestingOers = False, userMessage = Just "There was a problem while fetching OER data" }, Cmd.none)
+      -- ( { model | requestingOers = False, snackbar = createSnackbar model "There was a problem while fetching OER data" }, Cmd.none)
+      ( { model | requestingOers = False, snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none)
 
     RequestGains (Ok gains) ->
       ( { model | gains = Just gains }, Cmd.none )
@@ -236,7 +242,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestGains"
       -- in
-      ( { model | userMessage = Just "There was a problem while fetching the gains data" }, Cmd.none)
+      -- ( { model | snackbar = createSnackbar model "There was a problem while fetching the gains data" }, Cmd.none)
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none)
 
     RequestWikichunkEnrichments (Ok listOfEnrichments) ->
       let
@@ -261,7 +268,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestWikichunkEnrichments"
       -- in
-      ( { model | userMessage = Just "There was a problem - please reload the page.", requestingWikichunkEnrichments = False }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "There was a problem - please reload the page.", requestingWikichunkEnrichments = False }, Cmd.none )
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage, requestingWikichunkEnrichments = False }, Cmd.none )
 
     RequestEntityDefinitions (Ok definitionTexts) ->
       let
@@ -276,7 +284,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestEntityDefinitions"
       -- in
-      ( { model | userMessage = Just "There was a problem while fetching the wiki definitions data", requestingEntityDefinitions = False }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "There was a problem while fetching the wiki definitions data", requestingEntityDefinitions = False }, Cmd.none )
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage, requestingEntityDefinitions = False }, Cmd.none )
 
     RequestAutocompleteTerms (Ok autocompleteTerms) ->
       if (millisSince model model.timeOfLastSearch) < 2000 then
@@ -289,7 +298,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestAutocompleteTerms"
       -- in
-      ( { model | userMessage = Just "There was a problem while fetching search suggestions" }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "There was a problem while fetching search suggestions" }, Cmd.none )
+      ( { model | snackbar = createSnackbar model  snackbarMessageReloadPage}, Cmd.none )
 
     RequestSaveUserProfile (Ok _) ->
       ({ model | userProfileForm = { userProfileForm | saved = True }, userProfileFormSubmitted = Nothing }, Cmd.none)
@@ -299,7 +309,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestSaveUserProfile"
       -- in
-      ( { model | userMessage = Just "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
+      ( { model | snackbar = createSnackbar model "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
 
     RequestLabStudyLogEvent (Ok _) ->
       (model, Cmd.none)
@@ -309,7 +320,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestLabStudyLogEvent"
       -- in
-      ( { model | userMessage = Just "Some logs were not saved" }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "Some logs were not saved" }, Cmd.none )
+      ( { model | snackbar = createSnackbar model "Some logs were not saved" }, Cmd.none )
 
     RequestSendResourceFeedback (Ok _) ->
       (model, Cmd.none)
@@ -321,13 +333,15 @@ update msg ({nav, userProfileForm} as model) =
       (model, Cmd.none)
 
     RequestSaveAction (Err err) ->
-      ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+      ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
     RequestSaveNote (Ok _) ->
       (model, requestNotes)
 
     RequestSaveNote (Err err) ->
-      ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+      ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
     RequestResource (Ok oer) ->
       let
@@ -370,7 +384,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestResourceRecommendations"
       -- in
-      ( { model | resourceRecommendations = [], userMessage = Just "An error occurred while loading recommendations" }, Cmd.none )
+      -- ( { model | resourceRecommendations = [], snackbar = createSnackbar model "An error occurred while loading recommendations" }, Cmd.none )
+      ( { model | resourceRecommendations = [], snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     RequestCollectionsSearchPrediction (Ok response) ->
       ({ model | cachedCollectionsSearchPredictions = model.cachedCollectionsSearchPredictions |> Dict.insert response.searchText response.prediction }, Cmd.none)
@@ -381,7 +396,7 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestCollectionsSearchPrediction"
       -- in
-      ( { model | userMessage = Just "An error occurred while trying to predict search results" }, Cmd.none )
+      ( { model | snackbar = createSnackbar model "An error occurred while trying to predict search results" }, Cmd.none )
 
     SetHover maybeOerId ->
       let
@@ -871,7 +886,7 @@ executeSearchAfterUrlChanged model url =
                      else
                        collections
   in
-        ( { model | searchInputTyping = textParam, selectedOerCollections = selectedOerCollections, searchState = Just <| newSearch textParam, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers textParam (selectedOerCollectionsToCommaSeparatedString model))
+        ( { model | searchInputTyping = textParam, selectedOerCollections = selectedOerCollections, searchState = Just <| newSearch textParam, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, snackbar = Nothing } |> closePopup, searchOers textParam (selectedOerCollectionsToCommaSeparatedString model))
         |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam, (selectedOerCollectionsToCommaSeparatedString model) ]
 
 
@@ -898,6 +913,28 @@ saveAction actionTypeId params (model, oldCmd) =
     (model, [ oldCmd, ActionApi.saveAction actionTypeId params ] |> Cmd.batch)
   else
     (model, oldCmd)
+
+
+createSnackbar : Model -> String -> Maybe Snackbar
+createSnackbar model str =
+  Just <| Snackbar model.currentTime str
+
+
+updateSnackbar : Model -> Maybe Snackbar
+updateSnackbar model =
+  case model.snackbar of
+    Nothing ->
+      Nothing
+
+    Just snackbar ->
+      if (millisSince model snackbar.startTime) > snackbarDuration then
+        Nothing
+      else
+        Just snackbar
+
+
+snackbarMessageReloadPage =
+  "There was a problem - please reload the page"
 
 
 unselectMentionInStory : Model -> Model

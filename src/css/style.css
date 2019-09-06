@@ -20,6 +20,9 @@ a:hover {
   text-decoration: underline;
 }
 
+.Snackbar{
+  transition: all 0.9s;
+}
 
 .materialCard {
   background: #fff;

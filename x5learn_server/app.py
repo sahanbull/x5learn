@@ -25,9 +25,8 @@ from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichmen
     ActionsRepository, UserRepository, DefinitionsRepository
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
-from x5learn_server.oer_collections import search_in_oer_collections, autocomplete_terms_from_oer_collection, initialise_caches_for_all_oer_collections, predict_number_of_search_results_in_collection
+from x5learn_server.oer_collections import search_in_oer_collections, autocomplete_terms_from_oer_collection, initialise_caches_for_all_oer_collections, predict_number_of_search_results_in_collection, export_oer_collections_oer_data_as_json_lines
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
-
 
 # Create app
 app = Flask(__name__)
@@ -81,6 +80,7 @@ def initiate_login_db():
     initiate_action_types_table()
     initialise_caches_for_all_oer_collections()
     cleanup_enrichment_errors()
+    # export_oer_collections_oer_data_as_json_lines()
 
 
 def cleanup_enrichment_errors():

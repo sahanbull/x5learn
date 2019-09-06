@@ -1,4 +1,4 @@
-import re, math
+import re, math, json
 
 from x5learn_server.models import Oer, WikichunkEnrichment
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed
@@ -82,3 +82,15 @@ def predict_number_of_search_results_in_collection(text, collection_title):
         return -1
     else:
         return len(search_in_oer_collections([collection_title], text, 0))
+
+
+def export_oer_collections_oer_data_as_json_lines():
+    print('export_oer_collections_oer_data_as_json_lines')
+    with open('collections_oer_data.jsonl', 'w', encoding='utf-8') as f:
+        for _,collection in oer_collections.items():
+            for url in collection['video_urls']:
+                oer = Oer.query.filter_by(url=url).first()
+                if oer is not None:
+                    json.dump(oer.data, f)
+                    f.write('\n')
+    print('done')

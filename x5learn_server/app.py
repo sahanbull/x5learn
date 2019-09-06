@@ -81,7 +81,7 @@ def initiate_login_db():
     from x5learn_server.db.database import initiate_login_table_and_admin_profile
     initiate_login_table_and_admin_profile(user_datastore)
     initiate_action_types_table()
-    initialise_caches_for_all_oer_collections()
+    # initialise_caches_for_all_oer_collections()
     cleanup_enrichment_errors()
     # export_oer_collections_oer_data_as_json_lines()
 
@@ -182,6 +182,7 @@ def get_or_create_logged_in_user():
 def api_search():
     text = request.args['text'].lower().strip()
     collections = request.args['collections'].split(',')
+    initialise_caches_for_all_oer_collections() # quickfix. TODO move cache to db?
     results = search_in_oer_collections(collections, text, 30)
     if 'X5GON Platform' in collections:
         results += search_results_from_x5gon_api(text)

@@ -33,15 +33,23 @@ def search_in_oer_collections(collection_titles, text, max_n_results=0):
 def autocomplete_terms_from_oer_collection(collection_title):
     if collection_title not in oer_collections:
         return []
-    if collection_title not in autocomplete_cache:
+    if not is_cache_initialised(collection_title):
         return []
     return autocomplete_cache[collection_title]
+
+
+def is_cache_initialised(collection_title):
+    return collection_title in autocomplete_cache
 
 
 def initialise_caches_for_all_oer_collections():
     print('Initialising all collection caches.')
     for collection_title in oer_collections:
-        initialise_cache(collection_title)
+        # initialise_cache(collection_title)
+        # as a quick fix, in order to prevent request timeout, do them one at a time
+        if not is_cache_initialised(collection_title):
+            initialise_cache(collection_title)
+            break
 
 
 def initialise_cache(collection_title):

@@ -70,35 +70,11 @@ viewTopBar model ({lastSearch} as searchState) =
                 "Close" |> bodyNoWrap [ greyText ]
               else
                 "More" |> bodyNoWrap [ whiteText ]
-                -- case Dict.get lastSearch model.cachedCollectionsSearchPredictions of
-                --   Nothing ->
-                --     "Other collections" |> bodyNoWrap [ whiteText ]
-
-                --   Just prediction ->
-                --     case getPredictedNumberOfSearchResults model model.selectedOerCollections.title of
-                --       Nothing ->
-                --         "Other collections" |> bodyNoWrap [ whiteText ] -- shouldn't happen
-
-                --       Just nThis ->
-                --         let
-                --             nTotal =
-                --               prediction
-                --               |> Dict.values
-                --               |> List.sum
-
-                --             nOther =
-                --               nTotal - nThis
-                --         in
-                --             [ (numberOfResultsText nOther) ++ " in" |> bodyNoWrap [ greyText ]
-                --             , "other collections" |> bodyNoWrap [ whiteText ]
-                --             ]
-                --             |> row [ spacing 5, alignRight ]
         in
             button [] { label = label, onPress = (Just ToggleCollectionsMenu) }
 
       content =
         [ info
-        -- , if model.collectionsMenuOpen then none else otherCollectionsSummary
         , toggleButton
         ]
         |> topRow
@@ -115,13 +91,11 @@ viewTopBar model ({lastSearch} as searchState) =
                 |> bodyWrap [ whiteText ]
 
               Just oerIds ->
-                -- collectionTitle ++ ": " ++ (numberOfResultsText <| List.length oerIds) ++ " for \""++ lastSearch ++ "\""
                 (numberOfResultsText <| List.length oerIds) ++ " for \""++ lastSearch ++"\" in " ++ summaryString
                 |> bodyWrap [ whiteText ]
   in
       content
       |> el [ width fill, Background.color grey40 ]
-      -- |> el [ width fill, materialScrimBackground ]
 
 
 viewCollectionsTable : Model -> Element Msg
@@ -150,7 +124,8 @@ viewCollectionsTable model =
                       none
                       |> el [ onLeft <| content ]
         in
-            [ "Collection title" |> bodyWrap [ greyText, padding 15, paddingLeft 43 ] |> el [ width <| px (collectionTitleWidth + 30) ]
+            [ allCheckbox model
+            , "Collection (select at least one)" |> bodyWrap [ greyText, padding 15 ] |> el [ width <| px collectionTitleWidth ]
             , [ "Description" |> bodyWrap [ greyText, padding 15, width <| fillPortion 2 ]
               , results
               ]
@@ -169,6 +144,22 @@ viewCollectionsTable model =
       |> column [ width fill, Background.color materialDark, padding 8 ]
 
 
+allCheckbox model =
+  let
+      isChecked =
+        model.selectedOerCollections == setOfAllCollectionTitles
+
+      checkbox =
+        Input.checkbox []
+          { onChange = ToggledAllOerCollections
+          , icon = Input.defaultCheckbox
+          , checked = isChecked
+          , label = Input.labelHidden "Select or unselect all collections"
+          }
+  in
+      checkbox |> el [ paddingLeft 15 ]
+
+
 viewCollection : Model -> OerCollection -> Element Msg
 viewCollection model ({title, description, url} as collection) =
   let
@@ -183,12 +174,8 @@ viewCollection model ({title, description, url} as collection) =
       isChecked =
         Set.member title model.selectedOerCollections
 
-      clickHandler =
-        [ onClick (SelectedOerCollection title (not isChecked)), htmlClass "CursorPointer" ]
-
       item =
-        [ checkbox |> el [ width <| px 30 ]
-        , title |> bodyWrap [ whiteText, width (px collectionTitleWidth) ]
+        [ title |> bodyWrap [ paddingLeft 30, whiteText, width (px collectionTitleWidth) ]
         , description |> bodyWrap [ greyText, width fill ]
         , numberString |> bodyNoWrap [ greyText, alignRight ] |> el [ width <| px 50 ]
         ]
@@ -204,12 +191,24 @@ viewCollection model ({title, description, url} as collection) =
           , checked = isChecked
           , label = Input.labelHidden title
           }
+        |> el [ padding 15 ]
+        |> inFront
   in
-      -- [ button ([ padding 15, width fill, htmlClass "OerCollectionListItem" ] ++ border) { onPress = Just (SelectedOerCollection title True), label = label }
-      [ item |> el ([ padding 15, width fill, htmlClass "OerCollectionListItem" ] ++ border)
+      [ item |> el ([ padding 15, width fill ] ++ border)
       , image [ width (px 16), alpha 0.5 ] { src = svgPath "white_external_link", description = "external link" } |> newTabLinkTo [] url
       ]
-      |> row ([ width fill, spacing 15 ] ++ clickHandler)
+      |> row [ width fill, spacing 15, collectionOverlay model title isChecked, checkbox ]
+
+
+collectionOverlay : Model -> String -> Bool -> Attribute Msg
+collectionOverlay model title isChecked =
+  let
+      clickHandler =
+        onClick (SelectedOerCollection title (not isChecked))
+  in
+      none
+      |> el [ width (model.windowWidth - navigationDrawerWidth - 50 |> px), height fill, clickHandler, htmlClass "CursorPointer OerCollectionListItem", Background.color fullyTransparentColor ]
+      |> inFront
 
 
 collectionTitleWidth =

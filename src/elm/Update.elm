@@ -542,15 +542,18 @@ update msg ({nav, userProfileForm} as model) =
     SelectedOerCollection collectionTitle isChecked ->
       let
           selectedOerCollections =
-            if (isChecked |> Debug.log "isChecked") then
+            if isChecked then
               Set.insert collectionTitle model.selectedOerCollections
             else
               if Set.size model.selectedOerCollections == 1 then
-                setOfAllCollectionTitles
+                Set.singleton defaultOerCollection.title
               else
                 Set.remove collectionTitle model.selectedOerCollections
       in
           ({ model | selectedOerCollections = selectedOerCollections }, Cmd.none)
+
+    ToggledAllOerCollections on ->
+      ({ model | selectedOerCollections = (if on then setOfAllCollectionTitles else Set.singleton defaultOerCollection.title) }, Cmd.none)
 
     ToggleCollectionsMenu ->
       ({ model | collectionsMenuOpen = not model.collectionsMenuOpen }, setBrowserFocus "")

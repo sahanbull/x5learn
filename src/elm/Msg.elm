@@ -74,6 +74,7 @@ type Msg
   | MouseMovedOnStoryTag Float
   | SelectedOverviewType OverviewType
   | SelectedOerCollection String Bool
+  | ToggledAllOerCollections Bool
   | MouseEnterMentionInBubbblogramOverview OerId EntityId MentionInOer
   | ToggleCollectionsMenu
 

@@ -72,6 +72,9 @@ app.config['MAIL_DEFAULT_SENDER'] = MAIL_SENDER
 
 mail.init_app(app)
 
+CURRENT_ENRICHMENT_VERSION = 1
+MAX_SEARCH_RESULTS = 24 # number divisible by 2 and 3 to fit nicely into grid
+
 # create database when starting the app
 @app.before_first_request
 def initiate_login_db():
@@ -319,13 +322,20 @@ def log_event_for_lab_study():
 
 
 def search_results_from_x5gon_api(text):
-    max_results = 18
-    encoded_text = urllib.parse.quote(text)
+    text = urllib.parse.quote(text)
+    return search_results_from_x5gon_api_pages(text, 1, [])
+
+
+# This function is called recursively
+# until the number of search results hits a certain minimum or stops increasing
+def search_results_from_x5gon_api_pages(text, page_number, oers):
+    n_initial_oers = len(oers)
+    print('page_number', page_number)
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request(
-        'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text=' + encoded_text)
+        'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text=' + text + '&page=' + str(page_number))
     response = conn.getresponse().read().decode("utf-8")
-    materials = json.loads(response)['rec_materials'][:max_results]
+    materials = json.loads(response)['rec_materials']
     # materials = [ m for m in materials if m['url'].endswith('.pdf') ] # filter by suffix
     materials = [m for m in materials if m['url'].endswith(
         '.pdf') or is_video(m['url'])]  # filter by suffix
@@ -350,8 +360,12 @@ def search_results_from_x5gon_api(text):
             db_session.commit()
         oers.append(oer)
         push_enrichment_task_if_needed(url, int(1000 / (index + 1)) + 1)
-    print(len(oers), 'results from x5gon search')
-    return oers
+    oers = oers[:MAX_SEARCH_RESULTS]
+    if len(oers)==n_initial_oers: # no more results on page -> stop querying
+        return oers
+    if len(oers)>=MAX_SEARCH_RESULTS:
+        return oers
+    return search_results_from_x5gon_api_pages(text, page_number+1, oers)
 
 
 def remove_duplicates_from_x5gon_search_results(materials):

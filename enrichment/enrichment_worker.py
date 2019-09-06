@@ -7,6 +7,7 @@ from langdetect import detect_langs
 
 from wikichunkifiers.pdf import extract_chunks_from_pdf
 from wikichunkifiers.youtube import extract_chunks_from_youtube_video
+from wikichunkifiers.generic import extract_chunks_from_generic_text
 from wikichunkifiers.lib.util import EnrichmentError
 
 import wikipedia
@@ -72,17 +73,19 @@ def make_wikichunks(oer_data):
     url = oer_data['url']
     print(url)
     print(oer_data['title'])
-    if url.lower().endswith('.pdf'):
+    if url.lower().endswith('pdf'):
         return extract_chunks_from_pdf(url)
     # if url.lower().endswith('.mp4'): TODO
     #     return extract_chunks_from_video(url)
     if 'youtu' in url and '/watch?v=' in url:
         return extract_chunks_from_youtube_video(url, oer_data)
+    if 'meetup.com/' in url:
+        return extract_chunks_from_generic_text(url, oer_data)
     raise EnrichmentError('Unsupported file format')
 
 
 def extract_concept_clusters(chunks, mentions):
-    # print('\n_____________________________ Concept clusters')
+    print('\n_____________________________ Concept clusters')
     occurrences = defaultdict(int)
     for chunk in chunks:
         for entity in chunk['entities']:
@@ -93,7 +96,12 @@ def extract_concept_clusters(chunks, mentions):
     print('Titles:', titles)
     clusters = []
     for title in titles:
-        links = [ link for link in wikipedia.page(title).links if link in titles ]
+        try:
+            links = wikipedia.page(title).links
+        except Exception as err:
+            links = []
+            print('Ignoring error: ', err)
+        links = [ link for link in links if link in titles ]
         cluster = [ title ] + links
         clusters.append(cluster)
     print('Raw:', clusters)

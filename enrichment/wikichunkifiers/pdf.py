@@ -2,7 +2,7 @@ import subprocess, requests, math, json
 import textwrap
 
 from wikichunkifiers.lib.util import temp_file_path, EnrichmentError, make_chunk
-from wikichunkifiers.lib.wikify import get_entities, WIKIFIER_CHARACTER_LIMIT
+from wikichunkifiers.lib.wikify import get_entities, WIKIFIER_CHARACTER_LIMIT, WIKIFIER_BLACKLIST
 
 def extract_chunks_from_pdf(url):
     print('\nin extract_chunks_from_pdf\n')

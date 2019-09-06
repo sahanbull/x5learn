@@ -28,7 +28,7 @@ type IconPosition
 
 
 materialDark =
-  rgba 0 0 0 0.87
+  grey 11
 
 
 materialScrimBackground =
@@ -39,12 +39,24 @@ superLightBackground =
   Background.color <| rgb255 242 242 242
 
 
+greyDivider =
+  rgb 0.8 0.8 0.8
+
+
 materialDarkAlpha =
   alpha 0.87
 
 
 whiteText =
   Font.color white
+
+
+greyText =
+  Font.color <| grey 160
+
+
+greyTextDisabled =
+  Font.color <| grey 180
 
 
 feedbackOptionButtonColor =
@@ -61,10 +73,6 @@ x5colorSemiTransparent =
 
 x5colorDark =
   rgb255 38 63 71
-
-
-greyTextDisabled =
-  Font.color <| grey 180
 
 
 pageHeaderHeight =
@@ -103,8 +111,8 @@ borderLeft px =
   Border.widthEach { allSidesZero | left = px }
 
 
-borderColorLayout =
-  Border.color <| rgb 0.8 0.8 0.8
+borderColorDivider =
+  Border.color <| greyDivider
 
 
 allSidesZero =
@@ -176,7 +184,11 @@ recentBlue =
 
 
 linkBlue =
-  rgb255 0 120 250
+  rgb255 0 115 230
+
+
+grey40 =
+  grey 40
 
 
 grey80 =
@@ -228,10 +240,10 @@ whiteBackground =
 
 
 pageBodyBackground model =
-  if isLabStudy1 model then
+  -- if isLabStudy1 model then
     Background.color <| grey 224
-  else
-    Background.image <| imgPath "bg.jpg"
+  -- else
+  --   Background.image <| imgPath "bg.jpg"
 
 
 imgPath str =
@@ -284,6 +296,10 @@ linkTo attrs url label =
   link attrs { url = url, label = label }
 
 
+newTabLinkTo attrs url label =
+  newTabLink attrs { url = url, label = label }
+
+
 viewSearchWidget model widthAttr placeholder searchInputTyping =
   let
       submit =
@@ -320,15 +336,32 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
             button ([ width fill, clipX, onFocus <| SelectSuggestion str ]++background++mouseEnterHandler) { onPress = Just <| TriggerSearch str, label = label }
 
       suggestions =
-        if List.isEmpty model.searchSuggestions || String.length searchInputTyping < 2 then
+        if List.isEmpty model.autocompleteTerms || String.length searchInputTyping < 1 then
           none
         else
-          model.searchSuggestions
+          model.autocompleteSuggestions
           |> List.map (\suggestion -> suggestionButton suggestion)
-          |> menuColumn [ width fill, clipY, height <| px (39*7) ]
-          |> el [ width fill, htmlId "SearchSuggestions" ]
+          |> menuColumn [ width fill, clipY, height (px 39 |> maximum (39*7)) ]
+          |> el [ width fill, htmlId "AutocompleteTerms" ]
+
+      collectionInfo =
+        if model.nav.url.path |> String.startsWith searchPath then
+          -- [ "Search in" |> captionNowrap []
+          -- , selectedOerCollectionsToSummaryString model |> bodyWrap []
+          -- , button [] { label = (if model.collectionsMenuOpen then "Hide menu" else "Change") |> captionNowrap [ Font.color linkBlue ], onPress = Just <| ToggleCollectionsMenu }
+          -- ]
+          [ "Search in " ++ (selectedOerCollectionsToSummaryString model |> truncateSentence 20) |> captionNowrap [ width <| px 180, htmlClass "ClipEllipsis" ]
+          , button [] { label = (if model.collectionsMenuOpen then "Hide menu" else "Change") |> captionNowrap [ Font.color linkBlue ], onPress = Just <| ToggleCollectionsMenu }
+          ]
+          |> column [ spacing 10, paddingBottom 13 ]
+          |> el [ width fill, padding 10, borderBottom 1, borderColorDivider ]
+        else
+          none
   in
-      searchField
+      [ searchField
+      , collectionInfo
+      ]
+      |> column [ spacing 10 ]
 
 
 svgIcon stub=
@@ -339,13 +372,13 @@ navigationDrawerWidth =
   230
 
 
-actionButtonWithIcon iconPosition svgIconStub str onPress =
+actionButtonWithIcon textAttrs iconPosition svgIconStub str onPress =
   let
       icon =
         image [ alpha 0.5 ] { src = svgPath svgIconStub, description = "" }
 
       title =
-        str |> bodyNoWrap [ width fill ]
+        str |> bodyNoWrap (textAttrs ++ [ width fill ])
 
       label =
         case iconPosition of
@@ -355,7 +388,7 @@ actionButtonWithIcon iconPosition svgIconStub str onPress =
           IconRight ->
             [ title, icon ]
   in
-      button [] { onPress = onPress, label = label |> row [ width fill, padding 12, spacing 3, Border.rounded 4 ]}
+      button [] { onPress = onPress, label = label |> row [ width fill, spacing 3, Border.rounded 4 ]}
 
 
 simpleButton : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
@@ -367,13 +400,13 @@ simpleButton attrs str onPress =
       button attrs { onPress = onPress, label = label }
 
 
-actionButtonWithoutIcon : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
-actionButtonWithoutIcon attrs str onPress =
+actionButtonWithoutIcon : List (Attribute Msg) -> List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
+actionButtonWithoutIcon labelAttrs buttonAttrs str onPress =
   let
       label =
-        str |> bodyNoWrap []
+        str |> bodyNoWrap labelAttrs
   in
-      button attrs { onPress = onPress, label = label }
+      button buttonAttrs { onPress = onPress, label = label }
 
 
 actionButtonWithoutIconNoBobble : List (Attribute Msg) -> String -> Msg -> Element Msg

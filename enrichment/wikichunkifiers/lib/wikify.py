@@ -3,8 +3,10 @@ import requests, json
 from wikichunkifiers.lib.util import EnrichmentError
 
 WIKIFIER_CHARACTER_LIMIT = 24999
+WIKIFIER_BLACKLIST = ['Forward (association football)' , 'RenderX', 'MEDLINE', 'Medline', 'MedLine', 'medline', 'MEDLAR', '[Music]']
 
 def get_entities(text):
+    text = filter_blacklisted_terms(text)
     if len(text)>WIKIFIER_CHARACTER_LIMIT:
         print('Warning: Character limit exceeded. Text truncated.')
         text = text [:WIKIFIER_CHARACTER_LIMIT]
@@ -37,10 +39,17 @@ def get_entities(text):
     for a in annotations:
         if 'wikiDataItemId' in a:
             # print(json.dumps(a, indent=4, sort_keys=True))
-            entities.append({'id': a['wikiDataItemId'],
-                             'title': a['title'],
-                             'url': a['url'],
-                             })
+            if a['title'] not in WIKIFIER_BLACKLIST:
+                entities.append({'id': a['wikiDataItemId'],
+                                 'title': a['title'],
+                                 'url': a['url'],
+                                 })
     if entities==[]:
         raise EnrichmentError('No entities found in text fragment')
     return entities
+
+
+def filter_blacklisted_terms(text):
+    for term in WIKIFIER_BLACKLIST:
+        text = text.replace(term, '')
+    return text

@@ -47,6 +47,12 @@ function setupPorts(app){
     }, 100);
   });
 
+  app.ports.askPageScrollState.subscribe(function(dummy) {
+    setTimeout(function(){
+      sendPageScrollState(true);
+    }, 100);
+  });
+
   app.ports.youtubeSeekTo.subscribe(function(fragmentStart) {
     player.seekTo(fragmentStart * player.getDuration());
     player.playVideo();
@@ -60,7 +66,21 @@ function setupPorts(app){
 
   setupEventHandlers();
 
-  setupScrollListener();
+  setupScrollDetector();
+}
+
+
+function sendPageScrollState(requestedByElm){
+  var el = document.getElementById('MainPageContent');
+  if(el){
+    var offset = el.pageYOffset !== undefined ? el.pageYOffset : el.scrollTop;
+    if(requestedByElm || offset!=lastPageScrollOffset){
+      var contentHeight = el.childNodes[0].clientHeight;
+      var pageScrollState = {scrollTop: el.scrollTop, viewHeight: el.clientHeight, contentHeight: contentHeight, requestedByElm: requestedByElm};
+      app.ports.pageScrolled.send(pageScrollState);
+      lastPageScrollOffset = offset;
+    }
+  }
 }
 
 
@@ -127,20 +147,20 @@ function setupEventHandlers(){
 
   document.onkeydown = function checkKey(e) {
     e = e || window.event;
-    if(e.target.closest('#SearchField') || e.target.closest('#SearchSuggestions')){
+    if(e.target.closest('#SearchField') || e.target.closest('#AutocompleteSuggestions')){
       if (e.keyCode == '38') {
-        changeFocusOnSearchSuggestions(-1);
+        changeFocusOnAutocompleteSuggestions(-1);
       }
       else if (e.keyCode == '40') {
-        changeFocusOnSearchSuggestions(1);
+        changeFocusOnAutocompleteSuggestions(1);
       }
     }
   }
 }
 
-function changeFocusOnSearchSuggestions(direction){
+function changeFocusOnAutocompleteSuggestions(direction){
   var field = document.getElementById('SearchField');
-  var suggestions = document.getElementById('SearchSuggestions');
+  var suggestions = document.getElementById('AutocompleteSuggestions');
   if(!suggestions){
     return
   }
@@ -160,19 +180,10 @@ function changeFocusOnSearchSuggestions(direction){
 }
 
 
-function setupScrollListener(){
+function setupScrollDetector(){
   window.setInterval(function(){
-    var el = document.getElementById('MainPageContent');
-    if(el){
-      var offset = el.scrollTop;
-      if(offset!=lastPageScrollOffset){
-        var contentHeight = el.childNodes[0].clientHeight;
-        var scrollData = {scrollTop: el.scrollTop, viewHeight: el.clientHeight, contentHeight: contentHeight};
-        app.ports.pageScrolled.send(scrollData);
-        lastPageScrollOffset = offset;
-      }
-    }
-  }, 300);
+    sendPageScrollState(false);
+  }, 100);
 }
 
 

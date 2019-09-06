@@ -61,7 +61,7 @@ viewTopBar model ({lastSearch} as searchState) =
               else
                 []
         in
-            row ([ width fill, paddingXY 15 23 ] ++ table)
+            row ([ width fill, paddingXY 15 27 ] ++ table)
 
       toggleButton =
         let
@@ -69,7 +69,7 @@ viewTopBar model ({lastSearch} as searchState) =
               if model.collectionsMenuOpen then
                 "Close" |> bodyNoWrap [ greyText ]
               else
-                "Other collections" |> bodyNoWrap [ whiteText ]
+                "More" |> bodyNoWrap [ whiteText ]
                 -- case Dict.get lastSearch model.cachedCollectionsSearchPredictions of
                 --   Nothing ->
                 --     "Other collections" |> bodyNoWrap [ whiteText ]
@@ -107,6 +107,7 @@ viewTopBar model ({lastSearch} as searchState) =
         let
             summaryString =
               selectedOerCollectionsToSummaryString model
+              |> String.toLower
         in
             case searchState.searchResults of
               Nothing ->

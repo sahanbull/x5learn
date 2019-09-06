@@ -346,8 +346,11 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
 
       collectionInfo =
         if model.nav.url.path |> String.startsWith searchPath then
-          [ "Search in" |> captionNowrap []
-          , selectedOerCollectionsToSummaryString model |> bodyWrap []
+          -- [ "Search in" |> captionNowrap []
+          -- , selectedOerCollectionsToSummaryString model |> bodyWrap []
+          -- , button [] { label = (if model.collectionsMenuOpen then "Hide menu" else "Change") |> captionNowrap [ Font.color linkBlue ], onPress = Just <| ToggleCollectionsMenu }
+          -- ]
+          [ "Search in " ++ (selectedOerCollectionsToSummaryString model |> truncateSentence 20) |> captionNowrap [ width <| px 180, htmlClass "ClipEllipsis" ]
           , button [] { label = (if model.collectionsMenuOpen then "Hide menu" else "Change") |> captionNowrap [ Font.color linkBlue ], onPress = Just <| ToggleCollectionsMenu }
           ]
           |> column [ spacing 10, paddingBottom 13 ]

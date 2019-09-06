@@ -31,7 +31,7 @@ withNavigationDrawer model (pageContent, modal) =
             [ image [ width (px 20), alpha 0.66 ] { src = svgPath svgIconStub, description = "" }
             , label |> bodyNoWrap [ width fill ]
             ]
-            |> row ([ width fill, paddingXY 0 12, spacing 30, Border.rounded 4 ] ++ background)
+            |> row ([ width fill, paddingXY 8 12, spacing 28, Border.rounded 4 ] ++ background)
             |> if enabled then linkTo [ width fill ] url else el [ semiTransparent, htmlClass "CursorNotAllowed" ]
 
       navButtons =
@@ -46,14 +46,14 @@ withNavigationDrawer model (pageContent, modal) =
           -- , navButton False "/notes" "nav_notes" "Notes"
           -- , navButton False "/peers" "nav_peers" "Peers"
           ]
-          |> column [ width fill, spacing 10 ]
+          |> column [ width fill, spacing 8 ]
 
       drawer =
         [ model.searchInputTyping |> (if isLabStudy1 model then dataSetSelectionWidget model else viewSearchWidget model fill "Search")
         , viewOverviewSelectionWidget model
         , navButtons
         ]
-        |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 14, spacing 30, whiteBackground ]
+        |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 12, spacing 30, whiteBackground ]
         |> el [ height fill, width (px navigationDrawerWidth), paddingTop pageHeaderHeight ]
         |> inFront
 

@@ -846,11 +846,11 @@ selectedOerCollectionsToCommaSeparatedString model =
 selectedOerCollectionsToSummaryString : Model -> String
 selectedOerCollectionsToSummaryString model =
   if model.selectedOerCollections == setOfAllCollectionTitles then
-    "All collections"
+    "all collections"
   else
     case Set.toList model.selectedOerCollections of
       [ only ] ->
         only
 
       _ ->
-        "Selected collections"
+        "selected collections"

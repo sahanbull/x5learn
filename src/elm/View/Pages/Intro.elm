@@ -32,7 +32,8 @@ viewIntroPage model =
       searchSection =
         model.searchInputTyping
         |> viewSearchWidget model (px 360) "Find open learning materials"
-        |> el [ width fill, height <| fillPortion 7 ]
+        |> el [ centerX ]
+        |> el [ centerX, width fill, height <| fillPortion 7 ]
   in
       [ title
       , searchSection

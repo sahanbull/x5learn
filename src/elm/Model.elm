@@ -36,7 +36,8 @@ type alias Model =
   , wikichunkEnrichments : Dict OerId WikichunkEnrichment
   , enrichmentsAnimating : Bool
   , tagClouds : Dict String (List String)
-  , searchSuggestions : List String
+  , autocompleteTerms : List String
+  , autocompleteSuggestions : List String
   , selectedSuggestion : String
   , suggestionSelectionOnHoverEnabled : Bool
   , timeOfLastSearch : Posix
@@ -62,6 +63,18 @@ type alias Model =
   , oerCardPlaceholderPositions : List OerCardPlaceholderPosition
   , overviewType : OverviewType
   , selectedMentionInStory : Maybe (OerId, MentionInOer)
+  , selectedOerCollections : Set String
+  , pageScrollState : PageScrollState
+  , collectionsMenuOpen : Bool
+  , cachedCollectionsSearchPredictions : Dict String CollectionsSearchPrediction -- key = Search term
+  }
+
+
+type alias CollectionsSearchPrediction = Dict String Int
+
+type alias CollectionsSearchPredictionResponse =
+  { searchText : String
+  , prediction : CollectionsSearchPrediction
   }
 
 type EntityDefinition
@@ -126,10 +139,18 @@ type alias EntityTitle = String
 
 type alias Noteboard = List Note
 
-type alias ScrollData =
+type alias PageScrollState =
   { scrollTop : Float
   , viewHeight : Float
   , contentHeight : Float
+  , requestedByElm : Bool -- for analytics
+  }
+
+
+type alias OerCollection =
+  { title : String
+  , description : String
+  , url : String
   }
 
 type alias Snackbar =
@@ -330,7 +351,8 @@ initialModel nav flags =
   , wikichunkEnrichments = Dict.empty
   , enrichmentsAnimating = False
   , tagClouds = Dict.empty
-  , searchSuggestions = []
+  , autocompleteTerms = []
+  , autocompleteSuggestions = []
   , selectedSuggestion = ""
   , suggestionSelectionOnHoverEnabled = True -- prevent accidental selection when user doesn't move the pointer but the menu appears on the pointer
   , timeOfLastSearch = initialTime
@@ -357,6 +379,10 @@ initialModel nav flags =
   -- , overviewType = StoryOverview
   , overviewType = BubblogramOverview
   , selectedMentionInStory = Nothing
+  , selectedOerCollections = setOfAllCollectionTitles
+  , pageScrollState = PageScrollState 0 0 0 False
+  , collectionsMenuOpen = False
+  , cachedCollectionsSearchPredictions = Dict.empty
   }
 
 
@@ -763,3 +789,76 @@ getResourceFeedbackFormValue model oerId =
 
 snackbarDuration =
   3000
+
+
+oerCollections =
+  defaultOerCollection :: additionalOerCollections
+
+
+defaultOerCollection =
+  OerCollection "X5GON Platform" "Millions of lecture materials, videos and slide decks" "https://x5gon.org"
+
+
+additionalOerCollections =
+  [ OerCollection "Journal of Medical Internet Research (JMIR)" "Peer-reviewed Open Access Journal" "https://www.jmir.org/2019/8"
+  , OerCollection "Mental Health Meetups London" "74 Meetup groups" "https://www.meetup.com/find/?allMeetups=false&keywords=mental+health&radius=5&userFreeform=Greater+London%2C+United+Kingdom&mcId=z2827702&mcName=Greater+London%2C+England%2C+GB&sort=default"
+  , OerCollection "Mindfulness meditation" "Guided meditation videos on YouTube" "https://www.youtube.com/playlist?list=PLpb1DIPqFFN195vv7pnDFKtM9y5feLFp4"
+  , OerCollection "National Institute of Mental Health (NIMH)" "180+ videos on YouTube" "https://www.youtube.com/user/NIMHgov/videos"
+  , OerCollection "Alan Turing Institute" "350+ videos on YouTube" "https://www.youtube.com/channel/UCcr5vuAH5TPlYox-QLj4ySw/videos"
+  , OerCollection "TED Talks" "2000+ videos on YouTube" "https://www.youtube.com/user/TEDtalksDirector/videos"
+  , OerCollection "Numberphile" "400 videos on YouTube" "https://www.youtube.com/user/numberphile/videos"
+  ]
+
+
+getOerCollectionByTitle title =
+  additionalOerCollections
+  |> List.filter (\collection -> collection.title == title)
+  |> List.head
+  |> Maybe.withDefault defaultOerCollection
+
+
+getPredictedNumberOfSearchResults : Model -> String -> Maybe Int
+getPredictedNumberOfSearchResults model collectionTitle =
+  case getCollectionsSearchPredictionOfLastSearch model of
+    Nothing ->
+      Nothing
+
+    Just prediction ->
+      Dict.get collectionTitle prediction
+
+
+getCollectionsSearchPredictionOfLastSearch : Model -> Maybe CollectionsSearchPrediction
+getCollectionsSearchPredictionOfLastSearch model =
+  case model.searchState of
+    Nothing ->
+      Nothing
+
+    Just {lastSearch} ->
+      Dict.get lastSearch model.cachedCollectionsSearchPredictions
+
+
+setOfAllCollectionTitles : Set String
+setOfAllCollectionTitles =
+  oerCollections
+  |> List.map .title
+  |> Set.fromList
+
+
+selectedOerCollectionsToCommaSeparatedString : Model -> String
+selectedOerCollectionsToCommaSeparatedString model =
+  model.selectedOerCollections
+  |> Set.toList
+  |> String.join ","
+
+
+selectedOerCollectionsToSummaryString : Model -> String
+selectedOerCollectionsToSummaryString model =
+  if model.selectedOerCollections == setOfAllCollectionTitles then
+    "all collections"
+  else
+    case Set.toList model.selectedOerCollections of
+      [ only ] ->
+        only
+
+      _ ->
+        "selected collections"

@@ -34,11 +34,12 @@ type Msg
   | RequestGains (Result Http.Error (List Gain))
   | RequestWikichunkEnrichments (Result Http.Error (List WikichunkEnrichment))
   | RequestEntityDefinitions (Result Http.Error (Dict String String))
-  | RequestSearchSuggestions (Result Http.Error (List String))
+  | RequestAutocompleteTerms (Result Http.Error (List String))
   | RequestSaveUserProfile (Result Http.Error String)
   | RequestLabStudyLogEvent (Result Http.Error String)
   | RequestResource (Result Http.Error Oer)
   | RequestResourceRecommendations (Result Http.Error (List Oer))
+  | RequestCollectionsSearchPrediction (Result Http.Error CollectionsSearchPredictionResponse)
   | RequestSendResourceFeedback (Result Http.Error String)
   | RequestSaveAction (Result Http.Error String)
   | RequestSaveNote (Result Http.Error String)
@@ -65,14 +66,17 @@ type Msg
   | OverviewTagMouseOut
   | OverviewTagLabelMouseOver EntityId OerId
   | OverviewTagLabelClicked OerId
-  | PageScrolled ScrollData
+  | PageScrolled PageScrollState
   | OerCardPlaceholderPositionsReceived (List OerCardPlaceholderPosition)
   | StartLabStudyTask LabStudyTask
   | StoppedLabStudyTask
   | SelectResourceSidebarTab ResourceSidebarTab
   | MouseMovedOnStoryTag Float
   | SelectedOverviewType OverviewType
+  | SelectedOerCollection String Bool
+  | ToggledAllOerCollections Bool
   | MouseEnterMentionInBubbblogramOverview OerId EntityId MentionInOer
+  | ToggleCollectionsMenu
 
 
 type UserProfileField

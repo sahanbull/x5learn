@@ -149,9 +149,17 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
             else
               [ fill "rgba(255,255,255,0)" ]
 
+      isSearchTerm =
+        case getEntityTitleFromEntityId model entity.id of
+          Nothing ->
+            False
+
+          Just title ->
+            isEqualToSearchString model title
+
       mentionDots =
         if isHovering || model.overviewType==StoryOverview then
-          viewMentionDots model oerId entity.id bubble isHovering
+          viewMentionDots model oerId entity.id bubble isHovering isSearchTerm
         else
           []
 
@@ -162,7 +170,7 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
               ([ cx (posX * (toFloat contentWidth) + marginX |> String.fromFloat)
               , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
               , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
-              , fill <| Color.toCssString <| colorFromBubble bubble
+              , fill <| Color.toCssString <| if isSearchTerm then (Color.hsla 0.145 0.9 0.5 0.8) else colorFromBubble bubble
               ] ++ outline)
               []
 
@@ -328,7 +336,7 @@ viewPopup model {oerId, entityId, content} bubble =
               horizontalSpacingBetweenCards - 5
 
             smallest =
-              { horizontalOffset = (posX/2 + 1/4) * contentWidth + marginX - 220/2, popupWidth = 220 }
+              { horizontalOffset = (posX/2 + 1/4) * contentWidth + marginX - 300/2, popupWidth = 300 }
 
             largest =
               { horizontalOffset = -allowedMargin, popupWidth = cardWidth + 2*allowedMargin }
@@ -393,8 +401,8 @@ hoverableClass =
   "UserSelectNone CursorPointer"
 
 
-viewMentionDots : Model -> OerId -> EntityId -> Bubble -> Bool -> List (Svg Msg)
-viewMentionDots model oerId entityId bubble isHoveringOnCurrentTag =
+viewMentionDots : Model -> OerId -> EntityId -> Bubble -> Bool -> Bool -> List (Svg Msg)
+viewMentionDots model oerId entityId bubble isHoveringOnCurrentTag isSearchTerm =
   let
       circlePosY =
         String.fromFloat <|
@@ -404,14 +412,6 @@ viewMentionDots model oerId entityId bubble isHoveringOnCurrentTag =
 
             StoryOverview ->
               (bubblePosYfromIndex bubble) + 23
-
-      isSearchTerm =
-        case getEntityTitleFromEntityId model entityId of
-          Nothing ->
-            False
-
-          Just title ->
-            isEqualToSearchString model title
 
       dot : MentionInOer -> Svg Msg
       dot ({positionInResource, sentence} as mention) =
@@ -432,7 +432,7 @@ viewMentionDots model oerId entityId bubble isHoveringOnCurrentTag =
               else if isHoveringOnCurrentTag then
                 "rgba(255,140,0,1)"
               else
-                "rgba(255,140,0,0.3)"
+                "rgba(255,140,0,0.4)"
 
             hoverHandler =
               case model.overviewType of

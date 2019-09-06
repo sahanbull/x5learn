@@ -8,6 +8,7 @@ from fuzzywuzzy import fuzz
 import urllib
 from datetime import datetime, timedelta
 from sqlalchemy import or_, and_, cast, Integer
+from sqlalchemy.orm.attributes import flag_modified
 from flask_restplus import Api, Resource, fields, reqparse
 import wikipedia
 
@@ -24,6 +25,8 @@ from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichmen
     ActionsRepository, UserRepository, DefinitionsRepository
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
+from x5learn_server.oer_collections import search_in_oer_collections, autocomplete_terms_from_oer_collection, initialise_caches_for_all_oer_collections, predict_number_of_search_results_in_collection, export_oer_collections_oer_data_as_json_lines
+from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
 
 # Create app
 app = Flask(__name__)
@@ -78,6 +81,25 @@ def initiate_login_db():
     from x5learn_server.db.database import initiate_login_table_and_admin_profile
     initiate_login_table_and_admin_profile(user_datastore)
     initiate_action_types_table()
+    initialise_caches_for_all_oer_collections()
+    cleanup_enrichment_errors()
+    # export_oer_collections_oer_data_as_json_lines()
+
+
+def cleanup_enrichment_errors():
+    WIKIFIER_BLACKLIST = ['Forward (association football)' , 'RenderX', 'MEDLINE', 'Medline', 'MedLine', 'medline', 'MEDLAR']
+    print('\nin cleanup_enrichment_errors')
+    enrichments = WikichunkEnrichment.query.all()
+    for enrichment in enrichments:
+        for chunk in enrichment.data['chunks']:
+            filtered_entities = [ entity for entity in chunk['entities'] if entity['title'] not in WIKIFIER_BLACKLIST ]
+        if filtered_entities != chunk['entities']:
+            print(chunk['entities'])
+            print(filtered_entities)
+            chunk['entities'] = filtered_entities
+            flag_modified(enrichment, 'data')
+            db_session.commit()
+    print('done.\n')
 
 
 # Setting wikipedia api language
@@ -159,15 +181,27 @@ def get_or_create_logged_in_user():
 @app.route("/api/v1/search/", methods=['GET'])
 def api_search():
     text = request.args['text'].lower().strip()
-    results = get_dataset_for_lab_study_one(
-        text) or search_results_from_x5gon_api(text)
-    return jsonify(results)
+    collections = request.args['collections'].split(',')
+    results = search_in_oer_collections(collections, text, 30)
+    if 'X5GON Platform' in collections:
+        results += search_results_from_x5gon_api(text)
+    return jsonify([ oer.data_and_id() for oer in results ])
 
 
-@app.route("/api/v1/search_suggestions/", methods=['GET'])
-def api_search_suggestions():
-    text = request.args['text']
-    return search_suggestions(text.lower().strip())
+@app.route("/api/v1/autocomplete_terms/", methods=['GET'])
+def api_autocomplete_terms():
+    collection = request.args['collection']
+    return jsonify(list(autocomplete_terms_from_oer_collection(collection)))
+
+
+@app.route("/api/v1/collections_search_prediction/", methods=['GET'])
+def api_collections_search_prediction():
+    text = request.args['text'].lower().strip()
+    collection_titles = request.args['collectionTitles'].split(',')
+    numbers = {}
+    for collection_title in collection_titles:
+        numbers[collection_title] = predict_number_of_search_results_in_collection(text, collection_title)
+    return jsonify({'searchText': text, 'prediction': numbers})
 
 
 @app.route("/api/v1/oers/", methods=['POST'])
@@ -287,53 +321,6 @@ def log_event_for_lab_study():
     return 'OK'
 
 
-def save_enrichment(url, data):
-    oer = Oer.query.filter_by(url=url).first()
-    if oer is None:
-        return
-    data['oerId'] = oer.id
-    enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
-    if enrichment is None:
-        enrichment = WikichunkEnrichment(url, data, CURRENT_ENRICHMENT_VERSION)
-        db_session.add(enrichment)
-    else:
-        enrichment.data = data
-        enrichment.version = CURRENT_ENRICHMENT_VERSION
-    db_session.commit()
-
-
-def save_definitions(data):
-    for chunk in data['chunks']:
-        for entity in chunk['entities']:
-            title = entity['title']
-            # print(title, '...')
-            definition = EntityDefinition.query.filter_by(title=title).first()
-            if definition is None:
-                encoded_title = urllib.parse.quote(title)
-                # Request definitions from wikipedia.
-                # This should probably happen in the enrichment worker
-                # rather than the flask app for at least three reasons:
-                # 1. keeping requests times short
-                # 2. better error handling
-                # 3. guaranteeing that definitions are available together with enrichment
-                conn = http.client.HTTPSConnection('en.wikipedia.org')
-                conn.request(
-                    'GET',
-                    '/w/api.php?action=query&prop=extracts&exintro&explaintext&exsentences=1&titles=' + encoded_title + '&format=json')
-                response = conn.getresponse().read().decode("utf-8")
-                pages = json.loads(response)['query']['pages']
-                (_, page) = pages.popitem()
-                if 'extract' not in page:
-                    print('Could not save definition for', title)
-                    return
-                extract = page['extract']
-                # print(extract)
-                definition = EntityDefinition(
-                    entity['id'], title, entity['url'], extract, lang='en')
-                db_session.add(definition)
-                db_session.commit()
-
-
 def search_results_from_x5gon_api(text):
     text = urllib.parse.quote(text)
     return search_results_from_x5gon_api_pages(text, 1, [])
@@ -343,7 +330,7 @@ def search_results_from_x5gon_api(text):
 # until the number of search results hits a certain minimum or stops increasing
 def search_results_from_x5gon_api_pages(text, page_number, oers):
     n_initial_oers = len(oers)
-    print('page_number', page_number)
+    print('X5GON search page_number', page_number)
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request(
         'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text=' + text + '&page=' + str(page_number))
@@ -357,7 +344,8 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
                  and '199' not in m['url'] and '200' not in m['url']]
     # Exclude non-english materials because they tend to come out poorly after wikification. X5GON search doesn't have a language parameter at the time of writing.
     materials = [m for m in materials if m['language'] == 'en']
-    materials = remove_duplicates_from_search_results(materials)
+    materials = remove_duplicates_from_x5gon_search_results(materials)
+    oers = []
     for index, material in enumerate(materials):
         url = material['url']
         # Some urls that were longer than 255 caused errors.
@@ -370,7 +358,7 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
             oer = Oer(url, convert_x5_material_to_oer(material, url))
             db_session.add(oer)
             db_session.commit()
-        oers.append(oer.data_and_id())
+        oers.append(oer)
         push_enrichment_task_if_needed(url, int(1000 / (index + 1)) + 1)
     oers = oers[:MAX_SEARCH_RESULTS]
     if len(oers)==n_initial_oers: # no more results on page -> stop querying
@@ -380,7 +368,7 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     return search_results_from_x5gon_api_pages(text, page_number+1, oers)
 
 
-def remove_duplicates_from_search_results(materials):
+def remove_duplicates_from_x5gon_search_results(materials):
     enrichments = {}
     urls = [m['url'] for m in materials]
     for enrichment in WikichunkEnrichment.query.filter(WikichunkEnrichment.url.in_(urls)).all():
@@ -422,44 +410,39 @@ def convert_x5_material_to_oer(material, url):
     return data
 
 
-def push_enrichment_task_if_needed(url, urgency):
-    enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
-    if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION):
-        push_enrichment_task(url, urgency)
-
-
-def push_enrichment_task(url, priority):
-    # print('push_enrichment_task')
-    try:
-        task = WikichunkEnrichmentTask.query.filter_by(url=url).first()
-        if task is None:
-            task = WikichunkEnrichmentTask(url, priority)
-            db_session.add(task)
-        else:
-            task.priority += priority
+def save_definitions(data):
+    definitions = set([])
+    for chunk in data['chunks']:
+        for entity in chunk['entities']:
+            title = entity['title']
+            # print(title, '...')
+            definition = EntityDefinition.query.filter_by(title=title).first()
+            if definition is None and definition not in definitions:
+                encoded_title = urllib.parse.quote(title)
+                # Request definitions from wikipedia.
+                # This should probably happen in the enrichment worker
+                # rather than the flask app for at least three reasons:
+                # 1. keeping requests times short
+                # 2. better error handling
+                # 3. guaranteeing that definitions are available together with enrichment
+                conn = http.client.HTTPSConnection('en.wikipedia.org')
+                conn.request(
+                    'GET',
+                    '/w/api.php?action=query&prop=extracts&exintro&explaintext&exsentences=1&titles=' + encoded_title + '&format=json')
+                response = conn.getresponse().read().decode("utf-8")
+                pages = json.loads(response)['query']['pages']
+                (_, page) = pages.popitem()
+                if 'extract' not in page:
+                    print('Could not save definition for', title)
+                    return
+                extract = page['extract']
+                # print(extract)
+                definition = EntityDefinition(
+                    entity['id'], title, entity['url'], extract, lang='en')
+                definitions.add(definition)
+    for definition in definitions:
+        db_session.add(definition)
         db_session.commit()
-    except sqlalchemy.orm.exc.StaleDataError:
-        print(
-            'sqlalchemy.orm.exc.StaleDataError caught and ignored.')  # This error came up occasionally. I'm not 100% sure about what it entails but it didn't seem to affect the user experience so I'm suppressing it for now to prevent a pointless alert on the frontend. Grateful for any helpful tips. More information on this error: https://docs.sqlalchemy.org/en/13/orm/exceptions.html#sqlalchemy.orm.exc.StaleDataError
-
-
-def any_word_matches(words, text):
-    for word in words:
-        if word in text.lower():
-            return True
-    return False
-
-
-def search_suggestions(text):
-    all_entity_titles = []  # TODO: use Topics table in db
-    matches = [(title, fuzz.partial_ratio(text, title) +
-                fuzz.ratio(text, title)) for title in all_entity_titles]
-    matches = sorted(matches, key=lambda k_v: k_v[1], reverse=True)[:20]
-    print([v for k, v in matches])
-    matches = [k for k, v in matches]
-    # import pdb; pdb.set_trace()
-    # print(matches)
-    return jsonify(matches)
 
 
 def find_oer_by_id(oer_id):

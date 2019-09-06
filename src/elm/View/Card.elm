@@ -104,7 +104,19 @@ viewOerGrid model playlist =
 
 
 viewOerCard : Model -> List Fragment -> Point -> String -> Bool -> Oer -> Element Msg
-viewOerCard model recommendedFragments position barId enableShadow oer =
+viewOerCard ({pageScrollState} as model) recommendedFragments position barId enableShadow oer =
+  let
+      isCardInView =
+        position.y + cardHeight > pageScrollState.scrollTop && position.y < pageScrollState.scrollTop + pageScrollState.viewHeight
+  in
+      if isCardInView then
+        viewOerCardVisibleContent model recommendedFragments position barId enableShadow oer
+      else
+        none
+
+
+viewOerCardVisibleContent : Model -> List Fragment -> Point -> String -> Bool -> Oer -> Element Msg
+viewOerCardVisibleContent model recommendedFragments position barId enableShadow oer =
   let
       hovering =
         model.hoveringOerId == Just oer.id
@@ -234,10 +246,17 @@ viewOerCard model recommendedFragments position barId enableShadow oer =
                   viewBubblogram model oer.id bubblogram
 
       title =
-        oer.title
-        |> subSubheaderWrap [ paddingXY 16 0, centerY ]
-        |> el [ height <| px 70, clipY, moveDown 181 ]
-        |> inFront
+        let
+            fontSize =
+              if String.length oer.title < 90 then
+                Font.size 16
+              else
+                Font.size 14
+        in
+            oer.title
+            |> subSubheaderWrap [ paddingXY 16 0, centerY, fontSize ]
+            |> el [ height <| px 72, clipY, moveDown 181 ]
+            |> inFront
 
       -- modalityIcon =
       --   if hasYoutubeVideo oer.url then
@@ -254,7 +273,7 @@ viewOerCard model recommendedFragments position barId enableShadow oer =
               dateStr |> captionNowrap [ alignLeft ]
 
             provider =
-              oer.provider |> domainOnly |> truncateSentence 24 |> captionNowrap [ if dateStr=="" then alignLeft else centerX ]
+              oer.provider |> domainOnly |> truncateSentence 32 |> captionNowrap [ if dateStr=="" then alignLeft else centerX ]
 
             duration =
               oer.duration |> captionNowrap [ alignRight ]
@@ -263,7 +282,7 @@ viewOerCard model recommendedFragments position barId enableShadow oer =
               [ date, provider, duration ]
         in
             content
-            |> row [ width fill, paddingXY 16 0, moveDown 253 ]
+            |> row [ width fill, paddingXY 16 0, moveDown 255 ]
             |> inFront
 
       tagCloudView tagCloud =
@@ -298,7 +317,7 @@ viewOerCard model recommendedFragments position barId enableShadow oer =
             []
 
       shadow =
-        if enableShadow then [ htmlClass "materialCard" ] else [ Border.width 1, borderColorLayout ]
+        if enableShadow then [ htmlClass "materialCard" ] else [ Border.width 1, borderColorDivider ]
 
       card =
         -- [ (if hovering then hoverPreview else carousel)

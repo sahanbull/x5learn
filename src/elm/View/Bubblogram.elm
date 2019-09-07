@@ -26,8 +26,8 @@ import View.Shared exposing (..)
 import Msg exposing (..)
 
 
-viewBubblogram : Model -> OerId -> Bubblogram -> (Element Msg, List (Element.Attribute Msg))
-viewBubblogram model oerId {createdAt, bubbles} =
+viewBubblogram : Model -> BubblogramType -> OerId -> Bubblogram -> (Element Msg, List (Element.Attribute Msg))
+viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
   let
       animationPhase =
         bubblogramAnimationPhase model createdAt
@@ -37,7 +37,7 @@ viewBubblogram model oerId {createdAt, bubbles} =
 
       svgBubbles =
         bubbles
-        |> List.concatMap (viewTag model oerId animationPhase)
+        |> List.concatMap (viewTag model bubblogramType oerId animationPhase)
 
       background =
         rect [ width widthString, height heightString, fill "#191919" ] []
@@ -56,15 +56,15 @@ viewBubblogram model oerId {createdAt, bubbles} =
       entityLabel ({entity} as bubble) =
         let
             {px, py} =
-              case model.overviewType of
-                BubblogramOverview ->
+              case bubblogramType of
+                TopicConnections ->
                   let
                       {posX, posY, size} =
                         animatedBubbleCurrentCoordinates animationPhase bubble
                   in
                       { px = (posX + 0*size*1.1*bubbleZoom) * contentWidth + marginX, py = (posY + 0.1 -  0*size*1.1*bubbleZoom) * contentHeight + marginTop - 15 }
 
-                StoryOverview ->
+                TopicMentions ->
                   { px = 9, py = bubblePosYfromIndex bubble + 3 }
 
             isHovering =
@@ -93,7 +93,7 @@ viewBubblogram model oerId {createdAt, bubbles} =
                   []
 
                 Just bubble ->
-                  viewPopup model state bubble
+                  viewPopup model bubblogramType state bubble
             else
               []
 
@@ -126,8 +126,8 @@ viewBubblogram model oerId {createdAt, bubbles} =
       (graphic, popup)
 
 
-viewTag : Model -> OerId -> Float -> Bubble -> List (Svg Msg)
-viewTag model oerId animationPhase ({entity, index} as bubble) =
+viewTag : Model -> BubblogramType -> OerId -> Float -> Bubble -> List (Svg Msg)
+viewTag model bubblogramType oerId animationPhase ({entity, index} as bubble) =
   let
       {posX, posY, size} =
         animatedBubbleCurrentCoordinates animationPhase bubble
@@ -136,14 +136,14 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
         hoveringBubbleOrFragmentsBarEntityId model == Just entity.id
 
       outline =
-        case model.overviewType of
-          BubblogramOverview ->
+        case bubblogramType of
+          TopicConnections ->
             if isHovering then
               [ fill "#f93" ]
             else
               []
 
-          StoryOverview ->
+          TopicMentions ->
             if isHovering then
               [ fill "rgba(255,255,255,0.1)" ]
             else
@@ -158,14 +158,14 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
             isEqualToSearchString model title
 
       mentionDots =
-        if isHovering || model.overviewType==StoryOverview then
-          viewMentionDots model oerId entity.id bubble isHovering isSearchTerm
+        if isHovering || bubblogramType==TopicMentions then
+          viewMentionDots model bubblogramType oerId entity.id bubble isHovering isSearchTerm
         else
           []
 
       body =
-        case model.overviewType of
-          BubblogramOverview ->
+        case bubblogramType of
+          TopicConnections ->
             circle
               ([ cx (posX * (toFloat contentWidth) + marginX |> String.fromFloat)
               , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
@@ -174,7 +174,7 @@ viewTag model oerId animationPhase ({entity, index} as bubble) =
               ] ++ outline)
               []
 
-          StoryOverview ->
+          TopicMentions ->
             let
                 strokeAttrs =
                   if index==0 then
@@ -223,18 +223,18 @@ hoveringBubbleOrFragmentsBarEntityId model =
           Nothing
 
 
-viewPopup : Model -> BubblePopupState -> Bubble -> List (Element.Attribute Msg)
-viewPopup model {oerId, entityId, content} bubble =
+viewPopup : Model -> BubblogramType -> BubblePopupState -> Bubble -> List (Element.Attribute Msg)
+viewPopup model bubblogramType {oerId, entityId, content} bubble =
   let
       {posX, posY, size} =
         animatedBubbleCurrentCoordinates 1 bubble
 
       zoomFromText text =
-        case model.overviewType of
-          BubblogramOverview ->
+        case bubblogramType of
+          TopicConnections ->
             (String.length text |> toFloat) / 200 - posY*0.5 |> Basics.min 1
 
-          StoryOverview ->
+          TopicMentions ->
             (String.length text |> toFloat) / 200 - ((toFloat bubble.index)*0.05) |> Basics.min 1
 
       (contentElement, zoom) =
@@ -287,11 +287,11 @@ viewPopup model {oerId, entityId, content} bubble =
           MentionInBubblePopup {positionInResource} ->
             let
                 sizeY =
-                  case model.overviewType of
-                    BubblogramOverview ->
+                  case bubblogramType of
+                    TopicConnections ->
                       containerHeight - verticalOffset
 
-                    StoryOverview ->
+                    TopicMentions ->
                       35
 
                 tailHeightString =
@@ -345,11 +345,11 @@ viewPopup model {oerId, entityId, content} bubble =
             , interp zoom smallest.popupWidth largest.popupWidth)
 
       verticalOffset =
-        case model.overviewType of
-          BubblogramOverview ->
+        case bubblogramType of
+          TopicConnections ->
             Basics.max 10 <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5
 
-          StoryOverview ->
+          TopicMentions ->
             bubblePosYfromIndex bubble
   in
       none
@@ -401,16 +401,16 @@ hoverableClass =
   "UserSelectNone CursorPointer"
 
 
-viewMentionDots : Model -> OerId -> EntityId -> Bubble -> Bool -> Bool -> List (Svg Msg)
-viewMentionDots model oerId entityId bubble isHoveringOnCurrentTag isSearchTerm =
+viewMentionDots : Model -> BubblogramType -> OerId -> EntityId -> Bubble -> Bool -> Bool -> List (Svg Msg)
+viewMentionDots model bubblogramType oerId entityId bubble isHoveringOnCurrentTag isSearchTerm =
   let
       circlePosY =
         String.fromFloat <|
-          case model.overviewType of
-            BubblogramOverview ->
+          case bubblogramType of
+            TopicConnections ->
               containerHeight - 8
 
-            StoryOverview ->
+            TopicMentions ->
               (bubblePosYfromIndex bubble) + 23
 
       dot : MentionInOer -> Svg Msg
@@ -435,11 +435,11 @@ viewMentionDots model oerId entityId bubble isHoveringOnCurrentTag isSearchTerm 
                 "rgba(255,140,0,0.4)"
 
             hoverHandler =
-              case model.overviewType of
-                BubblogramOverview ->
+              case bubblogramType of
+                TopicConnections ->
                   [ onMouseOver <| MouseEnterMentionInBubbblogramOverview oerId entityId mention ]
 
-                StoryOverview ->
+                TopicMentions ->
                   []
         in
             circle ([ cx circlePosX, cy circlePosY, r circleRadius, fill color ]++hoverHandler) []

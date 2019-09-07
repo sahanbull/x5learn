@@ -98,7 +98,13 @@ class WikichunkEnrichment(Base):
         return titles
 
     def entities_to_string(self):
-        return ', '.join(['. '.join([e['title'] for e in chunk['entities']]) for chunk in self.data['chunks']])
+        return ','.join([','.join([e['title'] for e in chunk['entities']]) for chunk in self.data['chunks']])
+
+    def all_entity_titles_as_lowercase_strings(self):
+        result = []
+        for chunk in self.data['chunks']:
+            result += [ e['title'].lower() for e in chunk['entities'] ]
+        return result
 
     def full_text(self):
         return ' '.join([ chunk['text'] for chunk in self.data['chunks'] ])

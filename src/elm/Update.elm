@@ -914,9 +914,11 @@ executeSearchAfterUrlChanged model url =
                        setOfAllCollectionTitles
                      else
                        collections
+      newModel =
+        { model | searchInputTyping = textParam, selectedOerCollections = selectedOerCollections, searchState = Just <| newSearch textParam, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, snackbar = Nothing }
   in
-        ( { model | searchInputTyping = textParam, selectedOerCollections = selectedOerCollections, searchState = Just <| newSearch textParam, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, snackbar = Nothing } |> closePopup, searchOers textParam (selectedOerCollectionsToCommaSeparatedString model))
-        |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam, (selectedOerCollectionsToCommaSeparatedString model) ]
+        ( newModel |> closePopup, searchOers textParam (selectedOerCollectionsToCommaSeparatedString newModel))
+        |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam, (selectedOerCollectionsToCommaSeparatedString newModel) ]
 
 
 requestResourceAfterUrlChanged : Url -> Model -> (Model, Cmd Msg)

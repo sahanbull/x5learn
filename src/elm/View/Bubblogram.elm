@@ -58,7 +58,7 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
             {px, py} =
               case bubblogramType of
                 TopicNames ->
-                  { px = 9, py = bubblePosYfromIndex bubble + 3 }
+                  { px = 9, py = bubblePosYfromIndex bubble + 8 }
 
                 TopicConnections ->
                   let
@@ -81,9 +81,17 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
 
             labelClickHandler =
               [ onClickNoBubble (OverviewTagLabelClicked oerId) ]
+
+            textAttrs =
+              case bubblogramType of
+                TopicNames ->
+                  ([ Font.size <| 17 - bubble.index ] ++ (if isEntityEqualToSearchTerm model entity.id then [ Font.bold, Font.color yellow ] else []))
+
+                _ ->
+                  []
         in
             entity.title
-            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| OverviewTagLabelMouseOver entity.id oerId, htmlClass hoverableClass ] ++ highlight ++ labelClickHandler)
+            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| OverviewTagLabelMouseOver entity.id oerId, htmlClass hoverableClass ] ++ highlight ++ labelClickHandler ++ textAttrs)
             |> inFront
             |> List.singleton
 
@@ -159,12 +167,7 @@ viewTag model bubblogramType oerId animationPhase ({entity, index} as bubble) =
               [ fill "rgba(255,255,255,0)" ]
 
       isSearchTerm =
-        case getEntityTitleFromEntityId model entity.id of
-          Nothing ->
-            False
-
-          Just title ->
-            isEqualToSearchString model title
+        isEntityEqualToSearchTerm model entity.id
 
       mentionDots =
         if bubblogramType==TopicNames then
@@ -505,3 +508,12 @@ bubblePosYfromIndex : Bubble -> Float
 bubblePosYfromIndex bubble =
   bubble.index * containerHeight // 5
   |> toFloat
+
+
+isEntityEqualToSearchTerm model entityId =
+  case getEntityTitleFromEntityId model entityId of
+    Nothing ->
+      False
+
+    Just title ->
+      isEqualToSearchString model title

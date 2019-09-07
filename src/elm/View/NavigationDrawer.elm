@@ -91,8 +91,9 @@ viewOverviewSelectionWidget model =
     , selected = Just model.overviewType
     , label = Input.labelAbove captionTextAttrs (text "Preview")
     , options =
-        [ Input.option BubblogramOverview (bodyNoWrap [] "Compact")
-        , Input.option StoryOverview (bodyNoWrap [] "Detailed")
+        [ Input.option ImageOverview (bodyNoWrap [] "Image")
+        , Input.option (BubblogramOverview TopicConnections) (bodyNoWrap [] "Topic Connections")
+        , Input.option (BubblogramOverview TopicMentions) (bodyNoWrap [] "Topic Mentions")
         ]
     }
     |> el [ width fill, padding 10, borderBottom 1, borderColorDivider ]

@@ -92,8 +92,12 @@ type CurrentResource
   | Error
 
 type OverviewType
-  = BubblogramOverview
-  | StoryOverview
+  = ImageOverview
+  | BubblogramOverview BubblogramType
+
+type BubblogramType
+  = TopicConnections
+  | TopicMentions
 
 type alias LabStudyTask =
   { title : String
@@ -376,8 +380,7 @@ initialModel nav flags =
   , oerNoteboards = Dict.empty
   , fragmentAccesses = Dict.empty
   , oerCardPlaceholderPositions = []
-  -- , overviewType = StoryOverview
-  , overviewType = BubblogramOverview
+  , overviewType = ImageOverview
   , selectedMentionInStory = Nothing
   , selectedOerCollections = setOfAllCollectionTitles
   , pageScrollState = PageScrollState 0 0 0 False

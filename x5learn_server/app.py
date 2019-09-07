@@ -183,6 +183,7 @@ def api_search():
     text = request.args['text'].lower().strip()
     collections = request.args['collections'].split(',')
     results = search_in_oer_collections(collections, text, 30)
+    # print('\n\nSearch in', collections)
     if 'X5GON Platform' in collections:
         results += search_results_from_x5gon_api(text)
     return jsonify([ oer.data_and_id() for oer in results ])

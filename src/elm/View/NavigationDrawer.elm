@@ -92,6 +92,7 @@ viewOverviewSelectionWidget model =
     , label = Input.labelAbove captionTextAttrs (text "Preview")
     , options =
         [ Input.option ImageOverview (bodyNoWrap [] "Image")
+        , Input.option (BubblogramOverview TopicNames) (bodyNoWrap [] "Topic Names")
         , Input.option (BubblogramOverview TopicConnections) (bodyNoWrap [] "Topic Connections")
         , Input.option (BubblogramOverview TopicMentions) (bodyNoWrap [] "Topic Mentions")
         ]

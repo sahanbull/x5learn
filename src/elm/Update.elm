@@ -407,8 +407,16 @@ update msg ({nav, userProfileForm} as model) =
 
               Just _ ->
                 model.hoveringTagEntityId
+
+          popup =
+            case maybeOerId of
+              Nothing ->
+                Nothing
+
+              _ ->
+                model.popup
       in
-      ( { model | hoveringOerId = maybeOerId, timeOfLastMouseEnterOnCard = model.currentTime, hoveringTagEntityId = hoveringTagEntityId } |> unselectMentionInStory |> closePopup, Cmd.none )
+      ( { model | hoveringOerId = maybeOerId, timeOfLastMouseEnterOnCard = model.currentTime, hoveringTagEntityId = hoveringTagEntityId } |> unselectMentionInStory, Cmd.none )
       |> logEventForLabStudy "SetHover" [ maybeOerId |> Maybe.withDefault 0 |> String.fromInt ]
 
     SetPopup popup ->
@@ -492,8 +500,17 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "VideoIsPlayingAtPosition" [ position |> String.fromFloat]
 
     OverviewTagMouseOver entityId oerId ->
-      ({model | hoveringTagEntityId = Just entityId }, Cmd.none)
-      |> logEventForLabStudy "OverviewTagMouseOver" [ oerId |> String.fromInt, entityId ]
+      let
+          popup =
+            case model.overviewType of
+              BubblogramOverview TopicNames ->
+                Just <| BubblePopup <| BubblePopupState oerId entityId DefinitionInBubblePopup []
+
+              _ ->
+                Nothing
+      in
+          ({model | hoveringTagEntityId = Just entityId, popup = popup }, Cmd.none)
+          |> logEventForLabStudy "OverviewTagMouseOver" [ oerId |> String.fromInt, entityId ]
 
     OverviewTagLabelMouseOver entityId oerId ->
       let
@@ -536,8 +553,16 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "SelectResourceSidebarTab" []
 
     MouseMovedOnStoryTag mousePosXonCard ->
-      model
-      |> selectOrUnselectMentionInStory mousePosXonCard
+      case model.overviewType of
+        ImageOverview ->
+          (model, Cmd.none)
+
+        BubblogramOverview TopicNames ->
+          (model, Cmd.none)
+
+        _ ->
+          model
+          |> selectOrUnselectMentionInStory mousePosXonCard
 
     SelectedOverviewType overviewType ->
       let
@@ -545,6 +570,8 @@ update msg ({nav, userProfileForm} as model) =
             case overviewType of
               ImageOverview ->
                 "ImageOverview"
+              BubblogramOverview TopicNames ->
+                "TopicNames"
               BubblogramOverview TopicMentions ->
                 "TopicMentions"
               BubblogramOverview TopicConnections ->

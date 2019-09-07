@@ -57,6 +57,9 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
         let
             {px, py} =
               case bubblogramType of
+                TopicNames ->
+                  { px = 9, py = bubblePosYfromIndex bubble + 8 }
+
                 TopicConnections ->
                   let
                       {posX, posY, size} =
@@ -78,9 +81,17 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
 
             labelClickHandler =
               [ onClickNoBubble (OverviewTagLabelClicked oerId) ]
+
+            textAttrs =
+              case bubblogramType of
+                TopicNames ->
+                  ([ Font.size <| 17 - bubble.index ] ++ (if isEntityEqualToSearchTerm model entity.id then [ Font.bold, Font.color yellow ] else []))
+
+                _ ->
+                  []
         in
             entity.title
-            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| OverviewTagLabelMouseOver entity.id oerId, htmlClass hoverableClass ] ++ highlight ++ labelClickHandler)
+            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| OverviewTagLabelMouseOver entity.id oerId, htmlClass hoverableClass ] ++ highlight ++ labelClickHandler ++ textAttrs)
             |> inFront
             |> List.singleton
 
@@ -137,6 +148,12 @@ viewTag model bubblogramType oerId animationPhase ({entity, index} as bubble) =
 
       outline =
         case bubblogramType of
+          TopicNames ->
+            if isHovering then
+              [ fill "rgba(255,255,255,0.1)" ]
+            else
+              [ fill "rgba(255,255,255,0)" ]
+
           TopicConnections ->
             if isHovering then
               [ fill "#f93" ]
@@ -150,21 +167,30 @@ viewTag model bubblogramType oerId animationPhase ({entity, index} as bubble) =
               [ fill "rgba(255,255,255,0)" ]
 
       isSearchTerm =
-        case getEntityTitleFromEntityId model entity.id of
-          Nothing ->
-            False
-
-          Just title ->
-            isEqualToSearchString model title
+        isEntityEqualToSearchTerm model entity.id
 
       mentionDots =
-        if isHovering || bubblogramType==TopicMentions then
+        if bubblogramType==TopicNames then
+          []
+        else if isHovering || bubblogramType==TopicMentions then
           viewMentionDots model bubblogramType oerId entity.id bubble isHovering isSearchTerm
         else
           []
 
       body =
         case bubblogramType of
+          TopicNames ->
+            rect
+              ([ x "0"
+              , y (bubblePosYfromIndex bubble |> floor |> String.fromInt)
+              , width (containerWidth |> String.fromInt)
+              , height (containerHeight // 5 |> String.fromInt)
+              , onMouseOver <| OverviewTagMouseOver entity.id oerId
+              , onMouseLeave <| OverviewTagMouseOut
+              , class <| hoverableClass ++ " StoryTag"
+              ] ++ outline)
+              []
+
           TopicConnections ->
             circle
               ([ cx (posX * (toFloat contentWidth) + marginX |> String.fromFloat)
@@ -231,6 +257,9 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
 
       zoomFromText text =
         case bubblogramType of
+          TopicNames ->
+            (String.length text |> toFloat) / 200 - ((toFloat bubble.index)*0.05) |> Basics.min 1
+
           TopicConnections ->
             (String.length text |> toFloat) / 200 - posY*0.5 |> Basics.min 1
 
@@ -288,6 +317,9 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
             let
                 sizeY =
                   case bubblogramType of
+                    TopicNames ->
+                      35
+
                     TopicConnections ->
                       containerHeight - verticalOffset
 
@@ -346,6 +378,9 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
 
       verticalOffset =
         case bubblogramType of
+          TopicNames ->
+            bubblePosYfromIndex bubble
+
           TopicConnections ->
             Basics.max 10 <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5
 
@@ -407,6 +442,9 @@ viewMentionDots model bubblogramType oerId entityId bubble isHoveringOnCurrentTa
       circlePosY =
         String.fromFloat <|
           case bubblogramType of
+            TopicNames ->
+              (bubblePosYfromIndex bubble) + 23
+
             TopicConnections ->
               containerHeight - 8
 
@@ -436,6 +474,9 @@ viewMentionDots model bubblogramType oerId entityId bubble isHoveringOnCurrentTa
 
             hoverHandler =
               case bubblogramType of
+                TopicNames ->
+                  []
+
                 TopicConnections ->
                   [ onMouseOver <| MouseEnterMentionInBubbblogramOverview oerId entityId mention ]
 
@@ -467,3 +508,12 @@ bubblePosYfromIndex : Bubble -> Float
 bubblePosYfromIndex bubble =
   bubble.index * containerHeight // 5
   |> toFloat
+
+
+isEntityEqualToSearchTerm model entityId =
+  case getEntityTitleFromEntityId model entityId of
+    Nothing ->
+      False
+
+    Just title ->
+      isEqualToSearchString model title

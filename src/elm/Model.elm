@@ -96,7 +96,8 @@ type OverviewType
   | BubblogramOverview BubblogramType
 
 type BubblogramType
-  = TopicConnections
+  = TopicNames
+  | TopicConnections
   | TopicMentions
 
 type alias LabStudyTask =

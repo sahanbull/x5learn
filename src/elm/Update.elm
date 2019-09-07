@@ -543,10 +543,12 @@ update msg ({nav, userProfileForm} as model) =
       let
           logTitle =
             case overviewType of
-              BubblogramOverview ->
-                "BubblogramOverview"
-              StoryOverview ->
-                "StoryOverview"
+              ImageOverview ->
+                "ImageOverview"
+              BubblogramOverview TopicMentions ->
+                "TopicMentions"
+              BubblogramOverview TopicConnections ->
+                "TopicConnections"
       in
           ({ model | overviewType = overviewType, hoveringTagEntityId = Nothing } |> closePopup, Cmd.none)
           |> logEventForLabStudy "SelectedOverviewType" [ logTitle ]

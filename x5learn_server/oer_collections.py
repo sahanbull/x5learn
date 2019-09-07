@@ -74,7 +74,7 @@ def relevance_score(enrichment, text):
     n_chunk_matches = enrichment.all_entity_titles_as_lowercase_strings().count(text)
     if n_chunk_matches==0:
         return 0
-    return (n_text_matches + 10*n_chunk_matches) / math.sqrt(len(enrichment.data['chunks']))
+    return (n_text_matches + 100*n_chunk_matches) / math.sqrt(len(enrichment.data['chunks']))
 
 
 def predict_number_of_search_results_in_collection(text, collection_title):

@@ -36,6 +36,8 @@ addBubblogram model oerId ({chunks, clusters, mentions, bubblogram, errors} as e
           let
               bubbles =
                 entitiesWithDefinitions
+                |> List.sortBy (\{id} -> Dict.get id mentions |> Maybe.withDefault [] |> List.length)
+                |> List.reverse
                 |> List.indexedMap (bubbleFromEntity model occurrences)
                 |> layoutBubbles clusters
           in

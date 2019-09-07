@@ -70,6 +70,10 @@ def initialise_cache(collection_title):
             autocomplete_cache[collection_title].add(title)
 
 
+def concat_lists(list_of_lists):
+    return [y for z in list_of_lists for y in z]
+
+
 def relevance_score(enrichment, text):
     if enrichment.data['errors']:
         return 0
@@ -79,10 +83,12 @@ def relevance_score(enrichment, text):
     n_text_matches = len(p.findall(enrichment.full_text().lower()))
     if n_text_matches==0:
         return 0
-    n_chunk_matches = len(p.findall(enrichment.entities_to_string().lower()))
+    n_chunk_matches = enrichment.all_entity_titles_as_lowercase_strings().count(text)
     if n_chunk_matches==0:
         return 0
-    return (n_text_matches + 10*n_chunk_matches) / math.sqrt(len(enrichment.data['chunks']))
+    main_topics = concat_lists(enrichment.data['clusters'])
+    main_topic_bonus = 10000 if text in [ t.lower() for t in main_topics ] else 0
+    return (n_text_matches + 100*n_chunk_matches) / math.sqrt(len(enrichment.data['chunks'])) + main_topic_bonus
 
 
 def predict_number_of_search_results_in_collection(text, collection_title):

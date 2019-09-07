@@ -416,8 +416,8 @@ update msg ({nav, userProfileForm} as model) =
               _ ->
                 model.popup
       in
-      ( { model | hoveringOerId = maybeOerId, timeOfLastMouseEnterOnCard = model.currentTime, hoveringTagEntityId = hoveringTagEntityId } |> unselectMentionInStory, Cmd.none )
-      |> logEventForLabStudy "SetHover" [ maybeOerId |> Maybe.withDefault 0 |> String.fromInt ]
+          ( { model | hoveringOerId = maybeOerId, timeOfLastMouseEnterOnCard = model.currentTime, hoveringTagEntityId = hoveringTagEntityId } |> unselectMentionInStory, Cmd.none )
+          |> logEventForLabStudy "SetHover" [ maybeOerId |> Maybe.withDefault 0 |> String.fromInt ]
 
     SetPopup popup ->
       let

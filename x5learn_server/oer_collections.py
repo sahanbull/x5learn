@@ -71,7 +71,7 @@ def relevance_score(enrichment, text):
     n_text_matches = len(p.findall(enrichment.full_text().lower()))
     if n_text_matches==0:
         return 0
-    n_chunk_matches = len(p.findall(enrichment.entities_to_string().lower()))
+    n_chunk_matches = enrichment.all_entity_titles_as_lowercase_strings().count(text)
     if n_chunk_matches==0:
         return 0
     return (n_text_matches + 10*n_chunk_matches) / math.sqrt(len(enrichment.data['chunks']))

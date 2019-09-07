@@ -866,3 +866,20 @@ selectedOerCollectionsToSummaryString model =
 
 snackbarDuration =
   3000
+
+
+indexOf : a -> List a -> Maybe Int
+indexOf element list =
+  let
+      helper index xs =
+        case xs of
+          x::rest ->
+            if x==element then
+              Just index
+            else
+              helper (index+1) rest
+
+          _ ->
+            Nothing
+  in
+      helper 0 list

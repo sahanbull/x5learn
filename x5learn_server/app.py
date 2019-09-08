@@ -184,6 +184,7 @@ def api_search():
     collections = request.args['collections'].split(',')
     initialise_caches_for_all_oer_collections() # quickfix. TODO move cache to db?
     results = search_in_oer_collections(collections, text, 30)
+    # print('\n\nSearch in', collections)
     if 'X5GON Platform' in collections:
         results += search_results_from_x5gon_api(text)
     return jsonify([ oer.data_and_id() for oer in results ])

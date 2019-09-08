@@ -172,7 +172,7 @@ white =
 
 
 yellow =
-  rgb255 245 220 0
+  rgba255 255 240 0 0.9
 
 
 orange =
@@ -534,7 +534,33 @@ viewFragmentsBar model oer chunks recommendedFragments barWidth barId =
               if isPopupOpen then
                 [ Background.color orange ]
               else
-                [ none |> el [ width <| px 1, height <| px fragmentsBarHeight, Background.color veryTransparentWhite ] |> inFront ]
+                let
+                    leftBorder =
+                      none
+                      |> el [ width <| px 1, height <| px fragmentsBarHeight, Background.color veryTransparentWhite ]
+                      |> inFront
+
+                    queryHighlight =
+                      case model.searchState of
+                        Nothing ->
+                          []
+
+                        Just {lastSearch} ->
+                          case indexOf (String.toLower lastSearch) (chunk.entities |> List.map (\{title} -> String.toLower title)) of
+                            Nothing ->
+                              []
+
+                            Just index ->
+                              let
+                                  posY =
+                                    ((toFloat index)*3.5 |> floor)
+                              in
+                                  none
+                                  |> el [ width fill, height (px <| fragmentsBarHeight-posY), moveDown (toFloat posY), Background.color yellow ]
+                                  |> inFront
+                                  |> List.singleton
+                in
+                  ([ leftBorder ] ++ queryHighlight)
 
             popup =
               if isPopupOpen then

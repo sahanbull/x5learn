@@ -179,7 +179,7 @@ orange =
   rgb255 255 120 0
 
 
-recentBlue =
+viewedBlue =
   rgb255 0 190 250
 
 

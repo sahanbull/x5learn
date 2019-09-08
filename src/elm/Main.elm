@@ -16,7 +16,7 @@ import View.Pages.Search exposing (viewSearchPage)
 import View.Pages.Notes exposing (viewNotesPage)
 import View.Pages.Gains exposing (viewGainsPage)
 import View.Pages.Profile exposing (viewProfilePage)
-import View.Pages.Recent exposing (viewRecentPage)
+import View.Pages.Viewed exposing (viewViewedPage)
 import View.Pages.Resource exposing (viewResourcePage)
 
 import Update exposing (..)
@@ -64,7 +64,7 @@ view model =
                   defaultPage =
                     case session.loginState of
                       LoggedInUser userProfile ->
-                        viewRecentPage model |> withNavigationDrawer model
+                        viewViewedPage model |> withNavigationDrawer model
 
                       GuestUser ->
                         introPage
@@ -97,8 +97,8 @@ view model =
                     Notes ->
                       viewNotesPage model |> withNavigationDrawer model
 
-                    Recent ->
-                      viewRecentPage model |> withNavigationDrawer model
+                    Viewed ->
+                      viewViewedPage model |> withNavigationDrawer model
 
                     Resource ->
                       viewResourcePage model |> withNavigationDrawer model

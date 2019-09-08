@@ -136,6 +136,11 @@ def recent():
     return render_template('home.html')
 
 
+@app.route("/viewed")
+def viewed():
+    return render_template('home.html')
+
+
 @app.route("/resource/<oer_id>")
 def resource(oer_id):
     return render_template('home.html')

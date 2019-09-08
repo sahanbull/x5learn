@@ -208,7 +208,7 @@ type Subpage
   | Profile
   | Search
   | Notes
-  | Recent
+  | Viewed
   | Resource
 
 
@@ -678,8 +678,11 @@ searchPath =
 notesPath =
   "/notes"
 
-recentPath =
+recentPath = -- deprecated
   "/recent"
+
+viewedPath =
+  "/viewed"
 
 resourcePath =
   "/resource"

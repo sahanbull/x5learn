@@ -1,4 +1,4 @@
-module View.Pages.Recent exposing (viewRecentPage)
+module View.Pages.Viewed exposing (viewViewedPage)
 
 import Url
 import Dict
@@ -25,8 +25,8 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
-viewRecentPage : Model -> PageWithModal
-viewRecentPage model =
+viewViewedPage : Model -> PageWithModal
+viewViewedPage model =
   let
       page =
         if model.fragmentAccesses |> Dict.isEmpty then

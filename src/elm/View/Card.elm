@@ -252,7 +252,7 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
 
       wrapperAttrs =
         -- [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| button [] { onPress = openInspectorOnPress model oer, label = card }, moveRight position.x, moveDown position.y ]
-        [ htmlClass "CloseInspectorOnClickOutside OerCard", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y, htmlDataAttribute <| String.fromInt oer.id ]
+        [ htmlClass "CloseInspectorOnClickOutside OerCard", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y, htmlDataAttribute <| String.fromInt oer.id, htmlClass "CursorPointer" ]
   in
       none
       |> el wrapperAttrs

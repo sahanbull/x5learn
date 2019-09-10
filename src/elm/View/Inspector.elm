@@ -165,7 +165,7 @@ inspectorContentDefault model {oer, fragmentStart} =
 
       fragmentsBarWrapper =
         [ description
-        , [ linkToFile, providerLink ] |> column [ width fill, spacing 15, paddingTop 30 ]
+        , [ linkToFile, providerLinkAndFavoriteButton ] |> column [ width fill, spacing 15, paddingTop 30 ]
         , fragmentsBar
         ]
         |> column [ width (px playerWidth), height <| px fragmentsBarWrapperHeight, moveDown 1 ]
@@ -185,6 +185,21 @@ inspectorContentDefault model {oer, fragmentStart} =
                   none |> el [ inFront content, moveUp (fragmentsBarWrapperHeight - fragmentsBarHeight) ]
         else
           none
+
+      providerLinkAndFavoriteButton =
+        [ providerLink
+        , favoriteButton
+        ]
+        |> row [ width fill ]
+
+      favoriteButton =
+        let
+            heart =
+              viewHeartButton model oer.id
+              |> el [ moveRight 12, moveUp 14 ]
+        in
+            none
+            |> el [ alignRight, width <| px 34, inFront heart ]
 
       providerLink =
         case oer.provider of

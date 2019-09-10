@@ -207,10 +207,11 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
               let
                   heart =
                     viewHeartButton model oer.id
-                    |> el [ moveRight 10, moveUp 14 ]
+                    |> el [ moveRight 12, moveUp 14 ]
               in
                   none
                   |> el [ alignRight, width <| px 34, inFront heart ]
+
 
             content =
               [ date, provider, duration, favoriteButton ]

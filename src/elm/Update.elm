@@ -625,7 +625,7 @@ update msg ({nav, userProfileForm} as model) =
         ( { model | favorites = model.favorites |> List.filter (\o -> o/=oerId) }, Cmd.none)
         |> saveAction 3 [ ("oerId", Encode.int oerId) ]
       else
-        ( { model | favorites = oerId :: model.favorites }, Cmd.none)
+        ( { model | favorites = model.favorites ++ [ oerId ] }, Cmd.none)
         |> saveAction 2 [ ("oerId", Encode.int oerId) ]
 
 

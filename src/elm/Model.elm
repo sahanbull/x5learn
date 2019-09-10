@@ -67,6 +67,8 @@ type alias Model =
   , pageScrollState : PageScrollState
   , collectionsMenuOpen : Bool
   , cachedCollectionsSearchPredictions : Dict String CollectionsSearchPrediction -- key = Search term
+  , favorites : List OerId
+  , hoveringHeart : Maybe OerId
   }
 
 
@@ -207,6 +209,7 @@ type Subpage
   = Home
   | Profile
   | Search
+  | Favorites
   | Notes
   | Viewed
   | Resource
@@ -387,6 +390,8 @@ initialModel nav flags =
   , pageScrollState = PageScrollState 0 0 0 False
   , collectionsMenuOpen = False
   , cachedCollectionsSearchPredictions = Dict.empty
+  , favorites = []
+  , hoveringHeart = Nothing
   }
 
 
@@ -684,6 +689,9 @@ recentPath = -- deprecated
 viewedPath =
   "/viewed"
 
+favoritesPath =
+  "/favorites"
+
 resourcePath =
   "/resource"
 
@@ -886,3 +894,7 @@ indexOf element list =
             Nothing
   in
       helper 0 list
+
+
+isFavorite model oerId =
+  List.member oerId model.favorites

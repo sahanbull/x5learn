@@ -201,10 +201,19 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
               oer.provider |> domainOnly |> truncateSentence 32 |> captionNowrap [ if dateStr=="" then alignLeft else centerX ]
 
             duration =
-              oer.duration |> captionNowrap [ alignRight ]
+              oer.duration |> captionNowrap [ alignRight, paddingRight 8 ]
+
+            favoriteButton =
+              let
+                  heart =
+                    viewHeartButton model oer.id
+                    |> el [ moveRight 10, moveUp 14 ]
+              in
+                  none
+                  |> el [ alignRight, width <| px 34, inFront heart ]
 
             content =
-              [ date, provider, duration ]
+              [ date, provider, duration, favoriteButton ]
         in
             content
             |> row [ width fill, paddingXY 16 0, moveDown 255 ]

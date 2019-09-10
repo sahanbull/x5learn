@@ -91,6 +91,10 @@ paddingLeft px =
   paddingEach { allSidesZero | left = px }
 
 
+paddingRight px =
+  paddingEach { allSidesZero | right = px }
+
+
 paddingTRBL t r b l =
   paddingEach { top = t, right = r, bottom = b, left = l }
 
@@ -843,3 +847,13 @@ guestCallToSignup incentive =
       , "." |> text
       ]
       |> paragraph [ Font.size 14, Font.color materialDark ]
+
+
+viewHeartButton : Model -> OerId -> Element Msg
+viewHeartButton model oerId =
+    let
+        class =
+          "Heart " ++ (if isFavorite model oerId then "HeartFilled" else "HeartOutline")
+    in
+        none
+        |> el [ width <| px 20, height <| px 22, onClickNoBubble (ClickedHeart oerId), htmlClass class  ]

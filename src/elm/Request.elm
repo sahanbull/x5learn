@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestAutocompleteTerms, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestCollectionsSearchPrediction)
+module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestAutocompleteTerms, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestCollectionsSearchPrediction, requestFavorites)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -34,6 +34,14 @@ searchOers searchText collectionTitlesCommaSeparated =
   Http.get
     { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText, Url.Builder.string "collections" collectionTitlesCommaSeparated ]
     , expect = Http.expectJson RequestOerSearch (list oerDecoder)
+    }
+
+
+requestFavorites : Cmd Msg
+requestFavorites =
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "favorites/" ] []
+    , expect = Http.expectJson RequestFavorites (list int)
     }
 
 

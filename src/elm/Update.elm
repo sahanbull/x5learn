@@ -62,6 +62,8 @@ update msg ({nav, userProfileForm} as model) =
               (Viewed, (model, Navigation.load "/viewed"))
             else if path |> String.startsWith viewedPath then
               (Viewed, (model, askPageScrollState True))
+            else if path |> String.startsWith favoritesPath then
+              (Favorites, (model, askPageScrollState True))
             else if path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
             else if path |> String.startsWith resourcePath then
@@ -110,7 +112,7 @@ update msg ({nav, userProfileForm} as model) =
             }
       in
           ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> addFragmentAccess (Fragment oer.id fragmentStart fragmentLength) model.currentTime, openModalAnimation youtubeEmbedParams)
-          |> saveAction 1 [ ("oerId", Encode.int oer.id), ("oerId", Encode.int oer.id) ]
+          |> saveAction 1 [ ("oerId", Encode.int oer.id) ]
           |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat ]
 
     UninspectSearchResult ->
@@ -134,7 +136,7 @@ update msg ({nav, userProfileForm} as model) =
                 Cmd.none
 
               LoggedInUser userProfile ->
-                [ requestNotes, ActionApi.requestRecentViews ] |> Cmd.batch
+                [ requestNotes, ActionApi.requestRecentViews, requestFavorites ] |> Cmd.batch
       in
           ( newModel |> resetUserProfileForm, cmd)
           |> logEventForLabStudy "RequestSession" []
@@ -301,7 +303,21 @@ update msg ({nav, userProfileForm} as model) =
       --       err |> Debug.log "Error in RequestAutocompleteTerms"
       -- in
       -- ( { model | snackbar = createSnackbar model "There was a problem while fetching search suggestions" }, Cmd.none )
-      ( { model | snackbar = createSnackbar model  snackbarMessageReloadPage}, Cmd.none )
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
+
+    RequestFavorites (Ok favorites) ->
+      let
+          newModel = { model | favorites = favorites }
+      in
+          ( newModel, requestOersByIds newModel favorites)
+          |> logEventForLabStudy "RequestFavorites" []
+
+    RequestFavorites (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestFavorites"
+      -- in
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     RequestSaveUserProfile (Ok _) ->
       ({ model | userProfileForm = { userProfileForm | saved = True }, userProfileFormSubmitted = Nothing }, Cmd.none)
@@ -603,6 +619,14 @@ update msg ({nav, userProfileForm} as model) =
 
     ToggleCollectionsMenu ->
       ({ model | collectionsMenuOpen = not model.collectionsMenuOpen }, setBrowserFocus "")
+
+    ClickedHeart oerId ->
+      if isFavorite model oerId then
+        ( { model | favorites = model.favorites |> List.filter (\o -> o/=oerId) }, Cmd.none)
+        |> saveAction 3 [ ("oerId", Encode.int oerId) ]
+      else
+        ( { model | favorites = oerId :: model.favorites }, Cmd.none)
+        |> saveAction 2 [ ("oerId", Encode.int oerId) ]
 
 
 requestCollectionsSearchPredictionIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)

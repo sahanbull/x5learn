@@ -26,6 +26,7 @@ type Msg
   | ModalAnimationStart BoxAnimation
   | ModalAnimationStop Int
   | RequestSession (Result Http.Error Session)
+  | RequestFavorites (Result Http.Error (List OerId))
   | RequestRecentViews (Result Http.Error (List OerId))
   | RequestNotes (Result Http.Error (List Note))
   | RequestDeleteNote (Result Http.Error String)
@@ -77,6 +78,7 @@ type Msg
   | ToggledAllOerCollections Bool
   | MouseEnterMentionInBubbblogramOverview OerId EntityId MentionInOer
   | ToggleCollectionsMenu
+  | ClickedHeart OerId
 
 
 type UserProfileField

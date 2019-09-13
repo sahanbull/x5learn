@@ -71,7 +71,7 @@ type Msg
   | OerCardPlaceholderPositionsReceived (List OerCardPlaceholderPosition)
   | StartLabStudyTask LabStudyTask
   | StoppedLabStudyTask
-  | SelectResourceSidebarTab ResourceSidebarTab
+  | SelectResourceSidebarTab ResourceSidebarTab OerId
   | MouseMovedOnStoryTag Float
   | SelectedOverviewType OverviewType
   | SelectedOerCollection String Bool

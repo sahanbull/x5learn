@@ -80,7 +80,19 @@ update msg ({nav, userProfileForm} as model) =
       |> requestEntityDefinitionsIfNeeded
 
     AnimationTick time ->
-      ( { model | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
+      let
+          newModel =
+            case model.flyingHeartAnimation of
+              Nothing ->
+                model
+
+              Just {startTime} ->
+                if millisSince model startTime > flyingHeartAnimationDuration then
+                  { model | flyingHeartAnimation = Nothing }
+                else
+                  model
+      in
+          ( { newModel | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
 
     ChangeSearchText str ->
       let
@@ -625,8 +637,11 @@ update msg ({nav, userProfileForm} as model) =
         ( { model | favorites = model.favorites |> List.filter (\o -> o/=oerId) }, Cmd.none)
         |> saveAction 3 [ ("oerId", Encode.int oerId) ]
       else
-        ( { model | favorites = model.favorites ++ [ oerId ] }, Cmd.none)
+        ( { model | favorites = model.favorites ++ [ oerId ], flyingHeartAnimation = Just { startTime = model.currentTime } }, Cmd.none)
         |> saveAction 2 [ ("oerId", Encode.int oerId) ]
+
+    FlyingHeartRelativeStartPositionReceived startPoint ->
+      ( { model | flyingHeartAnimationStartPoint = Just startPoint }, Cmd.none)
 
 
 requestCollectionsSearchPredictionIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)

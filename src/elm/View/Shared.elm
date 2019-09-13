@@ -235,6 +235,11 @@ htmlId name =
   Html.Attributes.id name |> htmlAttribute
 
 
+htmlStyle : String -> String -> Attribute Msg
+htmlStyle name value =
+  Html.Attributes.style name value |> htmlAttribute
+
+
 htmlDataAttribute str =
   Html.Attributes.attribute "data-oerid" str |> htmlAttribute
 

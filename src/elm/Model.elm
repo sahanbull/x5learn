@@ -69,6 +69,8 @@ type alias Model =
   , cachedCollectionsSearchPredictions : Dict String CollectionsSearchPrediction -- key = Search term
   , favorites : List OerId
   , hoveringHeart : Maybe OerId
+  , flyingHeartAnimation : Maybe FlyingHeartAnimation
+  , flyingHeartAnimationStartPoint : Maybe Point
   }
 
 
@@ -101,6 +103,10 @@ type BubblogramType
   = TopicNames
   | TopicConnections
   | TopicMentions
+
+type alias FlyingHeartAnimation =
+  { startTime : Posix
+  }
 
 type alias LabStudyTask =
   { title : String
@@ -392,6 +398,8 @@ initialModel nav flags =
   , cachedCollectionsSearchPredictions = Dict.empty
   , favorites = []
   , hoveringHeart = Nothing
+  , flyingHeartAnimation = Nothing
+  , flyingHeartAnimationStartPoint = Nothing
   }
 
 
@@ -898,3 +906,11 @@ indexOf element list =
 
 isFavorite model oerId =
   List.member oerId model.favorites
+
+
+isFlyingHeartAnimating model =
+  model.flyingHeartAnimation /= Nothing
+
+
+flyingHeartAnimationDuration =
+  800

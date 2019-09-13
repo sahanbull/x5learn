@@ -38,6 +38,7 @@ viewFavoritesPage model =
             |> milkyWhiteCenteredContainer
         else
           model.favorites
+          -- |> List.filter (isMarkedAsFavorite model)
           |> List.filterMap (\oerId -> model.cachedOers |> Dict.get oerId)
           |> List.reverse
           |> viewOerCardsVertically model

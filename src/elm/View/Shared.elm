@@ -858,7 +858,7 @@ viewHeartButton : Model -> OerId -> Element Msg
 viewHeartButton model oerId =
     let
         class =
-          "Heart " ++ (if isFavorite model oerId then "HeartFilled" else "HeartOutline")
+          "Heart " ++ (if isMarkedAsFavorite model oerId then "HeartFilled" else "HeartOutline")
     in
         none
         |> el [ width <| px 20, height <| px 22, onClickNoBubble (ClickedHeart oerId), htmlClass class  ]

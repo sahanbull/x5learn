@@ -68,6 +68,7 @@ type alias Model =
   , collectionsMenuOpen : Bool
   , cachedCollectionsSearchPredictions : Dict String CollectionsSearchPrediction -- key = Search term
   , favorites : List OerId
+  , removedFavorites : Set OerId -- keep a client-side record of "unliked" oers so that cards on the favorites page don't simply disappear when unliked
   , hoveringHeart : Maybe OerId
   , flyingHeartAnimation : Maybe FlyingHeartAnimation
   , flyingHeartAnimationStartPoint : Maybe Point
@@ -397,6 +398,7 @@ initialModel nav flags =
   , collectionsMenuOpen = False
   , cachedCollectionsSearchPredictions = Dict.empty
   , favorites = []
+  , removedFavorites = Set.empty
   , hoveringHeart = Nothing
   , flyingHeartAnimation = Nothing
   , flyingHeartAnimationStartPoint = Nothing
@@ -904,8 +906,8 @@ indexOf element list =
       helper 0 list
 
 
-isFavorite model oerId =
-  List.member oerId model.favorites
+isMarkedAsFavorite model oerId =
+  List.member oerId model.favorites && (Set.member oerId model.removedFavorites |> not)
 
 
 isFlyingHeartAnimating model =
@@ -913,4 +915,4 @@ isFlyingHeartAnimating model =
 
 
 flyingHeartAnimationDuration =
-  800
+  900

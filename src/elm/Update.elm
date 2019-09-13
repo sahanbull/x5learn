@@ -633,12 +633,17 @@ update msg ({nav, userProfileForm} as model) =
       ({ model | collectionsMenuOpen = not model.collectionsMenuOpen }, setBrowserFocus "")
 
     ClickedHeart oerId ->
-      if isFavorite model oerId then
-        ( { model | favorites = model.favorites |> List.filter (\o -> o/=oerId) }, Cmd.none)
+      if isMarkedAsFavorite model oerId then
+        ( { model | removedFavorites = model.removedFavorites |> Set.insert oerId }, Cmd.none)
         |> saveAction 3 [ ("oerId", Encode.int oerId) ]
       else
-        ( { model | favorites = model.favorites ++ [ oerId ], flyingHeartAnimation = Just { startTime = model.currentTime } }, Cmd.none)
-        |> saveAction 2 [ ("oerId", Encode.int oerId) ]
+        let
+            favorites =
+              model.favorites ++ [ oerId ]
+              |> List.Extra.unique
+        in
+          ( { model | favorites = favorites, removedFavorites = model.removedFavorites |> Set.remove oerId, flyingHeartAnimation = Just { startTime = model.currentTime } }, Cmd.none)
+          |> saveAction 2 [ ("oerId", Encode.int oerId) ]
 
     FlyingHeartRelativeStartPositionReceived startPoint ->
       ( { model | flyingHeartAnimationStartPoint = Just startPoint }, Cmd.none)

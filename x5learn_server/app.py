@@ -188,6 +188,23 @@ def get_or_create_logged_in_user():
     return user
 
 
+@app.route("/api/v1/recommendations/", methods=['GET'])
+def api_recommendations():
+    oer_id = int(request.args['oerId'])
+    main_topics = find_enrichment_by_oer_id(oer_id).main_topics()
+    print(main_topics)
+    urls_with_similarity = [ (enrichment.url, enrichment.get_topic_overlap(main_topics)) for enrichment in WikichunkEnrichment.query.all() ]
+    most_similar = sorted(urls_with_similarity, key=lambda x: x[1], reverse=True)
+    results = []
+    for candidate in most_similar:
+        oer = Oer.query.filter_by(url=candidate[0]).first()
+        if oer is not None:
+            results.append(oer)
+        if len(results)>9:
+            break
+    return jsonify([ oer.data_and_id() for oer in results ])
+
+
 @app.route("/api/v1/search/", methods=['GET'])
 def api_search():
     text = request.args['text'].lower().strip()

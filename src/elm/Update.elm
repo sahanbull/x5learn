@@ -71,7 +71,7 @@ update msg ({nav, userProfileForm} as model) =
             else
               (Home, (model, Cmd.none))
       in
-          ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage, collectionsMenuOpen = False } |> closePopup |> resetUserProfileForm, cmd)
+          ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage, resourceSidebarTab = NotesTab, resourceRecommendations = [], collectionsMenuOpen = False } |> closePopup |> resetUserProfileForm, cmd)
           |> logEventForLabStudy "UrlChanged" [ path ]
 
     ClockTick time ->
@@ -370,7 +370,6 @@ update msg ({nav, userProfileForm} as model) =
       (model, requestNotes)
 
     RequestSaveNote (Err err) ->
-      -- ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
     RequestResource (Ok oer) ->
@@ -395,7 +394,7 @@ update msg ({nav, userProfileForm} as model) =
           newModel =
             { model | currentResource = Just <| Loaded oer.id } |> cacheOersFromList [ oer ]
       in
-          (newModel, [ cmdYoutube, requestResourceRecommendations <| relatedSearchStringFromOer newModel oer.id ] |> Cmd.batch )
+          (newModel, [ cmdYoutube ] |> Cmd.batch )
 
     RequestResource (Err err) ->
       ( { model | currentResource = Just Error }, Cmd.none )
@@ -404,6 +403,7 @@ update msg ({nav, userProfileForm} as model) =
       let
           oers =
             oersUnfiltered |> List.filter (\oer -> model.currentResource /= Just (Loaded oer.id)) -- ensure that the resource itself isn't included in the recommendations
+            |> Debug.log "RequestResourceRecommendations"
       in
           ({ model | resourceRecommendations = oers } |> cacheOersFromList oers, setBrowserFocus "")
           |> requestWikichunkEnrichmentsIfNeeded
@@ -578,9 +578,16 @@ update msg ({nav, userProfileForm} as model) =
       ({ model | startedLabStudyTask = Nothing }, setBrowserFocus "")
       |> logEventForLabStudy "StoppedLabStudyTask" []
 
-    SelectResourceSidebarTab tab ->
-      ({ model | resourceSidebarTab = tab }, setBrowserFocus "textInputFieldForNotesOrFeedback")
-      |> logEventForLabStudy "SelectResourceSidebarTab" []
+    SelectResourceSidebarTab tab oerId ->
+      let
+          cmd =
+            if tab==RecommendationsTab then
+              requestResourceRecommendations oerId
+            else
+              Cmd.none
+      in
+          ({ model | resourceSidebarTab = tab }, [ cmd, setBrowserFocus "textInputFieldForNotesOrFeedback" ] |> Cmd.batch )
+          |> logEventForLabStudy "SelectResourceSidebarTab" []
 
     MouseMovedOnStoryTag mousePosXonCard ->
       case model.overviewType of

@@ -128,10 +128,10 @@ requestResource oerId =
     }
 
 
-requestResourceRecommendations : String -> Cmd Msg
-requestResourceRecommendations searchText =
+requestResourceRecommendations : OerId -> Cmd Msg
+requestResourceRecommendations oerId =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText ]
+    { url = Url.Builder.absolute [ apiRoot, "recommendations/" ] [ Url.Builder.int "oerId" oerId ]
     , expect = Http.expectJson RequestResourceRecommendations (list oerDecoder)
     }
 

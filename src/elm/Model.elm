@@ -67,6 +67,11 @@ type alias Model =
   , pageScrollState : PageScrollState
   , collectionsMenuOpen : Bool
   , cachedCollectionsSearchPredictions : Dict String CollectionsSearchPrediction -- key = Search term
+  , favorites : List OerId
+  , removedFavorites : Set OerId -- keep a client-side record of "unliked" oers so that cards on the favorites page don't simply disappear when unliked
+  , hoveringHeart : Maybe OerId
+  , flyingHeartAnimation : Maybe FlyingHeartAnimation
+  , flyingHeartAnimationStartPoint : Maybe Point
   }
 
 
@@ -99,6 +104,10 @@ type BubblogramType
   = TopicNames
   | TopicConnections
   | TopicMentions
+
+type alias FlyingHeartAnimation =
+  { startTime : Posix
+  }
 
 type alias LabStudyTask =
   { title : String
@@ -207,8 +216,9 @@ type Subpage
   = Home
   | Profile
   | Search
+  | Favorites
   | Notes
-  | Recent
+  | Viewed
   | Resource
 
 
@@ -387,6 +397,11 @@ initialModel nav flags =
   , pageScrollState = PageScrollState 0 0 0 False
   , collectionsMenuOpen = False
   , cachedCollectionsSearchPredictions = Dict.empty
+  , favorites = []
+  , removedFavorites = Set.empty
+  , hoveringHeart = Nothing
+  , flyingHeartAnimation = Nothing
+  , flyingHeartAnimationStartPoint = Nothing
   }
 
 
@@ -678,8 +693,14 @@ searchPath =
 notesPath =
   "/notes"
 
-recentPath =
+recentPath = -- deprecated
   "/recent"
+
+viewedPath =
+  "/viewed"
+
+favoritesPath =
+  "/favorites"
 
 resourcePath =
   "/resource"
@@ -883,3 +904,15 @@ indexOf element list =
             Nothing
   in
       helper 0 list
+
+
+isMarkedAsFavorite model oerId =
+  List.member oerId model.favorites && (Set.member oerId model.removedFavorites |> not)
+
+
+isFlyingHeartAnimating model =
+  model.flyingHeartAnimation /= Nothing
+
+
+flyingHeartAnimationDuration =
+  900

@@ -27,6 +27,7 @@ port mouseMovedOnStoryTag : (Float -> msg) -> Sub msg
 port videoIsPlayingAtPosition : (Float -> msg) -> Sub msg
 port pageScrolled : (PageScrollState -> msg) -> Sub msg
 port receiveCardPlaceholderPositions : ((List OerCardPlaceholderPosition) -> msg) -> Sub msg
+port receiveFlyingHeartRelativeStartPosition : (Point -> msg) -> Sub msg
 
 
 type alias YoutubeEmbedParams =

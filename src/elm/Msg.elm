@@ -26,6 +26,7 @@ type Msg
   | ModalAnimationStart BoxAnimation
   | ModalAnimationStop Int
   | RequestSession (Result Http.Error Session)
+  | RequestFavorites (Result Http.Error (List OerId))
   | RequestRecentViews (Result Http.Error (List OerId))
   | RequestNotes (Result Http.Error (List Note))
   | RequestDeleteNote (Result Http.Error String)
@@ -77,6 +78,8 @@ type Msg
   | ToggledAllOerCollections Bool
   | MouseEnterMentionInBubbblogramOverview OerId EntityId MentionInOer
   | ToggleCollectionsMenu
+  | ClickedHeart OerId
+  | FlyingHeartRelativeStartPositionReceived Point
 
 
 type UserProfileField
@@ -86,21 +89,6 @@ type UserProfileField
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-  let
-      isModalAnimating =
-        if model.animationsPending |> Set.isEmpty then
-           False
-        else
-          case model.modalAnimation of
-            Nothing ->
-              True
-
-            Just animation ->
-              if animation.frameCount<2 then
-                True
-              else
-                False
-  in
       ([ Browser.Events.onResize ResizeBrowser
       , Ports.modalAnimationStart ModalAnimationStart
       , Ports.modalAnimationStop ModalAnimationStop
@@ -112,6 +100,22 @@ subscriptions model =
       , Ports.videoIsPlayingAtPosition VideoIsPlayingAtPosition
       , Ports.pageScrolled PageScrolled
       , Ports.receiveCardPlaceholderPositions OerCardPlaceholderPositionsReceived
+      , Ports.receiveFlyingHeartRelativeStartPosition FlyingHeartRelativeStartPositionReceived
       , Time.every 500 ClockTick
-      ] ++ (if anyBubblogramsAnimating model || isModalAnimating then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
+      ] ++ (if anyBubblogramsAnimating model || isModalAnimating model || isFlyingHeartAnimating model then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
       |> Sub.batch
+
+
+isModalAnimating model =
+  if model.animationsPending |> Set.isEmpty then
+     False
+  else
+    case model.modalAnimation of
+      Nothing ->
+        True
+
+      Just animation ->
+        if animation.frameCount<2 then
+          True
+        else
+          False

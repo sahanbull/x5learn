@@ -91,6 +91,10 @@ paddingLeft px =
   paddingEach { allSidesZero | left = px }
 
 
+paddingRight px =
+  paddingEach { allSidesZero | right = px }
+
+
 paddingTRBL t r b l =
   paddingEach { top = t, right = r, bottom = b, left = l }
 
@@ -179,7 +183,7 @@ orange =
   rgb255 255 120 0
 
 
-recentBlue =
+viewedBlue =
   rgb255 0 190 250
 
 
@@ -229,6 +233,11 @@ htmlClass name =
 
 htmlId name =
   Html.Attributes.id name |> htmlAttribute
+
+
+htmlStyle : String -> String -> Attribute Msg
+htmlStyle name value =
+  Html.Attributes.style name value |> htmlAttribute
 
 
 htmlDataAttribute str =
@@ -843,3 +852,13 @@ guestCallToSignup incentive =
       , "." |> text
       ]
       |> paragraph [ Font.size 14, Font.color materialDark ]
+
+
+viewHeartButton : Model -> OerId -> Element Msg
+viewHeartButton model oerId =
+    let
+        class =
+          "Heart " ++ (if isMarkedAsFavorite model oerId then "HeartFilled" else "HeartOutline")
+    in
+        none
+        |> el [ width <| px 20, height <| px 22, onClickNoBubble (ClickedHeart oerId), htmlClass class  ]

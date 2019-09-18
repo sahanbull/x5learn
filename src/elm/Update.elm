@@ -399,7 +399,6 @@ update msg ({nav, userProfileForm} as model) =
       let
           oers =
             oersUnfiltered |> List.filter (\oer -> model.currentResource /= Just (Loaded oer.id)) -- ensure that the resource itself isn't included in the recommendations
-            |> Debug.log "RequestResourceRecommendations"
       in
           ({ model | resourceRecommendations = oers } |> cacheOersFromList oers, setBrowserFocus "")
           |> requestWikichunkEnrichmentsIfNeeded

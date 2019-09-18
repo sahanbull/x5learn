@@ -252,6 +252,14 @@ def api_oers():
     return jsonify(oers)
 
 
+@app.route("/api/v1/featured/", methods=['GET'])
+def api_featured():
+    print('api_featured')
+    urls = [ 'https://www.youtube.com/watch?v=woy7_L2JKC4', 'https://www.youtube.com/watch?v=bRIL9kMJJSc', 'https://www.youtube.com/watch?v=4yYytLUViI4' ]
+    oers = [ oer.data_and_id() for oer in Oer.query.filter(Oer.url.in_(urls)).order_by(Oer.url.desc()).all() ]
+    return jsonify(oers)
+
+
 @app.route("/api/v1/resource/", methods=['POST'])
 def api_material():
     oer_id = request.get_json()['oerId']

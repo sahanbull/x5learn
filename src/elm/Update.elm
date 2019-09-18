@@ -59,15 +59,19 @@ update msg ({nav, userProfileForm} as model) =
             else if path |> String.startsWith notesPath then
               (Notes, ({ model | oerCardPlaceholderPositions = [] }, [ getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch))
             else if path |> String.startsWith recentPath then
-              (Recent, (model, askPageScrollState True))
+              (Viewed, (model, Navigation.load "/viewed"))
+            else if path |> String.startsWith viewedPath then
+              (Viewed, (model, askPageScrollState True))
+            else if path |> String.startsWith favoritesPath then
+              (Favorites, (model, askPageScrollState True))
             else if path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
             else if path |> String.startsWith resourcePath then
               (Resource, model |> requestResourceAfterUrlChanged url)
             else
-              (Home, (model, Cmd.none))
+              (Home, (model, (if model.featuredOers==Nothing then requestFeaturedOers else Cmd.none)))
       in
-          ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage, collectionsMenuOpen = False } |> closePopup |> resetUserProfileForm, cmd)
+          ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage, resourceSidebarTab = NotesTab, resourceRecommendations = [], collectionsMenuOpen = False } |> closePopup |> resetUserProfileForm, cmd)
           |> logEventForLabStudy "UrlChanged" [ path ]
 
     ClockTick time ->
@@ -76,7 +80,19 @@ update msg ({nav, userProfileForm} as model) =
       |> requestEntityDefinitionsIfNeeded
 
     AnimationTick time ->
-      ( { model | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
+      let
+          newModel =
+            case model.flyingHeartAnimation of
+              Nothing ->
+                model
+
+              Just {startTime} ->
+                if millisSince model startTime > flyingHeartAnimationDuration then
+                  { model | flyingHeartAnimation = Nothing }
+                else
+                  model
+      in
+          ( { newModel | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
 
     ChangeSearchText str ->
       let
@@ -108,7 +124,7 @@ update msg ({nav, userProfileForm} as model) =
             }
       in
           ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> addFragmentAccess (Fragment oer.id fragmentStart fragmentLength) model.currentTime, openModalAnimation youtubeEmbedParams)
-          |> saveAction 1 [ ("oerId", Encode.int oer.id), ("oerId", Encode.int oer.id) ]
+          |> saveAction 1 [ ("oerId", Encode.int oer.id) ]
           |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat ]
 
     UninspectSearchResult ->
@@ -132,7 +148,7 @@ update msg ({nav, userProfileForm} as model) =
                 Cmd.none
 
               LoggedInUser userProfile ->
-                [ requestNotes, ActionApi.requestRecentViews ] |> Cmd.batch
+                [ requestNotes, ActionApi.requestRecentViews, requestFavorites ] |> Cmd.batch
       in
           ( newModel |> resetUserProfileForm, cmd)
           |> logEventForLabStudy "RequestSession" []
@@ -234,15 +250,11 @@ update msg ({nav, userProfileForm} as model) =
       -- ( { model | requestingOers = False, snackbar = createSnackbar model "There was a problem while fetching OER data" }, Cmd.none)
       ( { model | requestingOers = False, snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none)
 
-    RequestGains (Ok gains) ->
-      ( { model | gains = Just gains }, Cmd.none )
+    RequestFeatured (Ok oers) ->
+      ( { model | featuredOers = oers |> List.map .id |> Just } |> cacheOersFromList oers, Cmd.none )
 
-    RequestGains (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestGains"
-      -- in
-      -- ( { model | snackbar = createSnackbar model "There was a problem while fetching the gains data" }, Cmd.none)
+
+    RequestFeatured (Err err) ->
       ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none)
 
     RequestWikichunkEnrichments (Ok listOfEnrichments) ->
@@ -299,7 +311,21 @@ update msg ({nav, userProfileForm} as model) =
       --       err |> Debug.log "Error in RequestAutocompleteTerms"
       -- in
       -- ( { model | snackbar = createSnackbar model "There was a problem while fetching search suggestions" }, Cmd.none )
-      ( { model | snackbar = createSnackbar model  snackbarMessageReloadPage}, Cmd.none )
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
+
+    RequestFavorites (Ok favorites) ->
+      let
+          newModel = { model | favorites = favorites }
+      in
+          ( newModel, requestOersByIds newModel favorites)
+          |> logEventForLabStudy "RequestFavorites" []
+
+    RequestFavorites (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestFavorites"
+      -- in
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     RequestSaveUserProfile (Ok _) ->
       ({ model | userProfileForm = { userProfileForm | saved = True }, userProfileFormSubmitted = Nothing }, Cmd.none)
@@ -340,7 +366,6 @@ update msg ({nav, userProfileForm} as model) =
       (model, requestNotes)
 
     RequestSaveNote (Err err) ->
-      -- ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
     RequestResource (Ok oer) ->
@@ -365,7 +390,7 @@ update msg ({nav, userProfileForm} as model) =
           newModel =
             { model | currentResource = Just <| Loaded oer.id } |> cacheOersFromList [ oer ]
       in
-          (newModel, [ cmdYoutube, requestResourceRecommendations <| relatedSearchStringFromOer newModel oer.id ] |> Cmd.batch )
+          (newModel, [ cmdYoutube ] |> Cmd.batch )
 
     RequestResource (Err err) ->
       ( { model | currentResource = Just Error }, Cmd.none )
@@ -374,6 +399,7 @@ update msg ({nav, userProfileForm} as model) =
       let
           oers =
             oersUnfiltered |> List.filter (\oer -> model.currentResource /= Just (Loaded oer.id)) -- ensure that the resource itself isn't included in the recommendations
+            |> Debug.log "RequestResourceRecommendations"
       in
           ({ model | resourceRecommendations = oers } |> cacheOersFromList oers, setBrowserFocus "")
           |> requestWikichunkEnrichmentsIfNeeded
@@ -548,9 +574,16 @@ update msg ({nav, userProfileForm} as model) =
       ({ model | startedLabStudyTask = Nothing }, setBrowserFocus "")
       |> logEventForLabStudy "StoppedLabStudyTask" []
 
-    SelectResourceSidebarTab tab ->
-      ({ model | resourceSidebarTab = tab }, setBrowserFocus "textInputFieldForNotesOrFeedback")
-      |> logEventForLabStudy "SelectResourceSidebarTab" []
+    SelectResourceSidebarTab tab oerId ->
+      let
+          cmd =
+            if tab==RecommendationsTab then
+              requestResourceRecommendations oerId
+            else
+              Cmd.none
+      in
+          ({ model | resourceSidebarTab = tab }, [ cmd, setBrowserFocus "textInputFieldForNotesOrFeedback" ] |> Cmd.batch )
+          |> logEventForLabStudy "SelectResourceSidebarTab" []
 
     MouseMovedOnStoryTag mousePosXonCard ->
       case model.overviewType of
@@ -601,6 +634,22 @@ update msg ({nav, userProfileForm} as model) =
 
     ToggleCollectionsMenu ->
       ({ model | collectionsMenuOpen = not model.collectionsMenuOpen }, setBrowserFocus "")
+
+    ClickedHeart oerId ->
+      if isMarkedAsFavorite model oerId then
+        ( { model | removedFavorites = model.removedFavorites |> Set.insert oerId }, Cmd.none)
+        |> saveAction 3 [ ("oerId", Encode.int oerId) ]
+      else
+        let
+            favorites =
+              model.favorites ++ [ oerId ]
+              |> List.Extra.unique
+        in
+          ( { model | favorites = favorites, removedFavorites = model.removedFavorites |> Set.remove oerId, flyingHeartAnimation = Just { startTime = model.currentTime } }, Cmd.none)
+          |> saveAction 2 [ ("oerId", Encode.int oerId) ]
+
+    FlyingHeartRelativeStartPositionReceived startPoint ->
+      ( { model | flyingHeartAnimationStartPoint = Just startPoint }, Cmd.none)
 
 
 requestCollectionsSearchPredictionIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
@@ -914,9 +963,11 @@ executeSearchAfterUrlChanged model url =
                        setOfAllCollectionTitles
                      else
                        collections
+      newModel =
+        { model | searchInputTyping = textParam, selectedOerCollections = selectedOerCollections, searchState = Just <| newSearch textParam, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, snackbar = Nothing }
   in
-        ( { model | searchInputTyping = textParam, selectedOerCollections = selectedOerCollections, searchState = Just <| newSearch textParam, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, snackbar = Nothing } |> closePopup, searchOers textParam (selectedOerCollectionsToCommaSeparatedString model))
-        |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam, (selectedOerCollectionsToCommaSeparatedString model) ]
+        ( newModel |> closePopup, searchOers textParam (selectedOerCollectionsToCommaSeparatedString newModel))
+        |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam, (selectedOerCollectionsToCommaSeparatedString newModel) ]
 
 
 requestResourceAfterUrlChanged : Url -> Model -> (Model, Cmd Msg)

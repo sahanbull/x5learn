@@ -10,13 +10,13 @@ import Model exposing (..)
 import View.Shared exposing (..)
 import View.PageHeader exposing (viewPageHeader)
 import View.NavigationDrawer exposing (..)
-import View.Pages.Intro exposing (viewIntroPage)
+import View.Pages.Featured exposing (viewFeaturedPage)
 import View.Pages.Maintenance exposing (viewMaintenancePage)
 import View.Pages.Search exposing (viewSearchPage)
 import View.Pages.Notes exposing (viewNotesPage)
-import View.Pages.Gains exposing (viewGainsPage)
+import View.Pages.Favorites exposing (viewFavoritesPage)
 import View.Pages.Profile exposing (viewProfilePage)
-import View.Pages.Recent exposing (viewRecentPage)
+import View.Pages.Viewed exposing (viewViewedPage)
 import View.Pages.Resource exposing (viewResourcePage)
 
 import Update exposing (..)
@@ -48,8 +48,8 @@ init flags url key =
 view : Model -> Browser.Document Msg
 view model =
   let
-      introPage =
-        (viewIntroPage model, [])
+      featuredPage =
+        viewFeaturedPage model |> withNavigationDrawer model
 
       (body, modal) =
         if isSiteUnderMaintenance then
@@ -60,48 +60,37 @@ view model =
               (viewLoadingSpinner, [])
 
             Just session ->
-              let
-                  defaultPage =
-                    case session.loginState of
-                      LoggedInUser userProfile ->
-                        viewRecentPage model |> withNavigationDrawer model
+              case model.subpage of
+                Home ->
+                  featuredPage
 
-                      GuestUser ->
-                        introPage
-              in
-                  case model.subpage of
-                    Home ->
-                      -- if loginState /= GuestUser && (not userState.registrationComplete) then
-                      --   viewPostRegistrationPage |> withNavigationDrawer model
-                      -- else if userState == initialUserState then
-                      --   introPage
-                      -- else
-                      defaultPage
+                Profile ->
+                  case session.loginState of
+                    LoggedInUser userProfile ->
+                      viewProfilePage model userProfile model.userProfileForm |> withNavigationDrawer model
 
-                    Profile ->
-                      case session.loginState of
-                        LoggedInUser userProfile ->
-                          viewProfilePage model userProfile model.userProfileForm |> withNavigationDrawer model
+                    GuestUser ->
+                      featuredPage
 
-                        GuestUser ->
-                          introPage
+                Search ->
+                  case model.searchState of
+                    Nothing ->
+                      featuredPage
 
-                    Search ->
-                      case model.searchState of
-                        Nothing ->
-                          defaultPage
+                    Just searchState ->
+                      viewSearchPage model searchState |> withNavigationDrawer model
 
-                        Just searchState ->
-                          viewSearchPage model searchState |> withNavigationDrawer model
+                Favorites ->
+                  viewFavoritesPage model |> withNavigationDrawer model
 
-                    Notes ->
-                      viewNotesPage model |> withNavigationDrawer model
+                Notes ->
+                  viewNotesPage model |> withNavigationDrawer model
 
-                    Recent ->
-                      viewRecentPage model |> withNavigationDrawer model
+                Viewed ->
+                  viewViewedPage model |> withNavigationDrawer model
 
-                    Resource ->
-                      viewResourcePage model |> withNavigationDrawer model
+                Resource ->
+                  viewResourcePage model |> withNavigationDrawer model
 
       header =
         viewPageHeader model

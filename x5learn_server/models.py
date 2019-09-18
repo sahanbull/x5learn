@@ -109,6 +109,16 @@ class WikichunkEnrichment(Base):
     def full_text(self):
         return ' '.join([ chunk['text'] for chunk in self.data['chunks'] ])
 
+    def main_topics(self):
+        return [y for z in self.data['clusters'] for y in z] # concat lists
+
+    def get_topic_overlap(self, topics):
+        overlap = 0
+        for topic in self.main_topics():
+            if topic in topics:
+                overlap += 1
+        return overlap
+
 
 class WikichunkEnrichmentTask(Base):
     __tablename__ = 'wikichunk_enrichment_task'

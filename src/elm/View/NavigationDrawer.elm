@@ -40,9 +40,9 @@ withNavigationDrawer model (pageContent, modal) =
         else
           -- [ navButton False "/next_steps" "nav_next_steps" "Next Steps"
           -- , navButton False "/journeys" "nav_journeys" "Journeys"
-          [ navButton True "/notes" "nav_bookmarks" "Notes"
-          , navButton True "/recent" "nav_recent" "Recent"
-          -- , navButton True "/gains" "nav_gains" "Gains"
+          [ navButton True "/favorites" "nav_favorites" "Favorites" |> heartAnimationWrapper
+          , navButton True "/notes" "nav_notes" "Notes"
+          , navButton True "/viewed" "nav_viewed" "Viewed"
           -- , navButton False "/notes" "nav_notes" "Notes"
           -- , navButton False "/peers" "nav_peers" "Peers"
           ]
@@ -62,10 +62,48 @@ withNavigationDrawer model (pageContent, modal) =
         , pageContent
         ]
         |> row [ width fill, height fill ]
+
+      heartAnimationWrapper =
+        let
+            animationLayer =
+              case model.flyingHeartAnimation of
+                Nothing ->
+                  []
+
+                Just {startTime} ->
+                  case model.flyingHeartAnimationStartPoint of
+                    Nothing ->
+                      []
+
+                    Just startPoint ->
+                      let
+                          phase =
+                            ((millisSince model startTime |> toFloat) / (flyingHeartAnimationDuration - 300)) ^ 0.9 |> min 1
+
+                          x =
+                            startPoint.x * (1-phase)
+
+                          y =
+                            startPoint.y * (1-phase)
+
+                          size =
+                            px 25
+
+                          opacity =
+                            phase^0.8
+
+                          transition =
+                            htmlStyle "transition-duration" "0.1s"
+
+                          heart =
+                            none
+                            |> el [ width <| size, height <| size, moveDown <| 10 + y, moveRight <| 6 + x, htmlClass "Heart HeartFilled HeartFlying PointerEventsNone", Element.alpha opacity, transition ]
+                      in
+                          [ inFront heart ]
+        in
+            el ([ width fill, htmlClass "HeartAnimWrapper" ] ++ animationLayer)
   in
       (page, modal ++ [ drawer ])
-
-
 
 
 dataSetSelectionWidget model searchInputTyping =
@@ -91,8 +129,9 @@ viewOverviewSelectionWidget model =
     , selected = Just model.overviewType
     , label = Input.labelAbove captionTextAttrs (text "Preview")
     , options =
-        [ Input.option ImageOverview (bodyNoWrap [] "Image")
-        , Input.option (BubblogramOverview TopicConnections) (bodyNoWrap [] "Topic Connections")
+        [ Input.option ImageOverview (bodyNoWrap [] "Cover Image")
+        , Input.option (BubblogramOverview TopicNames) (bodyNoWrap [] "Main Topics")
+        , Input.option (BubblogramOverview TopicConnections) (bodyNoWrap [] "Topic Clusters")
         , Input.option (BubblogramOverview TopicMentions) (bodyNoWrap [] "Topic Mentions")
         ]
     }

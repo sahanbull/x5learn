@@ -126,6 +126,11 @@ def search():
     return render_template('home.html')
 
 
+@app.route("/favorites")
+def favorites():
+    return render_template('home.html')
+
+
 @app.route("/notes")
 def notes():
     return render_template('home.html')
@@ -133,6 +138,11 @@ def notes():
 
 @app.route("/recent")
 def recent():
+    return render_template('home.html')
+
+
+@app.route("/viewed")
+def viewed():
     return render_template('home.html')
 
 
@@ -178,15 +188,47 @@ def get_or_create_logged_in_user():
     return user
 
 
+@app.route("/api/v1/recommendations/", methods=['GET'])
+def api_recommendations():
+    oer_id = int(request.args['oerId'])
+    main_topics = find_enrichment_by_oer_id(oer_id).main_topics()
+    print(main_topics)
+    urls_with_similarity = [ (enrichment.url, enrichment.get_topic_overlap(main_topics)) for enrichment in WikichunkEnrichment.query.all() ]
+    most_similar = sorted(urls_with_similarity, key=lambda x: x[1], reverse=True)
+    results = []
+    for candidate in most_similar:
+        oer = Oer.query.filter_by(url=candidate[0]).first()
+        if oer is not None:
+            results.append(oer)
+        if len(results)>9:
+            break
+    return jsonify([ oer.data_and_id() for oer in results ])
+
+
 @app.route("/api/v1/search/", methods=['GET'])
 def api_search():
     text = request.args['text'].lower().strip()
     collections = request.args['collections'].split(',')
     initialise_caches_for_all_oer_collections() # quickfix. TODO move cache to db?
     results = search_in_oer_collections(collections, text, 30)
+    # print('\n\nSearch in', collections)
     if 'X5GON Platform' in collections:
         results += search_results_from_x5gon_api(text)
     return jsonify([ oer.data_and_id() for oer in results ])
+
+
+@app.route("/api/v1/favorites/", methods=['GET'])
+def api_favorites():
+    actions = Action.query.filter(Action.user_login_id==current_user.get_id(), Action.action_type_id.in_([2, 3])).order_by(Action.id).all()
+    favorites = []
+    # reconstruct list by replaying the sequence of "like" and "unlike" actions
+    for action in actions:
+        oer_id = action.params['oerId']
+        if oer_id in favorites:
+            favorites.remove(oer_id) # remove in any case to avoid duplicates
+        if action.action_type_id==2:
+            favorites.append(oer_id)
+    return jsonify(favorites)
 
 
 @app.route("/api/v1/autocomplete_terms/", methods=['GET'])
@@ -208,6 +250,14 @@ def api_collections_search_prediction():
 @app.route("/api/v1/oers/", methods=['POST'])
 def api_oers():
     oers = [find_oer_by_id(oer_id) for oer_id in request.get_json()['ids']]
+    return jsonify(oers)
+
+
+@app.route("/api/v1/featured/", methods=['GET'])
+def api_featured():
+    print('api_featured')
+    urls = [ 'https://www.youtube.com/watch?v=woy7_L2JKC4', 'https://www.youtube.com/watch?v=bRIL9kMJJSc', 'https://www.youtube.com/watch?v=4yYytLUViI4' ]
+    oers = [ oer.data_and_id() for oer in Oer.query.filter(Oer.url.in_(urls)).order_by(Oer.url.desc()).all() ]
     return jsonify(oers)
 
 
@@ -841,6 +891,16 @@ def initiate_action_types_table():
     action_type = ActionType.query.filter_by(id=1).first()
     if action_type is None:
         action_type = ActionType('OER card opened')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=2).first()
+    if action_type is None:
+        action_type = ActionType('OER marked as favorite')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=3).first()
+    if action_type is None:
+        action_type = ActionType('OER unmarked as favorite')
         db_session.add(action_type)
         db_session.commit()
 

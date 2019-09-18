@@ -16,6 +16,11 @@ apiRoot =
   "api/v1/action/"
 
 
+-- action type IDs
+-- 1 = view, i.e. open card in inspector
+-- 2 = mark as favorite
+-- 3 = unmark favorite
+-- NB keep this list in sync with the backend
 saveAction : Int -> List (String, Encode.Value) -> Cmd Msg
 saveAction actionTypeId params =
   Http.post
@@ -28,7 +33,7 @@ saveAction actionTypeId params =
 requestRecentViews : Cmd Msg
 requestRecentViews =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot ] [ Url.Builder.int "action_type_id" actionTypeForWhenTheUserOpensAnOerCard ]
+    { url = Url.Builder.absolute [ apiRoot ] [ Url.Builder.int "action_type_id" 1 ]
     , expect = Http.expectJson RequestRecentViews (list recentViewDecoder)
     }
 
@@ -36,7 +41,3 @@ requestRecentViews =
 recentViewDecoder : Decoder OerId
 recentViewDecoder =
   (field "params" (field "oerId" int))
-
-
-actionTypeForWhenTheUserOpensAnOerCard =
-  1 -- TODO think of a scalable and maintainable way to share action types with the backend

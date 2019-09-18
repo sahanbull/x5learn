@@ -36,6 +36,8 @@ addBubblogram model oerId ({chunks, clusters, mentions, bubblogram, errors} as e
           let
               bubbles =
                 entitiesWithDefinitions
+                |> List.sortBy (\{id} -> Dict.get id mentions |> Maybe.withDefault [] |> List.length)
+                |> List.reverse
                 |> List.indexedMap (bubbleFromEntity model occurrences)
                 |> layoutBubbles clusters
           in
@@ -160,6 +162,7 @@ layoutBubbles clusters bubbles =
         let
             index =
               indexOf bubble.entity.title (clusters |> List.concat)
+              |> Maybe.withDefault -1 -- shouldn't happen
         in
             { bubble | finalCoordinates = { finalCoordinates | posY = (toFloat index) / nBubblesMinus1max1 * 0.85 + 0.0 } }
 
@@ -170,6 +173,7 @@ layoutBubbles clusters bubbles =
 
             indexInCluster =
               indexOf bubble.entity.title cluster
+              |> Maybe.withDefault -1 -- shouldn't happen
 
             offsetX =
               0
@@ -289,23 +293,6 @@ layoutBubbles clusters bubbles =
       |> List.reverse
       |> List.map setPosY
       |> List.map setPosXbyCluster
-
-
-indexOf : a -> List a -> Int
-indexOf element list =
-  let
-      helper index xs =
-        case xs of
-          x::rest ->
-            if x==element then
-              index
-            else
-              helper (index+1) rest
-
-          _ ->
-            -1
-  in
-      helper 0 list
 
 
 mean : Float -> List Float -> Float

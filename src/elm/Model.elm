@@ -29,7 +29,6 @@ type alias Model =
   , timeOfLastMouseEnterOnCard : Posix
   , modalAnimation : Maybe BoxAnimation
   , animationsPending : Set String
-  , gains : Maybe (List Gain)
   , nextSteps : Maybe (List Pathway)
   , popup : Maybe Popup
   , requestingWikichunkEnrichments : Bool
@@ -67,6 +66,12 @@ type alias Model =
   , pageScrollState : PageScrollState
   , collectionsMenuOpen : Bool
   , cachedCollectionsSearchPredictions : Dict String CollectionsSearchPrediction -- key = Search term
+  , favorites : List OerId
+  , removedFavorites : Set OerId -- keep a client-side record of "unliked" oers so that cards on the favorites page don't simply disappear when unliked
+  , hoveringHeart : Maybe OerId
+  , flyingHeartAnimation : Maybe FlyingHeartAnimation
+  , flyingHeartAnimationStartPoint : Maybe Point
+  , featuredOers : Maybe (List OerId)
   }
 
 
@@ -99,6 +104,10 @@ type BubblogramType
   = TopicNames
   | TopicConnections
   | TopicMentions
+
+type alias FlyingHeartAnimation =
+  { startTime : Posix
+  }
 
 type alias LabStudyTask =
   { title : String
@@ -207,8 +216,9 @@ type Subpage
   = Home
   | Profile
   | Search
+  | Favorites
   | Notes
-  | Recent
+  | Viewed
   | Resource
 
 
@@ -286,13 +296,6 @@ type alias MentionInOer =
   , sentence : String
   }
 
-type alias Gain =
-  { title : String
-  , level : Float
-  , confidence : Float
-  }
-
-
 type alias Fragment =
   { oerId : OerId
   , start : Float -- 0 to 1
@@ -349,7 +352,6 @@ initialModel nav flags =
   , timeOfLastMouseEnterOnCard = initialTime
   , modalAnimation = Nothing
   , animationsPending = Set.empty
-  , gains = Nothing
   , nextSteps = Nothing
   , popup = Nothing
   , requestingWikichunkEnrichments = False
@@ -387,6 +389,12 @@ initialModel nav flags =
   , pageScrollState = PageScrollState 0 0 0 False
   , collectionsMenuOpen = False
   , cachedCollectionsSearchPredictions = Dict.empty
+  , favorites = []
+  , removedFavorites = Set.empty
+  , hoveringHeart = Nothing
+  , flyingHeartAnimation = Nothing
+  , flyingHeartAnimationStartPoint = Nothing
+  , featuredOers = Nothing
   }
 
 
@@ -678,8 +686,14 @@ searchPath =
 notesPath =
   "/notes"
 
-recentPath =
+recentPath = -- deprecated
   "/recent"
+
+viewedPath =
+  "/viewed"
+
+favoritesPath =
+  "/favorites"
 
 resourcePath =
   "/resource"
@@ -883,3 +897,15 @@ indexOf element list =
             Nothing
   in
       helper 0 list
+
+
+isMarkedAsFavorite model oerId =
+  List.member oerId model.favorites && (Set.member oerId model.removedFavorites |> not)
+
+
+isFlyingHeartAnimating model =
+  model.flyingHeartAnimation /= Nothing
+
+
+flyingHeartAnimationDuration =
+  900

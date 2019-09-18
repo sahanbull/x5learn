@@ -4,7 +4,6 @@ var timeOfLastMouseMove = new Date().getTime();
 
 var lastPageScrollOffset = 0;
 
-
 function positionAndSize(el) {
   var rect = el.getBoundingClientRect(), scrollLeft = window.pageXOffset || document.documentElement.scrollLeft, scrollTop = window.pageYOffset || document.documentElement.scrollTop;
   return { x: rect.left + scrollLeft, y: rect.top + scrollTop, sx: el.offsetWidth, sy: el.offsetHeight }
@@ -128,10 +127,18 @@ function setupEventHandlers(){
     app.ports.clickedOnDocument.send(12345);
   });
 
-  document.addEventListener("mouseover", function(e){
+  document.addEventListener("mouseover", function(event){
     var element = event.target;
+    if(element.classList.contains('Heart') &! element.classList.contains('HeartFlying')){
+      var eventPosition = getEventPosition(event);
+      var wrapperPositionY = position(document.getElementsByClassName('HeartAnimWrapper')[0]).y;
+      hoveringHeartPosition = {x: eventPosition.x-30, y: eventPosition.y-20-wrapperPositionY};
+      app.ports.receiveFlyingHeartRelativeStartPosition.send(hoveringHeartPosition);
+      return
+    }
     if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" ChunkTrigger ") > -1 ){
-      app.ports.mouseOverChunkTrigger.send(e.pageX);
+      app.ports.mouseOverChunkTrigger.send(event.pageX);
+      return
     }
   });
 
@@ -191,4 +198,28 @@ function getCardPlaceholderPosition(ph){
   var rect = ph.getBoundingClientRect();
   var scrollY = document.getElementById('OerCardsContainer').getBoundingClientRect().top;
   return { x: rect.left, y: rect.top - scrollY, oerId: parseInt(ph.getAttribute("data-oerid")) };
+}
+
+
+function getEventPosition(event){
+  // some boilerplate for browser compatibility
+  // https://stackoverflow.com/questions/7790725/javascript-track-mouse-position
+  var eventDoc, doc, body;
+  event = event || window.event; // IE-ism
+  // If pageX/Y aren't available and clientX/Y are,
+  // calculate pageX/Y - logic taken from jQuery.
+  // (This is to support old IE)
+  if (event.pageX == null && event.clientX != null) {
+    eventDoc = (event.target && event.target.ownerDocument) || document;
+    doc = eventDoc.documentElement;
+    body = eventDoc.body;
+
+    event.pageX = event.clientX +
+      (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
+      (doc && doc.clientLeft || body && body.clientLeft || 0);
+    event.pageY = event.clientY +
+      (doc && doc.scrollTop  || body && body.scrollTop  || 0) -
+      (doc && doc.clientTop  || body && body.clientTop  || 0 );
+  }
+  return {x: event.pageX, y: event.pageY}
 }

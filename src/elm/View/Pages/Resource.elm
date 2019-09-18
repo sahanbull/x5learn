@@ -116,11 +116,21 @@ viewResource model oer =
                   ("Your notes", viewNoteboard model False oer.id)
 
                 RecommendationsTab ->
-                  ("Related material"
-                  , model.resourceRecommendations
-                    |> List.map (viewRecommendationCard model)
-                    |> column [ spacing 12 ]
-                  )
+                  let
+                      sidebarContent =
+                        case model.resourceRecommendations of
+                          [] ->
+                            viewLoadingSpinner
+                            |> el [ moveDown 80, width fill ]
+
+                          recommendations ->
+                            model.resourceRecommendations
+                            |> List.map (viewRecommendationCard model)
+                            |> column [ spacing 12 ]
+                  in
+                      ("Related material"
+                      , sidebarContent
+                      )
 
                 FeedbackTab ->
                   ("Feedback"
@@ -138,7 +148,7 @@ viewResource model oer =
                     else
                       (greyTextDisabled, Border.color fullyTransparentColor)
               in
-                  simpleButton [ Font.size 16, paddingXY 1 20, borderBottom 4, centerX, borderColor, textColor ] title (Just <| SelectResourceSidebarTab tab)
+                  simpleButton [ Font.size 16, paddingXY 1 20, borderBottom 4, centerX, borderColor, textColor ] title (Just <| SelectResourceSidebarTab tab oer.id)
 
             tabsMenu =
               [ (NotesTab, "Notes")
@@ -309,7 +319,7 @@ viewFeedbackTab model oer =
       textField =
         Input.text [ width fill, htmlId "textInputFieldForNotesOrFeedback", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5color ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Let us know" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
   in
-      [ "Anything noteworthy about this resource?" |> bodyWrap []
+      [ "Any comments about this material?" |> bodyWrap []
       , quickOptions
       , "Other" |> bodyWrap []
       , textField

@@ -19,6 +19,7 @@ import Dict
 import Model exposing (..)
 import Msg exposing (..)
 import Animation exposing (..)
+import Animation exposing (..)
 
 type alias PageWithModal = (Element Msg, List (Attribute Msg))
 
@@ -89,6 +90,10 @@ paddingBottom px =
 
 paddingLeft px =
   paddingEach { allSidesZero | left = px }
+
+
+paddingRight px =
+  paddingEach { allSidesZero | right = px }
 
 
 paddingTRBL t r b l =
@@ -179,7 +184,7 @@ orange =
   rgb255 255 120 0
 
 
-recentBlue =
+viewedBlue =
   rgb255 0 190 250
 
 
@@ -231,6 +236,11 @@ htmlId name =
   Html.Attributes.id name |> htmlAttribute
 
 
+htmlStyle : String -> String -> Attribute Msg
+htmlStyle name value =
+  Html.Attributes.style name value |> htmlAttribute
+
+
 htmlDataAttribute str =
   Html.Attributes.attribute "data-oerid" str |> htmlAttribute
 
@@ -240,10 +250,12 @@ whiteBackground =
 
 
 pageBodyBackground model =
-  if isLabStudy1 model then
-    Background.color <| grey 224
-  else
-    Background.image <| imgPath "bg.jpg"
+  Background.image <| imgPath "bg.jpg"
+  -- if isLabStudy1 model then
+  -- if model.subpage==Home && (isLoggedIn model |> not) then
+  --   Background.image <| imgPath "bg.jpg"
+  -- else
+  --   Background.color <| grey 224
 
 
 imgPath str =
@@ -361,7 +373,7 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
       [ searchField
       , collectionInfo
       ]
-      |> column [ spacing 10 ]
+      |> column [ spacing 10, centerX ]
 
 
 svgIcon stub=
@@ -531,36 +543,39 @@ viewFragmentsBar model oer chunks recommendedFragments barWidth barId =
                   False
 
             appearance =
-              if isPopupOpen then
-                [ Background.color orange ]
-              else
-                let
-                    leftBorder =
-                      none
-                      |> el [ width <| px 1, height <| px fragmentsBarHeight, Background.color veryTransparentWhite ]
-                      |> inFront
+              let
+                  bg =
+                    if isPopupOpen then
+                      [ Background.color grey80 ]
+                    else
+                      []
 
-                    queryHighlight =
-                      case model.searchState of
-                        Nothing ->
-                          []
+                  leftBorder =
+                    none
+                    |> el [ width <| px 1, height <| px fragmentsBarHeight, Background.color veryTransparentWhite ]
+                    |> inFront
 
-                        Just {lastSearch} ->
-                          case indexOf (String.toLower lastSearch) (chunk.entities |> List.map (\{title} -> String.toLower title)) of
-                            Nothing ->
-                              []
+                  queryHighlight =
+                    case model.searchState of
+                      Nothing ->
+                        []
 
-                            Just index ->
-                              let
-                                  posY =
-                                    ((toFloat index)*3.5 |> floor)
-                              in
-                                  none
-                                  |> el [ width fill, height (px <| fragmentsBarHeight-posY), moveDown (toFloat posY), Background.color yellow ]
-                                  |> inFront
-                                  |> List.singleton
+                      Just {lastSearch} ->
+                        case indexOf (String.toLower lastSearch) (chunk.entities |> List.map (\{title} -> String.toLower title)) of
+                          Nothing ->
+                            []
+
+                          Just index ->
+                            let
+                                posY =
+                                  ((toFloat index)*3.5 |> floor)
+                            in
+                                none
+                                |> el [ width fill, height (px <| fragmentsBarHeight-posY), moveDown (toFloat posY), Background.color yellow ]
+                                |> inFront
+                                |> List.singleton
                 in
-                  ([ leftBorder ] ++ queryHighlight)
+                  ([ leftBorder ] ++ queryHighlight ++ bg)
 
             popup =
               if isPopupOpen then
@@ -843,3 +858,13 @@ guestCallToSignup incentive =
       , "." |> text
       ]
       |> paragraph [ Font.size 14, Font.color materialDark ]
+
+
+viewHeartButton : Model -> OerId -> Element Msg
+viewHeartButton model oerId =
+    let
+        class =
+          "Heart " ++ (if isMarkedAsFavorite model oerId then "HeartFilled" else "HeartOutline")
+    in
+        none
+        |> el [ width <| px 20, height <| px 22, onClickNoBubble (ClickedHeart oerId), htmlClass class  ]

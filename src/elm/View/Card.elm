@@ -96,8 +96,9 @@ viewOerGrid model playlist =
               |> List.reverse
               |> List.map inFront
         in
-            -- [ playlist.title |> subheaderWrap [ whiteText ]
-            [ playlist.title |> (if isLabStudy1 model then captionNowrap [ Font.color grey80 ] else subheaderWrap [ whiteText ])
+            [ playlist.title |> captionNowrap [ paddingLeft <| round <| (cardPositionAtIndex 0).x - 20, moveDown 55, Font.color grey80 ]
+            -- [ playlist.title |> subSubheaderWrap [ whiteText, centerX ]
+            -- [ playlist.title |> (if isLabStudy1 model then captionNowrap [ Font.color grey80 ] else subheaderWrap [ whiteText ])
             ]
             -- |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ cards)
             |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
@@ -201,10 +202,20 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
               oer.provider |> domainOnly |> truncateSentence 32 |> captionNowrap [ if dateStr=="" then alignLeft else centerX ]
 
             duration =
-              oer.duration |> captionNowrap [ alignRight ]
+              oer.duration |> captionNowrap [ alignRight, paddingRight 8 ]
+
+            favoriteButton =
+              let
+                  heart =
+                    viewHeartButton model oer.id
+                    |> el [ moveRight 12, moveUp 14 ]
+              in
+                  none
+                  |> el [ alignRight, width <| px 34, inFront heart ]
+
 
             content =
-              [ date, provider, duration ]
+              [ date, provider, duration, favoriteButton ]
         in
             content
             |> row [ width fill, paddingXY 16 0, moveDown 255 ]
@@ -252,7 +263,7 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
 
       wrapperAttrs =
         -- [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| button [] { onPress = openInspectorOnPress model oer, label = card }, moveRight position.x, moveDown position.y ]
-        [ htmlClass "CloseInspectorOnClickOutside OerCard", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y, htmlDataAttribute <| String.fromInt oer.id ]
+        [ htmlClass "CloseInspectorOnClickOutside OerCard", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y, htmlDataAttribute <| String.fromInt oer.id, htmlClass "CursorPointer" ]
   in
       none
       |> el wrapperAttrs

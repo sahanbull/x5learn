@@ -540,36 +540,39 @@ viewFragmentsBar model oer chunks recommendedFragments barWidth barId =
                   False
 
             appearance =
-              if isPopupOpen then
-                [ Background.color orange ]
-              else
-                let
-                    leftBorder =
-                      none
-                      |> el [ width <| px 1, height <| px fragmentsBarHeight, Background.color veryTransparentWhite ]
-                      |> inFront
+              let
+                  bg =
+                    if isPopupOpen then
+                      [ Background.color grey80 ]
+                    else
+                      []
 
-                    queryHighlight =
-                      case model.searchState of
-                        Nothing ->
-                          []
+                  leftBorder =
+                    none
+                    |> el [ width <| px 1, height <| px fragmentsBarHeight, Background.color veryTransparentWhite ]
+                    |> inFront
 
-                        Just {lastSearch} ->
-                          case indexOf (String.toLower lastSearch) (chunk.entities |> List.map (\{title} -> String.toLower title)) of
-                            Nothing ->
-                              []
+                  queryHighlight =
+                    case model.searchState of
+                      Nothing ->
+                        []
 
-                            Just index ->
-                              let
-                                  posY =
-                                    ((toFloat index)*3.5 |> floor)
-                              in
-                                  none
-                                  |> el [ width fill, height (px <| fragmentsBarHeight-posY), moveDown (toFloat posY), Background.color yellow ]
-                                  |> inFront
-                                  |> List.singleton
+                      Just {lastSearch} ->
+                        case indexOf (String.toLower lastSearch) (chunk.entities |> List.map (\{title} -> String.toLower title)) of
+                          Nothing ->
+                            []
+
+                          Just index ->
+                            let
+                                posY =
+                                  ((toFloat index)*3.5 |> floor)
+                            in
+                                none
+                                |> el [ width fill, height (px <| fragmentsBarHeight-posY), moveDown (toFloat posY), Background.color yellow ]
+                                |> inFront
+                                |> List.singleton
                 in
-                  ([ leftBorder ] ++ queryHighlight)
+                  ([ leftBorder ] ++ queryHighlight ++ bg)
 
             popup =
               if isPopupOpen then

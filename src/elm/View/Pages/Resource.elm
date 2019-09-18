@@ -319,7 +319,7 @@ viewFeedbackTab model oer =
       textField =
         Input.text [ width fill, htmlId "textInputFieldForNotesOrFeedback", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5color ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Let us know" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
   in
-      [ "Anything noteworthy about this resource?" |> bodyWrap []
+      [ "Any comments about this material?" |> bodyWrap []
       , quickOptions
       , "Other" |> bodyWrap []
       , textField

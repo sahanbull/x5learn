@@ -43,7 +43,6 @@ withNavigationDrawer model (pageContent, modal) =
           [ navButton True "/favorites" "nav_favorites" "Favorites" |> heartAnimationWrapper
           , navButton True "/notes" "nav_notes" "Notes"
           , navButton True "/viewed" "nav_viewed" "Viewed"
-          -- , navButton True "/gains" "nav_gains" "Gains"
           -- , navButton False "/notes" "nav_notes" "Notes"
           -- , navButton False "/peers" "nav_peers" "Peers"
           ]

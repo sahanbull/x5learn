@@ -19,6 +19,7 @@ import Dict
 import Model exposing (..)
 import Msg exposing (..)
 import Animation exposing (..)
+import Animation exposing (..)
 
 type alias PageWithModal = (Element Msg, List (Attribute Msg))
 
@@ -249,10 +250,12 @@ whiteBackground =
 
 
 pageBodyBackground model =
+    Background.image <| imgPath "bg.jpg"
   -- if isLabStudy1 model then
-    Background.color <| grey 224
-  -- else
+  -- if model.subpage==Home && (isLoggedIn model |> not) then
   --   Background.image <| imgPath "bg.jpg"
+  -- else
+  --   Background.color <| grey 224
 
 
 imgPath str =
@@ -370,7 +373,7 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
       [ searchField
       , collectionInfo
       ]
-      |> column [ spacing 10 ]
+      |> column [ spacing 10, centerX ]
 
 
 svgIcon stub=

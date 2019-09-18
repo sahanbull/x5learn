@@ -29,7 +29,6 @@ type alias Model =
   , timeOfLastMouseEnterOnCard : Posix
   , modalAnimation : Maybe BoxAnimation
   , animationsPending : Set String
-  , gains : Maybe (List Gain)
   , nextSteps : Maybe (List Pathway)
   , popup : Maybe Popup
   , requestingWikichunkEnrichments : Bool
@@ -72,6 +71,7 @@ type alias Model =
   , hoveringHeart : Maybe OerId
   , flyingHeartAnimation : Maybe FlyingHeartAnimation
   , flyingHeartAnimationStartPoint : Maybe Point
+  , featuredOers : Maybe (List OerId)
   }
 
 
@@ -296,13 +296,6 @@ type alias MentionInOer =
   , sentence : String
   }
 
-type alias Gain =
-  { title : String
-  , level : Float
-  , confidence : Float
-  }
-
-
 type alias Fragment =
   { oerId : OerId
   , start : Float -- 0 to 1
@@ -359,7 +352,6 @@ initialModel nav flags =
   , timeOfLastMouseEnterOnCard = initialTime
   , modalAnimation = Nothing
   , animationsPending = Set.empty
-  , gains = Nothing
   , nextSteps = Nothing
   , popup = Nothing
   , requestingWikichunkEnrichments = False
@@ -402,6 +394,7 @@ initialModel nav flags =
   , hoveringHeart = Nothing
   , flyingHeartAnimation = Nothing
   , flyingHeartAnimationStartPoint = Nothing
+  , featuredOers = Nothing
   }
 
 

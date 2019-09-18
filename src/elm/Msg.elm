@@ -32,7 +32,7 @@ type Msg
   | RequestDeleteNote (Result Http.Error String)
   | RequestOerSearch (Result Http.Error (List Oer))
   | RequestOers (Result Http.Error (List Oer))
-  | RequestGains (Result Http.Error (List Gain))
+  | RequestFeatured (Result Http.Error (List Oer))
   | RequestWikichunkEnrichments (Result Http.Error (List WikichunkEnrichment))
   | RequestEntityDefinitions (Result Http.Error (Dict String String))
   | RequestAutocompleteTerms (Result Http.Error (List String))

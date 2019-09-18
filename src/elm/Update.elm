@@ -69,7 +69,7 @@ update msg ({nav, userProfileForm} as model) =
             else if path |> String.startsWith resourcePath then
               (Resource, model |> requestResourceAfterUrlChanged url)
             else
-              (Home, (model, Cmd.none))
+              (Home, (model, (if model.featuredOers==Nothing then requestFeaturedOers else Cmd.none)))
       in
           ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage, resourceSidebarTab = NotesTab, resourceRecommendations = [], collectionsMenuOpen = False } |> closePopup |> resetUserProfileForm, cmd)
           |> logEventForLabStudy "UrlChanged" [ path ]
@@ -250,15 +250,11 @@ update msg ({nav, userProfileForm} as model) =
       -- ( { model | requestingOers = False, snackbar = createSnackbar model "There was a problem while fetching OER data" }, Cmd.none)
       ( { model | requestingOers = False, snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none)
 
-    RequestGains (Ok gains) ->
-      ( { model | gains = Just gains }, Cmd.none )
+    RequestFeatured (Ok oers) ->
+      ( { model | featuredOers = oers |> List.map .id |> Just } |> cacheOersFromList oers, Cmd.none )
 
-    RequestGains (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestGains"
-      -- in
-      -- ( { model | snackbar = createSnackbar model "There was a problem while fetching the gains data" }, Cmd.none)
+
+    RequestFeatured (Err err) ->
       ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none)
 
     RequestWikichunkEnrichments (Ok listOfEnrichments) ->

@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestAutocompleteTerms, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestCollectionsSearchPrediction, requestFavorites)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestAutocompleteTerms, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestCollectionsSearchPrediction, requestFavorites)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -67,11 +67,11 @@ requestOers oerIds =
         }
 
 
-requestGains : Cmd Msg
-requestGains =
+requestFeaturedOers : Cmd Msg
+requestFeaturedOers =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "gains/" ] []
-    , expect = Http.expectJson RequestGains (list gainDecoder)
+    { url = Url.Builder.absolute [ apiRoot, "featured/" ] []
+    , expect = Http.expectJson RequestFeatured (list oerDecoder)
     }
 
 
@@ -185,13 +185,6 @@ userProfileDecoder =
     , map initialUserProfile
         (field "email" string)
     ]
-
-
-gainDecoder =
-  map3 Gain
-    (field "title" string)
-    (field "level" float)
-    (field "confidence" float)
 
 
 searchResultsDecoder =

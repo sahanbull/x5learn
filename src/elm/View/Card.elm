@@ -125,12 +125,7 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
       fragmentsBar =
         case Dict.get oer.id model.wikichunkEnrichments of
           Nothing ->
-            case model.overviewType of
-              ImageOverview ->
-                []
-
-              BubblogramOverview _ ->
-                [ viewLoadingSpinner |> el [ moveDown 80, width fill ] |> inFront ]
+            [ viewLoadingSpinner |> el [ moveDown 80, width fill ] |> inFront ]
 
           Just enrichment ->
             if enrichment.errors then
@@ -140,36 +135,6 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
               |> el [ width fill, moveDown imageHeight ]
               |> inFront
               |> List.singleton
-
-      (graphic, popup) =
-        case model.overviewType of
-          ImageOverview ->
-            (viewCarousel model isHovering oer, [])
-
-
-          BubblogramOverview bubblogramType ->
-            case Dict.get oer.id model.wikichunkEnrichments of
-              Nothing ->
-                (none |> el [ width fill, height (px imageHeight), Background.color x5color ]
-                , [])
-
-              Just enrichment ->
-                if enrichment.errors then
-                  if isVideoFile oer.url then
-                    (image [ alpha 0.9, centerX, centerY ] { src = svgPath "playIcon", description = "Video file" }
-                     |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
-                    , [])
-                  else
-                    ("no preview available" |> captionNowrap [ alpha 0.75, whiteText, centerX, centerY ]
-                     |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
-                    , [])
-                else
-                  case enrichment.bubblogram of
-                    Nothing -> -- shouldn't happen for more than a second
-                      (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color materialDark, inFront viewLoadingSpinner ], [])
-
-                    Just bubblogram ->
-                      viewBubblogram model bubblogramType oer.id bubblogram
 
       title =
         let
@@ -256,10 +221,8 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
         if enableShadow then [ htmlClass "materialCard" ] else [ Border.width 1, borderColorDivider ]
 
       card =
-        -- [ (if isHovering then hoverPreview else carousel)
-        -- ]
-        [ graphic ]
-        |> column ([ widthOfCard, heightOfCard, onMouseEnter (SetHover (Just oer.id)), onMouseLeave (SetHover Nothing), title, bottomInfo ] ++ fragmentsBar ++ shadow ++ clickHandler ++ popup)
+        viewCarousel model isHovering oer
+        |> el ([ widthOfCard, heightOfCard, onMouseEnter (SetHover (Just oer.id)), onMouseLeave (SetHover Nothing), title, bottomInfo ] ++ fragmentsBar ++ shadow ++ clickHandler)
 
       wrapperAttrs =
         -- [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| button [] { onPress = openInspectorOnPress model oer, label = card }, moveRight position.x, moveDown position.y ]

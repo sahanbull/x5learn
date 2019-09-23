@@ -73,7 +73,6 @@ type Msg
   | StoppedLabStudyTask
   | SelectResourceSidebarTab ResourceSidebarTab OerId
   | MouseMovedOnStoryTag Float
-  | SelectedOverviewType OverviewType
   | SelectedOerCollection String Bool
   | ToggledAllOerCollections Bool
   | MouseEnterMentionInBubbblogramOverview OerId EntityId MentionInOer

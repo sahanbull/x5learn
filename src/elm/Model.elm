@@ -60,7 +60,6 @@ type alias Model =
   , oerNoteboards : Dict OerId Noteboard
   , fragmentAccesses : Dict Int Fragment
   , oerCardPlaceholderPositions : List OerCardPlaceholderPosition
-  , overviewType : OverviewType
   , selectedMentionInStory : Maybe (OerId, MentionInOer)
   , selectedOerCollections : Set String
   , pageScrollState : PageScrollState
@@ -95,15 +94,6 @@ type ResourceSidebarTab
 type CurrentResource
   = Loaded OerId
   | Error
-
-type OverviewType
-  = ImageOverview
-  | BubblogramOverview BubblogramType
-
-type BubblogramType
-  = TopicNames
-  | TopicConnections
-  | TopicMentions
 
 type alias FlyingHeartAnimation =
   { startTime : Posix
@@ -383,7 +373,6 @@ initialModel nav flags =
   , oerNoteboards = Dict.empty
   , fragmentAccesses = Dict.empty
   , oerCardPlaceholderPositions = []
-  , overviewType = ImageOverview
   , selectedMentionInStory = Nothing
   , selectedOerCollections = setOfAllCollectionTitles
   , pageScrollState = PageScrollState 0 0 0 False

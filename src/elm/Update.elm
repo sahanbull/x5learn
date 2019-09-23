@@ -525,17 +525,8 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "VideoIsPlayingAtPosition" [ position |> String.fromFloat]
 
     OverviewTagMouseOver entityId oerId ->
-      let
-          popup =
-            case model.overviewType of
-              BubblogramOverview TopicNames ->
-                Just <| BubblePopup <| BubblePopupState oerId entityId DefinitionInBubblePopup []
-
-              _ ->
-                Nothing
-      in
-          ({model | hoveringTagEntityId = Just entityId, popup = popup }, Cmd.none)
-          |> logEventForLabStudy "OverviewTagMouseOver" [ oerId |> String.fromInt, entityId ]
+      ({model | hoveringTagEntityId = Just entityId, popup = Nothing }, Cmd.none)
+      |> logEventForLabStudy "OverviewTagMouseOver" [ oerId |> String.fromInt, entityId ]
 
     OverviewTagLabelMouseOver entityId oerId ->
       let
@@ -585,32 +576,8 @@ update msg ({nav, userProfileForm} as model) =
           |> logEventForLabStudy "SelectResourceSidebarTab" []
 
     MouseMovedOnStoryTag mousePosXonCard ->
-      case model.overviewType of
-        ImageOverview ->
-          (model, Cmd.none)
-
-        BubblogramOverview TopicNames ->
-          (model, Cmd.none)
-
-        _ ->
-          model
-          |> selectOrUnselectMentionInStory mousePosXonCard
-
-    SelectedOverviewType overviewType ->
-      let
-          logTitle =
-            case overviewType of
-              ImageOverview ->
-                "ImageOverview"
-              BubblogramOverview TopicNames ->
-                "TopicNames"
-              BubblogramOverview TopicMentions ->
-                "TopicMentions"
-              BubblogramOverview TopicConnections ->
-                "TopicConnections"
-      in
-          ({ model | overviewType = overviewType, hoveringTagEntityId = Nothing } |> closePopup, Cmd.none)
-          |> logEventForLabStudy "SelectedOverviewType" [ logTitle ]
+      model
+      |> selectOrUnselectMentionInStory mousePosXonCard
 
     MouseEnterMentionInBubbblogramOverview oerId entityId mention ->
       ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")

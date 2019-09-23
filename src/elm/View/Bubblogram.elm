@@ -26,8 +26,8 @@ import View.Shared exposing (..)
 import Msg exposing (..)
 
 
-viewBubblogram : Model -> BubblogramType -> OerId -> Bubblogram -> (Element Msg, List (Element.Attribute Msg))
-viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
+viewBubblogram : Model -> OerId -> Bubblogram -> (Element Msg, List (Element.Attribute Msg))
+viewBubblogram model oerId {createdAt, bubbles} =
   let
       animationPhase =
         bubblogramAnimationPhase model createdAt
@@ -37,7 +37,7 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
 
       svgBubbles =
         bubbles
-        |> List.concatMap (viewTag model bubblogramType oerId animationPhase)
+        |> List.concatMap (viewTag model oerId animationPhase)
 
       background =
         rect [ width widthString, height heightString, fill "#191919" ] []
@@ -56,19 +56,7 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
       entityLabel ({entity} as bubble) =
         let
             {px, py} =
-              case bubblogramType of
-                TopicNames ->
-                  { px = 9, py = bubblePosYfromIndex bubble + 8 }
-
-                TopicConnections ->
-                  let
-                      {posX, posY, size} =
-                        animatedBubbleCurrentCoordinates animationPhase bubble
-                  in
-                      { px = (posX + 0*size*1.1*bubbleZoom) * contentWidth + marginX, py = (posY + 0.1 -  0*size*1.1*bubbleZoom) * contentHeight + marginTop - 15 }
-
-                TopicMentions ->
-                  { px = 9, py = bubblePosYfromIndex bubble + 3 }
+              { px = 9, py = bubblePosYfromIndex bubble + 3 }
 
             isHovering =
               hoveringBubbleOrFragmentsBarEntityId model == Just entity.id
@@ -81,17 +69,9 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
 
             labelClickHandler =
               [ onClickNoBubble (OverviewTagLabelClicked oerId) ]
-
-            textAttrs =
-              case bubblogramType of
-                TopicNames ->
-                  ([ Font.size <| 17 - bubble.index ] ++ (if isEntityEqualToSearchTerm model entity.id then [ Font.bold, Font.color yellow ] else []))
-
-                _ ->
-                  []
         in
             entity.title
-            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| OverviewTagLabelMouseOver entity.id oerId, htmlClass hoverableClass ] ++ highlight ++ labelClickHandler ++ textAttrs)
+            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| OverviewTagLabelMouseOver entity.id oerId, htmlClass hoverableClass ] ++ highlight ++ labelClickHandler)
             |> inFront
             |> List.singleton
 
@@ -104,7 +84,7 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
                   []
 
                 Just bubble ->
-                  viewPopup model bubblogramType state bubble
+                  viewPopup model state bubble
             else
               []
 
@@ -137,8 +117,8 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
       (graphic, popup)
 
 
-viewTag : Model -> BubblogramType -> OerId -> Float -> Bubble -> List (Svg Msg)
-viewTag model bubblogramType oerId animationPhase ({entity, index} as bubble) =
+viewTag : Model -> OerId -> Float -> Bubble -> List (Svg Msg)
+viewTag model oerId animationPhase ({entity, index} as bubble) =
   let
       {posX, posY, size} =
         animatedBubbleCurrentCoordinates animationPhase bubble
@@ -147,69 +127,30 @@ viewTag model bubblogramType oerId animationPhase ({entity, index} as bubble) =
         hoveringBubbleOrFragmentsBarEntityId model == Just entity.id
 
       outline =
-        case bubblogramType of
-          TopicNames ->
-            if isHovering then
-              [ fill "rgba(255,255,255,0.1)" ]
-            else
-              [ fill "rgba(255,255,255,0)" ]
-
-          TopicConnections ->
-            if isHovering then
-              [ fill "#f93" ]
-            else
-              []
-
-          TopicMentions ->
-            if isHovering then
-              [ fill "rgba(255,255,255,0.1)" ]
-            else
-              [ fill "rgba(255,255,255,0)" ]
+        if isHovering then
+          [ fill "rgba(255,255,255,0.1)" ]
+        else
+          [ fill "rgba(255,255,255,0)" ]
 
       isSearchTerm =
         isEntityEqualToSearchTerm model entity.id
 
       mentionDots =
-        if bubblogramType==TopicNames then
-          []
-        else if isHovering || bubblogramType==TopicMentions then
-          viewMentionDots model bubblogramType oerId entity.id bubble isHovering isSearchTerm
+        if isHovering then
+          viewMentionDots model oerId entity.id bubble isHovering isSearchTerm
         else
           []
 
       body =
-        case bubblogramType of
-          TopicNames ->
-            rect
-              ([ x "0"
-              , y (bubblePosYfromIndex bubble |> floor |> String.fromInt)
-              , width (containerWidth |> String.fromInt)
-              , height (containerHeight // 5 |> String.fromInt)
-              , onMouseOver <| OverviewTagMouseOver entity.id oerId
-              , onMouseLeave <| OverviewTagMouseOut
-              , class <| hoverableClass ++ " StoryTag"
-              ] ++ outline)
-              []
-
-          TopicConnections ->
-            circle
-              ([ cx (posX * (toFloat contentWidth) + marginX |> String.fromFloat)
-              , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
-              , r (size * (toFloat contentWidth) * bubbleZoom|> String.fromFloat)
-              , fill <| Color.toCssString <| if isSearchTerm then (Color.hsla 0.145 0.9 0.5 0.8) else colorFromBubble bubble
-              ] ++ outline)
-              []
-
-          TopicMentions ->
-            let
-                strokeAttrs =
-                  if index==0 then
-                    []
-                  else
-                    [ stroke "#444"
-                    , strokeDasharray <| (cardWidth |> String.fromInt) ++ " 1000" -- only draw the top border of the rectangle
-                    ]
-            in
+        let
+            strokeAttrs =
+              if index==0 then
+                []
+              else
+                [ stroke "#444"
+                , strokeDasharray <| (cardWidth |> String.fromInt) ++ " 1000" -- only draw the top border of the rectangle
+                ]
+        in
             rect
               ([ x "0"
               , y (bubblePosYfromIndex bubble |> floor |> String.fromInt)
@@ -249,22 +190,14 @@ hoveringBubbleOrFragmentsBarEntityId model =
           Nothing
 
 
-viewPopup : Model -> BubblogramType -> BubblePopupState -> Bubble -> List (Element.Attribute Msg)
-viewPopup model bubblogramType {oerId, entityId, content} bubble =
+viewPopup : Model -> BubblePopupState -> Bubble -> List (Element.Attribute Msg)
+viewPopup model {oerId, entityId, content} bubble =
   let
       {posX, posY, size} =
         animatedBubbleCurrentCoordinates 1 bubble
 
       zoomFromText text =
-        case bubblogramType of
-          TopicNames ->
-            (String.length text |> toFloat) / 200 - ((toFloat bubble.index)*0.05) |> Basics.min 1
-
-          TopicConnections ->
-            (String.length text |> toFloat) / 200 - posY*0.5 |> Basics.min 1
-
-          TopicMentions ->
-            (String.length text |> toFloat) / 200 - ((toFloat bubble.index)*0.05) |> Basics.min 1
+        (String.length text |> toFloat) / 200 - ((toFloat bubble.index)*0.05) |> Basics.min 1
 
       (contentElement, zoom) =
         case content of
@@ -316,15 +249,7 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
           MentionInBubblePopup {positionInResource} ->
             let
                 sizeY =
-                  case bubblogramType of
-                    TopicNames ->
-                      35
-
-                    TopicConnections ->
-                      containerHeight - verticalOffset
-
-                    TopicMentions ->
-                      35
+                  35
 
                 tailHeightString =
                   sizeY
@@ -377,15 +302,7 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
             , interp zoom smallest.popupWidth largest.popupWidth)
 
       verticalOffset =
-        case bubblogramType of
-          TopicNames ->
-            bubblePosYfromIndex bubble
-
-          TopicConnections ->
-            Basics.max 10 <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5
-
-          TopicMentions ->
-            bubblePosYfromIndex bubble
+        bubblePosYfromIndex bubble
   in
       none
       |> el ([ above box, moveRight <| horizontalOffset, moveDown <| verticalOffset ]++tail)
@@ -436,20 +353,12 @@ hoverableClass =
   "UserSelectNone CursorPointer"
 
 
-viewMentionDots : Model -> BubblogramType -> OerId -> EntityId -> Bubble -> Bool -> Bool -> List (Svg Msg)
-viewMentionDots model bubblogramType oerId entityId bubble isHoveringOnCurrentTag isSearchTerm =
+viewMentionDots : Model -> OerId -> EntityId -> Bubble -> Bool -> Bool -> List (Svg Msg)
+viewMentionDots model oerId entityId bubble isHoveringOnCurrentTag isSearchTerm =
   let
       circlePosY =
         String.fromFloat <|
-          case bubblogramType of
-            TopicNames ->
-              (bubblePosYfromIndex bubble) + 23
-
-            TopicConnections ->
-              containerHeight - 8
-
-            TopicMentions ->
-              (bubblePosYfromIndex bubble) + 23
+          (bubblePosYfromIndex bubble) + 23
 
       dot : MentionInOer -> Svg Msg
       dot ({positionInResource, sentence} as mention) =
@@ -471,19 +380,8 @@ viewMentionDots model bubblogramType oerId entityId bubble isHoveringOnCurrentTa
                 "rgba(255,140,0,1)"
               else
                 "rgba(255,140,0,0.4)"
-
-            hoverHandler =
-              case bubblogramType of
-                TopicNames ->
-                  []
-
-                TopicConnections ->
-                  [ onMouseOver <| MouseEnterMentionInBubbblogramOverview oerId entityId mention ]
-
-                TopicMentions ->
-                  []
         in
-            circle ([ cx circlePosX, cy circlePosY, r circleRadius, fill color ]++hoverHandler) []
+            circle [ cx circlePosX, cy circlePosY, r circleRadius, fill color ] []
 
       mentions =
         getMentions model oerId bubble.entity.id

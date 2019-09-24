@@ -1,6 +1,8 @@
 module View.Inspector exposing (viewInspectorModalOrEmpty)
 
 import Set
+import Dict
+import Time exposing (posixToMillis)
 
 import Element exposing (..)
 import Element.Background as Background
@@ -17,6 +19,7 @@ import View.Shared exposing (..)
 import View.Noteboard exposing (..)
 import View.Html5VideoPlayer exposing (..)
 import View.HtmlPdfViewer exposing (..)
+import View.Bubblogram exposing (..)
 
 import Animation exposing (..)
 
@@ -116,16 +119,13 @@ inspectorContentDefault model {oer, fragmentStart} =
           title ->
             title |> headlineWrap []
 
-      linkToFile =
-        newTabLink [] { url = oer.url, label = oer.url |> bodyWrap [] }
-
       player =
         case getYoutubeVideoId oer.url of
           Nothing ->
             if isVideoFile oer.url then
               viewHtml5VideoPlayer model oer.url
             else if isPdfFile oer.url then
-              viewHtmlPdfPlayer oer.url "45vh"
+              viewHtmlPdfPlayer oer.url "410px"
             else
               none
 
@@ -136,23 +136,57 @@ inspectorContentDefault model {oer, fragmentStart} =
             in
                 embedYoutubePlayer youtubeId startTime
 
-      description =
-        case oer.description of
-          "" ->
-            "No description available" |> italicText |> el [ paddingTop 30 ]
+      descriptionColumn =
+        let
+            heading =
+              "About this document"
+              |> subheaderWrap []
 
-          desc ->
-            desc
-            |> String.split("\n")
-            |> List.filter (\line -> String.length line > 2)
-            |> List.map (bodyWrap [])
-            |> column [ spacing 7, height fill, scrollbarY, paddingTop 30 ]
+            scrollableText =
+              case oer.description of
+                "" ->
+                  "No description available" |> italicText
+
+                desc ->
+                  desc
+                  |> String.split("\n")
+                  |> List.filter (\line -> String.length line > 2)
+                  |> List.map (bodyWrap [])
+                  |> column [ width fill, spacing 7, height fill, scrollbarY, padding 5, Border.width 1 ]
+
+            linkToFile =
+              newTabLink [] { url = oer.url, label = oer.url |> bodyNoWrap [ htmlClass "ClipEllipsis" ] |> el [ width fill ] }
+
+            providerLink =
+              case oer.provider of
+                "" ->
+                  none
+
+                provider ->
+                  [ "Provider:" |> bodyNoWrap []
+                  , newTabLink [] { url = oer.url, label = provider |> trimTailingEllipsisIfNeeded |> bodyNoWrap [] }
+                  ]
+                  |> row [ spacing 10 ]
+        in
+            [ heading
+            , scrollableText
+            , linkToFile
+            , providerLink
+            ]
+            |> column [ width <| px descriptionColumnWidth, height <| px imageHeight, spacing 10 ]
+
+      mainColumns =
+        [ descriptionColumn
+        , enrichmentColumn model oer
+        , favoriteButton
+        ]
+        |> row [ width fill, spacing 10 ]
 
       mainSection =
         [ player
         , fragmentsBarWrapper
         ]
-        |> column [ width (px playerWidth), moveLeft notesWidth ]
+        |> column [ width (px playerWidth), moveLeft notesWidth, spacing 15 ]
 
       body =
         [ viewNoteboard model True oer.id |> el [ width <| px notesWidth, height fill, alignTop, borderLeft 1, paddingTRBL 0 0 0 15, moveRight (sheetWidth - notesWidth - 30 ) ]
@@ -164,14 +198,13 @@ inspectorContentDefault model {oer, fragmentStart} =
         []
 
       fragmentsBarWrapper =
-        [ description
-        , [ linkToFile, providerLinkAndFavoriteButton ] |> column [ width fill, spacing 15, paddingTop 30 ]
+        [ mainColumns
         , fragmentsBar
         ]
-        |> column [ width (px playerWidth), height <| px fragmentsBarWrapperHeight, moveDown 1 ]
+        |> column [ width (px playerWidth), height <| px fragmentsBarWrapperHeight, moveDown 16, spacing 15, Background.color x5color ]
 
       fragmentsBar =
-        if hasYoutubeVideo oer.url then
+        -- if hasYoutubeVideo oer.url then
           case chunksFromOerId model oer.id of
             [] ->
               none
@@ -183,34 +216,18 @@ inspectorContentDefault model {oer, fragmentStart} =
                     |> el [ width (px playerWidth), height (px 16) ]
               in
                   none |> el [ inFront content, moveUp (fragmentsBarWrapperHeight - fragmentsBarHeight) ]
-        else
-          none
-
-      providerLinkAndFavoriteButton =
-        [ providerLink
-        , favoriteButton
-        ]
-        |> row [ width fill ]
+        -- else
+        --   none
 
       favoriteButton =
         let
             heart =
               viewHeartButton model oer.id
-              |> el [ moveRight 12, moveUp 14 ]
+              |> el [ moveLeft 27 ]
         in
             none
-            |> el [ alignRight, width <| px 34, inFront heart ]
+            |> el [ alignRight, alignTop, width <| px 34, inFront heart ]
 
-      providerLink =
-        case oer.provider of
-          "" ->
-            none
-
-          provider ->
-            [ "Provider:" |> bodyNoWrap []
-            , newTabLink [] { url = oer.url, label = provider |> trimTailingEllipsisIfNeeded |> bodyNoWrap [] }
-            ]
-            |> row [ spacing 10 ]
         -- else
         --   actionButtonWithIcon IconRight "navigate_next" oer.provider (Just <| ShowProviderLinkInInspector)
         -- [ oer.provider |> bodyNoWrap [ alignLeft]
@@ -228,13 +245,50 @@ inspectorContentDefault model {oer, fragmentStart} =
       { header = header, body = body, footer = footer, fixed = none }
 
 
+enrichmentColumn model oer =
+  let
+      heading =
+        "Main topics"
+        |> subheaderWrap []
+
+      main =
+        case Dict.get oer.id model.wikichunkEnrichments of
+          Nothing ->
+            none |> el [ width fill, height (px imageHeight), Background.color x5color ]
+
+          Just enrichment ->
+            if enrichment.errors then
+              if isVideoFile oer.url then
+                image [ alpha 0.9, centerX, centerY ] { src = svgPath "playIcon", description = "Video file" }
+                 |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
+              else
+                "no preview available" |> captionNowrap [ alpha 0.75, whiteText, centerX, centerY ]
+                 |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
+            else
+              case enrichment.bubblogram of
+                Nothing -> -- shouldn't happen for more than a second
+                  none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color materialDark, inFront viewLoadingSpinner ]
+
+                Just bubblogram ->
+                  viewBubblogram model oer.id bubblogram
+  in
+      [ heading
+      , main
+      ]
+      |> column [ spacing 10, height <| px imageHeight ]
+
+
 notesWidth =
   248
 
 
 fragmentsBarWrapperHeight =
-  200
+  195
 
 
 sheetWidth =
   752+notesWidth+15
+
+
+descriptionColumnWidth =
+  378

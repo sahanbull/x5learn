@@ -26,7 +26,7 @@ import View.Shared exposing (..)
 import Msg exposing (..)
 
 
-viewBubblogram : Model -> OerId -> Bubblogram -> (Element Msg, List (Element.Attribute Msg))
+viewBubblogram : Model -> OerId -> Bubblogram -> Element Msg
 viewBubblogram model oerId {createdAt, bubbles} =
   let
       animationPhase =
@@ -108,13 +108,11 @@ viewBubblogram model oerId {createdAt, bubbles} =
             in
                 [ onClickNoBubble <| InspectOer oer fragmentStart 0.01 True ]
 
-      graphic =
-        [ background ] ++ svgBubbles
-        |> svg [ width widthString, height heightString, viewBox <| "0 0 " ++ ([ widthString, heightString ] |> String.join " ") ]
-        |> html
-        |> el (clickHandler ++ entityLabels)
   in
-      (graphic, popup)
+      [ background ] ++ svgBubbles
+      |> svg [ width widthString, height heightString, viewBox <| "0 0 " ++ ([ widthString, heightString ] |> String.join " ") ]
+      |> html
+      |> el (clickHandler ++ entityLabels ++ popup)
 
 
 viewTag : Model -> OerId -> Float -> Bubble -> List (Svg Msg)

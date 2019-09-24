@@ -11,7 +11,6 @@ import Dict exposing (Dict)
 
 import Model exposing (..)
 import View.Shared exposing (..)
-import View.Bubblogram exposing (..)
 
 import Msg exposing (..)
 import Animation exposing (..)

@@ -199,7 +199,7 @@ viewResource model oer =
             |> column [ width x, height y, moveDown 1 ]
 
       fragmentsBar =
-        if hasYoutubeVideo oer.url then
+        -- if hasYoutubeVideo oer.url then
           case chunksFromOerId model oer.id of
             [] ->
               none
@@ -209,10 +209,11 @@ viewResource model oer =
                   content =
                     viewFragmentsBar model oer wikichunks (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth "inspector"
                     |> el [ width (px playerWidth), height (px 16) ]
+                    |> Debug.log "none!"
               in
                   none |> el [ inFront content, moveUp (fragmentsBarWrapperHeight - fragmentsBarHeight) ]
-        else
-          none
+        -- else
+        --   none
 
       providerLink =
         case oer.provider of

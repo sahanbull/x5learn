@@ -387,14 +387,7 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
         'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text=' + text + '&page=' + str(page_number))
     response = conn.getresponse().read().decode("utf-8")
     materials = json.loads(response)['rec_materials']
-    # materials = [ m for m in materials if m['url'].endswith('.pdf') ] # filter by suffix
-    materials = [m for m in materials if m['url'].endswith(
-        '.pdf') or is_video(m['url'])]  # filter by suffix
-    # crudely filter out materials from MIT OCW that are assignments or date back to the 90s or early 2000s
-    materials = [m for m in materials if '/assignments/' not in m['url']
-                 and '199' not in m['url'] and '200' not in m['url']]
-    # Exclude non-english materials because they tend to come out poorly after wikification. X5GON search doesn't have a language parameter at the time of writing.
-    materials = [m for m in materials if m['language'] == 'en']
+    materials = filter_x5gon_search_results(materials)
     materials = remove_duplicates_from_x5gon_search_results(materials)
     for index, material in enumerate(materials):
         url = material['url']
@@ -416,6 +409,22 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     if len(oers)>=MAX_SEARCH_RESULTS:
         return oers
     return search_results_from_x5gon_api_pages(text, page_number+1, oers)
+
+
+def filter_x5gon_search_results(materials):
+    # (un)comment the lines below to enable/disable filters as desired
+
+    # filter by file suffix
+    materials = [m for m in materials if m['url'].endswith(
+        '.pdf') or is_video(m['url'])]
+
+    # crudely filter out materials from MIT OCW that are assignments or date back to the 90s or early 2000s
+    # materials = [m for m in materials if '/assignments/' not in m['url']
+    #              and '199' not in m['url'] and '200' not in m['url']]
+
+    # Exclude non-english materials because they tend to come out poorly after wikification. X5GON search doesn't have a language parameter at the time of writing.
+    # materials = [m for m in materials if m['language'] == 'en']
+    return materials
 
 
 def remove_duplicates_from_x5gon_search_results(materials):

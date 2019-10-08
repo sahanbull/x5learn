@@ -396,7 +396,6 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     # Exclude non-english materials because they tend to come out poorly after wikification. X5GON search doesn't have a language parameter at the time of writing.
     materials = [m for m in materials if m['language'] == 'en']
     materials = remove_duplicates_from_x5gon_search_results(materials)
-    oers = []
     for index, material in enumerate(materials):
         url = material['url']
         # Some urls that were longer than 255 caused errors.

@@ -64,6 +64,13 @@ class Oer(Base):
         self.data = data
 
     def data_and_id(self):
+        # Ensure that image and date fields have the correct types.
+        # This is just a lazy patch for pdfs that were poorly imported from csv.
+        # TODO remove the if statements below after re-importing the pdfs.
+        if self.data['images']=='[]':
+            self.data['images']=[]
+        if not isinstance(self.data['date'], str):
+            self.data['date'] = str(self.data['date'])
         result = {**self.data}
         result['id'] = self.id
         return result
@@ -82,8 +89,34 @@ class WikichunkEnrichment(Base):
         self.data = data
         self.version = version
 
+    def get_entity_titles(self):
+        titles = []
+        for chunk in self.data['chunks']:
+            for entity in chunk['entities']:
+                titles.append(entity['title'])
+        return titles
+
     def entities_to_string(self):
-        return '. '.join(['. '.join([e['title'] for e in chunk['entities']]) for chunk in self.data['chunks']])
+        return ','.join([','.join([e['title'] for e in chunk['entities']]) for chunk in self.data['chunks']])
+
+    def all_entity_titles_as_lowercase_strings(self):
+        result = []
+        for chunk in self.data['chunks']:
+            result += [ e['title'].lower() for e in chunk['entities'] ]
+        return result
+
+    def full_text(self):
+        return ' '.join([ chunk['text'] for chunk in self.data['chunks'] ])
+
+    def main_topics(self):
+        return [y for z in self.data['clusters'] for y in z] # concat lists
+
+    def get_topic_overlap(self, topics):
+        overlap = 0
+        for topic in self.main_topics():
+            if topic in topics:
+                overlap += 1
+        return overlap
 
 
 class WikichunkEnrichmentTask(Base):
@@ -106,7 +139,7 @@ class EntityDefinition(Base):
     id = Column(Integer(), primary_key=True)
     entity_id = Column(String(20))
     title = Column(String(255))
-    url = Column(String(255), unique=True)
+    url = Column(String(255))
     extract = Column(Text())
     last_update_at = Column(DateTime(), default=datetime.datetime.utcnow)
     lang = Column(String(20))

@@ -19,23 +19,30 @@ import Msg exposing (..)
 viewPageHeader : Model -> Element Msg
 viewPageHeader model =
   let
-      userMessage =
-        case model.userMessage of
+      snackbar =
+        case model.snackbar of
           Nothing ->
             []
 
-          Just str ->
-            [ str |> text |> el [ Background.color <| rgb 1 0.5 0.5, paddingXY 30 10, centerX ] |> below ]
+          Just {text, startTime} ->
+            let
+                time =
+                  millisSince model startTime
+
+                opacity =
+                  if time < snackbarDuration - 1500 then 1 else 0
+            in
+                [ text |> bodyWrap [ htmlClass "Snackbar", alpha opacity, pointerEventsNone, Background.color <| grey 50, paddingXY 25 15, centerX, Font.size 13, greyTextDisabled, Border.rounded 4, Font.color <| greyMedium, centerX, moveDown <| toFloat <| model.windowHeight - pageHeaderHeight - 50 ] |> el [ paddingLeft <| navigationDrawerWidth, centerX ]  |> below ]
 
       attrs =
         [ width fill
         , height (px pageHeaderHeight)
         , spacing 20
-        , paddingEach { allSidesZero | top = 0, left = 16, right = 16 }
+        , paddingEach { allSidesZero | top = 0, left = 13, right = 16 }
         , Background.color <| rgb 1 1 1
         , borderBottom 1
-        , borderColorLayout
-        ] ++ userMessage
+        , borderColorDivider
+        ] ++ snackbar
 
 
       loginLogoutSignup =

@@ -4,7 +4,6 @@ var timeOfLastMouseMove = new Date().getTime();
 
 var lastPageScrollOffset = 0;
 
-
 function positionAndSize(el) {
   var rect = el.getBoundingClientRect(), scrollLeft = window.pageXOffset || document.documentElement.scrollLeft, scrollTop = window.pageYOffset || document.documentElement.scrollTop;
   return { x: rect.left + scrollLeft, y: rect.top + scrollTop, sx: el.offsetWidth, sy: el.offsetHeight }
@@ -47,6 +46,12 @@ function setupPorts(app){
     }, 100);
   });
 
+  app.ports.askPageScrollState.subscribe(function(dummy) {
+    setTimeout(function(){
+      sendPageScrollState(true);
+    }, 100);
+  });
+
   app.ports.youtubeSeekTo.subscribe(function(fragmentStart) {
     player.seekTo(fragmentStart * player.getDuration());
     player.playVideo();
@@ -60,7 +65,21 @@ function setupPorts(app){
 
   setupEventHandlers();
 
-  setupScrollListener();
+  setupScrollDetector();
+}
+
+
+function sendPageScrollState(requestedByElm){
+  var el = document.getElementById('MainPageContent');
+  if(el){
+    var offset = el.pageYOffset !== undefined ? el.pageYOffset : el.scrollTop;
+    if(requestedByElm || offset!=lastPageScrollOffset){
+      var contentHeight = el.childNodes[0].clientHeight;
+      var pageScrollState = {scrollTop: el.scrollTop, viewHeight: el.clientHeight, contentHeight: contentHeight, requestedByElm: requestedByElm};
+      app.ports.pageScrolled.send(pageScrollState);
+      lastPageScrollOffset = offset;
+    }
+  }
 }
 
 
@@ -108,29 +127,47 @@ function setupEventHandlers(){
     app.ports.clickedOnDocument.send(12345);
   });
 
-  document.addEventListener("mouseover", function(e){
-    element = event.target;
+  document.addEventListener("mouseover", function(event){
+    var element = event.target;
+    if(element.classList.contains('Heart') &! element.classList.contains('HeartFlying')){
+      var eventPosition = getEventPosition(event);
+      var wrapperPositionY = position(document.getElementsByClassName('HeartAnimWrapper')[0]).y;
+      hoveringHeartPosition = {x: eventPosition.x-30, y: eventPosition.y-20-wrapperPositionY};
+      app.ports.receiveFlyingHeartRelativeStartPosition.send(hoveringHeartPosition);
+      return
+    }
     if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" ChunkTrigger ") > -1 ){
-      app.ports.mouseOverChunkTrigger.send(e.pageX);
+      app.ports.mouseOverChunkTrigger.send(event.pageX);
+      return
+    }
+  });
+
+  document.addEventListener("mousemove", function(e){
+    var element = event.target;
+    if((" " + element.getAttribute("class") + " ").replace(/[\n\t]/g, " ").indexOf(" StoryTag ") > -1 ){
+      var rect = element.getBoundingClientRect();
+      var posX = window.scrollX + rect.left;
+      var positionInResource = (e.pageX - posX) / rect.width;
+      app.ports.mouseMovedOnStoryTag.send(positionInResource);
     }
   });
 
   document.onkeydown = function checkKey(e) {
     e = e || window.event;
-    if(e.target.closest('#SearchField') || e.target.closest('#SearchSuggestions')){
+    if(e.target.closest('#SearchField') || e.target.closest('#AutocompleteSuggestions')){
       if (e.keyCode == '38') {
-        changeFocusOnSearchSuggestions(-1);
+        changeFocusOnAutocompleteSuggestions(-1);
       }
       else if (e.keyCode == '40') {
-        changeFocusOnSearchSuggestions(1);
+        changeFocusOnAutocompleteSuggestions(1);
       }
     }
   }
 }
 
-function changeFocusOnSearchSuggestions(direction){
+function changeFocusOnAutocompleteSuggestions(direction){
   var field = document.getElementById('SearchField');
-  var suggestions = document.getElementById('SearchSuggestions');
+  var suggestions = document.getElementById('AutocompleteSuggestions');
   if(!suggestions){
     return
   }
@@ -150,19 +187,10 @@ function changeFocusOnSearchSuggestions(direction){
 }
 
 
-function setupScrollListener(){
+function setupScrollDetector(){
   window.setInterval(function(){
-    var el = document.getElementById('MainPageContent');
-    if(el){
-      var offset = el.scrollTop;
-      if(offset!=lastPageScrollOffset){
-        var contentHeight = el.childNodes[0].clientHeight;
-        var scrollData = {scrollTop: el.scrollTop, viewHeight: el.clientHeight, contentHeight: contentHeight};
-        app.ports.pageScrolled.send(scrollData);
-        lastPageScrollOffset = offset;
-      }
-    }
-  }, 300);
+    sendPageScrollState(false);
+  }, 100);
 }
 
 
@@ -170,4 +198,28 @@ function getCardPlaceholderPosition(ph){
   var rect = ph.getBoundingClientRect();
   var scrollY = document.getElementById('OerCardsContainer').getBoundingClientRect().top;
   return { x: rect.left, y: rect.top - scrollY, oerId: parseInt(ph.getAttribute("data-oerid")) };
+}
+
+
+function getEventPosition(event){
+  // some boilerplate for browser compatibility
+  // https://stackoverflow.com/questions/7790725/javascript-track-mouse-position
+  var eventDoc, doc, body;
+  event = event || window.event; // IE-ism
+  // If pageX/Y aren't available and clientX/Y are,
+  // calculate pageX/Y - logic taken from jQuery.
+  // (This is to support old IE)
+  if (event.pageX == null && event.clientX != null) {
+    eventDoc = (event.target && event.target.ownerDocument) || document;
+    doc = eventDoc.documentElement;
+    body = eventDoc.body;
+
+    event.pageX = event.clientX +
+      (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
+      (doc && doc.clientLeft || body && body.clientLeft || 0);
+    event.pageY = event.clientY +
+      (doc && doc.scrollTop  || body && body.scrollTop  || 0) -
+      (doc && doc.clientTop  || body && body.clientTop  || 0 );
+  }
+  return {x: event.pageX, y: event.pageY}
 }

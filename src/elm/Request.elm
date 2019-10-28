@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestGains, requestWikichunkEnrichments, requestSearchSuggestions, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations, requestSendResourceFeedback)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestAutocompleteTerms, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestCollectionsSearchPrediction, requestFavorites)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -29,19 +29,27 @@ requestSession =
     }
 
 
-searchOers : String -> Cmd Msg
-searchOers searchText =
+searchOers : String -> String -> Cmd Msg
+searchOers searchText collectionTitlesCommaSeparated =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText ]
+    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText, Url.Builder.string "collections" collectionTitlesCommaSeparated ]
     , expect = Http.expectJson RequestOerSearch (list oerDecoder)
     }
 
 
-requestSearchSuggestions : String -> Cmd Msg
-requestSearchSuggestions searchText =
+requestFavorites : Cmd Msg
+requestFavorites =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "search_suggestions/" ] [ Url.Builder.string "text" searchText ]
-    , expect = Http.expectJson RequestSearchSuggestions (list string)
+    { url = Url.Builder.absolute [ apiRoot, "favorites/" ] []
+    , expect = Http.expectJson RequestFavorites (list int)
+    }
+
+
+requestAutocompleteTerms : String -> Cmd Msg
+requestAutocompleteTerms collectionTitlesCommaSeparated =
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "autocomplete_terms/" ] [ Url.Builder.string "collections" collectionTitlesCommaSeparated ]
+    , expect = Http.expectJson RequestAutocompleteTerms (list string)
     }
 
 
@@ -59,11 +67,11 @@ requestOers oerIds =
         }
 
 
-requestGains : Cmd Msg
-requestGains =
+requestFeaturedOers : Cmd Msg
+requestFeaturedOers =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "gains/" ] []
-    , expect = Http.expectJson RequestGains (list gainDecoder)
+    { url = Url.Builder.absolute [ apiRoot, "featured/" ] []
+    , expect = Http.expectJson RequestFeatured (list oerDecoder)
     }
 
 
@@ -120,11 +128,19 @@ requestResource oerId =
     }
 
 
-requestResourceRecommendations : String -> Cmd Msg
-requestResourceRecommendations searchText =
+requestResourceRecommendations : OerId -> Cmd Msg
+requestResourceRecommendations oerId =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText ]
+    { url = Url.Builder.absolute [ apiRoot, "recommendations/" ] [ Url.Builder.int "oerId" oerId ]
     , expect = Http.expectJson RequestResourceRecommendations (list oerDecoder)
+    }
+
+
+requestCollectionsSearchPrediction : String -> Cmd Msg
+requestCollectionsSearchPrediction searchText =
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "collections_search_prediction/" ] [ Url.Builder.string "text" searchText, Url.Builder.string "collectionTitles" (setOfAllCollectionTitles |> Set.toList |> String.join ",") ]
+    , expect = Http.expectJson RequestCollectionsSearchPrediction collectionsSearchPredictionDecoder
     }
 
 
@@ -135,6 +151,12 @@ requestSendResourceFeedback oerId text =
     , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId), ("text", Encode.string text) ]
     , expect = Http.expectString RequestSendResourceFeedback
     }
+
+
+collectionsSearchPredictionDecoder =
+  map2 CollectionsSearchPredictionResponse
+    (field "searchText" string)
+    (field "prediction" (dict int))
 
 
 sessionDecoder =
@@ -163,13 +185,6 @@ userProfileDecoder =
     , map initialUserProfile
         (field "email" string)
     ]
-
-
-gainDecoder =
-  map3 Gain
-    (field "title" string)
-    (field "level" float)
-    (field "confidence" float)
 
 
 searchResultsDecoder =

@@ -2,11 +2,13 @@ module View.NavigationDrawer exposing (withNavigationDrawer)
 
 import Dict
 import Set
+import Json.Decode as Decode
 
 import Element exposing (..)
 import Element.Input as Input exposing (button)
 import Element.Background as Background
 import Element.Border as Border
+import Element.Font as Font
 import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
 
 import Model exposing (..)
@@ -29,7 +31,7 @@ withNavigationDrawer model (pageContent, modal) =
             [ image [ width (px 20), alpha 0.66 ] { src = svgPath svgIconStub, description = "" }
             , label |> bodyNoWrap [ width fill ]
             ]
-            |> row ([ width fill, padding 12, spacing 30, Border.rounded 4 ] ++ background)
+            |> row ([ width fill, paddingXY 8 12, spacing 28, Border.rounded 4 ] ++ background)
             |> if enabled then linkTo [ width fill ] url else el [ semiTransparent, htmlClass "CursorNotAllowed" ]
 
       navButtons =
@@ -38,19 +40,20 @@ withNavigationDrawer model (pageContent, modal) =
         else
           -- [ navButton False "/next_steps" "nav_next_steps" "Next Steps"
           -- , navButton False "/journeys" "nav_journeys" "Journeys"
-          [ navButton True "/notes" "nav_bookmarks" "Notes"
-          , navButton True "/recent" "nav_recent" "Recent"
-          -- , navButton True "/gains" "nav_gains" "Gains"
+          [ navButton True "/favorites" "nav_favorites" "Favorites" |> heartAnimationWrapper
+          , navButton True "/notes" "nav_notes" "Notes"
+          , navButton True "/viewed" "nav_viewed" "Viewed"
           -- , navButton False "/notes" "nav_notes" "Notes"
           -- , navButton False "/peers" "nav_peers" "Peers"
           ]
-          |> column [ width fill, spacing 10 ]
+          |> column [ width fill, spacing 8 ]
 
       drawer =
         [ model.searchInputTyping |> (if isLabStudy1 model then dataSetSelectionWidget model else viewSearchWidget model fill "Search")
+        , viewOverviewSelectionWidget model
         , navButtons
         ]
-        |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 14, spacing 30, whiteBackground ]
+        |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 12, spacing 30, whiteBackground ]
         |> el [ height fill, width (px navigationDrawerWidth), paddingTop pageHeaderHeight ]
         |> inFront
 
@@ -59,10 +62,48 @@ withNavigationDrawer model (pageContent, modal) =
         , pageContent
         ]
         |> row [ width fill, height fill ]
+
+      heartAnimationWrapper =
+        let
+            animationLayer =
+              case model.flyingHeartAnimation of
+                Nothing ->
+                  []
+
+                Just {startTime} ->
+                  case model.flyingHeartAnimationStartPoint of
+                    Nothing ->
+                      []
+
+                    Just startPoint ->
+                      let
+                          phase =
+                            ((millisSince model startTime |> toFloat) / (flyingHeartAnimationDuration - 300)) ^ 0.9 |> min 1
+
+                          x =
+                            startPoint.x * (1-phase)
+
+                          y =
+                            startPoint.y * (1-phase)
+
+                          size =
+                            px 25
+
+                          opacity =
+                            phase^0.8
+
+                          transition =
+                            htmlStyle "transition-duration" "0.1s"
+
+                          heart =
+                            none
+                            |> el [ width <| size, height <| size, moveDown <| 10 + y, moveRight <| 6 + x, htmlClass "Heart HeartFilled HeartFlying PointerEventsNone", Element.alpha opacity, transition ]
+                      in
+                          [ inFront heart ]
+        in
+            el ([ width fill, htmlClass "HeartAnimWrapper" ] ++ animationLayer)
   in
       (page, modal ++ [ drawer ])
-
-
 
 
 dataSetSelectionWidget model searchInputTyping =
@@ -75,3 +116,23 @@ dataSetSelectionWidget model searchInputTyping =
         |> el [ width fill, centerX ]
   in
       searchField
+
+
+viewOverviewSelectionWidget : Model -> Element Msg
+viewOverviewSelectionWidget model =
+  Input.radio
+    [ paddingXY 0 20
+    , spacing 20
+    , width fill
+    ]
+    { onChange = SelectedOverviewType
+    , selected = Just model.overviewType
+    , label = Input.labelAbove captionTextAttrs (text "Preview")
+    , options =
+        [ Input.option ImageOverview (bodyNoWrap [] "Cover Image")
+        , Input.option (BubblogramOverview TopicNames) (bodyNoWrap [] "Main Topics")
+        , Input.option (BubblogramOverview TopicConnections) (bodyNoWrap [] "Topic Clusters")
+        , Input.option (BubblogramOverview TopicMentions) (bodyNoWrap [] "Topic Mentions")
+        ]
+    }
+    |> el [ width fill, padding 10, borderBottom 1, borderColorDivider ]

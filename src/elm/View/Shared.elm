@@ -19,6 +19,7 @@ import Dict
 import Model exposing (..)
 import Msg exposing (..)
 import Animation exposing (..)
+import Animation exposing (..)
 
 type alias PageWithModal = (Element Msg, List (Attribute Msg))
 
@@ -28,7 +29,7 @@ type IconPosition
 
 
 materialDark =
-  rgba 0 0 0 0.87
+  grey 11
 
 
 materialScrimBackground =
@@ -39,12 +40,24 @@ superLightBackground =
   Background.color <| rgb255 242 242 242
 
 
+greyDivider =
+  rgb 0.8 0.8 0.8
+
+
 materialDarkAlpha =
   alpha 0.87
 
 
 whiteText =
   Font.color white
+
+
+greyText =
+  Font.color <| grey 160
+
+
+greyTextDisabled =
+  Font.color <| grey 180
 
 
 feedbackOptionButtonColor =
@@ -63,10 +76,6 @@ x5colorDark =
   rgb255 38 63 71
 
 
-greyTextDisabled =
-  Font.color <| grey 180
-
-
 pageHeaderHeight =
   40
 
@@ -81,6 +90,10 @@ paddingBottom px =
 
 paddingLeft px =
   paddingEach { allSidesZero | left = px }
+
+
+paddingRight px =
+  paddingEach { allSidesZero | right = px }
 
 
 paddingTRBL t r b l =
@@ -103,8 +116,8 @@ borderLeft px =
   Border.widthEach { allSidesZero | left = px }
 
 
-borderColorLayout =
-  Border.color <| rgb 0.8 0.8 0.8
+borderColorDivider =
+  Border.color <| greyDivider
 
 
 allSidesZero =
@@ -119,16 +132,24 @@ wrapText attrs str =
   [ text str ] |> paragraph attrs
 
 
+captionTextAttrs =
+  [ Font.size 12, Font.color materialDark ]
+
+
+bodyTextAttrs =
+  [ Font.size 14, Font.color materialDark ]
+
+
 captionNowrap attrs str =
-  text str |> el ([ Font.size 12 ] ++ attrs)
+  text str |> el (captionTextAttrs ++ attrs)
 
 
 bodyWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 14 ] ++ attrs)
+  [ text str ] |> paragraph (bodyTextAttrs ++ attrs)
 
 
 bodyNoWrap attrs str =
-  text str |> el ([ Font.size 14, Font.color materialDark ] ++ attrs)
+  text str |> el (bodyTextAttrs ++ attrs)
 
 
 subSubheaderNoWrap attrs str =
@@ -136,15 +157,15 @@ subSubheaderNoWrap attrs str =
 
 
 subSubheaderWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 16 ] ++ attrs)
+  [ text str ] |> paragraph ([ Font.size 16, Font.color materialDark ] ++ attrs)
 
 
 subheaderWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 21 ] ++ attrs)
+  [ text str ] |> paragraph ([ Font.size 21, Font.color materialDark ] ++ attrs)
 
 
 headlineWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 24 ] ++ attrs)
+  [ text str ] |> paragraph ([ Font.size 24, Font.color materialDark ] ++ attrs)
 
 
 italicText =
@@ -156,19 +177,23 @@ white =
 
 
 yellow =
-  rgb255 245 220 0
+  rgba255 255 240 0 0.9
 
 
 orange =
   rgb255 255 120 0
 
 
-recentBlue =
+viewedBlue =
   rgb255 0 190 250
 
 
 linkBlue =
-  rgb255 0 120 250
+  rgb255 0 115 230
+
+
+grey40 =
+  grey 40
 
 
 grey80 =
@@ -211,6 +236,11 @@ htmlId name =
   Html.Attributes.id name |> htmlAttribute
 
 
+htmlStyle : String -> String -> Attribute Msg
+htmlStyle name value =
+  Html.Attributes.style name value |> htmlAttribute
+
+
 htmlDataAttribute str =
   Html.Attributes.attribute "data-oerid" str |> htmlAttribute
 
@@ -220,10 +250,12 @@ whiteBackground =
 
 
 pageBodyBackground model =
-  if isLabStudy1 model then
-    Background.color <| grey 224
-  else
-    Background.image <| imgPath "bg.jpg"
+  Background.image <| imgPath "bg.jpg"
+  -- if isLabStudy1 model then
+  -- if model.subpage==Home && (isLoggedIn model |> not) then
+  --   Background.image <| imgPath "bg.jpg"
+  -- else
+  --   Background.color <| grey 224
 
 
 imgPath str =
@@ -276,6 +308,10 @@ linkTo attrs url label =
   link attrs { url = url, label = label }
 
 
+newTabLinkTo attrs url label =
+  newTabLink attrs { url = url, label = label }
+
+
 viewSearchWidget model widthAttr placeholder searchInputTyping =
   let
       submit =
@@ -312,15 +348,32 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
             button ([ width fill, clipX, onFocus <| SelectSuggestion str ]++background++mouseEnterHandler) { onPress = Just <| TriggerSearch str, label = label }
 
       suggestions =
-        if List.isEmpty model.searchSuggestions || String.length searchInputTyping < 2 then
+        if List.isEmpty model.autocompleteTerms || String.length searchInputTyping < 1 then
           none
         else
-          model.searchSuggestions
+          model.autocompleteSuggestions
           |> List.map (\suggestion -> suggestionButton suggestion)
-          |> menuColumn [ width fill, clipY, height <| px (39*7) ]
-          |> el [ width fill, htmlId "SearchSuggestions" ]
+          |> menuColumn [ width fill, clipY, height (px 39 |> maximum (39*7)) ]
+          |> el [ width fill, htmlId "AutocompleteTerms" ]
+
+      collectionInfo =
+        if model.nav.url.path |> String.startsWith searchPath then
+          -- [ "Search in" |> captionNowrap []
+          -- , selectedOerCollectionsToSummaryString model |> bodyWrap []
+          -- , button [] { label = (if model.collectionsMenuOpen then "Hide menu" else "Change") |> captionNowrap [ Font.color linkBlue ], onPress = Just <| ToggleCollectionsMenu }
+          -- ]
+          [ "Search in " ++ (selectedOerCollectionsToSummaryString model |> truncateSentence 20) |> captionNowrap [ width <| px 180, htmlClass "ClipEllipsis" ]
+          , button [] { label = (if model.collectionsMenuOpen then "Hide menu" else "Change") |> captionNowrap [ Font.color linkBlue ], onPress = Just <| ToggleCollectionsMenu }
+          ]
+          |> column [ spacing 10, paddingBottom 13 ]
+          |> el [ width fill, padding 10, borderBottom 1, borderColorDivider ]
+        else
+          none
   in
-      searchField
+      [ searchField
+      , collectionInfo
+      ]
+      |> column [ spacing 10, centerX ]
 
 
 svgIcon stub=
@@ -331,13 +384,13 @@ navigationDrawerWidth =
   230
 
 
-actionButtonWithIcon iconPosition svgIconStub str onPress =
+actionButtonWithIcon textAttrs iconPosition svgIconStub str onPress =
   let
       icon =
         image [ alpha 0.5 ] { src = svgPath svgIconStub, description = "" }
 
       title =
-        str |> bodyNoWrap [ width fill ]
+        str |> bodyNoWrap (textAttrs ++ [ width fill ])
 
       label =
         case iconPosition of
@@ -347,7 +400,7 @@ actionButtonWithIcon iconPosition svgIconStub str onPress =
           IconRight ->
             [ title, icon ]
   in
-      button [] { onPress = onPress, label = label |> row [ width fill, padding 12, spacing 3, Border.rounded 4 ]}
+      button [] { onPress = onPress, label = label |> row [ width fill, spacing 3, Border.rounded 4 ]}
 
 
 simpleButton : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
@@ -359,13 +412,13 @@ simpleButton attrs str onPress =
       button attrs { onPress = onPress, label = label }
 
 
-actionButtonWithoutIcon : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
-actionButtonWithoutIcon attrs str onPress =
+actionButtonWithoutIcon : List (Attribute Msg) -> List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
+actionButtonWithoutIcon labelAttrs buttonAttrs str onPress =
   let
       label =
-        str |> bodyNoWrap []
+        str |> bodyNoWrap labelAttrs
   in
-      button attrs { onPress = onPress, label = label }
+      button buttonAttrs { onPress = onPress, label = label }
 
 
 actionButtonWithoutIconNoBobble : List (Attribute Msg) -> String -> Msg -> Element Msg
@@ -452,7 +505,7 @@ menuColumn attrs =
   column ([ Background.color white, Border.rounded 4, Border.color <| grey80, dialogShadow ] ++ attrs)
 
 
-viewFragmentsBar model oer chunks recommendedFragments barWidth barId darkBackground =
+viewFragmentsBar model oer chunks recommendedFragments barWidth barId =
   let
       -- markers =
       --   [ fragmentMarkers recommendedFragments yellow
@@ -490,10 +543,39 @@ viewFragmentsBar model oer chunks recommendedFragments barWidth barId darkBackgr
                   False
 
             appearance =
-              if isPopupOpen then
-                [ Background.color orange ]
-              else
-                [ none |> el [ width <| px 1, height <| px fragmentsBarHeight, Background.color veryTransparentWhite ] |> inFront ]
+              let
+                  bg =
+                    if isPopupOpen then
+                      [ Background.color grey80 ]
+                    else
+                      []
+
+                  leftBorder =
+                    none
+                    |> el [ width <| px 1, height <| px fragmentsBarHeight, Background.color veryTransparentWhite ]
+                    |> inFront
+
+                  queryHighlight =
+                    case model.searchState of
+                      Nothing ->
+                        []
+
+                      Just {lastSearch} ->
+                        case indexOf (String.toLower lastSearch) (chunk.entities |> List.map (\{title} -> String.toLower title)) of
+                          Nothing ->
+                            []
+
+                          Just index ->
+                            let
+                                posY =
+                                  ((toFloat index)*3.5 |> floor)
+                            in
+                                none
+                                |> el [ width fill, height (px <| fragmentsBarHeight-posY), moveDown (toFloat posY), Background.color yellow ]
+                                |> inFront
+                                |> List.singleton
+                in
+                  ([ leftBorder ] ++ queryHighlight ++ bg)
 
             popup =
               if isPopupOpen then
@@ -527,10 +609,7 @@ viewFragmentsBar model oer chunks recommendedFragments barWidth barId darkBackgr
         [ none |> el [ width fill , Background.color veryTransparentWhite, height <| px 1 ] |> above ]
 
       background =
-        if darkBackground then
-          [ Background.color materialDark ]
-        else
-          []
+        [ Background.color materialDark ]
   in
     none
     |> el ([ width fill, height <| px <| fragmentsBarHeight,  moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background)
@@ -751,15 +830,6 @@ pointerEventsNone =
   htmlClass "PointerEventsNone"
 
 
-isAnyChunkPopupOpen model =
-  case model.popup of
-    Just (ChunkOnBar _) ->
-      True
-
-    _ ->
-      False
-
-
 secondsToString : Int -> String
 secondsToString seconds =
   let
@@ -788,3 +858,13 @@ guestCallToSignup incentive =
       , "." |> text
       ]
       |> paragraph [ Font.size 14, Font.color materialDark ]
+
+
+viewHeartButton : Model -> OerId -> Element Msg
+viewHeartButton model oerId =
+    let
+        class =
+          "Heart " ++ (if isMarkedAsFavorite model oerId then "HeartFilled" else "HeartOutline")
+    in
+        none
+        |> el [ width <| px 20, height <| px 22, onClickNoBubble (ClickedHeart oerId), htmlClass class  ]

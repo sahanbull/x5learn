@@ -24,19 +24,19 @@ type alias Model =
   , searchInputTyping : String
   , searchState : Maybe SearchState
   , inspectorState : Maybe InspectorState
-  , userMessage : Maybe String
-  , hoveringOerId : Maybe String
+  , snackbar : Maybe Snackbar
+  , hoveringOerId : Maybe OerId
   , timeOfLastMouseEnterOnCard : Posix
   , modalAnimation : Maybe BoxAnimation
   , animationsPending : Set String
-  , gains : Maybe (List Gain)
   , nextSteps : Maybe (List Pathway)
   , popup : Maybe Popup
   , requestingWikichunkEnrichments : Bool
   , wikichunkEnrichments : Dict OerId WikichunkEnrichment
   , enrichmentsAnimating : Bool
   , tagClouds : Dict String (List String)
-  , searchSuggestions : List String
+  , autocompleteTerms : List String
+  , autocompleteSuggestions : List String
   , selectedSuggestion : String
   , suggestionSelectionOnHoverEnabled : Bool
   , timeOfLastSearch : Posix
@@ -46,7 +46,7 @@ type alias Model =
   , feedbackForms : Dict OerId String
   , cachedOers : Dict OerId Oer
   , requestingOers : Bool
-  , hoveringBubbleEntityId : Maybe String
+  , hoveringTagEntityId : Maybe String
   , entityDefinitions : Dict String EntityDefinition
   , requestingEntityDefinitions : Bool
   , wikichunkEnrichmentRequestFailCount : Int
@@ -60,8 +60,27 @@ type alias Model =
   , oerNoteboards : Dict OerId Noteboard
   , fragmentAccesses : Dict Int Fragment
   , oerCardPlaceholderPositions : List OerCardPlaceholderPosition
+  , overviewType : OverviewType
+  , selectedMentionInStory : Maybe (OerId, MentionInOer)
+  , selectedOerCollections : Set String
+  , pageScrollState : PageScrollState
+  , collectionsMenuOpen : Bool
+  , cachedCollectionsSearchPredictions : Dict String CollectionsSearchPrediction -- key = Search term
+  , favorites : List OerId
+  , removedFavorites : Set OerId -- keep a client-side record of "unliked" oers so that cards on the favorites page don't simply disappear when unliked
+  , hoveringHeart : Maybe OerId
+  , flyingHeartAnimation : Maybe FlyingHeartAnimation
+  , flyingHeartAnimationStartPoint : Maybe Point
+  , featuredOers : Maybe (List OerId)
   }
 
+
+type alias CollectionsSearchPrediction = Dict String Int
+
+type alias CollectionsSearchPredictionResponse =
+  { searchText : String
+  , prediction : CollectionsSearchPrediction
+  }
 
 type EntityDefinition
   = DefinitionScheduledForLoading
@@ -77,6 +96,19 @@ type CurrentResource
   = Loaded OerId
   | Error
 
+type OverviewType
+  = ImageOverview
+  | BubblogramOverview BubblogramType
+
+type BubblogramType
+  = TopicNames
+  | TopicConnections
+  | TopicMentions
+
+type alias FlyingHeartAnimation =
+  { startTime : Posix
+  }
+
 type alias LabStudyTask =
   { title : String
   , durationInMinutes : Int
@@ -85,6 +117,7 @@ type alias LabStudyTask =
 
 type alias Bubble =
   { entity : Entity
+  , index : Int
   , hue : Float
   , alpha : Float
   , saturation : Float
@@ -120,12 +153,24 @@ type alias EntityTitle = String
 
 type alias Noteboard = List Note
 
-type alias ScrollData =
+type alias PageScrollState =
   { scrollTop : Float
   , viewHeight : Float
   , contentHeight : Float
+  , requestedByElm : Bool -- for analytics
   }
 
+
+type alias OerCollection =
+  { title : String
+  , description : String
+  , url : String
+  }
+
+type alias Snackbar =
+  { startTime : Posix
+  , text : String
+  }
 
 type alias OerCardPlaceholderPosition =
   { x : Float
@@ -171,8 +216,9 @@ type Subpage
   = Home
   | Profile
   | Search
+  | Favorites
   | Notes
-  | Recent
+  | Viewed
   | Resource
 
 
@@ -250,13 +296,6 @@ type alias MentionInOer =
   , sentence : String
   }
 
-type alias Gain =
-  { title : String
-  , level : Float
-  , confidence : Float
-  }
-
-
 type alias Fragment =
   { oerId : OerId
   , start : Float -- 0 to 1
@@ -308,19 +347,19 @@ initialModel nav flags =
   , searchInputTyping = ""
   , searchState = Nothing
   , inspectorState = Nothing
-  , userMessage = Nothing
+  , snackbar = Nothing
   , hoveringOerId = Nothing
   , timeOfLastMouseEnterOnCard = initialTime
   , modalAnimation = Nothing
   , animationsPending = Set.empty
-  , gains = Nothing
   , nextSteps = Nothing
   , popup = Nothing
   , requestingWikichunkEnrichments = False
   , wikichunkEnrichments = Dict.empty
   , enrichmentsAnimating = False
   , tagClouds = Dict.empty
-  , searchSuggestions = []
+  , autocompleteTerms = []
+  , autocompleteSuggestions = []
   , selectedSuggestion = ""
   , suggestionSelectionOnHoverEnabled = True -- prevent accidental selection when user doesn't move the pointer but the menu appears on the pointer
   , timeOfLastSearch = initialTime
@@ -330,7 +369,7 @@ initialModel nav flags =
   , feedbackForms = Dict.empty
   , cachedOers = Dict.empty
   , requestingOers = False
-  , hoveringBubbleEntityId = Nothing
+  , hoveringTagEntityId = Nothing
   , entityDefinitions = Dict.empty
   , requestingEntityDefinitions = False
   , wikichunkEnrichmentRequestFailCount = 0
@@ -344,6 +383,18 @@ initialModel nav flags =
   , oerNoteboards = Dict.empty
   , fragmentAccesses = Dict.empty
   , oerCardPlaceholderPositions = []
+  , overviewType = ImageOverview
+  , selectedMentionInStory = Nothing
+  , selectedOerCollections = setOfAllCollectionTitles
+  , pageScrollState = PageScrollState 0 0 0 False
+  , collectionsMenuOpen = False
+  , cachedCollectionsSearchPredictions = Dict.empty
+  , favorites = []
+  , removedFavorites = Set.empty
+  , hoveringHeart = Nothing
+  , flyingHeartAnimation = Nothing
+  , flyingHeartAnimationStartPoint = Nothing
+  , featuredOers = Nothing
   }
 
 
@@ -605,6 +656,24 @@ uniqueEntitiesFromEnrichments enrichments =
   |> List.Extra.uniqueBy .id
 
 
+getEntityTitleFromEntityId : Model -> EntityId -> Maybe String
+getEntityTitleFromEntityId model entityId =
+  let
+      maybeEntity =
+        model.wikichunkEnrichments
+        |> Dict.values
+        |> uniqueEntitiesFromEnrichments
+        |> List.filter (\{id} -> id==entityId)
+        |> List.head
+  in
+      case maybeEntity of
+        Nothing ->
+          Nothing
+
+        Just entity ->
+          Just entity.title
+
+
 homePath =
   "/"
 
@@ -617,8 +686,14 @@ searchPath =
 notesPath =
   "/notes"
 
-recentPath =
+recentPath = -- deprecated
   "/recent"
+
+viewedPath =
+  "/viewed"
+
+favoritesPath =
+  "/favorites"
 
 resourcePath =
   "/resource"
@@ -728,3 +803,109 @@ relatedSearchStringFromOer model oerId =
 
 getResourceFeedbackFormValue model oerId =
   model.feedbackForms |> Dict.get oerId |> Maybe.withDefault ""
+
+
+oerCollections =
+  defaultOerCollection :: additionalOerCollections
+
+
+defaultOerCollection =
+  OerCollection "X5GON Platform" "Millions of lecture materials, videos and slide decks" "https://x5gon.org"
+
+
+additionalOerCollections =
+  [ OerCollection "Journal of Medical Internet Research (JMIR)" "Peer-reviewed Open Access Journal" "https://www.jmir.org/2019/8"
+  , OerCollection "Mental Health Meetups London" "74 Meetup groups" "https://www.meetup.com/find/?allMeetups=false&keywords=mental+health&radius=5&userFreeform=Greater+London%2C+United+Kingdom&mcId=z2827702&mcName=Greater+London%2C+England%2C+GB&sort=default"
+  , OerCollection "Mindfulness meditation" "Guided meditation videos on YouTube" "https://www.youtube.com/playlist?list=PLpb1DIPqFFN195vv7pnDFKtM9y5feLFp4"
+  , OerCollection "National Institute of Mental Health (NIMH)" "180+ videos on YouTube" "https://www.youtube.com/user/NIMHgov/videos"
+  , OerCollection "Alan Turing Institute" "350+ videos on YouTube" "https://www.youtube.com/channel/UCcr5vuAH5TPlYox-QLj4ySw/videos"
+  , OerCollection "TED Talks" "2000+ videos on YouTube" "https://www.youtube.com/user/TEDtalksDirector/videos"
+  , OerCollection "Numberphile" "400 videos on YouTube" "https://www.youtube.com/user/numberphile/videos"
+  ]
+
+
+getOerCollectionByTitle title =
+  additionalOerCollections
+  |> List.filter (\collection -> collection.title == title)
+  |> List.head
+  |> Maybe.withDefault defaultOerCollection
+
+
+getPredictedNumberOfSearchResults : Model -> String -> Maybe Int
+getPredictedNumberOfSearchResults model collectionTitle =
+  case getCollectionsSearchPredictionOfLastSearch model of
+    Nothing ->
+      Nothing
+
+    Just prediction ->
+      Dict.get collectionTitle prediction
+
+
+getCollectionsSearchPredictionOfLastSearch : Model -> Maybe CollectionsSearchPrediction
+getCollectionsSearchPredictionOfLastSearch model =
+  case model.searchState of
+    Nothing ->
+      Nothing
+
+    Just {lastSearch} ->
+      Dict.get lastSearch model.cachedCollectionsSearchPredictions
+
+
+setOfAllCollectionTitles : Set String
+setOfAllCollectionTitles =
+  oerCollections
+  |> List.map .title
+  |> Set.fromList
+
+
+selectedOerCollectionsToCommaSeparatedString : Model -> String
+selectedOerCollectionsToCommaSeparatedString model =
+  model.selectedOerCollections
+  |> Set.toList
+  |> String.join ","
+
+
+selectedOerCollectionsToSummaryString : Model -> String
+selectedOerCollectionsToSummaryString model =
+  if model.selectedOerCollections == setOfAllCollectionTitles then
+    "all collections"
+  else
+    case Set.toList model.selectedOerCollections of
+      [ only ] ->
+        only
+
+      _ ->
+        "selected collections"
+
+
+snackbarDuration =
+  3000
+
+
+indexOf : a -> List a -> Maybe Int
+indexOf element list =
+  let
+      helper index xs =
+        case xs of
+          x::rest ->
+            if x==element then
+              Just index
+            else
+              helper (index+1) rest
+
+          _ ->
+            Nothing
+  in
+      helper 0 list
+
+
+isMarkedAsFavorite model oerId =
+  List.member oerId model.favorites && (Set.member oerId model.removedFavorites |> not)
+
+
+isFlyingHeartAnimating model =
+  model.flyingHeartAnimation /= Nothing
+
+
+flyingHeartAnimationDuration =
+  900

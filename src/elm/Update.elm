@@ -27,7 +27,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg ({nav, userProfileForm} as model) =
   -- let
   --     actionlog =
-  --       msg |> log "action"
+  --       msg |> Debug.log "action"
   -- in
   case msg of
     Initialized url ->
@@ -35,7 +35,7 @@ update msg ({nav, userProfileForm} as model) =
           (newModel, cmd) =
             model |> update (UrlChanged url)
       in
-          (newModel, [ cmd, requestSession ] |> Cmd.batch )
+          (newModel, [ cmd, requestSession, askPageScrollState True ] |> Cmd.batch )
 
     LinkClicked urlRequest ->
       case urlRequest of
@@ -57,40 +57,61 @@ update msg ({nav, userProfileForm} as model) =
             if path |> String.startsWith profilePath then
               (Profile, (model, Cmd.none))
             else if path |> String.startsWith notesPath then
-              (Notes, ({ model | oerCardPlaceholderPositions = [] }, getOerCardPlaceholderPositions True))
+              (Notes, ({ model | oerCardPlaceholderPositions = [] }, [ getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch))
             else if path |> String.startsWith recentPath then
-              (Recent, (model, Cmd.none))
+              (Viewed, (model, Navigation.load "/viewed"))
+            else if path |> String.startsWith viewedPath then
+              (Viewed, (model, askPageScrollState True))
+            else if path |> String.startsWith favoritesPath then
+              (Favorites, (model, askPageScrollState True))
             else if path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
             else if path |> String.startsWith resourcePath then
               (Resource, model |> requestResourceAfterUrlChanged url)
             else
-              (Home, (model, Cmd.none))
+              (Home, (model, (if model.featuredOers==Nothing then requestFeaturedOers else Cmd.none)))
       in
-          ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage } |> closePopup |> resetUserProfileForm, cmd)
+          ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage, resourceSidebarTab = NotesTab, resourceRecommendations = [], collectionsMenuOpen = False } |> closePopup |> resetUserProfileForm, cmd)
           |> logEventForLabStudy "UrlChanged" [ path ]
 
     ClockTick time ->
-      ( { model | currentTime = time, enrichmentsAnimating = anyBubblogramsAnimating model }, getOerCardPlaceholderPositions True)
+      ( { model | currentTime = time, enrichmentsAnimating = anyBubblogramsAnimating model, snackbar = updateSnackbar model }, getOerCardPlaceholderPositions True)
       |> requestWikichunkEnrichmentsIfNeeded
       |> requestEntityDefinitionsIfNeeded
 
     AnimationTick time ->
-      ( { model | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
+      let
+          newModel =
+            case model.flyingHeartAnimation of
+              Nothing ->
+                model
+
+              Just {startTime} ->
+                if millisSince model startTime > flyingHeartAnimationDuration then
+                  { model | flyingHeartAnimation = Nothing }
+                else
+                  model
+      in
+          ( { newModel | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
 
     ChangeSearchText str ->
-      ( { model | searchInputTyping = str } |> closePopup, if String.length str > 1 then requestSearchSuggestions str else Cmd.none)
-      |> logEventForLabStudy "ChangeSearchText" [ str ]
+      let
+          autocompleteSuggestions =
+            model.autocompleteTerms
+            |> List.filter (\term -> String.startsWith (String.toLower str) (String.toLower term))
+      in
+          ( { model | searchInputTyping = str, autocompleteSuggestions = autocompleteSuggestions } |> closePopup, Cmd.none)
+          |> logEventForLabStudy "ChangeSearchText" [ str ]
 
     TriggerSearch str ->
       let
           searchUrl =
-            Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" str ]
+            Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" (String.trim str), Url.Builder.string "collections" (selectedOerCollectionsToCommaSeparatedString model) ]
       in
           ({ model | inspectorState = Nothing } |> closePopup, Navigation.pushUrl nav.key searchUrl)
 
     ResizeBrowser x y ->
-      ( { model | windowWidth = x, windowHeight = y } |> closePopup, Cmd.none )
+      ( { model | windowWidth = x, windowHeight = y } |> closePopup, askPageScrollState True)
 
     InspectOer oer fragmentStart fragmentLength playWhenReady ->
       let
@@ -103,8 +124,8 @@ update msg ({nav, userProfileForm} as model) =
             }
       in
           ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> addFragmentAccess (Fragment oer.id fragmentStart fragmentLength) model.currentTime, openModalAnimation youtubeEmbedParams)
-      |> saveAction 1 [ ("oerId", Encode.int oer.id), ("oerId", Encode.int oer.id) ]
-      |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt ]
+          |> saveAction 1 [ ("oerId", Encode.int oer.id) ]
+          |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat ]
 
     UninspectSearchResult ->
       ( { model | inspectorState = Nothing}, Cmd.none)
@@ -127,7 +148,7 @@ update msg ({nav, userProfileForm} as model) =
                 Cmd.none
 
               LoggedInUser userProfile ->
-                [ requestNotes, ActionApi.requestRecentViews ] |> Cmd.batch
+                [ requestNotes, ActionApi.requestRecentViews, requestFavorites ] |> Cmd.batch
       in
           ( newModel |> resetUserProfileForm, cmd)
           |> logEventForLabStudy "RequestSession" []
@@ -137,7 +158,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestSession"
       -- in
-      ( { model | userMessage = Just "An error occurred. Please reload the page." }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "An error occurred. Please reload the page." }, Cmd.none )
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     RequestRecentViews (Ok oerIds) ->
       let
@@ -154,7 +176,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestRecentViews"
       -- in
-      ( { model | userMessage = Just "An error occurred. Please reload the page." }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "An error occurred. Please reload the page." }, Cmd.none )
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     RequestNotes (Ok notes) ->
       let
@@ -187,7 +210,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestNotes"
       -- in
-      ( { model | userMessage = Just "An error occurred. Please reload the page." }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "An error occurred. Please reload the page." }, Cmd.none )
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     RequestDeleteNote (Ok _) ->
       ( model, requestNotes)
@@ -198,11 +222,13 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestDeleteNote"
       -- in
-      ( { model | userMessage = Just "Some changes were not saved." }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "Some changes were not saved." }, Cmd.none )
+      ( { model | snackbar = createSnackbar model "Some changes were not saved." }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
-      ( model |> updateSearch (insertSearchResults (oers |> List.map .id)) |> cacheOersFromList oers, setBrowserFocus "SearchField")
+      (model |> updateSearch (insertSearchResults (oers |> List.map .id)) |> cacheOersFromList oers, [ setBrowserFocus "SearchField", getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch)
       |> requestWikichunkEnrichmentsIfNeeded
+      |> requestCollectionsSearchPredictionIfNeeded
       |> logEventForLabStudy "RequestOerSearch" (oers |> List.map .id |> List.map String.fromInt)
 
     RequestOerSearch (Err err) ->
@@ -210,7 +236,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestOerSearch"
       -- in
-      ( { model | userMessage = Just "There was a problem while fetching the search data" }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "There was a problem while fetching the search data" }, Cmd.none )
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     RequestOers (Ok oers) ->
       ( { model | requestingOers = False } |> cacheOersFromList oers, Cmd.none)
@@ -220,17 +247,15 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestOers"
       -- in
-      ( { model | requestingOers = False, userMessage = Just "There was a problem while fetching OER data" }, Cmd.none)
+      -- ( { model | requestingOers = False, snackbar = createSnackbar model "There was a problem while fetching OER data" }, Cmd.none)
+      ( { model | requestingOers = False, snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none)
 
-    RequestGains (Ok gains) ->
-      ( { model | gains = Just gains }, Cmd.none )
+    RequestFeatured (Ok oers) ->
+      ( { model | featuredOers = oers |> List.map .id |> Just } |> cacheOersFromList oers, Cmd.none )
 
-    RequestGains (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestGains"
-      -- in
-      ( { model | userMessage = Just "There was a problem while fetching the gains data" }, Cmd.none)
+
+    RequestFeatured (Err err) ->
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none)
 
     RequestWikichunkEnrichments (Ok listOfEnrichments) ->
       let
@@ -248,14 +273,15 @@ update msg ({nav, userProfileForm} as model) =
           retryTime =
             (posixToMillis model.currentTime) + (failCount*2000 |> min 5000) |> millisToPosix
       in
-          ( { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.union dictOfEnrichments, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, wikichunkEnrichmentRequestFailCount = failCount, wikichunkEnrichmentRetryTime = retryTime } |> registerUndefinedEntities listOfEnrichments, Cmd.none )
+          ( { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.union dictOfEnrichments, requestingWikichunkEnrichments = False, enrichmentsAnimating = True, wikichunkEnrichmentRequestFailCount = failCount, wikichunkEnrichmentRetryTime = retryTime } |> registerUndefinedEntities listOfEnrichments |> updateBubblogramsIfNeeded, Cmd.none )
 
     RequestWikichunkEnrichments (Err err) ->
       -- let
       --     dummy =
       --       err |> Debug.log "Error in RequestWikichunkEnrichments"
       -- in
-      ( { model | userMessage = Just "There was a problem - please reload the page.", requestingWikichunkEnrichments = False }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "There was a problem - please reload the page.", requestingWikichunkEnrichments = False }, Cmd.none )
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage, requestingWikichunkEnrichments = False }, Cmd.none )
 
     RequestEntityDefinitions (Ok definitionTexts) ->
       let
@@ -270,20 +296,36 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestEntityDefinitions"
       -- in
-      ( { model | userMessage = Just "There was a problem while fetching the wiki definitions data", requestingEntityDefinitions = False }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "There was a problem while fetching the wiki definitions data", requestingEntityDefinitions = False }, Cmd.none )
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage, requestingEntityDefinitions = False }, Cmd.none )
 
-    RequestSearchSuggestions (Ok suggestions) ->
+    RequestAutocompleteTerms (Ok autocompleteTerms) ->
       if (millisSince model model.timeOfLastSearch) < 2000 then
         (model, Cmd.none)
       else
-        ({ model | searchSuggestions = suggestions, suggestionSelectionOnHoverEnabled = False }, Cmd.none)
+        ({ model | autocompleteTerms = autocompleteTerms, suggestionSelectionOnHoverEnabled = False }, Cmd.none)
 
-    RequestSearchSuggestions (Err err) ->
+    RequestAutocompleteTerms (Err err) ->
       -- let
       --     dummy =
-      --       err |> Debug.log "Error in RequestSearchSuggestions"
+      --       err |> Debug.log "Error in RequestAutocompleteTerms"
       -- in
-      ( { model | userMessage = Just "There was a problem while fetching search suggestions" }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "There was a problem while fetching search suggestions" }, Cmd.none )
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
+
+    RequestFavorites (Ok favorites) ->
+      let
+          newModel = { model | favorites = favorites }
+      in
+          ( newModel, requestOersByIds newModel favorites)
+          |> logEventForLabStudy "RequestFavorites" []
+
+    RequestFavorites (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestFavorites"
+      -- in
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     RequestSaveUserProfile (Ok _) ->
       ({ model | userProfileForm = { userProfileForm | saved = True }, userProfileFormSubmitted = Nothing }, Cmd.none)
@@ -293,7 +335,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestSaveUserProfile"
       -- in
-      ( { model | userMessage = Just "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
+      ( { model | snackbar = createSnackbar model "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
 
     RequestLabStudyLogEvent (Ok _) ->
       (model, Cmd.none)
@@ -303,7 +346,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestLabStudyLogEvent"
       -- in
-      ( { model | userMessage = Just "Some logs were not saved" }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "Some logs were not saved" }, Cmd.none )
+      ( { model | snackbar = createSnackbar model "Some logs were not saved" }, Cmd.none )
 
     RequestSendResourceFeedback (Ok _) ->
       (model, Cmd.none)
@@ -315,13 +359,14 @@ update msg ({nav, userProfileForm} as model) =
       (model, Cmd.none)
 
     RequestSaveAction (Err err) ->
-      ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+      ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
     RequestSaveNote (Ok _) ->
       (model, requestNotes)
 
     RequestSaveNote (Err err) ->
-      ( { model | userMessage = Just "Some changes were not saved" }, Cmd.none )
+      ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
     RequestResource (Ok oer) ->
       let
@@ -345,7 +390,7 @@ update msg ({nav, userProfileForm} as model) =
           newModel =
             { model | currentResource = Just <| Loaded oer.id } |> cacheOersFromList [ oer ]
       in
-          (newModel, [ cmdYoutube, requestResourceRecommendations <| relatedSearchStringFromOer newModel oer.id ] |> Cmd.batch )
+          (newModel, [ cmdYoutube ] |> Cmd.batch )
 
     RequestResource (Err err) ->
       ( { model | currentResource = Just Error }, Cmd.none )
@@ -364,16 +409,45 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestResourceRecommendations"
       -- in
-      ( { model | resourceRecommendations = [], userMessage = Just "An error occurred while loading recommendations" }, Cmd.none )
+      -- ( { model | resourceRecommendations = [], snackbar = createSnackbar model "An error occurred while loading recommendations" }, Cmd.none )
+      ( { model | resourceRecommendations = [], snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
-    SetHover maybeUrl ->
-      ( { model | hoveringOerId = maybeUrl, timeOfLastMouseEnterOnCard = model.currentTime }, Cmd.none )
-      |> logEventForLabStudy "SetHover" [ maybeUrl |> Maybe.withDefault "" ]
+    RequestCollectionsSearchPrediction (Ok response) ->
+      ({ model | cachedCollectionsSearchPredictions = model.cachedCollectionsSearchPredictions |> Dict.insert response.searchText response.prediction }, Cmd.none)
+      |> logEventForLabStudy "RequestCollectionsSearchPrediction" []
+
+    RequestCollectionsSearchPrediction (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestCollectionsSearchPrediction"
+      -- in
+      ( { model | snackbar = createSnackbar model "An error occurred while trying to predict search results" }, Cmd.none )
+
+    SetHover maybeOerId ->
+      let
+          hoveringTagEntityId =
+            case maybeOerId of
+              Nothing ->
+                Nothing
+
+              Just _ ->
+                model.hoveringTagEntityId
+
+          popup =
+            case maybeOerId of
+              Nothing ->
+                Nothing
+
+              _ ->
+                model.popup
+      in
+          ( { model | hoveringOerId = maybeOerId, timeOfLastMouseEnterOnCard = model.currentTime, hoveringTagEntityId = hoveringTagEntityId } |> unselectMentionInStory, Cmd.none )
+          |> logEventForLabStudy "SetHover" [ maybeOerId |> Maybe.withDefault 0 |> String.fromInt ]
 
     SetPopup popup ->
       let
           newModel =
-            { model | popup = Just popup }
+            { model | popup = Just popup, collectionsMenuOpen = False }
       in
           (newModel, Cmd.none)
           |> logEventForLabStudy "SetPopup" (popupToStrings newModel.popup)
@@ -387,14 +461,15 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "CloseInspector" []
 
     ClickedOnDocument ->
-      ( { model | searchSuggestions = [] }, Cmd.none )
+      ( { model | autocompleteSuggestions = [] }, Cmd.none )
 
     SelectSuggestion suggestion ->
       ( { model | selectedSuggestion = suggestion }, Cmd.none )
       |> logEventForLabStudy "SelectSuggestion" [ suggestion ]
 
     MouseOverChunkTrigger mousePositionX ->
-      ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX }, Cmd.none )
+      -- ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX } |> unselectMentionInStory, Cmd.none )
+      ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX, hoveringTagEntityId = Nothing } |> unselectMentionInStory, Cmd.none )
       |> logEventForLabStudy "MouseOverChunkTrigger" [ mousePositionX |> String.fromFloat ]
 
     YoutubeSeekTo fragmentStart ->
@@ -449,30 +524,42 @@ update msg ({nav, userProfileForm} as model) =
       (model |> expandCurrentFragmentOrCreateNewOne position model.inspectorState, Cmd.none)
       |> logEventForLabStudy "VideoIsPlayingAtPosition" [ position |> String.fromFloat]
 
-    BubbleMouseOver entityId ->
+    OverviewTagMouseOver entityId oerId ->
       let
-          oerId =
-            model.hoveringOerId
-            |> Maybe.withDefault ""
+          popup =
+            case model.overviewType of
+              BubblogramOverview TopicNames ->
+                Just <| BubblePopup <| BubblePopupState oerId entityId DefinitionInBubblePopup []
+
+              _ ->
+                Nothing
       in
-          ({model | hoveringBubbleEntityId = Just entityId }, Cmd.none)
-          |> logEventForLabStudy "BubbleMouseOver" [ oerId, entityId ]
+          ({model | hoveringTagEntityId = Just entityId, popup = popup }, Cmd.none)
+          |> logEventForLabStudy "OverviewTagMouseOver" [ oerId |> String.fromInt, entityId ]
 
-    BubbleMouseOut ->
-      ({model | hoveringBubbleEntityId = Nothing } |> closePopup, Cmd.none)
-      |> logEventForLabStudy "BubbleMouseOut" []
+    OverviewTagLabelMouseOver entityId oerId ->
+      let
+          popup =
+            BubblePopup <| BubblePopupState oerId entityId DefinitionInBubblePopup []
+      in
+          ({model | hoveringTagEntityId = Just entityId, popup = Just popup }, Cmd.none)
+          |> logEventForLabStudy "OverviewTagLabelMouseOver" [ oerId |> String.fromInt, entityId ]
 
-    BubbleClicked oerId ->
+    OverviewTagMouseOut ->
+      ({model | hoveringTagEntityId = Nothing } |> unselectMentionInStory |> closePopup, Cmd.none)
+      |> logEventForLabStudy "OverviewTagMouseOut" []
+
+    OverviewTagLabelClicked oerId ->
       let
           newModel =
-            {model | popup = model.popup |> updateBubblePopupOnClick model oerId }
+            {model | popup = model.popup |> updateBubblePopupOnTagLabelClicked model oerId }
       in
           (newModel, Cmd.none)
-          |> logEventForLabStudy "BubbleClicked" (popupToStrings newModel.popup)
+          |> logEventForLabStudy "OverviewTagLabelClicked" (popupToStrings newModel.popup)
 
-    PageScrolled {scrollTop, viewHeight, contentHeight} ->
-      (model, Cmd.none)
-      |> logEventForLabStudy "PageScrolled" [ scrollTop |> String.fromFloat, viewHeight |> String.fromFloat, contentHeight |> String.fromFloat ]
+    PageScrolled ({scrollTop, viewHeight, contentHeight, requestedByElm} as pageScrollState) ->
+      ({ model | pageScrollState = pageScrollState }, Cmd.none)
+      |> logEventForLabStudy "PageScrolled" [ scrollTop |> String.fromFloat, viewHeight |> String.fromFloat, contentHeight |> String.fromFloat, if requestedByElm then "elm" else "user" ]
 
     OerCardPlaceholderPositionsReceived positions ->
       ({ model | oerCardPlaceholderPositions = positions }, Cmd.none)
@@ -486,9 +573,97 @@ update msg ({nav, userProfileForm} as model) =
       ({ model | startedLabStudyTask = Nothing }, setBrowserFocus "")
       |> logEventForLabStudy "StoppedLabStudyTask" []
 
-    SelectResourceSidebarTab tab ->
-      ({ model | resourceSidebarTab = tab }, setBrowserFocus "textInputFieldForNotesOrFeedback")
-      |> logEventForLabStudy "SelectResourceSidebarTab" []
+    SelectResourceSidebarTab tab oerId ->
+      let
+          cmd =
+            if tab==RecommendationsTab then
+              requestResourceRecommendations oerId
+            else
+              Cmd.none
+      in
+          ({ model | resourceSidebarTab = tab }, [ cmd, setBrowserFocus "textInputFieldForNotesOrFeedback" ] |> Cmd.batch )
+          |> logEventForLabStudy "SelectResourceSidebarTab" []
+
+    MouseMovedOnStoryTag mousePosXonCard ->
+      case model.overviewType of
+        ImageOverview ->
+          (model, Cmd.none)
+
+        BubblogramOverview TopicNames ->
+          (model, Cmd.none)
+
+        _ ->
+          model
+          |> selectOrUnselectMentionInStory mousePosXonCard
+
+    SelectedOverviewType overviewType ->
+      let
+          logTitle =
+            case overviewType of
+              ImageOverview ->
+                "ImageOverview"
+              BubblogramOverview TopicNames ->
+                "TopicNames"
+              BubblogramOverview TopicMentions ->
+                "TopicMentions"
+              BubblogramOverview TopicConnections ->
+                "TopicConnections"
+      in
+          ({ model | overviewType = overviewType, hoveringTagEntityId = Nothing } |> closePopup, Cmd.none)
+          |> logEventForLabStudy "SelectedOverviewType" [ logTitle ]
+
+    MouseEnterMentionInBubbblogramOverview oerId entityId mention ->
+      ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
+
+    SelectedOerCollection collectionTitle isChecked ->
+      let
+          selectedOerCollections =
+            if isChecked then
+              Set.insert collectionTitle model.selectedOerCollections
+            else
+              if Set.size model.selectedOerCollections == 1 then
+                Set.singleton defaultOerCollection.title
+              else
+                Set.remove collectionTitle model.selectedOerCollections
+      in
+          ({ model | selectedOerCollections = selectedOerCollections }, Cmd.none)
+
+    ToggledAllOerCollections on ->
+      ({ model | selectedOerCollections = (if on then setOfAllCollectionTitles else Set.singleton defaultOerCollection.title) }, Cmd.none)
+
+    ToggleCollectionsMenu ->
+      ({ model | collectionsMenuOpen = not model.collectionsMenuOpen }, setBrowserFocus "")
+
+    ClickedHeart oerId ->
+      if isMarkedAsFavorite model oerId then
+        ( { model | removedFavorites = model.removedFavorites |> Set.insert oerId }, Cmd.none)
+        |> saveAction 3 [ ("oerId", Encode.int oerId) ]
+      else
+        let
+            favorites =
+              model.favorites ++ [ oerId ]
+              |> List.Extra.unique
+        in
+          ( { model | favorites = favorites, removedFavorites = model.removedFavorites |> Set.remove oerId, flyingHeartAnimation = Just { startTime = model.currentTime } }, Cmd.none)
+          |> saveAction 2 [ ("oerId", Encode.int oerId) ]
+
+    FlyingHeartRelativeStartPositionReceived startPoint ->
+      ( { model | flyingHeartAnimationStartPoint = Just startPoint }, Cmd.none)
+
+
+requestCollectionsSearchPredictionIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
+requestCollectionsSearchPredictionIfNeeded ((oldModel, oldCmd) as input) =
+  case getCollectionsSearchPredictionOfLastSearch oldModel of
+    Nothing ->
+      case oldModel.searchState of
+        Nothing ->
+          input
+
+        Just {lastSearch} ->
+          (oldModel, [ requestCollectionsSearchPrediction lastSearch, oldCmd ] |> Cmd.batch)
+
+    _ ->
+      input
 
 
 createNote : OerId -> String -> Model -> Model
@@ -602,7 +777,7 @@ registerUndefinedEntities enrichments model =
 
 closePopup : Model -> Model
 closePopup model =
-  { model | popup = Nothing, hoveringBubbleEntityId = Nothing }
+  { model | popup = Nothing }
 
 
 resetUserProfileForm : Model -> Model
@@ -703,6 +878,12 @@ updateBubblogramsIfNeeded model =
 
 
 logEventForLabStudy eventType params (model, cmd) =
+  -- let
+  --     dummy =
+  --       eventType :: params
+  --       |> String.join " "
+  --       |> Debug.log "logEventForLabStudy"
+  -- in
   if isLabStudy1 model then
     let
         time =
@@ -752,18 +933,40 @@ popupToStrings maybePopup =
 executeSearchAfterUrlChanged : Model -> Url -> (Model, Cmd Msg)
 executeSearchAfterUrlChanged model url =
   let
-      str =
+      textParam =
         url.query
         |> Maybe.withDefault ""
         |> String.dropLeft 2 -- TODO A much cleaner method is to use Url.Query.parser
+        |> String.split "&"
+        |> List.head
+        |> Maybe.withDefault ""
         |> Url.percentDecode
         |> Maybe.withDefault ""
+
+      selectedOerCollections =
+        case url.query of
+          Nothing ->
+            setOfAllCollectionTitles
+
+          Just query ->
+            case query |> String.split "&collections=" |> List.drop 1 |> List.head of
+              Nothing ->
+                setOfAllCollectionTitles
+
+              Just value ->
+                let
+                    collections =
+                      value |> Url.percentDecode |> Maybe.withDefault "" |> String.split "," |> Set.fromList |> Set.filter (\collectionTitle -> Set.member collectionTitle setOfAllCollectionTitles)
+                in
+                    if Set.isEmpty collections then
+                       setOfAllCollectionTitles
+                     else
+                       collections
+      newModel =
+        { model | searchInputTyping = textParam, selectedOerCollections = selectedOerCollections, searchState = Just <| newSearch textParam, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, snackbar = Nothing }
   in
-      if str=="" then
-        ( model, setBrowserFocus "SearchField")
-      else
-        ( { model | searchInputTyping = str, searchState = Just <| newSearch str, searchSuggestions = [], timeOfLastSearch = model.currentTime, userMessage = Nothing } |> closePopup, searchOers str)
-        |> logEventForLabStudy "executeSearchAfterUrlChanged" [ str ]
+        ( newModel |> closePopup, searchOers textParam (selectedOerCollectionsToCommaSeparatedString newModel))
+        |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam, (selectedOerCollectionsToCommaSeparatedString newModel) ]
 
 
 requestResourceAfterUrlChanged : Url -> Model -> (Model, Cmd Msg)
@@ -789,3 +992,63 @@ saveAction actionTypeId params (model, oldCmd) =
     (model, [ oldCmd, ActionApi.saveAction actionTypeId params ] |> Cmd.batch)
   else
     (model, oldCmd)
+
+
+createSnackbar : Model -> String -> Maybe Snackbar
+createSnackbar model str =
+  Just <| Snackbar model.currentTime str
+
+
+updateSnackbar : Model -> Maybe Snackbar
+updateSnackbar model =
+  case model.snackbar of
+    Nothing ->
+      Nothing
+
+    Just snackbar ->
+      if (millisSince model snackbar.startTime) > snackbarDuration then
+        Nothing
+      else
+        Just snackbar
+
+
+snackbarMessageReloadPage =
+  "There was a problem - please reload the page"
+
+
+unselectMentionInStory : Model -> Model
+unselectMentionInStory model =
+  { model | selectedMentionInStory = Nothing }
+
+
+selectOrUnselectMentionInStory : Float -> Model -> (Model, Cmd Msg)
+selectOrUnselectMentionInStory mousePosXonCard model =
+  let
+      unselect =
+        (model |> unselectMentionInStory, setBrowserFocus "")
+        |> logEventForLabStudy "UnselectMentionInStory" []
+  in
+      case model.hoveringTagEntityId of
+        Nothing ->
+          unselect
+
+        Just entityId ->
+          case model.hoveringOerId of
+            Nothing ->
+              unselect
+
+            Just oerId ->
+              let
+                  closestMentionInRange =
+                    getMentions model oerId entityId
+                    |> List.filter (\{positionInResource} -> (abs (positionInResource - mousePosXonCard) < 0.05))
+                    |> List.sortBy (\{positionInResource} -> (abs (positionInResource - mousePosXonCard)))
+                    |> List.head
+              in
+                  case closestMentionInRange of
+                    Nothing ->
+                      unselect
+
+                    Just mention ->
+                      ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
+                      |> logEventForLabStudy "SelectMentionInStory" [ oerId |> String.fromInt, mousePosXonCard |> String.fromFloat, mention.positionInResource |> String.fromFloat, mention.sentence ]

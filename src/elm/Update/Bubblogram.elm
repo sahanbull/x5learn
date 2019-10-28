@@ -36,7 +36,9 @@ addBubblogram model oerId ({chunks, clusters, mentions, bubblogram, errors} as e
           let
               bubbles =
                 entitiesWithDefinitions
-                |> List.map (bubbleFromEntity model occurrences)
+                |> List.sortBy (\{id} -> Dict.get id mentions |> Maybe.withDefault [] |> List.length)
+                |> List.reverse
+                |> List.indexedMap (bubbleFromEntity model occurrences)
                 |> layoutBubbles clusters
           in
               { enrichment | bubblogram = Just { createdAt = model.currentTime, bubbles = bubbles } }
@@ -93,8 +95,8 @@ occurrenceFromEntity approximatePositionInText nEntitiesMinus1 entityIndex entit
       Occurrence entity approximatePositionInText rank
 
 
-bubbleFromEntity : Model -> List Occurrence -> Entity -> Bubble
-bubbleFromEntity model occurrences entity =
+bubbleFromEntity : Model -> List Occurrence -> Int -> Entity -> Bubble
+bubbleFromEntity model occurrences index entity =
   let
       occurrencesOfThisEntity =
         occurrences
@@ -125,14 +127,8 @@ bubbleFromEntity model occurrences entity =
       finalSize =
         0.4 + (occurrencesOfThisEntity |> List.length |> toFloat |> sqrt) / 2
 
-      isSearchTerm =
-        isEqualToSearchString model entity.title
-
       (hue, saturation, alpha) =
-        if isSearchTerm then
-          (0.145, 0.9, 0.8)
-        else
-          (0.536, 0, 0.05 + 0.3 * finalSize)
+        (0.536, 0, 0.05 + 0.3 * finalSize)
 
       initialCoordinates =
         { posX = initialPosX
@@ -147,6 +143,7 @@ bubbleFromEntity model occurrences entity =
         }
   in
       { entity = entity
+      , index = index
       , hue = hue
       , saturation = saturation
       , alpha = alpha
@@ -165,8 +162,9 @@ layoutBubbles clusters bubbles =
         let
             index =
               indexOf bubble.entity.title (clusters |> List.concat)
+              |> Maybe.withDefault -1 -- shouldn't happen
         in
-            { bubble | finalCoordinates = { finalCoordinates | posY = (toFloat index) / nBubblesMinus1max1 * 0.85 + 0.05 } }
+            { bubble | finalCoordinates = { finalCoordinates | posY = (toFloat index) / nBubblesMinus1max1 * 0.85 + 0.0 } }
 
       setPosXbyCluster ({entity, finalCoordinates} as bubble) =
         let
@@ -175,6 +173,7 @@ layoutBubbles clusters bubbles =
 
             indexInCluster =
               indexOf bubble.entity.title cluster
+              |> Maybe.withDefault -1 -- shouldn't happen
 
             offsetX =
               0
@@ -294,23 +293,6 @@ layoutBubbles clusters bubbles =
       |> List.reverse
       |> List.map setPosY
       |> List.map setPosXbyCluster
-
-
-indexOf : a -> List a -> Int
-indexOf element list =
-  let
-      helper index xs =
-        case xs of
-          x::rest ->
-            if x==element then
-              index
-            else
-              helper (index+1) rest
-
-          _ ->
-            -1
-  in
-      helper 0 list
 
 
 mean : Float -> List Float -> Float

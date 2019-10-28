@@ -8,6 +8,7 @@ from fuzzywuzzy import fuzz
 import urllib
 from datetime import datetime, timedelta
 from sqlalchemy import or_, and_, cast, Integer
+from sqlalchemy.orm.attributes import flag_modified
 from flask_restplus import Api, Resource, fields, reqparse
 import wikipedia
 
@@ -24,6 +25,8 @@ from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichmen
     ActionsRepository, UserRepository, DefinitionsRepository
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
+from x5learn_server.oer_collections import search_in_oer_collections, autocomplete_terms_from_oer_collection, initialise_caches_for_all_oer_collections, predict_number_of_search_results_in_collection, export_oer_collections_oer_data_as_json_lines
+from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
 
 # Create app
 app = Flask(__name__)
@@ -70,7 +73,7 @@ app.config['MAIL_DEFAULT_SENDER'] = MAIL_SENDER
 mail.init_app(app)
 
 CURRENT_ENRICHMENT_VERSION = 1
-
+MAX_SEARCH_RESULTS = 24 # number divisible by 2 and 3 to fit nicely into grid
 
 # create database when starting the app
 @app.before_first_request
@@ -78,6 +81,25 @@ def initiate_login_db():
     from x5learn_server.db.database import initiate_login_table_and_admin_profile
     initiate_login_table_and_admin_profile(user_datastore)
     initiate_action_types_table()
+    # initialise_caches_for_all_oer_collections()
+    cleanup_enrichment_errors()
+    # export_oer_collections_oer_data_as_json_lines()
+
+
+def cleanup_enrichment_errors():
+    WIKIFIER_BLACKLIST = ['Forward (association football)' , 'RenderX', 'MEDLINE', 'Medline', 'MedLine', 'medline', 'MEDLAR']
+    print('\nin cleanup_enrichment_errors')
+    enrichments = WikichunkEnrichment.query.all()
+    for enrichment in enrichments:
+        for chunk in enrichment.data['chunks']:
+            filtered_entities = [ entity for entity in chunk['entities'] if entity['title'] not in WIKIFIER_BLACKLIST ]
+        if filtered_entities != chunk['entities']:
+            print(chunk['entities'])
+            print(filtered_entities)
+            chunk['entities'] = filtered_entities
+            flag_modified(enrichment, 'data')
+            db_session.commit()
+    print('done.\n')
 
 
 # Setting wikipedia api language
@@ -104,6 +126,11 @@ def search():
     return render_template('home.html')
 
 
+@app.route("/favorites")
+def favorites():
+    return render_template('home.html')
+
+
 @app.route("/notes")
 def notes():
     return render_template('home.html')
@@ -111,6 +138,11 @@ def notes():
 
 @app.route("/recent")
 def recent():
+    return render_template('home.html')
+
+
+@app.route("/viewed")
+def viewed():
     return render_template('home.html')
 
 
@@ -156,23 +188,76 @@ def get_or_create_logged_in_user():
     return user
 
 
+@app.route("/api/v1/recommendations/", methods=['GET'])
+def api_recommendations():
+    oer_id = int(request.args['oerId'])
+    main_topics = find_enrichment_by_oer_id(oer_id).main_topics()
+    print(main_topics)
+    urls_with_similarity = [ (enrichment.url, enrichment.get_topic_overlap(main_topics)) for enrichment in WikichunkEnrichment.query.all() ]
+    most_similar = sorted(urls_with_similarity, key=lambda x: x[1], reverse=True)
+    results = []
+    for candidate in most_similar:
+        oer = Oer.query.filter_by(url=candidate[0]).first()
+        if oer is not None:
+            results.append(oer)
+        if len(results)>9:
+            break
+    return jsonify([ oer.data_and_id() for oer in results ])
+
+
 @app.route("/api/v1/search/", methods=['GET'])
 def api_search():
     text = request.args['text'].lower().strip()
-    results = get_dataset_for_lab_study_one(
-        text) or search_results_from_x5gon_api(text)
-    return jsonify(results)
+    collections = request.args['collections'].split(',')
+    initialise_caches_for_all_oer_collections() # quickfix. TODO move cache to db?
+    results = search_in_oer_collections(collections, text, 30)
+    # print('\n\nSearch in', collections)
+    if 'X5GON Platform' in collections:
+        results += search_results_from_x5gon_api(text)
+    return jsonify([ oer.data_and_id() for oer in results ])
 
 
-@app.route("/api/v1/search_suggestions/", methods=['GET'])
-def api_search_suggestions():
-    text = request.args['text']
-    return search_suggestions(text.lower().strip())
+@app.route("/api/v1/favorites/", methods=['GET'])
+def api_favorites():
+    actions = Action.query.filter(Action.user_login_id==current_user.get_id(), Action.action_type_id.in_([2, 3])).order_by(Action.id).all()
+    favorites = []
+    # reconstruct list by replaying the sequence of "like" and "unlike" actions
+    for action in actions:
+        oer_id = action.params['oerId']
+        if oer_id in favorites:
+            favorites.remove(oer_id) # remove in any case to avoid duplicates
+        if action.action_type_id==2:
+            favorites.append(oer_id)
+    return jsonify(favorites)
+
+
+@app.route("/api/v1/autocomplete_terms/", methods=['GET'])
+def api_autocomplete_terms():
+    collection = request.args['collection']
+    return jsonify(list(autocomplete_terms_from_oer_collection(collection)))
+
+
+@app.route("/api/v1/collections_search_prediction/", methods=['GET'])
+def api_collections_search_prediction():
+    text = request.args['text'].lower().strip()
+    collection_titles = request.args['collectionTitles'].split(',')
+    numbers = {}
+    for collection_title in collection_titles:
+        numbers[collection_title] = predict_number_of_search_results_in_collection(text, collection_title)
+    return jsonify({'searchText': text, 'prediction': numbers})
 
 
 @app.route("/api/v1/oers/", methods=['POST'])
 def api_oers():
     oers = [find_oer_by_id(oer_id) for oer_id in request.get_json()['ids']]
+    return jsonify(oers)
+
+
+@app.route("/api/v1/featured/", methods=['GET'])
+def api_featured():
+    print('api_featured')
+    urls = [ 'https://www.youtube.com/watch?v=woy7_L2JKC4', 'https://www.youtube.com/watch?v=bRIL9kMJJSc', 'https://www.youtube.com/watch?v=4yYytLUViI4' ]
+    oers = [ oer.data_and_id() for oer in Oer.query.filter(Oer.url.in_(urls)).order_by(Oer.url.desc()).all() ]
     return jsonify(oers)
 
 
@@ -209,9 +294,7 @@ def api_save_user_profile():
 def api_wikichunk_enrichments():
     enrichments = []
     for oer_id in request.get_json()['ids']:
-        # enrichment = WikichunkEnrichment.query.filter_by(oer_id=oer_id).first()
-        enrichment = WikichunkEnrichment.query.filter(
-            WikichunkEnrichment.data['oerId'].astext.cast(Integer) == oer_id).first()
+        enrichment = find_enrichment_by_oer_id(oer_id)
         if enrichment is not None:
             enrichments.append(enrichment.data)
         else:
@@ -289,28 +372,111 @@ def log_event_for_lab_study():
     return 'OK'
 
 
-def save_enrichment(url, data):
-    oer = Oer.query.filter_by(url=url).first()
-    if oer is None:
-        return
-    data['oerId'] = oer.id
-    enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
-    if enrichment is None:
-        enrichment = WikichunkEnrichment(url, data, CURRENT_ENRICHMENT_VERSION)
-        db_session.add(enrichment)
-    else:
-        enrichment.data = data
-        enrichment.version = CURRENT_ENRICHMENT_VERSION
-    db_session.commit()
+def search_results_from_x5gon_api(text):
+    text = urllib.parse.quote(text)
+    return search_results_from_x5gon_api_pages(text, 1, [])
+
+
+# This function is called recursively
+# until the number of search results hits a certain minimum or stops increasing
+def search_results_from_x5gon_api_pages(text, page_number, oers):
+    n_initial_oers = len(oers)
+    print('X5GON search page_number', page_number)
+    conn = http.client.HTTPSConnection("platform.x5gon.org")
+    conn.request(
+        'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text=' + text + '&page=' + str(page_number))
+    response = conn.getresponse().read().decode("utf-8")
+    materials = json.loads(response)['rec_materials']
+    materials = filter_x5gon_search_results(materials)
+    # materials = remove_duplicates_from_x5gon_search_results(materials)
+    for index, material in enumerate(materials):
+        url = material['url']
+        # Some urls that were longer than 255 caused errors.
+        # TODO: change the type of all url colums from String(255) to Text()
+        # Temporary fix: ignore search results with very long urls
+        if len(url) > 255:
+            continue
+        oer = Oer.query.filter_by(url=url).first()
+        if oer is None:
+            oer = Oer(url, convert_x5_material_to_oer(material, url))
+            db_session.add(oer)
+            db_session.commit()
+        oers.append(oer)
+        push_enrichment_task_if_needed(url, int(1000 / (index + 1)) + 1)
+    oers = oers[:MAX_SEARCH_RESULTS]
+    if len(oers)==n_initial_oers: # no more results on page -> stop querying
+        return oers
+    if len(oers)>=MAX_SEARCH_RESULTS:
+        return oers
+    return search_results_from_x5gon_api_pages(text, page_number+1, oers)
+
+
+def filter_x5gon_search_results(materials):
+    # (un)comment the lines below to enable/disable filters as desired
+
+    # filter by file suffix
+    materials = [m for m in materials if m['url'].endswith(
+        '.pdf') or is_video(m['url'])]
+
+    # crudely filter out materials from MIT OCW that are assignments or date back to the 90s or early 2000s
+    # materials = [m for m in materials if '/assignments/' not in m['url']
+    #              and '199' not in m['url'] and '200' not in m['url']]
+
+    # Exclude non-english materials because they tend to come out poorly after wikification. X5GON search doesn't have a language parameter at the time of writing.
+    # materials = [m for m in materials if m['language'] == 'en']
+    return materials
+
+
+# def remove_duplicates_from_x5gon_search_results(materials):
+#     enrichments = {}
+#     urls = [m['url'] for m in materials]
+#     for enrichment in WikichunkEnrichment.query.filter(WikichunkEnrichment.url.in_(urls)).all():
+#         enrichments[enrichment.url] = enrichment
+#     included_materials = []
+#     included_enrichments = []
+
+#     def is_duplicate(material):
+#         url = material['url']
+#         # For materials that haven't been enriched yet, we can't tell whether they are identical.
+#         if url not in enrichments:
+#             return False
+#         enrichment = enrichments[url]
+#         for e in included_enrichments:
+#             if fuzz.ratio(e.entities_to_string(), enrichment.entities_to_string()) > 90:
+#                 return True
+#         return False
+
+#     for m in materials:
+#         if not is_duplicate(m):
+#             included_materials.append(m)
+#             url = m['url']
+#             if url in enrichments:
+#                 included_enrichments.append(enrichments[url])
+#     return included_materials
+
+
+def convert_x5_material_to_oer(material, url):
+    # Insert some fields that the frontend expects, using values from the x5gon search result when possible, otherwise default values.
+    data = {}
+    data['url'] = url
+    data['title'] = material['title'] or '(Title unavailable)'
+    data['provider'] = material['provider'] or ''
+    data['description'] = material['description'] or ''
+    data['date'] = ''
+    data['duration'] = ''
+    data['images'] = []
+    data['mediatype'] = material['type']
+    return data
 
 
 def save_definitions(data):
+    definitions = set([])
     for chunk in data['chunks']:
         for entity in chunk['entities']:
             title = entity['title']
             # print(title, '...')
             definition = EntityDefinition.query.filter_by(title=title).first()
-            if definition is None:
+            if definition is None and definition not in definitions:
                 encoded_title = urllib.parse.quote(title)
                 # Request definitions from wikipedia.
                 # This should probably happen in the enrichment worker
@@ -332,125 +498,10 @@ def save_definitions(data):
                 # print(extract)
                 definition = EntityDefinition(
                     entity['id'], title, entity['url'], extract, lang='en')
-                db_session.add(definition)
-                db_session.commit()
-
-
-def search_results_from_x5gon_api(text):
-    max_results = 18
-    encoded_text = urllib.parse.quote(text)
-    conn = http.client.HTTPSConnection("platform.x5gon.org")
-    conn.request(
-        'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text=' + encoded_text)
-    response = conn.getresponse().read().decode("utf-8")
-    materials = json.loads(response)['rec_materials'][:max_results]
-    # materials = [ m for m in materials if m['url'].endswith('.pdf') ] # filter by suffix
-    materials = [m for m in materials if m['url'].endswith(
-        '.pdf') or is_video(m['url'])]  # filter by suffix
-    # crudely filter out materials from MIT OCW that are assignments or date back to the 90s or early 2000s
-    materials = [m for m in materials if '/assignments/' not in m['url']
-                 and '199' not in m['url'] and '200' not in m['url']]
-    # Exclude non-english materials because they tend to come out poorly after wikification. X5GON search doesn't have a language parameter at the time of writing.
-    materials = [m for m in materials if m['language'] == 'en']
-    materials = remove_duplicates_from_search_results(materials)
-    oers = []
-    for index, material in enumerate(materials):
-        url = material['url']
-        # Some urls that were longer than 255 caused errors.
-        # TODO: change the type of all url colums from String(255) to Text()
-        # Temporary fix: ignore search results with very long urls
-        if len(url) > 255:
-            continue
-        oer = Oer.query.filter_by(url=url).first()
-        if oer is None:
-            oer = Oer(url, convert_x5_material_to_oer(material, url))
-            db_session.add(oer)
-            db_session.commit()
-        oers.append(oer.data_and_id())
-        push_enrichment_task_if_needed(url, int(1000 / (index + 1)) + 1)
-    return oers
-
-
-def remove_duplicates_from_search_results(materials):
-    enrichments = {}
-    urls = [m['url'] for m in materials]
-    for enrichment in WikichunkEnrichment.query.filter(WikichunkEnrichment.url.in_(urls)).all():
-        enrichments[enrichment.url] = enrichment
-    included_materials = []
-    included_enrichments = []
-
-    def is_duplicate(material):
-        url = material['url']
-        # For materials that haven't been enriched yet, we can't tell whether they are identical.
-        if url not in enrichments:
-            return False
-        enrichment = enrichments[url]
-        for e in included_enrichments:
-            if fuzz.ratio(e.entities_to_string(), enrichment.entities_to_string()) > 90:
-                return True
-        return False
-
-    for m in materials:
-        if not is_duplicate(m):
-            included_materials.append(m)
-            url = m['url']
-            if url in enrichments:
-                included_enrichments.append(enrichments[url])
-    return included_materials
-
-
-def convert_x5_material_to_oer(material, url):
-    # Insert some fields that the frontend expects, using values from the x5gon search result when possible, otherwise default values.
-    data = {}
-    data['url'] = url
-    data['title'] = material['title'] or '(Title unavailable)'
-    data['provider'] = material['provider'] or ''
-    data['description'] = material['description'] or ''
-    data['date'] = ''
-    data['duration'] = ''
-    data['images'] = []
-    data['mediatype'] = material['type']
-    return data
-
-
-def push_enrichment_task_if_needed(url, urgency):
-    enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
-    if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION):
-        push_enrichment_task(url, urgency)
-
-
-def push_enrichment_task(url, priority):
-    # print('push_enrichment_task')
-    try:
-        task = WikichunkEnrichmentTask.query.filter_by(url=url).first()
-        if task is None:
-            task = WikichunkEnrichmentTask(url, priority)
-            db_session.add(task)
-        else:
-            task.priority += priority
+                definitions.add(definition)
+    for definition in definitions:
+        db_session.add(definition)
         db_session.commit()
-    except StaleDataError:
-        print(
-            'sqlalchemy.orm.exc.StaleDataError caught and ignored.')  # This error came up occasionally. I'm not 100% sure about what it entails but it didn't seem to affect the user experience so I'm suppressing it for now to prevent a pointless alert on the frontend. Grateful for any helpful tips. More information on this error: https://docs.sqlalchemy.org/en/13/orm/exceptions.html#sqlalchemy.orm.exc.StaleDataError
-
-
-def any_word_matches(words, text):
-    for word in words:
-        if word in text.lower():
-            return True
-    return False
-
-
-def search_suggestions(text):
-    all_entity_titles = []  # TODO: use Topics table in db
-    matches = [(title, fuzz.partial_ratio(text, title) +
-                fuzz.ratio(text, title)) for title in all_entity_titles]
-    matches = sorted(matches, key=lambda k_v: k_v[1], reverse=True)[:20]
-    print([v for k, v in matches])
-    matches = [k for k, v in matches]
-    # import pdb; pdb.set_trace()
-    # print(matches)
-    return jsonify(matches)
 
 
 def find_oer_by_id(oer_id):
@@ -850,6 +901,29 @@ def initiate_action_types_table():
         action_type = ActionType('OER card opened')
         db_session.add(action_type)
         db_session.commit()
+    action_type = ActionType.query.filter_by(id=2).first()
+    if action_type is None:
+        action_type = ActionType('OER marked as favorite')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=3).first()
+    if action_type is None:
+        action_type = ActionType('OER unmarked as favorite')
+        db_session.add(action_type)
+        db_session.commit()
+
+
+def find_enrichment_by_oer_id(oer_id):
+    # Querying the JSON field this way resulted in bizarre CPU load on my Mac.
+    # enrichment = WikichunkEnrichment.query.filter(
+    #     WikichunkEnrichment.data['oerId'].astext.cast(Integer) == oer_id).first()
+    # The following quick fix takes a small detour by loading the OER.
+    # NB a more performant solution would be to add an oer_id column
+    # to WikichunkEnrichment but is beyond the scope of this issue.
+    oer = Oer.query.get(oer_id)
+    if oer is None:
+        return None
+    return WikichunkEnrichment.query.filter_by(url=oer.url).first()
 
 
 if __name__ == '__main__':

@@ -1,9 +1,10 @@
-module View.Pages.Recent exposing (viewRecentPage)
+module View.Pages.Favorites exposing (viewFavoritesPage)
 
 import Url
 import Dict
 import Set
-import List.Extra
+
+import Time exposing (posixToMillis)
 
 import Html.Attributes
 
@@ -25,23 +26,21 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
-viewRecentPage : Model -> PageWithModal
-viewRecentPage model =
+viewFavoritesPage : Model -> PageWithModal
+viewFavoritesPage model =
   let
       page =
-        if model.fragmentAccesses |> Dict.isEmpty then
+        if model.favorites |> List.isEmpty then
           if isLoggedIn model then
-            viewCenterNote "Your viewed items will appear here"
+            viewCenterNote "Your favorite items will appear here"
           else
-            guestCallToSignup "To ensure that your changes are saved"
+            guestCallToSignup "In order to save your favorite items"
             |> milkyWhiteCenteredContainer
         else
-          model.fragmentAccesses
-          |> Dict.toList
-          |> List.map (\(time, fragment) -> fragment.oerId)
+          model.favorites
+          -- |> List.filter (isMarkedAsFavorite model)
           |> List.filterMap (\oerId -> model.cachedOers |> Dict.get oerId)
           |> List.reverse
-          |> List.Extra.uniqueBy .id
           |> viewOerCardsVertically model
   in
       (page, viewInspectorModalOrEmpty model)

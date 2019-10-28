@@ -26,23 +26,25 @@ type Msg
   | ModalAnimationStart BoxAnimation
   | ModalAnimationStop Int
   | RequestSession (Result Http.Error Session)
+  | RequestFavorites (Result Http.Error (List OerId))
   | RequestRecentViews (Result Http.Error (List OerId))
   | RequestNotes (Result Http.Error (List Note))
   | RequestDeleteNote (Result Http.Error String)
   | RequestOerSearch (Result Http.Error (List Oer))
   | RequestOers (Result Http.Error (List Oer))
-  | RequestGains (Result Http.Error (List Gain))
+  | RequestFeatured (Result Http.Error (List Oer))
   | RequestWikichunkEnrichments (Result Http.Error (List WikichunkEnrichment))
   | RequestEntityDefinitions (Result Http.Error (Dict String String))
-  | RequestSearchSuggestions (Result Http.Error (List String))
+  | RequestAutocompleteTerms (Result Http.Error (List String))
   | RequestSaveUserProfile (Result Http.Error String)
   | RequestLabStudyLogEvent (Result Http.Error String)
   | RequestResource (Result Http.Error Oer)
   | RequestResourceRecommendations (Result Http.Error (List Oer))
+  | RequestCollectionsSearchPrediction (Result Http.Error CollectionsSearchPredictionResponse)
   | RequestSendResourceFeedback (Result Http.Error String)
   | RequestSaveAction (Result Http.Error String)
   | RequestSaveNote (Result Http.Error String)
-  | SetHover (Maybe String)
+  | SetHover (Maybe OerId)
   | SetPopup Popup
   | ClosePopup
   | CloseInspector
@@ -61,14 +63,23 @@ type Msg
   | ClickedQuickNoteButton OerId String
   | RemoveNote Note
   | VideoIsPlayingAtPosition Float
-  | BubbleMouseOver String
-  | BubbleMouseOut
-  | BubbleClicked OerId
-  | PageScrolled ScrollData
+  | OverviewTagMouseOver EntityId OerId
+  | OverviewTagMouseOut
+  | OverviewTagLabelMouseOver EntityId OerId
+  | OverviewTagLabelClicked OerId
+  | PageScrolled PageScrollState
   | OerCardPlaceholderPositionsReceived (List OerCardPlaceholderPosition)
   | StartLabStudyTask LabStudyTask
   | StoppedLabStudyTask
-  | SelectResourceSidebarTab ResourceSidebarTab
+  | SelectResourceSidebarTab ResourceSidebarTab OerId
+  | MouseMovedOnStoryTag Float
+  | SelectedOverviewType OverviewType
+  | SelectedOerCollection String Bool
+  | ToggledAllOerCollections Bool
+  | MouseEnterMentionInBubbblogramOverview OerId EntityId MentionInOer
+  | ToggleCollectionsMenu
+  | ClickedHeart OerId
+  | FlyingHeartRelativeStartPositionReceived Point
 
 
 type UserProfileField
@@ -78,21 +89,6 @@ type UserProfileField
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-  let
-      isModalAnimating =
-        if model.animationsPending |> Set.isEmpty then
-           False
-        else
-          case model.modalAnimation of
-            Nothing ->
-              True
-
-            Just animation ->
-              if animation.frameCount<2 then
-                True
-              else
-                False
-  in
       ([ Browser.Events.onResize ResizeBrowser
       , Ports.modalAnimationStart ModalAnimationStart
       , Ports.modalAnimationStop ModalAnimationStop
@@ -100,9 +96,26 @@ subscriptions model =
       , Ports.closeInspector (\_ -> CloseInspector)
       , Ports.clickedOnDocument (\_ -> ClickedOnDocument)
       , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
+      , Ports.mouseMovedOnStoryTag MouseMovedOnStoryTag
       , Ports.videoIsPlayingAtPosition VideoIsPlayingAtPosition
       , Ports.pageScrolled PageScrolled
       , Ports.receiveCardPlaceholderPositions OerCardPlaceholderPositionsReceived
+      , Ports.receiveFlyingHeartRelativeStartPosition FlyingHeartRelativeStartPositionReceived
       , Time.every 500 ClockTick
-      ] ++ (if anyBubblogramsAnimating model || isModalAnimating then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
+      ] ++ (if anyBubblogramsAnimating model || isModalAnimating model || isFlyingHeartAnimating model then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
       |> Sub.batch
+
+
+isModalAnimating model =
+  if model.animationsPending |> Set.isEmpty then
+     False
+  else
+    case model.modalAnimation of
+      Nothing ->
+        True
+
+      Just animation ->
+        if animation.frameCount<2 then
+          True
+        else
+          False

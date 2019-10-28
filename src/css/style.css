@@ -20,6 +20,9 @@ a:hover {
   text-decoration: underline;
 }
 
+.Snackbar{
+  transition: all 0.9s;
+}
 
 .materialCard {
   background: #fff;
@@ -144,4 +147,33 @@ a:hover {
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
+}
+
+.OerCollectionListItem{
+  background-color: #141414;
+  transition: all 0.2s;
+}
+
+.OerCollectionListItem:hover{
+  background-color: rgba(255, 255, 255, 0.32);
+}
+
+.Heart{
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  background-size: 92% !important;
+  transition: all 0.2s;
+}
+
+.Heart:hover{
+  background-size: 123% !important;
+  cursor: pointer;
+}
+
+.HeartOutline{
+  background: url('/static/dist/img_svg/favorite_outline.svg');
+}
+
+.HeartFilled{
+  background: url('/static/dist/img_svg/favorite_filled.svg');
 }

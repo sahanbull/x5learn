@@ -30,9 +30,8 @@ from selenium.webdriver.firefox.options import Options
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))
 
 from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET
-from x5learn_server.db.database import get_or_create_session_db
-get_or_create_session_db(DB_ENGINE_URI)
-from x5learn_server.db.database import db_session
+from x5learn_server.db.database import Base, get_or_create_db
+db_session = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.models import Oer
 
 
@@ -46,17 +45,12 @@ from x5learn_server.models import Oer
 waittime = 10                       # seconds browser waits before giving up
 headless = True                     # select True if you want the browser window to be invisible (but not inaudible)
 
-oers_csv_path = '/Users/stefan/x5/data/scenario_lab1/oers.csv'
-
-
-def backup_and_save(df, path):
-    copy(path, '/'.join(path.split('/')[:-1])+'/auto_backup/'+str(int(time.time()))+'_'+path.split('/')[-1])
-    df.to_csv(path, sep='\t', encoding='utf-8', index=False)
 
 def get_duration_from_youtube(url):
     txt = get(url).text
     if '"status":"UNPLAYABLE"' in txt:
         raise ValueError('unplayable')
+    txt = txt.replace('[Music]', '')
     duration = int(txt.split('lengthSeconds\\":\\"')[1].split('\\')[0])
     print('duration = ', duration)
     return duration
@@ -64,7 +58,7 @@ def get_duration_from_youtube(url):
 
 def scrape_youtube_page(videoid):
         print('Scraping Youtube video', videoid)
-                # Create a new instance of the Firefox driver
+        # Create a new instance of the Firefox driver
         if headless:
             options = Options()
             options.headless = True

@@ -3,10 +3,9 @@ from x5learn_server._config import DB_ENGINE_URI
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy import Boolean, DateTime, Column, Integer, \
-    Text, String, Float, ForeignKey, Table, func, BigInteger
+    Text, String, ForeignKey, BigInteger
 from sqlalchemy.dialects.postgresql import JSON
 import datetime
-from flask_sqlalchemy import SQLAlchemy
 
 
 class RolesUsers(Base):
@@ -138,7 +137,7 @@ def dump_datetime(value):
     """Deserialize datetime object into string form for JSON processing."""
     if value is None:
         return None
-    return value.strftime("%Y-%m-%dT%H:%M:%S")+'+00:00'
+    return value.strftime("%Y-%m-%dT%H:%M:%S") + '+00:00'
 
 
 class Note(Base):
@@ -215,6 +214,7 @@ class Action(Base):
             'created_at': dump_datetime(self.created_at),
             'user_login_id': self.user_login_id
         }
+
 
 class ResourceFeedback(Base):
     __tablename__ = 'resource_feedback'

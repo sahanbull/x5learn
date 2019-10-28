@@ -25,7 +25,9 @@ from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichmen
     ActionsRepository, UserRepository, DefinitionsRepository
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
-from x5learn_server.oer_collections import search_in_oer_collections, autocomplete_terms_from_oer_collection, initialise_caches_for_all_oer_collections, predict_number_of_search_results_in_collection, export_oer_collections_oer_data_as_json_lines
+from x5learn_server.oer_collections import search_in_oer_collections, autocomplete_terms_from_oer_collection, \
+    initialise_caches_for_all_oer_collections, predict_number_of_search_results_in_collection, \
+    export_oer_collections_oer_data_as_json_lines
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
 
 # Create app
@@ -73,7 +75,8 @@ app.config['MAIL_DEFAULT_SENDER'] = MAIL_SENDER
 mail.init_app(app)
 
 CURRENT_ENRICHMENT_VERSION = 1
-MAX_SEARCH_RESULTS = 24 # number divisible by 2 and 3 to fit nicely into grid
+MAX_SEARCH_RESULTS = 24  # number divisible by 2 and 3 to fit nicely into grid
+
 
 # create database when starting the app
 @app.before_first_request
@@ -87,12 +90,13 @@ def initiate_login_db():
 
 
 def cleanup_enrichment_errors():
-    WIKIFIER_BLACKLIST = ['Forward (association football)' , 'RenderX', 'MEDLINE', 'Medline', 'MedLine', 'medline', 'MEDLAR']
+    WIKIFIER_BLACKLIST = ['Forward (association football)', 'RenderX', 'MEDLINE', 'Medline', 'MedLine', 'medline',
+                          'MEDLAR']
     print('\nin cleanup_enrichment_errors')
     enrichments = WikichunkEnrichment.query.all()
     for enrichment in enrichments:
         for chunk in enrichment.data['chunks']:
-            filtered_entities = [ entity for entity in chunk['entities'] if entity['title'] not in WIKIFIER_BLACKLIST ]
+            filtered_entities = [entity for entity in chunk['entities'] if entity['title'] not in WIKIFIER_BLACKLIST]
         if filtered_entities != chunk['entities']:
             print(chunk['entities'])
             print(filtered_entities)
@@ -193,40 +197,49 @@ def api_recommendations():
     oer_id = int(request.args['oerId'])
     main_topics = find_enrichment_by_oer_id(oer_id).main_topics()
     print(main_topics)
-    urls_with_similarity = [ (enrichment.url, enrichment.get_topic_overlap(main_topics)) for enrichment in WikichunkEnrichment.query.all() ]
+    urls_with_similarity = [(enrichment.url, enrichment.get_topic_overlap(main_topics)) for enrichment in
+                            WikichunkEnrichment.query.all()]
     most_similar = sorted(urls_with_similarity, key=lambda x: x[1], reverse=True)
     results = []
     for candidate in most_similar:
         oer = Oer.query.filter_by(url=candidate[0]).first()
         if oer is not None:
             results.append(oer)
-        if len(results)>9:
+        if len(results) > 9:
             break
-    return jsonify([ oer.data_and_id() for oer in results ])
+    return jsonify([oer.data_and_id() for oer in results])
 
 
 @app.route("/api/v1/search/", methods=['GET'])
 def api_search():
+    """
+    API endpoint for search.
+
+    Receives multiple arguments in the payload such as "text", "collections"
+    Returns:
+
+    """
     text = request.args['text'].lower().strip()
     collections = request.args['collections'].split(',')
-    initialise_caches_for_all_oer_collections() # quickfix. TODO move cache to db?
+    initialise_caches_for_all_oer_collections()  # quickfix. TODO move cache to db?
     results = search_in_oer_collections(collections, text, 30)
     # print('\n\nSearch in', collections)
     if 'X5GON Platform' in collections:
         results += search_results_from_x5gon_api(text)
-    return jsonify([ oer.data_and_id() for oer in results ])
+    return jsonify([oer.data_and_id() for oer in results])
 
 
 @app.route("/api/v1/favorites/", methods=['GET'])
 def api_favorites():
-    actions = Action.query.filter(Action.user_login_id==current_user.get_id(), Action.action_type_id.in_([2, 3])).order_by(Action.id).all()
+    actions = Action.query.filter(Action.user_login_id == current_user.get_id(),
+                                  Action.action_type_id.in_([2, 3])).order_by(Action.id).all()
     favorites = []
     # reconstruct list by replaying the sequence of "like" and "unlike" actions
     for action in actions:
         oer_id = action.params['oerId']
         if oer_id in favorites:
-            favorites.remove(oer_id) # remove in any case to avoid duplicates
-        if action.action_type_id==2:
+            favorites.remove(oer_id)  # remove in any case to avoid duplicates
+        if action.action_type_id == 2:
             favorites.append(oer_id)
     return jsonify(favorites)
 
@@ -256,8 +269,9 @@ def api_oers():
 @app.route("/api/v1/featured/", methods=['GET'])
 def api_featured():
     print('api_featured')
-    urls = [ 'https://www.youtube.com/watch?v=woy7_L2JKC4', 'https://www.youtube.com/watch?v=bRIL9kMJJSc', 'https://www.youtube.com/watch?v=4yYytLUViI4' ]
-    oers = [ oer.data_and_id() for oer in Oer.query.filter(Oer.url.in_(urls)).order_by(Oer.url.desc()).all() ]
+    urls = ['https://www.youtube.com/watch?v=woy7_L2JKC4', 'https://www.youtube.com/watch?v=bRIL9kMJJSc',
+            'https://www.youtube.com/watch?v=4yYytLUViI4']
+    oers = [oer.data_and_id() for oer in Oer.query.filter(Oer.url.in_(urls)).order_by(Oer.url.desc()).all()]
     return jsonify(oers)
 
 
@@ -384,7 +398,8 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     print('X5GON search page_number', page_number)
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request(
-        'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text=' + text + '&page=' + str(page_number))
+        'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text=' + text + '&page=' + str(
+            page_number))
     response = conn.getresponse().read().decode("utf-8")
     materials = json.loads(response)['rec_materials']
     materials = filter_x5gon_search_results(materials)
@@ -404,19 +419,22 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
         oers.append(oer)
         push_enrichment_task_if_needed(url, int(1000 / (index + 1)) + 1)
     oers = oers[:MAX_SEARCH_RESULTS]
-    if len(oers)==n_initial_oers: # no more results on page -> stop querying
+    if len(oers) == n_initial_oers:  # no more results on page -> stop querying
         return oers
-    if len(oers)>=MAX_SEARCH_RESULTS:
+    if len(oers) >= MAX_SEARCH_RESULTS:
         return oers
-    return search_results_from_x5gon_api_pages(text, page_number+1, oers)
+    return search_results_from_x5gon_api_pages(text, page_number + 1, oers)
 
 
 def filter_x5gon_search_results(materials):
     # (un)comment the lines below to enable/disable filters as desired
 
+    # filter out videos only
+    materials = [m for m in materials if is_video(m['url'])]
+
     # filter by file suffix
-    materials = [m for m in materials if m['url'].endswith(
-        '.pdf') or is_video(m['url'])]
+    # materials = [m for m in materials if m['url'].endswith(
+    #     '.pdf') or is_video(m['url'])]
 
     # crudely filter out materials from MIT OCW that are assignments or date back to the 90s or early 2000s
     # materials = [m for m in materials if '/assignments/' not in m['url']
@@ -459,6 +477,7 @@ def convert_x5_material_to_oer(material, url):
     # Insert some fields that the frontend expects, using values from the x5gon search result when possible, otherwise default values.
     data = {}
     data['url'] = url
+    data['material_id'] = material['material_id']
     data['title'] = material['title'] or '(Title unavailable)'
     data['provider'] = material['provider'] or ''
     data['description'] = material['description'] or ''

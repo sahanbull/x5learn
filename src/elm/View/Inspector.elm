@@ -15,7 +15,7 @@ import Msg exposing (..)
 
 import View.Shared exposing (..)
 import View.Noteboard exposing (..)
-import View.Html5VideoPlayer exposing (..)
+import View.GenericVideoPlayer exposing (..)
 import View.HtmlPdfViewer exposing (..)
 
 import Animation exposing (..)
@@ -123,7 +123,7 @@ inspectorContentDefault model {oer, fragmentStart} =
         case getYoutubeVideoId oer.url of
           Nothing ->
             if isVideoFile oer.url then
-              viewHtml5VideoPlayer model oer.url
+              viewGenericVideoPlayer model oer.url
             else if isPdfFile oer.url then
               viewHtmlPdfPlayer oer.url "45vh"
             else

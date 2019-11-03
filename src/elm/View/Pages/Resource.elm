@@ -19,7 +19,7 @@ import Element.Keyed as Keyed
 import Model exposing (..)
 import View.Shared exposing (..)
 import View.Noteboard exposing (..)
-import View.Html5VideoPlayer exposing (..)
+import View.GenericVideoPlayer exposing (..)
 import View.HtmlPdfViewer exposing (..)
 
 
@@ -68,7 +68,7 @@ viewResource model oer =
         case getYoutubeVideoId oer.url of
           Nothing ->
             if isVideoFile oer.url then
-              viewHtml5VideoPlayer model oer.url
+              viewGenericVideoPlayer model oer.url
             else if isPdfFile oer.url then
               viewHtmlPdfPlayer oer.url "60vh"
             else

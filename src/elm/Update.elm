@@ -299,19 +299,19 @@ update msg ({nav, userProfileForm} as model) =
       -- ( { model | snackbar = createSnackbar model "There was a problem while fetching the wiki definitions data", requestingEntityDefinitions = False }, Cmd.none )
       ( { model | snackbar = createSnackbar model snackbarMessageReloadPage, requestingEntityDefinitions = False }, Cmd.none )
 
-    RequestAutocompleteTerms (Ok autocompleteTerms) ->
-      if (millisSince model model.timeOfLastSearch) < 2000 then
-        (model, Cmd.none)
-      else
-        ({ model | autocompleteTerms = autocompleteTerms, suggestionSelectionOnHoverEnabled = False }, Cmd.none)
+    -- RequestAutocompleteTerms (Ok autocompleteTerms) ->
+    --   if (millisSince model model.timeOfLastSearch) < 2000 then
+    --     (model, Cmd.none)
+    --   else
+    --     ({ model | autocompleteTerms = autocompleteTerms, suggestionSelectionOnHoverEnabled = False }, Cmd.none)
 
-    RequestAutocompleteTerms (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestAutocompleteTerms"
-      -- in
-      -- ( { model | snackbar = createSnackbar model "There was a problem while fetching search suggestions" }, Cmd.none )
-      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
+    -- RequestAutocompleteTerms (Err err) ->
+    --   -- let
+    --   --     dummy =
+    --   --       err |> Debug.log "Error in RequestAutocompleteTerms"
+    --   -- in
+    --   -- ( { model | snackbar = createSnackbar model "There was a problem while fetching search suggestions" }, Cmd.none )
+    --   ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     RequestFavorites (Ok favorites) ->
       let

@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestAutocompleteTerms, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestCollectionsSearchPrediction, requestFavorites)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestCollectionsSearchPrediction, requestFavorites)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -45,12 +45,12 @@ requestFavorites =
     }
 
 
-requestAutocompleteTerms : String -> Cmd Msg
-requestAutocompleteTerms collectionTitlesCommaSeparated =
-  Http.get
-    { url = Url.Builder.absolute [ apiRoot, "autocomplete_terms/" ] [ Url.Builder.string "collections" collectionTitlesCommaSeparated ]
-    , expect = Http.expectJson RequestAutocompleteTerms (list string)
-    }
+-- requestAutocompleteTerms : String -> Cmd Msg
+-- requestAutocompleteTerms collectionTitlesCommaSeparated =
+--   Http.get
+--     { url = Url.Builder.absolute [ apiRoot, "autocomplete_terms/" ] [ Url.Builder.string "collections" collectionTitlesCommaSeparated ]
+--     , expect = Http.expectJson RequestAutocompleteTerms (list string)
+--     }
 
 
 requestOers : List OerId -> Cmd Msg

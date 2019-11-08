@@ -34,7 +34,7 @@ def main(args):
         pic_name = os.path.join(dir_name, "thumb_{}.jpg".format(frame_id))
 
         if os.path.exists(pic_name):  # if thumbnail exists: move on
-            print("{} exists !! moving on...")
+            print("{} exists !! moving on...".format(pic_name))
             continue
 
         time_point = min((frame_id + 1) * thumbnail_duration, duration)

@@ -3,6 +3,7 @@ import subprocess
 
 from converter import Converter
 
+
 def main(args):
     NUM_THUMBS = args["num_thumbs"]
     FFMPEG_PATH = "ffmpeg"
@@ -17,7 +18,7 @@ def main(args):
     c = Converter()
 
     info = c.probe(url)
-    duration = info.format.duration # duration in seconds
+    duration = info.format.duration  # duration in seconds
 
     thumbnail_duration = round(duration / NUM_THUMBS, 1)
 
@@ -25,20 +26,24 @@ def main(args):
     dir_name = os.path.join(args["output_dir"], str(material_id))
     print(dir_name)
 
-    if not os.path.exists(dir_name):
+    if not os.path.exists(dir_name):  # if no dir, make one
         os.mkdir(dir_name)
-    else:
-        print("Directory ", dir_name, " already exists !! Rewriting")
 
     # generate each frame
     for frame_id in range(NUM_THUMBS):
-        time_point = min((frame_id + 1) * thumbnail_duration, duration)
         pic_name = os.path.join(dir_name, "thumb_{}.jpg".format(frame_id))
-        cmd = [FFMPEG_PATH, '-y', '-loglevel', 'warning', '-i', url, '-s', '332x175', '-ss', str(time_point), '-frames:v', '1',
+
+        if os.path.exists(pic_name):  # if thumbnail exists: move on
+            print("{} exists !! moving on...")
+            continue
+
+        time_point = min((frame_id + 1) * thumbnail_duration, duration)
+
+        cmd = [FFMPEG_PATH, '-y', '-loglevel', 'warning', '-i', url, '-s', '332x175', '-ss', str(time_point),
+               '-frames:v', '1',
                pic_name]
 
         subprocess.call(cmd)
-        # c.thumbnail(url,time_point,pic_name,size="160x90")
         print("{} thumbnail created".format(pic_name))
 
 

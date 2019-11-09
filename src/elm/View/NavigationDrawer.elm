@@ -50,7 +50,6 @@ withNavigationDrawer model (pageContent, modal) =
 
       drawer =
         [ model.searchInputTyping |> (if isLabStudy1 model then dataSetSelectionWidget model else viewSearchWidget model fill "Search")
-        , viewOverviewSelectionWidget model
         , navButtons
         ]
         |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 12, spacing 30, whiteBackground ]
@@ -116,23 +115,3 @@ dataSetSelectionWidget model searchInputTyping =
         |> el [ width fill, centerX ]
   in
       searchField
-
-
-viewOverviewSelectionWidget : Model -> Element Msg
-viewOverviewSelectionWidget model =
-  Input.radio
-    [ paddingXY 0 20
-    , spacing 20
-    , width fill
-    ]
-    { onChange = SelectedOverviewType
-    , selected = Just model.overviewType
-    , label = Input.labelAbove captionTextAttrs (text "Preview")
-    , options =
-        [ Input.option ImageOverview (bodyNoWrap [] "Cover Image")
-        , Input.option (BubblogramOverview TopicNames) (bodyNoWrap [] "Main Topics")
-        , Input.option (BubblogramOverview TopicConnections) (bodyNoWrap [] "Topic Clusters")
-        , Input.option (BubblogramOverview TopicMentions) (bodyNoWrap [] "Topic Mentions")
-        ]
-    }
-    |> el [ width fill, padding 10, borderBottom 1, borderColorDivider ]

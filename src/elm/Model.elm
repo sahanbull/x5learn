@@ -62,10 +62,7 @@ type alias Model =
   , oerCardPlaceholderPositions : List OerCardPlaceholderPosition
   , overviewType : OverviewType
   , selectedMentionInStory : Maybe (OerId, MentionInOer)
-  , selectedOerCollections : Set String
   , pageScrollState : PageScrollState
-  , collectionsMenuOpen : Bool
-  , cachedCollectionsSearchPredictions : Dict String CollectionsSearchPrediction -- key = Search term
   , favorites : List OerId
   , removedFavorites : Set OerId -- keep a client-side record of "unliked" oers so that cards on the favorites page don't simply disappear when unliked
   , hoveringHeart : Maybe OerId
@@ -74,13 +71,6 @@ type alias Model =
   , featuredOers : Maybe (List OerId)
   }
 
-
-type alias CollectionsSearchPrediction = Dict String Int
-
-type alias CollectionsSearchPredictionResponse =
-  { searchText : String
-  , prediction : CollectionsSearchPrediction
-  }
 
 type EntityDefinition
   = DefinitionScheduledForLoading
@@ -160,12 +150,6 @@ type alias PageScrollState =
   , requestedByElm : Bool -- for analytics
   }
 
-
-type alias OerCollection =
-  { title : String
-  , description : String
-  , url : String
-  }
 
 type alias Snackbar =
   { startTime : Posix
@@ -385,10 +369,7 @@ initialModel nav flags =
   , oerCardPlaceholderPositions = []
   , overviewType = ImageOverview
   , selectedMentionInStory = Nothing
-  , selectedOerCollections = setOfAllCollectionTitles
   , pageScrollState = PageScrollState 0 0 0 False
-  , collectionsMenuOpen = False
-  , cachedCollectionsSearchPredictions = Dict.empty
   , favorites = []
   , removedFavorites = Set.empty
   , hoveringHeart = Nothing
@@ -803,79 +784,6 @@ relatedSearchStringFromOer model oerId =
 
 getResourceFeedbackFormValue model oerId =
   model.feedbackForms |> Dict.get oerId |> Maybe.withDefault ""
-
-
-oerCollections =
-  defaultOerCollection :: additionalOerCollections
-
-
-defaultOerCollection =
-  OerCollection "X5GON Platform" "Millions of lecture materials, videos and slide decks" "https://x5gon.org"
-
-
-additionalOerCollections =
-  [ OerCollection "Journal of Medical Internet Research (JMIR)" "Peer-reviewed Open Access Journal" "https://www.jmir.org/2019/8"
-  , OerCollection "Mental Health Meetups London" "74 Meetup groups" "https://www.meetup.com/find/?allMeetups=false&keywords=mental+health&radius=5&userFreeform=Greater+London%2C+United+Kingdom&mcId=z2827702&mcName=Greater+London%2C+England%2C+GB&sort=default"
-  , OerCollection "Mindfulness meditation" "Guided meditation videos on YouTube" "https://www.youtube.com/playlist?list=PLpb1DIPqFFN195vv7pnDFKtM9y5feLFp4"
-  , OerCollection "National Institute of Mental Health (NIMH)" "180+ videos on YouTube" "https://www.youtube.com/user/NIMHgov/videos"
-  , OerCollection "Alan Turing Institute" "350+ videos on YouTube" "https://www.youtube.com/channel/UCcr5vuAH5TPlYox-QLj4ySw/videos"
-  , OerCollection "TED Talks" "2000+ videos on YouTube" "https://www.youtube.com/user/TEDtalksDirector/videos"
-  , OerCollection "Numberphile" "400 videos on YouTube" "https://www.youtube.com/user/numberphile/videos"
-  ]
-
-
-getOerCollectionByTitle title =
-  additionalOerCollections
-  |> List.filter (\collection -> collection.title == title)
-  |> List.head
-  |> Maybe.withDefault defaultOerCollection
-
-
-getPredictedNumberOfSearchResults : Model -> String -> Maybe Int
-getPredictedNumberOfSearchResults model collectionTitle =
-  case getCollectionsSearchPredictionOfLastSearch model of
-    Nothing ->
-      Nothing
-
-    Just prediction ->
-      Dict.get collectionTitle prediction
-
-
-getCollectionsSearchPredictionOfLastSearch : Model -> Maybe CollectionsSearchPrediction
-getCollectionsSearchPredictionOfLastSearch model =
-  case model.searchState of
-    Nothing ->
-      Nothing
-
-    Just {lastSearch} ->
-      Dict.get lastSearch model.cachedCollectionsSearchPredictions
-
-
-setOfAllCollectionTitles : Set String
-setOfAllCollectionTitles =
-  oerCollections
-  |> List.map .title
-  |> Set.fromList
-
-
-selectedOerCollectionsToCommaSeparatedString : Model -> String
-selectedOerCollectionsToCommaSeparatedString model =
-  model.selectedOerCollections
-  |> Set.toList
-  |> String.join ","
-
-
-selectedOerCollectionsToSummaryString : Model -> String
-selectedOerCollectionsToSummaryString model =
-  if model.selectedOerCollections == setOfAllCollectionTitles then
-    "all collections"
-  else
-    case Set.toList model.selectedOerCollections of
-      [ only ] ->
-        only
-
-      _ ->
-        "selected collections"
 
 
 snackbarDuration =

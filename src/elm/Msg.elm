@@ -40,7 +40,6 @@ type Msg
   | RequestLabStudyLogEvent (Result Http.Error String)
   | RequestResource (Result Http.Error Oer)
   | RequestResourceRecommendations (Result Http.Error (List Oer))
-  | RequestCollectionsSearchPrediction (Result Http.Error CollectionsSearchPredictionResponse)
   | RequestSendResourceFeedback (Result Http.Error String)
   | RequestSaveAction (Result Http.Error String)
   | RequestSaveNote (Result Http.Error String)
@@ -74,10 +73,7 @@ type Msg
   | SelectResourceSidebarTab ResourceSidebarTab OerId
   | MouseMovedOnStoryTag Float
   | SelectedOverviewType OverviewType
-  | SelectedOerCollection String Bool
-  | ToggledAllOerCollections Bool
   | MouseEnterMentionInBubbblogramOverview OerId EntityId MentionInOer
-  | ToggleCollectionsMenu
   | ClickedHeart OerId
   | FlyingHeartRelativeStartPositionReceived Point
 

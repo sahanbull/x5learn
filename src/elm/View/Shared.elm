@@ -355,23 +355,8 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
           |> List.map (\suggestion -> suggestionButton suggestion)
           |> menuColumn [ width fill, clipY, height (px 39 |> maximum (39*7)) ]
           |> el [ width fill, htmlId "AutocompleteTerms" ]
-
-      collectionInfo =
-        if model.nav.url.path |> String.startsWith searchPath then
-          -- [ "Search in" |> captionNowrap []
-          -- , selectedOerCollectionsToSummaryString model |> bodyWrap []
-          -- , button [] { label = (if model.collectionsMenuOpen then "Hide menu" else "Change") |> captionNowrap [ Font.color linkBlue ], onPress = Just <| ToggleCollectionsMenu }
-          -- ]
-          [ "Search in " ++ (selectedOerCollectionsToSummaryString model |> truncateSentence 20) |> captionNowrap [ width <| px 180, htmlClass "ClipEllipsis" ]
-          , button [] { label = (if model.collectionsMenuOpen then "Hide menu" else "Change") |> captionNowrap [ Font.color linkBlue ], onPress = Just <| ToggleCollectionsMenu }
-          ]
-          |> column [ spacing 10, paddingBottom 13 ]
-          |> el [ width fill, padding 10, borderBottom 1, borderColorDivider ]
-        else
-          none
   in
       [ searchField
-      , collectionInfo
       ]
       |> column [ spacing 10, centerX ]
 

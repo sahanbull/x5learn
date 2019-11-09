@@ -71,7 +71,7 @@ update msg ({nav, userProfileForm} as model) =
             else
               (Home, (model, (if model.featuredOers==Nothing then requestFeaturedOers else Cmd.none)))
       in
-          ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage, resourceSidebarTab = NotesTab, resourceRecommendations = [], collectionsMenuOpen = False } |> closePopup |> resetUserProfileForm, cmd)
+          ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage, resourceSidebarTab = NotesTab, resourceRecommendations = [] } |> closePopup |> resetUserProfileForm, cmd)
           |> logEventForLabStudy "UrlChanged" [ path ]
 
     ClockTick time ->
@@ -106,7 +106,7 @@ update msg ({nav, userProfileForm} as model) =
     TriggerSearch str ->
       let
           searchUrl =
-            Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" (String.trim str), Url.Builder.string "collections" (selectedOerCollectionsToCommaSeparatedString model) ]
+            Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" (String.trim str) ]
       in
           ({ model | inspectorState = Nothing } |> closePopup, Navigation.pushUrl nav.key searchUrl)
 
@@ -228,7 +228,6 @@ update msg ({nav, userProfileForm} as model) =
     RequestOerSearch (Ok oers) ->
       (model |> updateSearch (insertSearchResults (oers |> List.map .id)) |> cacheOersFromList oers, [ setBrowserFocus "SearchField", getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch)
       |> requestWikichunkEnrichmentsIfNeeded
-      |> requestCollectionsSearchPredictionIfNeeded
       |> logEventForLabStudy "RequestOerSearch" (oers |> List.map .id |> List.map String.fromInt)
 
     RequestOerSearch (Err err) ->
@@ -412,17 +411,6 @@ update msg ({nav, userProfileForm} as model) =
       -- ( { model | resourceRecommendations = [], snackbar = createSnackbar model "An error occurred while loading recommendations" }, Cmd.none )
       ( { model | resourceRecommendations = [], snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
-    RequestCollectionsSearchPrediction (Ok response) ->
-      ({ model | cachedCollectionsSearchPredictions = model.cachedCollectionsSearchPredictions |> Dict.insert response.searchText response.prediction }, Cmd.none)
-      |> logEventForLabStudy "RequestCollectionsSearchPrediction" []
-
-    RequestCollectionsSearchPrediction (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestCollectionsSearchPrediction"
-      -- in
-      ( { model | snackbar = createSnackbar model "An error occurred while trying to predict search results" }, Cmd.none )
-
     SetHover maybeOerId ->
       let
           hoveringTagEntityId =
@@ -447,7 +435,7 @@ update msg ({nav, userProfileForm} as model) =
     SetPopup popup ->
       let
           newModel =
-            { model | popup = Just popup, collectionsMenuOpen = False }
+            { model | popup = Just popup }
       in
           (newModel, Cmd.none)
           |> logEventForLabStudy "SetPopup" (popupToStrings newModel.popup)
@@ -615,25 +603,6 @@ update msg ({nav, userProfileForm} as model) =
     MouseEnterMentionInBubbblogramOverview oerId entityId mention ->
       ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
 
-    SelectedOerCollection collectionTitle isChecked ->
-      let
-          selectedOerCollections =
-            if isChecked then
-              Set.insert collectionTitle model.selectedOerCollections
-            else
-              if Set.size model.selectedOerCollections == 1 then
-                Set.singleton defaultOerCollection.title
-              else
-                Set.remove collectionTitle model.selectedOerCollections
-      in
-          ({ model | selectedOerCollections = selectedOerCollections }, Cmd.none)
-
-    ToggledAllOerCollections on ->
-      ({ model | selectedOerCollections = (if on then setOfAllCollectionTitles else Set.singleton defaultOerCollection.title) }, Cmd.none)
-
-    ToggleCollectionsMenu ->
-      ({ model | collectionsMenuOpen = not model.collectionsMenuOpen }, setBrowserFocus "")
-
     ClickedHeart oerId ->
       if isMarkedAsFavorite model oerId then
         ( { model | removedFavorites = model.removedFavorites |> Set.insert oerId }, Cmd.none)
@@ -649,21 +618,6 @@ update msg ({nav, userProfileForm} as model) =
 
     FlyingHeartRelativeStartPositionReceived startPoint ->
       ( { model | flyingHeartAnimationStartPoint = Just startPoint }, Cmd.none)
-
-
-requestCollectionsSearchPredictionIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
-requestCollectionsSearchPredictionIfNeeded ((oldModel, oldCmd) as input) =
-  case getCollectionsSearchPredictionOfLastSearch oldModel of
-    Nothing ->
-      case oldModel.searchState of
-        Nothing ->
-          input
-
-        Just {lastSearch} ->
-          (oldModel, [ requestCollectionsSearchPrediction lastSearch, oldCmd ] |> Cmd.batch)
-
-    _ ->
-      input
 
 
 createNote : OerId -> String -> Model -> Model
@@ -943,30 +897,11 @@ executeSearchAfterUrlChanged model url =
         |> Url.percentDecode
         |> Maybe.withDefault ""
 
-      selectedOerCollections =
-        case url.query of
-          Nothing ->
-            setOfAllCollectionTitles
-
-          Just query ->
-            case query |> String.split "&collections=" |> List.drop 1 |> List.head of
-              Nothing ->
-                setOfAllCollectionTitles
-
-              Just value ->
-                let
-                    collections =
-                      value |> Url.percentDecode |> Maybe.withDefault "" |> String.split "," |> Set.fromList |> Set.filter (\collectionTitle -> Set.member collectionTitle setOfAllCollectionTitles)
-                in
-                    if Set.isEmpty collections then
-                       setOfAllCollectionTitles
-                     else
-                       collections
       newModel =
-        { model | searchInputTyping = textParam, selectedOerCollections = selectedOerCollections, searchState = Just <| newSearch textParam, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, snackbar = Nothing }
+        { model | searchInputTyping = textParam,  searchState = Just <| newSearch textParam, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, snackbar = Nothing }
   in
-        ( newModel |> closePopup, searchOers textParam (selectedOerCollectionsToCommaSeparatedString newModel))
-        |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam, (selectedOerCollectionsToCommaSeparatedString newModel) ]
+        ( newModel |> closePopup, searchOers textParam)
+        |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam ]
 
 
 requestResourceAfterUrlChanged : Url -> Model -> (Model, Cmd Msg)

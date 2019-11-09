@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestCollectionsSearchPrediction, requestFavorites)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestFavorites)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -29,10 +29,10 @@ requestSession =
     }
 
 
-searchOers : String -> String -> Cmd Msg
-searchOers searchText collectionTitlesCommaSeparated =
+searchOers : String -> Cmd Msg
+searchOers searchText =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText, Url.Builder.string "collections" collectionTitlesCommaSeparated ]
+    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText ]
     , expect = Http.expectJson RequestOerSearch (list oerDecoder)
     }
 
@@ -43,14 +43,6 @@ requestFavorites =
     { url = Url.Builder.absolute [ apiRoot, "favorites/" ] []
     , expect = Http.expectJson RequestFavorites (list int)
     }
-
-
--- requestAutocompleteTerms : String -> Cmd Msg
--- requestAutocompleteTerms collectionTitlesCommaSeparated =
---   Http.get
---     { url = Url.Builder.absolute [ apiRoot, "autocomplete_terms/" ] [ Url.Builder.string "collections" collectionTitlesCommaSeparated ]
---     , expect = Http.expectJson RequestAutocompleteTerms (list string)
---     }
 
 
 requestOers : List OerId -> Cmd Msg
@@ -136,14 +128,6 @@ requestResourceRecommendations oerId =
     }
 
 
-requestCollectionsSearchPrediction : String -> Cmd Msg
-requestCollectionsSearchPrediction searchText =
-  Http.get
-    { url = Url.Builder.absolute [ apiRoot, "collections_search_prediction/" ] [ Url.Builder.string "text" searchText, Url.Builder.string "collectionTitles" (setOfAllCollectionTitles |> Set.toList |> String.join ",") ]
-    , expect = Http.expectJson RequestCollectionsSearchPrediction collectionsSearchPredictionDecoder
-    }
-
-
 requestSendResourceFeedback : Int -> String -> Cmd Msg
 requestSendResourceFeedback oerId text =
   Http.post
@@ -151,12 +135,6 @@ requestSendResourceFeedback oerId text =
     , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId), ("text", Encode.string text) ]
     , expect = Http.expectString RequestSendResourceFeedback
     }
-
-
-collectionsSearchPredictionDecoder =
-  map2 CollectionsSearchPredictionResponse
-    (field "searchText" string)
-    (field "prediction" (dict int))
 
 
 sessionDecoder =

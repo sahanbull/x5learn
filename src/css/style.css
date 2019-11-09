@@ -149,15 +149,6 @@ a:hover {
   text-overflow: ellipsis !important;
 }
 
-.OerCollectionListItem{
-  background-color: #141414;
-  transition: all 0.2s;
-}
-
-.OerCollectionListItem:hover{
-  background-color: rgba(255, 255, 255, 0.32);
-}
-
 .Heart{
   background-repeat: no-repeat !important;
   background-position: center !important;

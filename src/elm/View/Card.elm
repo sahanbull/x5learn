@@ -120,9 +120,6 @@ viewOerCard ({pageScrollState} as model) recommendedFragments position barId ena
 viewOerCardVisibleContent : Model -> List Fragment -> Point -> String -> Bool -> Oer -> Element Msg
 viewOerCardVisibleContent model recommendedFragments position barId enableShadow oer =
   let
-      isHovering =
-        model.hoveringOerId == Just oer.id
-
       fragmentsBar =
         case Dict.get oer.id model.wikichunkEnrichments of
           Nothing ->
@@ -138,7 +135,7 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
               |> List.singleton
 
       (graphic, popup) =
-        (viewCarousel model isHovering oer, [])
+        (viewCarousel model oer, [])
           -- BubblogramOverview bubblogramType ->
           --   case Dict.get oer.id model.wikichunkEnrichments of
           --     Nothing ->
@@ -248,8 +245,6 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
         if enableShadow then [ htmlClass "materialCard" ] else [ Border.width 1, borderColorDivider ]
 
       card =
-        -- [ (if isHovering then hoverPreview else carousel)
-        -- ]
         [ graphic ]
         |> column ([ widthOfCard, heightOfCard, onMouseEnter (SetHover (Just oer.id)), onMouseLeave (SetHover Nothing), title, bottomInfo ] ++ fragmentsBar ++ shadow ++ clickHandler ++ popup)
 
@@ -261,8 +256,8 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
       |> el wrapperAttrs
 
 
-viewCarousel : Model -> Bool -> Oer -> Element Msg
-viewCarousel model isHovering oer =
+viewCarousel : Model -> Oer -> Element Msg
+viewCarousel model oer =
   let
       upperImage attrs url =
         none
@@ -271,7 +266,6 @@ viewCarousel model isHovering oer =
       case oer.images of
         [] ->
           imgPath "thumbnail_unavailable.jpg"
-          -- viewMediatypeIcon oer.mediatype isHovering
           |> upperImage []
 
         [ singleImage ] ->

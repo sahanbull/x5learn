@@ -822,3 +822,7 @@ flyingHeartAnimationDuration =
 
 initialResourceSidebarTab =
   FeedbackTab
+
+
+isHovering model oer =
+  model.hoveringOerId == Just oer.id

@@ -77,6 +77,7 @@ type Msg
   | ClickedHeart OerId
   | FlyingHeartRelativeStartPositionReceived Point
   | Scrubbed Float
+  | ScrubMouseLeave
 
 
 type UserProfileField

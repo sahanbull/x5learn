@@ -7,7 +7,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input exposing (button)
--- import Element.Events as Events exposing (onMouseMove)
+import Element.Events as Events exposing (onMouseLeave)
 import Dict
 
 import Model exposing (..)
@@ -121,9 +121,26 @@ viewFragmentsBar model oer chunks recommendedFragments barWidth barId =
 
       background =
         [ Background.color materialDark ]
+
+      scrubCursor =
+        if isHovering model oer then
+          case model.scrubbing of
+            Nothing ->
+              []
+
+            Just position ->
+              none
+              |> el [ width <| px 2, height fill, Background.color white, moveRight ((cardWidth - 2) * position), pointerEventsNone ]
+              |> inFront
+              |> List.singleton
+        else
+          []
+
+      mouseLeaveHandler =
+        [ onMouseLeave <| ScrubMouseLeave ]
   in
     none
-    |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background)
+    |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background ++ scrubCursor ++ mouseLeaveHandler)
 
 
 viewChunkPopup model chunkPopup =

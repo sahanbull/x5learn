@@ -614,6 +614,9 @@ update msg ({nav, userProfileForm} as model) =
     Scrubbed position ->
       ({ model | scrubbing = Just position }, Cmd.none)
 
+    ScrubMouseLeave ->
+      ({ model | scrubbing = Nothing}, Cmd.none)
+
 
 createNote : OerId -> String -> Model -> Model
 createNote oerId text model =

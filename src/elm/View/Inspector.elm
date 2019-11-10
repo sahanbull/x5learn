@@ -14,7 +14,6 @@ import Model exposing (..)
 import Msg exposing (..)
 
 import View.Shared exposing (..)
-import View.Noteboard exposing (..)
 import View.Html5VideoPlayer exposing (..)
 import View.HtmlPdfViewer exposing (..)
 
@@ -148,17 +147,11 @@ inspectorContentDefault model {oer, fragmentStart} =
             |> List.map (bodyWrap [])
             |> column [ spacing 7, height fill, scrollbarY, paddingTop 30 ]
 
-      mainSection =
+      body =
         [ player
         , fragmentsBarWrapper
         ]
-        |> column [ width (px playerWidth), moveLeft notesWidth ]
-
-      body =
-        [ viewNoteboard model True oer.id |> el [ width <| px notesWidth, height fill, alignTop, borderLeft 1, paddingTRBL 0 0 0 15, moveRight (sheetWidth - notesWidth - 30 ) ]
-        , mainSection
-        ]
-        |> row []
+        |> column [ width (px playerWidth) ]
 
       footer =
         []
@@ -228,13 +221,9 @@ inspectorContentDefault model {oer, fragmentStart} =
       { header = header, body = body, footer = footer, fixed = none }
 
 
-notesWidth =
-  248
-
-
 fragmentsBarWrapperHeight =
   200
 
 
 sheetWidth =
-  752+notesWidth+15
+  752

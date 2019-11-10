@@ -71,7 +71,7 @@ update msg ({nav, userProfileForm} as model) =
             else
               (Home, (model, (if model.featuredOers==Nothing then requestFeaturedOers else Cmd.none)))
       in
-          ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage, resourceSidebarTab = NotesTab, resourceRecommendations = [] } |> closePopup |> resetUserProfileForm, cmd)
+          ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage, resourceSidebarTab = initialResourceSidebarTab, resourceRecommendations = [] } |> closePopup |> resetUserProfileForm, cmd)
           |> logEventForLabStudy "UrlChanged" [ path ]
 
     ClockTick time ->

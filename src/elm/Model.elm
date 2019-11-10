@@ -78,8 +78,7 @@ type EntityDefinition
   -- | DefinitionUnavailable -- TODO consider appropriate error handling
 
 type ResourceSidebarTab
-  = NotesTab
-  | RecommendationsTab
+  = RecommendationsTab
   | FeedbackTab
 
 type CurrentResource
@@ -361,7 +360,7 @@ initialModel nav flags =
   , timeOfLastUrlChange = initialTime
   , startedLabStudyTask = Nothing
   , currentResource = Nothing
-  , resourceSidebarTab = NotesTab
+  , resourceSidebarTab = initialResourceSidebarTab
   , resourceRecommendations = []
   , timeOfLastFeedbackRecorded = initialTime
   , oerNoteboards = Dict.empty
@@ -817,3 +816,7 @@ isFlyingHeartAnimating model =
 
 flyingHeartAnimationDuration =
   900
+
+
+initialResourceSidebarTab =
+  FeedbackTab

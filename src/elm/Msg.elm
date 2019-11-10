@@ -71,11 +71,12 @@ type Msg
   | StartLabStudyTask LabStudyTask
   | StoppedLabStudyTask
   | SelectResourceSidebarTab ResourceSidebarTab OerId
-  | MouseMovedOnStoryTag Float
+  -- | MouseMovedOnStoryTag Float
   | SelectedOverviewType OverviewType
   | MouseEnterMentionInBubbblogramOverview OerId EntityId MentionInOer
   | ClickedHeart OerId
   | FlyingHeartRelativeStartPositionReceived Point
+  | Scrubbed Float
 
 
 type UserProfileField
@@ -92,7 +93,8 @@ subscriptions model =
       , Ports.closeInspector (\_ -> CloseInspector)
       , Ports.clickedOnDocument (\_ -> ClickedOnDocument)
       , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
-      , Ports.mouseMovedOnStoryTag MouseMovedOnStoryTag
+      -- , Ports.mouseMovedOnStoryTag MouseMovedOnStoryTag
+      , Ports.scrubbed Scrubbed
       , Ports.videoIsPlayingAtPosition VideoIsPlayingAtPosition
       , Ports.pageScrolled PageScrolled
       , Ports.receiveCardPlaceholderPositions OerCardPlaceholderPositionsReceived

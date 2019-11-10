@@ -1,11 +1,13 @@
 module View.FragmentsBar exposing (..)
 
+import Json.Decode
+
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 import Element.Input as Input exposing (button)
-import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave, onFocus)
+-- import Element.Events as Events exposing (onMouseMove)
 import Dict
 
 import Model exposing (..)
@@ -121,7 +123,7 @@ viewFragmentsBar model oer chunks recommendedFragments barWidth barId =
         [ Background.color materialDark ]
   in
     none
-    |> el ([ width fill, height <| px <| fragmentsBarHeight,  moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background)
+    |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background)
 
 
 viewChunkPopup model chunkPopup =

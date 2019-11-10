@@ -69,6 +69,7 @@ type alias Model =
   , flyingHeartAnimation : Maybe FlyingHeartAnimation
   , flyingHeartAnimationStartPoint : Maybe Point
   , featuredOers : Maybe (List OerId)
+  , scrubbing : Maybe Float
   }
 
 
@@ -375,6 +376,7 @@ initialModel nav flags =
   , flyingHeartAnimation = Nothing
   , flyingHeartAnimationStartPoint = Nothing
   , featuredOers = Nothing
+  , scrubbing = Nothing
   }
 
 

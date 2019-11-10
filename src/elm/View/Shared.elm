@@ -278,6 +278,21 @@ onEnter msg =
       |> htmlAttribute
 
 
+-- onMouseMove : (MouseMoveData -> Msg) -> Attribute Msg
+-- onMouseMove msg =
+--   let
+--       decoder : Json.Decode.Decoder MouseMoveData
+--       decoder =
+--         Json.Decode.map4 MouseMoveData
+--           (Json.Decode.at [ "offsetX" ] Json.Decode.int)
+--           (Json.Decode.at [ "offsetY" ] Json.Decode.int)
+--           (Json.Decode.at [ "target", "offsetHeight" ] Json.Decode.float)
+--           (Json.Decode.at [ "target", "offsetWidth" ] Json.Decode.float)
+--   in
+--       Html.Events.on "mousemove" (Json.Decode.map msg decoder)
+--       |> htmlAttribute
+
+
 -- NB: stopPropagation should be avoided, see https://css-tricks.com/dangers-stopping-event-propagation/
 onClickNoBubble : msg -> Attribute msg
 onClickNoBubble message =

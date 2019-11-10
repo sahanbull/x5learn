@@ -126,12 +126,7 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
       fragmentsBar =
         case Dict.get oer.id model.wikichunkEnrichments of
           Nothing ->
-            case model.overviewType of
-              ImageOverview ->
-                []
-
-              BubblogramOverview _ ->
-                [ viewLoadingSpinner |> el [ moveDown 80, width fill ] |> inFront ]
+            [ viewLoadingSpinner |> el [ moveDown 80, width fill ] |> inFront ]
 
           Just enrichment ->
             if enrichment.errors then
@@ -143,34 +138,30 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
               |> List.singleton
 
       (graphic, popup) =
-        case model.overviewType of
-          ImageOverview ->
-            (viewCarousel model isHovering oer, [])
+        (viewCarousel model isHovering oer, [])
+          -- BubblogramOverview bubblogramType ->
+          --   case Dict.get oer.id model.wikichunkEnrichments of
+          --     Nothing ->
+          --       (none |> el [ width fill, height (px imageHeight), Background.color x5color ]
+          --       , [])
 
+          --     Just enrichment ->
+          --       if enrichment.errors then
+          --         if isVideoFile oer.url then
+          --           (image [ alpha 0.9, centerX, centerY ] { src = svgPath "playIcon", description = "Video file" }
+          --            |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
+          --           , [])
+          --         else
+          --           ("no preview available" |> captionNowrap [ alpha 0.75, whiteText, centerX, centerY ]
+          --            |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
+          --           , [])
+          --       else
+          --         case enrichment.bubblogram of
+          --           Nothing -> -- shouldn't happen for more than a second
+          --             (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color materialDark, inFront viewLoadingSpinner ], [])
 
-          BubblogramOverview bubblogramType ->
-            case Dict.get oer.id model.wikichunkEnrichments of
-              Nothing ->
-                (none |> el [ width fill, height (px imageHeight), Background.color x5color ]
-                , [])
-
-              Just enrichment ->
-                if enrichment.errors then
-                  if isVideoFile oer.url then
-                    (image [ alpha 0.9, centerX, centerY ] { src = svgPath "playIcon", description = "Video file" }
-                     |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
-                    , [])
-                  else
-                    ("no preview available" |> captionNowrap [ alpha 0.75, whiteText, centerX, centerY ]
-                     |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
-                    , [])
-                else
-                  case enrichment.bubblogram of
-                    Nothing -> -- shouldn't happen for more than a second
-                      (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color materialDark, inFront viewLoadingSpinner ], [])
-
-                    Just bubblogram ->
-                      viewBubblogram model bubblogramType oer.id bubblogram
+          --           Just bubblogram ->
+          --             viewBubblogram model bubblogramType oer.id bubblogram
 
       title =
         let

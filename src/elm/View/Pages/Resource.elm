@@ -18,7 +18,7 @@ import Element.Keyed as Keyed
 
 import Model exposing (..)
 import View.Shared exposing (..)
-import View.Noteboard exposing (..)
+-- import View.Noteboard exposing (..)
 import View.Html5VideoPlayer exposing (..)
 import View.HtmlPdfViewer exposing (..)
 
@@ -112,9 +112,6 @@ viewResource model oer =
         let
             (heading, content) =
               case model.resourceSidebarTab of
-                NotesTab ->
-                  ("Your notes", viewNoteboard model False oer.id)
-
                 RecommendationsTab ->
                   let
                       sidebarContent =
@@ -151,8 +148,7 @@ viewResource model oer =
                   simpleButton [ Font.size 16, paddingXY 1 20, borderBottom 4, centerX, borderColor, textColor ] title (Just <| SelectResourceSidebarTab tab oer.id)
 
             tabsMenu =
-              [ (NotesTab, "Notes")
-              , (RecommendationsTab, "Recommendations")
+              [ (RecommendationsTab, "Recommendations")
               , (FeedbackTab, "Feedback")
               ]
               |> List.map renderTab

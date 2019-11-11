@@ -8,20 +8,28 @@ from langdetect import detect_langs
 from wikichunkifiers.pdf import extract_chunks_from_pdf
 from wikichunkifiers.youtube import extract_chunks_from_youtube_video
 from wikichunkifiers.generic import extract_chunks_from_generic_text
+from wikichunkifiers.video import extract_chunks_from_x5gon_video
 from wikichunkifiers.lib.util import EnrichmentError
 
 import wikipedia
 
 API_ROOT = os.environ["FLASK_API_ROOT"]
+
+
 # API_ROOT = 'http://127.0.0.1:5000/api/v1/'
 
 
 def main():
+    """ Runs every 5 seconds to get the pending enrichment tasks and runs them to enrich them.
+    """
     say('hello')
-    while(True):
+    while (True):
         try:
-            r = requests.post(API_ROOT+"most_urgent_unstarted_enrichment_task/", data={})
+            # get oer record of the most recent requested materials
+            r = requests.post(API_ROOT + "most_urgent_unstarted_enrichment_task/", data={})
+            # get json obj with (url, material data)
             j = json.loads(r.text)
+            # if there is additional data in j
             if 'data' in j:
                 oer_data = j['data']
                 url = oer_data['url']
@@ -51,7 +59,15 @@ def say(text):
 
 
 def make_enrichment_data(oer_data):
-    data = { 'chunks': [], 'mentions': {}, 'clusters': [], 'errors': False }
+    """Generates wikifier enrichments for media. Gets the meta information and creates extracts chunks, mentions etc.
+
+    Args:
+        oer_data {key: val}: dict of meta information inc. url, title, desc and also material id if X5GON record
+
+    Returns:
+
+    """
+    data = {'chunks': [], 'mentions': {}, 'clusters': [], 'errors': False}
     error = None
     try:
         data['chunks'] = make_wikichunks(oer_data)
@@ -69,18 +85,32 @@ def make_enrichment_data(oer_data):
 
 
 def make_wikichunks(oer_data):
-    print('\n________________________________________________________________________________________________________________________________')
+    """extracts the text and also chunkifies it.
+
+    Args:
+        oer_data {key, val}: where they is url and oer data in a dict
+
+    Returns:
+        ([str]): a list of chunks
+    """
+    print(
+        '\n________________________________________________________________________________________________________________________________')
     url = oer_data['url']
     print(url)
     print(oer_data['title'])
+    # if the material is pdfs, including jmir and research protocols:
     if url.lower().endswith('pdf'):
         return extract_chunks_from_pdf(url)
-    # if url.lower().endswith('.mp4'): TODO
-    #     return extract_chunks_from_video(url)
     if 'youtu' in url and '/watch?v=' in url:
         return extract_chunks_from_youtube_video(url, oer_data)
     if 'meetup.com/' in url:
         return extract_chunks_from_generic_text(url, oer_data)
+    if url.lower().endswith('.mp4') and "material_id" in oer_data:  # if X5GON Video,
+        try:
+            return extract_chunks_from_x5gon_video(oer_data)
+        except ValueError:
+            pass
+
     raise EnrichmentError('Unsupported file format')
 
 
@@ -90,9 +120,10 @@ def extract_concept_clusters(chunks, mentions):
     for chunk in chunks:
         for entity in chunk['entities']:
             title = entity['title']
-            if len(title)>2 and entity['id'] in mentions: # Exclude titles that are too short, such as one-letter variable names
+            if len(title) > 2 and entity[
+                'id'] in mentions:  # Exclude titles that are too short, such as one-letter variable names
                 occurrences[title] += 1
-    titles = [ x[0] for x in sorted(occurrences.items(), key=lambda k_v: k_v[1], reverse=True)[:5] ]
+    titles = [x[0] for x in sorted(occurrences.items(), key=lambda k_v: k_v[1], reverse=True)[:5]]
     print('Titles:', titles)
     clusters = []
     for title in titles:
@@ -101,8 +132,8 @@ def extract_concept_clusters(chunks, mentions):
         except Exception as err:
             links = []
             print('Ignoring error: ', err)
-        links = [ link for link in links if link in titles ]
-        cluster = [ title ] + links
+        links = [link for link in links if link in titles]
+        cluster = [title] + links
         clusters.append(cluster)
     print('Raw:', clusters)
     clusters = merge_clusters(clusters)
@@ -117,32 +148,38 @@ def extract_mentions(chunks):
     entities = []
     for chunk in chunks:
         entities += chunk['entities']
-    entities = list({v['id']:v for v in entities}.values()) # remove duplicates. solution adapted from https://stackoverflow.com/a/11092590/2237986
-    entities = [ e for e in entities if len(e['title'])>1 ] # exclude super-short titles, such as one-letter names of mathematical variables
+    entities = list({v['id']: v for v in
+                     entities}.values())  #  remove duplicates. solution adapted from https://stackoverflow.com/a/11092590/2237986
+    entities = [e for e in entities if
+                len(e['title']) > 1]  # exclude super-short titles, such as one-letter names of mathematical variables
     for entity in entities:
         entity_id = entity['id']
         title = entity['title'].lower()
-        title = remove_stuff_in_parentheses(title) # e.g. look for mentions of "strategy" if the concept is "strategy (game theory)"
+        title = remove_stuff_in_parentheses(
+            title)  # e.g. look for mentions of "strategy" if the concept is "strategy (game theory)"
         title = title.strip()
         for chunk in chunks:
             text = chunk['text']
             text = re.sub(r'\s+', ' ', text)
-            positions = [ m.start() for m in re.finditer(re.escape(title), text.lower()) ]
+            positions = [m.start() for m in re.finditer(re.escape(title), text.lower())]
             prev_position = None
             for position in positions:
-                position += int(len(title)/2) # Focus on the middle of the title to account for variations in surrounding blanks
-                if prev_position is not None and position-prev_position<200 and not contains_end_mark(text[prev_position:position]): # ignore adjacent mentions as described in issue #167
+                position += int(
+                    len(title) / 2)  # Focus on the middle of the title to account for variations in surrounding blanks
+                if prev_position is not None and position - prev_position < 200 and not contains_end_mark(
+                        text[prev_position:position]):  # ignore adjacent mentions as described in issue #167
                     continue
                 prev_position = position
                 sentence, pos_in_chunk = sentence_at_position(text, position)
-                if len(sentence)>200: # probably not a normal sentence
+                if len(sentence) > 200:  # probably not a normal sentence
                     sentence, pos_in_chunk = excerpt_at_position(text, position)
                 if not looks_like_english(sentence):
                     continue
                 position_in_resource = round(chunk['start'] + chunk['length'] * pos_in_chunk / len(text), 4)
-                if entity_id not in mentions: # could we use defaultdict for this? not sure if it works for lists. too lazy/rushed to check now.
+                if entity_id not in mentions:  # could we use defaultdict for this? not sure if it works for lists. too lazy/rushed to check now.
                     mentions[entity_id] = []
-                if len(mentions[entity_id])==0 or mentions[entity_id][-1]['positionInResource']!=position_in_resource: # don't create duplicates if an entity is mentioned twice in a sentence
+                if len(mentions[entity_id]) == 0 or mentions[entity_id][-1][
+                    'positionInResource'] != position_in_resource:  # don't create duplicates if an entity is mentioned twice in a sentence
                     mentions[entity_id].append({'sentence': sentence, 'positionInResource': position_in_resource})
     print(len(mentions), 'mentions found')
     return mentions
@@ -153,14 +190,14 @@ def contains_end_mark(text):
 
 
 def sentence_at_position(text, position):
-    end_mark_positions = [ m.start() for m in re.finditer('[.!?]([ ]|$)', text) ]
-    if len(end_mark_positions)==0:
+    end_mark_positions = [m.start() for m in re.finditer('[.!?]([ ]|$)', text)]
+    if len(end_mark_positions) == 0:
         return text, 0
     sentence_start_position = 0
     for end_mark_position in end_mark_positions:
         if end_mark_position > position:
-            return text[sentence_start_position:(end_mark_position+1)], sentence_start_position
-        sentence_start_position = end_mark_position+1
+            return text[sentence_start_position:(end_mark_position + 1)], sentence_start_position
+        sentence_start_position = end_mark_position + 1
     return text[sentence_start_position:], sentence_start_position
 
 
@@ -174,13 +211,13 @@ def excerpt_at_position(text, position):
 
 def post_back_wikichunks(url, data, error):
     payload = {'url': url, 'data': data, 'error': error}
-    r = requests.post(API_ROOT+"ingest_wikichunk_enrichment/", data=json.dumps(payload))
+    r = requests.post(API_ROOT + "ingest_wikichunk_enrichment/", data=json.dumps(payload))
     # print('post_back_wikichunks', payload)
 
 
 def looks_like_english(sentence):
     language = detect_langs(sentence)[0]
-    return language.lang=='en' and language.prob > 0.9
+    return language.lang == 'en' and language.prob > 0.9
 
 
 def remove_stuff_in_parentheses(text):
@@ -192,7 +229,7 @@ def merge_clusters(raw_clusters):
     # print('raw_clusters', raw_clusters)
     for raw_cluster in raw_clusters:
         # print('raw_cluster', raw_cluster)
-        overlapping_merged_clusters = [ c for c in resulting_merged_clusters if not set(c).isdisjoint(set(raw_cluster)) ]
+        overlapping_merged_clusters = [c for c in resulting_merged_clusters if not set(c).isdisjoint(set(raw_cluster))]
         # print('overlapping_merged_clusters', overlapping_merged_clusters)
         for o in overlapping_merged_clusters:
             resulting_merged_clusters.remove(o)
@@ -204,9 +241,9 @@ def merge_clusters(raw_clusters):
     return resulting_merged_clusters
 
 
-def unique_list_of_lists(k): # https://stackoverflow.com/a/2213973/2237986
+def unique_list_of_lists(k):  # https://stackoverflow.com/a/2213973/2237986
     k.sort()
-    return list(k for k,_ in itertools.groupby(k))
+    return list(k for k, _ in itertools.groupby(k))
 
 
 if __name__ == '__main__':

@@ -3,7 +3,7 @@ import os, math
 
 
 def main(args):
-    max_frames_row = 10.0
+    max_frames_per_row = 10.0
     frames = []
 
     material_id = os.path.basename(os.path.normpath(args["folder_path"]))
@@ -25,19 +25,20 @@ def main(args):
     tile_width = frames[0].size[0]
     tile_height = frames[0].size[1]
 
-    if len(frames) > max_frames_row:
-        spritesheet_width = tile_width * max_frames_row
-        required_rows = math.ceil(len(frames) / max_frames_row)
+    if len(frames) > max_frames_per_row:
+        spritesheet_width = tile_width * max_frames_per_row
+        required_rows = math.ceil(len(frames) / max_frames_per_row)
         spritesheet_height = tile_height * required_rows
     else:
         spritesheet_width = tile_width * len(frames)
         spritesheet_height = tile_height
+        required_rows = 1
 
     spritesheet = Image.new("RGB", (int(spritesheet_width), int(spritesheet_height)))
 
     for current_frame in frames:
-        top = tile_height * math.floor((frames.index(current_frame)) / max_frames_row)
-        left = tile_width * (frames.index(current_frame) % max_frames_row)
+        top = tile_height * math.floor((frames.index(current_frame)) / max_frames_per_row)
+        left = tile_width * (frames.index(current_frame) % max_frames_per_row)
         bottom = top + tile_height
         right = left + tile_width
 
@@ -47,7 +48,11 @@ def main(args):
 
         spritesheet.paste(cut_frame, box)
 
-    spritesheet.save(os.path.join(args["folder_path"], "sprite_sheet_{}.jpg".format(material_id)))
+    spritesheet.save(os.path.join(args["folder_path"], "sprite_{}_{}x{}_{}x{}.jpg".format(material_id,
+                                                                                          int(max_frames_per_row),
+                                                                                          int(required_rows),
+                                                                                          int(tile_width),
+                                                                                          int(tile_height))))
 
 
 if __name__ == '__main__':

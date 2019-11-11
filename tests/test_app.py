@@ -13,7 +13,6 @@ def test_list_notes_unauthorized(client):
 def test_create_note_unauthorized(client):
     response = client.post('/api/v1/note/', json={'oer_id': '1', 'text': 'test string'}, follow_redirects=True)
 
-
     assert response.status_code == 401
 
 
@@ -82,7 +81,7 @@ def test_repository_get(repository):
 def test_repository_get_by_id(repository):
     existing = repository.get(models.Note, 1)
 
-    if (existing is None): 
+    if (existing is None):
         note = models.Note(1, "test", 1, False)
         repository.add(note)
 

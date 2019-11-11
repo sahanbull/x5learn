@@ -1,13 +1,17 @@
 # _ = get_or_create_db(DB_ENGINE_URI)
+import sqlalchemy
+
 from x5learn_server.db.database import db_session
 from x5learn_server.models import Oer, WikichunkEnrichment, WikichunkEnrichmentTask
-
 
 CURRENT_ENRICHMENT_VERSION = 1
 
 
 def push_enrichment_task_if_needed(url, urgency):
+    # check if OER is already listed for enrichment
     enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
+
+    # if the enrichment is not present or outdated: push enrichment task
     if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION):
         push_enrichment_task(url, urgency)
 
@@ -15,11 +19,14 @@ def push_enrichment_task_if_needed(url, urgency):
 def push_enrichment_task(url, priority):
     # print('push_enrichment_task')
     try:
+        # check if the url is currently put in the task queue
         task = WikichunkEnrichmentTask.query.filter_by(url=url).first()
+        # if not a task, create task in the task queue
         if task is None:
             task = WikichunkEnrichmentTask(url, priority)
             db_session.add(task)
         else:
+            # else increase priority
             task.priority += priority
         db_session.commit()
     except sqlalchemy.orm.exc.StaleDataError:

@@ -258,6 +258,45 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
 
 viewCarousel : Model -> Oer -> Element Msg
 viewCarousel model oer =
+  if isHovering model oer then
+    case model.scrubbing of
+      Nothing ->
+        viewCoverImage model oer
+
+      Just position ->
+        viewScrubImage model oer position
+  else
+    viewCoverImage model oer
+
+
+viewScrubImage : Model -> Oer -> Float -> Element Msg
+viewScrubImage model oer position =
+  let
+      url =
+        "http://145.14.12.67/files/sprite_sheets/sprite_8668_10x10_332x175.jpg"
+
+      spriteImageIndex =
+        (min 0.999 position) * spriteSheetNumberOfColumns * spriteSheetNumberOfRows
+        |> floor
+
+      offsetX =
+        (modBy spriteSheetNumberOfColumns spriteImageIndex) * cardWidth
+        |> String.fromInt
+
+      offsetY =
+        (spriteImageIndex // spriteSheetNumberOfColumns) * imageHeight
+        |> String.fromInt
+        |> Debug.log "offsetY"
+
+      backgroundValue =
+        "url('"++ url ++"') -"++offsetX++"px -"++offsetY++"px"
+  in
+      none
+      |> el [ width <| px cardWidth, height <| px imageHeight, htmlStyle "background" backgroundValue ]
+
+
+viewCoverImage : Model -> Oer -> Element Msg
+viewCoverImage model oer =
   let
       upperImage attrs url =
         none
@@ -321,3 +360,11 @@ viewCarousel model oer =
 --   in
 --       image [ semiTransparent, centerX, centerY, width (px <| if isHovering then 60 else 50) ] { src = (svgPath stub), description = "" }
 --       |> el [ width fill, height (px imageHeight), Background.color x5color ]
+
+
+spriteSheetNumberOfRows =
+  10
+
+
+spriteSheetNumberOfColumns =
+  10

@@ -413,23 +413,15 @@ update msg ({nav, userProfileForm} as model) =
 
     SetHover maybeOerId ->
       let
-          hoveringTagEntityId =
+          (scrubbing, hoveringTagEntityId) =
             case maybeOerId of
               Nothing ->
-                Nothing
+                (Nothing, Nothing)
 
               Just _ ->
-                model.hoveringTagEntityId
-
-          popup =
-            case maybeOerId of
-              Nothing ->
-                Nothing
-
-              _ ->
-                model.popup
+                (model.scrubbing, model.hoveringTagEntityId)
       in
-          ( { model | hoveringOerId = maybeOerId, timeOfLastMouseEnterOnCard = model.currentTime, hoveringTagEntityId = hoveringTagEntityId } |> unselectMentionInStory, Cmd.none )
+          ( { model | hoveringOerId = maybeOerId, scrubbing = scrubbing, hoveringTagEntityId = hoveringTagEntityId, timeOfLastMouseEnterOnCard = model.currentTime } |> unselectMentionInStory, Cmd.none )
           |> logEventForLabStudy "SetHover" [ maybeOerId |> Maybe.withDefault 0 |> String.fromInt ]
 
     SetPopup popup ->
@@ -572,17 +564,17 @@ update msg ({nav, userProfileForm} as model) =
           ({ model | resourceSidebarTab = tab }, [ cmd, setBrowserFocus "textInputFieldForNotesOrFeedback" ] |> Cmd.batch )
           |> logEventForLabStudy "SelectResourceSidebarTab" []
 
-    MouseMovedOnStoryTag mousePosXonCard ->
-      case model.overviewType of
-        ImageOverview ->
-          (model, Cmd.none)
+    -- MouseMovedOnStoryTag mousePosXonCard ->
+    --   case model.overviewType of
+    --     ImageOverview ->
+    --       (model, Cmd.none)
 
-        BubblogramOverview TopicNames ->
-          (model, Cmd.none)
+    --     BubblogramOverview TopicNames ->
+    --       (model, Cmd.none)
 
-        _ ->
-          model
-          |> selectOrUnselectMentionInStory mousePosXonCard
+    --     _ ->
+    --       model
+    --       |> selectOrUnselectMentionInStory mousePosXonCard
 
     SelectedOverviewType overviewType ->
       let
@@ -618,6 +610,12 @@ update msg ({nav, userProfileForm} as model) =
 
     FlyingHeartRelativeStartPositionReceived startPoint ->
       ( { model | flyingHeartAnimationStartPoint = Just startPoint }, Cmd.none)
+
+    Scrubbed position ->
+      ({ model | scrubbing = Just position }, Cmd.none)
+
+    ScrubMouseLeave ->
+      ({ model | scrubbing = Nothing}, Cmd.none)
 
 
 createNote : OerId -> String -> Model -> Model

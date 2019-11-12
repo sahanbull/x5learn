@@ -11,6 +11,7 @@ import Dict exposing (Dict)
 
 import Model exposing (..)
 import View.Shared exposing (..)
+import View.FragmentsBar exposing (..)
 import View.Bubblogram exposing (..)
 
 import Msg exposing (..)
@@ -119,18 +120,10 @@ viewOerCard ({pageScrollState} as model) recommendedFragments position barId ena
 viewOerCardVisibleContent : Model -> List Fragment -> Point -> String -> Bool -> Oer -> Element Msg
 viewOerCardVisibleContent model recommendedFragments position barId enableShadow oer =
   let
-      isHovering =
-        model.hoveringOerId == Just oer.id
-
       fragmentsBar =
         case Dict.get oer.id model.wikichunkEnrichments of
           Nothing ->
-            case model.overviewType of
-              ImageOverview ->
-                []
-
-              BubblogramOverview _ ->
-                [ viewLoadingSpinner |> el [ moveDown 80, width fill ] |> inFront ]
+            [ viewLoadingSpinner |> el [ moveDown 80, width fill ] |> inFront ]
 
           Just enrichment ->
             if enrichment.errors then
@@ -142,34 +135,30 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
               |> List.singleton
 
       (graphic, popup) =
-        case model.overviewType of
-          ImageOverview ->
-            (viewCarousel model isHovering oer, [])
+        (viewCarousel model oer, [])
+          -- BubblogramOverview bubblogramType ->
+          --   case Dict.get oer.id model.wikichunkEnrichments of
+          --     Nothing ->
+          --       (none |> el [ width fill, height (px imageHeight), Background.color x5color ]
+          --       , [])
 
+          --     Just enrichment ->
+          --       if enrichment.errors then
+          --         if isVideoFile oer.url then
+          --           (image [ alpha 0.9, centerX, centerY ] { src = svgPath "playIcon", description = "Video file" }
+          --            |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
+          --           , [])
+          --         else
+          --           ("no preview available" |> captionNowrap [ alpha 0.75, whiteText, centerX, centerY ]
+          --            |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
+          --           , [])
+          --       else
+          --         case enrichment.bubblogram of
+          --           Nothing -> -- shouldn't happen for more than a second
+          --             (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color materialDark, inFront viewLoadingSpinner ], [])
 
-          BubblogramOverview bubblogramType ->
-            case Dict.get oer.id model.wikichunkEnrichments of
-              Nothing ->
-                (none |> el [ width fill, height (px imageHeight), Background.color x5color ]
-                , [])
-
-              Just enrichment ->
-                if enrichment.errors then
-                  if isVideoFile oer.url then
-                    (image [ alpha 0.9, centerX, centerY ] { src = svgPath "playIcon", description = "Video file" }
-                     |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
-                    , [])
-                  else
-                    ("no preview available" |> captionNowrap [ alpha 0.75, whiteText, centerX, centerY ]
-                     |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
-                    , [])
-                else
-                  case enrichment.bubblogram of
-                    Nothing -> -- shouldn't happen for more than a second
-                      (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color materialDark, inFront viewLoadingSpinner ], [])
-
-                    Just bubblogram ->
-                      viewBubblogram model bubblogramType oer.id bubblogram
+          --           Just bubblogram ->
+          --             viewBubblogram model bubblogramType oer.id bubblogram
 
       title =
         let
@@ -256,8 +245,6 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
         if enableShadow then [ htmlClass "materialCard" ] else [ Border.width 1, borderColorDivider ]
 
       card =
-        -- [ (if isHovering then hoverPreview else carousel)
-        -- ]
         [ graphic ]
         |> column ([ widthOfCard, heightOfCard, onMouseEnter (SetHover (Just oer.id)), onMouseLeave (SetHover Nothing), title, bottomInfo ] ++ fragmentsBar ++ shadow ++ clickHandler ++ popup)
 
@@ -269,17 +256,58 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
       |> el wrapperAttrs
 
 
-viewCarousel : Model -> Bool -> Oer -> Element Msg
-viewCarousel model isHovering oer =
+viewCarousel : Model -> Oer -> Element Msg
+viewCarousel model oer =
+  let
+      scrubImage =
+        if isHovering model oer && (hasYoutubeVideo oer.url |> not) then
+          case model.scrubbing of
+            Nothing ->
+              []
+
+            Just position ->
+              [ viewScrubImage model oer position |> inFront ]
+        else
+          []
+  in
+      viewCoverImage model oer scrubImage
+
+
+viewScrubImage : Model -> Oer -> Float -> Element Msg
+viewScrubImage model oer position =
+  let
+      url =
+        "http://145.14.12.67/files/sprite_sheets/sprite_"++(String.fromInt oer.id)++"_10x10_332x175.jpg"
+
+      spriteImageIndex =
+        (min 0.999 position) * spriteSheetNumberOfColumns * spriteSheetNumberOfRows
+        |> floor
+
+      offsetX =
+        (modBy spriteSheetNumberOfColumns spriteImageIndex) * cardWidth
+        |> String.fromInt
+
+      offsetY =
+        (spriteImageIndex // spriteSheetNumberOfColumns) * imageHeight
+        |> String.fromInt
+
+      backgroundValue =
+        "url('"++ url ++"') -"++offsetX++"px -"++offsetY++"px"
+  in
+      none
+      |> el [ width <| px cardWidth, height <| px imageHeight, htmlStyle "background" backgroundValue ]
+
+
+viewCoverImage : Model -> Oer -> List (Attribute Msg) -> Element Msg
+viewCoverImage model oer scrubImage =
   let
       upperImage attrs url =
         none
-        |> el ([ width fill, height <| px <| imageHeight, Background.image <| url, htmlClass (if isFromVideoLecturesNet oer then "materialHoverZoomThumb-videolectures" else "materialHoverZoomThumb") ] ++ attrs)
+        |> el ([ width fill, height <| px <| imageHeight, Background.image <| url, htmlClass (if isFromVideoLecturesNet oer then "materialHoverZoomThumb-videolectures" else "materialHoverZoomThumb") ] ++ scrubImage ++ attrs)
   in
       case oer.images of
         [] ->
           imgPath "thumbnail_unavailable.jpg"
-          -- viewMediatypeIcon oer.mediatype isHovering
           |> upperImage []
 
         [ singleImage ] ->
@@ -335,3 +363,11 @@ viewCarousel model isHovering oer =
 --   in
 --       image [ semiTransparent, centerX, centerY, width (px <| if isHovering then 60 else 50) ] { src = (svgPath stub), description = "" }
 --       |> el [ width fill, height (px imageHeight), Background.color x5color ]
+
+
+spriteSheetNumberOfRows =
+  10
+
+
+spriteSheetNumberOfColumns =
+  10

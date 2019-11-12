@@ -22,6 +22,7 @@ import Color -- avh4/elm-color
 
 import Model exposing (..)
 import View.Shared exposing (..)
+import View.FragmentsBar exposing (..)
 
 import Msg exposing (..)
 

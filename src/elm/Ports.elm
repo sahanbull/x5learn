@@ -23,7 +23,8 @@ port closeInspector : (Int -> msg) -> Sub msg
 port popupTriggerPosition : (Point -> msg) -> Sub msg
 port clickedOnDocument : (Int -> msg) -> Sub msg
 port mouseOverChunkTrigger : (Float -> msg) -> Sub msg
-port mouseMovedOnStoryTag : (Float -> msg) -> Sub msg
+-- port mouseMovedOnStoryTag : (Float -> msg) -> Sub msg
+port scrubbed : (Float -> msg) -> Sub msg
 port videoIsPlayingAtPosition : (Float -> msg) -> Sub msg
 port pageScrolled : (PageScrollState -> msg) -> Sub msg
 port receiveCardPlaceholderPositions : ((List OerCardPlaceholderPosition) -> msg) -> Sub msg

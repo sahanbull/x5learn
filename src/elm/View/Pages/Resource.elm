@@ -18,6 +18,7 @@ import Element.Keyed as Keyed
 
 import Model exposing (..)
 import View.Shared exposing (..)
+import View.FragmentsBar exposing (..)
 -- import View.Noteboard exposing (..)
 import View.Html5VideoPlayer exposing (..)
 import View.HtmlPdfViewer exposing (..)

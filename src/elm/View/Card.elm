@@ -290,7 +290,6 @@ viewScrubImage model oer position =
       offsetY =
         (spriteImageIndex // spriteSheetNumberOfColumns) * imageHeight
         |> String.fromInt
-        |> Debug.log "offsetY"
 
       backgroundValue =
         "url('"++ url ++"') -"++offsetX++"px -"++offsetY++"px"

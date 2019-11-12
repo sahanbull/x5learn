@@ -1,4 +1,4 @@
-module View.Card exposing (viewPathway, viewOerGrid, viewOerCard)
+module View.Card exposing (viewOerGrid, viewOerCard)
 
 import Element exposing (..)
 import Element.Background as Background
@@ -16,35 +16,6 @@ import View.Bubblogram exposing (..)
 
 import Msg exposing (..)
 import Animation exposing (..)
-
-
-viewPathway model pathway =
-  "pathway goes here"
-  |> text
-    -- let
-    --     grid =
-    --       oerPathwayContainer model pathway.fragments pathway.rationale (pathway.fragments |> List.map .oer)
-    --       |> List.map inFront
-
-    --     slotAtIndex index oer =
-    --       let
-    --           x =
-    --             modBy 3 index
-
-    --           y =
-    --             index//3
-    --       in
-    --           viewOerCard model recommendedFragments { x = x*370 + 180 |> toFloat, y = y*310 + 70 |> toFloat } (gridKey ++"-"++ (String.fromInt index)) oer
-  -- in
-    --   oers
-    --   |> List.indexedMap slotAtIndex
-    --   |> List.reverse -- Rendering the cards in reverse order so that popup menus (to the bottom and right) are rendered above the neighboring card, rather than below.
-
-    -- in
-    --     [ pathway.rationale |> headlineWrap []
-    --     ]
-    --     |> column ([ height (px 380), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ grid)
-
 
 
 viewOerGrid : Model -> Playlist -> Element Msg

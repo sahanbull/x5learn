@@ -168,3 +168,9 @@ a:hover {
 .HeartFilled{
   background: url('/static/dist/img_svg/favorite_filled.svg');
 }
+
+.ChunkQueryHighlight{
+  border-radius: 50% / 100%;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}

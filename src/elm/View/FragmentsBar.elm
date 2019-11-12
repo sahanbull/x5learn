@@ -79,10 +79,10 @@ viewFragmentsBar model oer chunks recommendedFragments barWidth barId =
                           Just index ->
                             let
                                 posY =
-                                  ((toFloat index)*3.5 |> floor)
+                                  ((toFloat index)*2.5 + 8 |> floor)
                             in
                                 none
-                                |> el [ width fill, height (px <| fragmentsBarHeight-posY), moveDown (toFloat posY), Background.color yellow ]
+                                |> el [ width fill, height (px <| fragmentsBarHeight-posY), moveDown (toFloat <| posY + 1), Background.color white, htmlClass "ChunkQueryHighlight", pointerEventsNone ]
                                 |> inFront
                                 |> List.singleton
                 in

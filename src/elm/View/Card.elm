@@ -258,22 +258,26 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
 
 viewCarousel : Model -> Oer -> Element Msg
 viewCarousel model oer =
-  if isHovering model oer then
-    case model.scrubbing of
-      Nothing ->
-        viewCoverImage model oer
+  let
+      scrubImage =
+        if isHovering model oer && (hasYoutubeVideo oer.url |> not) then
+          case model.scrubbing of
+            Nothing ->
+              []
 
-      Just position ->
-        viewScrubImage model oer position
-  else
-    viewCoverImage model oer
+            Just position ->
+              [ viewScrubImage model oer position |> inFront ]
+        else
+          []
+  in
+      viewCoverImage model oer scrubImage
 
 
 viewScrubImage : Model -> Oer -> Float -> Element Msg
 viewScrubImage model oer position =
   let
       url =
-        "http://145.14.12.67/files/sprite_sheets/sprite_8668_10x10_332x175.jpg"
+        "http://145.14.12.67/files/sprite_sheets/sprite_"++(String.fromInt oer.id)++"_10x10_332x175.jpg"
 
       spriteImageIndex =
         (min 0.999 position) * spriteSheetNumberOfColumns * spriteSheetNumberOfRows
@@ -295,12 +299,12 @@ viewScrubImage model oer position =
       |> el [ width <| px cardWidth, height <| px imageHeight, htmlStyle "background" backgroundValue ]
 
 
-viewCoverImage : Model -> Oer -> Element Msg
-viewCoverImage model oer =
+viewCoverImage : Model -> Oer -> List (Attribute Msg) -> Element Msg
+viewCoverImage model oer scrubImage =
   let
       upperImage attrs url =
         none
-        |> el ([ width fill, height <| px <| imageHeight, Background.image <| url, htmlClass (if isFromVideoLecturesNet oer then "materialHoverZoomThumb-videolectures" else "materialHoverZoomThumb") ] ++ attrs)
+        |> el ([ width fill, height <| px <| imageHeight, Background.image <| url, htmlClass (if isFromVideoLecturesNet oer then "materialHoverZoomThumb-videolectures" else "materialHoverZoomThumb") ] ++ scrubImage ++ attrs)
   in
       case oer.images of
         [] ->

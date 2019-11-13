@@ -132,7 +132,7 @@ function setupEventHandlers(){
     if(element.classList.contains('Heart') &! element.classList.contains('HeartFlying')){
       var eventPosition = getEventPosition(event);
       var wrapperPositionY = position(document.getElementsByClassName('HeartAnimWrapper')[0]).y;
-      hoveringHeartPosition = {x: eventPosition.x-30, y: eventPosition.y-20-wrapperPositionY};
+      var hoveringHeartPosition = {x: eventPosition.x-30, y: eventPosition.y-20-wrapperPositionY};
       app.ports.receiveFlyingHeartRelativeStartPosition.send(hoveringHeartPosition);
       return
     }
@@ -142,13 +142,22 @@ function setupEventHandlers(){
     }
   });
 
-  document.addEventListener("mousemove", function(e){
+  document.addEventListener("mousemove", function(event){
     var element = event.target;
-    if((" " + element.getAttribute("class") + " ").replace(/[\n\t]/g, " ").indexOf(" StoryTag ") > -1 ){
-      var rect = element.getBoundingClientRect();
-      var posX = window.scrollX + rect.left;
-      var positionInResource = (e.pageX - posX) / rect.width;
-      app.ports.mouseMovedOnStoryTag.send(positionInResource);
+    // if((" " + element.getAttribute("class") + " ").replace(/[\n\t]/g, " ").indexOf(" StoryTag ") > -1 ){
+    //   var rect = element.getBoundingClientRect();
+    //   var posX = window.scrollX + rect.left;
+    //   var positionInResource = (event.pageX - posX) / rect.width;
+    //   app.ports.mouseMovedOnStoryTag.send(positionInResource);
+    // }
+    if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" ChunkTrigger ") > -1 ){
+      var fragmentsBar = element.closest('.FragmentsBar')
+      if(fragmentsBar){
+        var rect = fragmentsBar.getBoundingClientRect();
+        var posX = window.scrollX + rect.left;
+        var positionInResource = (event.pageX - posX) / rect.width;
+        app.ports.scrubbed.send(positionInResource);
+      }
     }
   });
 

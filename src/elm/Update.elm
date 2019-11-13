@@ -20,7 +20,7 @@ import Msg exposing (..)
 import Ports exposing (..)
 import Request exposing (..)
 import ActionApi exposing (..)
-import NotesApi exposing (..)
+-- import NotesApi exposing (..)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -56,18 +56,18 @@ update msg ({nav, userProfileForm} as model) =
           (subpage, (newModel, cmd)) =
             if path |> String.startsWith profilePath then
               (Profile, (model, Cmd.none))
-            else if path |> String.startsWith notesPath then
-              (Notes, ({ model | oerCardPlaceholderPositions = [] }, [ getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch))
-            else if path |> String.startsWith recentPath then
-              (Viewed, (model, Navigation.load "/viewed"))
-            else if path |> String.startsWith viewedPath then
-              (Viewed, (model, askPageScrollState True))
-            else if path |> String.startsWith favoritesPath then
-              (Favorites, (model, askPageScrollState True))
+            -- else if path |> String.startsWith notesPath then
+            --   (Notes, ({ model | oerCardPlaceholderPositions = [] }, [ getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch))
+            -- else if path |> String.startsWith recentPath then
+            --   (Viewed, (model, Navigation.load "/viewed"))
+            -- else if path |> String.startsWith viewedPath then
+            --   (Viewed, (model, askPageScrollState True))
+            -- else if path |> String.startsWith favoritesPath then
+            --   (Favorites, (model, askPageScrollState True))
             else if path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
-            else if path |> String.startsWith resourcePath then
-              (Resource, model |> requestResourceAfterUrlChanged url)
+            -- else if path |> String.startsWith resourcePath then
+            --   (Resource, model |> requestResourceAfterUrlChanged url)
             else
               (Home, (model, (if model.featuredOers==Nothing then requestFeaturedOers else Cmd.none)))
       in
@@ -123,7 +123,7 @@ update msg ({nav, userProfileForm} as model) =
             , playWhenReady = playWhenReady
             }
       in
-          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup |> addFragmentAccess (Fragment oer.id fragmentStart fragmentLength) model.currentTime, openModalAnimation youtubeEmbedParams)
+          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation youtubeEmbedParams)
           |> saveAction 1 [ ("oerId", Encode.int oer.id) ]
           |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat ]
 
@@ -148,7 +148,7 @@ update msg ({nav, userProfileForm} as model) =
                 Cmd.none
 
               LoggedInUser userProfile ->
-                [ requestNotes, ActionApi.requestRecentViews, requestFavorites ] |> Cmd.batch
+                [ requestPeeks ] |> Cmd.batch
       in
           ( newModel |> resetUserProfileForm, cmd)
           |> logEventForLabStudy "RequestSession" []
@@ -158,72 +158,82 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestSession"
       -- in
-      -- ( { model | snackbar = createSnackbar model "An error occurred. Please reload the page." }, Cmd.none )
       ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
-    RequestRecentViews (Ok oerIds) ->
+    RequestPeeks (Ok peeksWithStringKeys) ->
       let
-          newModel =
-            oerIds
-            |> List.indexedMap (\index oerId -> (100000-index, oerId)) -- lazy trick to avoid having to decode the date from the JSON (which we don't really need at this point)
-            |> List.foldl (\(index, oerId) resultingModel -> resultingModel |> addFragmentAccess (Fragment oerId 0 0.01) (millisToPosix index)) model
+          peeks =
+            peeksWithStringKeys
+            |> Dict.foldl (\k v result -> result |> Dict.insert (k |> String.toInt |> Maybe.withDefault 0) v) Dict.empty
       in
-          ( newModel, requestOersByIds newModel oerIds)
-          |> logEventForLabStudy "RequestRecentViews" []
+          ({ model | peeks = peeks }, Cmd.none)
 
-    RequestRecentViews (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestRecentViews"
-      -- in
-      -- ( { model | snackbar = createSnackbar model "An error occurred. Please reload the page." }, Cmd.none )
-      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
-
-    RequestNotes (Ok notes) ->
+    RequestPeeks (Err err) ->
       let
-          addNoteToNoteboard : Note -> Dict OerId Noteboard -> Dict OerId Noteboard
-          addNoteToNoteboard note oerNoteboards =
-            let
-                oldNoteboard =
-                  oerNoteboards |> Dict.get note.oerId |> Maybe.withDefault []
-            in
-                oerNoteboards |> Dict.insert note.oerId (note::oldNoteboard)
-
-          newOerNoteboards : Dict OerId Noteboard
-          newOerNoteboards =
-            notes
-            |> List.foldl (\note noteboards -> noteboards |> addNoteToNoteboard note) Dict.empty
-
-          newModel =
-            { model | oerNoteboards = newOerNoteboards}
-
-          oerIds =
-            notes
-            |> List.map .oerId
-            |> List.Extra.unique
+          dummy =
+            err |> Debug.log "Error in RequestPeeks"
       in
-          ( newModel, requestOersByIds newModel oerIds)
-          |> logEventForLabStudy "RequestNotes" []
-
-    RequestNotes (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestNotes"
-      -- in
-      -- ( { model | snackbar = createSnackbar model "An error occurred. Please reload the page." }, Cmd.none )
       ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
-    RequestDeleteNote (Ok _) ->
-      ( model, requestNotes)
-      |> logEventForLabStudy "RequestDeleteNote" []
+    RequestUpdatePlayingVideo (Ok _) ->
+      let
+          dummy =
+            model.playingVideo |> Debug.log "playingVideo"
+      in
+      (model, Cmd.none)
 
-    RequestDeleteNote (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestDeleteNote"
-      -- in
-      -- ( { model | snackbar = createSnackbar model "Some changes were not saved." }, Cmd.none )
-      ( { model | snackbar = createSnackbar model "Some changes were not saved." }, Cmd.none )
+    RequestUpdatePlayingVideo (Err err) ->
+      let
+          dummy =
+            err |> Debug.log "Error in RequestUpdatePlayingVideo"
+      in
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
+
+    -- RequestNotes (Ok notes) ->
+    --   let
+    --       addNoteToNoteboard : Note -> Dict OerId Noteboard -> Dict OerId Noteboard
+    --       addNoteToNoteboard note oerNoteboards =
+    --         let
+    --             oldNoteboard =
+    --               oerNoteboards |> Dict.get note.oerId |> Maybe.withDefault []
+    --         in
+    --             oerNoteboards |> Dict.insert note.oerId (note::oldNoteboard)
+
+    --       newOerNoteboards : Dict OerId Noteboard
+    --       newOerNoteboards =
+    --         notes
+    --         |> List.foldl (\note noteboards -> noteboards |> addNoteToNoteboard note) Dict.empty
+
+    --       newModel =
+    --         { model | oerNoteboards = newOerNoteboards}
+
+    --       oerIds =
+    --         notes
+    --         |> List.map .oerId
+    --         |> List.Extra.unique
+    --   in
+    --       ( newModel, requestOersByIds newModel oerIds)
+    --       |> logEventForLabStudy "RequestNotes" []
+
+    -- RequestNotes (Err err) ->
+    --   -- let
+    --   --     dummy =
+    --   --       err |> Debug.log "Error in RequestNotes"
+    --   -- in
+    --   -- ( { model | snackbar = createSnackbar model "An error occurred. Please reload the page." }, Cmd.none )
+    --   ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
+
+    -- RequestDeleteNote (Ok _) ->
+    --   ( model, requestNotes)
+    --   |> logEventForLabStudy "RequestDeleteNote" []
+
+    -- RequestDeleteNote (Err err) ->
+    --   -- let
+    --   --     dummy =
+    --   --       err |> Debug.log "Error in RequestDeleteNote"
+    --   -- in
+    --   -- ( { model | snackbar = createSnackbar model "Some changes were not saved." }, Cmd.none )
+    --   ( { model | snackbar = createSnackbar model "Some changes were not saved." }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
       (model |> updateSearch (insertSearchResults (oers |> List.map .id)) |> cacheOersFromList oers, [ setBrowserFocus "SearchField", getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch)
@@ -312,19 +322,19 @@ update msg ({nav, userProfileForm} as model) =
     --   -- ( { model | snackbar = createSnackbar model "There was a problem while fetching search suggestions" }, Cmd.none )
     --   ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
-    RequestFavorites (Ok favorites) ->
-      let
-          newModel = { model | favorites = favorites }
-      in
-          ( newModel, requestOersByIds newModel favorites)
-          |> logEventForLabStudy "RequestFavorites" []
+    -- RequestFavorites (Ok favorites) ->
+    --   let
+    --       newModel = { model | favorites = favorites }
+    --   in
+    --       ( newModel, requestOersByIds newModel favorites)
+    --       |> logEventForLabStudy "RequestFavorites" []
 
-    RequestFavorites (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestFavorites"
-      -- in
-      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
+    -- RequestFavorites (Err err) ->
+    --   -- let
+    --   --     dummy =
+    --   --       err |> Debug.log "Error in RequestFavorites"
+    --   -- in
+    --   ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     RequestSaveUserProfile (Ok _) ->
       ({ model | userProfileForm = { userProfileForm | saved = True }, userProfileFormSubmitted = Nothing }, Cmd.none)
@@ -348,11 +358,11 @@ update msg ({nav, userProfileForm} as model) =
       -- ( { model | snackbar = createSnackbar model "Some logs were not saved" }, Cmd.none )
       ( { model | snackbar = createSnackbar model "Some logs were not saved" }, Cmd.none )
 
-    RequestSendResourceFeedback (Ok _) ->
-      (model, Cmd.none)
+    -- RequestSendResourceFeedback (Ok _) ->
+    --   (model, Cmd.none)
 
-    RequestSendResourceFeedback (Err err) ->
-      (model, Cmd.none)
+    -- RequestSendResourceFeedback (Err err) ->
+    --   (model, Cmd.none)
 
     RequestSaveAction (Ok _) ->
       (model, Cmd.none)
@@ -361,55 +371,55 @@ update msg ({nav, userProfileForm} as model) =
       -- ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
-    RequestSaveNote (Ok _) ->
-      (model, requestNotes)
+    -- RequestSaveNote (Ok _) ->
+    --   (model, requestNotes)
 
-    RequestSaveNote (Err err) ->
-      ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+    -- RequestSaveNote (Err err) ->
+    --   ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
-    RequestResource (Ok oer) ->
-      let
-          cmdYoutube =
-            case getYoutubeVideoId oer.url of
-              Nothing ->
-                youtubeDestroyPlayer True
+    -- RequestResource (Ok oer) ->
+    --   let
+    --       cmdYoutube =
+    --         case getYoutubeVideoId oer.url of
+    --           Nothing ->
+    --             youtubeDestroyPlayer True
 
-              Just videoId ->
-                let
-                    youtubeEmbedParams : YoutubeEmbedParams
-                    youtubeEmbedParams =
-                      { modalId = ""
-                      , videoId = videoId
-                      , fragmentStart = 0
-                      , playWhenReady = False
-                      }
-                in
-                    embedYoutubePlayerOnResourcePage youtubeEmbedParams
+    --           Just videoId ->
+    --             let
+    --                 youtubeEmbedParams : YoutubeEmbedParams
+    --                 youtubeEmbedParams =
+    --                   { modalId = ""
+    --                   , videoId = videoId
+    --                   , fragmentStart = 0
+    --                   , playWhenReady = False
+    --                   }
+    --             in
+    --                 embedYoutubePlayerOnResourcePage youtubeEmbedParams
 
-          newModel =
-            { model | currentResource = Just <| Loaded oer.id } |> cacheOersFromList [ oer ]
-      in
-          (newModel, [ cmdYoutube ] |> Cmd.batch )
+    --       newModel =
+    --         { model | currentResource = Just <| Loaded oer.id } |> cacheOersFromList [ oer ]
+    --   in
+    --       (newModel, [ cmdYoutube ] |> Cmd.batch )
 
-    RequestResource (Err err) ->
-      ( { model | currentResource = Just Error }, Cmd.none )
+    -- RequestResource (Err err) ->
+    --   ( { model | currentResource = Just Error }, Cmd.none )
 
-    RequestResourceRecommendations (Ok oersUnfiltered) ->
-      let
-          oers =
-            oersUnfiltered |> List.filter (\oer -> model.currentResource /= Just (Loaded oer.id)) -- ensure that the resource itself isn't included in the recommendations
-      in
-          ({ model | resourceRecommendations = oers } |> cacheOersFromList oers, setBrowserFocus "")
-          |> requestWikichunkEnrichmentsIfNeeded
-          |> logEventForLabStudy "RequestResourceRecommendations" (oers |> List.map .url)
+    -- RequestResourceRecommendations (Ok oersUnfiltered) ->
+    --   let
+    --       oers =
+    --         oersUnfiltered |> List.filter (\oer -> model.currentResource /= Just (Loaded oer.id)) -- ensure that the resource itself isn't included in the recommendations
+    --   in
+    --       ({ model | resourceRecommendations = oers } |> cacheOersFromList oers, setBrowserFocus "")
+    --       |> requestWikichunkEnrichmentsIfNeeded
+    --       |> logEventForLabStudy "RequestResourceRecommendations" (oers |> List.map .url)
 
-    RequestResourceRecommendations (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestResourceRecommendations"
-      -- in
-      -- ( { model | resourceRecommendations = [], snackbar = createSnackbar model "An error occurred while loading recommendations" }, Cmd.none )
-      ( { model | resourceRecommendations = [], snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
+    -- RequestResourceRecommendations (Err err) ->
+    --   -- let
+    --   --     dummy =
+    --   --       err |> Debug.log "Error in RequestResourceRecommendations"
+    --   -- in
+    --   -- ( { model | resourceRecommendations = [], snackbar = createSnackbar model "An error occurred while loading recommendations" }, Cmd.none )
+    --   ( { model | resourceRecommendations = [], snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     SetHover maybeOerId ->
       let
@@ -452,9 +462,9 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX, hoveringTagEntityId = Nothing } |> unselectMentionInStory, Cmd.none )
       |> logEventForLabStudy "MouseOverChunkTrigger" [ mousePositionX |> String.fromFloat ]
 
-    YoutubeSeekTo fragmentStart ->
-      ( model, youtubeSeekTo fragmentStart)
-      |> logEventForLabStudy "YoutubeSeekTo" [ fragmentStart |> String.fromFloat ]
+    -- YoutubeSeekTo fragmentStart ->
+    --   ( model, youtubeSeekTo fragmentStart)
+    --   |> logEventForLabStudy "YoutubeSeekTo" [ fragmentStart |> String.fromFloat ]
 
     EditUserProfile field value ->
       let
@@ -468,41 +478,42 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | userProfileFormSubmitted = Just userProfileForm }, requestSaveUserProfile model.userProfileForm.userProfile)
       |> logEventForLabStudy "SubmittedUserProfile" []
 
-    ChangedTextInNewNoteFormInOerNoteboard oerId str ->
-      ( model |> setTextInNoteForm oerId str, Cmd.none)
+    -- ChangedTextInNewNoteFormInOerNoteboard oerId str ->
+    --   ( model |> setTextInNoteForm oerId str, Cmd.none)
 
-    ChangedTextInResourceFeedbackForm oerId str ->
-      ( model |> setTextInResourceFeedbackForm oerId str, Cmd.none)
+    -- ChangedTextInResourceFeedbackForm oerId str ->
+    --   ( model |> setTextInResourceFeedbackForm oerId str, Cmd.none)
 
-    SubmittedNewNoteInOerNoteboard oerId ->
-      let
-          text =
-            getOerNoteForm model oerId
-      in
-      (model |> createNote oerId text |> setTextInNoteForm oerId "", [ setBrowserFocus "textInputFieldForNotesOrFeedback", saveNote oerId text ] |> Cmd.batch)
-      |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ String.fromInt oerId, getOerNoteForm model oerId ]
+    -- SubmittedNewNoteInOerNoteboard oerId ->
+    --   let
+    --       text =
+    --         getOerNoteForm model oerId
+    --   in
+    --   (model |> createNote oerId text |> setTextInNoteForm oerId "", [ setBrowserFocus "textInputFieldForNotesOrFeedback", saveNote oerId text ] |> Cmd.batch)
+    --   |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ String.fromInt oerId, getOerNoteForm model oerId ]
 
-    SubmittedResourceFeedback oerId text ->
-      ({ model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", requestSendResourceFeedback oerId text)
-      |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, getResourceFeedbackFormValue model oerId ]
+    -- SubmittedResourceFeedback oerId text ->
+    --   ({ model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", requestSendResourceFeedback oerId text)
+    --   |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, getResourceFeedbackFormValue model oerId ]
 
-    PressedKeyInNewNoteFormInOerNoteboard oerId keyCode ->
-      if keyCode==13 then
-        model |> update (SubmittedNewNoteInOerNoteboard oerId)
-      else
-        (model, Cmd.none)
+    -- PressedKeyInNewNoteFormInOerNoteboard oerId keyCode ->
+    --   if keyCode==13 then
+    --     model |> update (SubmittedNewNoteInOerNoteboard oerId)
+    --   else
+    --     (model, Cmd.none)
 
-    ClickedQuickNoteButton oerId text ->
-      (model |> createNote oerId text |> setTextInNoteForm oerId "" , saveNote oerId text)
-      |> logEventForLabStudy "ClickedQuickNoteButtond" [ String.fromInt oerId, text ]
+    -- ClickedQuickNoteButton oerId text ->
+    --   (model |> createNote oerId text |> setTextInNoteForm oerId "" , saveNote oerId text)
+    --   |> logEventForLabStudy "ClickedQuickNoteButtond" [ String.fromInt oerId, text ]
 
-    RemoveNote note ->
-      (model |> removeNote note, NotesApi.deleteNote note)
-      |> logEventForLabStudy "RemoveNote" [ note.oerId |> String.fromInt, note.text ]
+    -- RemoveNote note ->
+    --   (model |> removeNote note, NotesApi.deleteNote note)
+    --   |> logEventForLabStudy "RemoveNote" [ note.oerId |> String.fromInt, note.text ]
 
-    VideoIsPlayingAtPosition position ->
-      (model |> expandCurrentFragmentOrCreateNewOne position model.inspectorState, Cmd.none)
-      |> logEventForLabStudy "VideoIsPlayingAtPosition" [ position |> String.fromFloat]
+    YoutubeVideoIsPlayingAtPosition position ->
+      (model, Cmd.none)
+      -- |> addFragmentAccess (Fragment oer.id fragmentStart fragmentLength) model.currentTime
+      |> logEventForLabStudy "YoutubeVideoIsPlayingAtPosition" [ position |> String.fromFloat]
 
     OverviewTagMouseOver entityId oerId ->
       let
@@ -553,16 +564,16 @@ update msg ({nav, userProfileForm} as model) =
       ({ model | startedLabStudyTask = Nothing }, setBrowserFocus "")
       |> logEventForLabStudy "StoppedLabStudyTask" []
 
-    SelectResourceSidebarTab tab oerId ->
-      let
-          cmd =
-            if tab==RecommendationsTab then
-              requestResourceRecommendations oerId
-            else
-              Cmd.none
-      in
-          ({ model | resourceSidebarTab = tab }, [ cmd, setBrowserFocus "textInputFieldForNotesOrFeedback" ] |> Cmd.batch )
-          |> logEventForLabStudy "SelectResourceSidebarTab" []
+    -- SelectResourceSidebarTab tab oerId ->
+    --   let
+    --       cmd =
+    --         if tab==RecommendationsTab then
+    --           requestResourceRecommendations oerId
+    --         else
+    --           Cmd.none
+    --   in
+    --       ({ model | resourceSidebarTab = tab }, [ cmd, setBrowserFocus "textInputFieldForNotesOrFeedback" ] |> Cmd.batch )
+    --       |> logEventForLabStudy "SelectResourceSidebarTab" []
 
     -- MouseMovedOnStoryTag mousePosXonCard ->
     --   case model.overviewType of
@@ -595,18 +606,18 @@ update msg ({nav, userProfileForm} as model) =
     MouseEnterMentionInBubbblogramOverview oerId entityId mention ->
       ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
 
-    ClickedHeart oerId ->
-      if isMarkedAsFavorite model oerId then
-        ( { model | removedFavorites = model.removedFavorites |> Set.insert oerId }, Cmd.none)
-        |> saveAction 3 [ ("oerId", Encode.int oerId) ]
-      else
-        let
-            favorites =
-              model.favorites ++ [ oerId ]
-              |> List.Extra.unique
-        in
-          ( { model | favorites = favorites, removedFavorites = model.removedFavorites |> Set.remove oerId, flyingHeartAnimation = Just { startTime = model.currentTime } }, Cmd.none)
-          |> saveAction 2 [ ("oerId", Encode.int oerId) ]
+    -- ClickedHeart oerId ->
+    --   if isMarkedAsFavorite model oerId then
+    --     ( { model | removedFavorites = model.removedFavorites |> Set.insert oerId }, Cmd.none)
+    --     |> saveAction 3 [ ("oerId", Encode.int oerId) ]
+    --   else
+    --     let
+    --         favorites =
+    --           model.favorites ++ [ oerId ]
+    --           |> List.Extra.unique
+    --     in
+    --       ( { model | favorites = favorites, removedFavorites = model.removedFavorites |> Set.remove oerId, flyingHeartAnimation = Just { startTime = model.currentTime } }, Cmd.none)
+    --       |> saveAction 2 [ ("oerId", Encode.int oerId) ]
 
     FlyingHeartRelativeStartPositionReceived startPoint ->
       ( { model | flyingHeartAnimationStartPoint = Just startPoint }, Cmd.none)
@@ -617,33 +628,64 @@ update msg ({nav, userProfileForm} as model) =
     ScrubMouseLeave ->
       ({ model | scrubbing = Nothing}, Cmd.none)
 
+    Html5VideoStartedPlaying {startTime, duration} ->
+      case model.inspectorState of
+        Nothing ->
+          (model, Cmd.none) -- impossible
 
-createNote : OerId -> String -> Model -> Model
-createNote oerId text model =
-  let
-      newNote =
-        Note text model.currentTime oerId 0
-
-      oldNoteboard : Noteboard
-      oldNoteboard =
-        getOerNoteboard model oerId
-
-      newNoteboard : Noteboard
-      newNoteboard =
-        newNote :: oldNoteboard
-  in
-      { model | oerNoteboards = model.oerNoteboards |> Dict.insert oerId newNoteboard }
+        Just {oer} ->
+          let
+              playingVideo =
+                { oerId = oer.id
+                , startTimeInVideo = startTime
+                , currentTimeInVideo = startTime
+                , videoDuration = duration
+                }
+          in
+              ({ model | playingVideo = Just playingVideo }, Cmd.none)
+              |> saveAction 4 [ ("oerId", Encode.int oer.id), ("startTimeInVideo", Encode.float playingVideo.startTimeInVideo) ]
 
 
-removeNote : Note -> Model -> Model
-removeNote note model =
-  let
-      filter : OerId -> Noteboard -> Noteboard
-      filter _ notes =
-        notes
-        |> List.filter (\n -> n /= note)
-  in
-     { model | oerNoteboards = model.oerNoteboards |> Dict.map filter }
+    Html5VideoStillPlaying currentTimeInVideo ->
+      case model.playingVideo of
+        Nothing ->
+          (model, Cmd.none) -- shouldn't happen
+
+        Just oldPlayingVideo ->
+          let
+              playingVideo =
+                { oldPlayingVideo | currentTimeInVideo = currentTimeInVideo }
+                |> Debug.log "Html5VideoStillPlaying"
+          in
+          ({ model | playingVideo = Just playingVideo }, requestUpdatePlayingVideo playingVideo.currentTimeInVideo)
+
+
+-- createNote : OerId -> String -> Model -> Model
+-- createNote oerId text model =
+--   let
+--       newNote =
+--         Note text model.currentTime oerId 0
+
+--       oldNoteboard : Noteboard
+--       oldNoteboard =
+--         getOerNoteboard model oerId
+
+--       newNoteboard : Noteboard
+--       newNoteboard =
+--         newNote :: oldNoteboard
+--   in
+--       { model | oerNoteboards = model.oerNoteboards |> Dict.insert oerId newNoteboard }
+
+
+-- removeNote : Note -> Model -> Model
+-- removeNote note model =
+--   let
+--       filter : OerId -> Noteboard -> Noteboard
+--       filter _ notes =
+--         notes
+--         |> List.filter (\n -> n /= note)
+--   in
+--      { model | oerNoteboards = model.oerNoteboards |> Dict.map filter }
 
 
 updateSearch : (SearchState -> SearchState) -> Model -> Model
@@ -762,66 +804,35 @@ cacheOersFromList oers model =
       { model | cachedOers = Dict.union oersDict model.cachedOers }
 
 
-addFragmentAccess : Fragment -> Posix -> Model -> Model
-addFragmentAccess fragment time model =
-  if List.member fragment (Dict.values model.fragmentAccesses) then
-    model
-  else
-      let
-          maxNumberOfItemsToKeep =
-            30 -- arbitrary value. There used to be some performance implications associated with this number but I forgot what the issue was and I'm unsure whether it still applies. Should test empirically.
+-- addFragmentAccess : Fragment -> Posix -> Model -> Model
+-- addFragmentAccess fragment time model =
+--   if List.member fragment (Dict.values model.peekPoints) then
+--     model
+--   else
+--       let
+--           maxNumberOfItemsToKeep =
+--             30 -- arbitrary value. There used to be some performance implications associated with this number but I forgot what the issue was and I'm unsure whether it still applies. Should test empirically.
 
-          fragmentAccesses =
-            model.fragmentAccesses
-            |> Dict.toList
-            |> List.reverse
-            |> List.take maxNumberOfItemsToKeep
-            |> List.reverse
-            |> Dict.fromList
-            |> Dict.insert (posixToMillis time) fragment
-      in
-          { model | fragmentAccesses = fragmentAccesses }
-
-
-setTextInNoteForm : OerId -> String -> Model -> Model
-setTextInNoteForm oerId str model =
-  { model | oerNoteForms = model.oerNoteForms |> Dict.insert oerId str }
+--           peekPoints =
+--             model.peekPoints
+--             |> Dict.toList
+--             |> List.reverse
+--             |> List.take maxNumberOfItemsToKeep
+--             |> List.reverse
+--             |> Dict.fromList
+--             |> Dict.insert (posixToMillis time) fragment
+--       in
+--           { model | peekPoints = peekPoints }
 
 
-setTextInResourceFeedbackForm : OerId -> String -> Model -> Model
-setTextInResourceFeedbackForm oerId str model =
-  { model | feedbackForms = model.feedbackForms |> Dict.insert oerId str }
+-- setTextInNoteForm : OerId -> String -> Model -> Model
+-- setTextInNoteForm oerId str model =
+--   { model | oerNoteForms = model.oerNoteForms |> Dict.insert oerId str }
 
 
-expandCurrentFragmentOrCreateNewOne : Float -> Maybe InspectorState -> Model -> Model
-expandCurrentFragmentOrCreateNewOne position inspectorState model =
-  case inspectorState of
-    Nothing ->
-      model
-
-    Just {oer} ->
-      case mostRecentFragmentAccess model.fragmentAccesses of
-        Nothing ->
-          model
-
-        Just (time, fragment) ->
-          let
-              fragmentEnd =
-                fragment.start + fragment.length
-
-              newFragmentAccesses =
-                if position >= fragmentEnd && position < fragmentEnd + 0.05 then
-                  -- The video appears to be playing normally.
-                  -- -> Extend the current fragment to the current play position.
-                  model.fragmentAccesses
-                  |> Dict.insert time { fragment | length = position - fragment.start }
-                else
-                  -- The user appears to have skipped within the video, using the player's controls (rather than the fragmentsBar)
-                  -- -> Create a new fragment, starting with the current position
-                  model.fragmentAccesses
-                  |> Dict.insert time (Fragment oer.id position 0)
-          in
-              { model | fragmentAccesses = newFragmentAccesses }
+-- setTextInResourceFeedbackForm : OerId -> String -> Model -> Model
+-- setTextInResourceFeedbackForm oerId str model =
+--   { model | feedbackForms = model.feedbackForms |> Dict.insert oerId str }
 
 
 updateBubblogramsIfNeeded : Model -> Model
@@ -902,20 +913,20 @@ executeSearchAfterUrlChanged model url =
         |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam ]
 
 
-requestResourceAfterUrlChanged : Url -> Model -> (Model, Cmd Msg)
-requestResourceAfterUrlChanged url model =
-  let
-      resourceId =
-        url.path
-        |> String.dropLeft 10 -- TODO A much cleaner method is to use Url.Query.parser
-        |> String.toInt
-  in
-      case resourceId of
-        Nothing ->
-          ({ model | currentResource = Just Error }, Cmd.none)
+-- requestResourceAfterUrlChanged : Url -> Model -> (Model, Cmd Msg)
+-- requestResourceAfterUrlChanged url model =
+--   let
+--       resourceId =
+--         url.path
+--         |> String.dropLeft 10 -- TODO A much cleaner method is to use Url.Query.parser
+--         |> String.toInt
+--   in
+--       case resourceId of
+--         Nothing ->
+--           ({ model | currentResource = Just Error }, Cmd.none)
 
-        Just oerId ->
-          (model, requestResource oerId)
+--         Just oerId ->
+--           (model, requestResource oerId)
 
 
 

@@ -179,6 +179,10 @@ yellow =
   rgba255 255 240 0 0.9
 
 
+red =
+  rgba255 240 30 0 1
+
+
 orange =
   rgb255 255 120 0
 
@@ -643,9 +647,10 @@ guestCallToSignup incentive =
 
 viewHeartButton : Model -> OerId -> Element Msg
 viewHeartButton model oerId =
-    let
-        class =
-          "Heart " ++ (if isMarkedAsFavorite model oerId then "HeartFilled" else "HeartOutline")
-    in
-        none
-        |> el [ width <| px 20, height <| px 22, onClickNoBubble (ClickedHeart oerId), htmlClass class  ]
+  none
+    -- let
+    --     class =
+    --       "Heart " ++ (if isMarkedAsFavorite model oerId then "HeartFilled" else "HeartOutline")
+    -- in
+    --     none
+    --     |> el [ width <| px 20, height <| px 22, onClickNoBubble (ClickedHeart oerId), htmlClass class  ]

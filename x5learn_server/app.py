@@ -239,6 +239,12 @@ def api_oers():
     return jsonify(oers)
 
 
+@app.route("/api/v1/peeks/", methods=['GET'])
+def api_peeks():
+    peeks = {'7409': [{'start': 0.33, 'length': 0.1}, {'start': 0.66, 'length': 0.01}]}
+    return jsonify(peeks)
+
+
 @app.route("/api/v1/featured/", methods=['GET'])
 def api_featured():
     print('api_featured')

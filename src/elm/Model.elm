@@ -21,6 +21,7 @@ type alias Model =
   , windowHeight : Int
   , mousePositionXwhenOnChunkTrigger : Float
   , currentTime : Posix
+  , playingVideo : Maybe PlayingVideo
   , searchInputTyping : String
   , searchState : Maybe SearchState
   , inspectorState : Maybe InspectorState
@@ -29,7 +30,6 @@ type alias Model =
   , timeOfLastMouseEnterOnCard : Posix
   , modalAnimation : Maybe BoxAnimation
   , animationsPending : Set String
-  , nextSteps : Maybe (List Pathway)
   , popup : Maybe Popup
   , requestingWikichunkEnrichments : Bool
   , wikichunkEnrichments : Dict OerId WikichunkEnrichment
@@ -42,7 +42,7 @@ type alias Model =
   , timeOfLastSearch : Posix
   , userProfileForm : UserProfileForm
   , userProfileFormSubmitted : Maybe UserProfileForm
-  , oerNoteForms : Dict OerId String
+  -- , oerNoteForms : Dict OerId String
   , feedbackForms : Dict OerId String
   , cachedOers : Dict OerId Oer
   , requestingOers : Bool
@@ -57,8 +57,8 @@ type alias Model =
   , resourceSidebarTab : ResourceSidebarTab
   , resourceRecommendations : List Oer
   , timeOfLastFeedbackRecorded : Posix
-  , oerNoteboards : Dict OerId Noteboard
-  , fragmentAccesses : Dict Int Fragment
+  -- , oerNoteboards : Dict OerId Noteboard
+  , peeks : Dict OerId (List Range)
   , oerCardPlaceholderPositions : List OerCardPlaceholderPosition
   , overviewType : OverviewType
   , selectedMentionInStory : Maybe (OerId, MentionInOer)
@@ -98,6 +98,14 @@ type BubblogramType
 type alias FlyingHeartAnimation =
   { startTime : Posix
   }
+
+type alias PlayingVideo =
+  { oerId : OerId
+  , startTimeInVideo : Float
+  , currentTimeInVideo : Float
+  , videoDuration : Float
+  }
+
 
 type alias LabStudyTask =
   { title : String
@@ -200,10 +208,16 @@ type Subpage
   = Home
   | Profile
   | Search
-  | Favorites
-  | Notes
-  | Viewed
-  | Resource
+  -- | Favorites
+  -- | Notes
+  -- | Viewed
+  -- | Resource
+
+
+type alias StartTimeAndDuration =
+  { startTime : Float
+  , duration : Float
+  }
 
 
 type alias SearchState =
@@ -280,9 +294,8 @@ type alias MentionInOer =
   , sentence : String
   }
 
-type alias Fragment =
-  { oerId : OerId
-  , start : Float -- 0 to 1
+type alias Range =
+  { start : Float -- 0 to 1
   , length : Float -- 0 to 1
   }
 
@@ -290,12 +303,6 @@ type alias Fragment =
 type alias Playlist =
   { title : String
   , oerIds : List OerId
-  }
-
-
-type alias Pathway =
-  { rationale : String
-  , fragments : List Fragment
   }
 
 
@@ -328,6 +335,7 @@ initialModel nav flags =
   , windowHeight = flags.windowHeight
   , mousePositionXwhenOnChunkTrigger = 0
   , currentTime = initialTime
+  , playingVideo = Nothing
   , searchInputTyping = ""
   , searchState = Nothing
   , inspectorState = Nothing
@@ -336,7 +344,6 @@ initialModel nav flags =
   , timeOfLastMouseEnterOnCard = initialTime
   , modalAnimation = Nothing
   , animationsPending = Set.empty
-  , nextSteps = Nothing
   , popup = Nothing
   , requestingWikichunkEnrichments = False
   , wikichunkEnrichments = Dict.empty
@@ -349,7 +356,7 @@ initialModel nav flags =
   , timeOfLastSearch = initialTime
   , userProfileForm = freshUserProfileForm (initialUserProfile "")
   , userProfileFormSubmitted = Nothing
-  , oerNoteForms = Dict.empty
+  -- , oerNoteForms = Dict.empty
   , feedbackForms = Dict.empty
   , cachedOers = Dict.empty
   , requestingOers = False
@@ -364,8 +371,8 @@ initialModel nav flags =
   , resourceSidebarTab = initialResourceSidebarTab
   , resourceRecommendations = []
   , timeOfLastFeedbackRecorded = initialTime
-  , oerNoteboards = Dict.empty
-  , fragmentAccesses = Dict.empty
+  -- , oerNoteboards = Dict.empty
+  , peeks = Dict.empty
   , oerCardPlaceholderPositions = []
   , overviewType = ImageOverview
   , selectedMentionInStory = Nothing
@@ -384,18 +391,18 @@ initialUserProfile email =
   UserProfile email "" ""
 
 
-getOerNoteboard : Model -> OerId -> Noteboard
-getOerNoteboard model oerId =
-  model.oerNoteboards
-  |> Dict.get oerId
-  |> Maybe.withDefault []
+-- getOerNoteboard : Model -> OerId -> Noteboard
+-- getOerNoteboard model oerId =
+--   model.oerNoteboards
+--   |> Dict.get oerId
+--   |> Maybe.withDefault []
 
 
-getOerNoteForm : Model -> OerId -> String
-getOerNoteForm model oerId =
-  model.oerNoteForms
-  |> Dict.get oerId
-  |> Maybe.withDefault ""
+-- getOerNoteForm : Model -> OerId -> String
+-- getOerNoteForm model oerId =
+--   model.oerNoteForms
+--   |> Dict.get oerId
+--   |> Maybe.withDefault ""
 
 
 -- getOerIdFromOerId : Model -> OerId -> OerId
@@ -541,14 +548,6 @@ loggedInUserProfile {session} =
 
 freshUserProfileForm userProfile =
   { userProfile = userProfile, saved = False }
-
-
-mostRecentFragmentAccess : Dict Int Fragment -> Maybe (Int, Fragment)
-mostRecentFragmentAccess fragmentAccesses =
-  fragmentAccesses
-  |> Dict.toList
-  |> List.reverse
-  |> List.head
 
 
 chunksFromOerId : Model -> OerId -> List Chunk

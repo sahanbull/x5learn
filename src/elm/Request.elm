@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestFavorites)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestPeeks, requestUpdatePlayingVideo) --requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestFavorites)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -37,12 +37,12 @@ searchOers searchText =
     }
 
 
-requestFavorites : Cmd Msg
-requestFavorites =
-  Http.get
-    { url = Url.Builder.absolute [ apiRoot, "favorites/" ] []
-    , expect = Http.expectJson RequestFavorites (list int)
-    }
+-- requestFavorites : Cmd Msg
+-- requestFavorites =
+--   Http.get
+--     { url = Url.Builder.absolute [ apiRoot, "favorites/" ] []
+--     , expect = Http.expectJson RequestFavorites (list int)
+--     }
 
 
 requestOers : List OerId -> Cmd Msg
@@ -111,30 +111,53 @@ requestLabStudyLogEvent time eventType params =
     }
 
 
-requestResource : Int -> Cmd Msg
-requestResource oerId =
+requestUpdatePlayingVideo : Float -> Cmd Msg
+requestUpdatePlayingVideo currentTimeInVideo =
   Http.post
-    { url = Url.Builder.absolute [ apiRoot, "resource/" ] []
-    , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId) ]
-    , expect = Http.expectJson RequestResource oerDecoder
+    { url = Url.Builder.absolute [ apiRoot, "playing_video/" ] []
+    , body = Http.jsonBody <| Encode.object [ ("currentTimeInVideo", Encode.float currentTimeInVideo) ]
+    , expect = Http.expectString RequestUpdatePlayingVideo
     }
 
 
-requestResourceRecommendations : OerId -> Cmd Msg
-requestResourceRecommendations oerId =
+-- requestResource : Int -> Cmd Msg
+-- requestResource oerId =
+--   Http.post
+--     { url = Url.Builder.absolute [ apiRoot, "resource/" ] []
+--     , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId) ]
+--     , expect = Http.expectJson RequestResource oerDecoder
+--     }
+
+
+-- requestResourceRecommendations : OerId -> Cmd Msg
+-- requestResourceRecommendations oerId =
+--   Http.get
+--     { url = Url.Builder.absolute [ apiRoot, "recommendations/" ] [ Url.Builder.int "oerId" oerId ]
+--     , expect = Http.expectJson RequestResourceRecommendations (list oerDecoder)
+--     }
+
+
+-- requestSendResourceFeedback : Int -> String -> Cmd Msg
+-- requestSendResourceFeedback oerId text =
+--   Http.post
+--     { url = Url.Builder.absolute [ apiRoot, "resource_feedback/" ] []
+--     , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId), ("text", Encode.string text) ]
+--     , expect = Http.expectString RequestSendResourceFeedback
+--     }
+
+
+requestPeeks : Cmd Msg
+requestPeeks =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "recommendations/" ] [ Url.Builder.int "oerId" oerId ]
-    , expect = Http.expectJson RequestResourceRecommendations (list oerDecoder)
+    { url = Url.Builder.absolute [ apiRoot, "peeks" ] []
+    , expect = Http.expectJson RequestPeeks (dict (list rangeDecoder))
     }
 
 
-requestSendResourceFeedback : Int -> String -> Cmd Msg
-requestSendResourceFeedback oerId text =
-  Http.post
-    { url = Url.Builder.absolute [ apiRoot, "resource_feedback/" ] []
-    , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId), ("text", Encode.string text) ]
-    , expect = Http.expectString RequestSendResourceFeedback
-    }
+rangeDecoder =
+  map2 Range
+    (field "start" float)
+    (field "length" float)
 
 
 sessionDecoder =
@@ -180,6 +203,7 @@ oerDecoder =
   |> andMap (field "title" string)
   |> andMap (field "url" string)
   |> andMap (field "mediatype" string)
+  -- |> andMap (field "peeks" string)
 
 
 wikichunkEnrichmentDecoder =

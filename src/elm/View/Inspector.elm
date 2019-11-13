@@ -173,7 +173,7 @@ inspectorContentDefault model {oer, fragmentStart} =
             wikichunks ->
               let
                   content =
-                    viewFragmentsBar model oer wikichunks (model.nextSteps |> Maybe.withDefault [] |> List.concatMap .fragments) playerWidth "inspector"
+                    viewFragmentsBar model oer wikichunks playerWidth "inspector"
                     |> el [ width (px playerWidth), height (px 16) ]
               in
                   none |> el [ inFront content, moveUp (fragmentsBarWrapperHeight - fragmentsBarHeight) ]

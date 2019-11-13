@@ -16,17 +16,21 @@ import Msg exposing (..)
 import Animation exposing (..)
 
 
-viewFragmentsBar model oer chunks recommendedFragments barWidth barId =
+viewFragmentsBar : Model -> Oer -> List Chunk -> Int -> String -> Element Msg
+viewFragmentsBar model oer chunks barWidth barId =
   let
-      -- markers =
-      --   [ fragmentMarkers recommendedFragments yellow
-      --   ]
-      --   |> List.concat
+      peekRanges =
+        [ rangeMarkers red
+        ]
+        |> List.concat
 
-      -- fragmentMarkers fragments color =
-      --   fragments
-      --   |> List.filter (\fragment -> fragment.oerId == oer.url)
-      --   |> List.map (\{start,length} -> none |> el [ width (length |> pxFromFraction |> round |> px), height fill, Background.color color, moveRight (start |> pxFromFraction) ] |> inFront)
+      rangeMarkers color =
+        case model.peeks |> Dict.get oer.id of
+          Nothing ->
+            [] -- impossible
+          Just ranges ->
+            ranges
+            |> List.map (\{start,length} -> none |> el [ width (length |> pxFromFraction |> round |> px), height <| px 3, Background.color color, moveRight (start |> pxFromFraction) ] |> inFront)
 
       pxFromFraction fraction =
         (barWidth |> toFloat) * fraction
@@ -100,9 +104,9 @@ viewFragmentsBar model oer chunks recommendedFragments barWidth barId =
                   [ onClickNoBubble <| InspectOer oer chunk.start chunk.length True ]
 
                 _ ->
-                  if hasYoutubeVideo oer.url then
-                    [ onClickNoBubble <| YoutubeSeekTo chunk.start ]
-                  else
+                  -- if hasYoutubeVideo oer.url then
+                  --   [ onClickNoBubble <| YoutubeSeekTo chunk.start ]
+                  -- else
                     []
 
             chunkWidth =
@@ -140,7 +144,7 @@ viewFragmentsBar model oer chunks recommendedFragments barWidth barId =
         [ onMouseLeave <| ScrubMouseLeave ]
   in
     none
-    |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background ++ scrubCursor ++ mouseLeaveHandler)
+    |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background ++ peekRanges ++ scrubCursor ++ mouseLeaveHandler)
 
 
 viewChunkPopup model chunkPopup =

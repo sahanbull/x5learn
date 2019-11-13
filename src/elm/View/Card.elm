@@ -64,7 +64,7 @@ viewOerGrid model playlist =
 
             cards =
               oers
-              |> List.indexedMap (\index oer -> viewOerCard model [] (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) True oer)
+              |> List.indexedMap (\index oer -> viewOerCard model (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) True oer)
               |> List.reverse
               |> List.map inFront
         in
@@ -76,20 +76,20 @@ viewOerGrid model playlist =
             |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
 
 
-viewOerCard : Model -> List Fragment -> Point -> String -> Bool -> Oer -> Element Msg
-viewOerCard ({pageScrollState} as model) recommendedFragments position barId enableShadow oer =
+viewOerCard : Model -> Point -> String -> Bool -> Oer -> Element Msg
+viewOerCard ({pageScrollState} as model) position barId enableShadow oer =
   let
       isCardInView =
         position.y + cardHeight > pageScrollState.scrollTop && position.y < pageScrollState.scrollTop + pageScrollState.viewHeight
   in
       if isCardInView then
-        viewOerCardVisibleContent model recommendedFragments position barId enableShadow oer
+        viewOerCardVisibleContent model position barId enableShadow oer
       else
         none
 
 
-viewOerCardVisibleContent : Model -> List Fragment -> Point -> String -> Bool -> Oer -> Element Msg
-viewOerCardVisibleContent model recommendedFragments position barId enableShadow oer =
+viewOerCardVisibleContent : Model -> Point -> String -> Bool -> Oer -> Element Msg
+viewOerCardVisibleContent model position barId enableShadow oer =
   let
       fragmentsBar =
         case Dict.get oer.id model.wikichunkEnrichments of
@@ -100,7 +100,7 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
             if enrichment.errors then
               []
             else
-              viewFragmentsBar model oer enrichment.chunks recommendedFragments cardWidth barId
+              viewFragmentsBar model oer enrichment.chunks cardWidth barId
               |> el [ width fill, moveDown imageHeight ]
               |> inFront
               |> List.singleton

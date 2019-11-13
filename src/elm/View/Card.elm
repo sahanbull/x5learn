@@ -276,10 +276,6 @@ viewCarousel model oer =
 viewScrubImage : Model -> Oer -> Float -> Element Msg
 viewScrubImage model oer position =
   let
-      url =
-        "http://145.14.12.67/files/sprite_sheets/sprite_"++(String.fromInt oer.id)++"_10x10_332x175.jpg"
-        -- "http://145.14.12.67/files/sprite_sheets/sprite_"++(String.fromInt 8671)++"_10x10_332x175.jpg"
-
       spriteImageIndex =
         (min 0.999 position) * spriteSheetNumberOfColumns * spriteSheetNumberOfRows
         |> floor
@@ -293,7 +289,7 @@ viewScrubImage model oer position =
         |> String.fromInt
 
       backgroundValue =
-        "url('"++ url ++"') -"++offsetX++"px -"++offsetY++"px"
+        "url('"++ (spritesheetUrl oer) ++"') -"++offsetX++"px -"++offsetY++"px"
   in
       none
       |> el [ width <| px cardWidth, height <| px imageHeight, htmlStyle "background" backgroundValue ]
@@ -308,7 +304,7 @@ viewCoverImage model oer scrubImage =
   in
       case oer.images of
         [] ->
-          imgPath "thumbnail_unavailable.jpg"
+          (if oer.mediatype=="video" && (hasYoutubeVideo oer.url |> not) then spritesheetUrl oer else imgPath "thumbnail_unavailable.jpg")
           |> upperImage []
 
         [ singleImage ] ->
@@ -372,3 +368,7 @@ spriteSheetNumberOfRows =
 
 spriteSheetNumberOfColumns =
   10
+
+
+spritesheetUrl oer =
+  "http://145.14.12.67/files/sprite_sheets/sprite_"++(String.fromInt oer.id)++"_10x10_332x175.jpg"

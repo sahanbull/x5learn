@@ -278,6 +278,7 @@ viewScrubImage model oer position =
   let
       url =
         "http://145.14.12.67/files/sprite_sheets/sprite_"++(String.fromInt oer.id)++"_10x10_332x175.jpg"
+        -- "http://145.14.12.67/files/sprite_sheets/sprite_"++(String.fromInt 8671)++"_10x10_332x175.jpg"
 
       spriteImageIndex =
         (min 0.999 position) * spriteSheetNumberOfColumns * spriteSheetNumberOfRows

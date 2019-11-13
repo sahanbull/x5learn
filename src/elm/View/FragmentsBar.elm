@@ -82,7 +82,7 @@ viewFragmentsBar model oer chunks recommendedFragments barWidth barId =
                                   ((toFloat index)*3.5 |> floor)
                             in
                                 none
-                                |> el [ width fill, height (px <| fragmentsBarHeight-posY), moveDown (toFloat posY), Background.color yellow ]
+                                |> el [ width fill, height (px <| fragmentsBarHeight-posY), moveDown (toFloat posY), Background.color yellow, pointerEventsNone ]
                                 |> inFront
                                 |> List.singleton
                 in

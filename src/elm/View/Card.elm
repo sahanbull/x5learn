@@ -259,18 +259,25 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
 viewCarousel : Model -> Oer -> Element Msg
 viewCarousel model oer =
   let
-      scrubImage =
-        if isHovering model oer && (hasYoutubeVideo oer.url |> not) then
-          case model.scrubbing of
-            Nothing ->
-              []
-
-            Just position ->
-              [ viewScrubImage model oer position |> inFront ]
-        else
+      thumbFromSpritesheet =
+        if oer.mediatype/="video" || hasYoutubeVideo oer.url then
           []
+        else
+          let
+              defaultThumb =
+                [ viewScrubImage model oer 0.099 |> inFront ]
+          in
+              if isHovering model oer then
+                case model.scrubbing of
+                  Nothing ->
+                    defaultThumb
+
+                  Just position ->
+                    [ viewScrubImage model oer position |> inFront ]
+              else
+                defaultThumb
   in
-      viewCoverImage model oer scrubImage
+      viewCoverImage model oer thumbFromSpritesheet
 
 
 viewScrubImage : Model -> Oer -> Float -> Element Msg
@@ -296,11 +303,11 @@ viewScrubImage model oer position =
 
 
 viewCoverImage : Model -> Oer -> List (Attribute Msg) -> Element Msg
-viewCoverImage model oer scrubImage =
+viewCoverImage model oer thumbFromSpritesheet =
   let
       upperImage attrs url =
         none
-        |> el ([ width fill, height <| px <| imageHeight, Background.image <| url, htmlClass (if isFromVideoLecturesNet oer then "materialHoverZoomThumb-videolectures" else "materialHoverZoomThumb") ] ++ scrubImage ++ attrs)
+        |> el ([ width fill, height <| px <| imageHeight, Background.image <| url, htmlClass (if isFromVideoLecturesNet oer then "materialHoverZoomThumb-videolectures" else "materialHoverZoomThumb") ] ++ thumbFromSpritesheet ++ attrs)
   in
       case oer.images of
         [] ->

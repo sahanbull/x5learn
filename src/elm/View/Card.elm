@@ -265,7 +265,10 @@ viewCarousel model oer =
         else
           let
               defaultThumb =
-                [ viewScrubImage model oer 0.099 |> inFront ]
+                none
+                |> el [ width <| px cardWidth, height <| px imageHeight, htmlStyle "background" ("url('"++ (thumbUrl oer) ++"')") ]
+                |> inFront
+                |> List.singleton
           in
               if isHovering model oer then
                 case model.scrubbing of
@@ -311,7 +314,7 @@ viewCoverImage model oer thumbFromSpritesheet =
   in
       case oer.images of
         [] ->
-          (if oer.mediatype=="video" && (hasYoutubeVideo oer.url |> not) then spritesheetUrl oer else imgPath "thumbnail_unavailable.jpg")
+          imgPath "thumbnail_unavailable.jpg"
           |> upperImage []
 
         [ singleImage ] ->
@@ -379,3 +382,7 @@ spriteSheetNumberOfColumns =
 
 spritesheetUrl oer =
   "http://145.14.12.67/files/sprite_sheets/sprite_"++(String.fromInt oer.id)++"_10x10_332x175.jpg"
+
+
+thumbUrl oer =
+  "http://145.14.12.67/files/thumbs/tn_"++(String.fromInt oer.id)++"_332x175.jpg"

@@ -26,8 +26,9 @@ port mouseOverChunkTrigger : (Float -> msg) -> Sub msg
 -- port mouseMovedOnStoryTag : (Float -> msg) -> Sub msg
 port scrubbed : (Float -> msg) -> Sub msg
 -- port youtubeVideoIsPlayingAtPosition : (Float -> msg) -> Sub msg
-port html5VideoStartedPlaying : (StartTimeAndDuration -> msg) -> Sub msg
-port html5VideoStillPlaying : (Float -> msg) -> Sub msg
+port html5VideoStarted : (VideoPositionAndDuration -> msg) -> Sub msg
+port html5VideoPaused : (VideoPositionAndDuration -> msg) -> Sub msg
+port html5VideoChangedPosition : (VideoPositionAndDuration -> msg) -> Sub msg
 port pageScrolled : (PageScrollState -> msg) -> Sub msg
 port receiveCardPlaceholderPositions : ((List OerCardPlaceholderPosition) -> msg) -> Sub msg
 port receiveFlyingHeartRelativeStartPosition : (Point -> msg) -> Sub msg

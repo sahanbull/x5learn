@@ -262,6 +262,20 @@ def api_material():
     return jsonify(oer.data_and_id())
 
 
+# Heartbeat signal from the frontend that the current video is still playing.
+# Sent every few seconds, this signal provides a robust measurement in edge
+# cases where explicit stop events are missing, e.g. when user closes the page.
+@app.route("/api/v1/video_playing/", methods=['POST'])
+def api_video_playing():
+    oer_id = request.get_json()['oerId']
+    text = request.get_json()['text']
+    user_login_id = current_user.get_id()  # Assuming we are never going to allow feedback from logged-out users
+    feedback = ResourceFeedback(user_login_id, oer_id, text)
+    db_session.add(feedback)
+    db_session.commit()
+    return 'OK'
+
+
 @app.route("/api/v1/resource_feedback/", methods=['POST'])  # to be replaced by Actions API
 def api_resource_feedback():
     oer_id = request.get_json()['oerId']
@@ -907,6 +921,21 @@ def initiate_action_types_table():
     action_type = ActionType.query.filter_by(id=3).first()
     if action_type is None:
         action_type = ActionType('OER unmarked as favorite')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=4).first()
+    if action_type is None:
+        action_type = ActionType('Video played')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=5).first()
+    if action_type is None:
+        action_type = ActionType('Video position changed (manually by user)')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=6).first()
+    if action_type is None:
+        action_type = ActionType('Video paused by user')
         db_session.add(action_type)
         db_session.commit()
 

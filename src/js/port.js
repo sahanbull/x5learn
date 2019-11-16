@@ -4,7 +4,9 @@ var timeOfLastMouseMove = new Date().getTime();
 
 var lastPageScrollOffset = 0;
 
-var lastReportedVideoPosition = null;
+var lastReportedPositionInVideo = null;
+var isHtml5videoPlaying = false;
+var html5videoDuration = null;
 
 
 function positionAndSize(el) {
@@ -98,24 +100,37 @@ function startAnimationWhenModalIsReady(youtubeEmbedParams) {
     var modal = document.getElementById(modalId);
     card.blur(); // remove the blue outline
     app.ports.modalAnimationStart.send({frameCount: 0, start: positionAndSize(card), end: positionAndSize(modal)});
+    lastReportedPositionInVideo = null;
     setTimeout(function(){
       app.ports.modalAnimationStop.send(12345);
       if(youtubeEmbedParams.videoId.length>0){
         embedYoutubeVideo(youtubeEmbedParams);
       }else{
+        html5videoDuration = null;
         var vid = getHtml5VideoPlayer();
         if(vid){
+          vid.onloadedmetadata = function() {
+            html5VideoDuration = vid.duration;
+          };
           vid.onplay = function() {
-            app.ports.html5VideoStartedPlaying.send({startTime: vid.currentTime, duration: vid.duration});
-            console.log('started playing:');
-            console.log({startTime: vid.currentTime, duration: vid.duration});
+            app.ports.html5VideoStarted.send({positionInVideo: vid.currentTime, videoDuration: html5VideoDuration});
+            console.log('started playing!');
+            isHtml5videoPlaying = true;
+          };
+          vid.onpause = function() {
+            lastReportedPositionInVideo = null;
+            app.ports.html5VideoPaused.send({positionInVideo: vid.currentTime, videoDuration: html5VideoDuration});
+            console.log('paused!');
+            isHtml5videoPlaying = false;
           };
           vid.ontimeupdate = function() {
             var pos = vid.currentTime;
             // Throttle events by omitting events that occur within 10 seconds after the previous event
-            if(lastReportedVideoPosition==null || pos-lastReportedVideoPosition > 10){
-              app.ports.html5VideoStillPlaying.send(pos);
-              console.log('still playing '+pos);
+            if(lastReportedPositionInVideo==null || pos-lastReportedPositionInVideo > 10){
+              app.ports.html5VideoChangedPosition.send({positionInVideo: vid.currentTime, videoDuration: html5VideoDuration});
+              console.log('changed position! '+pos);
+              lastReportedPositionInVideo = isHtml5videoPlaying ? pos : null;
+              console.log('is playing: '+isHtml5videoPlaying);
             }
           };
         }else{

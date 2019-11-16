@@ -203,7 +203,6 @@ oerDecoder =
   |> andMap (field "title" string)
   |> andMap (field "url" string)
   |> andMap (field "mediatype" string)
-  -- |> andMap (field "peeks" string)
 
 
 wikichunkEnrichmentDecoder =

@@ -79,8 +79,9 @@ type Msg
   | FlyingHeartRelativeStartPositionReceived Point
   | Scrubbed Float
   | ScrubMouseLeave
-  | Html5VideoStartedPlaying StartTimeAndDuration
-  | Html5VideoStillPlaying Float
+  | Html5VideoStarted VideoPositionAndDuration
+  | Html5VideoPaused VideoPositionAndDuration
+  | Html5VideoChangedPosition VideoPositionAndDuration
 
 
 type UserProfileField
@@ -100,8 +101,9 @@ subscriptions model =
       -- , Ports.mouseMovedOnStoryTag MouseMovedOnStoryTag
       , Ports.scrubbed Scrubbed
       -- , Ports.youtubeVideoIsPlayingAtPosition YoutubeVideoIsPlayingAtPosition
-      , Ports.html5VideoStartedPlaying Html5VideoStartedPlaying
-      , Ports.html5VideoStillPlaying Html5VideoStillPlaying
+      , Ports.html5VideoStarted Html5VideoStarted
+      , Ports.html5VideoPaused Html5VideoPaused
+      , Ports.html5VideoChangedPosition Html5VideoChangedPosition
       , Ports.pageScrolled PageScrolled
       , Ports.receiveCardPlaceholderPositions OerCardPlaceholderPositionsReceived
       , Ports.receiveFlyingHeartRelativeStartPosition FlyingHeartRelativeStartPositionReceived

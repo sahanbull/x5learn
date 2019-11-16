@@ -628,7 +628,7 @@ update msg ({nav, userProfileForm} as model) =
     ScrubMouseLeave ->
       ({ model | scrubbing = Nothing}, Cmd.none)
 
-    Html5VideoStartedPlaying {startTime, duration} ->
+    Html5VideoStarted {positionInVideo, videoDuration} ->
       case model.inspectorState of
         Nothing ->
           (model, Cmd.none) -- impossible
@@ -637,27 +637,41 @@ update msg ({nav, userProfileForm} as model) =
           let
               playingVideo =
                 { oerId = oer.id
-                , startTimeInVideo = startTime
-                , currentTimeInVideo = startTime
-                , videoDuration = duration
+                , startPositionInVideo = positionInVideo
+                , lastReportedPositionInVideo = positionInVideo+10 -- peek update interval = 10 seconds
+                , videoDuration = videoDuration
                 }
           in
               ({ model | playingVideo = Just playingVideo }, Cmd.none)
-              |> saveAction 4 [ ("oerId", Encode.int oer.id), ("startTimeInVideo", Encode.float playingVideo.startTimeInVideo) ]
+              |> saveAction 4 [ ("oerId", Encode.int oer.id), ("startPositionInVideo", Encode.float playingVideo.startPositionInVideo), ("lastReportedPositionInVideo", Encode.float playingVideo.startPositionInVideo), ("videoDuration", Encode.float playingVideo.videoDuration) ]
+
+    Html5VideoPaused {positionInVideo, videoDuration} ->
+      case model.inspectorState of
+        Nothing ->
+          (model, Cmd.none) -- impossible
+
+        Just {oer} ->
+          ({ model | playingVideo = Nothing }, Cmd.none)
+          |> saveAction 6 [ ("oerId", Encode.int oer.id), ("positionInVideo", Encode.float positionInVideo), ("videoDuration", Encode.float videoDuration) ]
 
 
-    Html5VideoStillPlaying currentTimeInVideo ->
+    Html5VideoChangedPosition {positionInVideo, videoDuration} ->
       case model.playingVideo of
         Nothing ->
-          (model, Cmd.none) -- shouldn't happen
+          case model.inspectorState of
+            Just {oer} ->
+              (model, Cmd.none)
+              |> saveAction 5 [ ("oerId", Encode.int oer.id), ("positionInVideo", Encode.float positionInVideo), ("videoDuration", Encode.float videoDuration) ]
+            Nothing ->
+              (model, Cmd.none)
 
         Just oldPlayingVideo ->
           let
               playingVideo =
-                { oldPlayingVideo | currentTimeInVideo = currentTimeInVideo }
-                |> Debug.log "Html5VideoStillPlaying"
+                { oldPlayingVideo | lastReportedPositionInVideo = positionInVideo }
+                |> Debug.log "Html5VideoChangedPosition"
           in
-          ({ model | playingVideo = Just playingVideo }, requestUpdatePlayingVideo playingVideo.currentTimeInVideo)
+          ({ model | playingVideo = Just playingVideo }, requestUpdatePlayingVideo playingVideo.lastReportedPositionInVideo)
 
 
 -- createNote : OerId -> String -> Model -> Model

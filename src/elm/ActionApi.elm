@@ -16,19 +16,7 @@ apiRoot =
   "api/v1/action/"
 
 
--- action type IDs
--- 1 = view, i.e. open card in inspector
--- 2 = mark as favorite
--- 3 = unmark favorite
--- 4 = video started at position (second / percentage)
--- NB keep this list in sync with the backend
-
--- NB It would have been nice to be able to use the Actions API for all the video events.
--- However, using a custom model turned out more practical and efficient for the frontend needs.
--- At the time of writing this, the frontend needs a list of visited fragments for each OER.
--- These fragments need to expand as the video plays (or the pdf scrolls).
--- The Actions API doesn't afford this kind of updating, hence the need for a custom model.
--- We can still use the Actions API for logging, e.g. play and pause actions.
+-- action type IDs (1, 2, 3, ...) see app.py
 
 saveAction : Int -> List (String, Encode.Value) -> Cmd Msg
 saveAction actionTypeId params =

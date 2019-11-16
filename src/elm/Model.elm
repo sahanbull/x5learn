@@ -101,8 +101,8 @@ type alias FlyingHeartAnimation =
 
 type alias PlayingVideo =
   { oerId : OerId
-  , startTimeInVideo : Float
-  , currentTimeInVideo : Float
+  , startPositionInVideo : Float
+  , lastReportedPositionInVideo : Float
   , videoDuration : Float
   }
 
@@ -214,9 +214,9 @@ type Subpage
   -- | Resource
 
 
-type alias StartTimeAndDuration =
-  { startTime : Float
-  , duration : Float
+type alias VideoPositionAndDuration =
+  { positionInVideo : Float
+  , videoDuration : Float
   }
 
 

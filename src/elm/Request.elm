@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestPeeks, requestUpdatePlayingVideo) --requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestFavorites)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestPeeks)--, requestUpdatePlayingVideo) --requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestFavorites)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -111,13 +111,13 @@ requestLabStudyLogEvent time eventType params =
     }
 
 
-requestUpdatePlayingVideo : Float -> Cmd Msg
-requestUpdatePlayingVideo currentTimeInVideo =
-  Http.post
-    { url = Url.Builder.absolute [ apiRoot, "playing_video/" ] []
-    , body = Http.jsonBody <| Encode.object [ ("currentTimeInVideo", Encode.float currentTimeInVideo) ]
-    , expect = Http.expectString RequestUpdatePlayingVideo
-    }
+-- requestUpdatePlayingVideo : Float -> Cmd Msg
+-- requestUpdatePlayingVideo currentTimeInVideo =
+--   Http.post
+--     { url = Url.Builder.absolute [ apiRoot, "playing_video/" ] []
+--     , body = Http.jsonBody <| Encode.object [ ("currentTimeInVideo", Encode.float currentTimeInVideo) ]
+--     , expect = Http.expectString RequestUpdatePlayingVideo
+--     }
 
 
 -- requestResource : Int -> Cmd Msg

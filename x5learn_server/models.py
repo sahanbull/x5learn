@@ -3,7 +3,7 @@ from x5learn_server._config import DB_ENGINE_URI
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy import Boolean, DateTime, Column, Integer, \
-    Text, String, ForeignKey, BigInteger
+    Text, String, ForeignKey, BigInteger, Float
 from sqlalchemy.dialects.postgresql import JSON
 import datetime
 
@@ -263,6 +263,17 @@ class ResourceFeedback(Base):
         self.oer_id = oer_id
         self.text = text
         self.created_at = datetime.now()
+
+
+class Peek(Base):
+    __tablename__ = 'peek'
+    __table_args__ = {'extend_existing': True}
+    id = Column(Integer(), primary_key=True)
+    user_login_id = Column(Integer())
+    oer_id = Column(Integer())
+    range_start = Column(Float())
+    range_length = Column(Float())
+    created_at = Column(DateTime())
 
 
 # This table is only used for the purpose of conducting lab-based evaluations of user experience at UCL.

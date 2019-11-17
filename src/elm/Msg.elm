@@ -28,7 +28,6 @@ type Msg
   | RequestSession (Result Http.Error Session)
   -- | RequestFavorites (Result Http.Error (List OerId))
   | RequestPeeks (Result Http.Error (Dict String (List Range)))
-  | RequestUpdatePlayingVideo (Result Http.Error String)
   -- | RequestNotes (Result Http.Error (List Note))
   -- | RequestDeleteNote (Result Http.Error String)
   | RequestOerSearch (Result Http.Error (List Oer))
@@ -79,9 +78,11 @@ type Msg
   | FlyingHeartRelativeStartPositionReceived Point
   | Scrubbed Float
   | ScrubMouseLeave
-  | Html5VideoStarted VideoPositionAndDuration
-  | Html5VideoPaused VideoPositionAndDuration
-  | Html5VideoChangedPosition VideoPositionAndDuration
+  | Html5VideoStarted Float
+  | Html5VideoPaused Float
+  | Html5VideoSeeked Float
+  | Html5VideoStillPlaying Float
+  | Html5VideoDuration Float
 
 
 type UserProfileField
@@ -91,25 +92,27 @@ type UserProfileField
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-      ([ Browser.Events.onResize ResizeBrowser
-      , Ports.modalAnimationStart ModalAnimationStart
-      , Ports.modalAnimationStop ModalAnimationStop
-      , Ports.closePopup (\_ -> ClosePopup)
-      , Ports.closeInspector (\_ -> CloseInspector)
-      , Ports.clickedOnDocument (\_ -> ClickedOnDocument)
-      , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
-      -- , Ports.mouseMovedOnStoryTag MouseMovedOnStoryTag
-      , Ports.scrubbed Scrubbed
-      -- , Ports.youtubeVideoIsPlayingAtPosition YoutubeVideoIsPlayingAtPosition
-      , Ports.html5VideoStarted Html5VideoStarted
-      , Ports.html5VideoPaused Html5VideoPaused
-      , Ports.html5VideoChangedPosition Html5VideoChangedPosition
-      , Ports.pageScrolled PageScrolled
-      , Ports.receiveCardPlaceholderPositions OerCardPlaceholderPositionsReceived
-      , Ports.receiveFlyingHeartRelativeStartPosition FlyingHeartRelativeStartPositionReceived
-      , Time.every 500 ClockTick
-      ] ++ (if anyBubblogramsAnimating model || isModalAnimating model || isFlyingHeartAnimating model then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
-      |> Sub.batch
+  ([ Browser.Events.onResize ResizeBrowser
+  , Ports.modalAnimationStart ModalAnimationStart
+  , Ports.modalAnimationStop ModalAnimationStop
+  , Ports.closePopup (\_ -> ClosePopup)
+  , Ports.closeInspector (\_ -> CloseInspector)
+  , Ports.clickedOnDocument (\_ -> ClickedOnDocument)
+  , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
+  -- , Ports.mouseMovedOnStoryTag MouseMovedOnStoryTag
+  , Ports.scrubbed Scrubbed
+  -- , Ports.youtubeVideoIsPlayingAtPosition YoutubeVideoIsPlayingAtPosition
+  , Ports.html5VideoStarted Html5VideoStarted
+  , Ports.html5VideoPaused Html5VideoPaused
+  , Ports.html5VideoSeeked Html5VideoSeeked
+  , Ports.html5VideoStillPlaying Html5VideoStillPlaying
+  , Ports.html5VideoDuration Html5VideoDuration
+  , Ports.pageScrolled PageScrolled
+  , Ports.receiveCardPlaceholderPositions OerCardPlaceholderPositionsReceived
+  , Ports.receiveFlyingHeartRelativeStartPosition FlyingHeartRelativeStartPositionReceived
+  , Time.every 500 ClockTick
+  ] ++ (if anyBubblogramsAnimating model || isModalAnimating model || isFlyingHeartAnimating model then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
+  |> Sub.batch
 
 
 isModalAnimating model =

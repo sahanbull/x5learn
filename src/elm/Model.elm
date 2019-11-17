@@ -21,7 +21,6 @@ type alias Model =
   , windowHeight : Int
   , mousePositionXwhenOnChunkTrigger : Float
   , currentTime : Posix
-  , playingVideo : Maybe PlayingVideo
   , searchInputTyping : String
   , searchState : Maybe SearchState
   , inspectorState : Maybe InspectorState
@@ -98,14 +97,6 @@ type BubblogramType
 type alias FlyingHeartAnimation =
   { startTime : Posix
   }
-
-type alias PlayingVideo =
-  { oerId : OerId
-  , startPositionInVideo : Float
-  , lastReportedPositionInVideo : Float
-  , videoDuration : Float
-  }
-
 
 type alias LabStudyTask =
   { title : String
@@ -214,12 +205,6 @@ type Subpage
   -- | Resource
 
 
-type alias VideoPositionAndDuration =
-  { positionInVideo : Float
-  , videoDuration : Float
-  }
-
-
 type alias SearchState =
   { lastSearch : String
   , searchResults : Maybe (List OerId)
@@ -230,7 +215,16 @@ type alias InspectorState =
   { oer : Oer
   , fragmentStart : Float
   , activeMenu : Maybe InspectorMenu
+  , videoPlayer : Maybe Html5VideoPlayer
   }
+
+
+type alias Html5VideoPlayer =
+  { isPlaying : Bool
+  , currentTime : Float
+  , duration : Float
+  }
+
 
 
 type alias Oer =
@@ -335,7 +329,6 @@ initialModel nav flags =
   , windowHeight = flags.windowHeight
   , mousePositionXwhenOnChunkTrigger = 0
   , currentTime = initialTime
-  , playingVideo = Nothing
   , searchInputTyping = ""
   , searchState = Nothing
   , inspectorState = Nothing
@@ -427,7 +420,18 @@ newSearch str =
 
 newInspectorState : Oer -> Float -> InspectorState
 newInspectorState oer fragmentStart =
-  InspectorState oer fragmentStart Nothing
+  let
+      videoPlayer =
+        if oer.mediatype=="video" && (hasYoutubeVideo oer.url |> not) then
+          Just <|
+            { isPlaying = False
+            , currentTime = 0
+            , duration = 0
+            }
+        else
+          Nothing
+  in
+      InspectorState oer fragmentStart Nothing videoPlayer
 
 
 hasYoutubeVideo : OerUrl -> Bool

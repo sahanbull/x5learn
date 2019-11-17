@@ -175,19 +175,19 @@ update msg ({nav, userProfileForm} as model) =
       in
       ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
-    RequestUpdatePlayingVideo (Ok _) ->
-      let
-          dummy =
-            model.playingVideo |> Debug.log "playingVideo"
-      in
-      (model, Cmd.none)
+    -- RequestUpdatePlayingVideo (Ok _) ->
+    --   let
+    --       dummy =
+    --         model.playingVideo |> Debug.log "playingVideo"
+    --   in
+    --   (model, Cmd.none)
 
-    RequestUpdatePlayingVideo (Err err) ->
-      let
-          dummy =
-            err |> Debug.log "Error in RequestUpdatePlayingVideo"
-      in
-      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
+    -- RequestUpdatePlayingVideo (Err err) ->
+    --   let
+    --       dummy =
+    --         err |> Debug.log "Error in RequestUpdatePlayingVideo"
+    --   in
+    --   ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     -- RequestNotes (Ok notes) ->
     --   let
@@ -628,51 +628,23 @@ update msg ({nav, userProfileForm} as model) =
     ScrubMouseLeave ->
       ({ model | scrubbing = Nothing}, Cmd.none)
 
-    Html5VideoStarted {positionInVideo, videoDuration} ->
-      case model.inspectorState of
-        Nothing ->
-          (model, Cmd.none) -- impossible
+    Html5VideoStarted pos ->
+      (model |> updateVideoPlayer (Started pos), Cmd.none)
+      |> saveVideoAction 4
 
-        Just {oer} ->
-          let
-              playingVideo =
-                { oerId = oer.id
-                , startPositionInVideo = positionInVideo
-                , lastReportedPositionInVideo = positionInVideo+10 -- peek update interval = 10 seconds
-                , videoDuration = videoDuration
-                }
-          in
-              ({ model | playingVideo = Just playingVideo }, Cmd.none)
-              |> saveAction 4 [ ("oerId", Encode.int oer.id), ("startPositionInVideo", Encode.float playingVideo.startPositionInVideo), ("lastReportedPositionInVideo", Encode.float playingVideo.startPositionInVideo), ("videoDuration", Encode.float playingVideo.videoDuration) ]
+    Html5VideoPaused pos ->
+      (model |> updateVideoPlayer (Paused pos), Cmd.none)
+      |> saveVideoAction 5
 
-    Html5VideoPaused {positionInVideo, videoDuration} ->
-      case model.inspectorState of
-        Nothing ->
-          (model, Cmd.none) -- impossible
+    Html5VideoSeeked pos ->
+      (model |> updateVideoPlayer (PositionChanged pos), Cmd.none)
+      |> saveVideoAction 6
 
-        Just {oer} ->
-          ({ model | playingVideo = Nothing }, Cmd.none)
-          |> saveAction 6 [ ("oerId", Encode.int oer.id), ("positionInVideo", Encode.float positionInVideo), ("videoDuration", Encode.float videoDuration) ]
+    Html5VideoStillPlaying pos ->
+      (model |> updateVideoPlayer (PositionChanged pos), Cmd.none)
 
-
-    Html5VideoChangedPosition {positionInVideo, videoDuration} ->
-      case model.playingVideo of
-        Nothing ->
-          case model.inspectorState of
-            Just {oer} ->
-              (model, Cmd.none)
-              |> saveAction 5 [ ("oerId", Encode.int oer.id), ("positionInVideo", Encode.float positionInVideo), ("videoDuration", Encode.float videoDuration) ]
-            Nothing ->
-              (model, Cmd.none)
-
-        Just oldPlayingVideo ->
-          let
-              playingVideo =
-                { oldPlayingVideo | lastReportedPositionInVideo = positionInVideo }
-                |> Debug.log "Html5VideoChangedPosition"
-          in
-          ({ model | playingVideo = Just playingVideo }, requestUpdatePlayingVideo playingVideo.lastReportedPositionInVideo)
-
+    Html5VideoDuration duration ->
+      (model |> updateVideoPlayer (Duration duration), Cmd.none)
 
 -- createNote : OerId -> String -> Model -> Model
 -- createNote oerId text model =
@@ -944,6 +916,22 @@ executeSearchAfterUrlChanged model url =
 
 
 
+saveVideoAction : Int -> (Model, Cmd Msg)-> (Model, Cmd Msg)
+saveVideoAction actionTypeId (model, oldCmd) =
+  case model.inspectorState of
+    Nothing ->
+      (model, oldCmd) -- impossible
+
+    Just {oer, videoPlayer} ->
+      case videoPlayer of
+        Nothing ->
+          (model, oldCmd) -- impossible
+
+        Just {currentTime} ->
+          (model, oldCmd)
+          |> saveAction actionTypeId [ ("oerId", Encode.int oer.id), ("positionInSeconds", Encode.float currentTime) ]
+
+
 saveAction : Int -> List (String, Encode.Value) -> (Model, Cmd Msg)-> (Model, Cmd Msg)
 saveAction actionTypeId params (model, oldCmd) =
   if isLoggedIn model then
@@ -1010,3 +998,58 @@ selectOrUnselectMentionInStory mousePosXonCard model =
                     Just mention ->
                       ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
                       |> logEventForLabStudy "SelectMentionInStory" [ oerId |> String.fromInt, mousePosXonCard |> String.fromFloat, mention.positionInResource |> String.fromFloat, mention.sentence ]
+
+
+type VideoPlayerMsg
+  = Started Float
+  | Paused Float
+  | PositionChanged Float
+  | Duration Float
+
+
+updateVideoPlayer : VideoPlayerMsg -> Model -> Model
+updateVideoPlayer msg model =
+  let
+      dummy2 =
+        msg
+        |> Debug.log "updateVideoPlayer"
+  in
+  case model.inspectorState of
+    Nothing ->
+      let
+          dummy =
+            "updateVideoPlayer"
+            |> Debug.log "no inspectorState"
+      in
+      model -- impossible
+
+    Just inspectorState ->
+      case inspectorState.videoPlayer of
+        Nothing ->
+          let
+              dummy =
+                "updateVideoPlayer"
+                |> Debug.log "no videoPlayer"
+          in
+          model -- impossible
+
+        Just videoPlayer ->
+          let
+              newVideoPlayer =
+                case msg of
+                  Started pos ->
+                    { videoPlayer | currentTime = pos, isPlaying = True }
+
+                  Paused pos ->
+                    { videoPlayer | currentTime = pos, isPlaying = False }
+
+                  PositionChanged pos ->
+                    { videoPlayer | currentTime = pos }
+
+                  Duration duration ->
+                    { videoPlayer | duration = duration }
+
+              newInspectorState =
+                { inspectorState | videoPlayer = Just newVideoPlayer }
+          in
+              { model | inspectorState = Just newInspectorState }

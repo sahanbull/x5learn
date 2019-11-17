@@ -262,16 +262,29 @@ def api_material():
     return jsonify(oer.data_and_id())
 
 
+@app.route("/api/v1/peek/", methods=['POST'])
+def api_peek():
+    user_login_id = current_user.get_id()
+    oer_id = request.get_json()['oerId']
+    start = request.get_json()['start']
+    length = request.get_json()['length']
+    extra_args = request.get_json()['extraArgs']
+    peek = Peek(user_login_id, oer_id, start, length, extra_args)
+    db_session.add(peek)
+    db_session.commit()
+    return 'OK'
+
+
 # Heartbeat signal from the frontend that the current video is still playing.
 # Sent every few seconds, this signal provides a robust measurement in edge
 # cases where explicit stop events are missing, e.g. when user closes the page.
-@app.route("/api/v1/video_playing/", methods=['POST'])
-def api_video_playing():
-    oer_id = request.get_json()['oerId']
-    text = request.get_json()['text']
-    user_login_id = current_user.get_id()  # Assuming we are never going to allow feedback from logged-out users
-    feedback = ResourceFeedback(user_login_id, oer_id, text)
-    db_session.add(feedback)
+@app.route("/api/v1/peek_extend/", methods=['POST'])
+def api_peek_extend():
+    user_login_id = current_user.get_id()
+    peek = Peek.query.filter_by(user_login_id=user_login_id).order_by(Peek.id.desc()).first()
+    length = request.get_json()['length']
+    peek.length = length
+    db_session.add(peek)
     db_session.commit()
     return 'OK'
 
@@ -908,6 +921,7 @@ class Definition(Resource):
 
 def initiate_action_types_table():
     # TODO Define a comprehensive set of actions and keep it in sync with the frontend
+    # BTW in case a reset is needed: https://stackoverflow.com/a/5342503/2237986
     action_type = ActionType.query.filter_by(id=1).first()
     if action_type is None:
         action_type = ActionType('OER card opened')
@@ -930,12 +944,12 @@ def initiate_action_types_table():
         db_session.commit()
     action_type = ActionType.query.filter_by(id=5).first()
     if action_type is None:
-        action_type = ActionType('Video position changed (manually by user)')
+        action_type = ActionType('Video paused')
         db_session.add(action_type)
         db_session.commit()
     action_type = ActionType.query.filter_by(id=6).first()
     if action_type is None:
-        action_type = ActionType('Video paused by user')
+        action_type = ActionType('Video seeked')
         db_session.add(action_type)
         db_session.commit()
 

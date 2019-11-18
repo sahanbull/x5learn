@@ -1,4 +1,4 @@
-module View.Card exposing (viewPathway, viewOerGrid, viewOerCard)
+module View.Card exposing (viewOerGrid, viewOerCard)
 
 import Element exposing (..)
 import Element.Background as Background
@@ -16,35 +16,6 @@ import View.Bubblogram exposing (..)
 
 import Msg exposing (..)
 import Animation exposing (..)
-
-
-viewPathway model pathway =
-  "pathway goes here"
-  |> text
-    -- let
-    --     grid =
-    --       oerPathwayContainer model pathway.fragments pathway.rationale (pathway.fragments |> List.map .oer)
-    --       |> List.map inFront
-
-    --     slotAtIndex index oer =
-    --       let
-    --           x =
-    --             modBy 3 index
-
-    --           y =
-    --             index//3
-    --       in
-    --           viewOerCard model recommendedFragments { x = x*370 + 180 |> toFloat, y = y*310 + 70 |> toFloat } (gridKey ++"-"++ (String.fromInt index)) oer
-  -- in
-    --   oers
-    --   |> List.indexedMap slotAtIndex
-    --   |> List.reverse -- Rendering the cards in reverse order so that popup menus (to the bottom and right) are rendered above the neighboring card, rather than below.
-
-    -- in
-    --     [ pathway.rationale |> headlineWrap []
-    --     ]
-    --     |> column ([ height (px 380), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ grid)
-
 
 
 viewOerGrid : Model -> Playlist -> Element Msg
@@ -93,7 +64,7 @@ viewOerGrid model playlist =
 
             cards =
               oers
-              |> List.indexedMap (\index oer -> viewOerCard model [] (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) True oer)
+              |> List.indexedMap (\index oer -> viewOerCard model (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) True oer)
               |> List.reverse
               |> List.map inFront
         in
@@ -105,20 +76,20 @@ viewOerGrid model playlist =
             |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
 
 
-viewOerCard : Model -> List Fragment -> Point -> String -> Bool -> Oer -> Element Msg
-viewOerCard ({pageScrollState} as model) recommendedFragments position barId enableShadow oer =
+viewOerCard : Model -> Point -> String -> Bool -> Oer -> Element Msg
+viewOerCard ({pageScrollState} as model) position barId enableShadow oer =
   let
       isCardInView =
         position.y + cardHeight > pageScrollState.scrollTop && position.y < pageScrollState.scrollTop + pageScrollState.viewHeight
   in
       if isCardInView then
-        viewOerCardVisibleContent model recommendedFragments position barId enableShadow oer
+        viewOerCardVisibleContent model position barId enableShadow oer
       else
         none
 
 
-viewOerCardVisibleContent : Model -> List Fragment -> Point -> String -> Bool -> Oer -> Element Msg
-viewOerCardVisibleContent model recommendedFragments position barId enableShadow oer =
+viewOerCardVisibleContent : Model -> Point -> String -> Bool -> Oer -> Element Msg
+viewOerCardVisibleContent model position barId enableShadow oer =
   let
       fragmentsBar =
         case Dict.get oer.id model.wikichunkEnrichments of
@@ -129,7 +100,7 @@ viewOerCardVisibleContent model recommendedFragments position barId enableShadow
             if enrichment.errors then
               []
             else
-              viewFragmentsBar model oer enrichment.chunks recommendedFragments cardWidth barId
+              viewFragmentsBar model oer enrichment.chunks cardWidth barId
               |> el [ width fill, moveDown imageHeight ]
               |> inFront
               |> List.singleton

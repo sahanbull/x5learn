@@ -179,6 +179,10 @@ yellow =
   rgba255 255 240 0 0.9
 
 
+red =
+  rgba255 240 30 0 1
+
+
 orange =
   rgb255 255 120 0
 
@@ -570,21 +574,12 @@ avatarImage =
 
 
 openInspectorOnPress model oer =
-  let
-      fragmentLength =
-        case chunksFromOerId model oer.id |> List.head of
-          Nothing ->
-            1
+  case model.inspectorState of
+    Nothing ->
+      Just (InspectOer oer 0 False)
 
-          Just chunk ->
-            chunk.length
-  in
-      case model.inspectorState of
-        Nothing ->
-          Just (InspectOer oer 0 fragmentLength False)
-
-        _ ->
-          Nothing
+    _ ->
+      Nothing
 
 
 imageHeight =
@@ -643,9 +638,10 @@ guestCallToSignup incentive =
 
 viewHeartButton : Model -> OerId -> Element Msg
 viewHeartButton model oerId =
-    let
-        class =
-          "Heart " ++ (if isMarkedAsFavorite model oerId then "HeartFilled" else "HeartOutline")
-    in
-        none
-        |> el [ width <| px 20, height <| px 22, onClickNoBubble (ClickedHeart oerId), htmlClass class  ]
+  none
+    -- let
+    --     class =
+    --       "Heart " ++ (if isMarkedAsFavorite model oerId then "HeartFilled" else "HeartOutline")
+    -- in
+    --     none
+    --     |> el [ width <| px 20, height <| px 22, onClickNoBubble (ClickedHeart oerId), htmlClass class  ]

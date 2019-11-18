@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestFavorites)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestVideoUsages, requestOerDurationInSeconds)--, requestUpdatePlayingVideo) --requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestFavorites)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -37,12 +37,12 @@ searchOers searchText =
     }
 
 
-requestFavorites : Cmd Msg
-requestFavorites =
-  Http.get
-    { url = Url.Builder.absolute [ apiRoot, "favorites/" ] []
-    , expect = Http.expectJson RequestFavorites (list int)
-    }
+-- requestFavorites : Cmd Msg
+-- requestFavorites =
+--   Http.get
+--     { url = Url.Builder.absolute [ apiRoot, "favorites/" ] []
+--     , expect = Http.expectJson RequestFavorites (list int)
+--     }
 
 
 requestOers : List OerId -> Cmd Msg
@@ -102,6 +102,15 @@ userProfileEncoder userProfile =
     ]
 
 
+requestOerDurationInSeconds : OerId -> Float -> Cmd Msg
+requestOerDurationInSeconds oerId durationInSeconds =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "oer_duration_in_seconds/" ] []
+    , body = Http.jsonBody <| Encode.object [ ("oer_id", Encode.int oerId), ("durationInSeconds", Encode.float durationInSeconds) ]
+    , expect = Http.expectString RequestOerDurationInSeconds
+    }
+
+
 requestLabStudyLogEvent : Int -> String -> List String -> Cmd Msg
 requestLabStudyLogEvent time eventType params =
   Http.post
@@ -111,30 +120,53 @@ requestLabStudyLogEvent time eventType params =
     }
 
 
-requestResource : Int -> Cmd Msg
-requestResource oerId =
-  Http.post
-    { url = Url.Builder.absolute [ apiRoot, "resource/" ] []
-    , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId) ]
-    , expect = Http.expectJson RequestResource oerDecoder
-    }
+-- requestUpdatePlayingVideo : Float -> Cmd Msg
+-- requestUpdatePlayingVideo currentTimeInVideo =
+--   Http.post
+--     { url = Url.Builder.absolute [ apiRoot, "playing_video/" ] []
+--     , body = Http.jsonBody <| Encode.object [ ("currentTimeInVideo", Encode.float currentTimeInVideo) ]
+--     , expect = Http.expectString RequestUpdatePlayingVideo
+--     }
 
 
-requestResourceRecommendations : OerId -> Cmd Msg
-requestResourceRecommendations oerId =
+-- requestResource : Int -> Cmd Msg
+-- requestResource oerId =
+--   Http.post
+--     { url = Url.Builder.absolute [ apiRoot, "resource/" ] []
+--     , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId) ]
+--     , expect = Http.expectJson RequestResource oerDecoder
+--     }
+
+
+-- requestResourceRecommendations : OerId -> Cmd Msg
+-- requestResourceRecommendations oerId =
+--   Http.get
+--     { url = Url.Builder.absolute [ apiRoot, "recommendations/" ] [ Url.Builder.int "oerId" oerId ]
+--     , expect = Http.expectJson RequestResourceRecommendations (list oerDecoder)
+--     }
+
+
+-- requestSendResourceFeedback : Int -> String -> Cmd Msg
+-- requestSendResourceFeedback oerId text =
+--   Http.post
+--     { url = Url.Builder.absolute [ apiRoot, "resource_feedback/" ] []
+--     , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId), ("text", Encode.string text) ]
+--     , expect = Http.expectString RequestSendResourceFeedback
+--     }
+
+
+requestVideoUsages : Cmd Msg
+requestVideoUsages =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "recommendations/" ] [ Url.Builder.int "oerId" oerId ]
-    , expect = Http.expectJson RequestResourceRecommendations (list oerDecoder)
+    { url = Url.Builder.absolute [ apiRoot, "video_usages" ] []
+    , expect = Http.expectJson RequestVideoUsages (dict (list rangeDecoder))
     }
 
 
-requestSendResourceFeedback : Int -> String -> Cmd Msg
-requestSendResourceFeedback oerId text =
-  Http.post
-    { url = Url.Builder.absolute [ apiRoot, "resource_feedback/" ] []
-    , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId), ("text", Encode.string text) ]
-    , expect = Http.expectString RequestSendResourceFeedback
-    }
+rangeDecoder =
+  map2 Range
+    (field "start" float)
+    (field "length" float)
 
 
 sessionDecoder =
@@ -175,6 +207,7 @@ oerDecoder =
   |> andMap (field "date" string)
   |> andMap (field "description" string)
   |> andMap (field "duration" string)
+  |> andMap (field "durationInSeconds" float)
   |> andMap (field "images" (list string))
   |> andMap (field "provider" string)
   |> andMap (field "title" string)

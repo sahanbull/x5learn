@@ -98,7 +98,7 @@ def make_wikichunks(oer_data):
     url = oer_data['url']
     print(url)
     print(oer_data['title'])
-    # if the material is pdfs, including jmir and research protocols:
+    # if the material is pdf:
     if url.lower().endswith('pdf'):
         return extract_chunks_from_pdf(url)
     if 'youtu' in url and '/watch?v=' in url:

@@ -65,7 +65,7 @@ function setupYouTubePlayPositionFollower(){
     // see YouTube API documentation https://developers.google.com/youtube/iframe_api_reference#Playback_status
     if(player && player.getPlayerState && player.getPlayerState()==1){
       var fraction = player.getCurrentTime() / player.getDuration();
-      app.ports.videoIsPlayingAtPosition.send(fraction);
+      app.ports.youtubeVideoIsPlayingAtPosition.send(fraction);
     }
   }, 1000);
 }

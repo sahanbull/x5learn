@@ -177,14 +177,14 @@ def get_logged_in_user_profile_and_state():
 #     ...
 
 
-def get_or_create_logged_in_user():
-    user = current_user.user
-    if user is None:
-        user = User()
-        db_session.add(user)
-        current_user.user = user
-        db_session.commit()
-    return user
+# def get_or_create_logged_in_user():
+#     user = current_user.user
+#     if user is None:
+#         user = User()
+#         db_session.add(user)
+#         current_user.user = user
+#         db_session.commit()
+#     return user
 
 
 @app.route("/api/v1/recommendations/", methods=['GET'])

@@ -114,8 +114,11 @@ viewFragmentsBar model oer chunks barWidth barId =
             |> inFront
 
       chunkTriggers =
-        chunks
-        |> List.indexedMap chunkTrigger
+        if model.isContentFlowEnabled then
+          chunks
+          |> List.indexedMap chunkTrigger
+        else
+          []
 
       border =
         [ none |> el [ width fill , Background.color veryTransparentWhite, height <| px 1 ] |> above ]

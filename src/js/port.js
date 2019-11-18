@@ -208,14 +208,18 @@ function setupEventHandlers(){
     //   var positionInResource = (event.pageX - posX) / rect.width;
     //   app.ports.mouseMovedOnStoryTag.send(positionInResource);
     // }
+
+    // When ContentFlow is enabled, the mousemove event is caught by ChunkTrigger
     if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" ChunkTrigger ") > -1 ){
       var fragmentsBar = element.closest('.FragmentsBar')
       if(fragmentsBar){
-        var rect = fragmentsBar.getBoundingClientRect();
-        var posX = window.scrollX + rect.left;
-        var positionInResource = (event.pageX - posX) / rect.width;
-        app.ports.scrubbed.send(positionInResource);
+        reportScrubbing(fragmentsBar, event);
       }
+    }
+
+    // When ContentFlow is disabled, the mousemove event is caught by FragmentsBar
+    if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" FragmentsBar ") > -1 ){
+      reportScrubbing(element, event);
     }
   });
 
@@ -289,4 +293,12 @@ function getEventPosition(event){
       (doc && doc.clientTop  || body && body.clientTop  || 0 );
   }
   return {x: event.pageX, y: event.pageY}
+}
+
+
+function reportScrubbing(fragmentsBar, event){
+  var rect = fragmentsBar.getBoundingClientRect();
+  var posX = window.scrollX + rect.left;
+  var positionInResource = (event.pageX - posX) / rect.width;
+  app.ports.scrubbed.send(positionInResource);
 }

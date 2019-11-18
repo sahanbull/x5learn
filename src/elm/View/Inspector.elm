@@ -117,7 +117,10 @@ inspectorContentDefault model {oer, fragmentStart} =
             title |> headlineWrap []
 
       linkToFile =
-        newTabLink [] { url = oer.url, label = oer.url |> bodyWrap [] }
+        if isLabStudy1 model then
+          none
+        else
+          newTabLink [] { url = oer.url, label = oer.url |> bodyWrap [] }
 
       player =
         case getYoutubeVideoId oer.url of
@@ -137,16 +140,19 @@ inspectorContentDefault model {oer, fragmentStart} =
                 embedYoutubePlayer youtubeId startTime
 
       description =
-        case oer.description of
-          "" ->
-            "No description available" |> italicText |> el [ paddingTop 30 ]
+        if isLabStudy1 model then
+          none
+        else
+          case oer.description of
+            "" ->
+              "No description available" |> italicText |> el [ paddingTop 30 ]
 
-          desc ->
-            desc
-            |> String.split("\n")
-            |> List.filter (\line -> String.length line > 2)
-            |> List.map (bodyWrap [])
-            |> column [ spacing 7, height fill, scrollbarY, paddingTop 30 ]
+            desc ->
+              desc
+              |> String.split("\n")
+              |> List.filter (\line -> String.length line > 2)
+              |> List.map (bodyWrap [])
+              |> column [ spacing 7, height fill, scrollbarY, paddingTop 30 ]
 
       body =
         [ player
@@ -162,10 +168,10 @@ inspectorContentDefault model {oer, fragmentStart} =
         , [ linkToFile, providerLinkAndFavoriteButton ] |> column [ width fill, spacing 15, paddingTop 30 ]
         , fragmentsBar
         ]
-        |> column [ width (px playerWidth), height <| px fragmentsBarWrapperHeight, moveDown 1 ]
+        |> column [ width (px playerWidth), height <| px <| fragmentsBarWrapperHeight model, moveDown 1 ]
 
       fragmentsBar =
-        if hasYoutubeVideo oer.url then
+        if oer.mediatype == "video" then
           case chunksFromOerId model oer.id of
             [] ->
               none
@@ -176,15 +182,18 @@ inspectorContentDefault model {oer, fragmentStart} =
                     viewFragmentsBar model oer wikichunks playerWidth "inspector"
                     |> el [ width (px playerWidth), height (px 16) ]
               in
-                  none |> el [ inFront content, moveUp (fragmentsBarWrapperHeight - fragmentsBarHeight) ]
+                  none |> el [ inFront content, moveUp ((fragmentsBarWrapperHeight model) - fragmentsBarHeight) ]
         else
           none
 
       providerLinkAndFavoriteButton =
-        [ providerLink
-        , favoriteButton
-        ]
-        |> row [ width fill ]
+        if isLabStudy1 model then
+          none
+        else
+          [ providerLink
+          , favoriteButton
+          ]
+          |> row [ width fill ]
 
       favoriteButton =
         let
@@ -222,8 +231,11 @@ inspectorContentDefault model {oer, fragmentStart} =
       { header = header, body = body, footer = footer, fixed = none }
 
 
-fragmentsBarWrapperHeight =
-  200
+fragmentsBarWrapperHeight model =
+  if isLabStudy1 model then
+    30
+  else
+    200
 
 
 sheetWidth =

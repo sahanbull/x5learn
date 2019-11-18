@@ -834,3 +834,11 @@ initialResourceSidebarTab =
 
 isHovering model oer =
   model.hoveringOerId == Just oer.id
+
+
+isInspecting model {id} =
+  case model.inspectorState of
+    Just {oer} ->
+      oer.id==id
+    _ ->
+      False

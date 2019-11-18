@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 import json
 import http.client
 import urllib
+from collections import defaultdict
 from datetime import datetime, timedelta
 from sqlalchemy import or_, and_, cast, Integer
 from sqlalchemy.orm.attributes import flag_modified
@@ -239,9 +240,47 @@ def api_oers():
     return jsonify(oers)
 
 
+@app.route("/api/v1/oer_duration_in_seconds/", methods=['POST'])
+def api_oer_duration_in_seconds():
+    j  = request.get_json()
+    oer_id = j['oer_id']
+    duration = j['durationInSeconds']
+    oer = Oer.query.filter_by(id=oer_id).first()
+    new_data = json.loads(json.dumps(oer.data)) # https://stackoverflow.com/a/53977819/2237986
+    new_data['durationInSeconds'] = duration
+    oer.data = new_data
+    db_session.commit()
+    return 'OK'
+
+
+@app.route("/api/v1/video_usages/", methods=['GET'])
+def api_video_usages():
+    actions = Action.query.filter(Action.user_login_id == current_user.get_id(),
+                                  Action.action_type_id.in_([4, 5, 6])).order_by(Action.id).all()
+    positions_per_oer = defaultdict(list)
+    for action in actions:
+        oer_id = str(action.params['oerId'])
+        position = action.params['positionInSeconds']
+        positions_per_oer[oer_id].append(position)
+    ranges_per_oer = defaultdict(list)
+    for oer_id, positions in positions_per_oer.items():
+        ranges_per_oer[oer_id] = video_usage_ranges_from_positions(positions)
+    return jsonify(ranges_per_oer)
+
+
+def video_usage_ranges_from_positions(positions):
+    ranges = []
+    positions = sorted(positions)
+    for index, position in enumerate(positions):
+        if index>0 and position >= ranges[-1]['start'] and position < ranges[-1]['start'] + ranges[-1]['length'] + 10:
+            ranges[-1]['length'] = position - ranges[-1]['start'] + 10
+        else:
+            ranges.append({'start': position, 'length': 10})
+    return ranges
+
+
 @app.route("/api/v1/featured/", methods=['GET'])
 def api_featured():
-    print('api_featured')
     urls = ['https://www.youtube.com/watch?v=woy7_L2JKC4', 'https://www.youtube.com/watch?v=bRIL9kMJJSc',
             'https://www.youtube.com/watch?v=4yYytLUViI4']
     oers = [oer.data_and_id() for oer in Oer.query.filter(Oer.url.in_(urls)).order_by(Oer.url.desc()).all()]
@@ -888,6 +927,7 @@ class Definition(Resource):
 
 def initiate_action_types_table():
     # TODO Define a comprehensive set of actions and keep it in sync with the frontend
+    # BTW in case a reset is needed: https://stackoverflow.com/a/5342503/2237986
     action_type = ActionType.query.filter_by(id=1).first()
     if action_type is None:
         action_type = ActionType('OER card opened')
@@ -901,6 +941,21 @@ def initiate_action_types_table():
     action_type = ActionType.query.filter_by(id=3).first()
     if action_type is None:
         action_type = ActionType('OER unmarked as favorite')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=4).first()
+    if action_type is None:
+        action_type = ActionType('Video played')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=5).first()
+    if action_type is None:
+        action_type = ActionType('Video paused')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=6).first()
+    if action_type is None:
+        action_type = ActionType('Video seeked')
         db_session.add(action_type)
         db_session.commit()
 

@@ -16,20 +16,25 @@ import Msg exposing (..)
 import Animation exposing (..)
 
 
-viewFragmentsBar model oer chunks recommendedFragments barWidth barId =
+viewFragmentsBar : Model -> Oer -> List Chunk -> Int -> String -> Element Msg
+viewFragmentsBar model oer chunks barWidth barId =
   let
-      -- markers =
-      --   [ fragmentMarkers recommendedFragments yellow
-      --   ]
-      --   |> List.concat
+      peekRanges =
+        [ rangeMarkers red
+        ]
+        |> List.concat
 
-      -- fragmentMarkers fragments color =
-      --   fragments
-      --   |> List.filter (\fragment -> fragment.oerId == oer.url)
-      --   |> List.map (\{start,length} -> none |> el [ width (length |> pxFromFraction |> round |> px), height fill, Background.color color, moveRight (start |> pxFromFraction) ] |> inFront)
+      rangeMarkers color =
+        case model.videoUsages |> Dict.get oer.id of
+          Nothing ->
+            [] -- impossible
 
-      pxFromFraction fraction =
-        (barWidth |> toFloat) * fraction
+          Just ranges ->
+            ranges
+            |> List.map (\{start,length} -> none |> el [ width (length |> pxFromSeconds |> round |> px), height <| px 3, Background.color color, moveRight (start |> pxFromSeconds) ] |> inFront)
+
+      pxFromSeconds seconds =
+        (barWidth |> toFloat) * seconds / oer.durationInSeconds
 
       chunkTrigger chunkIndex chunk =
         let
@@ -77,14 +82,10 @@ viewFragmentsBar model oer chunks recommendedFragments barWidth barId =
                             []
 
                           Just index ->
-                            let
-                                posY =
-                                  ((toFloat index)*3.5 |> floor)
-                            in
-                                none
-                                |> el [ width fill, height (px <| fragmentsBarHeight-posY), moveDown (toFloat posY), Background.color yellow, pointerEventsNone ]
-                                |> inFront
-                                |> List.singleton
+                            none
+                            |> el [ width fill, height fill, Background.color yellow, alpha <| 0.85 - (toFloat index)/4, pointerEventsNone ]
+                            |> inFront
+                            |> List.singleton
                 in
                   ([ leftBorder ] ++ queryHighlight ++ bg)
 
@@ -94,22 +95,22 @@ viewFragmentsBar model oer chunks recommendedFragments barWidth barId =
               else
                 []
 
-            clickHandler =
-              case model.inspectorState of
-                Nothing ->
-                  [ onClickNoBubble <| InspectOer oer chunk.start chunk.length True ]
+            -- clickHandler =
+            --   case model.inspectorState of
+            --     Nothing ->
+            --       [ onClickNoBubble <| InspectOer oer chunk.start chunk.length True ]
 
-                _ ->
-                  if hasYoutubeVideo oer.url then
-                    [ onClickNoBubble <| YoutubeSeekTo chunk.start ]
-                  else
-                    []
+            --     _ ->
+            --       -- if hasYoutubeVideo oer.url then
+            --       --   [ onClickNoBubble <| YoutubeSeekTo chunk.start ]
+            --       -- else
+            --         []
 
             chunkWidth =
               floor <| chunk.length * (toFloat barWidth) + (if chunkIndex == (List.length chunks)-1 then 0 else 1)
         in
             none
-            |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ appearance ++ popup ++ clickHandler)
+            |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ appearance ++ popup)
             |> inFront
 
       chunkTriggers =
@@ -122,17 +123,28 @@ viewFragmentsBar model oer chunks recommendedFragments barWidth barId =
       background =
         [ Background.color materialDark ]
 
-      scrubCursor =
+      scrubCursorAndClickHandler =
         if isHovering model oer then
           case model.scrubbing of
             Nothing ->
               []
 
             Just position ->
-              none
-              |> el [ width <| px 2, height fill, Background.color white, moveRight ((cardWidth - 2) * position), pointerEventsNone ]
-              |> inFront
-              |> List.singleton
+              let
+                  scrubCursor =
+                    none
+                    |> el [ width <| px 2, height fill, Background.color white, moveRight ((cardWidth - 2) * position), pointerEventsNone ]
+                    |> inFront
+
+                  clickHandler =
+                    case model.inspectorState of
+                      Nothing ->
+                        onClickNoBubble <| InspectOer oer position True
+
+                      _ ->
+                        onClickNoBubble <| StartCurrentHtml5Video (position * oer.durationInSeconds)
+              in
+                  [ scrubCursor, clickHandler ]
         else
           []
 
@@ -140,7 +152,7 @@ viewFragmentsBar model oer chunks recommendedFragments barWidth barId =
         [ onMouseLeave <| ScrubMouseLeave ]
   in
     none
-    |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background ++ scrubCursor ++ mouseLeaveHandler)
+    |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background ++ peekRanges ++ scrubCursorAndClickHandler ++ mouseLeaveHandler)
 
 
 viewChunkPopup model chunkPopup =
@@ -249,5 +261,3 @@ fragmentsBarHeight = 16
 
 isHoverMenuNearRightEdge model margin =
   model.mousePositionXwhenOnChunkTrigger > (toFloat model.windowWidth)-margin
-
-

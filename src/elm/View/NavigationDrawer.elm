@@ -13,6 +13,7 @@ import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
 
 import Model exposing (..)
 import View.Shared exposing (..)
+import View.ContentFlowToggle exposing (..)
 
 import Msg exposing (..)
 
@@ -36,7 +37,7 @@ withNavigationDrawer model (pageContent, modal) =
 
       navButtons =
         if isLabStudy1 model then
-          none
+          viewContentFlowToggle model
         else
           -- [ navButton False "/next_steps" "nav_next_steps" "Next Steps"
           -- , navButton False "/journeys" "nav_journeys" "Journeys"

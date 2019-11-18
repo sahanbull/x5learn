@@ -78,6 +78,13 @@ type Msg
   | FlyingHeartRelativeStartPositionReceived Point
   | Scrubbed Float
   | ScrubMouseLeave
+  | Html5VideoStarted Float
+  | Html5VideoPaused Float
+  | Html5VideoSeeked Float
+  | Html5VideoStillPlaying Float
+  | Html5VideoDuration Float
+  | StartCurrentHtml5Video Float
+  | ToggleContentFlow
 
 
 type UserProfileField

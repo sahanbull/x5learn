@@ -617,6 +617,46 @@ update msg ({nav, userProfileForm} as model) =
     ScrubMouseLeave ->
       ({ model | scrubbing = Nothing}, Cmd.none)
 
+    Html5VideoStarted pos ->
+      (model |> updateVideoPlayer (Started pos) |> extendVideoUsages pos, Cmd.none)
+      |> saveVideoAction 4
+
+    Html5VideoPaused pos ->
+      (model |> updateVideoPlayer (Paused pos), Cmd.none)
+      |> saveVideoAction 5
+
+    Html5VideoSeeked pos ->
+      (model |> updateVideoPlayer (PositionChanged pos), Cmd.none)
+      |> saveVideoAction 6
+
+    Html5VideoStillPlaying pos ->
+      (model |> updateVideoPlayer (PositionChanged pos) |> extendVideoUsages pos, Cmd.none)
+
+    Html5VideoDuration duration ->
+      let
+          (newModel, cmd) =
+            case model.inspectorState of
+              Nothing ->
+                (model, Cmd.none) -- impossible
+
+              Just {oer} ->
+                if oer.durationInSeconds < 0.1 then
+                  let
+                      cachedOers =
+                        model.cachedOers |> Dict.map (\oerId o -> if oerId==oer.id then { o | durationInSeconds = duration } else o)
+                  in
+                      ({ model | cachedOers = cachedOers }, requestOerDurationInSeconds oer.id duration)
+                else
+                  (model, Cmd.none) -- impossible
+      in
+          (newModel |> updateVideoPlayer (Duration duration), cmd)
+
+    StartCurrentHtml5Video pos ->
+      (model |> extendVideoUsages pos, startCurrentHtml5Video pos)
+
+    ToggleContentFlow ->
+      ({ model | isContentFlowEnabled = not model.isContentFlowEnabled }, Cmd.none)
+
 
 createNote : OerId -> String -> Model -> Model
 createNote oerId text model =

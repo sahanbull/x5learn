@@ -21,7 +21,7 @@ type Msg
   | AnimationTick Posix
   | ChangeSearchText String
   | ResizeBrowser Int Int
-  | InspectOer Oer Float Float Bool
+  | InspectOer Oer Float Bool
   | UninspectSearchResult
   | ModalAnimationStart BoxAnimation
   | ModalAnimationStop Int
@@ -84,6 +84,7 @@ type Msg
   | Html5VideoSeeked Float
   | Html5VideoStillPlaying Float
   | Html5VideoDuration Float
+  | StartCurrentHtml5Video Float
 
 
 type UserProfileField

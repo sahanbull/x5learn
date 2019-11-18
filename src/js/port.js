@@ -57,6 +57,14 @@ function setupPorts(app){
     }, 100);
   });
 
+  app.ports.startCurrentHtml5Video.subscribe(function(position) {
+    var vid = getHtml5VideoPlayer();
+    if(vid){
+      vid.currentTime = position;
+      vid.play();
+    }
+  });
+
   // app.ports.youtubeSeekTo.subscribe(function(fragmentStart) {
   //   player.seekTo(fragmentStart * player.getDuration());
   //   player.playVideo();
@@ -109,6 +117,10 @@ function startAnimationWhenModalIsReady(youtubeEmbedParams) {
         if(vid){
           vid.onloadedmetadata = function() {
             app.ports.html5VideoDuration.send(vid.duration);
+            if(youtubeEmbedParams.playWhenReady){
+              vid.currentTime = youtubeEmbedParams.fragmentStart * vid.duration;
+              vid.play();
+            }
           };
           vid.onplay = function() {
             isVideoPlaying = true;
@@ -126,7 +138,7 @@ function startAnimationWhenModalIsReady(youtubeEmbedParams) {
           vid.ontimeupdate = function() {
             videoPlayPosition = vid.currentTime;
             if(isVideoPlaying){
-              if(videoPlayPosition > videoEventThrottlePosition + 2){
+              if(videoPlayPosition > videoEventThrottlePosition + 10){
                 // console.log("SENT");
                 app.ports.html5VideoStillPlaying.send(videoPlayPosition);
                 videoEventThrottlePosition = videoPlayPosition;

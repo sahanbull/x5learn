@@ -574,21 +574,12 @@ avatarImage =
 
 
 openInspectorOnPress model oer =
-  let
-      fragmentLength =
-        case chunksFromOerId model oer.id |> List.head of
-          Nothing ->
-            1
+  case model.inspectorState of
+    Nothing ->
+      Just (InspectOer oer 0 False)
 
-          Just chunk ->
-            chunk.length
-  in
-      case model.inspectorState of
-        Nothing ->
-          Just (InspectOer oer 0 fragmentLength False)
-
-        _ ->
-          Nothing
+    _ ->
+      Nothing
 
 
 imageHeight =

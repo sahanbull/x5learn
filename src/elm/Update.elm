@@ -113,7 +113,7 @@ update msg ({nav, userProfileForm} as model) =
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, askPageScrollState True)
 
-    InspectOer oer fragmentStart fragmentLength playWhenReady ->
+    InspectOer oer fragmentStart playWhenReady ->
       let
           youtubeEmbedParams : YoutubeEmbedParams
           youtubeEmbedParams =
@@ -528,7 +528,6 @@ update msg ({nav, userProfileForm} as model) =
 
     YoutubeVideoIsPlayingAtPosition position ->
       (model, Cmd.none)
-      -- |> addFragmentAccess (Fragment oer.id fragmentStart fragmentLength) model.currentTime
       |> logEventForLabStudy "YoutubeVideoIsPlayingAtPosition" [ position |> String.fromFloat]
 
     OverviewTagMouseOver entityId oerId ->
@@ -645,7 +644,7 @@ update msg ({nav, userProfileForm} as model) =
       ({ model | scrubbing = Nothing}, Cmd.none)
 
     Html5VideoStarted pos ->
-      (model |> updateVideoPlayer (Started pos), Cmd.none)
+      (model |> updateVideoPlayer (Started pos) |> extendVideoUsages pos, Cmd.none)
       |> saveVideoAction 4
 
     Html5VideoPaused pos ->
@@ -677,6 +676,13 @@ update msg ({nav, userProfileForm} as model) =
                   (model, Cmd.none) -- impossible
       in
           (newModel |> updateVideoPlayer (Duration duration), cmd)
+
+    StartCurrentHtml5Video pos ->
+      -- let
+      --     test =
+      --       pos |> Debug.log "StartCurrentHtml5Video"
+      -- in
+      (model |> extendVideoUsages pos, startCurrentHtml5Video pos)
 
 -- createNote : OerId -> String -> Model -> Model
 -- createNote oerId text model =

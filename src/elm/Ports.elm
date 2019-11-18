@@ -15,6 +15,7 @@ port openModalAnimation : YoutubeEmbedParams -> Cmd msg
 -- port youtubeDestroyPlayer : Bool -> Cmd msg
 port getOerCardPlaceholderPositions : Bool -> Cmd msg
 port askPageScrollState : Bool -> Cmd msg
+port startCurrentHtml5Video : Float -> Cmd msg
 
 port modalAnimationStart : (BoxAnimation -> msg) -> Sub msg
 port modalAnimationStop : (Int -> msg) -> Sub msg

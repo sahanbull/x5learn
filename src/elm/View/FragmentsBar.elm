@@ -95,22 +95,22 @@ viewFragmentsBar model oer chunks barWidth barId =
               else
                 []
 
-            clickHandler =
-              case model.inspectorState of
-                Nothing ->
-                  [ onClickNoBubble <| InspectOer oer chunk.start chunk.length True ]
+            -- clickHandler =
+            --   case model.inspectorState of
+            --     Nothing ->
+            --       [ onClickNoBubble <| InspectOer oer chunk.start chunk.length True ]
 
-                _ ->
-                  -- if hasYoutubeVideo oer.url then
-                  --   [ onClickNoBubble <| YoutubeSeekTo chunk.start ]
-                  -- else
-                    []
+            --     _ ->
+            --       -- if hasYoutubeVideo oer.url then
+            --       --   [ onClickNoBubble <| YoutubeSeekTo chunk.start ]
+            --       -- else
+            --         []
 
             chunkWidth =
               floor <| chunk.length * (toFloat barWidth) + (if chunkIndex == (List.length chunks)-1 then 0 else 1)
         in
             none
-            |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ appearance ++ popup ++ clickHandler)
+            |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ appearance ++ popup)
             |> inFront
 
       chunkTriggers =
@@ -123,17 +123,28 @@ viewFragmentsBar model oer chunks barWidth barId =
       background =
         [ Background.color materialDark ]
 
-      scrubCursor =
+      scrubCursorAndClickHandler =
         if isHovering model oer then
           case model.scrubbing of
             Nothing ->
               []
 
             Just position ->
-              none
-              |> el [ width <| px 2, height fill, Background.color white, moveRight ((cardWidth - 2) * position), pointerEventsNone ]
-              |> inFront
-              |> List.singleton
+              let
+                  scrubCursor =
+                    none
+                    |> el [ width <| px 2, height fill, Background.color white, moveRight ((cardWidth - 2) * position), pointerEventsNone ]
+                    |> inFront
+
+                  clickHandler =
+                    case model.inspectorState of
+                      Nothing ->
+                        onClickNoBubble <| InspectOer oer position True
+
+                      _ ->
+                        onClickNoBubble <| StartCurrentHtml5Video (position * oer.durationInSeconds)
+              in
+                  [ scrubCursor, clickHandler ]
         else
           []
 
@@ -141,7 +152,7 @@ viewFragmentsBar model oer chunks barWidth barId =
         [ onMouseLeave <| ScrubMouseLeave ]
   in
     none
-    |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background ++ peekRanges ++ scrubCursor ++ mouseLeaveHandler)
+    |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background ++ peekRanges ++ scrubCursorAndClickHandler ++ mouseLeaveHandler)
 
 
 viewChunkPopup model chunkPopup =

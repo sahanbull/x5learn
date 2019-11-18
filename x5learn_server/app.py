@@ -40,7 +40,7 @@ app.config['SECURITY_PASSWORD_SALT'] = PASSWORD_SECRET
 app.config['SECURITY_REGISTERABLE'] = True
 app.config['SECURITY_REGISTER_URL'] = '/signup'
 app.config['SECURITY_SEND_REGISTER_EMAIL'] = True
-app.config['SECURITY_CONFIRMABLE'] = False
+app.config['SECURITY_CONFIRMABLE'] = True
 app.config['SECURITY_POST_REGISTER_VIEW'] = '/login'
 
 # user password configs

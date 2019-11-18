@@ -67,6 +67,8 @@ class Oer(Base):
         # Ensure that image and date fields have the correct types.
         # This is just a lazy patch for pdfs that were poorly imported from csv.
         # TODO remove the if statements below after re-importing the pdfs.
+        if 'durationInSeconds' not in self.data:
+            self.data['durationInSeconds']=0.001 # tiny default value causes frontend to report the real duration
         if self.data['images']=='[]':
             self.data['images']=[]
         if not isinstance(self.data['date'], str):
@@ -263,17 +265,6 @@ class ResourceFeedback(Base):
         self.oer_id = oer_id
         self.text = text
         self.created_at = datetime.now()
-
-
-class Peek(Base):
-    __tablename__ = 'peek'
-    __table_args__ = {'extend_existing': True}
-    id = Column(Integer(), primary_key=True)
-    user_login_id = Column(Integer())
-    oer_id = Column(Integer())
-    range_start = Column(Float())
-    range_length = Column(Float())
-    created_at = Column(DateTime())
 
 
 # This table is only used for the purpose of conducting lab-based evaluations of user experience at UCL.

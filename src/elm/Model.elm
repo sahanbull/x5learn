@@ -57,7 +57,7 @@ type alias Model =
   , resourceRecommendations : List Oer
   , timeOfLastFeedbackRecorded : Posix
   -- , oerNoteboards : Dict OerId Noteboard
-  , peeks : Dict OerId (List Range)
+  , videoUsages : Dict OerId VideoUsage
   , oerCardPlaceholderPositions : List OerCardPlaceholderPosition
   , overviewType : OverviewType
   , selectedMentionInStory : Maybe (OerId, MentionInOer)
@@ -93,6 +93,8 @@ type BubblogramType
   = TopicNames
   | TopicConnections
   | TopicMentions
+
+type alias VideoUsage = List Range
 
 type alias FlyingHeartAnimation =
   { startTime : Posix
@@ -232,6 +234,7 @@ type alias Oer =
   , date : String
   , description : String
   , duration : String
+  , durationInSeconds : Float
   , images : List String
   , provider : String
   , title : String
@@ -365,7 +368,7 @@ initialModel nav flags =
   , resourceRecommendations = []
   , timeOfLastFeedbackRecorded = initialTime
   -- , oerNoteboards = Dict.empty
-  , peeks = Dict.empty
+  , videoUsages = Dict.empty
   , oerCardPlaceholderPositions = []
   , overviewType = ImageOverview
   , selectedMentionInStory = Nothing
@@ -493,29 +496,29 @@ isInPlaylist oerId playlist =
   List.member oerId playlist.oerIds
 
 
-durationInSecondsFromOer : Oer -> Int
-durationInSecondsFromOer {duration} =
-  let
-      parts =
-        duration
-        |> String.split ":"
+-- durationInSecondsFromOer : Oer -> Int
+-- durationInSecondsFromOer {duration} =
+--   let
+--       parts =
+--         duration
+--         |> String.split ":"
 
-      minutes =
-        parts
-        |> List.head
-        |> Maybe.withDefault ""
-        |> String.toInt
-        |> Maybe.withDefault 0
+--       minutes =
+--         parts
+--         |> List.head
+--         |> Maybe.withDefault ""
+--         |> String.toInt
+--         |> Maybe.withDefault 0
 
-      seconds =
-        parts
-        |> List.drop 1
-        |> List.head
-        |> Maybe.withDefault ""
-        |> String.toInt
-        |> Maybe.withDefault 0
-  in
-      minutes * 60 + seconds
+--       seconds =
+--         parts
+--         |> List.drop 1
+--         |> List.head
+--         |> Maybe.withDefault ""
+--         |> String.toInt
+--         |> Maybe.withDefault 0
+--   in
+--       minutes * 60 + seconds
 
 
 displayName userProfile =

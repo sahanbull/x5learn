@@ -148,7 +148,7 @@ update msg ({nav, userProfileForm} as model) =
                 Cmd.none
 
               LoggedInUser userProfile ->
-                [ requestPeeks ] |> Cmd.batch
+                [ requestVideoUsages ] |> Cmd.batch
       in
           ( newModel |> resetUserProfileForm, cmd)
           |> logEventForLabStudy "RequestSession" []
@@ -160,19 +160,19 @@ update msg ({nav, userProfileForm} as model) =
       -- in
       ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
-    RequestPeeks (Ok peeksWithStringKeys) ->
+    RequestVideoUsages (Ok dictWithStringKeys) ->
       let
-          peeks =
-            peeksWithStringKeys
+          videoUsages =
+            dictWithStringKeys
             |> Dict.foldl (\k v result -> result |> Dict.insert (k |> String.toInt |> Maybe.withDefault 0) v) Dict.empty
       in
-          ({ model | peeks = peeks }, Cmd.none)
+          ({ model | videoUsages = videoUsages }, Cmd.none)
 
-    RequestPeeks (Err err) ->
-      let
-          dummy =
-            err |> Debug.log "Error in RequestPeeks"
-      in
+    RequestVideoUsages (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestVideoUsages"
+      -- in
       ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     -- RequestUpdatePlayingVideo (Ok _) ->
@@ -346,6 +346,22 @@ update msg ({nav, userProfileForm} as model) =
       -- in
       -- ( { model | snackbar = createSnackbar model "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
       ( { model | snackbar = createSnackbar model "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
+
+    RequestOerDurationInSeconds (Ok _) ->
+      (model, Cmd.none)
+
+    RequestOerDurationInSeconds (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestOerDurationInSeconds"
+      -- in
+      ( { model | snackbar = createSnackbar model "Some logs were not saved" }, Cmd.none )
+
+    -- RequestSendResourceFeedback (Ok _) ->
+    --   (model, Cmd.none)
+
+    -- RequestSendResourceFeedback (Err err) ->
+    --   (model, Cmd.none)
 
     RequestLabStudyLogEvent (Ok _) ->
       (model, Cmd.none)
@@ -641,10 +657,26 @@ update msg ({nav, userProfileForm} as model) =
       |> saveVideoAction 6
 
     Html5VideoStillPlaying pos ->
-      (model |> updateVideoPlayer (PositionChanged pos), Cmd.none)
+      (model |> updateVideoPlayer (PositionChanged pos) |> extendVideoUsages pos, Cmd.none)
 
     Html5VideoDuration duration ->
-      (model |> updateVideoPlayer (Duration duration), Cmd.none)
+      let
+          (newModel, cmd) =
+            case model.inspectorState of
+              Nothing ->
+                (model, Cmd.none) -- impossible
+
+              Just {oer} ->
+                if oer.durationInSeconds < 0.1 then
+                  let
+                      cachedOers =
+                        model.cachedOers |> Dict.map (\oerId o -> if oerId==oer.id then { o | durationInSeconds = duration } else o)
+                  in
+                      ({ model | cachedOers = cachedOers }, requestOerDurationInSeconds oer.id duration)
+                else
+                  (model, Cmd.none) -- impossible
+      in
+          (newModel |> updateVideoPlayer (Duration duration), cmd)
 
 -- createNote : OerId -> String -> Model -> Model
 -- createNote oerId text model =
@@ -792,15 +824,15 @@ cacheOersFromList oers model =
 
 -- addFragmentAccess : Fragment -> Posix -> Model -> Model
 -- addFragmentAccess fragment time model =
---   if List.member fragment (Dict.values model.peekPoints) then
+--   if List.member fragment (Dict.values model.videoUsages) then
 --     model
 --   else
 --       let
 --           maxNumberOfItemsToKeep =
 --             30 -- arbitrary value. There used to be some performance implications associated with this number but I forgot what the issue was and I'm unsure whether it still applies. Should test empirically.
 
---           peekPoints =
---             model.peekPoints
+--           videoUsages =
+--             model.videoUsages
 --             |> Dict.toList
 --             |> List.reverse
 --             |> List.take maxNumberOfItemsToKeep
@@ -808,7 +840,7 @@ cacheOersFromList oers model =
 --             |> Dict.fromList
 --             |> Dict.insert (posixToMillis time) fragment
 --       in
---           { model | peekPoints = peekPoints }
+--           { model | videoUsages = videoUsages }
 
 
 -- setTextInNoteForm : OerId -> String -> Model -> Model
@@ -1009,28 +1041,13 @@ type VideoPlayerMsg
 
 updateVideoPlayer : VideoPlayerMsg -> Model -> Model
 updateVideoPlayer msg model =
-  let
-      dummy2 =
-        msg
-        |> Debug.log "updateVideoPlayer"
-  in
   case model.inspectorState of
     Nothing ->
-      let
-          dummy =
-            "updateVideoPlayer"
-            |> Debug.log "no inspectorState"
-      in
       model -- impossible
 
     Just inspectorState ->
       case inspectorState.videoPlayer of
         Nothing ->
-          let
-              dummy =
-                "updateVideoPlayer"
-                |> Debug.log "no videoPlayer"
-          in
           model -- impossible
 
         Just videoPlayer ->
@@ -1053,3 +1070,25 @@ updateVideoPlayer msg model =
                 { inspectorState | videoPlayer = Just newVideoPlayer }
           in
               { model | inspectorState = Just newInspectorState }
+
+
+extendVideoUsages : Float -> Model -> Model
+extendVideoUsages pos model =
+  case model.inspectorState of
+    Nothing ->
+      model -- impossible
+
+    Just {oer} ->
+      case Dict.get oer.id model.videoUsages of
+        Nothing ->
+          model -- impossible
+
+        Just oldRanges ->
+          if oldRanges |> List.any (\{start, length} -> pos>start && pos<start+length + 7) then
+            model
+          else
+            let
+                newRanges =
+                  (Range pos 10) :: oldRanges
+            in
+                { model | videoUsages = Dict.insert oer.id newRanges model.videoUsages  }

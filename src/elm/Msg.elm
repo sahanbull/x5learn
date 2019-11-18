@@ -27,7 +27,7 @@ type Msg
   | ModalAnimationStop Int
   | RequestSession (Result Http.Error Session)
   -- | RequestFavorites (Result Http.Error (List OerId))
-  | RequestPeeks (Result Http.Error (Dict String (List Range)))
+  | RequestVideoUsages (Result Http.Error (Dict String (List Range)))
   -- | RequestNotes (Result Http.Error (List Note))
   -- | RequestDeleteNote (Result Http.Error String)
   | RequestOerSearch (Result Http.Error (List Oer))
@@ -38,6 +38,7 @@ type Msg
   -- | RequestAutocompleteTerms (Result Http.Error (List String))
   | RequestSaveUserProfile (Result Http.Error String)
   | RequestLabStudyLogEvent (Result Http.Error String)
+  | RequestOerDurationInSeconds (Result Http.Error String)
   -- | RequestResource (Result Http.Error Oer)
   -- | RequestResourceRecommendations (Result Http.Error (List Oer))
   -- | RequestSendResourceFeedback (Result Http.Error String)

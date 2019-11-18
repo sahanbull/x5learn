@@ -132,7 +132,7 @@ inspectorContentDefault model {oer, fragmentStart} =
           Just youtubeId ->
             let
                 startTime =
-                  fragmentStart * (durationInSecondsFromOer oer |> toFloat) |> floor
+                  fragmentStart * oer.durationInSeconds |> floor
             in
                 embedYoutubePlayer youtubeId startTime
 

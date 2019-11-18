@@ -25,15 +25,16 @@ viewFragmentsBar model oer chunks barWidth barId =
         |> List.concat
 
       rangeMarkers color =
-        case model.peeks |> Dict.get oer.id of
+        case model.videoUsages |> Dict.get oer.id of
           Nothing ->
             [] -- impossible
+
           Just ranges ->
             ranges
-            |> List.map (\{start,length} -> none |> el [ width (length |> pxFromFraction |> round |> px), height <| px 3, Background.color color, moveRight (start |> pxFromFraction) ] |> inFront)
+            |> List.map (\{start,length} -> none |> el [ width (length |> pxFromSeconds |> round |> px), height <| px 3, Background.color color, moveRight (start |> pxFromSeconds) ] |> inFront)
 
-      pxFromFraction fraction =
-        (barWidth |> toFloat) * fraction
+      pxFromSeconds seconds =
+        (barWidth |> toFloat) * seconds / oer.durationInSeconds
 
       chunkTrigger chunkIndex chunk =
         let
@@ -249,5 +250,3 @@ fragmentsBarHeight = 16
 
 isHoverMenuNearRightEdge model margin =
   model.mousePositionXwhenOnChunkTrigger > (toFloat model.windowWidth)-margin
-
-

@@ -115,31 +115,31 @@ function startAnimationWhenModalIsReady(youtubeEmbedParams) {
             videoPlayPosition = vid.currentTime;
             app.ports.html5VideoStarted.send(videoPlayPosition);
             videoEventThrottlePosition = videoPlayPosition;
-            console.log('started!');
+            // console.log('started!');
           };
           vid.onpause = function() {
             isVideoPlaying = false;
             videoPlayPosition = vid.currentTime;
             app.ports.html5VideoPaused.send(videoPlayPosition);
-            console.log('paused!');
+            // console.log('paused!');
           };
           vid.ontimeupdate = function() {
             videoPlayPosition = vid.currentTime;
             if(isVideoPlaying){
               if(videoPlayPosition > videoEventThrottlePosition + 2){
-                console.log("SENT");
+                // console.log("SENT");
                 app.ports.html5VideoStillPlaying.send(videoPlayPosition);
                 videoEventThrottlePosition = videoPlayPosition;
               }
-              console.log('still playing: '+videoPlayPosition);
+              // console.log('still playing: '+videoPlayPosition);
             }else{
               app.ports.html5VideoSeeked.send(videoPlayPosition);
               videoEventThrottlePosition = 0;
-              console.log('seek: '+videoPlayPosition);
+              // console.log('seek: '+videoPlayPosition);
             }
           };
         }else{
-          console.log('video not found');
+          // console.log('video not found');
         }
       }
     }, 110);

@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestPeeks)--, requestUpdatePlayingVideo) --requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestFavorites)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestVideoUsages, requestOerDurationInSeconds)--, requestUpdatePlayingVideo) --requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestFavorites)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -102,6 +102,15 @@ userProfileEncoder userProfile =
     ]
 
 
+requestOerDurationInSeconds : OerId -> Float -> Cmd Msg
+requestOerDurationInSeconds oerId durationInSeconds =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "oer_duration_in_seconds/" ] []
+    , body = Http.jsonBody <| Encode.object [ ("oer_id", Encode.int oerId), ("durationInSeconds", Encode.float durationInSeconds) ]
+    , expect = Http.expectString RequestOerDurationInSeconds
+    }
+
+
 requestLabStudyLogEvent : Int -> String -> List String -> Cmd Msg
 requestLabStudyLogEvent time eventType params =
   Http.post
@@ -146,11 +155,11 @@ requestLabStudyLogEvent time eventType params =
 --     }
 
 
-requestPeeks : Cmd Msg
-requestPeeks =
+requestVideoUsages : Cmd Msg
+requestVideoUsages =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "peeks" ] []
-    , expect = Http.expectJson RequestPeeks (dict (list rangeDecoder))
+    { url = Url.Builder.absolute [ apiRoot, "video_usages" ] []
+    , expect = Http.expectJson RequestVideoUsages (dict (list rangeDecoder))
     }
 
 
@@ -198,6 +207,7 @@ oerDecoder =
   |> andMap (field "date" string)
   |> andMap (field "description" string)
   |> andMap (field "duration" string)
+  |> andMap (field "durationInSeconds" float)
   |> andMap (field "images" (list string))
   |> andMap (field "provider" string)
   |> andMap (field "title" string)

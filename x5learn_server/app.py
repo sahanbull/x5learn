@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 import json
 import http.client
 import urllib
+from collections import defaultdict
 from datetime import datetime, timedelta
 from sqlalchemy import or_, and_, cast, Integer
 from sqlalchemy.orm.attributes import flag_modified
@@ -239,15 +240,47 @@ def api_oers():
     return jsonify(oers)
 
 
-@app.route("/api/v1/peeks/", methods=['GET'])
-def api_peeks():
-    peeks = {'7409': [{'start': 0.33, 'length': 0.1}, {'start': 0.66, 'length': 0.01}]}
-    return jsonify(peeks)
+@app.route("/api/v1/oer_duration_in_seconds/", methods=['POST'])
+def api_oer_duration_in_seconds():
+    j  = request.get_json()
+    oer_id = j['oer_id']
+    duration = j['durationInSeconds']
+    oer = Oer.query.filter_by(id=oer_id).first()
+    new_data = json.loads(json.dumps(oer.data)) # https://stackoverflow.com/a/53977819/2237986
+    new_data['durationInSeconds'] = duration
+    oer.data = new_data
+    db_session.commit()
+    return 'OK'
+
+
+@app.route("/api/v1/video_usages/", methods=['GET'])
+def api_video_usages():
+    actions = Action.query.filter(Action.user_login_id == current_user.get_id(),
+                                  Action.action_type_id.in_([4, 5, 6])).order_by(Action.id).all()
+    positions_per_oer = defaultdict(list)
+    for action in actions:
+        oer_id = str(action.params['oerId'])
+        position = action.params['positionInSeconds']
+        positions_per_oer[oer_id].append(position)
+    ranges_per_oer = defaultdict(list)
+    for oer_id, positions in positions_per_oer.items():
+        ranges_per_oer[oer_id] = video_usage_ranges_from_positions(positions)
+    return jsonify(ranges_per_oer)
+
+
+def video_usage_ranges_from_positions(positions):
+    ranges = []
+    positions = sorted(positions)
+    for index, position in enumerate(positions):
+        if index>0 and position >= ranges[-1]['start'] and position < ranges[-1]['start'] + ranges[-1]['length'] + 10:
+            ranges[-1]['length'] = position - ranges[-1]['start'] + 10
+        else:
+            ranges.append({'start': position, 'length': 10})
+    return ranges
 
 
 @app.route("/api/v1/featured/", methods=['GET'])
 def api_featured():
-    print('api_featured')
     urls = ['https://www.youtube.com/watch?v=woy7_L2JKC4', 'https://www.youtube.com/watch?v=bRIL9kMJJSc',
             'https://www.youtube.com/watch?v=4yYytLUViI4']
     oers = [oer.data_and_id() for oer in Oer.query.filter(Oer.url.in_(urls)).order_by(Oer.url.desc()).all()]
@@ -260,33 +293,6 @@ def api_material():
     oer = Oer.query.filter_by(id=oer_id).first()
     push_enrichment_task_if_needed(oer.data['url'], 10000)
     return jsonify(oer.data_and_id())
-
-
-@app.route("/api/v1/peek/", methods=['POST'])
-def api_peek():
-    user_login_id = current_user.get_id()
-    oer_id = request.get_json()['oerId']
-    start = request.get_json()['start']
-    length = request.get_json()['length']
-    extra_args = request.get_json()['extraArgs']
-    peek = Peek(user_login_id, oer_id, start, length, extra_args)
-    db_session.add(peek)
-    db_session.commit()
-    return 'OK'
-
-
-# Heartbeat signal from the frontend that the current video is still playing.
-# Sent every few seconds, this signal provides a robust measurement in edge
-# cases where explicit stop events are missing, e.g. when user closes the page.
-@app.route("/api/v1/peek_extend/", methods=['POST'])
-def api_peek_extend():
-    user_login_id = current_user.get_id()
-    peek = Peek.query.filter_by(user_login_id=user_login_id).order_by(Peek.id.desc()).first()
-    length = request.get_json()['length']
-    peek.length = length
-    db_session.add(peek)
-    db_session.commit()
-    return 'OK'
 
 
 @app.route("/api/v1/resource_feedback/", methods=['POST'])  # to be replaced by Actions API

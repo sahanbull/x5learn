@@ -678,11 +678,11 @@ update msg ({nav, userProfileForm} as model) =
           (newModel |> updateVideoPlayer (Duration duration), cmd)
 
     StartCurrentHtml5Video pos ->
-      -- let
-      --     test =
-      --       pos |> Debug.log "StartCurrentHtml5Video"
-      -- in
       (model |> extendVideoUsages pos, startCurrentHtml5Video pos)
+
+    ToggleContentFlow ->
+      ({ model | isContentFlowEnabled = not model.isContentFlowEnabled }, Cmd.none)
+
 
 -- createNote : OerId -> String -> Model -> Model
 -- createNote oerId text model =

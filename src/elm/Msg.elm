@@ -85,6 +85,7 @@ type Msg
   | Html5VideoStillPlaying Float
   | Html5VideoDuration Float
   | StartCurrentHtml5Video Float
+  | ToggleContentFlow
 
 
 type UserProfileField

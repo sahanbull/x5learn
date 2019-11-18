@@ -114,8 +114,11 @@ viewFragmentsBar model oer chunks barWidth barId =
             |> inFront
 
       chunkTriggers =
-        chunks
-        |> List.indexedMap chunkTrigger
+        if model.isContentFlowEnabled then
+          chunks
+          |> List.indexedMap chunkTrigger
+        else
+          []
 
       border =
         [ none |> el [ width fill , Background.color veryTransparentWhite, height <| px 1 ] |> above ]
@@ -124,7 +127,7 @@ viewFragmentsBar model oer chunks barWidth barId =
         [ Background.color materialDark ]
 
       scrubCursorAndClickHandler =
-        if isHovering model oer then
+        if isHovering model oer || isInspecting model oer then
           case model.scrubbing of
             Nothing ->
               []
@@ -133,7 +136,7 @@ viewFragmentsBar model oer chunks barWidth barId =
               let
                   scrubCursor =
                     none
-                    |> el [ width <| px 2, height fill, Background.color white, moveRight ((cardWidth - 2) * position), pointerEventsNone ]
+                    |> el [ width <| px 2, height fill, Background.color white, moveRight ((barWidth - 2 |> toFloat) * position), pointerEventsNone ]
                     |> inFront
 
                   clickHandler =

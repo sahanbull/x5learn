@@ -3,7 +3,7 @@ from x5learn_server._config import DB_ENGINE_URI
 from flask_security import UserMixin, RoleMixin
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy import Boolean, DateTime, Column, Integer, \
-    Text, String, ForeignKey, BigInteger
+    Text, String, ForeignKey, BigInteger, Float
 from sqlalchemy.dialects.postgresql import JSON
 import datetime
 
@@ -67,6 +67,8 @@ class Oer(Base):
         # Ensure that image and date fields have the correct types.
         # This is just a lazy patch for pdfs that were poorly imported from csv.
         # TODO remove the if statements below after re-importing the pdfs.
+        if 'durationInSeconds' not in self.data:
+            self.data['durationInSeconds']=0.001 # tiny default value causes frontend to report the real duration
         if self.data['images']=='[]':
             self.data['images']=[]
         if not isinstance(self.data['date'], str):

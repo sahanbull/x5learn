@@ -4,6 +4,11 @@ var timeOfLastMouseMove = new Date().getTime();
 
 var lastPageScrollOffset = 0;
 
+var videoEventThrottlePosition = 0; // Limit the frequency of events sent to Elm
+var isVideoPlaying = false;
+var videoPlayPosition = 0;
+
+
 function positionAndSize(el) {
   var rect = el.getBoundingClientRect(), scrollLeft = window.pageXOffset || document.documentElement.scrollLeft, scrollTop = window.pageYOffset || document.documentElement.scrollTop;
   return { x: rect.left + scrollLeft, y: rect.top + scrollTop, sx: el.offsetWidth, sy: el.offsetHeight }
@@ -23,7 +28,7 @@ function setupPorts(app){
   // });
 
   app.ports.openModalAnimation.subscribe(startAnimationWhenModalIsReady);
-  app.ports.embedYoutubePlayerOnResourcePage.subscribe(embedYoutubePlayerOnResourcePage);
+  // app.ports.embedYoutubePlayerOnResourcePage.subscribe(embedYoutubePlayerOnResourcePage);
 
   app.ports.setBrowserFocus.subscribe(function(elementId) {
     document.activeElement.blur();
@@ -52,16 +57,24 @@ function setupPorts(app){
     }, 100);
   });
 
-  app.ports.youtubeSeekTo.subscribe(function(fragmentStart) {
-    player.seekTo(fragmentStart * player.getDuration());
-    player.playVideo();
-  });
-
-  app.ports.youtubeDestroyPlayer.subscribe(function(dummy) {
-    if(typeof player !== 'undefined' && player.getIframe()!==null){
-      player.destroy();
+  app.ports.startCurrentHtml5Video.subscribe(function(position) {
+    var vid = getHtml5VideoPlayer();
+    if(vid){
+      vid.currentTime = position;
+      vid.play();
     }
   });
+
+  // app.ports.youtubeSeekTo.subscribe(function(fragmentStart) {
+  //   player.seekTo(fragmentStart * player.getDuration());
+  //   player.playVideo();
+  // });
+
+  // app.ports.youtubeDestroyPlayer.subscribe(function(dummy) {
+  //   if(typeof player !== 'undefined' && player.getIframe()!==null){
+  //     player.destroy();
+  //   }
+  // });
 
   setupEventHandlers();
 
@@ -99,6 +112,47 @@ function startAnimationWhenModalIsReady(youtubeEmbedParams) {
       app.ports.modalAnimationStop.send(12345);
       if(youtubeEmbedParams.videoId.length>0){
         embedYoutubeVideo(youtubeEmbedParams);
+      }else{
+        var vid = getHtml5VideoPlayer();
+        if(vid){
+          vid.onloadedmetadata = function() {
+            app.ports.html5VideoDuration.send(vid.duration);
+            if(youtubeEmbedParams.playWhenReady){
+              vid.currentTime = youtubeEmbedParams.fragmentStart * vid.duration;
+              vid.play();
+            }
+          };
+          vid.onplay = function() {
+            isVideoPlaying = true;
+            videoPlayPosition = vid.currentTime;
+            app.ports.html5VideoStarted.send(videoPlayPosition);
+            videoEventThrottlePosition = videoPlayPosition;
+            // console.log('started!');
+          };
+          vid.onpause = function() {
+            isVideoPlaying = false;
+            videoPlayPosition = vid.currentTime;
+            app.ports.html5VideoPaused.send(videoPlayPosition);
+            // console.log('paused!');
+          };
+          vid.ontimeupdate = function() {
+            videoPlayPosition = vid.currentTime;
+            if(isVideoPlaying){
+              if(videoPlayPosition > videoEventThrottlePosition + 10){
+                // console.log("SENT");
+                app.ports.html5VideoStillPlaying.send(videoPlayPosition);
+                videoEventThrottlePosition = videoPlayPosition;
+              }
+              // console.log('still playing: '+videoPlayPosition);
+            }else{
+              app.ports.html5VideoSeeked.send(videoPlayPosition);
+              videoEventThrottlePosition = 0;
+              // console.log('seek: '+videoPlayPosition);
+            }
+          };
+        }else{
+          // console.log('video not found');
+        }
       }
     }, 110);
     return;
@@ -106,13 +160,17 @@ function startAnimationWhenModalIsReady(youtubeEmbedParams) {
 }
 
 
-function embedYoutubePlayerOnResourcePage(youtubeEmbedParams) {
-    setTimeout(function(){
-      if(youtubeEmbedParams.videoId.length>0){
-        embedYoutubeVideo(youtubeEmbedParams);
-      }
-    }, 200);
+function getHtml5VideoPlayer(){
+  return document.getElementById("Html5VideoPlayer");
 }
+
+// function embedYoutubePlayerOnResourcePage(youtubeEmbedParams) {
+//     setTimeout(function(){
+//       if(youtubeEmbedParams.videoId.length>0){
+//         embedYoutubeVideo(youtubeEmbedParams);
+//       }
+//     }, 200);
+// }
 
 
 function setupEventHandlers(){

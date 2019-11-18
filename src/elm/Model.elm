@@ -21,6 +21,7 @@ type alias Model =
   , windowHeight : Int
   , mousePositionXwhenOnChunkTrigger : Float
   , currentTime : Posix
+  , isContentFlowEnabled : Bool
   , searchInputTyping : String
   , searchState : Maybe SearchState
   , inspectorState : Maybe InspectorState
@@ -332,6 +333,7 @@ initialModel nav flags =
   , windowHeight = flags.windowHeight
   , mousePositionXwhenOnChunkTrigger = 0
   , currentTime = initialTime
+  , isContentFlowEnabled = False
   , searchInputTyping = ""
   , searchState = Nothing
   , inspectorState = Nothing
@@ -832,3 +834,11 @@ initialResourceSidebarTab =
 
 isHovering model oer =
   model.hoveringOerId == Just oer.id
+
+
+isInspecting model {id} =
+  case model.inspectorState of
+    Just {oer} ->
+      oer.id==id
+    _ ->
+      False

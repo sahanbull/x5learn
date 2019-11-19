@@ -37,7 +37,10 @@ withNavigationDrawer model (pageContent, modal) =
 
       navButtons =
         if isLabStudy1 model then
-          viewContentFlowToggle model
+          [ viewContentFlowToggle model
+          , model.course.items |> List.indexedMap (viewCourseItemInSidebar model) |> column [ spacing 20, borderTop 1, Border.color greyDivider, paddingTop 20 ]
+          ]
+          |> column [ spacing 30, width fill ]
         else
           -- [ navButton False "/next_steps" "nav_next_steps" "Next Steps"
           -- , navButton False "/journeys" "nav_journeys" "Journeys"
@@ -114,3 +117,18 @@ dataSetSelectionWidget model searchInputTyping =
         |> el [ width fill, centerX ]
   in
       searchField
+
+
+viewCourseItemInSidebar model index item =
+  case model.cachedOers |> Dict.get item.oerId of
+    Nothing ->
+      none -- impossible
+    Just oer ->
+      let
+          miniCard =
+            [ index+1 |> String.fromInt |> bodyNoWrap []
+            , oer.title |> bodyWrap []
+            ]
+            |> column [ spacing 5, Border.color <| greyDivider ]
+      in
+          button [] { onPress = Just <| InspectOer oer 0 False, label = miniCard }

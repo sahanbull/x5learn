@@ -712,6 +712,9 @@ viewedPath =
 favoritesPath =
   "/favorites"
 
+-- coursePath =
+--   "/course"
+
 resourcePath =
   "/resource"
 

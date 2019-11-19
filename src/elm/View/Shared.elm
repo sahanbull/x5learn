@@ -403,7 +403,7 @@ actionButtonWithIcon textAttrs iconPosition svgIconStub str onPress =
           IconRight ->
             [ title, icon ]
   in
-      button [] { onPress = onPress, label = label |> row [ width fill, spacing 3, Border.rounded 4 ]}
+      button [ htmlClass "CloseInspectorOnClickOutside" ] { onPress = onPress, label = label |> row [ width fill, spacing 3, Border.rounded 4 ]}
 
 
 simpleButton : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg

@@ -64,6 +64,8 @@ update msg ({nav, userProfileForm} as model) =
             --   (Viewed, (model, askPageScrollState True))
             -- else if path |> String.startsWith favoritesPath then
             --   (Favorites, (model, askPageScrollState True))
+            -- else if path |> String.startsWith coursePath then
+            --   (Course, (model, askPageScrollState True))
             else if path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
             -- else if path |> String.startsWith resourcePath then
@@ -123,6 +125,9 @@ update msg ({nav, userProfileForm} as model) =
             , fragmentStart = fragmentStart
             , playWhenReady = playWhenReady
             }
+          dummy2 =
+            oer.title
+            |> Debug.log "InspectOer"
       in
           ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation youtubeEmbedParams)
           |> saveAction 1 [ ("oerId", Encode.int oer.id) ]
@@ -685,6 +690,32 @@ update msg ({nav, userProfileForm} as model) =
           in
               ({ model | session = Just { session | isContentFlowEnabled = enabled } }, Cmd.none)
               |> saveAction 7 [ ("enable", Encode.bool enabled) ]
+
+    AddedOerToCourse oerId range ->
+      let
+          newItem =
+            { oerId = oerId
+            , range = range
+            , comment = ""
+            }
+
+          oldCourse =
+            model.course
+
+          newCourse =
+            { oldCourse | items = newItem :: oldCourse.items }
+      in
+          ({ model | course = newCourse }, Cmd.none)
+
+    RemovedOerFromCourse oerId ->
+      let
+          oldCourse =
+            model.course
+
+          newCourse =
+            { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId/=oerId) }
+      in
+          ({ model | course = newCourse }, Cmd.none)
 
 
 -- createNote : OerId -> String -> Model -> Model

@@ -25,6 +25,7 @@ type alias Model =
   , searchState : Maybe SearchState
   , inspectorState : Maybe InspectorState
   , snackbar : Maybe Snackbar
+  , course : Course
   , hoveringOerId : Maybe OerId
   , timeOfLastMouseEnterOnCard : Posix
   , modalAnimation : Maybe BoxAnimation
@@ -297,6 +298,17 @@ type alias Range =
   }
 
 
+type alias Course =
+  { title : String
+  , items : List CourseItem
+  }
+
+type alias CourseItem =
+  { oerId : OerId
+  , range : Range
+  , comment : String
+  }
+
 type alias Playlist =
   { title : String
   , oerIds : List OerId
@@ -337,6 +349,7 @@ initialModel nav flags =
   , searchState = Nothing
   , inspectorState = Nothing
   , snackbar = Nothing
+  , course = Course "My course" []
   , hoveringOerId = Nothing
   , timeOfLastMouseEnterOnCard = initialTime
   , modalAnimation = Nothing
@@ -497,29 +510,44 @@ isInPlaylist oerId playlist =
   List.member oerId playlist.oerIds
 
 
--- durationInSecondsFromOer : Oer -> Int
--- durationInSecondsFromOer {duration} =
---   let
---       parts =
---         duration
---         |> String.split ":"
+secondsFromTimeString : String -> Int
+secondsFromTimeString time =
+  let
+      parts =
+        time
+        |> String.split ":"
 
---       minutes =
---         parts
---         |> List.head
---         |> Maybe.withDefault ""
---         |> String.toInt
---         |> Maybe.withDefault 0
+      minutes =
+        parts
+        |> List.head
+        |> Maybe.withDefault ""
+        |> String.toInt
+        |> Maybe.withDefault 0
 
---       seconds =
---         parts
---         |> List.drop 1
---         |> List.head
---         |> Maybe.withDefault ""
---         |> String.toInt
---         |> Maybe.withDefault 0
---   in
---       minutes * 60 + seconds
+      seconds =
+        parts
+        |> List.drop 1
+        |> List.head
+        |> Maybe.withDefault ""
+        |> String.toInt
+        |> Maybe.withDefault 0
+  in
+      minutes * 60 + seconds
+
+
+secondsToString : Int -> String
+secondsToString seconds =
+  let
+      secondsString =
+        seconds |> modBy 60
+        |> String.fromInt
+        |> String.padLeft 2 '0'
+
+      minutesString =
+        seconds // 60
+        |> String.fromInt
+  in
+      minutesString ++ ":" ++ secondsString
 
 
 displayName userProfile =
@@ -683,6 +711,9 @@ viewedPath =
 
 favoritesPath =
   "/favorites"
+
+-- coursePath =
+--   "/course"
 
 resourcePath =
   "/resource"
@@ -850,3 +881,10 @@ isContentFlowEnabled model =
       False
     Just session ->
       session.isContentFlowEnabled
+
+
+getCourseItem : Model -> Oer -> Maybe CourseItem
+getCourseItem model oer =
+  model.course.items
+  |> List.filter (\{oerId} -> oerId == oer.id)
+  |> List.head

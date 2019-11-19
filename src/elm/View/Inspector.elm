@@ -53,9 +53,9 @@ viewModal model inspectorState =
         image [ alpha 0.8, hoverCircleBackground ] { src = svgPath "fullscreen", description = "View this resource in full-page mode" }
         |> linkTo [ alignRight ] (resourceUrlPath inspectorState.oer.id)
 
-      footer =
-        content.footer
-        |> row [ spacing 20, width fill ]
+      -- footer =
+      --   content.footer
+      --   |> row [ spacing 20, width fill ]
 
       hideWhileOpening =
         alpha <| if model.animationsPending |> Set.member modalId then 0.01 else 1
@@ -66,7 +66,7 @@ viewModal model inspectorState =
       sheet =
         [ header
         , body
-        , footer
+        -- , footer
         ]
         |> column [ htmlClass "CloseInspectorOnClickOutside", width (px sheetWidth), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow, inFront content.fixed ]
 
@@ -116,12 +116,6 @@ inspectorContentDefault model {oer, fragmentStart} =
           title ->
             title |> headlineWrap []
 
-      linkToFile =
-        if isLabStudy1 model then
-          none
-        else
-          newTabLink [] { url = oer.url, label = oer.url |> bodyWrap [] }
-
       player =
         case getYoutubeVideoId oer.url of
           Nothing ->
@@ -139,62 +133,42 @@ inspectorContentDefault model {oer, fragmentStart} =
             in
                 embedYoutubePlayer youtubeId startTime
 
-      description =
-        if isLabStudy1 model then
-          none
-        else
-          case oer.description of
-            "" ->
-              "No description available" |> italicText |> el [ paddingTop 30 ]
-
-            desc ->
-              desc
-              |> String.split("\n")
-              |> List.filter (\line -> String.length line > 2)
-              |> List.map (bodyWrap [])
-              |> column [ spacing 7, height fill, scrollbarY, paddingTop 30 ]
-
       body =
         [ player
-        , fragmentsBarWrapper
+        , viewFragmentsBarWrapper model oer
         ]
         |> column [ width (px playerWidth) ]
 
       footer =
         []
+  in
+      { header = header, body = body, footer = footer, fixed = none }
 
-      fragmentsBarWrapper =
-        [ description
-        , [ linkToFile, providerLinkAndFavoriteButton ] |> column [ width fill, spacing 15, paddingTop 30 ]
-        , fragmentsBar
-        ]
-        |> column [ width (px playerWidth), height <| px <| fragmentsBarWrapperHeight model, moveDown 1 ]
 
-      fragmentsBar =
-        if oer.mediatype == "video" then
-          case chunksFromOerId model oer.id of
-            [] ->
-              none
 
-            wikichunks ->
-              let
-                  content =
-                    viewFragmentsBar model oer wikichunks playerWidth "inspector"
-                    |> el [ width (px playerWidth), height (px 16) ]
-              in
-                  none |> el [ inFront content, moveUp ((fragmentsBarWrapperHeight model) - fragmentsBarHeight) ]
-        else
-          none
+viewDescription oer =
+  case oer.description of
+    "" ->
+      "No description available" |> italicText |> el [ paddingTop 30 ]
 
-      providerLinkAndFavoriteButton =
-        if isLabStudy1 model then
-          none
-        else
-          [ providerLink
-          , favoriteButton
-          ]
-          |> row [ width fill ]
+    desc ->
+      desc
+      |> String.split("\n")
+      |> List.filter (\line -> String.length line > 2)
+      |> List.map (bodyWrap [])
+      |> column [ spacing 7, height fill, scrollbarY, paddingTop 30 ]
 
+
+viewLinkToFile oer =
+  newTabLink [] { url = oer.url, label = oer.url |> bodyWrap [] }
+
+
+sheetWidth =
+  752
+
+
+viewProviderLinkAndFavoriteButton model oer =
+  let
       favoriteButton =
         let
             heart =
@@ -214,29 +188,80 @@ inspectorContentDefault model {oer, fragmentStart} =
             , newTabLink [] { url = oer.url, label = provider |> trimTailingEllipsisIfNeeded |> bodyNoWrap [] }
             ]
             |> row [ spacing 10 ]
-        -- else
-        --   actionButtonWithIcon IconRight "navigate_next" oer.provider (Just <| ShowProviderLinkInInspector)
-        -- [ oer.provider |> bodyNoWrap [ alignLeft]
-        -- , image [ alignLeft, materialDarkAlpha, width (px 20) ] { src = svgPath "navigate_next", description = "external link" }
-        -- ]
-        -- |> row [ alignLeft, width fill, onClick UninspectSearchResult ]
-
-      -- actionButtons =
-      --   [ actionButtonWithIcon IconLeft "share" "SHARE" Nothing
-      --   , actionButtonWithIcon IconLeft "bookmarklist_add" "SAVE" <| Just <| OpenSaveToBookmarklistMenu inspectorState
-      --   , footerButton <| svgIcon "more_vert"
-      --   ]
-      --   |> row [ spacing 20, alignRight ]
   in
-      { header = header, body = body, footer = footer, fixed = none }
+      [ providerLink
+      , favoriteButton
+      ]
+      |> row [ width fill ]
 
 
-fragmentsBarWrapperHeight model =
-  if isLabStudy1 model then
-    30
-  else
-    200
+viewCourseButton model oer =
+  [ none |> el [ width fill ]
+  , actionButtonWithIcon [] IconLeft "bookmarklist_add" "Add to course" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
+  ]
 
 
-sheetWidth =
-  752
+viewCourseSettings model oer {range, comment} =
+  let
+      topRow =
+        [ "This video has been added to your course." |> bodyWrap [ width fill ]
+        , actionButtonWithIcon [] IconLeft "delete" "Remove" <| Just <| RemovedOerFromCourse oer.id
+        ]
+        |> row [ width fill ]
+
+      fields =
+        [ "Selected Range:" |> bodyNoWrap [ width fill ]
+        , range.start |> floor |> secondsToString |> bodyNoWrap [ width fill ]
+        , "-" |> bodyNoWrap [ width fill ]
+        , range.start + range.length |> floor |> secondsToString |> bodyNoWrap [ width fill ]
+        ]
+        |> row [ spacing 10 ]
+  in
+      [ topRow
+      , fields
+      ]
+      -- |> column [ width fill, spacing 10 ]
+
+
+viewFragmentsBarWrapper model oer =
+  let
+      components =
+        if isLabStudy1 model then
+          case getCourseItem model oer of
+            Nothing ->
+              viewCourseButton model oer
+
+            Just item ->
+              viewCourseSettings model oer item
+        else
+          [ viewDescription oer
+          , [ viewLinkToFile oer, viewProviderLinkAndFavoriteButton model oer ] |> column [ width fill, spacing 15, paddingTop 30 ]
+          ]
+
+      containerHeight =
+        if isLabStudy1 model then
+          65
+        else
+          200
+
+      fragmentsBar =
+        if oer.mediatype == "video" then
+          case chunksFromOerId model oer.id of
+            [] ->
+              []
+
+            wikichunks ->
+              let
+                  barWrapper =
+                    viewFragmentsBar model oer wikichunks playerWidth "inspector"
+                    |> el [ width (px playerWidth), height (px 16) ]
+              in
+                  none
+                  |> el [ inFront barWrapper, moveUp (0 - fragmentsBarHeight), height <| px containerHeight ]
+                  |> inFront
+                  |> List.singleton
+        else
+          []
+  in
+      components
+      |> column ([ width (px playerWidth), height <| px <| containerHeight, moveDown 1, paddingTop 25, spacing 4 ] ++ fragmentsBar)

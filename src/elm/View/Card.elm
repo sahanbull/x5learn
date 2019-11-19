@@ -185,9 +185,8 @@ viewOerCardVisibleContent model position barId enableShadow oer =
                   none
                   |> el [ alignRight, width <| px 34, inFront heart ]
 
-
             content =
-              [ date, provider, duration, favoriteButton ]
+              [ date, provider, duration ]--, favoriteButton ]
         in
             content
             |> row [ width fill, paddingXY 16 0, moveDown 255 ]

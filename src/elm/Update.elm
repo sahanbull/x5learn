@@ -640,9 +640,11 @@ update msg ({nav, userProfileForm} as model) =
 
     Scrubbed position ->
       ({ model | scrubbing = Just position }, Cmd.none)
+      |> logEventForLabStudy "Scrubbed" [ position |> String.fromFloat ]
 
     ScrubMouseLeave ->
       ({ model | scrubbing = Nothing}, Cmd.none)
+      |> logEventForLabStudy "ScrubMouseLeave" []
 
     Html5VideoStarted pos ->
       (model |> updateVideoPlayer (Started pos) |> extendVideoUsages pos, Cmd.none)

@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestVideoUsages, requestOerDurationInSeconds)--, requestUpdatePlayingVideo) --requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestFavorites)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestVideoUsages)--, requestUpdatePlayingVideo) --requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestFavorites)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -100,15 +100,6 @@ userProfileEncoder userProfile =
     , ("firstName", Encode.string userProfile.firstName)
     , ("lastName", Encode.string userProfile.lastName)
     ]
-
-
-requestOerDurationInSeconds : OerId -> Float -> Cmd Msg
-requestOerDurationInSeconds oerId durationInSeconds =
-  Http.post
-    { url = Url.Builder.absolute [ apiRoot, "oer_duration_in_seconds/" ] []
-    , body = Http.jsonBody <| Encode.object [ ("oer_id", Encode.int oerId), ("durationInSeconds", Encode.float durationInSeconds) ]
-    , expect = Http.expectString RequestOerDurationInSeconds
-    }
 
 
 requestLabStudyLogEvent : Int -> String -> List String -> Cmd Msg

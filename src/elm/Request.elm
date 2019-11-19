@@ -177,12 +177,13 @@ sessionDecoder =
 
 
 loggedInUserDecoder =
-  map (\userProfile -> Session (LoggedInUser userProfile))
+  map2 (\userProfile isContentFlowEnabled -> Session (LoggedInUser userProfile) isContentFlowEnabled)
     (field "userProfile" userProfileDecoder)
+    (field "isContentFlowEnabled" bool)
 
 
 guestUserDecoder =
-  map (\_ -> Session GuestUser)
+  map (\_ -> Session GuestUser True)
     string
 
 

@@ -114,7 +114,7 @@ viewFragmentsBar model oer chunks barWidth barId =
             |> inFront
 
       chunkTriggers =
-        if model.isContentFlowEnabled then
+        if isContentFlowEnabled model then
           chunks
           |> List.indexedMap chunkTrigger
         else

@@ -696,6 +696,9 @@ update msg ({nav, userProfileForm} as model) =
               ({ model | session = Just { session | isContentFlowEnabled = enabled } }, Cmd.none)
               |> saveAction 7 [ ("enable", Encode.bool enabled) ]
 
+    AddedOerToCourse oerId ->
+      ( model, Cmd.none)
+
 
 -- createNote : OerId -> String -> Model -> Model
 -- createNote oerId text model =

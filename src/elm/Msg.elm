@@ -86,6 +86,7 @@ type Msg
   | Html5VideoDuration Float
   | StartCurrentHtml5Video Float
   | ToggleContentFlow
+  | AddedOerToCourse OerId
 
 
 type UserProfileField

@@ -297,6 +297,16 @@ type alias Range =
   }
 
 
+type alias Course =
+  { segments : List CourseSegment
+  }
+
+type alias CourseSegment =
+  { oerId : OerId
+  , range : Range
+  , comment : String
+  }
+
 type alias Playlist =
   { title : String
   , oerIds : List OerId

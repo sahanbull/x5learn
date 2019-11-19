@@ -141,20 +141,6 @@ inspectorContentDefault model {oer, fragmentStart} =
 
       footer =
         []
-
-        -- else
-        --   actionButtonWithIcon IconRight "navigate_next" oer.provider (Just <| ShowProviderLinkInInspector)
-        -- [ oer.provider |> bodyNoWrap [ alignLeft]
-        -- , image [ alignLeft, materialDarkAlpha, width (px 20) ] { src = svgPath "navigate_next", description = "external link" }
-        -- ]
-        -- |> row [ alignLeft, width fill, onClick UninspectSearchResult ]
-
-      -- actionButtons =
-      --   [ actionButtonWithIcon IconLeft "share" "SHARE" Nothing
-      --   , actionButtonWithIcon IconLeft "bookmarklist_add" "SAVE" <| Just <| OpenSaveToBookmarklistMenu inspectorState
-      --   , footerButton <| svgIcon "more_vert"
-      --   ]
-      --   |> row [ spacing 20, alignRight ]
   in
       { header = header, body = body, footer = footer, fixed = none }
 
@@ -209,16 +195,19 @@ viewProviderLinkAndFavoriteButton model oer =
       |> row [ width fill ]
 
 
-viewAddToCourseComponent oer =
-  ""
-  |> bodyNoWrap []
+viewCourseComponent model oer =
+  -- ""
+  -- |> bodyNoWrap []
+  [ actionButtonWithIcon [ alignRight ] IconRight "bookmarklist_add" "Add to course" <| Just <| AddedOerToCourse oer.id
+  ]
+  |> row [ paddingTop 30, width fill ]
 
 
 viewFragmentsBarWrapper model oer =
   let
       components =
         if isLabStudy1 model then
-          [ viewAddToCourseComponent oer ]
+          [ viewCourseComponent model oer ]
         else
           [ viewDescription oer
           , [ viewLinkToFile oer, viewProviderLinkAndFavoriteButton model oer ] |> column [ width fill, spacing 15, paddingTop 30 ]
@@ -226,7 +215,7 @@ viewFragmentsBarWrapper model oer =
 
       containerHeight =
         if isLabStudy1 model then
-          30
+          80
         else
           200
 

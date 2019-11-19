@@ -13,9 +13,9 @@ import View.Shared exposing (..)
 
 
 viewContentFlowToggle : Model -> Element Msg
-viewContentFlowToggle {isContentFlowEnabled} =
-  [ "ContentFlow is "++(if isContentFlowEnabled then "ON" else "OFF") |> bodyNoWrap [ width fill ]
-  , viewSwitch isContentFlowEnabled
+viewContentFlowToggle model =
+  [ "ContentFlow is "++(if isContentFlowEnabled model then "ON" else "OFF") |> bodyNoWrap [ width fill ]
+  , viewSwitch <| isContentFlowEnabled model
   ]
   |> row [ width fill, spacing 10, onClick ToggleContentFlow ]
 

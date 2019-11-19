@@ -31,7 +31,7 @@ viewFeaturedPage model =
 
       page =
         [ title
-        , viewFeaturedOers model
+        , if isLabStudy1 model then none else viewFeaturedOers model
         ]
         |> column [ centerX, paddingXY 15 80, spacing 20, width fill, height fill ]
   in

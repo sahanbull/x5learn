@@ -3,6 +3,7 @@ from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
 import json
+import os # apologies
 import http.client
 import urllib
 from collections import defaultdict
@@ -243,19 +244,6 @@ def api_oers():
     return jsonify(oers)
 
 
-@app.route("/api/v1/oer_duration_in_seconds/", methods=['POST'])
-def api_oer_duration_in_seconds():
-    j  = request.get_json()
-    oer_id = j['oer_id']
-    duration = j['durationInSeconds']
-    oer = Oer.query.filter_by(id=oer_id).first()
-    new_data = json.loads(json.dumps(oer.data)) # https://stackoverflow.com/a/53977819/2237986
-    new_data['durationInSeconds'] = duration
-    oer.data = new_data
-    db_session.commit()
-    return 'OK'
-
-
 @app.route("/api/v1/video_usages/", methods=['GET'])
 def api_video_usages():
     actions = Action.query.filter(Action.user_login_id == current_user.get_id(),
@@ -432,6 +420,9 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
             db_session.add(oer)
             db_session.commit()
         oers.append(oer)
+        # Fix a problem with videolectures lacking duration info
+        if oer.data['mediatype']=='video' and oer.data['duration']=='' and ('durationInSeconds' not in oer.data):
+            oer = inject_duration(oer)
         push_enrichment_task_if_needed(url, int(1000 / (index + 1)) + 1)
     oers = oers[:MAX_SEARCH_RESULTS]
     if len(oers) == n_initial_oers:  # no more results on page -> stop querying
@@ -439,6 +430,19 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     if len(oers) >= MAX_SEARCH_RESULTS:
         return oers
     return search_results_from_x5gon_api_pages(text, page_number + 1, oers)
+
+
+def inject_duration(oer):
+    seconds = os.popen('ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 '+oer.url).read()
+    seconds = int(float(seconds))
+    duration = str(int(seconds/60)) +':' + str(seconds%60).zfill(2)
+    print('inject_duration: ', duration)
+    new_data = json.loads(json.dumps(oer.data)) # https://stackoverflow.com/a/53977819/2237986
+    new_data['durationInSeconds'] = seconds
+    new_data['duration'] = duration
+    oer.data = new_data
+    db_session.commit()
+    return oer
 
 
 def filter_x5gon_search_results(materials):

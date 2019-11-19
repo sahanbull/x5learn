@@ -348,16 +348,6 @@ update msg ({nav, userProfileForm} as model) =
       -- ( { model | snackbar = createSnackbar model "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
       ( { model | snackbar = createSnackbar model "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
 
-    RequestOerDurationInSeconds (Ok _) ->
-      (model, Cmd.none)
-
-    RequestOerDurationInSeconds (Err err) ->
-      -- let
-      --     dummy =
-      --       err |> Debug.log "Error in RequestOerDurationInSeconds"
-      -- in
-      ( { model | snackbar = createSnackbar model "Some logs were not saved" }, Cmd.none )
-
     -- RequestSendResourceFeedback (Ok _) ->
     --   (model, Cmd.none)
 
@@ -674,7 +664,7 @@ update msg ({nav, userProfileForm} as model) =
                       cachedOers =
                         model.cachedOers |> Dict.map (\oerId o -> if oerId==oer.id then { o | durationInSeconds = duration } else o)
                   in
-                      ({ model | cachedOers = cachedOers }, requestOerDurationInSeconds oer.id duration)
+                      ({ model | cachedOers = cachedOers }, Cmd.none)
                 else
                   (model, Cmd.none)
       in

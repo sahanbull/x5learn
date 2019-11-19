@@ -21,7 +21,6 @@ type alias Model =
   , windowHeight : Int
   , mousePositionXwhenOnChunkTrigger : Float
   , currentTime : Posix
-  , isContentFlowEnabled : Bool
   , searchInputTyping : String
   , searchState : Maybe SearchState
   , inspectorState : Maybe InspectorState
@@ -316,6 +315,7 @@ type InspectorMenu
 
 type alias Session =
   { loginState : LoginState
+  , isContentFlowEnabled : Bool
   }
 
 
@@ -333,7 +333,6 @@ initialModel nav flags =
   , windowHeight = flags.windowHeight
   , mousePositionXwhenOnChunkTrigger = 0
   , currentTime = initialTime
-  , isContentFlowEnabled = False
   , searchInputTyping = ""
   , searchState = Nothing
   , inspectorState = Nothing
@@ -842,3 +841,12 @@ isInspecting model {id} =
       oer.id==id
     _ ->
       False
+
+
+isContentFlowEnabled : Model -> Bool
+isContentFlowEnabled model =
+  case model.session of
+    Nothing ->
+      False
+    Just session ->
+      session.isContentFlowEnabled

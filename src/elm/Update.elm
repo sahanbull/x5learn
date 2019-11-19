@@ -676,7 +676,7 @@ update msg ({nav, userProfileForm} as model) =
                   in
                       ({ model | cachedOers = cachedOers }, requestOerDurationInSeconds oer.id duration)
                 else
-                  (model, Cmd.none) -- impossible
+                  (model, Cmd.none)
       in
           (newModel |> updateVideoPlayer (Duration duration), cmd)
 

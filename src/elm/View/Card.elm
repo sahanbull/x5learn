@@ -162,7 +162,19 @@ viewOerCardVisibleContent model position barId enableShadow oer =
               oer.provider |> domainOnly |> truncateSentence 32 |> captionNowrap [ if dateStr=="" then alignLeft else centerX ]
 
             duration =
-              oer.duration |> captionNowrap [ alignRight, paddingRight 8 ]
+              if oer.mediatype=="video" && oer.duration=="" && oer.durationInSeconds>1 then
+                -- hack to fix videolectures.net
+                -- https://github.com/sahanbull/x5learn/issues/255
+                let
+                    minutes =
+                      oer.durationInSeconds / 60
+                      |> floor
+                      |> max 1
+                      |> String.fromInt
+                in
+                    (minutes ++ " min") |> captionNowrap [ alignRight, paddingRight 8 ]
+              else
+                oer.duration |> captionNowrap [ alignRight, paddingRight 8 ]
 
             favoriteButton =
               let
@@ -173,9 +185,8 @@ viewOerCardVisibleContent model position barId enableShadow oer =
                   none
                   |> el [ alignRight, width <| px 34, inFront heart ]
 
-
             content =
-              [ date, provider, duration, favoriteButton ]
+              [ date, provider, duration ]--, favoriteButton ]
         in
             content
             |> row [ width fill, paddingXY 16 0, moveDown 255 ]

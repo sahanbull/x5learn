@@ -676,7 +676,7 @@ update msg ({nav, userProfileForm} as model) =
                   in
                       ({ model | cachedOers = cachedOers }, requestOerDurationInSeconds oer.id duration)
                 else
-                  (model, Cmd.none) -- impossible
+                  (model, Cmd.none)
       in
           (newModel |> updateVideoPlayer (Duration duration), cmd)
 
@@ -1098,11 +1098,15 @@ extendVideoUsages pos model =
       model -- impossible
 
     Just {oer} ->
-      case Dict.get oer.id model.videoUsages of
-        Nothing ->
-          model -- impossible
+      let
+          oldRanges =
+            case Dict.get oer.id model.videoUsages of
+              Nothing ->
+                []
 
-        Just oldRanges ->
+              Just ranges ->
+                ranges
+      in
           if oldRanges |> List.any (\{start, length} -> pos>start && pos<start+length + 7) then
             model
           else

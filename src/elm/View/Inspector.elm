@@ -53,9 +53,9 @@ viewModal model inspectorState =
         image [ alpha 0.8, hoverCircleBackground ] { src = svgPath "fullscreen", description = "View this resource in full-page mode" }
         |> linkTo [ alignRight ] (resourceUrlPath inspectorState.oer.id)
 
-      footer =
-        content.footer
-        |> row [ spacing 20, width fill ]
+      -- footer =
+      --   content.footer
+      --   |> row [ spacing 20, width fill ]
 
       hideWhileOpening =
         alpha <| if model.animationsPending |> Set.member modalId then 0.01 else 1
@@ -66,7 +66,7 @@ viewModal model inspectorState =
       sheet =
         [ header
         , body
-        , footer
+        -- , footer
         ]
         |> column [ htmlClass "CloseInspectorOnClickOutside", width (px sheetWidth), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow, inFront content.fixed ]
 

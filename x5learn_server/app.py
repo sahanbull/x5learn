@@ -167,8 +167,11 @@ def api_session():
 def get_logged_in_user_profile_and_state():
     profile = current_user.user_profile if current_user.user_profile is not None else {
         'email': current_user.email}
-    user = get_or_create_logged_in_user()
-    logged_in_user = {'userProfile': profile}
+    # Look at actions to determine whether contentflow is enabled or disabled
+    action = Action.query.filter(Action.user_login_id == current_user.get_id(),
+                                 Action.action_type_id.in_([7])).order_by(Action.id.desc()).first()
+    is_contentflow_enabled = False if action is None else action.params['enable']
+    logged_in_user = {'userProfile': profile, 'isContentFlowEnabled': is_contentflow_enabled}
     return jsonify({'loggedInUser': logged_in_user})
 
 
@@ -956,6 +959,11 @@ def initiate_action_types_table():
     action_type = ActionType.query.filter_by(id=6).first()
     if action_type is None:
         action_type = ActionType('Video seeked')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=7).first()
+    if action_type is None:
+        action_type = ActionType('ContentFlow setting changed')
         db_session.add(action_type)
         db_session.commit()
 

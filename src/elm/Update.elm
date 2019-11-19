@@ -681,7 +681,17 @@ update msg ({nav, userProfileForm} as model) =
       (model |> extendVideoUsages pos, startCurrentHtml5Video pos)
 
     ToggleContentFlow ->
-      ({ model | isContentFlowEnabled = not model.isContentFlowEnabled }, Cmd.none)
+      case model.session of
+        Nothing ->
+          (model, Cmd.none)
+
+        Just session ->
+          let
+              enabled =
+                not session.isContentFlowEnabled
+          in
+              ({ model | session = Just { session | isContentFlowEnabled = enabled } }, Cmd.none)
+              |> saveAction 7 [ ("enable", Encode.bool enabled) ]
 
 
 -- createNote : OerId -> String -> Model -> Model

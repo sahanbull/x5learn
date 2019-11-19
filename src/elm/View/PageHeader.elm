@@ -94,7 +94,7 @@ viewUserMenu model userProfile =
       menu =
         if model.popup == Just UserMenu then
           ([ link [] { url = "/profile", label = displayName userProfile |> captionNowrap [ padding 15 ] }
-          , navButton "/profile" "My profile"
+          , if isLabStudy1 model then none else navButton "/profile" "My profile"
           , navButton "/logout" "Log out"
           -- ]++labStudyTaskButtons)
           ])

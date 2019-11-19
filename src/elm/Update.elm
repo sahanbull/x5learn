@@ -696,11 +696,11 @@ update msg ({nav, userProfileForm} as model) =
               ({ model | session = Just { session | isContentFlowEnabled = enabled } }, Cmd.none)
               |> saveAction 7 [ ("enable", Encode.bool enabled) ]
 
-    AddedOerToCourse oerId ->
+    AddedOerToCourse oerId range ->
       let
           newItem =
             { oerId = oerId
-            , range = Range 0 1
+            , range = range
             , comment = ""
             }
 
@@ -709,6 +709,16 @@ update msg ({nav, userProfileForm} as model) =
 
           newCourse =
             { oldCourse | items = newItem :: oldCourse.items }
+      in
+          ({ model | course = newCourse }, Cmd.none)
+
+    RemovedOerFromCourse oerId ->
+      let
+          oldCourse =
+            model.course
+
+          newCourse =
+            { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId/=oerId) }
       in
           ({ model | course = newCourse }, Cmd.none)
 

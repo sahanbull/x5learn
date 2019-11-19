@@ -197,20 +197,42 @@ viewProviderLinkAndFavoriteButton model oer =
 
 viewCourseButton model oer =
   [ none |> el [ width fill ]
-  , actionButtonWithIcon [] IconLeft "bookmarklist_add" "Add to course" <| Just <| AddedOerToCourse oer.id
+  , actionButtonWithIcon [] IconLeft "bookmarklist_add" "Add to course" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
   ]
 
 
-viewCourseSettings model oer =
-  [ "This video has been added to your course." |> bodyWrap []
-  ]
+viewCourseSettings model oer {range, comment} =
+  let
+      topRow =
+        [ "This video has been added to your course." |> bodyWrap [ width fill ]
+        , actionButtonWithIcon [] IconLeft "delete" "Remove" <| Just <| RemovedOerFromCourse oer.id
+        ]
+        |> row [ width fill ]
+
+      fields =
+        [ "Selected Range:" |> bodyNoWrap [ width fill ]
+        , range.start |> floor |> secondsToString |> bodyNoWrap [ width fill ]
+        , "-" |> bodyNoWrap [ width fill ]
+        , range.start + range.length |> floor |> secondsToString |> bodyNoWrap [ width fill ]
+        ]
+        |> row [ spacing 10 ]
+  in
+      [ topRow
+      , fields
+      ]
+      -- |> column [ width fill, spacing 10 ]
 
 
 viewFragmentsBarWrapper model oer =
   let
       components =
         if isLabStudy1 model then
-          (if isInCourse model oer then viewCourseSettings model oer else viewCourseButton model oer)
+          case getCourseItem model oer of
+            Nothing ->
+              viewCourseButton model oer
+
+            Just item ->
+              viewCourseSettings model oer item
         else
           [ viewDescription oer
           , [ viewLinkToFile oer, viewProviderLinkAndFavoriteButton model oer ] |> column [ width fill, spacing 15, paddingTop 30 ]
@@ -218,7 +240,7 @@ viewFragmentsBarWrapper model oer =
 
       containerHeight =
         if isLabStudy1 model then
-          200
+          65
         else
           200
 
@@ -235,11 +257,11 @@ viewFragmentsBarWrapper model oer =
                     |> el [ width (px playerWidth), height (px 16) ]
               in
                   none
-                  |> el [ inFront barWrapper, moveUp (containerHeight - fragmentsBarHeight), height <| px containerHeight ]
+                  |> el [ inFront barWrapper, moveUp (0 - fragmentsBarHeight), height <| px containerHeight ]
                   |> inFront
                   |> List.singleton
         else
           []
   in
       components
-      |> column ([ width (px playerWidth), height <| px <| containerHeight, moveDown 1 ] ++ fragmentsBar)
+      |> column ([ width (px playerWidth), height <| px <| containerHeight, moveDown 1, paddingTop 25, spacing 4 ] ++ fragmentsBar)

@@ -606,21 +606,6 @@ pointerEventsNone =
   htmlClass "PointerEventsNone"
 
 
-secondsToString : Int -> String
-secondsToString seconds =
-  let
-      secondsString =
-        seconds |> modBy 60
-        |> String.fromInt
-        |> String.padLeft 2 '0'
-
-      minutesString =
-        seconds // 60
-        |> String.fromInt
-  in
-      minutesString ++ ":" ++ secondsString
-
-
 guestCallToSignup : String -> Element Msg
 guestCallToSignup incentive =
   let

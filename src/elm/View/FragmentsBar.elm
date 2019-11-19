@@ -19,19 +19,14 @@ import Animation exposing (..)
 viewFragmentsBar : Model -> Oer -> List Chunk -> Int -> String -> Element Msg
 viewFragmentsBar model oer chunks barWidth barId =
   let
-      peekRanges =
-        [ rangeMarkers red
-        ]
-        |> List.concat
-
-      rangeMarkers color =
+      rangeMarkers =
         case model.videoUsages |> Dict.get oer.id of
           Nothing ->
             [] -- impossible
 
           Just ranges ->
             ranges
-            |> List.map (\{start,length} -> none |> el [ width (length |> pxFromSeconds |> round |> px), height <| px 3, Background.color color, moveRight (start |> pxFromSeconds) ] |> inFront)
+            |> List.map (\{start,length} -> none |> el [ width (length |> pxFromSeconds |> round |> px), height <| px 3, Background.color red, moveRight (start |> pxFromSeconds), pointerEventsNone ] |> inFront)
 
       pxFromSeconds seconds =
         (barWidth |> toFloat) * seconds / oer.durationInSeconds
@@ -168,7 +163,7 @@ viewFragmentsBar model oer chunks barWidth barId =
         [ onMouseLeave <| ScrubMouseLeave ]
   in
     none
-    |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background ++ peekRanges ++ scrubDisplayAndClickHandler ++ mouseLeaveHandler)
+    |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background ++ rangeMarkers ++ scrubDisplayAndClickHandler ++ mouseLeaveHandler)
 
 
 viewChunkPopup model chunkPopup =

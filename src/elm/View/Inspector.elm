@@ -218,7 +218,7 @@ viewFragmentsBarWrapper model oer =
 
       containerHeight =
         if isLabStudy1 model then
-          80
+          200
         else
           200
 
@@ -226,17 +226,20 @@ viewFragmentsBarWrapper model oer =
         if oer.mediatype == "video" then
           case chunksFromOerId model oer.id of
             [] ->
-              none
+              []
 
             wikichunks ->
               let
-                  content =
+                  barWrapper =
                     viewFragmentsBar model oer wikichunks playerWidth "inspector"
                     |> el [ width (px playerWidth), height (px 16) ]
               in
-                  none |> el [ inFront content, moveUp (containerHeight - fragmentsBarHeight) ]
+                  none
+                  |> el [ inFront barWrapper, moveUp (containerHeight - fragmentsBarHeight), height <| px containerHeight ]
+                  |> inFront
+                  |> List.singleton
         else
-          none
+          []
   in
-      components ++ [ fragmentsBar ]
-      |> column [ width (px playerWidth), height <| px <| containerHeight, moveDown 1 ]
+      components
+      |> column ([ width (px playerWidth), height <| px <| containerHeight, moveDown 1 ] ++ fragmentsBar)

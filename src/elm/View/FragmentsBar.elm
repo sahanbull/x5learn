@@ -19,19 +19,14 @@ import Animation exposing (..)
 viewFragmentsBar : Model -> Oer -> List Chunk -> Int -> String -> Element Msg
 viewFragmentsBar model oer chunks barWidth barId =
   let
-      peekRanges =
-        [ rangeMarkers red
-        ]
-        |> List.concat
-
-      rangeMarkers color =
+      rangeMarkers =
         case model.videoUsages |> Dict.get oer.id of
           Nothing ->
             [] -- impossible
 
           Just ranges ->
             ranges
-            |> List.map (\{start,length} -> none |> el [ width (length |> pxFromSeconds |> round |> px), height <| px 3, Background.color color, moveRight (start |> pxFromSeconds) ] |> inFront)
+            |> List.map (\{start,length} -> none |> el [ width (length |> pxFromSeconds |> round |> max 4 |> px), height <| px 3, Background.color red, moveRight (start |> pxFromSeconds), pointerEventsNone ] |> inFront)
 
       pxFromSeconds seconds =
         (barWidth |> toFloat) * seconds / oer.durationInSeconds
@@ -126,7 +121,7 @@ viewFragmentsBar model oer chunks barWidth barId =
       background =
         [ Background.color materialDark ]
 
-      scrubCursorAndClickHandler =
+      scrubDisplayAndClickHandler =
         if isHovering model oer || isInspecting model oer then
           case model.scrubbing of
             Nothing ->
@@ -134,10 +129,23 @@ viewFragmentsBar model oer chunks barWidth barId =
 
             Just position ->
               let
-                  scrubCursor =
-                    none
-                    |> el [ width <| px 2, height fill, Background.color white, moveRight ((barWidth - 2 |> toFloat) * position), pointerEventsNone ]
-                    |> inFront
+                  scrubDisplay =
+                    let
+                        cursor =
+                          none
+                          |> el [ width <| px 2, height fill, Background.color white, moveRight ((barWidth - 2 |> toFloat) * position), pointerEventsNone ]
+                          |> inFront
+
+                        seconds =
+                          position * oer.durationInSeconds
+                          |> round
+
+                        timeDisplay =
+                          (seconds // 60 |> String.fromInt) ++":"++ (seconds |> modBy 60 |> String.fromInt |> String.pad 2 '0')
+                          |> bodyNoWrap [ whiteText, moveRight ((barWidth - 20 |> toFloat) * position), moveUp 20, pointerEventsNone ]
+                          |> inFront
+                    in
+                        [ cursor, timeDisplay ]
 
                   clickHandler =
                     case model.inspectorState of
@@ -147,7 +155,7 @@ viewFragmentsBar model oer chunks barWidth barId =
                       _ ->
                         onClickNoBubble <| StartCurrentHtml5Video (position * oer.durationInSeconds)
               in
-                  [ scrubCursor, clickHandler ]
+                  scrubDisplay ++ [ clickHandler ]
         else
           []
 
@@ -155,7 +163,7 @@ viewFragmentsBar model oer chunks barWidth barId =
         [ onMouseLeave <| ScrubMouseLeave ]
   in
     none
-    |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background ++ peekRanges ++ scrubCursorAndClickHandler ++ mouseLeaveHandler)
+    |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background ++ rangeMarkers ++ scrubDisplayAndClickHandler ++ mouseLeaveHandler)
 
 
 viewChunkPopup model chunkPopup =

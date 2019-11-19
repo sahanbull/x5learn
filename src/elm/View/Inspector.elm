@@ -195,19 +195,22 @@ viewProviderLinkAndFavoriteButton model oer =
       |> row [ width fill ]
 
 
-viewCourseComponent model oer =
-  -- ""
-  -- |> bodyNoWrap []
-  [ actionButtonWithIcon [ alignRight ] IconRight "bookmarklist_add" "Add to course" <| Just <| AddedOerToCourse oer.id
+viewCourseButton model oer =
+  [ none |> el [ width fill ]
+  , actionButtonWithIcon [] IconLeft "bookmarklist_add" "Add to course" <| Just <| AddedOerToCourse oer.id
   ]
-  |> row [ paddingTop 30, width fill ]
+
+
+viewCourseSettings model oer =
+  [ "This video has been added to your course." |> bodyWrap []
+  ]
 
 
 viewFragmentsBarWrapper model oer =
   let
       components =
         if isLabStudy1 model then
-          [ viewCourseComponent model oer ]
+          (if isInCourse model oer then viewCourseSettings model oer else viewCourseButton model oer)
         else
           [ viewDescription oer
           , [ viewLinkToFile oer, viewProviderLinkAndFavoriteButton model oer ] |> column [ width fill, spacing 15, paddingTop 30 ]

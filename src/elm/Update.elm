@@ -697,7 +697,20 @@ update msg ({nav, userProfileForm} as model) =
               |> saveAction 7 [ ("enable", Encode.bool enabled) ]
 
     AddedOerToCourse oerId ->
-      ( model, Cmd.none)
+      let
+          newItem =
+            { oerId = oerId
+            , range = Range 0 1
+            , comment = ""
+            }
+
+          oldCourse =
+            model.course
+
+          newCourse =
+            { oldCourse | items = newItem :: oldCourse.items }
+      in
+          ({ model | course = newCourse }, Cmd.none)
 
 
 -- createNote : OerId -> String -> Model -> Model

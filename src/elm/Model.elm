@@ -25,6 +25,7 @@ type alias Model =
   , searchState : Maybe SearchState
   , inspectorState : Maybe InspectorState
   , snackbar : Maybe Snackbar
+  , course : Course
   , hoveringOerId : Maybe OerId
   , timeOfLastMouseEnterOnCard : Posix
   , modalAnimation : Maybe BoxAnimation
@@ -298,10 +299,11 @@ type alias Range =
 
 
 type alias Course =
-  { segments : List CourseSegment
+  { title : String
+  , items : List CourseItem
   }
 
-type alias CourseSegment =
+type alias CourseItem =
   { oerId : OerId
   , range : Range
   , comment : String
@@ -347,6 +349,7 @@ initialModel nav flags =
   , searchState = Nothing
   , inspectorState = Nothing
   , snackbar = Nothing
+  , course = Course "My course" []
   , hoveringOerId = Nothing
   , timeOfLastMouseEnterOnCard = initialTime
   , modalAnimation = Nothing
@@ -860,3 +863,8 @@ isContentFlowEnabled model =
       False
     Just session ->
       session.isContentFlowEnabled
+
+
+isInCourse : Model -> Oer -> Bool
+isInCourse model oer =
+  model.course.items |> List.any (\{oerId} -> oerId == oer.id)

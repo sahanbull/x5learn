@@ -888,3 +888,18 @@ getCourseItem model oer =
   model.course.items
   |> List.filter (\{oerId} -> oerId == oer.id)
   |> List.head
+
+
+swapListItemWithNext : Int -> List a -> List a
+swapListItemWithNext index xs =
+  let
+      left =
+        xs |> List.take index
+
+      swapped =
+        xs |> List.drop index |> List.take 2 |> List.reverse
+
+      right =
+        xs |> List.drop (index+2)
+  in
+      left ++ swapped ++ right

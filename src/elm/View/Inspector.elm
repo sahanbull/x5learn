@@ -197,14 +197,14 @@ viewProviderLinkAndFavoriteButton model oer =
 
 viewCourseButton model oer =
   [ none |> el [ width fill ]
-  , actionButtonWithIcon [] IconLeft "bookmarklist_add" "Add to course" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
+  , actionButtonWithIcon [] IconLeft "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
   ]
 
 
 viewCourseSettings model oer {range, comment} =
   let
       topRow =
-        [ "This video has been added to your course." |> bodyWrap [ width fill ]
+        [ "This video has been added to your workspace." |> bodyWrap [ width fill ]
         , actionButtonWithIcon [] IconLeft "delete" "Remove" <| Just <| RemovedOerFromCourse oer.id
         ]
         |> row [ width fill ]

@@ -125,13 +125,15 @@ update msg ({nav, userProfileForm} as model) =
             , fragmentStart = fragmentStart
             , playWhenReady = playWhenReady
             }
-          dummy2 =
-            oer.title
-            |> Debug.log "InspectOer"
       in
           ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation youtubeEmbedParams)
           |> saveAction 1 [ ("oerId", Encode.int oer.id) ]
           |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat ]
+
+    InspectCourseItem oer ->
+      model
+      |> update (InspectOer oer 0 False)
+      |> logEventForLabStudy "InspectCourseItem" [ oer.id |> String.fromInt ]
 
     UninspectSearchResult ->
       ( { model | inspectorState = Nothing}, Cmd.none)
@@ -716,6 +718,7 @@ update msg ({nav, userProfileForm} as model) =
             { oldCourse | items = newItem :: oldCourse.items }
       in
           ({ model | course = newCourse }, Cmd.none)
+          |> logEventForLabStudy "AddedOerToCourse" [ oerId |> String.fromInt, courseToString newCourse ]
 
     RemovedOerFromCourse oerId ->
       let
@@ -726,6 +729,18 @@ update msg ({nav, userProfileForm} as model) =
             { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId/=oerId) }
       in
           ({ model | course = newCourse }, Cmd.none)
+          |> logEventForLabStudy "RemovedOerFromCourse" [ oerId |> String.fromInt, courseToString newCourse ]
+
+    MovedCourseItemDown index ->
+      let
+          oldCourse =
+            model.course
+
+          newCourse =
+            { oldCourse | items = oldCourse.items |> swapListItemWithNext index }
+      in
+          ({ model | course = newCourse }, Cmd.none)
+          |> logEventForLabStudy "MovedCourseItemDown" [ index |> String.fromInt, courseToString newCourse ]
 
 
 -- createNote : OerId -> String -> Model -> Model
@@ -1146,3 +1161,10 @@ extendVideoUsages pos model =
                   (Range pos 10) :: oldRanges
             in
                 { model | videoUsages = Dict.insert oer.id newRanges model.videoUsages  }
+
+
+courseToString : Course -> String
+courseToString {items} =
+  items
+  |> List.map (\item -> (String.fromInt item.oerId) ++ ":" ++ (item.range.start |> String.fromFloat) ++ "-" ++ (item.range.start + item.range.length |> String.fromFloat))
+  |> String.join ","

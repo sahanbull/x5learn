@@ -22,6 +22,7 @@ type Msg
   | ChangeSearchText String
   | ResizeBrowser Int Int
   | InspectOer Oer Float Bool
+  | InspectCourseItem Oer
   | UninspectSearchResult
   | ModalAnimationStart BoxAnimation
   | ModalAnimationStop Int
@@ -88,6 +89,7 @@ type Msg
   | ToggleContentFlow
   | AddedOerToCourse OerId Range
   | RemovedOerFromCourse OerId
+  | MovedCourseItemDown Int
 
 
 type UserProfileField

@@ -25,7 +25,7 @@ port popupTriggerPosition : (Point -> msg) -> Sub msg
 port clickedOnDocument : (Int -> msg) -> Sub msg
 port mouseOverChunkTrigger : (Float -> msg) -> Sub msg
 -- port mouseMovedOnStoryTag : (Float -> msg) -> Sub msg
-port scrubbed : (Float -> msg) -> Sub msg
+port timelineMouseEvent : (EventNameAndPosition -> msg) -> Sub msg
 -- port youtubeVideoIsPlayingAtPosition : (Float -> msg) -> Sub msg
 port html5VideoStarted : (Float -> msg) -> Sub msg
 port html5VideoPaused : (Float -> msg) -> Sub msg

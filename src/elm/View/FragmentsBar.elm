@@ -123,11 +123,11 @@ viewFragmentsBar model oer chunks barWidth barId =
 
       scrubDisplayAndClickHandler =
         if isHovering model oer || isInspecting model oer then
-          case model.scrubbing of
+          case model.timelineHoverState of
             Nothing ->
               []
 
-            Just position ->
+            Just {position} ->
               let
                   scrubDisplay =
                     let
@@ -160,7 +160,7 @@ viewFragmentsBar model oer chunks barWidth barId =
           []
 
       mouseLeaveHandler =
-        [ onMouseLeave <| ScrubMouseLeave ]
+        [ onMouseLeave <| TimelineMouseLeave ]
   in
     none
     |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background ++ rangeMarkers ++ scrubDisplayAndClickHandler ++ mouseLeaveHandler)

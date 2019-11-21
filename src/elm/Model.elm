@@ -69,7 +69,7 @@ type alias Model =
   , flyingHeartAnimation : Maybe FlyingHeartAnimation
   , flyingHeartAnimationStartPoint : Maybe Point
   , featuredOers : Maybe (List OerId)
-  , scrubbing : Maybe Float
+  , timelineHoverState : Maybe TimelineHoverState
   }
 
 
@@ -297,10 +297,20 @@ type alias Range =
   , length : Float -- 0 to 1
   }
 
+type alias TimelineHoverState =
+  { position : Float
+  , mouseDownPosition : Maybe Float
+  }
+
+type alias EventNameAndPosition =
+  { eventName : String
+  , position : Float
+  }
 
 type alias Course =
   { title : String
   , items : List CourseItem
+  , hasChanged : Bool
   }
 
 type alias CourseItem =
@@ -349,7 +359,7 @@ initialModel nav flags =
   , searchState = Nothing
   , inspectorState = Nothing
   , snackbar = Nothing
-  , course = Course "My course" []
+  , course = Course "My course" [] False
   , hoveringOerId = Nothing
   , timeOfLastMouseEnterOnCard = initialTime
   , modalAnimation = Nothing
@@ -393,7 +403,7 @@ initialModel nav flags =
   , flyingHeartAnimation = Nothing
   , flyingHeartAnimationStartPoint = Nothing
   , featuredOers = Nothing
-  , scrubbing = Nothing
+  , timelineHoverState = Nothing
   }
 
 
@@ -903,3 +913,13 @@ swapListItemWithNext index xs =
         xs |> List.drop (index+2)
   in
       left ++ swapped ++ right
+
+
+invertRangeIfNeeded : Range -> Range
+invertRangeIfNeeded range =
+  if range.length < 0 then
+    { start = range.start + range.length
+    , length = -range.length
+    }
+  else
+    range

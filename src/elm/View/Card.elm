@@ -243,11 +243,11 @@ viewCarousel model oer =
   let
       scrubImage =
         if isHovering model oer && (hasYoutubeVideo oer.url |> not) then
-          case model.scrubbing of
+          case model.timelineHoverState of
             Nothing ->
               []
 
-            Just position ->
+            Just {position} ->
               [ viewScrubImage model oer position |> inFront ]
         else
           []

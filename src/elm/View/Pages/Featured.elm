@@ -23,8 +23,8 @@ viewFeaturedPage : Model -> PageWithModal
 viewFeaturedPage model =
   let
       title =
-        [ "Engage with ideas" |> text |> el [ whiteText, Font.size 60, centerX ]
-        , "Discover hidden gems in Open Educational Resources" |> text |> el [ whiteText, Font.size 20, centerX ]
+        [ "Get a clearer view" |> text |> el [ whiteText, Font.size 60, centerX ]
+        , "X5Learn helps you find information in Open Educational Resources" |> text |> el [ whiteText, Font.size 20, centerX ]
         ]
         |> column [ centerX, centerY, spacing 30 ]
         |> el [ width fill, height <| fillPortion 3 ]

@@ -187,7 +187,7 @@ orange =
   rgb255 255 120 0
 
 
-viewedBlue =
+blue =
   rgb255 0 190 250
 
 

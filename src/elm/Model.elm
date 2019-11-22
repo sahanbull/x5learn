@@ -923,3 +923,10 @@ invertRangeIfNeeded range =
     }
   else
     range
+
+
+multiplyRange : Float -> Range -> Range
+multiplyRange factor {start, length} =
+  { start = start * factor
+  , length = length * factor
+  }

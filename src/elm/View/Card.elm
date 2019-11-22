@@ -253,11 +253,11 @@ viewCarousel model oer =
                 |> List.singleton
           in
               if isHovering model oer then
-                case model.scrubbing of
+                case model.timelineHoverState of
                   Nothing ->
                     defaultThumb
 
-                  Just position ->
+                  Just {position} ->
                     [ viewScrubImage model oer position |> inFront ]
               else
                 defaultThumb

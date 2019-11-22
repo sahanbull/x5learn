@@ -19,7 +19,7 @@ import Animation exposing (..)
 viewFragmentsBar : Model -> Oer -> List Chunk -> Int -> String -> Element Msg
 viewFragmentsBar model oer chunks barWidth barId =
   let
-      rangeMarkers =
+      visitedRangeMarkers =
         case model.videoUsages |> Dict.get oer.id of
           Nothing ->
             [] -- impossible
@@ -27,6 +27,52 @@ viewFragmentsBar model oer chunks barWidth barId =
           Just ranges ->
             ranges
             |> List.map (\{start,length} -> none |> el [ width (length |> pxFromSeconds |> round |> max 4 |> px), height <| px 3, Background.color red, moveRight (start |> pxFromSeconds), pointerEventsNone ] |> inFront)
+
+      courseRangeMarkers =
+        let
+            maybeRangeFromDragging =
+              case model.timelineHoverState of
+                Nothing ->
+                  Nothing
+                Just timelineHoverState ->
+                  if isHovering model oer || isInspecting model oer then
+                    case timelineHoverState.mouseDownPosition of
+                      Nothing ->
+                        Nothing
+                      Just dragStartPos ->
+                        Just (Range dragStartPos (timelineHoverState.position - dragStartPos) |> multiplyRange oer.durationInSeconds)
+                  else
+                    Nothing
+
+            maybeRangeFromCourse =
+              case model.course.items |> List.filter (\item -> item.oerId==oer.id) |> List.head of
+                Nothing ->
+                  Nothing
+                Just item ->
+                  Just <| item.range
+
+            ranges =
+              case maybeRangeFromDragging of
+                Just range ->
+                  [ range ]
+                Nothing ->
+                  case maybeRangeFromCourse of
+                    Just range ->
+                      [ range ]
+                    Nothing ->
+                      []
+            drawRange range =
+              let
+                  {start,length} =
+                    range
+                    |> invertRangeIfNeeded
+              in
+                  none
+                  |> el [ width (length |> pxFromSeconds |> round |> max 4 |> px), height <| px 7, Background.color blue, Border.rounded 7, moveRight <| pxFromSeconds <| start, moveDown 4, pointerEventsNone ]
+                  |> inFront
+        in
+            ranges
+            |> List.map drawRange
 
       pxFromSeconds seconds =
         (barWidth |> toFloat) * seconds / oer.durationInSeconds
@@ -123,11 +169,11 @@ viewFragmentsBar model oer chunks barWidth barId =
 
       scrubDisplayAndClickHandler =
         if isHovering model oer || isInspecting model oer then
-          case model.scrubbing of
+          case model.timelineHoverState of
             Nothing ->
               []
 
-            Just position ->
+            Just {position} ->
               let
                   scrubDisplay =
                     let
@@ -160,10 +206,10 @@ viewFragmentsBar model oer chunks barWidth barId =
           []
 
       mouseLeaveHandler =
-        [ onMouseLeave <| ScrubMouseLeave ]
+        [ onMouseLeave <| TimelineMouseLeave ]
   in
     none
-    |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background ++ rangeMarkers ++ scrubDisplayAndClickHandler ++ mouseLeaveHandler)
+    |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background ++ visitedRangeMarkers ++ courseRangeMarkers ++ scrubDisplayAndClickHandler ++ mouseLeaveHandler)
 
 
 viewChunkPopup model chunkPopup =

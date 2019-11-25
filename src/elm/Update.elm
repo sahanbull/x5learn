@@ -652,7 +652,7 @@ update msg ({nav, userProfileForm} as model) =
                       Nothing ->
                         model -- impossible
                       Just dragStartPos ->
-                        { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing }, course = model.course |> setRange model dragStartPos position }
+                        { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing }, coursePersistenceStatus = Changed, course = model.course |> setRange model dragStartPos position }
 
               "mousemove" ->
                 case model.timelineHoverState of
@@ -751,9 +751,9 @@ update msg ({nav, userProfileForm} as model) =
             model.course
 
           newCourse =
-            { oldCourse | items = newItem :: oldCourse.items }
+            { oldCourse | items = newItem :: oldCourse.items}
       in
-          ({ model | course = newCourse }, Cmd.none)
+          ({ model | course = newCourse, coursePersistenceStatus = Changed  }, Cmd.none)
           |> logEventForLabStudy "AddedOerToCourse" [ oerId |> String.fromInt, courseToString newCourse ]
 
     RemovedOerFromCourse oerId ->
@@ -762,9 +762,9 @@ update msg ({nav, userProfileForm} as model) =
             model.course
 
           newCourse =
-            { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId/=oerId) }
+            { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId/=oerId)}
       in
-          ({ model | course = newCourse }, Cmd.none)
+          ({ model | course = newCourse, coursePersistenceStatus = Changed  }, Cmd.none)
           |> logEventForLabStudy "RemovedOerFromCourse" [ oerId |> String.fromInt, courseToString newCourse ]
 
     MovedCourseItemDown index ->
@@ -773,24 +773,17 @@ update msg ({nav, userProfileForm} as model) =
             model.course
 
           newCourse =
-            { oldCourse | items = oldCourse.items |> swapListItemWithNext index, hasChanged=True }
+            { oldCourse | items = oldCourse.items |> swapListItemWithNext index}
       in
-          ({ model | course = newCourse }, Cmd.none)
+          ({ model | course = newCourse, coursePersistenceStatus = Changed }, Cmd.none)
           |> logEventForLabStudy "MovedCourseItemDown" [ index |> String.fromInt, courseToString newCourse ]
 
     ChangedCommentTextInCourseItem oerId str ->
       ( model |> setCommentTextInCourseItem oerId str, Cmd.none)
 
     SubmittedCourseItemComment ->
-      let
-          oldCourse =
-            model.course
-
-          newCourse =
-            { oldCourse | hasChanged = True}
-      in
-          ({ model | course = newCourse }, setBrowserFocus "")
-          |> logEventForLabStudy "SubmittedCourseItemComment" []
+      ({ model | coursePersistenceStatus = Changed }, setBrowserFocus "")
+      |> logEventForLabStudy "SubmittedCourseItemComment" []
 
 
 -- createNote : OerId -> String -> Model -> Model
@@ -1245,7 +1238,7 @@ setRange model dragStartPosition dragEndPosition course =
                   course.items
                   |> List.map (\item -> if item.oerId==existingItem.oerId then { item | range = range } else item)
         in
-            { course | hasChanged = True, items = newItems }
+            { course |  items = newItems }
   in
       case model.inspectorState of
         Just {oer} ->
@@ -1276,6 +1269,6 @@ setCommentTextInCourseItem oerId str model =
         |> List.map (\item -> if item.oerId==oerId then { item | comment = str } else item)
 
       newCourse =
-        { oldCourse | hasChanged = True, items = newItems }
+        { oldCourse | items = newItems }
   in
-      { model | course = newCourse }
+      { model | course = newCourse, coursePersistenceStatus = Changed }

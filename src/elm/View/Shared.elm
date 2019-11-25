@@ -253,12 +253,12 @@ whiteBackground =
 
 
 pageBodyBackground model =
-  Background.image <| imgPath "bg.jpg"
-  -- if isLabStudy1 model then
+  -- Background.image <| imgPath "bg.jpg"
+  if isLabStudy1 model then
   -- if model.subpage==Home && (isLoggedIn model |> not) then
-  --   Background.image <| imgPath "bg.jpg"
-  -- else
-  --   Background.color <| grey 224
+    Background.color <| grey 224
+  else
+    Background.image <| imgPath "bg.jpg"
 
 
 imgPath str =

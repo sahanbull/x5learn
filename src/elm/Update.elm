@@ -64,6 +64,8 @@ update msg ({nav, userProfileForm} as model) =
             --   (Viewed, (model, askPageScrollState True))
             -- else if path |> String.startsWith favoritesPath then
             --   (Favorites, (model, askPageScrollState True))
+            -- else if path |> String.startsWith coursePath then
+            --   (Course, (model, askPageScrollState True))
             else if path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
             -- else if path |> String.startsWith resourcePath then
@@ -127,6 +129,11 @@ update msg ({nav, userProfileForm} as model) =
           ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation youtubeEmbedParams)
           |> saveAction 1 [ ("oerId", Encode.int oer.id) ]
           |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat ]
+
+    InspectCourseItem oer ->
+      model
+      |> update (InspectOer oer 0 False)
+      |> logEventForLabStudy "InspectCourseItem" [ oer.id |> String.fromInt ]
 
     UninspectSearchResult ->
       ( { model | inspectorState = Nothing}, Cmd.none)
@@ -430,15 +437,15 @@ update msg ({nav, userProfileForm} as model) =
 
     SetHover maybeOerId ->
       let
-          (scrubbing, hoveringTagEntityId) =
+          (timelineHoverState, hoveringTagEntityId) =
             case maybeOerId of
               Nothing ->
                 (Nothing, Nothing)
 
               Just _ ->
-                (model.scrubbing, model.hoveringTagEntityId)
+                (model.timelineHoverState, model.hoveringTagEntityId)
       in
-          ( { model | hoveringOerId = maybeOerId, scrubbing = scrubbing, hoveringTagEntityId = hoveringTagEntityId, timeOfLastMouseEnterOnCard = model.currentTime } |> unselectMentionInStory, Cmd.none )
+          ( { model | hoveringOerId = maybeOerId, timelineHoverState = timelineHoverState, hoveringTagEntityId = hoveringTagEntityId, timeOfLastMouseEnterOnCard = model.currentTime } |> unselectMentionInStory, Cmd.none )
           |> logEventForLabStudy "SetHover" [ maybeOerId |> Maybe.withDefault 0 |> String.fromInt ]
 
     SetPopup popup ->
@@ -628,13 +635,59 @@ update msg ({nav, userProfileForm} as model) =
     FlyingHeartRelativeStartPositionReceived startPoint ->
       ( { model | flyingHeartAnimationStartPoint = Just startPoint }, Cmd.none)
 
-    Scrubbed position ->
-      ({ model | scrubbing = Just position }, Cmd.none)
-      |> logEventForLabStudy "Scrubbed" [ position |> String.fromFloat ]
+    TimelineMouseEvent {eventName, position} ->
+      let
+          newModel =
+            case eventName of
+              "mousedown" ->
+                { model | timelineHoverState = Just { position = position, mouseDownPosition = Just position } }
 
-    ScrubMouseLeave ->
-      ({ model | scrubbing = Nothing}, Cmd.none)
-      |> logEventForLabStudy "ScrubMouseLeave" []
+              "mouseup" ->
+                case model.timelineHoverState of
+                  Nothing ->
+                    model -- impossible
+
+                  Just {mouseDownPosition} ->
+                    case mouseDownPosition of
+                      Nothing ->
+                        model -- impossible
+                      Just dragStartPos ->
+                        { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing }, course = model.course |> setRange model dragStartPos position }
+
+              "mousemove" ->
+                case model.timelineHoverState of
+                  Nothing ->
+                    { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing } }
+
+                  Just timelineHoverState ->
+                    { model | timelineHoverState = Just { position = position, mouseDownPosition = timelineHoverState.mouseDownPosition } }
+
+              _ ->
+                model -- impossible
+      in
+          (newModel, Cmd.none)
+          |> logEventForLabStudy "TimelineMouseEvent" [ eventName, position |> String.fromFloat ]
+
+    TimelineMouseLeave ->
+      let
+          course =
+            case model.timelineHoverState of
+              Nothing ->
+                model.course -- impossible
+
+              Just {position, mouseDownPosition} ->
+                case mouseDownPosition of
+                  Nothing ->
+                    model.course -- scrubbed but not dragged
+
+                  Just dragStartPos ->
+                    model.course |> setRange model dragStartPos position
+
+          newModel =
+            { model | timelineHoverState = Nothing, course = course }
+      in
+          (newModel, Cmd.none)
+          |> logEventForLabStudy "TimelineMouseLeave" []
 
     Html5VideoStarted pos ->
       (model |> updateVideoPlayer (Started pos) |> extendVideoUsages pos, Cmd.none)
@@ -685,6 +738,45 @@ update msg ({nav, userProfileForm} as model) =
           in
               ({ model | session = Just { session | isContentFlowEnabled = enabled } }, Cmd.none)
               |> saveAction 7 [ ("enable", Encode.bool enabled) ]
+
+    AddedOerToCourse oerId range ->
+      let
+          newItem =
+            { oerId = oerId
+            , range = range
+            , comment = ""
+            }
+
+          oldCourse =
+            model.course
+
+          newCourse =
+            { oldCourse | items = newItem :: oldCourse.items }
+      in
+          ({ model | course = newCourse }, Cmd.none)
+          |> logEventForLabStudy "AddedOerToCourse" [ oerId |> String.fromInt, courseToString newCourse ]
+
+    RemovedOerFromCourse oerId ->
+      let
+          oldCourse =
+            model.course
+
+          newCourse =
+            { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId/=oerId) }
+      in
+          ({ model | course = newCourse }, Cmd.none)
+          |> logEventForLabStudy "RemovedOerFromCourse" [ oerId |> String.fromInt, courseToString newCourse ]
+
+    MovedCourseItemDown index ->
+      let
+          oldCourse =
+            model.course
+
+          newCourse =
+            { oldCourse | items = oldCourse.items |> swapListItemWithNext index }
+      in
+          ({ model | course = newCourse }, Cmd.none)
+          |> logEventForLabStudy "MovedCourseItemDown" [ index |> String.fromInt, courseToString newCourse ]
 
 
 -- createNote : OerId -> String -> Model -> Model
@@ -1105,3 +1197,55 @@ extendVideoUsages pos model =
                   (Range pos 10) :: oldRanges
             in
                 { model | videoUsages = Dict.insert oer.id newRanges model.videoUsages  }
+
+
+courseToString : Course -> String
+courseToString {items} =
+  items
+  |> List.map (\item -> (String.fromInt item.oerId) ++ ":" ++ (item.range.start |> String.fromFloat) ++ "-" ++ (item.range.start + item.range.length |> String.fromFloat))
+  |> String.join ","
+
+
+setRange : Model -> Float -> Float -> Course -> Course
+setRange model dragStartPosition dragEndPosition course =
+  let
+      newCourse oerId duration =
+        let
+            range =
+              { start = dragStartPosition * duration
+              , length = (dragEndPosition - dragStartPosition) * duration
+              }
+              |> invertRangeIfNeeded
+
+            maybeExistingItem =
+              course.items
+              |> List.filter (\item -> item.oerId==oerId)
+              |> List.head
+
+            newItems =
+              case maybeExistingItem of
+                Nothing ->
+                  { oerId = oerId, range = range, comment = "" } :: course.items
+
+                Just existingItem ->
+                  course.items
+                  |> List.map (\item -> if item.oerId==existingItem.oerId then { item | range = range } else item)
+        in
+            { course | hasChanged = True, items = newItems }
+  in
+      case model.inspectorState of
+        Just {oer} ->
+          newCourse oer.id oer.durationInSeconds
+
+        Nothing ->
+          case model.hoveringOerId of
+            Just hoveringOerId ->
+              case model.cachedOers |> Dict.get hoveringOerId of
+                Nothing ->
+                  course -- impossible
+
+                Just oer ->
+                  newCourse hoveringOerId oer.durationInSeconds
+
+            Nothing ->
+              course -- impossible

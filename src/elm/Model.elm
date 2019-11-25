@@ -25,6 +25,7 @@ type alias Model =
   , searchState : Maybe SearchState
   , inspectorState : Maybe InspectorState
   , snackbar : Maybe Snackbar
+  , course : Course
   , hoveringOerId : Maybe OerId
   , timeOfLastMouseEnterOnCard : Posix
   , modalAnimation : Maybe BoxAnimation
@@ -68,7 +69,7 @@ type alias Model =
   , flyingHeartAnimation : Maybe FlyingHeartAnimation
   , flyingHeartAnimationStartPoint : Maybe Point
   , featuredOers : Maybe (List OerId)
-  , scrubbing : Maybe Float
+  , timelineHoverState : Maybe TimelineHoverState
   }
 
 
@@ -296,6 +297,27 @@ type alias Range =
   , length : Float -- 0 to 1
   }
 
+type alias TimelineHoverState =
+  { position : Float
+  , mouseDownPosition : Maybe Float
+  }
+
+type alias EventNameAndPosition =
+  { eventName : String
+  , position : Float
+  }
+
+type alias Course =
+  { title : String
+  , items : List CourseItem
+  , hasChanged : Bool
+  }
+
+type alias CourseItem =
+  { oerId : OerId
+  , range : Range
+  , comment : String
+  }
 
 type alias Playlist =
   { title : String
@@ -337,6 +359,7 @@ initialModel nav flags =
   , searchState = Nothing
   , inspectorState = Nothing
   , snackbar = Nothing
+  , course = Course "My course" [] False
   , hoveringOerId = Nothing
   , timeOfLastMouseEnterOnCard = initialTime
   , modalAnimation = Nothing
@@ -380,7 +403,7 @@ initialModel nav flags =
   , flyingHeartAnimation = Nothing
   , flyingHeartAnimationStartPoint = Nothing
   , featuredOers = Nothing
-  , scrubbing = Nothing
+  , timelineHoverState = Nothing
   }
 
 
@@ -497,29 +520,44 @@ isInPlaylist oerId playlist =
   List.member oerId playlist.oerIds
 
 
--- durationInSecondsFromOer : Oer -> Int
--- durationInSecondsFromOer {duration} =
---   let
---       parts =
---         duration
---         |> String.split ":"
+secondsFromTimeString : String -> Int
+secondsFromTimeString time =
+  let
+      parts =
+        time
+        |> String.split ":"
 
---       minutes =
---         parts
---         |> List.head
---         |> Maybe.withDefault ""
---         |> String.toInt
---         |> Maybe.withDefault 0
+      minutes =
+        parts
+        |> List.head
+        |> Maybe.withDefault ""
+        |> String.toInt
+        |> Maybe.withDefault 0
 
---       seconds =
---         parts
---         |> List.drop 1
---         |> List.head
---         |> Maybe.withDefault ""
---         |> String.toInt
---         |> Maybe.withDefault 0
---   in
---       minutes * 60 + seconds
+      seconds =
+        parts
+        |> List.drop 1
+        |> List.head
+        |> Maybe.withDefault ""
+        |> String.toInt
+        |> Maybe.withDefault 0
+  in
+      minutes * 60 + seconds
+
+
+secondsToString : Int -> String
+secondsToString seconds =
+  let
+      secondsString =
+        seconds |> modBy 60
+        |> String.fromInt
+        |> String.padLeft 2 '0'
+
+      minutesString =
+        seconds // 60
+        |> String.fromInt
+  in
+      minutesString ++ ":" ++ secondsString
 
 
 displayName userProfile =
@@ -683,6 +721,9 @@ viewedPath =
 
 favoritesPath =
   "/favorites"
+
+-- coursePath =
+--   "/course"
 
 resourcePath =
   "/resource"
@@ -850,3 +891,42 @@ isContentFlowEnabled model =
       False
     Just session ->
       session.isContentFlowEnabled
+
+
+getCourseItem : Model -> Oer -> Maybe CourseItem
+getCourseItem model oer =
+  model.course.items
+  |> List.filter (\{oerId} -> oerId == oer.id)
+  |> List.head
+
+
+swapListItemWithNext : Int -> List a -> List a
+swapListItemWithNext index xs =
+  let
+      left =
+        xs |> List.take index
+
+      swapped =
+        xs |> List.drop index |> List.take 2 |> List.reverse
+
+      right =
+        xs |> List.drop (index+2)
+  in
+      left ++ swapped ++ right
+
+
+invertRangeIfNeeded : Range -> Range
+invertRangeIfNeeded range =
+  if range.length < 0 then
+    { start = range.start + range.length
+    , length = -range.length
+    }
+  else
+    range
+
+
+multiplyRange : Float -> Range -> Range
+multiplyRange factor {start, length} =
+  { start = start * factor
+  , length = length * factor
+  }

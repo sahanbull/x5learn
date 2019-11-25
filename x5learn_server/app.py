@@ -419,10 +419,10 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
             oer = Oer(url, convert_x5_material_to_oer(material, url))
             db_session.add(oer)
             db_session.commit()
-        oers.append(oer)
         # Fix a problem with videolectures lacking duration info
         if oer.data['mediatype']=='video' and oer.data['duration']=='' and ('durationInSeconds' not in oer.data):
             oer = inject_duration(oer)
+        oers.append(oer)
         push_enrichment_task_if_needed(url, int(1000 / (index + 1)) + 1)
     oers = oers[:MAX_SEARCH_RESULTS]
     if len(oers) == n_initial_oers:  # no more results on page -> stop querying

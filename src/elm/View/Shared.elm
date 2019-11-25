@@ -187,7 +187,7 @@ orange =
   rgb255 255 120 0
 
 
-viewedBlue =
+blue =
   rgb255 0 190 250
 
 
@@ -403,7 +403,7 @@ actionButtonWithIcon textAttrs iconPosition svgIconStub str onPress =
           IconRight ->
             [ title, icon ]
   in
-      button [] { onPress = onPress, label = label |> row [ width fill, spacing 3, Border.rounded 4 ]}
+      button [ htmlClass "CloseInspectorOnClickOutside" ] { onPress = onPress, label = label |> row [ width fill, spacing 3, Border.rounded 4 ]}
 
 
 simpleButton : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
@@ -604,21 +604,6 @@ verticalSpacingBetweenCards =
 
 pointerEventsNone =
   htmlClass "PointerEventsNone"
-
-
-secondsToString : Int -> String
-secondsToString seconds =
-  let
-      secondsString =
-        seconds |> modBy 60
-        |> String.fromInt
-        |> String.padLeft 2 '0'
-
-      minutesString =
-        seconds // 60
-        |> String.fromInt
-  in
-      minutesString ++ ":" ++ secondsString
 
 
 guestCallToSignup : String -> Element Msg

@@ -200,28 +200,8 @@ function setupEventHandlers(){
     }
   });
 
-  document.addEventListener("mousemove", function(event){
-    var element = event.target;
-    // if((" " + element.getAttribute("class") + " ").replace(/[\n\t]/g, " ").indexOf(" StoryTag ") > -1 ){
-    //   var rect = element.getBoundingClientRect();
-    //   var posX = window.scrollX + rect.left;
-    //   var positionInResource = (event.pageX - posX) / rect.width;
-    //   app.ports.mouseMovedOnStoryTag.send(positionInResource);
-    // }
+  [ 'mousedown', 'mouseup', 'mousemove' ].forEach(registerTimelineMouseEvent);
 
-    // When ContentFlow is enabled, the mousemove event is caught by ChunkTrigger
-    if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" ChunkTrigger ") > -1 ){
-      var fragmentsBar = element.closest('.FragmentsBar')
-      if(fragmentsBar){
-        reportScrubbing(fragmentsBar, event);
-      }
-    }
-
-    // When ContentFlow is disabled, the mousemove event is caught by FragmentsBar
-    if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" FragmentsBar ") > -1 ){
-      reportScrubbing(element, event);
-    }
-  });
 
   document.onkeydown = function checkKey(e) {
     e = e || window.event;
@@ -296,9 +276,25 @@ function getEventPosition(event){
 }
 
 
-function reportScrubbing(fragmentsBar, event){
-  var rect = fragmentsBar.getBoundingClientRect();
+function registerTimelineMouseEvent(eventName){
+  document.addEventListener(eventName, function(event){
+    var element = event.target;
+    // When ContentFlow is enabled, the event is caught by ChunkTrigger
+    if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" ChunkTrigger ") > -1 ){
+      var fragmentsBar = element.closest('.FragmentsBar')
+      reportTimelineMouseEvent(fragmentsBar, eventName, event);
+    }
+    // When ContentFlow is disabled, the event is caught by FragmentsBar
+    if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" FragmentsBar ") > -1 ){
+      reportTimelineMouseEvent(element, eventName, event);
+    }
+  });
+}
+
+
+function reportTimelineMouseEvent(element, eventName, event){
+  var rect = element.getBoundingClientRect();
   var posX = window.scrollX + rect.left;
-  var positionInResource = (event.pageX - posX) / rect.width;
-  app.ports.scrubbed.send(positionInResource);
+  var position = (event.pageX - posX) / rect.width;
+  app.ports.timelineMouseEvent.send({eventName: eventName, position: position});
 }

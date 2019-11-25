@@ -22,6 +22,7 @@ type Msg
   | ChangeSearchText String
   | ResizeBrowser Int Int
   | InspectOer Oer Float Bool
+  | InspectCourseItem Oer
   | UninspectSearchResult
   | ModalAnimationStart BoxAnimation
   | ModalAnimationStop Int
@@ -76,8 +77,8 @@ type Msg
   | MouseEnterMentionInBubbblogramOverview OerId EntityId MentionInOer
   -- | ClickedHeart OerId
   | FlyingHeartRelativeStartPositionReceived Point
-  | Scrubbed Float
-  | ScrubMouseLeave
+  | TimelineMouseEvent EventNameAndPosition
+  | TimelineMouseLeave
   | Html5VideoStarted Float
   | Html5VideoPaused Float
   | Html5VideoSeeked Float
@@ -85,6 +86,9 @@ type Msg
   | Html5VideoDuration Float
   | StartCurrentHtml5Video Float
   | ToggleContentFlow
+  | AddedOerToCourse OerId Range
+  | RemovedOerFromCourse OerId
+  | MovedCourseItemDown Int
 
 
 type UserProfileField
@@ -102,7 +106,7 @@ subscriptions model =
   , Ports.clickedOnDocument (\_ -> ClickedOnDocument)
   , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
   -- , Ports.mouseMovedOnStoryTag MouseMovedOnStoryTag
-  , Ports.scrubbed Scrubbed
+  , Ports.timelineMouseEvent TimelineMouseEvent
   -- , Ports.youtubeVideoIsPlayingAtPosition YoutubeVideoIsPlayingAtPosition
   , Ports.html5VideoStarted Html5VideoStarted
   , Ports.html5VideoPaused Html5VideoPaused

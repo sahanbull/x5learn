@@ -89,6 +89,8 @@ type Msg
   | AddedOerToCourse OerId Range
   | RemovedOerFromCourse OerId
   | MovedCourseItemDown Int
+  | SubmittedCourseItemComment
+  | ChangedCommentTextInCourseItem OerId String
 
 
 type UserProfileField

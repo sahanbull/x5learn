@@ -216,11 +216,14 @@ viewCourseSettings model oer {range, comment} =
         , range.start + range.length |> floor |> secondsToString |> bodyNoWrap [ width fill ]
         ]
         |> row [ spacing 10 ]
+
+      commentField =
+        Input.text [ width fill, htmlId "textInputFieldForCommentOnCourseItem", onEnter <| SubmittedCourseItemComment, Border.color x5color, Font.size 14, padding 3, moveDown 5 ] { onChange = ChangedCommentTextInCourseItem oer.id, text = comment, placeholder = Just ("Enter any notes or comments about this item" |> text |> Input.placeholder [ Font.size 14, moveDown 6 ]), label = Input.labelHidden "Comment on course item" }
   in
       [ topRow
       , fields
+      , commentField
       ]
-      -- |> column [ width fill, spacing 10 ]
 
 
 viewFragmentsBarWrapper model oer =
@@ -240,7 +243,7 @@ viewFragmentsBarWrapper model oer =
 
       containerHeight =
         if isLabStudy1 model then
-          65
+          100
         else
           200
 

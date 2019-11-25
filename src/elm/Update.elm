@@ -773,10 +773,24 @@ update msg ({nav, userProfileForm} as model) =
             model.course
 
           newCourse =
-            { oldCourse | items = oldCourse.items |> swapListItemWithNext index }
+            { oldCourse | items = oldCourse.items |> swapListItemWithNext index, hasChanged=True }
       in
           ({ model | course = newCourse }, Cmd.none)
           |> logEventForLabStudy "MovedCourseItemDown" [ index |> String.fromInt, courseToString newCourse ]
+
+    ChangedCommentTextInCourseItem oerId str ->
+      ( model |> setCommentTextInCourseItem oerId str, Cmd.none)
+
+    SubmittedCourseItemComment ->
+      let
+          oldCourse =
+            model.course
+
+          newCourse =
+            { oldCourse | hasChanged = True}
+      in
+          ({ model | course = newCourse }, setBrowserFocus "")
+          |> logEventForLabStudy "SubmittedCourseItemComment" []
 
 
 -- createNote : OerId -> String -> Model -> Model
@@ -1249,3 +1263,19 @@ setRange model dragStartPosition dragEndPosition course =
 
             Nothing ->
               course -- impossible
+
+
+setCommentTextInCourseItem : OerId -> String -> Model -> Model
+setCommentTextInCourseItem oerId str model =
+  let
+      oldCourse =
+        model.course
+
+      newItems =
+        oldCourse.items
+        |> List.map (\item -> if item.oerId==oerId then { item | comment = str } else item)
+
+      newCourse =
+        { oldCourse | hasChanged = True, items = newItems }
+  in
+      { model | course = newCourse }

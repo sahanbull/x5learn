@@ -223,3 +223,10 @@ a:hover {
 }
 
 /* End Toggle for ContentFlow */
+
+
+#textInputFieldForCommentOnCourseItem{
+  border: none;
+  border-bottom: 1px solid #999;
+  border-radius: 0;bottom ;
+}

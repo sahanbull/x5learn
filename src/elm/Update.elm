@@ -477,12 +477,22 @@ update msg ({nav, userProfileForm} as model) =
           |> logEventForLabStudy "SetPopup" (popupToStrings newModel.popup)
 
     ClosePopup ->
-      ( model |> closePopup, Cmd.none )
-      |> logEventForLabStudy "ClosePopup" []
+      case model.popup of
+        Nothing ->
+          (model, Cmd.none )
+
+        Just _ ->
+          ( model |> closePopup, Cmd.none )
+          |> logEventForLabStudy "ClosePopup" []
 
     CloseInspector ->
-      ( { model | inspectorState = Nothing }, Cmd.none )
-      |> logEventForLabStudy "CloseInspector" []
+      case model.inspectorState of
+        Nothing ->
+          (model, Cmd.none )
+
+        Just _ ->
+          ( { model | inspectorState = Nothing }, Cmd.none )
+          |> logEventForLabStudy "CloseInspector" []
 
     ClickedOnDocument ->
       ( { model | autocompleteSuggestions = [] }, Cmd.none )

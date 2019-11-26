@@ -121,7 +121,7 @@ subscriptions model =
   , Ports.pageScrolled PageScrolled
   , Ports.receiveCardPlaceholderPositions OerCardPlaceholderPositionsReceived
   , Ports.receiveFlyingHeartRelativeStartPosition FlyingHeartRelativeStartPositionReceived
-  , Time.every (if model.currentTime==initialTime then 1 else 500) ClockTick
+  , Time.every (if model.currentTime==initialTime then 1 else if model.timelineHoverState==Nothing then 500 else 200) ClockTick
   ] ++ (if anyBubblogramsAnimating model || isModalAnimating model || isFlyingHeartAnimating model then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
   |> Sub.batch
 

@@ -263,8 +263,6 @@ def api_load_course():
     course = Course.query.filter(Course.user_login_id == current_user.get_id()).order_by(Course.id.desc()).first()
     if course is None:
         course = {'items': [] }
-    print('load_course')
-    print(course)
     return jsonify(course.data)
 
 
@@ -282,9 +280,6 @@ def api_save_course():
 def api_save_ui_logged_events_batch():
     client_time = request.get_json()['clientTime']
     text = request.get_json()['text']
-    print('save_ui_logged_events_batch')
-    print(client_time)
-    print(text)
     user_login_id = current_user.get_id()  # Assuming that guests cannot use this feature
     batch = UiLogBatch(user_login_id, client_time, text)
     db_session.add(batch)
@@ -418,7 +413,7 @@ def search_results_from_x5gon_api(text):
 # until the number of search results hits a certain minimum or stops increasing
 def search_results_from_x5gon_api_pages(text, page_number, oers):
     n_initial_oers = len(oers)
-    print('X5GON search page_number', page_number)
+    # print('X5GON search page_number', page_number)
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request(
         'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text=' + text + '&page=' + str(

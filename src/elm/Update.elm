@@ -81,6 +81,7 @@ update msg ({nav, userProfileForm} as model) =
       |> requestWikichunkEnrichmentsIfNeeded
       |> requestEntityDefinitionsIfNeeded
       |> saveCourseIfNeeded
+      |> saveLoggedEventsIfNeeded
 
     AnimationTick time ->
       let
@@ -123,13 +124,13 @@ update msg ({nav, userProfileForm} as model) =
           youtubeEmbedParams =
             { modalId = modalId
             , videoId = getYoutubeVideoId oer.url |> Maybe.withDefault ""
-            , fragmentStart = fragmentStart
+            , videoStartPosition = fragmentStart * oer.durationInSeconds
             , playWhenReady = playWhenReady
             }
       in
           ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation youtubeEmbedParams)
           |> saveAction 1 [ ("oerId", Encode.int oer.id) ]
-          |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat ]
+          |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat, "playWhenReady:"++(if playWhenReady then "True" else "False") ]
 
     InspectCourseItem oer ->
       model
@@ -149,7 +150,7 @@ update msg ({nav, userProfileForm} as model) =
     RequestSession (Ok session) ->
       let
           newModel =
-            { model | session = Just session }
+            { model | session = Just session, timeWhenSessionLoaded = model.currentTime }
 
           cmd =
             case session.loginState of
@@ -398,6 +399,12 @@ update msg ({nav, userProfileForm} as model) =
     RequestSaveCourse (Err err) ->
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
+    RequestSaveLoggedEvents (Ok _) ->
+      (model, Cmd.none)
+
+    RequestSaveLoggedEvents (Err err) ->
+      ( { model | snackbar = createSnackbar model "Some logs were not saved" }, Cmd.none )
+
     -- RequestSaveNote (Ok _) ->
     --   (model, requestNotes)
 
@@ -470,12 +477,22 @@ update msg ({nav, userProfileForm} as model) =
           |> logEventForLabStudy "SetPopup" (popupToStrings newModel.popup)
 
     ClosePopup ->
-      ( model |> closePopup, Cmd.none )
-      |> logEventForLabStudy "ClosePopup" []
+      case model.popup of
+        Nothing ->
+          (model, Cmd.none )
+
+        Just _ ->
+          ( model |> closePopup, Cmd.none )
+          |> logEventForLabStudy "ClosePopup" []
 
     CloseInspector ->
-      ( { model | inspectorState = Nothing }, Cmd.none )
-      |> logEventForLabStudy "CloseInspector" []
+      case model.inspectorState of
+        Nothing ->
+          (model, Cmd.none )
+
+        Just _ ->
+          ( { model | inspectorState = Nothing }, Cmd.none )
+          |> logEventForLabStudy "CloseInspector" []
 
     ClickedOnDocument ->
       ( { model | autocompleteSuggestions = [] }, Cmd.none )
@@ -665,8 +682,8 @@ update msg ({nav, userProfileForm} as model) =
                       Nothing ->
                         model -- impossible
                       Just dragStartPos ->
-                        { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing }, course = model.course |> setRange model dragStartPos position }
-                        |> markCourseAsChanged
+                        { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing } }
+                        |> setCourseRange dragStartPos position
 
               "mousemove" ->
                 case model.timelineHoverState of
@@ -684,23 +701,20 @@ update msg ({nav, userProfileForm} as model) =
 
     TimelineMouseLeave ->
       let
-          course =
+          newModel =
             case model.timelineHoverState of
               Nothing ->
-                model.course -- impossible
+                model -- impossible
 
               Just {position, mouseDownPosition} ->
                 case mouseDownPosition of
                   Nothing ->
-                    model.course -- scrubbed but not dragged
+                    model -- scrubbed but not dragged
 
                   Just dragStartPos ->
-                    model.course |> setRange model dragStartPos position
-
-          newModel =
-            { model | timelineHoverState = Nothing, course = course }
+                    model |> setCourseRange dragStartPos position
       in
-          (newModel, Cmd.none)
+          ({ newModel | timelineHoverState = Nothing }, Cmd.none)
           |> logEventForLabStudy "TimelineMouseLeave" []
 
     Html5VideoStarted pos ->
@@ -739,6 +753,7 @@ update msg ({nav, userProfileForm} as model) =
 
     StartCurrentHtml5Video pos ->
       (model |> extendVideoUsages pos, startCurrentHtml5Video pos)
+      |> logEventForLabStudy "StartCurrentHtml5Video" [ pos |> String.fromFloat ]
 
     ToggleContentFlow ->
       case model.session of
@@ -752,6 +767,7 @@ update msg ({nav, userProfileForm} as model) =
           in
               ({ model | session = Just { session | isContentFlowEnabled = enabled } }, Cmd.none)
               |> saveAction 7 [ ("enable", Encode.bool enabled) ]
+              |> logEventForLabStudy "ToggleContentFlow" [ if enabled then "enabled" else "disabled" ]
 
     AddedOerToCourse oerId range ->
       let
@@ -989,10 +1005,15 @@ logEventForLabStudy eventType params (model, cmd) =
   -- in
   if isLabStudy1 model then
     let
-        time =
-          model.currentTime |> posixToMillis
+        timeString =
+          model.currentTime
+          |> posixToMillis
+          |> String.fromInt
+
+        logString =
+          timeString ++ ": " ++ eventType ++ " " ++ (params |> String.join ", ")
     in
-        (model, [ cmd, requestLabStudyLogEvent time eventType params ] |> Cmd.batch)
+        ({ model | loggedEvents = logString :: model.loggedEvents }, cmd)
   else
     (model, cmd)
 
@@ -1227,10 +1248,10 @@ courseToString {items} =
   |> String.join ","
 
 
-setRange : Model -> Float -> Float -> Course -> Course
-setRange model dragStartPosition dragEndPosition course =
+setCourseRange : Float -> Float -> Model -> Model
+setCourseRange dragStartPosition dragEndPosition ({course} as model) =
   let
-      newCourse oerId duration =
+      newModel oerId duration =
         let
             range =
               { start = dragStartPosition * duration
@@ -1251,25 +1272,33 @@ setRange model dragStartPosition dragEndPosition course =
                 Just existingItem ->
                   course.items
                   |> List.map (\item -> if item.oerId==existingItem.oerId then { item | range = range } else item)
+
+            oldCourse : Course
+            oldCourse =
+              model.course
         in
-            { course |  items = newItems }
+            if range.length > duration/100 then -- it needs to be drag, not click
+              { model | course = { oldCourse | items = newItems } }
+              |> markCourseAsChanged
+            else
+              model
   in
       case model.inspectorState of
         Just {oer} ->
-          newCourse oer.id oer.durationInSeconds
+          newModel oer.id oer.durationInSeconds
 
         Nothing ->
           case model.hoveringOerId of
             Just hoveringOerId ->
               case model.cachedOers |> Dict.get hoveringOerId of
                 Nothing ->
-                  course -- impossible
+                  model -- impossible
 
                 Just oer ->
-                  newCourse hoveringOerId oer.durationInSeconds
+                  newModel hoveringOerId oer.durationInSeconds
 
             Nothing ->
-              course -- impossible
+              model -- impossible
 
 
 setCommentTextInCourseItem : OerId -> String -> Model -> Model
@@ -1299,3 +1328,11 @@ saveCourseIfNeeded (oldModel, oldCmd) =
 markCourseAsChanged : Model -> Model
 markCourseAsChanged model =
   { model | courseNeedsSaving = True, courseChangesSaved = False, lastTimeCourseChanged = model.currentTime }
+
+
+saveLoggedEventsIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
+saveLoggedEventsIfNeeded (oldModel, oldCmd) =
+  if oldModel.loggedEvents/=[] && oldModel.session/=Nothing && millisSince oldModel oldModel.timeWhenSessionLoaded > 10000 && millisSince oldModel oldModel.lastTimeLoggedEventsSaved > 5000 then
+    ({ oldModel | loggedEvents = [], lastTimeLoggedEventsSaved = oldModel.currentTime }, [ requestSaveLoggedEvents oldModel, oldCmd ] |> Cmd.batch)
+  else
+    (oldModel, oldCmd)

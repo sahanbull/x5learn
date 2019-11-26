@@ -22,10 +22,9 @@ from x5learn_server.db.database import get_or_create_db
 _ = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
 from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, \
-    EntityDefinition, LabStudyLogEvent, ResourceFeedback, Action, ActionType, Note, Repository, NotesRepository, \
-    ActionsRepository, UserRepository, DefinitionsRepository, Course
+    EntityDefinition, ResourceFeedback, Action, ActionType, Note, Repository, NotesRepository, \
+    ActionsRepository, UserRepository, DefinitionsRepository, Course, UiLogBatch
 
-from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
 
 # Create app
@@ -264,19 +263,26 @@ def api_load_course():
     course = Course.query.filter(Course.user_login_id == current_user.get_id()).order_by(Course.id.desc()).first()
     if course is None:
         course = {'items': [] }
-    print('load_course')
-    print(course)
     return jsonify(course.data)
 
 
 @app.route("/api/v1/save_course/", methods=['POST'])
 def api_save_course():
     items = request.get_json()['items']
-    print('todo: save_course')
-    print(items)
     user_login_id = current_user.get_id()  # Assuming that guests cannot use this feature
     course = Course(user_login_id, {'items': items})
     db_session.add(course)
+    db_session.commit()
+    return 'OK'
+
+
+@app.route("/api/v1/save_ui_logged_events_batch/", methods=['POST'])
+def api_save_ui_logged_events_batch():
+    client_time = request.get_json()['clientTime']
+    text = request.get_json()['text']
+    user_login_id = current_user.get_id()  # Assuming that guests cannot use this feature
+    batch = UiLogBatch(user_login_id, client_time, text)
+    db_session.add(batch)
     db_session.commit()
     return 'OK'
 
@@ -398,19 +404,6 @@ def api_entity_descriptions():
     return jsonify(definitions)
 
 
-@app.route("/api/v1/log_event_for_lab_study/", methods=['POST'])
-def log_event_for_lab_study():
-    if current_user.is_authenticated:
-        email = current_user.email
-        if email.endswith('.lab'):
-            j = request.get_json(force=True)
-            event = LabStudyLogEvent(
-                email, j['eventType'], j['params'], j['browserTime'])
-            db_session.add(event)
-            db_session.commit()
-    return 'OK'
-
-
 def search_results_from_x5gon_api(text):
     text = urllib.parse.quote(text)
     return search_results_from_x5gon_api_pages(text, 1, [])
@@ -420,7 +413,7 @@ def search_results_from_x5gon_api(text):
 # until the number of search results hits a certain minimum or stops increasing
 def search_results_from_x5gon_api_pages(text, page_number, oers):
     n_initial_oers = len(oers)
-    print('X5GON search page_number', page_number)
+    # print('X5GON search page_number', page_number)
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request(
         'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text=' + text + '&page=' + str(

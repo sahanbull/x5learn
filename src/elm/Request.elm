@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestVideoUsages, requestLoadCourse, requestSaveCourse)--, requestUpdatePlayingVideo) --requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestFavorites)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents)--, requestUpdatePlayingVideo) --requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestFavorites)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -143,6 +143,15 @@ requestSaveCourse course =
     { url = Url.Builder.absolute [ apiRoot, "save_course/" ] []
     , body = Http.jsonBody <| Encode.object [ ("items", Encode.list courseItemEncoder course.items) ]
     , expect = Http.expectString RequestSaveCourse
+    }
+
+
+requestSaveLoggedEvents : Model -> Cmd Msg
+requestSaveLoggedEvents {currentTime, loggedEvents} =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "save_ui_logged_events_batch/" ] []
+    , body = Http.jsonBody <| Encode.object [ ("clientTime", Encode.string (currentTime |> posixToMillis |> String.fromInt)), ("text", Encode.string (loggedEvents |> List.reverse |> String.join "\n")) ]
+    , expect = Http.expectString RequestSaveLoggedEvents
     }
 
 

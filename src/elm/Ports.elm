@@ -40,6 +40,6 @@ port receiveFlyingHeartRelativeStartPosition : (Point -> msg) -> Sub msg
 type alias YoutubeEmbedParams =
   { modalId : String
   , videoId : String
-  , fragmentStart : Float
+  , videoStartPosition : Float
   , playWhenReady : Bool
   }

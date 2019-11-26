@@ -130,7 +130,7 @@ update msg ({nav, userProfileForm} as model) =
       in
           ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation youtubeEmbedParams)
           |> saveAction 1 [ ("oerId", Encode.int oer.id) ]
-          |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat ]
+          |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat, "playWhenReady:"++(if playWhenReady then "True" else "False") ]
 
     InspectCourseItem oer ->
       model
@@ -150,7 +150,7 @@ update msg ({nav, userProfileForm} as model) =
     RequestSession (Ok session) ->
       let
           newModel =
-            { model | session = Just session }
+            { model | session = Just session, timeWhenSessionLoaded = model.currentTime }
 
           cmd =
             case session.loginState of
@@ -1320,7 +1320,7 @@ markCourseAsChanged model =
 
 saveLoggedEventsIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
 saveLoggedEventsIfNeeded (oldModel, oldCmd) =
-  if oldModel.loggedEvents/=[] && millisSince oldModel oldModel.lastTimeLoggedEventsSaved > 5000 then
-    ({ oldModel | loggedEvents = [] }, [ requestSaveLoggedEvents oldModel, oldCmd ] |> Cmd.batch)
+  if oldModel.loggedEvents/=[] && oldModel.session/=Nothing && millisSince oldModel oldModel.timeWhenSessionLoaded > 10000 && millisSince oldModel oldModel.lastTimeLoggedEventsSaved > 5000 then
+    ({ oldModel | loggedEvents = [], lastTimeLoggedEventsSaved = oldModel.currentTime }, [ requestSaveLoggedEvents oldModel, oldCmd ] |> Cmd.batch)
   else
     (oldModel, oldCmd)

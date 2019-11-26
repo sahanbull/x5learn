@@ -75,6 +75,7 @@ type alias Model =
   , lastTimeCourseChanged : Posix
   , loggedEvents : List String
   , lastTimeLoggedEventsSaved : Posix
+  , timeWhenSessionLoaded : Posix
   }
 
 
@@ -413,6 +414,7 @@ initialModel nav flags =
   , lastTimeCourseChanged = initialTime
   , loggedEvents = []
   , lastTimeLoggedEventsSaved = initialTime
+  , timeWhenSessionLoaded = initialTime
   }
 
 

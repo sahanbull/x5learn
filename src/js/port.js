@@ -289,6 +289,14 @@ function registerTimelineMouseEvent(eventName){
 
 
 function reportTimelineMouseEvent(element, eventName, event){
+  if(eventName=='mousemove'){
+    var now = new Date().getTime();
+    // no need to report more than a handful mousemove events per second. be nice to the network.
+    if(now-timeOfLastMouseMove < 200){
+      return;
+    }
+    timeOfLastMouseMove = now;
+  }
   var rect = element.getBoundingClientRect();
   var posX = window.scrollX + rect.left;
   var position = (event.pageX - posX) / rect.width;

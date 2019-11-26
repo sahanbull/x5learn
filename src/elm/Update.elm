@@ -757,6 +757,7 @@ update msg ({nav, userProfileForm} as model) =
           in
               ({ model | session = Just { session | isContentFlowEnabled = enabled } }, Cmd.none)
               |> saveAction 7 [ ("enable", Encode.bool enabled) ]
+              |> logEventForLabStudy "ToggleContentFlow" [ if enabled then "enabled" else "disabled" ]
 
     AddedOerToCourse oerId range ->
       let

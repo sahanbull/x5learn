@@ -26,7 +26,7 @@ viewFragmentsBar model oer chunks barWidth barId =
 
           Just ranges ->
             ranges
-            |> List.map (\{start,length} -> none |> el [ width (length |> pxFromSeconds |> round |> max 4 |> px), height <| px 3, Background.color red, moveRight (start |> pxFromSeconds), pointerEventsNone ] |> inFront)
+            |> List.map (\{start,length} -> none |> el [ width (length |> pxFromSeconds |> round |> max 4 |> px), height <| px 3, Background.color red, moveRight <| pxFromSeconds <| min start (oer.durationInSeconds-length), pointerEventsNone ] |> inFront)
 
       courseRangeMarkers =
         let

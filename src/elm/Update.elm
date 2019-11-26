@@ -124,7 +124,7 @@ update msg ({nav, userProfileForm} as model) =
           youtubeEmbedParams =
             { modalId = modalId
             , videoId = getYoutubeVideoId oer.url |> Maybe.withDefault ""
-            , fragmentStart = fragmentStart
+            , videoStartPosition = fragmentStart * oer.durationInSeconds
             , playWhenReady = playWhenReady
             }
       in
@@ -743,6 +743,7 @@ update msg ({nav, userProfileForm} as model) =
 
     StartCurrentHtml5Video pos ->
       (model |> extendVideoUsages pos, startCurrentHtml5Video pos)
+      |> logEventForLabStudy "StartCurrentHtml5Video" [ pos |> String.fromFloat ]
 
     ToggleContentFlow ->
       case model.session of

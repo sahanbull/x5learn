@@ -60,8 +60,7 @@ function setupPorts(app){
   app.ports.startCurrentHtml5Video.subscribe(function(position) {
     var vid = getHtml5VideoPlayer();
     if(vid){
-      vid.currentTime = position;
-      vid.play();
+      playWhenPossible(vid, position);
     }
   });
 
@@ -115,13 +114,10 @@ function startAnimationWhenModalIsReady(youtubeEmbedParams) {
       }else{
         var vid = getHtml5VideoPlayer();
         if(vid){
-          vid.onloadedmetadata = function() {
-            app.ports.html5VideoDuration.send(vid.duration);
-            if(youtubeEmbedParams.playWhenReady){
-              vid.currentTime = youtubeEmbedParams.fragmentStart * vid.duration;
-              vid.play();
-            }
-          };
+          if(youtubeEmbedParams.playWhenReady){
+            playWhenPossible(vid, youtubeEmbedParams.videoStartPosition);
+          }
+
           vid.onplay = function() {
             isVideoPlaying = true;
             videoPlayPosition = vid.currentTime;
@@ -297,4 +293,21 @@ function reportTimelineMouseEvent(element, eventName, event){
   var posX = window.scrollX + rect.left;
   var position = (event.pageX - posX) / rect.width;
   app.ports.timelineMouseEvent.send({eventName: eventName, position: position});
+}
+
+
+function playWhenPossible(vid, position){
+  vid.currentTime = position;
+  tryPlaying(vid, position, 50);
+}
+
+function tryPlaying(vid, position, attempts){
+  // console.log('tryPlaying '+vid+' '+position+' '+attempts);
+  if(vid.readyState>=2){//HAVE_CURRENT_DATA
+    vid.play();
+  }else if(attempts>0){
+    setTimeout(function(){
+      tryPlaying(vid, position, attempts-1);
+    }, 500);
+  }
 }

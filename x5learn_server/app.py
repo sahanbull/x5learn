@@ -22,10 +22,9 @@ from x5learn_server.db.database import get_or_create_db
 _ = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
 from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, \
-    EntityDefinition, LabStudyLogEvent, ResourceFeedback, Action, ActionType, Note, Repository, NotesRepository, \
+    EntityDefinition, ResourceFeedback, Action, ActionType, Note, Repository, NotesRepository, \
     ActionsRepository, UserRepository, DefinitionsRepository, Course, UiLogBatch
 
-from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
 
 # Create app
@@ -408,20 +407,6 @@ def api_entity_descriptions():
             entity_id=entity_id).first()
         definitions[entity_id] = entity_definition.extract if entity_definition is not None else ''
     return jsonify(definitions)
-
-
-@app.route("/api/v1/log_event_for_lab_study/", methods=['POST'])
-def log_event_for_lab_study():
-    if current_user.is_authenticated:
-        email = current_user.email
-        user_login_id = current_user.get_id()
-        if email.endswith('.lab'):
-            j = request.get_json(force=True)
-            event = LabStudyLogEvent(
-                user_login_id, email, j['eventType'], j['params'], j['browserTime'])
-            db_session.add(event)
-            db_session.commit()
-    return 'OK'
 
 
 def search_results_from_x5gon_api(text):

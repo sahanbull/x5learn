@@ -297,28 +297,6 @@ class UiLogBatch(Base):
         self.created_at = datetime.datetime.now()
 
 
-# This table is only used for the purpose of conducting lab-based evaluations of user experience at UCL.
-
-
-class LabStudyLogEvent(Base):
-    __tablename__ = 'lab_study_log_event'
-    id = Column(Integer(), primary_key=True)
-    user_login_id = Column(Integer())
-    participant = Column(String(255))
-    event_type = Column(String(40))
-    params = Column(String())
-    browser_time = Column(BigInteger())
-    created_at = Column(DateTime())
-
-    def __init__(self, user_login_id, participant, event_type, params, browser_time):
-        self.user_login_id = user_login_id
-        self.participant = participant
-        self.event_type = event_type
-        self.params = params
-        self.browser_time = browser_time
-        self.created_at = datetime.datetime.now()
-
-
 # Repository pattern implemented for CRUD
 class Repository:
     """

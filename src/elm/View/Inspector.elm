@@ -219,9 +219,15 @@ viewCourseSettings model oer {range, comment} =
 
       commentField =
         Input.text [ width fill, htmlId "textInputFieldForCommentOnCourseItem", onEnter <| SubmittedCourseItemComment, Border.color x5color, Font.size 14, padding 3, moveDown 5 ] { onChange = ChangedCommentTextInCourseItem oer.id, text = comment, placeholder = Just ("Enter any notes or comments about this item" |> text |> Input.placeholder [ Font.size 14, moveDown 6 ]), label = Input.labelHidden "Comment on course item" }
+
+      changesSaved =
+        if model.courseChangesSaved then
+          "✓ Your changes were saved" |> captionNowrap [ alignRight, greyTextDisabled ]
+        else
+          none
   in
       [ topRow
-      , fields
+      , [ fields, changesSaved ] |> row [ width fill ]
       , commentField
       ]
 

@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestVideoUsages)--, requestUpdatePlayingVideo) --requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestFavorites)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestVideoUsages, requestLoadCourse, requestSaveCourse)--, requestUpdatePlayingVideo) --requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestFavorites)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -102,12 +102,47 @@ userProfileEncoder userProfile =
     ]
 
 
+courseItemEncoder : CourseItem -> Encode.Value
+courseItemEncoder item =
+  Encode.object
+    [ ("oerId", Encode.int item.oerId)
+    , ("range", rangeEncoder item.range)
+    , ("comment", Encode.string item.comment)
+    ]
+
+
+rangeEncoder : Range -> Encode.Value
+rangeEncoder range =
+  Encode.object
+    [ ("start", Encode.float range.start)
+    , ("length", Encode.float range.length)
+    ]
+
+
 requestLabStudyLogEvent : Int -> String -> List String -> Cmd Msg
 requestLabStudyLogEvent time eventType params =
   Http.post
     { url = Url.Builder.absolute [ apiRoot, "log_event_for_lab_study/" ] []
     , body = Http.jsonBody <| Encode.object [ ("browserTime", Encode.int time), ("eventType", Encode.string eventType), ("params", Encode.list Encode.string params) ]
     , expect = Http.expectString RequestLabStudyLogEvent
+    }
+
+
+requestLoadCourse : Cmd Msg
+requestLoadCourse =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "load_course/" ] []
+    , body = Http.jsonBody <| Encode.object []
+    , expect = Http.expectJson RequestLoadCourse courseDecoder
+    }
+
+
+requestSaveCourse : Course -> Cmd Msg
+requestSaveCourse course =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "save_course/" ] []
+    , body = Http.jsonBody <| Encode.object [ ("items", Encode.list courseItemEncoder course.items) ]
+    , expect = Http.expectString RequestSaveCourse
     }
 
 
@@ -152,6 +187,18 @@ requestVideoUsages =
     { url = Url.Builder.absolute [ apiRoot, "video_usages" ] []
     , expect = Http.expectJson RequestVideoUsages (dict (list rangeDecoder))
     }
+
+
+courseItemDecoder =
+  map3 CourseItem
+    (field "oerId" int)
+    (field "range" rangeDecoder)
+    (field "comment" string)
+
+
+courseDecoder =
+  map Course
+    (field "items" (list courseItemDecoder))
 
 
 rangeDecoder =

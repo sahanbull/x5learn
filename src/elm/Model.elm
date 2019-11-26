@@ -70,7 +70,9 @@ type alias Model =
   , flyingHeartAnimationStartPoint : Maybe Point
   , featuredOers : Maybe (List OerId)
   , timelineHoverState : Maybe TimelineHoverState
-  , coursePersistenceStatus : CoursePersistenceStatus
+  , courseNeedsSaving : Bool
+  , courseChangesSaved : Bool
+  , lastTimeCourseChanged : Posix
   }
 
 
@@ -284,12 +286,6 @@ type alias EntityPopup = { entityId : String, hoveringAction : Maybe String }
 
 type alias BubblePopupState = { oerId : OerId, entityId : String, content : BubblePopupContent, nextContents : List BubblePopupContent }
 
-type CoursePersistenceStatus
-  = CourseNeedsLoading
-  | CourseLoaded
-  | Fresh
-  | Changed
-  | Saved
 
 type BubblePopupContent
   = DefinitionInBubblePopup
@@ -410,7 +406,9 @@ initialModel nav flags =
   , flyingHeartAnimationStartPoint = Nothing
   , featuredOers = Nothing
   , timelineHoverState = Nothing
-  , coursePersistenceStatus = CourseNeedsLoading
+  , courseNeedsSaving = False
+  , courseChangesSaved = False
+  , lastTimeCourseChanged = initialTime
   }
 
 

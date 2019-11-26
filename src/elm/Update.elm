@@ -35,7 +35,7 @@ update msg ({nav, userProfileForm} as model) =
           (newModel, cmd) =
             model |> update (UrlChanged url)
       in
-          (newModel, [ cmd, requestSession, askPageScrollState True ] |> Cmd.batch )
+          (newModel, [ cmd, requestSession, requestLoadCourse, askPageScrollState True ] |> Cmd.batch )
 
     LinkClicked urlRequest ->
       case urlRequest of
@@ -80,6 +80,7 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | currentTime = time, enrichmentsAnimating = anyBubblogramsAnimating model, snackbar = updateSnackbar model }, getOerCardPlaceholderPositions True)
       |> requestWikichunkEnrichmentsIfNeeded
       |> requestEntityDefinitionsIfNeeded
+      |> saveCourseIfNeeded
 
     AnimationTick time ->
       let
@@ -385,6 +386,18 @@ update msg ({nav, userProfileForm} as model) =
       -- ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
+    RequestLoadCourse (Ok course) ->
+      ({ model | course = course, courseNeedsSaving = False}, Cmd.none)
+
+    RequestLoadCourse (Err err) ->
+      ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+
+    RequestSaveCourse (Ok _) ->
+      ({ model | courseChangesSaved = True }, Cmd.none)
+
+    RequestSaveCourse (Err err) ->
+      ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+
     -- RequestSaveNote (Ok _) ->
     --   (model, requestNotes)
 
@@ -652,7 +665,8 @@ update msg ({nav, userProfileForm} as model) =
                       Nothing ->
                         model -- impossible
                       Just dragStartPos ->
-                        { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing }, coursePersistenceStatus = Changed, course = model.course |> setRange model dragStartPos position }
+                        { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing }, course = model.course |> setRange model dragStartPos position }
+                        |> markCourseAsChanged
 
               "mousemove" ->
                 case model.timelineHoverState of
@@ -753,7 +767,7 @@ update msg ({nav, userProfileForm} as model) =
           newCourse =
             { oldCourse | items = newItem :: oldCourse.items}
       in
-          ({ model | course = newCourse, coursePersistenceStatus = Changed  }, Cmd.none)
+          ({ model | course = newCourse } |> markCourseAsChanged, Cmd.none)
           |> logEventForLabStudy "AddedOerToCourse" [ oerId |> String.fromInt, courseToString newCourse ]
 
     RemovedOerFromCourse oerId ->
@@ -764,7 +778,7 @@ update msg ({nav, userProfileForm} as model) =
           newCourse =
             { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId/=oerId)}
       in
-          ({ model | course = newCourse, coursePersistenceStatus = Changed  }, Cmd.none)
+          ({ model | course = newCourse } |> markCourseAsChanged, Cmd.none)
           |> logEventForLabStudy "RemovedOerFromCourse" [ oerId |> String.fromInt, courseToString newCourse ]
 
     MovedCourseItemDown index ->
@@ -775,14 +789,14 @@ update msg ({nav, userProfileForm} as model) =
           newCourse =
             { oldCourse | items = oldCourse.items |> swapListItemWithNext index}
       in
-          ({ model | course = newCourse, coursePersistenceStatus = Changed }, Cmd.none)
+          ({ model | course = newCourse} |> markCourseAsChanged, Cmd.none)
           |> logEventForLabStudy "MovedCourseItemDown" [ index |> String.fromInt, courseToString newCourse ]
 
     ChangedCommentTextInCourseItem oerId str ->
       ( model |> setCommentTextInCourseItem oerId str, Cmd.none)
 
     SubmittedCourseItemComment ->
-      ({ model | coursePersistenceStatus = Changed }, setBrowserFocus "")
+      ( model |> markCourseAsChanged, setBrowserFocus "")
       |> logEventForLabStudy "SubmittedCourseItemComment" []
 
 
@@ -1271,4 +1285,17 @@ setCommentTextInCourseItem oerId str model =
       newCourse =
         { oldCourse | items = newItems }
   in
-      { model | course = newCourse, coursePersistenceStatus = Changed }
+      { model | course = newCourse} |> markCourseAsChanged
+
+
+saveCourseIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
+saveCourseIfNeeded (oldModel, oldCmd) =
+  if oldModel.courseNeedsSaving && millisSince oldModel oldModel.lastTimeCourseChanged > 2000 then
+    ({ oldModel | courseNeedsSaving = False }, [ requestSaveCourse oldModel.course, oldCmd ] |> Cmd.batch)
+  else
+    (oldModel, oldCmd)
+
+
+markCourseAsChanged : Model -> Model
+markCourseAsChanged model =
+  { model | courseNeedsSaving = True, courseChangesSaved = False, lastTimeCourseChanged = model.currentTime }

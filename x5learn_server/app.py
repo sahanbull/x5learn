@@ -262,7 +262,8 @@ def api_video_usages():
 def api_load_course():
     course = Course.query.filter(Course.user_login_id == current_user.get_id()).order_by(Course.id.desc()).first()
     if course is None:
-        course = {'items': [] }
+        user_login_id = current_user.get_id()  # Assuming that guests cannot use this feature
+        course = Course(user_login_id, {'items': []})
     return jsonify(course.data)
 
 

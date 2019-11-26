@@ -672,8 +672,8 @@ update msg ({nav, userProfileForm} as model) =
                       Nothing ->
                         model -- impossible
                       Just dragStartPos ->
-                        { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing }, course = model.course |> setRange model dragStartPos position }
-                        |> markCourseAsChanged
+                        { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing } }
+                        |> setCourseRange dragStartPos position
 
               "mousemove" ->
                 case model.timelineHoverState of
@@ -691,23 +691,20 @@ update msg ({nav, userProfileForm} as model) =
 
     TimelineMouseLeave ->
       let
-          course =
+          newModel =
             case model.timelineHoverState of
               Nothing ->
-                model.course -- impossible
+                model -- impossible
 
               Just {position, mouseDownPosition} ->
                 case mouseDownPosition of
                   Nothing ->
-                    model.course -- scrubbed but not dragged
+                    model -- scrubbed but not dragged
 
                   Just dragStartPos ->
-                    model.course |> setRange model dragStartPos position
-
-          newModel =
-            { model | timelineHoverState = Nothing, course = course }
+                    model |> setCourseRange dragStartPos position
       in
-          (newModel, Cmd.none)
+          ({ newModel | timelineHoverState = Nothing }, Cmd.none)
           |> logEventForLabStudy "TimelineMouseLeave" []
 
     Html5VideoStarted pos ->
@@ -1239,10 +1236,10 @@ courseToString {items} =
   |> String.join ","
 
 
-setRange : Model -> Float -> Float -> Course -> Course
-setRange model dragStartPosition dragEndPosition course =
+setCourseRange : Float -> Float -> Model -> Model
+setCourseRange dragStartPosition dragEndPosition ({course} as model) =
   let
-      newCourse oerId duration =
+      newModel oerId duration =
         let
             range =
               { start = dragStartPosition * duration
@@ -1263,25 +1260,33 @@ setRange model dragStartPosition dragEndPosition course =
                 Just existingItem ->
                   course.items
                   |> List.map (\item -> if item.oerId==existingItem.oerId then { item | range = range } else item)
+
+            oldCourse : Course
+            oldCourse =
+              model.course
         in
-            { course |  items = newItems }
+            if range.length > duration/100 then -- it needs to be drag, not click
+              { model | course = { oldCourse | items = newItems } }
+              |> markCourseAsChanged
+            else
+              model
   in
       case model.inspectorState of
         Just {oer} ->
-          newCourse oer.id oer.durationInSeconds
+          newModel oer.id oer.durationInSeconds
 
         Nothing ->
           case model.hoveringOerId of
             Just hoveringOerId ->
               case model.cachedOers |> Dict.get hoveringOerId of
                 Nothing ->
-                  course -- impossible
+                  model -- impossible
 
                 Just oer ->
-                  newCourse hoveringOerId oer.durationInSeconds
+                  newModel hoveringOerId oer.durationInSeconds
 
             Nothing ->
-              course -- impossible
+              model -- impossible
 
 
 setCommentTextInCourseItem : OerId -> String -> Model -> Model

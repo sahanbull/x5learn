@@ -23,7 +23,7 @@ _ = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
 from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, \
     EntityDefinition, LabStudyLogEvent, ResourceFeedback, Action, ActionType, Note, Repository, NotesRepository, \
-    ActionsRepository, UserRepository, DefinitionsRepository
+    ActionsRepository, UserRepository, DefinitionsRepository, Course
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
@@ -257,6 +257,28 @@ def api_video_usages():
     for oer_id, positions in positions_per_oer.items():
         ranges_per_oer[oer_id] = video_usage_ranges_from_positions(positions)
     return jsonify(ranges_per_oer)
+
+
+@app.route("/api/v1/load_course/", methods=['POST'])
+def api_load_course():
+    course = Course.query.filter(Course.user_login_id == current_user.get_id()).order_by(Course.id.desc()).first()
+    if course is None:
+        course = {'items': [] }
+    print('load_course')
+    print(course)
+    return jsonify(course.data)
+
+
+@app.route("/api/v1/save_course/", methods=['POST'])
+def api_save_course():
+    items = request.get_json()['items']
+    print('todo: save_course')
+    print(items)
+    user_login_id = current_user.get_id()  # Assuming that guests cannot use this feature
+    course = Course(user_login_id, {'items': items})
+    db_session.add(course)
+    db_session.commit()
+    return 'OK'
 
 
 def video_usage_ranges_from_positions(positions):

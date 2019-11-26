@@ -35,7 +35,7 @@ update msg ({nav, userProfileForm} as model) =
           (newModel, cmd) =
             model |> update (UrlChanged url)
       in
-          (newModel, [ cmd, requestSession, askPageScrollState True ] |> Cmd.batch )
+          (newModel, [ cmd, requestSession, requestLoadCourse, askPageScrollState True ] |> Cmd.batch )
 
     LinkClicked urlRequest ->
       case urlRequest of
@@ -80,6 +80,7 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | currentTime = time, enrichmentsAnimating = anyBubblogramsAnimating model, snackbar = updateSnackbar model }, getOerCardPlaceholderPositions True)
       |> requestWikichunkEnrichmentsIfNeeded
       |> requestEntityDefinitionsIfNeeded
+      |> saveCourseIfNeeded
 
     AnimationTick time ->
       let
@@ -385,6 +386,18 @@ update msg ({nav, userProfileForm} as model) =
       -- ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
+    RequestLoadCourse (Ok course) ->
+      ({ model | course = course, courseNeedsSaving = False}, Cmd.none)
+
+    RequestLoadCourse (Err err) ->
+      ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+
+    RequestSaveCourse (Ok _) ->
+      ({ model | courseChangesSaved = True }, Cmd.none)
+
+    RequestSaveCourse (Err err) ->
+      ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+
     -- RequestSaveNote (Ok _) ->
     --   (model, requestNotes)
 
@@ -653,6 +666,7 @@ update msg ({nav, userProfileForm} as model) =
                         model -- impossible
                       Just dragStartPos ->
                         { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing }, course = model.course |> setRange model dragStartPos position }
+                        |> markCourseAsChanged
 
               "mousemove" ->
                 case model.timelineHoverState of
@@ -751,9 +765,9 @@ update msg ({nav, userProfileForm} as model) =
             model.course
 
           newCourse =
-            { oldCourse | items = newItem :: oldCourse.items }
+            { oldCourse | items = newItem :: oldCourse.items}
       in
-          ({ model | course = newCourse }, Cmd.none)
+          ({ model | course = newCourse } |> markCourseAsChanged, Cmd.none)
           |> logEventForLabStudy "AddedOerToCourse" [ oerId |> String.fromInt, courseToString newCourse ]
 
     RemovedOerFromCourse oerId ->
@@ -762,9 +776,9 @@ update msg ({nav, userProfileForm} as model) =
             model.course
 
           newCourse =
-            { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId/=oerId) }
+            { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId/=oerId)}
       in
-          ({ model | course = newCourse }, Cmd.none)
+          ({ model | course = newCourse } |> markCourseAsChanged, Cmd.none)
           |> logEventForLabStudy "RemovedOerFromCourse" [ oerId |> String.fromInt, courseToString newCourse ]
 
     MovedCourseItemDown index ->
@@ -773,10 +787,17 @@ update msg ({nav, userProfileForm} as model) =
             model.course
 
           newCourse =
-            { oldCourse | items = oldCourse.items |> swapListItemWithNext index }
+            { oldCourse | items = oldCourse.items |> swapListItemWithNext index}
       in
-          ({ model | course = newCourse }, Cmd.none)
+          ({ model | course = newCourse} |> markCourseAsChanged, Cmd.none)
           |> logEventForLabStudy "MovedCourseItemDown" [ index |> String.fromInt, courseToString newCourse ]
+
+    ChangedCommentTextInCourseItem oerId str ->
+      ( model |> setCommentTextInCourseItem oerId str, Cmd.none)
+
+    SubmittedCourseItemComment ->
+      ( model |> markCourseAsChanged, setBrowserFocus "")
+      |> logEventForLabStudy "SubmittedCourseItemComment" []
 
 
 -- createNote : OerId -> String -> Model -> Model
@@ -1231,7 +1252,7 @@ setRange model dragStartPosition dragEndPosition course =
                   course.items
                   |> List.map (\item -> if item.oerId==existingItem.oerId then { item | range = range } else item)
         in
-            { course | hasChanged = True, items = newItems }
+            { course |  items = newItems }
   in
       case model.inspectorState of
         Just {oer} ->
@@ -1249,3 +1270,32 @@ setRange model dragStartPosition dragEndPosition course =
 
             Nothing ->
               course -- impossible
+
+
+setCommentTextInCourseItem : OerId -> String -> Model -> Model
+setCommentTextInCourseItem oerId str model =
+  let
+      oldCourse =
+        model.course
+
+      newItems =
+        oldCourse.items
+        |> List.map (\item -> if item.oerId==oerId then { item | comment = str } else item)
+
+      newCourse =
+        { oldCourse | items = newItems }
+  in
+      { model | course = newCourse} |> markCourseAsChanged
+
+
+saveCourseIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
+saveCourseIfNeeded (oldModel, oldCmd) =
+  if oldModel.courseNeedsSaving && millisSince oldModel oldModel.lastTimeCourseChanged > 2000 then
+    ({ oldModel | courseNeedsSaving = False }, [ requestSaveCourse oldModel.course, oldCmd ] |> Cmd.batch)
+  else
+    (oldModel, oldCmd)
+
+
+markCourseAsChanged : Model -> Model
+markCourseAsChanged model =
+  { model | courseNeedsSaving = True, courseChangesSaved = False, lastTimeCourseChanged = model.currentTime }

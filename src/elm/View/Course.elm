@@ -78,4 +78,4 @@ viewCourseItem model index item =
             |> column [ width fill, spacing 10, paddingTop 10, borderTop 1, Border.color <| greyDivider ]
       in
           miniCard
-          |> el [ htmlClass "CloseInspectorOnClickOutside", onClickNoBubble <| InspectCourseItem oer ]
+          |> el [ width fill, htmlClass "CloseInspectorOnClickOutside", onClickNoBubble <| InspectCourseItem oer ]

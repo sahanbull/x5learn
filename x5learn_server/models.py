@@ -264,7 +264,21 @@ class ResourceFeedback(Base):
         self.user_login_id = user_login_id
         self.oer_id = oer_id
         self.text = text
-        self.created_at = datetime.now()
+        self.created_at = datetime.datetime.now()
+
+
+class Course(Base):
+    __tablename__ = 'course'
+    __table_args__ = {'extend_existing': True}
+    id = Column(Integer(), primary_key=True)
+    user_login_id = Column(Integer())
+    data = Column(JSON())
+    created_at = Column(DateTime())
+
+    def __init__(self, user_login_id, data):
+        self.user_login_id = user_login_id
+        self.data = data
+        self.created_at = datetime.datetime.now()
 
 
 # This table is only used for the purpose of conducting lab-based evaluations of user experience at UCL.

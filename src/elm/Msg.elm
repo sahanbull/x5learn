@@ -43,6 +43,8 @@ type Msg
   -- | RequestResourceRecommendations (Result Http.Error (List Oer))
   -- | RequestSendResourceFeedback (Result Http.Error String)
   | RequestSaveAction (Result Http.Error String)
+  | RequestLoadCourse (Result Http.Error Course)
+  | RequestSaveCourse (Result Http.Error String)
   -- | RequestSaveNote (Result Http.Error String)
   | SetHover (Maybe OerId)
   | SetPopup Popup
@@ -89,6 +91,8 @@ type Msg
   | AddedOerToCourse OerId Range
   | RemovedOerFromCourse OerId
   | MovedCourseItemDown Int
+  | SubmittedCourseItemComment
+  | ChangedCommentTextInCourseItem OerId String
 
 
 type UserProfileField

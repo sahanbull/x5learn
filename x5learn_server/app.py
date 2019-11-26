@@ -414,10 +414,11 @@ def api_entity_descriptions():
 def log_event_for_lab_study():
     if current_user.is_authenticated:
         email = current_user.email
+        user_login_id = current_user.get_id()
         if email.endswith('.lab'):
             j = request.get_json(force=True)
             event = LabStudyLogEvent(
-                email, j['eventType'], j['params'], j['browserTime'])
+                user_login_id, email, j['eventType'], j['params'], j['browserTime'])
             db_session.add(event)
             db_session.commit()
     return 'OK'

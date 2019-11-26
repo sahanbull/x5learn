@@ -81,6 +81,7 @@ update msg ({nav, userProfileForm} as model) =
       |> requestWikichunkEnrichmentsIfNeeded
       |> requestEntityDefinitionsIfNeeded
       |> saveCourseIfNeeded
+      |> saveLoggedEventsIfNeeded
 
     AnimationTick time ->
       let
@@ -397,6 +398,12 @@ update msg ({nav, userProfileForm} as model) =
 
     RequestSaveCourse (Err err) ->
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+
+    RequestSaveLoggedEvents (Ok _) ->
+      (model, Cmd.none)
+
+    RequestSaveLoggedEvents (Err err) ->
+      ( { model | snackbar = createSnackbar model "Some logs were not saved" }, Cmd.none )
 
     -- RequestSaveNote (Ok _) ->
     --   (model, requestNotes)
@@ -989,10 +996,15 @@ logEventForLabStudy eventType params (model, cmd) =
   -- in
   if isLabStudy1 model then
     let
-        time =
-          model.currentTime |> posixToMillis
+        timeString =
+          model.currentTime
+          |> posixToMillis
+          |> String.fromInt
+
+        logString =
+          timeString ++ ": " ++ eventType ++ " " ++ (params |> String.join ", ")
     in
-        (model, [ cmd, requestLabStudyLogEvent time eventType params ] |> Cmd.batch)
+        ({ model | loggedEvents = logString :: model.loggedEvents }, cmd)
   else
     (model, cmd)
 
@@ -1299,3 +1311,11 @@ saveCourseIfNeeded (oldModel, oldCmd) =
 markCourseAsChanged : Model -> Model
 markCourseAsChanged model =
   { model | courseNeedsSaving = True, courseChangesSaved = False, lastTimeCourseChanged = model.currentTime }
+
+
+saveLoggedEventsIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
+saveLoggedEventsIfNeeded (oldModel, oldCmd) =
+  if oldModel.loggedEvents/=[] && millisSince oldModel oldModel.lastTimeLoggedEventsSaved > 5000 then
+    ({ oldModel | loggedEvents = [] }, [ requestSaveLoggedEvents oldModel, oldCmd ] |> Cmd.batch)
+  else
+    (oldModel, oldCmd)

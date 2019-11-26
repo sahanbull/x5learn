@@ -23,7 +23,7 @@ _ = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
 from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, \
     EntityDefinition, LabStudyLogEvent, ResourceFeedback, Action, ActionType, Note, Repository, NotesRepository, \
-    ActionsRepository, UserRepository, DefinitionsRepository, Course
+    ActionsRepository, UserRepository, DefinitionsRepository, Course, UiLogBatch
 
 from x5learn_server.labstudyone import get_dataset_for_lab_study_one
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
@@ -272,11 +272,23 @@ def api_load_course():
 @app.route("/api/v1/save_course/", methods=['POST'])
 def api_save_course():
     items = request.get_json()['items']
-    print('todo: save_course')
-    print(items)
     user_login_id = current_user.get_id()  # Assuming that guests cannot use this feature
     course = Course(user_login_id, {'items': items})
     db_session.add(course)
+    db_session.commit()
+    return 'OK'
+
+
+@app.route("/api/v1/save_ui_logged_events_batch/", methods=['POST'])
+def api_save_ui_logged_events_batch():
+    client_time = request.get_json()['clientTime']
+    text = request.get_json()['text']
+    print('save_ui_logged_events_batch')
+    print(client_time)
+    print(text)
+    user_login_id = current_user.get_id()  # Assuming that guests cannot use this feature
+    batch = UiLogBatch(user_login_id, client_time, text)
+    db_session.add(batch)
     db_session.commit()
     return 'OK'
 

@@ -281,6 +281,22 @@ class Course(Base):
         self.created_at = datetime.datetime.now()
 
 
+class UiLogBatch(Base):
+    __tablename__ = 'ui_log_batch'
+    __table_args__ = {'extend_existing': True}
+    id = Column(Integer(), primary_key=True)
+    user_login_id = Column(Integer())
+    client_time = Column(String())
+    text = Column(String())
+    created_at = Column(DateTime())
+
+    def __init__(self, user_login_id, client_time, text):
+        self.user_login_id = user_login_id
+        self.client_time = client_time
+        self.text = text
+        self.created_at = datetime.datetime.now()
+
+
 # This table is only used for the purpose of conducting lab-based evaluations of user experience at UCL.
 
 

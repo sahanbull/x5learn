@@ -764,7 +764,7 @@ isLabStudy1 model =
       False
 
     Just {email} ->
-      email |> String.endsWith ".lab"
+      email |> String.contains "@" |> not
 
 
 listContainsBoth a b list =

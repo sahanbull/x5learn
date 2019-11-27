@@ -108,18 +108,18 @@ wikipedia.set_lang("en")
 repository = Repository()
 
 
-@app.route("/make_users_for_tokyo/")
-def make_users_for_tokyo():
-    # import pdb; pdb.set_trace()
-    for index in range(40):
-        user = UserLogin()
-        user.email = 'p'+str(index+1)
-        user.password = 'japan'
-        user.active = True
-        user.confirmed_at = datetime.utcnow();
-        db.session.add(user)
-        db.session.commit()
-    return render_template('home.html')
+# @app.route("/make_users_for_tokyo/")
+# def make_users_for_tokyo():
+#     # import pdb; pdb.set_trace()
+#     for index in range(40):
+#         user = UserLogin()
+#         user.email = 'p'+str(index+1)
+#         user.password = 'japan'
+#         user.active = True
+#         user.confirmed_at = datetime.utcnow();
+#         db.session.add(user)
+#         db.session.commit()
+#     return render_template('home.html')
 
 
 @app.route("/")

@@ -323,8 +323,10 @@ def video_usage_ranges_from_positions(positions):
 
 @app.route("/api/v1/featured/", methods=['GET'])
 def api_featured():
-    urls = ['https://www.youtube.com/watch?v=woy7_L2JKC4', 'https://www.youtube.com/watch?v=bRIL9kMJJSc',
-            'https://www.youtube.com/watch?v=4yYytLUViI4']
+    # urls = ['https://www.youtube.com/watch?v=woy7_L2JKC4', 'https://www.youtube.com/watch?v=bRIL9kMJJSc',
+    #         'https://www.youtube.com/watch?v=4yYytLUViI4']
+    urls = ['http://hydro.ijs.si/v019/9a/tlsmr7i7ssoq7nvjsp7ysrhkobwdzwcy.mp4', 'http://hydro.ijs.si/v00b/84/qqxsxflkrrs7hkkrwxdjkix62g2b3v46.mp4',
+            'http://hydro.ijs.si/v00a/63/mpklwd24fti34fzr3wtfqsrwri77fg2i.mp4']
     oers = [oer.data_and_id() for oer in Oer.query.filter(Oer.url.in_(urls)).order_by(Oer.url.desc()).all()]
     return jsonify(oers)
 

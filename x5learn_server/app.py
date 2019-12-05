@@ -192,7 +192,7 @@ def get_logged_in_user_profile_and_state():
     # Look at actions to determine whether contentflow is enabled or disabled
     action = Action.query.filter(Action.user_login_id == current_user.get_id(),
                                  Action.action_type_id.in_([7])).order_by(Action.id.desc()).first()
-    is_contentflow_enabled = False if action is None else action.params['enable']
+    is_contentflow_enabled = True if action is None else action.params['enable']
     logged_in_user = {'userProfile': profile, 'isContentFlowEnabled': is_contentflow_enabled}
     return jsonify({'loggedInUser': logged_in_user})
 

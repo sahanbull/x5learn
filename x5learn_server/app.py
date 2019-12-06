@@ -473,7 +473,7 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
 
 
 def inject_duration(oer):
-    seconds = os.popen('ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 '+oer.url).read()
+    seconds = os.popen('ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 '+oer.url).read().strip()
     seconds = int(float(seconds))
     duration = str(int(seconds/60)) +':' + str(seconds%60).zfill(2)
     print('inject_duration: ', duration)

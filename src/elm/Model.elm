@@ -211,7 +211,7 @@ type Subpage
   -- | Favorites
   -- | Notes
   -- | Viewed
-  -- | Resource
+  | Resource
 
 
 type alias SearchState =

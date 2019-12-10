@@ -17,7 +17,7 @@ import View.Pages.Search exposing (viewSearchPage)
 -- import View.Pages.Favorites exposing (viewFavoritesPage)
 import View.Pages.Profile exposing (viewProfilePage)
 -- import View.Pages.Viewed exposing (viewViewedPage)
--- import View.Pages.Resource exposing (viewResourcePage)
+import View.Pages.Resource exposing (viewResourcePage)
 
 import Update exposing (..)
 import Request exposing (..)
@@ -89,8 +89,8 @@ view model =
                 -- Viewed ->
                 --   viewViewedPage model |> withNavigationDrawer model
 
-                -- Resource ->
-                --   viewResourcePage model |> withNavigationDrawer model
+                Resource ->
+                  viewResourcePage model |> withNavigationDrawer model
 
       header =
         viewPageHeader model

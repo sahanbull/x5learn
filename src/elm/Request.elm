@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents)--, requestUpdatePlayingVideo) --requestResource, requestResourceRecommendations, requestSendResourceFeedback, requestFavorites)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResource, requestResourceRecommendations, requestSendResourceFeedback)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -164,30 +164,30 @@ requestSaveLoggedEvents {currentTime, loggedEvents} =
 --     }
 
 
--- requestResource : Int -> Cmd Msg
--- requestResource oerId =
---   Http.post
---     { url = Url.Builder.absolute [ apiRoot, "resource/" ] []
---     , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId) ]
---     , expect = Http.expectJson RequestResource oerDecoder
---     }
+requestResource : Int -> Cmd Msg
+requestResource oerId =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "resource/" ] []
+    , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId) ]
+    , expect = Http.expectJson RequestResource oerDecoder
+    }
 
 
--- requestResourceRecommendations : OerId -> Cmd Msg
--- requestResourceRecommendations oerId =
---   Http.get
---     { url = Url.Builder.absolute [ apiRoot, "recommendations/" ] [ Url.Builder.int "oerId" oerId ]
---     , expect = Http.expectJson RequestResourceRecommendations (list oerDecoder)
---     }
+requestResourceRecommendations : OerId -> Cmd Msg
+requestResourceRecommendations oerId =
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "recommendations/" ] [ Url.Builder.int "oerId" oerId ]
+    , expect = Http.expectJson RequestResourceRecommendations (list oerDecoder)
+    }
 
 
--- requestSendResourceFeedback : Int -> String -> Cmd Msg
--- requestSendResourceFeedback oerId text =
---   Http.post
---     { url = Url.Builder.absolute [ apiRoot, "resource_feedback/" ] []
---     , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId), ("text", Encode.string text) ]
---     , expect = Http.expectString RequestSendResourceFeedback
---     }
+requestSendResourceFeedback : Int -> String -> Cmd Msg
+requestSendResourceFeedback oerId text =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "resource_feedback/" ] []
+    , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId), ("text", Encode.string text) ]
+    , expect = Http.expectString RequestSendResourceFeedback
+    }
 
 
 requestVideoUsages : Cmd Msg

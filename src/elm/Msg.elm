@@ -39,9 +39,9 @@ type Msg
   -- | RequestAutocompleteTerms (Result Http.Error (List String))
   | RequestSaveUserProfile (Result Http.Error String)
   | RequestLabStudyLogEvent (Result Http.Error String)
-  -- | RequestResource (Result Http.Error Oer)
-  -- | RequestResourceRecommendations (Result Http.Error (List Oer))
-  -- | RequestSendResourceFeedback (Result Http.Error String)
+  | RequestResource (Result Http.Error Oer)
+  | RequestResourceRecommendations (Result Http.Error (List Oer))
+  | RequestSendResourceFeedback (Result Http.Error String)
   | RequestSaveAction (Result Http.Error String)
   | RequestLoadCourse (Result Http.Error Course)
   | RequestSaveCourse (Result Http.Error String)
@@ -59,9 +59,9 @@ type Msg
   | EditUserProfile UserProfileField String
   | SubmittedUserProfile
   -- | ChangedTextInNewNoteFormInOerNoteboard OerId String
-  -- | ChangedTextInResourceFeedbackForm OerId String
+  | ChangedTextInResourceFeedbackForm OerId String
   -- | SubmittedNewNoteInOerNoteboard OerId
-  -- | SubmittedResourceFeedback OerId String
+  | SubmittedResourceFeedback OerId String
   -- | PressedKeyInNewNoteFormInOerNoteboard OerId Int
   -- | ClickedQuickNoteButton OerId String
   -- | RemoveNote Note
@@ -74,7 +74,7 @@ type Msg
   | OerCardPlaceholderPositionsReceived (List OerCardPlaceholderPosition)
   | StartLabStudyTask LabStudyTask
   | StoppedLabStudyTask
-  -- | SelectResourceSidebarTab ResourceSidebarTab OerId
+  | SelectResourceSidebarTab ResourceSidebarTab OerId
   -- | MouseMovedOnStoryTag Float
   | SelectedOverviewType OverviewType
   | MouseEnterMentionInBubbblogramOverview OerId EntityId MentionInOer

@@ -68,8 +68,8 @@ update msg ({nav, userProfileForm} as model) =
             --   (Course, (model, askPageScrollState True))
             else if path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
-            -- else if path |> String.startsWith resourcePath then
-            --   (Resource, model |> requestResourceAfterUrlChanged url)
+            else if path |> String.startsWith resourcePath then
+              (Resource, model |> requestResourceAfterUrlChanged url)
             else
               (Home, (model, (if model.featuredOers==Nothing then requestFeaturedOers else Cmd.none)))
       in
@@ -357,11 +357,11 @@ update msg ({nav, userProfileForm} as model) =
       -- ( { model | snackbar = createSnackbar model "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
       ( { model | snackbar = createSnackbar model "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
 
-    -- RequestSendResourceFeedback (Ok _) ->
-    --   (model, Cmd.none)
+    RequestSendResourceFeedback (Ok _) ->
+      (model, Cmd.none)
 
-    -- RequestSendResourceFeedback (Err err) ->
-    --   (model, Cmd.none)
+    RequestSendResourceFeedback (Err err) ->
+      (model, Cmd.none)
 
     RequestLabStudyLogEvent (Ok _) ->
       (model, Cmd.none)
@@ -373,12 +373,6 @@ update msg ({nav, userProfileForm} as model) =
       -- in
       -- ( { model | snackbar = createSnackbar model "Some logs were not saved" }, Cmd.none )
       ( { model | snackbar = createSnackbar model "Some logs were not saved" }, Cmd.none )
-
-    -- RequestSendResourceFeedback (Ok _) ->
-    --   (model, Cmd.none)
-
-    -- RequestSendResourceFeedback (Err err) ->
-    --   (model, Cmd.none)
 
     RequestSaveAction (Ok _) ->
       (model, Cmd.none)
@@ -411,49 +405,49 @@ update msg ({nav, userProfileForm} as model) =
     -- RequestSaveNote (Err err) ->
     --   ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
-    -- RequestResource (Ok oer) ->
-    --   let
-    --       cmdYoutube =
-    --         case getYoutubeVideoId oer.url of
-    --           Nothing ->
-    --             youtubeDestroyPlayer True
+    RequestResource (Ok oer) ->
+      let
+          -- cmdYoutube =
+          --   case getYoutubeVideoId oer.url of
+          --     Nothing ->
+          --       youtubeDestroyPlayer True
 
-    --           Just videoId ->
-    --             let
-    --                 youtubeEmbedParams : YoutubeEmbedParams
-    --                 youtubeEmbedParams =
-    --                   { modalId = ""
-    --                   , videoId = videoId
-    --                   , fragmentStart = 0
-    --                   , playWhenReady = False
-    --                   }
-    --             in
-    --                 embedYoutubePlayerOnResourcePage youtubeEmbedParams
+          --     Just videoId ->
+          --       let
+          --           youtubeEmbedParams : YoutubeEmbedParams
+          --           youtubeEmbedParams =
+          --             { modalId = ""
+          --             , videoId = videoId
+          --             , fragmentStart = 0
+          --             , playWhenReady = False
+          --             }
+          --       in
+          --           embedYoutubePlayerOnResourcePage youtubeEmbedParams
 
-    --       newModel =
-    --         { model | currentResource = Just <| Loaded oer.id } |> cacheOersFromList [ oer ]
-    --   in
-    --       (newModel, [ cmdYoutube ] |> Cmd.batch )
+          newModel =
+            { model | currentResource = Just <| Loaded oer.id } |> cacheOersFromList [ oer ]
+      in
+          (newModel, Cmd.none)
 
-    -- RequestResource (Err err) ->
-    --   ( { model | currentResource = Just Error }, Cmd.none )
+    RequestResource (Err err) ->
+      ( { model | currentResource = Just Error }, Cmd.none )
 
-    -- RequestResourceRecommendations (Ok oersUnfiltered) ->
-    --   let
-    --       oers =
-    --         oersUnfiltered |> List.filter (\oer -> model.currentResource /= Just (Loaded oer.id)) -- ensure that the resource itself isn't included in the recommendations
-    --   in
-    --       ({ model | resourceRecommendations = oers } |> cacheOersFromList oers, setBrowserFocus "")
-    --       |> requestWikichunkEnrichmentsIfNeeded
-    --       |> logEventForLabStudy "RequestResourceRecommendations" (oers |> List.map .url)
+    RequestResourceRecommendations (Ok oersUnfiltered) ->
+      let
+          oers =
+            oersUnfiltered |> List.filter (\oer -> model.currentResource /= Just (Loaded oer.id)) -- ensure that the resource itself isn't included in the recommendations
+      in
+          ({ model | resourceRecommendations = oers } |> cacheOersFromList oers, setBrowserFocus "")
+          |> requestWikichunkEnrichmentsIfNeeded
+          |> logEventForLabStudy "RequestResourceRecommendations" (oers |> List.map .url)
 
-    -- RequestResourceRecommendations (Err err) ->
-    --   -- let
-    --   --     dummy =
-    --   --       err |> Debug.log "Error in RequestResourceRecommendations"
-    --   -- in
-    --   -- ( { model | resourceRecommendations = [], snackbar = createSnackbar model "An error occurred while loading recommendations" }, Cmd.none )
-    --   ( { model | resourceRecommendations = [], snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
+    RequestResourceRecommendations (Err err) ->
+      -- let
+      --     dummy =
+      --       err |> Debug.log "Error in RequestResourceRecommendations"
+      -- in
+      -- ( { model | resourceRecommendations = [], snackbar = createSnackbar model "An error occurred while loading recommendations" }, Cmd.none )
+      ( { model | resourceRecommendations = [], snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     SetHover maybeOerId ->
       let
@@ -525,8 +519,8 @@ update msg ({nav, userProfileForm} as model) =
     -- ChangedTextInNewNoteFormInOerNoteboard oerId str ->
     --   ( model |> setTextInNoteForm oerId str, Cmd.none)
 
-    -- ChangedTextInResourceFeedbackForm oerId str ->
-    --   ( model |> setTextInResourceFeedbackForm oerId str, Cmd.none)
+    ChangedTextInResourceFeedbackForm oerId str ->
+      ( model |> setTextInResourceFeedbackForm oerId str, Cmd.none)
 
     -- SubmittedNewNoteInOerNoteboard oerId ->
     --   let
@@ -536,9 +530,9 @@ update msg ({nav, userProfileForm} as model) =
     --   (model |> createNote oerId text |> setTextInNoteForm oerId "", [ setBrowserFocus "textInputFieldForNotesOrFeedback", saveNote oerId text ] |> Cmd.batch)
     --   |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ String.fromInt oerId, getOerNoteForm model oerId ]
 
-    -- SubmittedResourceFeedback oerId text ->
-    --   ({ model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", requestSendResourceFeedback oerId text)
-    --   |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, getResourceFeedbackFormValue model oerId ]
+    SubmittedResourceFeedback oerId text ->
+      ({ model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", requestSendResourceFeedback oerId text)
+      |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, getResourceFeedbackFormValue model oerId ]
 
     -- PressedKeyInNewNoteFormInOerNoteboard oerId keyCode ->
     --   if keyCode==13 then
@@ -607,16 +601,16 @@ update msg ({nav, userProfileForm} as model) =
       ({ model | startedLabStudyTask = Nothing }, setBrowserFocus "")
       |> logEventForLabStudy "StoppedLabStudyTask" []
 
-    -- SelectResourceSidebarTab tab oerId ->
-    --   let
-    --       cmd =
-    --         if tab==RecommendationsTab then
-    --           requestResourceRecommendations oerId
-    --         else
-    --           Cmd.none
-    --   in
-    --       ({ model | resourceSidebarTab = tab }, [ cmd, setBrowserFocus "textInputFieldForNotesOrFeedback" ] |> Cmd.batch )
-    --       |> logEventForLabStudy "SelectResourceSidebarTab" []
+    SelectResourceSidebarTab tab oerId ->
+      let
+          cmd =
+            if tab==RecommendationsTab then
+              requestResourceRecommendations oerId
+            else
+              Cmd.none
+      in
+          ({ model | resourceSidebarTab = tab }, [ cmd, setBrowserFocus "textInputFieldForNotesOrFeedback" ] |> Cmd.batch )
+          |> logEventForLabStudy "SelectResourceSidebarTab" []
 
     -- MouseMovedOnStoryTag mousePosXonCard ->
     --   case model.overviewType of
@@ -986,9 +980,9 @@ cacheOersFromList oers model =
 --   { model | oerNoteForms = model.oerNoteForms |> Dict.insert oerId str }
 
 
--- setTextInResourceFeedbackForm : OerId -> String -> Model -> Model
--- setTextInResourceFeedbackForm oerId str model =
---   { model | feedbackForms = model.feedbackForms |> Dict.insert oerId str }
+setTextInResourceFeedbackForm : OerId -> String -> Model -> Model
+setTextInResourceFeedbackForm oerId str model =
+  { model | feedbackForms = model.feedbackForms |> Dict.insert oerId str }
 
 
 updateBubblogramsIfNeeded : Model -> Model
@@ -1074,20 +1068,20 @@ executeSearchAfterUrlChanged model url =
         |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam ]
 
 
--- requestResourceAfterUrlChanged : Url -> Model -> (Model, Cmd Msg)
--- requestResourceAfterUrlChanged url model =
---   let
---       resourceId =
---         url.path
---         |> String.dropLeft 10 -- TODO A much cleaner method is to use Url.Query.parser
---         |> String.toInt
---   in
---       case resourceId of
---         Nothing ->
---           ({ model | currentResource = Just Error }, Cmd.none)
+requestResourceAfterUrlChanged : Url -> Model -> (Model, Cmd Msg)
+requestResourceAfterUrlChanged url model =
+  let
+      resourceId =
+        url.path
+        |> String.dropLeft 10 -- TODO A much cleaner method is to use Url.Query.parser
+        |> String.toInt
+  in
+      case resourceId of
+        Nothing ->
+          ({ model | currentResource = Just Error }, Cmd.none)
 
---         Just oerId ->
---           (model, requestResource oerId)
+        Just oerId ->
+          (model, requestResource oerId)
 
 
 

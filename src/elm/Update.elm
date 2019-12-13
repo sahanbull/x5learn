@@ -817,7 +817,7 @@ update msg ({nav, userProfileForm} as model) =
                 "climate change"
 
               "Task 2" ->
-                "climate change"
+                "machine learning"
 
               _ ->
                 "brain"

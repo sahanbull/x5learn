@@ -440,6 +440,15 @@ confirmButton attrs str onPress =
       button attrs { onPress = onPress, label = label }
 
 
+stopButton : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
+stopButton attrs str onPress =
+  let
+      label =
+        str |> bodyNoWrap [ Background.color red, bigButtonPadding, whiteText ]
+  in
+      button attrs { onPress = onPress, label = label }
+
+
 selectByIndex : Int -> a -> List a -> a
 selectByIndex index fallback elements =
   elements

@@ -76,6 +76,7 @@ type alias Model =
   , loggedEvents : List String
   , lastTimeLoggedEventsSaved : Posix
   , timeWhenSessionLoaded : Posix
+  , currentTaskName : Maybe String
   }
 
 
@@ -415,6 +416,7 @@ initialModel nav flags =
   , loggedEvents = []
   , lastTimeLoggedEventsSaved = initialTime
   , timeWhenSessionLoaded = initialTime
+  , currentTaskName = Nothing
   }
 
 

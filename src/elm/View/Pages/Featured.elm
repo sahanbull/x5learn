@@ -24,7 +24,7 @@ viewFeaturedPage model =
   let
       title =
         if isLabStudy1 model then
-          [ "Start exploring by searching for a topic" |> text |> el [ Font.size 20, centerX ]
+          [ "Please follow the researcher's instructions" |> text |> el [ Font.size 20, centerX ]
           ]
           |> column [ centerX, centerY, spacing 30 ]
           |> el [ width fill, height <| fillPortion 3 ]

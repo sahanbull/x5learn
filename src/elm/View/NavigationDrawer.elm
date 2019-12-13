@@ -52,7 +52,7 @@ withNavigationDrawer model (pageContent, modal) =
           |> column [ width fill, spacing 8 ]
 
       drawer =
-        [ model.searchInputTyping |> viewSearchWidget model fill "Search"
+        [ if isLabStudy1 model then none else model.searchInputTyping |> viewSearchWidget model fill "Search"
         , navButtons
         ]
         |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 12, spacing 30, whiteBackground ]

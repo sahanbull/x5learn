@@ -108,25 +108,25 @@ wikipedia.set_lang("en")
 repository = Repository()
 
 
-# @app.route("/make_users_for_tokyo/")
-# def make_users_for_tokyo():
+# @app.route("/make_users_for_webinar/")
+# def make_users_for_webinar():
 #     # import pdb; pdb.set_trace()
-#     # for index in range(40):
+#     for index in range(40):
+#         user = UserLogin()
+#         user.email = 'p'+str(index+1)
+#         user.password = 'study'
+#         user.active = True
+#         user.confirmed_at = datetime.utcnow();
+#         db.session.add(user)
+#         db.session.commit()
+#     # for name in 'davor john colin stefan'.split(' '):
 #     #     user = UserLogin()
-#     #     user.email = 'p'+str(index+1)
+#     #     user.email = name
 #     #     user.password = 'japan'
 #     #     user.active = True
 #     #     user.confirmed_at = datetime.utcnow();
 #     #     db.session.add(user)
 #     #     db.session.commit()
-#     for name in 'davor john colin stefan'.split(' '):
-#         user = UserLogin()
-#         user.email = name
-#         user.password = 'japan'
-#         user.active = True
-#         user.confirmed_at = datetime.utcnow();
-#         db.session.add(user)
-#         db.session.commit()
 #     return render_template('home.html')
 
 

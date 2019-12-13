@@ -72,7 +72,7 @@ app.config['MAIL_DEFAULT_SENDER'] = MAIL_SENDER
 mail.init_app(app)
 
 CURRENT_ENRICHMENT_VERSION = 1
-MAX_SEARCH_RESULTS = 24 # number divisible by 2 and 3 to fit nicely into grid
+MAX_SEARCH_RESULTS = 18 # number divisible by 2 and 3 to fit nicely into grid
 
 
 # create database when starting the app

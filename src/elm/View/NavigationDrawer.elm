@@ -39,6 +39,7 @@ withNavigationDrawer model (pageContent, modal) =
       navButtons =
         if isLabStudy1 model then
           [ viewContentFlowToggle model
+          , taskButtons model
           , viewCourse model
           ]
           |> column [ spacing 40, width fill ]
@@ -52,7 +53,7 @@ withNavigationDrawer model (pageContent, modal) =
           |> column [ width fill, spacing 8 ]
 
       drawer =
-        [ model.searchInputTyping |> viewSearchWidget model fill "Search"
+        [ if isLabStudy1 model then none else model.searchInputTyping |> viewSearchWidget model fill "Search"
         , navButtons
         ]
         |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 12, spacing 30, whiteBackground ]
@@ -118,3 +119,27 @@ dataSetSelectionWidget model searchInputTyping =
         |> el [ width fill, centerX ]
   in
       searchField
+
+
+taskButtons : Model -> Element Msg
+taskButtons model =
+  let
+      taskButton taskName =
+        case model.currentTaskName of
+          Nothing ->
+            confirmButton [] ("Start "++taskName) <| Just <| StartTask taskName
+
+          Just name ->
+            if name==taskName then
+              [ taskName++" started" |> bodyNoWrap []
+              , stopButton [] "Complete" <| Just CompleteTask
+              ]
+              |> row [ spacing 20 ]
+            else
+              confirmButton [ alpha 0.3, greyTextDisabled ] ("Start "++taskName) Nothing
+  in
+      [ taskButton "Practice"
+      , taskButton "Task 1"
+      , taskButton "Task 2"
+      ]
+      |> column [ spacing 10 ]

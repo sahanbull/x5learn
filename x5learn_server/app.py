@@ -72,7 +72,7 @@ app.config['MAIL_DEFAULT_SENDER'] = MAIL_SENDER
 mail.init_app(app)
 
 CURRENT_ENRICHMENT_VERSION = 1
-MAX_SEARCH_RESULTS = 24 # number divisible by 2 and 3 to fit nicely into grid
+MAX_SEARCH_RESULTS = 18 # number divisible by 2 and 3 to fit nicely into grid
 
 
 # create database when starting the app
@@ -108,25 +108,25 @@ wikipedia.set_lang("en")
 repository = Repository()
 
 
-# @app.route("/make_users_for_tokyo/")
-# def make_users_for_tokyo():
+# @app.route("/make_users_for_webinar/")
+# def make_users_for_webinar():
 #     # import pdb; pdb.set_trace()
-#     # for index in range(40):
+#     for index in range(40):
+#         user = UserLogin()
+#         user.email = 'p'+str(index+1)
+#         user.password = 'study'
+#         user.active = True
+#         user.confirmed_at = datetime.utcnow();
+#         db.session.add(user)
+#         db.session.commit()
+#     # for name in 'davor john colin stefan'.split(' '):
 #     #     user = UserLogin()
-#     #     user.email = 'p'+str(index+1)
+#     #     user.email = name
 #     #     user.password = 'japan'
 #     #     user.active = True
 #     #     user.confirmed_at = datetime.utcnow();
 #     #     db.session.add(user)
 #     #     db.session.commit()
-#     for name in 'davor john colin stefan'.split(' '):
-#         user = UserLogin()
-#         user.email = name
-#         user.password = 'japan'
-#         user.active = True
-#         user.confirmed_at = datetime.utcnow();
-#         db.session.add(user)
-#         db.session.commit()
 #     return render_template('home.html')
 
 

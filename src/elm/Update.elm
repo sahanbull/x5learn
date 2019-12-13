@@ -809,6 +809,29 @@ update msg ({nav, userProfileForm} as model) =
       ( model |> markCourseAsChanged, setBrowserFocus "")
       |> logEventForLabStudy "SubmittedCourseItemComment" []
 
+    StartTask taskName ->
+      let
+          searchText =
+            case taskName of
+              "Task 1" ->
+                "climate change"
+
+              "Task 2" ->
+                "climate change"
+
+              _ ->
+                "brain"
+
+          newModel =
+            { model | currentTaskName = Just taskName, searchInputTyping = searchText, searchState = Just <| newSearch searchText, snackbar = Nothing }
+      in
+          ( newModel, [ setBrowserFocus "", searchOers searchText] |> Cmd.batch)
+          |> logEventForLabStudy "StartTask" [ taskName ]
+
+    CompleteTask ->
+      ( { model | currentTaskName = Nothing }, setBrowserFocus "")
+      |> logEventForLabStudy "CompleteTask" []
+
 
 -- createNote : OerId -> String -> Model -> Model
 -- createNote oerId text model =

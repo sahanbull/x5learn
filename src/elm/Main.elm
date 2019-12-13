@@ -62,7 +62,15 @@ view model =
             Just session ->
               case model.subpage of
                 Home ->
-                  featuredPage
+                  if isLabStudy1 model then
+                    case model.searchState of
+                      Nothing ->
+                        featuredPage
+
+                      Just searchState ->
+                        viewSearchPage model searchState |> withNavigationDrawer model
+                  else
+                    featuredPage
 
                 Profile ->
                   case session.loginState of

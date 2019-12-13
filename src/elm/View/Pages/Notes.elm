@@ -65,6 +65,7 @@ viewNotesPage model =
       (page, viewInspectorModalOrEmpty model)
 
 
+viewNoteCard : Model -> Oer -> Note -> Element Msg
 viewNoteCard model oer note =
   let
       date =

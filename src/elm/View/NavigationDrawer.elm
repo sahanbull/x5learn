@@ -80,7 +80,7 @@ withNavigationDrawer model (pageContent, modal) =
                     Just startPoint ->
                       let
                           phase =
-                            ((millisSince model startTime |> toFloat) / (flyingHeartAnimationDuration - 300)) ^ 0.9 |> min 1
+                            ((millisSince model startTime |> toFloat) / ((toFloat flyingHeartAnimationDuration) - 300)) ^ 0.9 |> min 1
 
                           x =
                             startPoint.x * (1-phase)

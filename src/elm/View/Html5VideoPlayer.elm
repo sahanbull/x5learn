@@ -16,7 +16,6 @@ import Model exposing (..)
 viewHtml5VideoPlayer : Model -> OerUrl -> Element Msg
 viewHtml5VideoPlayer model oerUrl =
   let
-
       fallbackMessage =
         [ [ "Your browser does not support HTML5 video." |> Html.text ] |> Html.div []
         ]

@@ -12,6 +12,7 @@ import Msg exposing (..)
 import Model exposing (OerId)
 
 
+apiRoot : String
 apiRoot =
   "api/v1/action/"
 

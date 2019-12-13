@@ -4,7 +4,6 @@ import Browser
 import Browser.Navigation as Navigation
 import Url
 import Time exposing (Posix, posixToMillis, millisToPosix)
-import Element exposing (Color, rgb255)
 import Dict exposing (Dict)
 import Set exposing (Set)
 import Regex
@@ -418,6 +417,7 @@ initialModel nav flags =
   }
 
 
+initialUserProfile : String -> UserProfile
 initialUserProfile email =
   UserProfile email "" ""
 
@@ -446,10 +446,12 @@ initialUserProfile email =
     --   0
 
 
+initialTime : Posix
 initialTime =
   Time.millisToPosix 0
 
 
+newSearch : String -> SearchState
 newSearch str =
   { lastSearch = str
   , searchResults = Nothing
@@ -496,6 +498,7 @@ getYoutubeVideoId oerUrl =
     Nothing
 
 
+modalId : String
 modalId =
   "inspectorModal"
 
@@ -518,10 +521,12 @@ modalAnimationStatus model =
     Inactive
 
 
+currentUrlMatches : Model -> String -> Bool
 currentUrlMatches model url =
   url == model.nav.url.path
 
 
+isFromVideoLecturesNet : Oer -> Bool
 isFromVideoLecturesNet oer =
   String.startsWith "http://videolectures.net/" oer.url
 
@@ -571,6 +576,7 @@ secondsToString seconds =
       minutesString ++ ":" ++ secondsString
 
 
+displayName : UserProfile -> String
 displayName userProfile =
   let
       name =
@@ -603,6 +609,7 @@ loggedInUserProfile {session} =
           Just userProfile
 
 
+freshUserProfileForm : UserProfile -> UserProfileForm
 freshUserProfileForm userProfile =
   { userProfile = userProfile, saved = False }
 
@@ -617,6 +624,7 @@ chunksFromOerId model oerId =
       enrichment.chunks
 
 
+enrichmentAnimationDuration : Float
 enrichmentAnimationDuration =
   3000
 
@@ -637,6 +645,7 @@ anyBubblogramsAnimating model =
       |> List.any isAnimating
 
 
+bubblogramAnimationPhase : Model -> Posix -> Float
 bubblogramAnimationPhase model createdAt =
   let
       millisSinceStart =
@@ -647,10 +656,12 @@ bubblogramAnimationPhase model createdAt =
       millisSinceStart / enrichmentAnimationDuration * 2 |> Basics.min 1
 
 
+millisSinceLastUrlChange : Model -> Int
 millisSinceLastUrlChange model =
   (model.currentTime |> posixToMillis) - (model.timeOfLastUrlChange |> posixToMillis)
 
 
+isEqualToSearchString : Model -> EntityTitle -> Bool
 isEqualToSearchString model entityTitle =
   case model.searchState of
     Nothing ->
@@ -687,6 +698,7 @@ mentionInBubblePopup model =
       Nothing
 
 
+uniqueEntitiesFromEnrichments : List WikichunkEnrichment -> List Entity
 uniqueEntitiesFromEnrichments enrichments =
   enrichments
   |> List.concatMap .chunks
@@ -749,6 +761,7 @@ logoutPath =
   "/logout"
 
 
+averageOf : (a -> Float) -> List a -> Float
 averageOf getterFunction records =
   (records |> List.map getterFunction |> List.sum) / (records |> List.length |> toFloat)
 
@@ -758,6 +771,7 @@ interp phase a b =
   phase * b + (1-phase) * a
 
 
+isLabStudy1 : Model -> Bool
 isLabStudy1 model =
   case loggedInUserProfile model of
     Nothing ->
@@ -767,10 +781,12 @@ isLabStudy1 model =
       email |> String.contains "@" |> not
 
 
+listContainsBoth : a -> a -> List a -> Bool
 listContainsBoth a b list =
   List.member a list && List.member b list
 
 
+bubbleZoom : Float
 bubbleZoom =
   0.042
 
@@ -789,18 +805,12 @@ isPdfFile oerUrl =
   String.endsWith ".pdf" (oerUrl |> String.toLower)
 
 
-trimTailingEllipsisIfNeeded str = -- This function is a temporary patch to fix a mistake I made whereby an additional character was erroneously added to the provider field. Only the youtube videos for the first lab study are affected. Delete this function after re-ingesting or removing those oers.
-  if str |> String.endsWith "…" then
-    str |> String.dropRight 1
-  else
-    str
-
-
 resourceUrlPath : OerId -> String
 resourceUrlPath oerId =
   resourcePath ++ "/" ++ (String.fromInt oerId)
 
 
+isSiteUnderMaintenance : Bool
 isSiteUnderMaintenance =
   False
 
@@ -846,6 +856,7 @@ getResourceFeedbackFormValue model oerId =
   model.feedbackForms |> Dict.get oerId |> Maybe.withDefault ""
 
 
+snackbarDuration : Int
 snackbarDuration =
   3000
 
@@ -867,26 +878,32 @@ indexOf element list =
       helper 0 list
 
 
+isMarkedAsFavorite : Model -> OerId -> Bool
 isMarkedAsFavorite model oerId =
   List.member oerId model.favorites && (Set.member oerId model.removedFavorites |> not)
 
 
+isFlyingHeartAnimating : Model -> Bool
 isFlyingHeartAnimating model =
   model.flyingHeartAnimation /= Nothing
 
 
+flyingHeartAnimationDuration : Int
 flyingHeartAnimationDuration =
   900
 
 
+initialResourceSidebarTab : ResourceSidebarTab
 initialResourceSidebarTab =
   FeedbackTab
 
 
+isHovering : Model -> Oer -> Bool
 isHovering model oer =
   model.hoveringOerId == Just oer.id
 
 
+isInspecting : Model -> Oer -> Bool
 isInspecting model {id} =
   case model.inspectorState of
     Just {oer} ->

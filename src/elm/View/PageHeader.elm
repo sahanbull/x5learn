@@ -66,6 +66,7 @@ viewPageHeader model =
       |> row attrs
 
 
+viewUserMenu : Model -> UserProfile -> Element Msg
 viewUserMenu model userProfile =
   let
       icon =

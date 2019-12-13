@@ -218,7 +218,7 @@ viewResource model oer =
 
           provider ->
             [ "Provider:" |> bodyNoWrap []
-            , newTabLink [] { url = oer.url, label = provider |> trimTailingEllipsisIfNeeded |> bodyNoWrap [] }
+            , newTabLink [] { url = oer.url, label = provider |> bodyNoWrap [] }
             ]
             |> row [ spacing 10 ]
   in
@@ -234,6 +234,7 @@ fragmentsBarWrapperHeight =
   200
 
 
+sheetWidth : Model -> Int
 sheetWidth model =
   model.windowWidth - navigationDrawerWidth
 
@@ -275,24 +276,27 @@ viewRecommendationCard model oer =
             |> row [ width fill, height fill, alignBottom ]
 
       widthOfCard =
-        width (px (recommendationCardWidth model))
+        width <| px <| recommendationCardWidth model
 
       heightOfCard =
-        height (px recommendationCardHeight)
+        height <| px <| recommendationCardHeight
   in
       [ title, bottomInfo ]
       |> column [ widthOfCard, heightOfCard, paddingXY 15 12, spacing 15, htmlClass "materialCard" ]
       |> linkTo [] (resourceUrlPath oer.id)
 
 
+recommendationCardHeight : Int
 recommendationCardHeight =
   80
 
 
+recommendationCardWidth : Model -> Int
 recommendationCardWidth model =
   sidebarWidth model - 50
 
 
+viewFeedbackTab : Model -> Oer -> Element Msg
 viewFeedbackTab model oer =
   let
       formValue =
@@ -325,6 +329,7 @@ viewFeedbackTab model oer =
       |> column [ width fill, spacing 20 ]
 
 
+viewFeedbackConfirmation : Element Msg
 viewFeedbackConfirmation =
   [ "Thanks 😊" |> headlineWrap [ Font.size 24 ]
   , "✔ Your feedback has been recorded." |> bodyWrap []

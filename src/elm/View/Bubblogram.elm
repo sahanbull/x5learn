@@ -66,7 +66,7 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
                       {posX, posY, size} =
                         animatedBubbleCurrentCoordinates animationPhase bubble
                   in
-                      { px = (posX + 0*size*1.1*bubbleZoom) * contentWidth + marginX, py = (posY + 0.1 -  0*size*1.1*bubbleZoom) * contentHeight + marginTop - 15 }
+                      { px = (posX + 0*size*1.1*bubbleZoom) * (toFloat contentWidth) + marginX, py = (posY + 0.1 -  0*size*1.1*bubbleZoom) * (toFloat contentHeight) + marginTop - 15 }
 
                 TopicMentions ->
                   { px = 9, py = bubblePosYfromIndex bubble + 3 }
@@ -231,6 +231,7 @@ colorFromBubble {hue, alpha, saturation} =
   Color.hsla hue saturation 0.5 alpha
 
 
+hoveringBubbleOrFragmentsBarEntityId : Model -> Maybe EntityId
 hoveringBubbleOrFragmentsBarEntityId model =
   case model.hoveringTagEntityId of
     Just entityId ->
@@ -316,13 +317,14 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
         case content of
           MentionInBubblePopup {positionInResource} ->
             let
+                sizeY : Float
                 sizeY =
                   case bubblogramType of
                     TopicNames ->
                       35
 
                     TopicConnections ->
-                      containerHeight - verticalOffset
+                      (toFloat containerHeight) - verticalOffset
 
                     TopicMentions ->
                       35
@@ -331,13 +333,14 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
                   sizeY
                   |> String.fromFloat
 
+                tipX : Float
                 tipX =
-                  positionInResource * containerWidth
+                  positionInResource * (toFloat containerWidth)
 
                 rootX =
-                  tipX * 3 / 4 + (containerWidth/8)
+                  tipX * 3 / 4 + ((toFloat containerWidth)/8)
                   |> Basics.min (popupWidth-rootMargin-rootWidth - 30)
-                  |> Basics.min (containerWidth - rootMargin - 35)
+                  |> Basics.min ((toFloat containerWidth) - rootMargin - 35)
                   |> Basics.max 25
 
                 rootWidth =
@@ -368,11 +371,13 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
             allowedMargin =
               horizontalSpacingBetweenCards - 5
 
+            smallest : { horizontalOffset : Float, popupWidth : Float }
             smallest =
-              { horizontalOffset = (posX/2 + 1/4) * contentWidth + marginX - 300/2, popupWidth = 300 }
+              { horizontalOffset = (posX/2 + 1/4) * (toFloat contentWidth) + marginX - 300/2, popupWidth = 300 }
 
+            largest : { horizontalOffset : Float, popupWidth : Float }
             largest =
-              { horizontalOffset = -allowedMargin, popupWidth = cardWidth + 2*allowedMargin }
+              { horizontalOffset = -allowedMargin |> toFloat, popupWidth = cardWidth + 2*allowedMargin |> toFloat }
         in
             (interp zoom smallest.horizontalOffset largest.horizontalOffset
             , interp zoom smallest.popupWidth largest.popupWidth)
@@ -383,7 +388,7 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
             bubblePosYfromIndex bubble
 
           TopicConnections ->
-            Basics.max 10 <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5
+            Basics.max 10 <| (posY - size*3.5*bubbleZoom) * (toFloat contentHeight) + marginTop - 5
 
           TopicMentions ->
             bubblePosYfromIndex bubble
@@ -418,9 +423,11 @@ marginX =
   25
 
 
+widthString : String
 widthString =
   containerWidth |> String.fromInt
 
+heightString : String
 heightString =
   containerHeight |> String.fromInt
 
@@ -447,7 +454,7 @@ viewMentionDots model bubblogramType oerId entityId bubble isHoveringOnCurrentTa
               (bubblePosYfromIndex bubble) + 23
 
             TopicConnections ->
-              containerHeight - 8
+              containerHeight - 8 |> toFloat
 
             TopicMentions ->
               (bubblePosYfromIndex bubble) + 23
@@ -456,7 +463,7 @@ viewMentionDots model bubblogramType oerId entityId bubble isHoveringOnCurrentTa
       dot ({positionInResource, sentence} as mention) =
         let
             circlePosX =
-              positionInResource * containerWidth
+              positionInResource * (toFloat containerWidth)
               |> String.fromFloat
 
             circleRadius =
@@ -511,6 +518,7 @@ bubblePosYfromIndex bubble =
   |> toFloat
 
 
+isEntityEqualToSearchTerm : Model -> EntityId -> Bool
 isEntityEqualToSearchTerm model entityId =
   case getEntityTitleFromEntityId model entityId of
     Nothing ->

@@ -5,7 +5,7 @@ import Dict exposing (Dict)
 import Time exposing (millisToPosix, posixToMillis)
 
 import Http exposing (expectStringResponse)
-import Json.Decode as Decode exposing (Value,map,map2,map3,map4,map5,map8,field,bool,int,float,string,list,dict,oneOf,maybe,null)
+import Json.Decode as Decode exposing (Decoder,Value,map,map2,map3,map4,map5,map8,field,bool,int,float,string,list,dict,oneOf,maybe,null)
 import Json.Decode.Extra exposing (andMap)
 import Json.Encode as Encode
 import Url
@@ -198,6 +198,7 @@ requestVideoUsages =
     }
 
 
+courseItemDecoder : Decoder CourseItem
 courseItemDecoder =
   map3 CourseItem
     (field "oerId" int)
@@ -205,17 +206,20 @@ courseItemDecoder =
     (field "comment" string)
 
 
+courseDecoder : Decoder Course
 courseDecoder =
   map Course
     (field "items" (list courseItemDecoder))
 
 
+rangeDecoder : Decoder Range
 rangeDecoder =
   map2 Range
     (field "start" float)
     (field "length" float)
 
 
+sessionDecoder : Decoder Session
 sessionDecoder =
   oneOf
     [ field "loggedInUser" loggedInUserDecoder
@@ -223,17 +227,20 @@ sessionDecoder =
     ]
 
 
+loggedInUserDecoder : Decoder Session
 loggedInUserDecoder =
   map2 (\userProfile isContentFlowEnabled -> Session (LoggedInUser userProfile) isContentFlowEnabled)
     (field "userProfile" userProfileDecoder)
     (field "isContentFlowEnabled" bool)
 
 
+guestUserDecoder : Decoder Session
 guestUserDecoder =
   map (\_ -> Session GuestUser True)
     string
 
 
+userProfileDecoder : Decoder UserProfile
 userProfileDecoder =
   oneOf
     [ map3 UserProfile
@@ -245,10 +252,12 @@ userProfileDecoder =
     ]
 
 
+searchResultsDecoder : Decoder (List Oer)
 searchResultsDecoder =
   list oerDecoder
 
 
+oerDecoder : Decoder Oer
 oerDecoder =
   Decode.succeed Oer
   |> andMap (field "id" int)
@@ -263,6 +272,7 @@ oerDecoder =
   |> andMap (field "mediatype" string)
 
 
+wikichunkEnrichmentDecoder : Decoder WikichunkEnrichment
 wikichunkEnrichmentDecoder =
   map5 (WikichunkEnrichment Nothing)
     (field "mentions" (dict (list mentionDecoder)))
@@ -272,16 +282,19 @@ wikichunkEnrichmentDecoder =
     (field "oerId" int)
 
 
+clusterDecoder : Decoder Cluster
 clusterDecoder =
   list string
 
 
+mentionDecoder : Decoder MentionInOer
 mentionDecoder =
   map2 MentionInOer
     (field "positionInResource" float)
     (field "sentence" string)
 
 
+chunkDecoder : Decoder Chunk
 chunkDecoder =
   map4 Chunk
     (field "start" float)
@@ -290,6 +303,7 @@ chunkDecoder =
     (field "text" string)
 
 
+entityDecoder : Decoder Entity
 entityDecoder =
   map3 Entity
     (field "id" string)

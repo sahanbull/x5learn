@@ -39,6 +39,7 @@ viewCourse model =
         |> column [ spacing 10 ]
 
 
+viewCourseItem : Model -> Int -> CourseItem -> Element Msg
 viewCourseItem model index item =
   case model.cachedOers |> Dict.get item.oerId of
     Nothing ->

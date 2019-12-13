@@ -33,6 +33,7 @@ viewSearchPage model searchState =
       (content, modal)
 
 
+viewBody : Model -> SearchState -> Element Msg
 viewBody model searchState =
   case searchState.searchResults of
     Nothing ->
@@ -44,4 +45,4 @@ viewBody model searchState =
     Just oerIds ->
       Playlist "" oerIds
       |> viewOerGrid model
-      |> el [ width fill, height fill, paddingTRBL 0 0 100 0 ]
+      |> el [ width fill, height fill, paddingBottom 100 ]

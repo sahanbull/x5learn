@@ -212,6 +212,7 @@ viewFragmentsBar model oer chunks barWidth barId =
     |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background ++ visitedRangeMarkers ++ courseRangeMarkers ++ scrubDisplayAndClickHandler ++ mouseLeaveHandler)
 
 
+viewChunkPopup : Model -> ChunkPopup -> Element Msg
 viewChunkPopup model chunkPopup =
   let
       entitiesSection =
@@ -252,6 +253,7 @@ viewEntityButton model chunkPopup entity =
         button ([ padding 5, width fill, popupOnMouseEnter (ChunkOnBar { chunkPopup | entityPopup = Just { entityId = entity.id, hoveringAction = Nothing } }) ] ++ backgroundAndSubmenu) { onPress = Nothing, label = label }
 
 
+viewEntityPopup : Model -> ChunkPopup -> EntityPopup -> Entity -> List (Attribute Msg)
 viewEntityPopup model chunkPopup entityPopup entity =
   let
       actionButtons =
@@ -274,6 +276,7 @@ viewEntityPopup model chunkPopup entityPopup entity =
       |> List.singleton
 
 
+entityActionButton : ChunkPopup -> EntityPopup -> (EntityTitle, Msg) -> Element Msg
 entityActionButton chunkPopup entityPopup (title, clickAction) =
   let
       hoverAction =
@@ -316,5 +319,6 @@ viewDefinition model entityId =
 fragmentsBarHeight = 16
 
 
+isHoverMenuNearRightEdge : Model -> Float -> Bool
 isHoverMenuNearRightEdge model margin =
   model.mousePositionXwhenOnChunkTrigger > (toFloat model.windowWidth)-margin

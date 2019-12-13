@@ -92,6 +92,7 @@ view model =
                 Resource ->
                   viewResourcePage model |> withNavigationDrawer model
 
+      header : Attribute Msg
       header =
         viewPageHeader model
         |> inFront

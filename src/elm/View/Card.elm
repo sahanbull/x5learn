@@ -80,7 +80,7 @@ viewOerCard : Model -> Point -> String -> Bool -> Oer -> Element Msg
 viewOerCard ({pageScrollState} as model) position barId enableShadow oer =
   let
       isCardInView =
-        position.y + cardHeight > pageScrollState.scrollTop && position.y < pageScrollState.scrollTop + pageScrollState.viewHeight
+        position.y + (toFloat cardHeight) > pageScrollState.scrollTop && position.y < pageScrollState.scrollTop + pageScrollState.viewHeight
   in
       if isCardInView then
         viewOerCardVisibleContent model position barId enableShadow oer
@@ -101,7 +101,7 @@ viewOerCardVisibleContent model position barId enableShadow oer =
               []
             else
               viewFragmentsBar model oer enrichment.chunks cardWidth barId
-              |> el [ width fill, moveDown imageHeight ]
+              |> el [ width fill, moveDown (toFloat imageHeight) ]
               |> inFront
               |> List.singleton
 
@@ -362,9 +362,11 @@ spriteSheetNumberOfColumns =
   10
 
 
+spritesheetUrl : Oer -> String
 spritesheetUrl oer =
   "http://145.14.12.67/files/sprite_sheets/sprite_"++(String.fromInt oer.id)++"_10x10_332x175.jpg"
 
 
+thumbUrl : Oer -> String
 thumbUrl oer =
   "http://145.14.12.67/files/thumbs/tn_"++(String.fromInt oer.id)++"_332x175.jpg"

@@ -101,7 +101,7 @@ viewModal model inspectorState =
                   materialScrimAlpha
         in
             none
-            |> el [ Background.color <| rgba 0 0 0 opacity, width (model.windowWidth - navigationDrawerWidth |> px), height (fill |> maximum (model.windowHeight - pageHeaderHeight)), moveDown pageHeaderHeight, moveRight navigationDrawerWidth,  htmlClass "modalScrim" ]
+            |> el [ Background.color <| rgba 0 0 0 opacity, width (model.windowWidth - navigationDrawerWidth |> px), height (fill |> maximum (model.windowHeight - pageHeaderHeight)), moveDown (toFloat pageHeaderHeight), moveRight navigationDrawerWidth,  htmlClass "modalScrim" ]
   in
       sheet
       |> el [ width fill, height fill, behindContent scrim, inFront animatingBox ]
@@ -147,6 +147,7 @@ inspectorContentDefault model {oer, fragmentStart} =
 
 
 
+viewDescription : Oer -> Element Msg
 viewDescription oer =
   case oer.description of
     "" ->
@@ -160,6 +161,7 @@ viewDescription oer =
       |> column [ spacing 7, height fill, scrollbarY, paddingTop 30 ]
 
 
+viewLinkToFile : Oer -> Element Msg
 viewLinkToFile oer =
   newTabLink [] { url = oer.url, label = oer.url |> bodyWrap [] }
 
@@ -168,8 +170,10 @@ sheetWidth =
   752
 
 
+viewProviderLinkAndFavoriteButton : Model -> Oer -> Element Msg
 viewProviderLinkAndFavoriteButton model oer =
   let
+      favoriteButton : Element Msg
       favoriteButton =
         let
             heart =
@@ -179,6 +183,7 @@ viewProviderLinkAndFavoriteButton model oer =
             none
             |> el [ alignRight, width <| px 34, inFront heart ]
 
+      providerLink : Element Msg
       providerLink =
         case oer.provider of
           "" ->
@@ -186,7 +191,7 @@ viewProviderLinkAndFavoriteButton model oer =
 
           provider ->
             [ "Provider:" |> bodyNoWrap []
-            , newTabLink [] { url = oer.url, label = provider |> trimTailingEllipsisIfNeeded |> bodyNoWrap [] }
+            , newTabLink [] { url = oer.url, label = provider |> bodyNoWrap [] }
             ]
             |> row [ spacing 10 ]
   in
@@ -196,12 +201,14 @@ viewProviderLinkAndFavoriteButton model oer =
       |> row [ width fill ]
 
 
+viewCourseButton : Model -> Oer -> List (Element Msg)
 viewCourseButton model oer =
   [ none |> el [ width fill ]
   , actionButtonWithIcon [] IconLeft "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
   ]
 
 
+viewCourseSettings : Model -> Oer -> CourseItem -> List (Element Msg)
 viewCourseSettings model oer {range, comment} =
   let
       topRow =

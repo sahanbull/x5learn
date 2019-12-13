@@ -848,6 +848,7 @@ updateSearch transformFunction model =
       { model | searchState = Just (searchState |> transformFunction) }
 
 
+insertSearchResults : List OerId -> SearchState -> SearchState
 insertSearchResults oerIds searchState =
   { searchState | searchResults = Just oerIds }
 
@@ -990,6 +991,7 @@ updateBubblogramsIfNeeded model =
   { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.map (addBubblogram model) }
 
 
+logEventForLabStudy : String -> List String -> (Model, Cmd Msg) -> (Model, Cmd Msg)
 logEventForLabStudy eventType params (model, cmd) =
   -- let
   --     dummy =
@@ -1127,6 +1129,7 @@ updateSnackbar model =
         Just snackbar
 
 
+snackbarMessageReloadPage : String
 snackbarMessageReloadPage =
   "There was a problem - please reload the page"
 

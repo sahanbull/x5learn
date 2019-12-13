@@ -126,6 +126,7 @@ subscriptions model =
   |> Sub.batch
 
 
+isModalAnimating : Model -> Bool
 isModalAnimating model =
   if model.animationsPending |> Set.isEmpty then
      False

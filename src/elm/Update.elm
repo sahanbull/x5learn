@@ -814,13 +814,13 @@ update msg ({nav, userProfileForm} as model) =
           searchText =
             case taskName of
               "Task 1" ->
-                "climate change"
+                "labstudytask1"
 
               "Task 2" ->
-                "machine learning"
+                "labstudytask2"
 
               _ ->
-                "brain"
+                "labstudypractice"
 
           newModel =
             { model | currentTaskName = Just taskName, searchInputTyping = searchText, searchState = Just <| newSearch searchText, snackbar = Nothing }

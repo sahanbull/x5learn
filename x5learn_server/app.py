@@ -26,6 +26,7 @@ from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichmen
     ActionsRepository, UserRepository, DefinitionsRepository, Course, UiLogBatch
 
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
+from x5learn_server.lab_study import frozen_search_results_for_lab_study, is_special_search_key_for_lab_study
 
 # Create app
 app = Flask(__name__)
@@ -431,6 +432,8 @@ def api_entity_descriptions():
 
 def search_results_from_x5gon_api(text):
     text = urllib.parse.quote(text)
+    if is_special_search_key_for_lab_study(text):
+        return frozen_search_results_for_lab_study(text)
     return search_results_from_x5gon_api_pages(text, 1, [])
 
 

@@ -1349,7 +1349,7 @@ markCourseAsChanged model =
 
 saveLoggedEventsIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
 saveLoggedEventsIfNeeded (oldModel, oldCmd) =
-  if oldModel.loggedEvents/=[] && oldModel.session/=Nothing && millisSince oldModel oldModel.timeWhenSessionLoaded > 10000 && millisSince oldModel oldModel.lastTimeLoggedEventsSaved > 5000 then
+  if oldModel.loggedEvents/=[] && millisSince oldModel oldModel.timeWhenSessionLoaded > 10000 && millisSince oldModel oldModel.lastTimeLoggedEventsSaved > 5000 then
     ({ oldModel | loggedEvents = [], lastTimeLoggedEventsSaved = oldModel.currentTime }, [ requestSaveLoggedEvents oldModel, oldCmd ] |> Cmd.batch)
   else
     (oldModel, oldCmd)

@@ -56,7 +56,6 @@ type alias Model =
   , requestingWikichunkEnrichments : Bool -- true while waiting for a response from the server. This is to avoid simultaneous requests.
   , wikichunkEnrichments : Dict OerId WikichunkEnrichment -- enrichment data cached on the frontend
   , enrichmentsAnimating : Bool -- when the enrichments are loaded, some of the bubblogram visualisations come in with a zooming/sliding effect
-  , tagClouds : Dict String (List String)
   , autocompleteTerms : List String
   , autocompleteSuggestions : List String
   , selectedSuggestion : String
@@ -395,7 +394,6 @@ initialModel nav flags =
   , requestingWikichunkEnrichments = False
   , wikichunkEnrichments = Dict.empty
   , enrichmentsAnimating = False
-  , tagClouds = Dict.empty
   , autocompleteTerms = []
   , autocompleteSuggestions = []
   , selectedSuggestion = ""

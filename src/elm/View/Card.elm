@@ -192,23 +192,6 @@ viewOerCardVisibleContent model position barId enableShadow oer =
             |> row [ width fill, paddingXY 16 0, moveDown 255 ]
             |> inFront
 
-      tagCloudView tagCloud =
-        tagCloud
-        |> List.indexedMap (\index label -> label |> wrapText [ Font.size (20-index), Font.color <| rgba 0 0 0 (0.8- ((toFloat index)/15)), height fill ])
-        |> column [ padding 16, spacing 6, height <| px <| imageHeight-16 ]
-        |> el [ paddingBottom 16 ]
-
-      -- hoverPreview =
-      --   if chunksFromOerId model oer.url |> List.isEmpty then
-      --     carousel
-      --   else
-      --     case model.tagClouds |> Dict.get oer.id of
-      --       Nothing ->
-      --         carousel
-
-      --       Just tagCloud ->
-      --         tagCloudView tagCloud
-
       widthOfCard =
         width (px cardWidth)
 

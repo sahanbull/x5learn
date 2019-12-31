@@ -1,5 +1,10 @@
 module Model exposing (..)
 
+{-| This module holds the Model type
+    as well as auxiliary types and helper functions
+-}
+
+
 import Browser
 import Browser.Navigation as Navigation
 import Url
@@ -12,27 +17,45 @@ import List.Extra
 import Animation exposing (..)
 
 
+{-| The Model contains the ENTIRE state of the frontend at any point in time.
+
+    Naturally, it is a huge type with lots of fields and some nesting.
+    There is an obvious trade-off between the number of fields and the depth of nesting.
+    Sometimes deeper nesting can be preferable, in cases when things need to change as one,
+    e.g. searchState contains fields that share a common lifetime and context.
+    On the other hand, sometimes you want to avoid nesting to keep update simple.
+    e.g. course could be nested into the session, but then updating it would be
+    significantly more complex, while the benefits would arguably be small.
+
+    It's a long and interesting discussion.
+    https://discourse.elm-lang.org/t/updating-nested-records-again/1488/9
+
+    Also note that in some cases, it simply comes down to convenience,
+    E.g. Should windowWidth and windowHeight be combined into a single field
+    that holds two integers? Sure, why not. This one is almost a matter of taste.
+    In my experience, having lots of fields in the Model doesn't come at a real cost.
+-}
 type alias Model =
-  { nav : Nav
-  , subpage : Subpage
-  , session : Maybe Session
-  , windowWidth : Int
-  , windowHeight : Int
-  , mousePositionXwhenOnChunkTrigger : Float
-  , currentTime : Posix
-  , searchInputTyping : String
-  , searchState : Maybe SearchState
-  , inspectorState : Maybe InspectorState
-  , snackbar : Maybe Snackbar
-  , course : Course
-  , hoveringOerId : Maybe OerId
-  , timeOfLastMouseEnterOnCard : Posix
-  , modalAnimation : Maybe BoxAnimation
-  , animationsPending : Set String
-  , popup : Maybe Popup
-  , requestingWikichunkEnrichments : Bool
-  , wikichunkEnrichments : Dict OerId WikichunkEnrichment
-  , enrichmentsAnimating : Bool
+  { nav : Nav -- Elm structure for managing the browser's navigation bar. https://package.elm-lang.org/packages/elm/browser/1.0.1/Browser-Navigation
+  , subpage : Subpage -- custom type, indicating which subpage to render
+  , session : Maybe Session -- custom type, loaded from server initially
+  , windowWidth : Int -- width of the browser window in pixels
+  , windowHeight : Int -- height of the browser window in pixels
+  , mousePositionXwhenOnChunkTrigger : Float -- crude method to determine whether the ContentFlow menu should open to the left or right (to prevent exceeding the screen borders)
+  , currentTime : Posix -- updated a few times a second. Mind the limited precision
+  , searchInputTyping : String -- text the user types into the search field
+  , searchState : Maybe SearchState -- custom type, see definition below
+  , inspectorState : Maybe InspectorState -- custom type, see definition below
+  , snackbar : Maybe Snackbar -- brief message at the bottom of the screen. https://material.io/components/snackbars/
+  , course : Course -- essentially a list of commentable OER snippets that the user has bookmarked
+  , hoveringOerId : Maybe OerId -- When the mouse is hovering over an OER card then we store its ID here
+  , timeOfLastMouseEnterOnCard : Posix -- When the mouse starts hovering over an OER card then we keep track of the time in order to cycle through multiple images (if any).
+  , modalAnimation : Maybe BoxAnimation -- When the user clicks on an OER card then the inspector modal doesn't just appear instantly - there is a bit of a zooming effect.
+  , animationsPending : Set String -- Keeping track of multiple GUI animations, including the inspector modal. We're using a Set of Strings, assuming that there can be multiple animations in parallel, each having a unique String ID.
+  , popup : Maybe Popup -- There can be different types of popups, see type definition below.
+  , requestingWikichunkEnrichments : Bool -- true while waiting for a response from the server. This is to avoid simultaneous requests.
+  , wikichunkEnrichments : Dict OerId WikichunkEnrichment -- enrichment data cached on the frontend
+  , enrichmentsAnimating : Bool -- when the enrichments are loaded, some of the bubblogram visualisations come in with a zooming/sliding effect
   , tagClouds : Dict String (List String)
   , autocompleteTerms : List String
   , autocompleteSuggestions : List String

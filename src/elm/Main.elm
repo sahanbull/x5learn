@@ -23,6 +23,17 @@ import Update exposing (..)
 import Request exposing (..)
 
 
+{-| This module comprises the core of the Elm application.
+    It contains the essential "main" function and some of its key arguments,
+    particularly "init" and "view" (since they are small functions).
+    The "update" function is large enough to deserve its own module.
+-}
+
+
+{-| Set up the Elm application, using the "Browser" module.
+    https://package.elm-lang.org/packages/elm/browser/1.0.1/Browser#application
+    (NB check if the version number is in sync with elm.json)
+-}
 main : Program Flags Model Msg
 main =
   Browser.application
@@ -35,6 +46,8 @@ main =
     }
 
 
+{-| Initialise the Elm application
+-}
 init : Flags -> Url.Url -> Navigation.Key -> ( Model, Cmd Msg )
 init flags url key =
   let
@@ -45,6 +58,9 @@ init flags url key =
       ( model, cmd )
 
 
+{-| This is the top-level view functions.
+    All it does is delegate to the appropriate view function to render the current page
+-}
 view : Model -> Browser.Document Msg
 view model =
   let

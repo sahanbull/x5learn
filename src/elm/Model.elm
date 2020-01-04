@@ -64,39 +64,39 @@ type alias Model =
   , userProfileForm : UserProfileForm -- for the user to fill in their name etc
   , userProfileFormSubmitted : Bool -- show a loading spinner while waiting for HTTP response
   -- , oerNoteForms : Dict OerId String
-  , feedbackForms : Dict OerId String
-  , cachedOers : Dict OerId Oer
-  , requestingOers : Bool
-  , hoveringTagEntityId : Maybe String
-  , entityDefinitions : Dict String EntityDefinition
-  , requestingEntityDefinitions : Bool
-  , wikichunkEnrichmentRequestFailCount : Int
-  , wikichunkEnrichmentRetryTime : Posix
-  , timeOfLastUrlChange : Posix
-  , startedLabStudyTask : Maybe (LabStudyTask, Posix)
-  , currentResource : Maybe CurrentResource
-  , resourceSidebarTab : ResourceSidebarTab
-  , resourceRecommendations : List Oer
-  , timeOfLastFeedbackRecorded : Posix
+  , feedbackForms : Dict OerId String -- allowing the user to type feedback on different OERs
+  , timeOfLastFeedbackRecorded : Posix -- used to show a brief thank you message
+  , cachedOers : Dict OerId Oer -- OER data loaded from the server
+  , requestingOers : Bool -- waiting for OER data from the server
+  , hoveringTagEntityId : Maybe String -- when the user hovers over a topic in a bubblogram
+  , entityDefinitions : Dict String EntityDefinition -- wikipedia definitions loaded from the server
+  , requestingEntityDefinitions : Bool -- waiting for wikipedia definitions from the server
+  , wikichunkEnrichmentRequestFailCount : Int -- exponential(ish) backoff strategy: keep nagging the server for enrichments. count the attempts
+  , wikichunkEnrichmentRetryTime : Posix -- exponential(ish) backoff strategy: wait a bit longer every time
+  , timeOfLastUrlChange : Posix -- used to animate bubblograms
+  , startedLabStudyTask : Maybe (LabStudyTask, Posix) -- when the user presses button to start a task (lab study only)
+  , currentResource : Maybe CurrentResource -- in full-page view: the loaded OER e.g. x5learn.org/resource/12345
+  , resourceSidebarTab : ResourceSidebarTab -- in full-page view: switch between recommendations, notes and feedback
+  , resourceRecommendations : List Oer -- in full-page view: OER recommendations in the sidebar tab
   -- , oerNoteboards : Dict OerId Noteboard
-  , videoUsages : Dict OerId VideoUsage
-  , oerCardPlaceholderPositions : List OerCardPlaceholderPosition
-  , overviewType : OverviewType
-  , selectedMentionInStory : Maybe (OerId, MentionInOer)
-  , pageScrollState : PageScrollState
-  , favorites : List OerId
-  , removedFavorites : Set OerId -- keep a client-side record of "unliked" oers so that cards on the favorites page don't simply disappear when unliked
-  , hoveringHeart : Maybe OerId
-  , flyingHeartAnimation : Maybe FlyingHeartAnimation
-  , flyingHeartAnimationStartPoint : Maybe Point
-  , featuredOers : Maybe (List OerId)
-  , timelineHoverState : Maybe TimelineHoverState
-  , courseNeedsSaving : Bool
-  , courseChangesSaved : Bool
-  , lastTimeCourseChanged : Posix
-  , loggedEvents : List String
-  , lastTimeLoggedEventsSaved : Posix
-  , timeWhenSessionLoaded : Posix
+  , videoUsages : Dict OerId VideoUsage -- for each (video) OER, which parts has the user watched
+  , oerCardPlaceholderPositions : List OerCardPlaceholderPosition -- dynamic layout of the cards on the screen
+  , overviewType : OverviewType -- thumbnail or bubblogram
+  , selectedMentionInStory : Maybe (OerId, MentionInOer) -- in bubblogram: hovering over a mention
+  , pageScrollState : PageScrollState -- vertical page scrolling. NB This value can also change when resizing the window or rotating the device.
+  , favorites : List OerId -- OERs marked as favourite (heart icon)
+  , removedFavorites : Set OerId -- keep a client-side record of removed items so that cards on the favorites page don't simply disappear when unliked
+  , hoveringHeart : Maybe OerId -- if the user hovers over a heart, which OER is it
+  , flyingHeartAnimation : Maybe FlyingHeartAnimation -- when the user likes an OER
+  , flyingHeartAnimationStartPoint : Maybe Point -- when the user likes an OER
+  , featuredOers : Maybe (List OerId) -- a handful of OERs to display on the start page
+  , timelineHoverState : Maybe TimelineHoverState -- used for scrubbing and defining ranges
+  , courseNeedsSaving : Bool -- true when the user changes any course items since last saving
+  , courseChangesSaved : Bool -- used to display a message to the user
+  , lastTimeCourseChanged : Posix -- wait a few seconds before saving changes, to avoid too frequent requests (e.g. while typing)
+  , loggedEvents : List String -- temporary buffer for frequent UI events that will be sent to the server in delayed batches
+  , lastTimeLoggedEventsSaved : Posix -- wait a few seconds between batches
+  , timeWhenSessionLoaded : Posix -- wait a few seconds before logging UI events
   }
 
 
@@ -403,6 +403,7 @@ initialModel nav flags =
   , userProfileFormSubmitted = False
   -- , oerNoteForms = Dict.empty
   , feedbackForms = Dict.empty
+  , timeOfLastFeedbackRecorded = initialTime
   , cachedOers = Dict.empty
   , requestingOers = False
   , hoveringTagEntityId = Nothing
@@ -415,7 +416,6 @@ initialModel nav flags =
   , currentResource = Nothing
   , resourceSidebarTab = initialResourceSidebarTab
   , resourceRecommendations = []
-  , timeOfLastFeedbackRecorded = initialTime
   -- , oerNoteboards = Dict.empty
   , videoUsages = Dict.empty
   , oerCardPlaceholderPositions = []

@@ -103,7 +103,7 @@ type alias Model =
   , timelineHoverState : Maybe TimelineHoverState -- used for scrubbing and defining ranges
   -- additional screen elements
   , snackbar : Maybe Snackbar -- brief message at the bottom of the screen. https://material.io/components/snackbars/
-  , popup : Maybe Popup -- There can be different types of popups, see type definition below.
+  , popup : Maybe Popup -- There can be only one popup at a time. See the type definition below.
   -- time
   , currentTime : Posix -- updated a few times a second. Mind the limited precision
   , animationsPending : Set String -- Keeping track of multiple GUI animations, including the inspector modal. We're using a Set of Strings, assuming that there can be multiple animations in parallel, each having a unique String ID.
@@ -190,7 +190,8 @@ type alias BubbleCoordinates =
   , size : Float
   }
 
-{-| Literal occurrence of an entity's name in an OER transcript
+{-| Occurrence of an entity in an enrichment.
+    Not to be confused with MentionInOer
 -}
 type alias Occurrence =
   { entity : Entity
@@ -219,6 +220,8 @@ type alias EntityTitle = String
 type alias Noteboard = List Note
 
 
+{-| Knowing what part of the page the user is seeing
+-}
 type alias PageScrollState =
   { scrollTop : Float
   , viewHeight : Float
@@ -227,12 +230,17 @@ type alias PageScrollState =
   }
 
 
+{-| Brief message at the bottom of the screen
+    https://material.io/components/snackbars/
+-}
 type alias Snackbar =
   { startTime : Posix
   , text : String
   }
 
 
+{-| Screen layout
+-}
 type alias OerCardPlaceholderPosition =
   { x : Float
   , y : Float
@@ -240,6 +248,8 @@ type alias OerCardPlaceholderPosition =
   }
 
 
+{-| User comments on OER
+-}
 type alias Note =
   { text : String
   , time : Posix
@@ -248,12 +258,16 @@ type alias Note =
   }
 
 
+{-| Allowing the user to enter their profile information
+-}
 type alias UserProfileForm =
   { userProfile : UserProfile
   , saved : Bool
   }
 
 
+{-| User profile information
+-}
 type alias UserProfile =
   { email : String
   , firstName : String
@@ -261,18 +275,24 @@ type alias UserProfile =
   }
 
 
+{-| Data passed to the Elm app from JS as initial parameters
+-}
 type alias Flags =
   { windowWidth : Int
   , windowHeight : Int
   }
 
 
+{-| Browser data
+-}
 type alias Nav =
   { url : Url.Url
   , key : Navigation.Key
   }
 
 
+{-| Page (rlative URL) within the application
+-}
 type Subpage
   = Home
   | Profile
@@ -282,20 +302,25 @@ type Subpage
   | Resource
 
 
+{-| Search for OERs
+-}
 type alias SearchState =
   { lastSearch : String
   , searchResults : Maybe (List OerId)
   }
 
 
+{-| Content of the OER inspector modal
+-}
 type alias InspectorState =
   { oer : Oer
   , fragmentStart : Float
-  , activeMenu : Maybe InspectorMenu
   , videoPlayer : Maybe Html5VideoPlayer
   }
 
 
+{-|  HTML5 video player
+-}
 type alias Html5VideoPlayer =
   { isPlaying : Bool
   , currentTime : Float
@@ -303,7 +328,8 @@ type alias Html5VideoPlayer =
   }
 
 
-
+{-| OER basic metadata
+-}
 type alias Oer =
   { id : Int
   , date : String
@@ -318,6 +344,8 @@ type alias Oer =
   }
 
 
+{-| Enrichment based on Wikification
+-}
 type alias WikichunkEnrichment =
   { bubblogram : Maybe Bubblogram
   , mentions : Dict EntityId (List MentionInOer)
@@ -328,8 +356,13 @@ type alias WikichunkEnrichment =
   }
 
 
+{-| In some kinds of Bubblogram, the bubbles are grouped into Clusters
+-}
 type alias Cluster = List EntityTitle
 
+
+{-| A Chunk is an enriched portion of an OER
+-}
 type alias Chunk =
   { start : Float -- 0 to 1
   , length : Float -- 0 to 1
@@ -338,6 +371,11 @@ type alias Chunk =
   }
 
 
+{-| An Entity is a wikipedia topic.
+    The reason we call it Entity is partly historical
+    as earlier versions relied more strongly on Wikidata entities.
+    https://www.wikidata.org/wiki/Q32753077
+-}
 type alias Entity =
   { id : String
   , title : String
@@ -345,80 +383,133 @@ type alias Entity =
   }
 
 
+{-| Popups can come in different shapes for different purposes.
+    (They are mutually exclusive, i.e. only one popup can be open at any time)
+-}
 type Popup
-  = ChunkOnBar ChunkPopup
-  | UserMenu
-  | BubblePopup BubblePopupState
+  = ChunkOnBar ChunkPopup -- chunk on FragmentsBar
+  | UserMenu -- when the user clicks on the avatar icon at the top right
+  | BubblePopup BubblePopupState -- Certain types of bubblograms open a popup when the mouse hovers over a bubble
 
 
-type alias ChunkPopup = { barId : String, oer : Oer, chunk : Chunk, entityPopup : Maybe EntityPopup }
+{-| Cascading menu containing wikipedia topics
+-}
+type alias ChunkPopup =
+  { barId : String
+  , oer : Oer
+  , chunk : Chunk
+  , entityPopup : Maybe EntityPopup
+  }
 
-type alias EntityPopup = { entityId : String, hoveringAction : Maybe String }
 
-type alias BubblePopupState = { oerId : OerId, entityId : String, content : BubblePopupContent, nextContents : List BubblePopupContent }
+{-| Nested menu when hovering over an entity
+-}
+type alias EntityPopup =
+  { entityId : String
+  , hoveringAction : Maybe String
+  }
 
 
+{-| Popups in bubblograms can have different content
+-}
+type alias BubblePopupState =
+  { oerId : OerId
+  , entityId : String
+  , content : BubblePopupContent
+  , nextContents : List BubblePopupContent
+  }
+
+
+{-| Popups in bubblograms can have different content
+-}
 type BubblePopupContent
   = DefinitionInBubblePopup
   | MentionInBubblePopup MentionInOer
 
+
+{-| Literal mention of an entity's name in an OER transcript
+-}
 type alias MentionInOer =
   { positionInResource : Float
   , sentence : String
   }
 
+{-| Ranges from 0 to 1 are usually used to specify sections of content within an OER.
+-}
 type alias Range =
   { start : Float -- 0 to 1
   , length : Float -- 0 to 1
   }
 
+{-| TimelineHoverState relates to the FragmentsBar and serves 2 purposes:
+    1. scrubbing to preview video content
+    2. specifying a range for a CourseItem by dragging
+-}
 type alias TimelineHoverState =
   { position : Float
   , mouseDownPosition : Maybe Float
   }
 
+{-| used in connection with timelineMouseEvent
+-}
 type alias EventNameAndPosition =
   { eventName : String
   , position : Float
   }
 
+{-| A Course is a list of commentable OER snippets selected by the user.
+    Aka the user's workspace
+-}
 type alias Course =
   { items : List CourseItem
   }
 
+{-| CourseItem is a snippet of an OER (specified by a Range) that the has added to a Course.
+    The user can add a comment to a CourseItem.
+-}
 type alias CourseItem =
   { oerId : OerId
   , range : Range
   , comment : String
   }
 
+
+{-| Playlist is a historical name for: a list of OERs with a title.
+    The name Playlist doesn't fit as well as it used to in earlier versions.
+    Not to be confused with Course.
+    TODO reactor to rename this type
+-}
 type alias Playlist =
   { title : String
   , oerIds : List OerId
   }
 
 
+{-| Used to control the zoom animation when opening the inspector modal
+-}
 type AnimationStatus
   = Inactive
   | Prestart
   | Started
 
 
-type InspectorMenu
-  = QualitySurvey -- TODO
-
-
+{-| Represents a user (who may or may not be logged in) and some extra settings
+-}
 type alias Session =
   { loginState : LoginState
   , isContentFlowEnabled : Bool
   }
 
 
+{-| Represents a user (who may or may not be logged in)
+-}
 type LoginState
   = GuestUser
   | LoggedInUser UserProfile
 
 
+{-| Initial model state
+-}
 initialModel : Nav -> Flags -> Model
 initialModel nav flags =
   { nav = nav
@@ -539,7 +630,7 @@ newInspectorState oer fragmentStart =
         else
           Nothing
   in
-      InspectorState oer fragmentStart Nothing videoPlayer
+      InspectorState oer fragmentStart videoPlayer
 
 
 hasYoutubeVideo : OerUrl -> Bool
@@ -571,11 +662,15 @@ modalId =
   "inspectorModal"
 
 
+{-| Number of milliseconds that have passed since a certain point in time
+-}
 millisSince : Model -> Posix -> Int
 millisSince model pastPointInTime =
   (posixToMillis model.currentTime) - (posixToMillis pastPointInTime)
 
 
+{-| Status of the animation of the inspector modal
+-}
 modalAnimationStatus : Model -> AnimationStatus
 modalAnimationStatus model =
   if model.animationsPending |> Set.member modalId then
@@ -589,6 +684,8 @@ modalAnimationStatus model =
     Inactive
 
 
+{-| Convenience function to check whether the current URL equals a certain string
+-}
 currentUrlMatches : Model -> String -> Bool
 currentUrlMatches model url =
   url == model.nav.url.path
@@ -599,11 +696,15 @@ isFromVideoLecturesNet oer =
   String.startsWith "http://videolectures.net/" oer.url
 
 
+{-| Playlist: not to be confused with Course
+-}
 isInPlaylist : OerId -> Playlist -> Bool
 isInPlaylist oerId playlist =
   List.member oerId playlist.oerIds
 
 
+{-| Takes a String like "13:45" and returns the number of seconds (e.g. 45)
+-}
 secondsFromTimeString : String -> Int
 secondsFromTimeString time =
   let
@@ -629,6 +730,8 @@ secondsFromTimeString time =
       minutes * 60 + seconds
 
 
+{-| Convert a time duration to a String, e.g. 185 seconds -> "3:05"
+-}
 secondsToString : Int -> String
 secondsToString seconds =
   let
@@ -644,6 +747,8 @@ secondsToString seconds =
       minutesString ++ ":" ++ secondsString
 
 
+{-| How the user's name appears in the GUI
+-}
 displayName : UserProfile -> String
 displayName userProfile =
   let
@@ -657,11 +762,15 @@ displayName userProfile =
         name
 
 
+{-| Check whether the user is logged in
+-}
 isLoggedIn : Model -> Bool
 isLoggedIn model =
   loggedInUserProfile model /= Nothing
 
 
+{-| Get the profile of the logged-in user (if applicable, otherwise return Nothing)
+-}
 loggedInUserProfile : Model -> Maybe UserProfile
 loggedInUserProfile {session} =
   case session of
@@ -677,11 +786,15 @@ loggedInUserProfile {session} =
           Just userProfile
 
 
+{-| Default profile info for the user to change
+-}
 freshUserProfileForm : UserProfile -> UserProfileForm
 freshUserProfileForm userProfile =
   { userProfile = userProfile, saved = False }
 
 
+{-| Get all available chunks for a particular OER
+-}
 chunksFromOerId : Model -> OerId -> List Chunk
 chunksFromOerId model oerId =
   case model.wikichunkEnrichments |> Dict.get oerId of
@@ -692,11 +805,16 @@ chunksFromOerId model oerId =
       enrichment.chunks
 
 
+{-| In certain types of bubblogram, the bubbles animate into position.
+    This is the duration of the animation in milliseconds.
+-}
 enrichmentAnimationDuration : Float
 enrichmentAnimationDuration =
   3000
 
 
+{-| Check whether a bubblogram animation is currently running
+-}
 anyBubblogramsAnimating : Model -> Bool
 anyBubblogramsAnimating model =
   let
@@ -713,6 +831,9 @@ anyBubblogramsAnimating model =
       |> List.any isAnimating
 
 
+{-| In certain types of bubblogram, the bubbles animate into position.
+    This function returns the phase of the animation between 0 (start) and 1 (end).
+-}
 bubblogramAnimationPhase : Model -> Posix -> Float
 bubblogramAnimationPhase model createdAt =
   let
@@ -724,11 +845,16 @@ bubblogramAnimationPhase model createdAt =
       millisSinceStart / enrichmentAnimationDuration * 2 |> Basics.min 1
 
 
+{-| The time of switching pages within the app is used to control the Bubblogram animation.
+    Check whether this still makes sense.
+-}
 millisSinceLastUrlChange : Model -> Int
 millisSinceLastUrlChange model =
   (model.currentTime |> posixToMillis) - (model.timeOfLastUrlChange |> posixToMillis)
 
 
+{-| Convenience function to check whether a string equals the current search query
+-}
 isEqualToSearchString : Model -> EntityTitle -> Bool
 isEqualToSearchString model entityTitle =
   case model.searchState of
@@ -739,6 +865,8 @@ isEqualToSearchString model entityTitle =
       (entityTitle |> String.toLower) == (searchState.lastSearch |> String.toLower)
 
 
+{-| Returns all the mentions of a particular Entity in a particular OER
+-}
 getMentions : Model -> OerId -> String -> List MentionInOer
 getMentions model oerId entityId =
   case model.wikichunkEnrichments |> Dict.get oerId of
@@ -751,6 +879,8 @@ getMentions model oerId entityId =
       |> Maybe.withDefault []
 
 
+{-| Returns the currently selected Mention (if any) in the Bubblogram popup (if any)
+-}
 mentionInBubblePopup : Model -> Maybe MentionInOer
 mentionInBubblePopup model =
   case model.popup of
@@ -766,6 +896,8 @@ mentionInBubblePopup model =
       Nothing
 
 
+{-| Used in order to look up wikipedia definitions
+-}
 uniqueEntitiesFromEnrichments : List WikichunkEnrichment -> List Entity
 uniqueEntitiesFromEnrichments enrichments =
   enrichments
@@ -774,6 +906,8 @@ uniqueEntitiesFromEnrichments enrichments =
   |> List.Extra.uniqueBy .id
 
 
+{-| Look up an Entity's title by the Entity's id
+-}
 getEntityTitleFromEntityId : Model -> EntityId -> Maybe String
 getEntityTitleFromEntityId model entityId =
   let
@@ -792,6 +926,8 @@ getEntityTitleFromEntityId model entityId =
           Just entity.title
 
 
+{-| Relative page URL within the application
+-}
 homePath =
   "/"
 
@@ -801,14 +937,11 @@ profilePath =
 searchPath =
   "/search"
 
-notesPath =
-  "/notes"
+-- notesPath =
+--   "/notes"
 
 favoritesPath =
   "/favorites"
-
--- coursePath =
---   "/course"
 
 resourcePath =
   "/resource"
@@ -823,16 +956,24 @@ logoutPath =
   "/logout"
 
 
+{-| Takes a getter function (such as .price) and a collection (such as cars)
+    Returns the mean (e.g. the average price of all the cars)
+-}
 averageOf : (a -> Float) -> List a -> Float
 averageOf getterFunction records =
   (records |> List.map getterFunction |> List.sum) / (records |> List.length |> toFloat)
 
 
+{-| Interpolate between two numbers a and b, using "phase" to crossfade
+-}
 interp : Float -> Float -> Float -> Float
 interp phase a b =
   phase * b + (1-phase) * a
 
 
+{-| Check whether the current user is a participant in a scientific experiment.
+    By convention, lab study participants use researcher-created accounts that have short identifiers such as "p1", "p2"... instead of an email address.
+-}
 isLabStudy1 : Model -> Bool
 isLabStudy1 model =
   case loggedInUserProfile model of
@@ -843,16 +984,22 @@ isLabStudy1 model =
       email |> String.contains "@" |> not
 
 
+{-| Check whether a list contains both elements x and y
+-}
 listContainsBoth : a -> a -> List a -> Bool
-listContainsBoth a b list =
-  List.member a list && List.member b list
+listContainsBoth x y list =
+  List.member x list && List.member y list
 
 
+{-| Arbitrary factor controlling the size of bubbles
+-}
 bubbleZoom : Float
 bubbleZoom =
   0.042
 
 
+{-| Check it the OER is a video file
+-}
 isVideoFile : OerUrl -> Bool
 isVideoFile oerUrl =
   let
@@ -862,21 +1009,29 @@ isVideoFile oerUrl =
      String.endsWith ".mp4" lower || String.endsWith ".webm" lower || String.endsWith ".ogg" lower
 
 
+{-| Check it the OER is a pdf file
+-}
 isPdfFile : OerUrl -> Bool
 isPdfFile oerUrl =
   String.endsWith ".pdf" (oerUrl |> String.toLower)
 
 
+{-| Relative URL of the full-page OER view
+-}
 resourceUrlPath : OerId -> String
 resourceUrlPath oerId =
   resourcePath ++ "/" ++ (String.fromInt oerId)
 
 
+{-| In an emergency, temporarily set this to true, then compile and redeploy
+-}
 isSiteUnderMaintenance : Bool
 isSiteUnderMaintenance =
   False
 
 
+{-| Check whether a particular OER's metadata has been loaded from the server
+-}
 isOerLoaded : Model -> OerId -> Bool
 isOerLoaded model oerId =
   case model.cachedOers |> Dict.get oerId of
@@ -887,42 +1042,25 @@ isOerLoaded model oerId =
       True
 
 
-relatedSearchStringFromOer : Model -> OerId -> String
-relatedSearchStringFromOer model oerId =
-  let
-      fallbackString =
-        case model.cachedOers |> Dict.get oerId of
-          Nothing ->
-            "learning" -- shouldn't happen
-
-          Just {title} ->
-            title
-  in
-      case model.wikichunkEnrichments |> Dict.get oerId of
-        Nothing ->
-          fallbackString
-
-        Just {bubblogram, chunks} ->
-          case bubblogram of
-            Nothing ->
-              fallbackString
-
-            Just {bubbles} ->
-              bubbles
-              |> List.map .entity
-              |> List.map .title
-              |> String.join ","
-
-
+{-| Read the value from a user feedback form
+    Defaults to empty String
+-}
+getResourceFeedbackFormValue : Model -> OerId -> String
 getResourceFeedbackFormValue model oerId =
   model.feedbackForms |> Dict.get oerId |> Maybe.withDefault ""
 
 
+{-| How long (in milliseconds) the snackbar message should be visible to the user.
+-}
 snackbarDuration : Int
 snackbarDuration =
   3000
 
 
+{-| Return the N-th element from a list (if available).
+    Elm doesn't have a built-in function for this because it's considered bad practice.
+    I needed it for the occasional workaround, for lack of a more elegant method. Apologies.
+-}
 indexOf : a -> List a -> Maybe Int
 indexOf element list =
   let
@@ -940,31 +1078,45 @@ indexOf element list =
       helper 0 list
 
 
+{-| Check whether a particular OER is one of the user's favourites
+-}
 isMarkedAsFavorite : Model -> OerId -> Bool
 isMarkedAsFavorite model oerId =
   List.member oerId model.favorites && (Set.member oerId model.removedFavorites |> not)
 
 
+{-| Check whether the user has just "favorited" an OER in the last second or so
+-}
 isFlyingHeartAnimating : Model -> Bool
 isFlyingHeartAnimating model =
   model.flyingHeartAnimation /= Nothing
 
 
+{-| When the user adds an OER to their favorites, there is a short animation.
+    This is the duration in milliseconds.
+-}
 flyingHeartAnimationDuration : Int
 flyingHeartAnimationDuration =
   900
 
 
+{-| In the full-page OER view, which tab should be shown in the sidebar by default
+-}
 initialResourceSidebarTab : ResourceSidebarTab
 initialResourceSidebarTab =
   FeedbackTab
 
 
+{-| Check whether the mouse is hovering over a particular OER
+    TODO refactor to rename this function
+-}
 isHovering : Model -> Oer -> Bool
 isHovering model oer =
   model.hoveringOerId == Just oer.id
 
 
+{-| Check whether a particular OER is currently in the open inspector modal
+-}
 isInspecting : Model -> Oer -> Bool
 isInspecting model {id} =
   case model.inspectorState of
@@ -974,6 +1126,8 @@ isInspecting model {id} =
       False
 
 
+{-| Check whether the user has ContentFlow enabled
+-}
 isContentFlowEnabled : Model -> Bool
 isContentFlowEnabled model =
   case model.session of
@@ -983,6 +1137,9 @@ isContentFlowEnabled model =
       session.isContentFlowEnabled
 
 
+{-| If the OER has been added to a course, return the corresponding CourseItem.
+    Otherwise, return Nothing
+-}
 getCourseItem : Model -> Oer -> Maybe CourseItem
 getCourseItem model oer =
   model.course.items
@@ -990,6 +1147,9 @@ getCourseItem model oer =
   |> List.head
 
 
+{-| Change the order of two elements in a list.
+    Used for changing the order of CourseItems in a Course
+-}
 swapListItemWithNext : Int -> List a -> List a
 swapListItemWithNext index xs =
   let
@@ -1005,6 +1165,9 @@ swapListItemWithNext index xs =
       left ++ swapped ++ right
 
 
+{-| Ensure that the length of a range is always positive.
+    Flip start and end point if necessary.
+-}
 invertRangeIfNeeded : Range -> Range
 invertRangeIfNeeded range =
   if range.length < 0 then
@@ -1015,6 +1178,9 @@ invertRangeIfNeeded range =
     range
 
 
+{-| Scale a given Range by a given factor.
+    Used to convert relative to absolute time segments
+-}
 multiplyRange : Float -> Range -> Range
 multiplyRange factor {start, length} =
   { start = start * factor

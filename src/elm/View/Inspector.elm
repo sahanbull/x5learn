@@ -35,12 +35,7 @@ viewModal : Model -> InspectorState -> Element Msg
 viewModal model inspectorState =
   let
       content =
-        case inspectorState.activeMenu of
-          Nothing ->
-            inspectorContentDefault model inspectorState
-
-          Just QualitySurvey ->
-            inspectorContentDefault model inspectorState -- TODO
+        inspectorContentDefault model inspectorState
 
       header =
         [ content.header
@@ -200,13 +195,6 @@ viewProviderLinkAndFavoriteButton model oer =
       |> row [ width fill ]
 
 
-viewCourseButton : Model -> Oer -> List (Element Msg)
-viewCourseButton model oer =
-  [ none |> el [ width fill ]
-  , actionButtonWithIcon [] IconLeft "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
-  ]
-
-
 viewCourseSettings : Model -> Oer -> CourseItem -> List (Element Msg)
 viewCourseSettings model oer {range, comment} =
   let
@@ -245,7 +233,9 @@ viewFragmentsBarWrapper model oer =
         if isLabStudy1 model then
           case getCourseItem model oer of
             Nothing ->
-              viewCourseButton model oer
+              [ none |> el [ width fill ]
+              , actionButtonWithIcon [] IconLeft "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
+              ]
 
             Just item ->
               viewCourseSettings model oer item

@@ -60,8 +60,6 @@ update msg ({nav, userProfileForm} as model) =
             --   (Notes, ({ model | oerCardPlaceholderPositions = [] }, [ getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch))
             -- else if path |> String.startsWith favoritesPath then
             --   (Favorites, (model, askPageScrollState True))
-            -- else if path |> String.startsWith coursePath then
-            --   (Course, (model, askPageScrollState True))
             else if path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
             else if path |> String.startsWith resourcePath then

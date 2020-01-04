@@ -347,15 +347,14 @@ update msg ({nav, userProfileForm} as model) =
     --   ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     RequestSaveUserProfile (Ok _) ->
-      ({ model | userProfileForm = { userProfileForm | saved = True }, userProfileFormSubmitted = Nothing }, Cmd.none)
+      ({ model | userProfileForm = { userProfileForm | saved = True }, userProfileFormSubmitted = False }, Cmd.none)
 
     RequestSaveUserProfile (Err err) ->
       -- let
       --     dummy =
       --       err |> Debug.log "Error in RequestSaveUserProfile"
       -- in
-      -- ( { model | snackbar = createSnackbar model "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
-      ( { model | snackbar = createSnackbar model "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
+      ( { model | snackbar = createSnackbar model "Some changes were not saved", userProfileFormSubmitted = False }, Cmd.none )
 
     RequestSendResourceFeedback (Ok _) ->
       (model, Cmd.none)
@@ -513,7 +512,7 @@ update msg ({nav, userProfileForm} as model) =
           |> logEventForLabStudy "EditUserProfile" []
 
     SubmittedUserProfile ->
-      ( { model | userProfileFormSubmitted = Just userProfileForm }, requestSaveUserProfile model.userProfileForm.userProfile)
+      ( { model | userProfileFormSubmitted = True }, requestSaveUserProfile model.userProfileForm.userProfile)
       |> logEventForLabStudy "SubmittedUserProfile" []
 
     -- ChangedTextInNewNoteFormInOerNoteboard oerId str ->

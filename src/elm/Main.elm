@@ -27,10 +27,9 @@ import Request exposing (..)
     It contains the essential "main" function and some of its key arguments,
     particularly "init" and "view" (since they are small functions).
     The "update" function is large enough to deserve its own module.
--}
 
 
-{-| Set up the Elm application, using the "Browser" module.
+    Set up the Elm application, using the "Browser" module.
     https://package.elm-lang.org/packages/elm/browser/1.0.1/Browser#application
     (NB check if the version number is in sync with elm.json)
 -}

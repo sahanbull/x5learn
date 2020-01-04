@@ -56,13 +56,13 @@ type alias Model =
   , requestingWikichunkEnrichments : Bool -- true while waiting for a response from the server. This is to avoid simultaneous requests.
   , wikichunkEnrichments : Dict OerId WikichunkEnrichment -- enrichment data cached on the frontend
   , enrichmentsAnimating : Bool -- when the enrichments are loaded, some of the bubblogram visualisations come in with a zooming/sliding effect
-  , autocompleteTerms : List String
-  , autocompleteSuggestions : List String
-  , selectedSuggestion : String
-  , suggestionSelectionOnHoverEnabled : Bool
-  , timeOfLastSearch : Posix
-  , userProfileForm : UserProfileForm
-  , userProfileFormSubmitted : Maybe UserProfileForm
+  , autocompleteTerms : List String -- list of wiki topics that may be used as autocompleteSuggestions
+  , autocompleteSuggestions : List String -- when the user enters text in the search field, an earlier prototype version of the UI used to suggest wiki topics as search terms (currently disabled)
+  , selectedSuggestion : String -- hovering over one of the autocompleteSuggestions selects the item
+  , suggestionSelectionOnHoverEnabled : Bool -- dynamic flag to prevent accidental selection when the menu appears under the mouse pointer
+  , timeOfLastSearch : Posix -- important to briefly disable autocomplete immediately after a search
+  , userProfileForm : UserProfileForm -- for the user to fill in their name etc
+  , userProfileFormSubmitted : Bool -- show a loading spinner while waiting for HTTP response
   -- , oerNoteForms : Dict OerId String
   , feedbackForms : Dict OerId String
   , cachedOers : Dict OerId Oer
@@ -397,10 +397,10 @@ initialModel nav flags =
   , autocompleteTerms = []
   , autocompleteSuggestions = []
   , selectedSuggestion = ""
-  , suggestionSelectionOnHoverEnabled = True -- prevent accidental selection when user doesn't move the pointer but the menu appears on the pointer
+  , suggestionSelectionOnHoverEnabled = True
   , timeOfLastSearch = initialTime
   , userProfileForm = freshUserProfileForm (initialUserProfile "")
-  , userProfileFormSubmitted = Nothing
+  , userProfileFormSubmitted = False
   -- , oerNoteForms = Dict.empty
   , feedbackForms = Dict.empty
   , cachedOers = Dict.empty

@@ -28,16 +28,14 @@ viewProfilePage model savedUserProfile {userProfile, saved} =
         textInput LastName "Last Name" userProfile.lastName
 
       saveButton =
-        case model.userProfileFormSubmitted of
-          Just _ ->
-            viewLoadingSpinner
-            |> el [ width (px 77), height (px 37) ]
-
-          Nothing ->
-            if saved then
-              "✓ Saved" |> bodyWrap [ greyTextDisabled, width fill ]
-            else
-              button [ paddingXY 16 8, width fill, Background.color x5color, whiteText ] { onPress = Just SubmittedUserProfile, label = "Save" |> text |> el [] }
+        if model.userProfileFormSubmitted then
+          viewLoadingSpinner
+          |> el [ width (px 77), height (px 37) ]
+        else
+          if saved then
+            "✓ Saved" |> bodyWrap [ greyTextDisabled, width fill ]
+          else
+            button [ paddingXY 16 8, width fill, Background.color x5color, whiteText ] { onPress = Just SubmittedUserProfile, label = "Save" |> text |> el [] }
 
       page =
         -- [ "My profile" |> headlineWrap []

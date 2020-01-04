@@ -279,7 +279,6 @@ type Subpage
   | Search
   -- | Favorites
   -- | Notes
-  -- | Viewed
   | Resource
 
 
@@ -804,12 +803,6 @@ searchPath =
 
 notesPath =
   "/notes"
-
-recentPath = -- deprecated
-  "/recent"
-
-viewedPath =
-  "/viewed"
 
 favoritesPath =
   "/favorites"

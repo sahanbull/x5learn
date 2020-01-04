@@ -43,11 +43,7 @@ withNavigationDrawer model (pageContent, modal) =
           ]
           |> column [ spacing 40, width fill ]
         else
-          -- [ navButton False "/next_steps" "nav_next_steps" "Next Steps"
-          -- , navButton False "/journeys" "nav_journeys" "Journeys"
           -- [ navButton True "/favorites" "nav_favorites" "Favorites" |> heartAnimationWrapper
-          -- , navButton True "/viewed" "nav_viewed" "Viewed"
-          -- , navButton False "/peers" "nav_peers" "Peers"
           []
           |> column [ width fill, spacing 8 ]
 

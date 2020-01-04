@@ -37,66 +37,87 @@ import Animation exposing (..)
 -}
 type alias Model =
   { nav : Nav -- Elm structure for managing the browser's navigation bar. https://package.elm-lang.org/packages/elm/browser/1.0.1/Browser-Navigation
+  , session : Maybe Session -- the Session represents a logged-in or guest user. We request this data initially from the server. Until the response arrives, the value defaults to Nothing.
   , subpage : Subpage -- custom type, indicating which subpage to render
-  , session : Maybe Session -- custom type, loaded from server initially
-  , windowWidth : Int -- width of the browser window in pixels
-  , windowHeight : Int -- height of the browser window in pixels
-  , mousePositionXwhenOnChunkTrigger : Float -- crude method to determine whether the ContentFlow menu should open to the left or right (to prevent exceeding the screen borders)
-  , currentTime : Posix -- updated a few times a second. Mind the limited precision
-  , searchInputTyping : String -- text the user types into the search field
-  , searchState : Maybe SearchState -- custom type, see definition below
-  , inspectorState : Maybe InspectorState -- custom type, see definition below
-  , snackbar : Maybe Snackbar -- brief message at the bottom of the screen. https://material.io/components/snackbars/
+  -- OER data
+  , cachedOers : Dict OerId Oer -- OER data loaded from the server
+  , requestingOers : Bool -- waiting for OER data from the server
+  , featuredOers : Maybe (List OerId) -- a handful of OERs to display on the start page
+  -- Course data
   , course : Course -- essentially a list of commentable OER snippets that the user has bookmarked
-  , hoveringOerId : Maybe OerId -- When the mouse is hovering over an OER card then we store its ID here
-  , timeOfLastMouseEnterOnCard : Posix -- When the mouse starts hovering over an OER card then we keep track of the time in order to cycle through multiple images (if any).
-  , modalAnimation : Maybe BoxAnimation -- When the user clicks on an OER card then the inspector modal doesn't just appear instantly - there is a bit of a zooming effect.
-  , animationsPending : Set String -- Keeping track of multiple GUI animations, including the inspector modal. We're using a Set of Strings, assuming that there can be multiple animations in parallel, each having a unique String ID.
-  , popup : Maybe Popup -- There can be different types of popups, see type definition below.
+  , courseNeedsSaving : Bool -- true when the user changes any course items since last saving
+  , courseChangesSaved : Bool -- used to display a message to the user
+  , lastTimeCourseChanged : Posix -- wait a few seconds before saving changes, to avoid too frequent requests (e.g. while typing)
+  -- Enrichments data
   , requestingWikichunkEnrichments : Bool -- true while waiting for a response from the server. This is to avoid simultaneous requests.
   , wikichunkEnrichments : Dict OerId WikichunkEnrichment -- enrichment data cached on the frontend
   , enrichmentsAnimating : Bool -- when the enrichments are loaded, some of the bubblogram visualisations come in with a zooming/sliding effect
+  , wikichunkEnrichmentRequestFailCount : Int -- exponential(ish) backoff strategy: keep nagging the server for enrichments. count the attempts
+  , wikichunkEnrichmentRetryTime : Posix -- exponential(ish) backoff strategy: wait a bit longer every time
+  -- Wikipedia definitions data
+  , entityDefinitions : Dict String EntityDefinition -- wikipedia definitions loaded from the server
+  , requestingEntityDefinitions : Bool -- waiting for wikipedia definitions from the server
+  -- OER cards
+  , hoveringOerId : Maybe OerId -- When the mouse is hovering over an OER card then we store its ID here
+  , timeOfLastMouseEnterOnCard : Posix -- When the mouse starts hovering over an OER card then we keep track of the time in order to cycle through multiple images (if any).
+  , oerCardPlaceholderPositions : List OerCardPlaceholderPosition -- dynamic layout of the cards on the screen
+  -- OER Bubblograms
+  , overviewType : OverviewType -- thumbnail or bubblogram
+  , hoveringTagEntityId : Maybe String -- when the user hovers over a topic in a bubblogram
+  , timeOfLastUrlChange : Posix -- used to animate bubblograms
+  , selectedMentionInStory : Maybe (OerId, MentionInOer) -- in bubblogram: hovering over a mention
+  -- OER inspector modal
+  , inspectorState : Maybe InspectorState -- custom type, see definition below
+  , modalAnimation : Maybe BoxAnimation -- When the user clicks on an OER card then the inspector modal doesn't just appear instantly - there is a bit of a zooming effect.
+  -- Autocomplete for suggested search terms
   , autocompleteTerms : List String -- list of wiki topics that may be used as autocompleteSuggestions
   , autocompleteSuggestions : List String -- when the user enters text in the search field, an earlier prototype version of the UI used to suggest wiki topics as search terms (currently disabled)
   , selectedSuggestion : String -- hovering over one of the autocompleteSuggestions selects the item
   , suggestionSelectionOnHoverEnabled : Bool -- dynamic flag to prevent accidental selection when the menu appears under the mouse pointer
-  , timeOfLastSearch : Posix -- important to briefly disable autocomplete immediately after a search
+  -- User profile
   , userProfileForm : UserProfileForm -- for the user to fill in their name etc
   , userProfileFormSubmitted : Bool -- show a loading spinner while waiting for HTTP response
-  -- , oerNoteForms : Dict OerId String
-  , feedbackForms : Dict OerId String -- allowing the user to type feedback on different OERs
-  , timeOfLastFeedbackRecorded : Posix -- used to show a brief thank you message
-  , cachedOers : Dict OerId Oer -- OER data loaded from the server
-  , requestingOers : Bool -- waiting for OER data from the server
-  , hoveringTagEntityId : Maybe String -- when the user hovers over a topic in a bubblogram
-  , entityDefinitions : Dict String EntityDefinition -- wikipedia definitions loaded from the server
-  , requestingEntityDefinitions : Bool -- waiting for wikipedia definitions from the server
-  , wikichunkEnrichmentRequestFailCount : Int -- exponential(ish) backoff strategy: keep nagging the server for enrichments. count the attempts
-  , wikichunkEnrichmentRetryTime : Posix -- exponential(ish) backoff strategy: wait a bit longer every time
-  , timeOfLastUrlChange : Posix -- used to animate bubblograms
+  -- Lab study
   , startedLabStudyTask : Maybe (LabStudyTask, Posix) -- when the user presses button to start a task (lab study only)
+  -- Full-page resource view
   , currentResource : Maybe CurrentResource -- in full-page view: the loaded OER e.g. x5learn.org/resource/12345
   , resourceSidebarTab : ResourceSidebarTab -- in full-page view: switch between recommendations, notes and feedback
   , resourceRecommendations : List Oer -- in full-page view: OER recommendations in the sidebar tab
-  -- , oerNoteboards : Dict OerId Noteboard
+  -- Explicit user feedback about OER content
+  , feedbackForms : Dict OerId String -- allowing the user to type feedback on different OERs
+  , timeOfLastFeedbackRecorded : Posix -- used to show a brief thank you message
+  -- VideoUsages
   , videoUsages : Dict OerId VideoUsage -- for each (video) OER, which parts has the user watched
-  , oerCardPlaceholderPositions : List OerCardPlaceholderPosition -- dynamic layout of the cards on the screen
-  , overviewType : OverviewType -- thumbnail or bubblogram
-  , selectedMentionInStory : Maybe (OerId, MentionInOer) -- in bubblogram: hovering over a mention
-  , pageScrollState : PageScrollState -- vertical page scrolling. NB This value can also change when resizing the window or rotating the device.
+  -- favorites
   , favorites : List OerId -- OERs marked as favourite (heart icon)
   , removedFavorites : Set OerId -- keep a client-side record of removed items so that cards on the favorites page don't simply disappear when unliked
   , hoveringHeart : Maybe OerId -- if the user hovers over a heart, which OER is it
   , flyingHeartAnimation : Maybe FlyingHeartAnimation -- when the user likes an OER
   , flyingHeartAnimationStartPoint : Maybe Point -- when the user likes an OER
-  , featuredOers : Maybe (List OerId) -- a handful of OERs to display on the start page
+  -- screen dimensions
+  , windowWidth : Int -- width of the browser window in pixels
+  , windowHeight : Int -- height of the browser window in pixels
+  -- scrolling and scrubbing
+  , pageScrollState : PageScrollState -- vertical page scrolling. NB This value can also change when resizing the window or rotating the device.
+  , mousePositionXwhenOnChunkTrigger : Float -- crude method to determine whether the ContentFlow menu should open to the left or right (to prevent exceeding the screen borders)
   , timelineHoverState : Maybe TimelineHoverState -- used for scrubbing and defining ranges
-  , courseNeedsSaving : Bool -- true when the user changes any course items since last saving
-  , courseChangesSaved : Bool -- used to display a message to the user
-  , lastTimeCourseChanged : Posix -- wait a few seconds before saving changes, to avoid too frequent requests (e.g. while typing)
+  -- additional screen elements
+  , snackbar : Maybe Snackbar -- brief message at the bottom of the screen. https://material.io/components/snackbars/
+  , popup : Maybe Popup -- There can be different types of popups, see type definition below.
+  -- time
+  , currentTime : Posix -- updated a few times a second. Mind the limited precision
+  , animationsPending : Set String -- Keeping track of multiple GUI animations, including the inspector modal. We're using a Set of Strings, assuming that there can be multiple animations in parallel, each having a unique String ID.
+  -- search
+  , searchInputTyping : String -- text the user types into the search field
+  , searchState : Maybe SearchState -- custom type, see definition below
+  , timeOfLastSearch : Posix -- important to briefly disable autocomplete immediately after a search
+  -- UI log events
   , loggedEvents : List String -- temporary buffer for frequent UI events that will be sent to the server in delayed batches
   , lastTimeLoggedEventsSaved : Posix -- wait a few seconds between batches
   , timeWhenSessionLoaded : Posix -- wait a few seconds before logging UI events
+  -- deactivated code
+  -- , oerNoteboards : Dict OerId Noteboard
+  -- , oerNoteForms : Dict OerId String
   }
 
 
@@ -375,66 +396,66 @@ type LoginState
 initialModel : Nav -> Flags -> Model
 initialModel nav flags =
   { nav = nav
-  , subpage = Home
   , session = Nothing
-  , windowWidth = flags.windowWidth
-  , windowHeight = flags.windowHeight
-  , mousePositionXwhenOnChunkTrigger = 0
-  , currentTime = initialTime
-  , searchInputTyping = ""
-  , searchState = Nothing
-  , inspectorState = Nothing
-  , snackbar = Nothing
+  , subpage = Home
+  , cachedOers = Dict.empty
+  , requestingOers = False
+  , featuredOers = Nothing
   , course = Course []
-  , hoveringOerId = Nothing
-  , timeOfLastMouseEnterOnCard = initialTime
-  , modalAnimation = Nothing
-  , animationsPending = Set.empty
-  , popup = Nothing
+  , courseNeedsSaving = False
+  , courseChangesSaved = False
+  , lastTimeCourseChanged = initialTime
   , requestingWikichunkEnrichments = False
   , wikichunkEnrichments = Dict.empty
   , enrichmentsAnimating = False
+  , wikichunkEnrichmentRequestFailCount = 0
+  , wikichunkEnrichmentRetryTime = initialTime
+  , entityDefinitions = Dict.empty
+  , requestingEntityDefinitions = False
+  , hoveringOerId = Nothing
+  , timeOfLastMouseEnterOnCard = initialTime
+  , oerCardPlaceholderPositions = []
+  , overviewType = ImageOverview
+  , hoveringTagEntityId = Nothing
+  , timeOfLastUrlChange = initialTime
+  , selectedMentionInStory = Nothing
+  , inspectorState = Nothing
+  , modalAnimation = Nothing
   , autocompleteTerms = []
   , autocompleteSuggestions = []
   , selectedSuggestion = ""
   , suggestionSelectionOnHoverEnabled = True
-  , timeOfLastSearch = initialTime
   , userProfileForm = freshUserProfileForm (initialUserProfile "")
   , userProfileFormSubmitted = False
-  -- , oerNoteForms = Dict.empty
-  , feedbackForms = Dict.empty
-  , timeOfLastFeedbackRecorded = initialTime
-  , cachedOers = Dict.empty
-  , requestingOers = False
-  , hoveringTagEntityId = Nothing
-  , entityDefinitions = Dict.empty
-  , requestingEntityDefinitions = False
-  , wikichunkEnrichmentRequestFailCount = 0
-  , wikichunkEnrichmentRetryTime = initialTime
-  , timeOfLastUrlChange = initialTime
   , startedLabStudyTask = Nothing
   , currentResource = Nothing
   , resourceSidebarTab = initialResourceSidebarTab
   , resourceRecommendations = []
-  -- , oerNoteboards = Dict.empty
+  , feedbackForms = Dict.empty
+  , timeOfLastFeedbackRecorded = initialTime
   , videoUsages = Dict.empty
-  , oerCardPlaceholderPositions = []
-  , overviewType = ImageOverview
-  , selectedMentionInStory = Nothing
-  , pageScrollState = PageScrollState 0 0 0 False
   , favorites = []
   , removedFavorites = Set.empty
   , hoveringHeart = Nothing
   , flyingHeartAnimation = Nothing
   , flyingHeartAnimationStartPoint = Nothing
-  , featuredOers = Nothing
+  , windowWidth = flags.windowWidth
+  , windowHeight = flags.windowHeight
+  , pageScrollState = PageScrollState 0 0 0 False
+  , mousePositionXwhenOnChunkTrigger = 0
   , timelineHoverState = Nothing
-  , courseNeedsSaving = False
-  , courseChangesSaved = False
-  , lastTimeCourseChanged = initialTime
+  , snackbar = Nothing
+  , popup = Nothing
+  , currentTime = initialTime
+  , animationsPending = Set.empty
+  , searchInputTyping = ""
+  , searchState = Nothing
+  , timeOfLastSearch = initialTime
   , loggedEvents = []
   , lastTimeLoggedEventsSaved = initialTime
   , timeWhenSessionLoaded = initialTime
+  -- , oerNoteboards = Dict.empty
+  -- , oerNoteForms = Dict.empty
   }
 
 

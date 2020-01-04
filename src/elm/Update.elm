@@ -531,7 +531,8 @@ update msg ({nav, userProfileForm} as model) =
 
     SubmittedResourceFeedback oerId text ->
       ({ model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", requestSendResourceFeedback oerId text)
-      |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, getResourceFeedbackFormValue model oerId ]
+      |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, text ]
+      |> saveAction 8 [ ("OER id", Encode.int oerId), ("user feedback", Encode.string text) ]
 
     -- PressedKeyInNewNoteFormInOerNoteboard oerId keyCode ->
     --   if keyCode==13 then

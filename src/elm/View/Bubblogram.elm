@@ -290,9 +290,6 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
                             unavailable
                           else
                             ("“" ++ text ++ "” (Wikipedia)" |> bodyWrap [ Font.italic ], zoomFromText text)
-
-                        -- DefinitionUnavailable ->
-                        -- unavailable
             in
                 element
 

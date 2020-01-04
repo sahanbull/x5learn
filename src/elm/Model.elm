@@ -121,40 +121,57 @@ type alias Model =
   }
 
 
+{-| We get the first sentence from the Wikipedia article
+-}
 type EntityDefinition
   = DefinitionScheduledForLoading
   | DefinitionLoaded String
-  -- | DefinitionUnavailable -- TODO consider appropriate error handling
 
+{-| Sidebar in full-page view
+-}
 type ResourceSidebarTab
   = RecommendationsTab
   | FeedbackTab
 
+{-| Current resource in full-page view
+-}
 type CurrentResource
   = Loaded OerId
   | Error
 
+{-| Toggle between thumbnails and bubblograms
+-}
 type OverviewType
   = ImageOverview
   | BubblogramOverview BubblogramType
 
+{-| Type of bubblogram to display
+-}
 type BubblogramType
   = TopicNames
   | TopicConnections
   | TopicMentions
 
+{-| For any (video) OER, which parts has the user watched
+-}
 type alias VideoUsage = List Range
 
+{-| when the user likes an OER
+-}
 type alias FlyingHeartAnimation =
   { startTime : Posix
   }
 
+{-| when the user presses button to start a task (lab study only)
+-}
 type alias LabStudyTask =
   { title : String
   , durationInMinutes : Int
   , dataset : String
   }
 
+{-| Item in a bubblogram representing an entity as a circle
+-}
 type alias Bubble =
   { entity : Entity
   , index : Int
@@ -165,24 +182,32 @@ type alias Bubble =
   , finalCoordinates : BubbleCoordinates
   }
 
+{-| Position and size of a bubble
+-}
 type alias BubbleCoordinates =
   { posX : Float
   , posY : Float
   , size : Float
   }
 
+{-| Literal occurrence of an entity's name in an OER transcript
+-}
 type alias Occurrence =
   { entity : Entity
   , approximatePositionInText : Float
   , rank : Float
   }
 
-
+{-| Bubblogram
+-}
 type alias Bubblogram =
   { createdAt : Posix
   , bubbles : List Bubble
   }
 
+
+{-| An OER's URL is just a String. We use an alias to make it explicit, in order to make the code easier to read.
+-}
 type alias OerUrl = String
 
 type alias OerId = Int
@@ -192,6 +217,7 @@ type alias EntityId = String
 type alias EntityTitle = String
 
 type alias Noteboard = List Note
+
 
 type alias PageScrollState =
   { scrollTop : Float
@@ -205,6 +231,7 @@ type alias Snackbar =
   { startTime : Posix
   , text : String
   }
+
 
 type alias OerCardPlaceholderPosition =
   { x : Float

@@ -508,6 +508,16 @@ type LoginState
   | LoggedInUser UserProfile
 
 
+{-| VideoEmbedParams is a helper type for embedding YouTube or HTML5 videos.
+-}
+type alias VideoEmbedParams =
+  { modalId : String
+  , videoId : String
+  , videoStartPosition : Float
+  , playWhenReady : Bool
+  }
+
+
 {-| Initial model state
 -}
 initialModel : Nav -> Flags -> Model

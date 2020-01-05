@@ -11,7 +11,7 @@ import Element.Events as Events exposing (onMouseLeave)
 import Dict
 
 import Model exposing (..)
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 import Msg exposing (..)
 import Animation exposing (..)
 

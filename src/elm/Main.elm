@@ -7,7 +7,7 @@ import Element exposing (..)
 import Msg exposing (..)
 
 import Model exposing (..)
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 import View.PageHeader exposing (viewPageHeader)
 import View.NavigationDrawer exposing (..)
 import View.Pages.Featured exposing (viewFeaturedPage)

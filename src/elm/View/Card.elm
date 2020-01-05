@@ -10,7 +10,7 @@ import Json.Decode
 import Dict exposing (Dict)
 
 import Model exposing (..)
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 import View.FragmentsBar exposing (..)
 import View.Bubblogram exposing (..)
 

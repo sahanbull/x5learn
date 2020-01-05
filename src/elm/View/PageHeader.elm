@@ -11,7 +11,7 @@ import Element.Input as Input exposing (button)
 
 import Model exposing (..)
 
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 
 import Msg exposing (..)
 

@@ -13,7 +13,7 @@ import Json.Decode
 import Model exposing (..)
 import Msg exposing (..)
 
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 import View.FragmentsBar exposing (..)
 import View.Html5VideoPlayer exposing (..)
 import View.HtmlPdfViewer exposing (..)

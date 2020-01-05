@@ -12,7 +12,7 @@ import Element.Font as Font
 import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
 
 import Model exposing (..)
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 
 import Msg exposing (..)
 

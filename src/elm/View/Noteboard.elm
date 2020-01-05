@@ -15,7 +15,7 @@ import Json.Decode
 import Model exposing (..)
 import Msg exposing (..)
 
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 
 
 viewNoteboard : Model -> Bool -> OerId -> Element Msg

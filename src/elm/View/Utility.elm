@@ -1,4 +1,4 @@
-module View.Shared exposing (..)
+module View.Utility exposing (..)
 
 import Html
 import Html.Attributes

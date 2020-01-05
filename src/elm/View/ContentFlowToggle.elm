@@ -9,7 +9,7 @@ import Element.Events as Events exposing (onClick)
 
 import Model exposing (..)
 import Msg exposing (..)
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 
 
 viewContentFlowToggle : Model -> Element Msg

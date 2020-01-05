@@ -8,7 +8,7 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 import Msg exposing (Msg)
 import Model exposing (..)
 

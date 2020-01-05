@@ -762,6 +762,25 @@ displayName userProfile =
         name
 
 
+{-| Check whether the inspector modal is currently animating.
+    The inspector modal was designed to open with a short zoom animation.
+-}
+isModalAnimating : Model -> Bool
+isModalAnimating model =
+  if model.animationsPending |> Set.isEmpty then
+     False
+  else
+    case model.modalAnimation of
+      Nothing ->
+        True
+
+      Just animation ->
+        if animation.frameCount<2 then
+          True
+        else
+          False
+
+
 {-| Check whether the user is logged in
 -}
 isLoggedIn : Model -> Bool

@@ -13,6 +13,8 @@ import Animation exposing (..)
 import Model exposing (..)
 import Ports
 
+{-| The Msg type specifies all the actions that can occur in the app.
+-}
 type Msg
   = Initialized Url.Url
   | LinkClicked Browser.UrlRequest
@@ -101,6 +103,9 @@ type UserProfileField
   | LastName
 
 
+{-| Subscribe to: incoming data from ports, time, and resizing the browser window.
+    The corresponding Msg events are handled in Update.elm
+-}
 subscriptions : Model -> Sub Msg
 subscriptions model =
   ([ Browser.Events.onResize ResizeBrowser
@@ -124,19 +129,3 @@ subscriptions model =
   , Time.every (if model.currentTime==initialTime then 1 else if model.timelineHoverState==Nothing then 500 else 200) ClockTick
   ] ++ (if anyBubblogramsAnimating model || isModalAnimating model || isFlyingHeartAnimating model then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
   |> Sub.batch
-
-
-isModalAnimating : Model -> Bool
-isModalAnimating model =
-  if model.animationsPending |> Set.isEmpty then
-     False
-  else
-    case model.modalAnimation of
-      Nothing ->
-        True
-
-      Just animation ->
-        if animation.frameCount<2 then
-          True
-        else
-          False

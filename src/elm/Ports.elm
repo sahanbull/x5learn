@@ -7,10 +7,12 @@ import Animation exposing (..)
 
 import Model exposing (..)
 
+{-|  This module defines the ports for communication with JavaScript
+-}
 port setBrowserFocus : String -> Cmd msg
 port copyClipboard : String -> Cmd msg
-port openModalAnimation : YoutubeEmbedParams -> Cmd msg
--- port embedYoutubePlayerOnResourcePage : YoutubeEmbedParams -> Cmd msg
+port openModalAnimation : VideoEmbedParams -> Cmd msg
+-- port embedYoutubePlayerOnResourcePage : VideoEmbedParams -> Cmd msg
 -- port youtubeSeekTo : Float -> Cmd msg
 -- port youtubeDestroyPlayer : Bool -> Cmd msg
 port getOerCardPlaceholderPositions : Bool -> Cmd msg
@@ -37,7 +39,7 @@ port receiveCardPlaceholderPositions : ((List OerCardPlaceholderPosition) -> msg
 port receiveFlyingHeartRelativeStartPosition : (Point -> msg) -> Sub msg
 
 
-type alias YoutubeEmbedParams =
+type alias VideoEmbedParams =
   { modalId : String
   , videoId : String
   , videoStartPosition : Float

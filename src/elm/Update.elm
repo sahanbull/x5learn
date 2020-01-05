@@ -114,15 +114,15 @@ update msg ({nav, userProfileForm} as model) =
 
     InspectOer oer fragmentStart playWhenReady ->
       let
-          youtubeEmbedParams : YoutubeEmbedParams
-          youtubeEmbedParams =
+          videoEmbedParams : VideoEmbedParams
+          videoEmbedParams =
             { modalId = modalId
             , videoId = getYoutubeVideoId oer.url |> Maybe.withDefault ""
             , videoStartPosition = fragmentStart * oer.durationInSeconds
             , playWhenReady = playWhenReady
             }
       in
-          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation youtubeEmbedParams)
+          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation videoEmbedParams)
           |> saveAction 1 [ ("oerId", Encode.int oer.id) ]
           |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat, "playWhenReady:"++(if playWhenReady then "True" else "False") ]
 
@@ -407,15 +407,15 @@ update msg ({nav, userProfileForm} as model) =
 
           --     Just videoId ->
           --       let
-          --           youtubeEmbedParams : YoutubeEmbedParams
-          --           youtubeEmbedParams =
+          --           videoEmbedParams : VideoEmbedParams
+          --           videoEmbedParams =
           --             { modalId = ""
           --             , videoId = videoId
           --             , fragmentStart = 0
           --             , playWhenReady = False
           --             }
           --       in
-          --           embedYoutubePlayerOnResourcePage youtubeEmbedParams
+          --           embedYoutubePlayerOnResourcePage videoEmbedParams
 
           newModel =
             { model | currentResource = Just <| Loaded oer.id } |> cacheOersFromList [ oer ]

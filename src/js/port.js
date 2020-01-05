@@ -95,11 +95,11 @@ function sendPageScrollState(requestedByElm){
 }
 
 
-function startAnimationWhenModalIsReady(youtubeEmbedParams) {
-  var modalId = youtubeEmbedParams.modalId;
+function startAnimationWhenModalIsReady(videoEmbedParams) {
+  var modalId = videoEmbedParams.modalId;
   if(window.document.getElementById(modalId)==null) {
     setTimeout(function() {
-      startAnimationWhenModalIsReady(youtubeEmbedParams);
+      startAnimationWhenModalIsReady(videoEmbedParams);
     }, 15);
   }
   else{
@@ -109,13 +109,13 @@ function startAnimationWhenModalIsReady(youtubeEmbedParams) {
     app.ports.modalAnimationStart.send({frameCount: 0, start: positionAndSize(card), end: positionAndSize(modal)});
     setTimeout(function(){
       app.ports.modalAnimationStop.send(12345);
-      if(youtubeEmbedParams.videoId.length>0){
-        embedYoutubeVideo(youtubeEmbedParams);
+      if(videoEmbedParams.videoId.length>0){
+        embedYoutubeVideo(videoEmbedParams);
       }else{
         var vid = getHtml5VideoPlayer();
         if(vid){
-          if(youtubeEmbedParams.playWhenReady){
-            playWhenPossible(vid, youtubeEmbedParams.videoStartPosition);
+          if(videoEmbedParams.playWhenReady){
+            playWhenPossible(vid, videoEmbedParams.videoStartPosition);
           }
 
           vid.onplay = function() {
@@ -160,10 +160,10 @@ function getHtml5VideoPlayer(){
   return document.getElementById("Html5VideoPlayer");
 }
 
-// function embedYoutubePlayerOnResourcePage(youtubeEmbedParams) {
+// function embedYoutubePlayerOnResourcePage(videoEmbedParams) {
 //     setTimeout(function(){
-//       if(youtubeEmbedParams.videoId.length>0){
-//         embedYoutubeVideo(youtubeEmbedParams);
+//       if(videoEmbedParams.videoId.length>0){
+//         embedYoutubeVideo(videoEmbedParams);
 //       }
 //     }, 200);
 // }

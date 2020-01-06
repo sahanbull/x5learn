@@ -249,12 +249,6 @@ viewRecommendationCard model oer =
         |> html
         |> el []
 
-      -- modalityIcon =
-      --   if hasYoutubeVideo oer.url then
-      --     image [ moveRight 280, moveUp 50, width (px 30) ] { src = svgPath "playIcon", description = "play icon" }
-      --   else
-      --     none
-
       bottomInfo =
         let
             dateStr =

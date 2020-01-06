@@ -18,6 +18,8 @@ import Msg exposing (..)
 import Animation exposing (..)
 
 
+{-| Render a list of OERs as cards on a grid
+-}
 viewOerGrid : Model -> Playlist -> Element Msg
 viewOerGrid model playlist =
   let
@@ -76,6 +78,9 @@ viewOerGrid model playlist =
             |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
 
 
+{-| Render an OER as a card
+    (only if it is within screen boundaries, taking scrolling into account)
+-}
 viewOerCard : Model -> Point -> String -> Bool -> Oer -> Element Msg
 viewOerCard ({pageScrollState} as model) position barId enableShadow oer =
   let
@@ -83,13 +88,15 @@ viewOerCard ({pageScrollState} as model) position barId enableShadow oer =
         position.y + (toFloat cardHeight) > pageScrollState.scrollTop && position.y < pageScrollState.scrollTop + pageScrollState.viewHeight
   in
       if isCardInView then
-        viewOerCardVisibleContent model position barId enableShadow oer
+        viewVisibleOerCard model position barId enableShadow oer
       else
         none
 
 
-viewOerCardVisibleContent : Model -> Point -> String -> Bool -> Oer -> Element Msg
-viewOerCardVisibleContent model position barId enableShadow oer =
+{-| Actually the OER as a card, having made sure that it is within screen boundaries
+-}
+viewVisibleOerCard : Model -> Point -> String -> Bool -> Oer -> Element Msg
+viewVisibleOerCard model position barId enableShadow oer =
   let
       fragmentsBar =
         case Dict.get oer.id model.wikichunkEnrichments of
@@ -143,12 +150,6 @@ viewOerCardVisibleContent model position barId enableShadow oer =
             |> subSubheaderWrap [ paddingXY 16 0, centerY, fontSize ]
             |> el [ height <| px 72, clipY, moveDown 181 ]
             |> inFront
-
-      -- modalityIcon =
-      --   if hasYoutubeVideo oer.url then
-      --     image [ moveRight 280, moveUp 50, width (px 30) ] { src = svgPath "playIcon", description = "play icon" }
-      --   else
-      --     none
 
       bottomInfo =
         let
@@ -214,13 +215,14 @@ viewOerCardVisibleContent model position barId enableShadow oer =
         |> column ([ widthOfCard, heightOfCard, onMouseEnter (SetHover (Just oer.id)), onMouseLeave (SetHover Nothing), title, bottomInfo ] ++ fragmentsBar ++ shadow ++ clickHandler ++ popup)
 
       wrapperAttrs =
-        -- [ htmlClass "CloseInspectorOnClickOutside", widthOfCard, heightOfCard, inFront <| button [] { onPress = openInspectorOnPress model oer, label = card }, moveRight position.x, moveDown position.y ]
         [ htmlClass "CloseInspectorOnClickOutside OerCard", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y, htmlDataAttribute <| String.fromInt oer.id, htmlClass "CursorPointer" ]
   in
       none
       |> el wrapperAttrs
 
 
+{-| If the Oer has several images, show them as a slideshow
+-}
 viewCarousel : Model -> Oer -> Element Msg
 viewCarousel model oer =
   let
@@ -248,6 +250,8 @@ viewCarousel model oer =
       viewCoverImage model oer thumbFromSpritesheet
 
 
+{-| When the user hovers over the timeline, show the appropriate tumbnail at that point
+-}
 viewScrubImage : Model -> Oer -> Float -> Element Msg
 viewScrubImage model oer position =
   let
@@ -270,6 +274,8 @@ viewScrubImage model oer position =
       |> el [ width <| px cardWidth, height <| px imageHeight, htmlStyle "background" backgroundValue ]
 
 
+{-| Render the default cover image
+-}
 viewCoverImage : Model -> Oer -> List (Attribute Msg) -> Element Msg
 viewCoverImage model oer thumbFromSpritesheet =
   let
@@ -299,16 +305,6 @@ viewCoverImage model oer thumbFromSpritesheet =
               nextImageUrl =
                 oer.images
                 |> selectByIndex (imageIndex+1) firstImage
-
-              -- dot url =
-              --   none
-              --   |> el [ width (px 6), height (px 6), Border.rounded 3, Background.color <| if url==currentImageUrl then white else semiTransparentWhite ]
-
-              -- dotRow =
-              --   oer.images
-              --   |> List.map dot
-              --   |> row [ spacing 5, moveDown 160, moveRight 16 ]
-              --   |> inFront
 
               imageCounter txt =
                 txt

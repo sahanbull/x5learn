@@ -79,7 +79,6 @@ type alias Model =
   , userProfileFormSubmitted : Bool -- show a loading spinner while waiting for HTTP response
   -- Lab study
   , currentTaskName : Maybe String
-  , startedLabStudyTask : Maybe (LabStudyTask, Posix) -- when the user presses button to start a task (lab study only)
   -- Full-page resource view
   , currentResource : Maybe CurrentResource -- in full-page view: the loaded OER e.g. x5learn.org/resource/12345
   , resourceSidebarTab : ResourceSidebarTab -- in full-page view: switch between recommendations, notes and feedback
@@ -161,14 +160,6 @@ type alias VideoUsage = List Range
 -}
 type alias FlyingHeartAnimation =
   { startTime : Posix
-  }
-
-{-| when the user presses button to start a task (lab study only)
--}
-type alias LabStudyTask =
-  { title : String
-  , durationInMinutes : Int
-  , dataset : String
   }
 
 {-| Item in a bubblogram representing an entity as a circle
@@ -555,7 +546,6 @@ initialModel nav flags =
   , suggestionSelectionOnHoverEnabled = True
   , userProfileForm = freshUserProfileForm (initialUserProfile "")
   , userProfileFormSubmitted = False
-  , startedLabStudyTask = Nothing
   , currentResource = Nothing
   , resourceSidebarTab = initialResourceSidebarTab
   , resourceRecommendations = []

@@ -580,15 +580,6 @@ update msg ({nav, userProfileForm} as model) =
     OerCardPlaceholderPositionsReceived positions ->
       ({ model | oerCardPlaceholderPositions = positions }, Cmd.none)
 
-    StartLabStudyTask task ->
-      { model | startedLabStudyTask = Just (task, model.currentTime) }
-      |> update (TriggerSearch task.dataset)
-      |> logEventForLabStudy "StartLabStudyTask" [ task.title, task.durationInMinutes |> String.fromInt ]
-
-    StoppedLabStudyTask ->
-      ({ model | startedLabStudyTask = Nothing }, setBrowserFocus "")
-      |> logEventForLabStudy "StoppedLabStudyTask" []
-
     SelectResourceSidebarTab tab oerId ->
       let
           cmd =

@@ -73,8 +73,6 @@ type Msg
   | OverviewTagLabelClicked OerId
   | PageScrolled PageScrollState
   | OerCardPlaceholderPositionsReceived (List OerCardPlaceholderPosition)
-  | StartLabStudyTask LabStudyTask
-  | StoppedLabStudyTask
   | SelectResourceSidebarTab ResourceSidebarTab OerId
   -- | MouseMovedOnStoryTag Float
   | SelectedOverviewType OverviewType

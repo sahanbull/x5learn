@@ -21,7 +21,7 @@ import View.Utility exposing (..)
 import View.FragmentsBar exposing (..)
 -- import View.Noteboard exposing (..)
 import View.Html5VideoPlayer exposing (..)
-import View.HtmlPdfViewer exposing (..)
+import View.PdfViewer exposing (..)
 
 
 import Msg exposing (..)
@@ -71,7 +71,7 @@ viewResource model oer =
             if isVideoFile oer.url then
               viewHtml5VideoPlayer model oer.url
             else if isPdfFile oer.url then
-              viewHtmlPdfPlayer oer.url "60vh"
+              viewPdfViewer oer.url "60vh"
             else
               none
 

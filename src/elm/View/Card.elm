@@ -93,7 +93,7 @@ viewOerCard ({pageScrollState} as model) position barId enableShadow oer =
         none
 
 
-{-| Actually the OER as a card, having made sure that it is within screen boundaries
+{-| Render the OER as a card, having previously ensured that it is within screen boundaries
 -}
 viewVisibleOerCard : Model -> Point -> String -> Bool -> Oer -> Element Msg
 viewVisibleOerCard model position barId enableShadow oer =

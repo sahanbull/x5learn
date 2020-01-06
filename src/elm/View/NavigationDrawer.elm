@@ -19,6 +19,9 @@ import View.Course exposing (..)
 import Msg exposing (..)
 
 
+{-| Add a navigation drawer (sidebar) to a given page
+    https://material.io/components/navigation-drawer/
+-}
 withNavigationDrawer : Model -> PageWithModal -> PageWithModal
 withNavigationDrawer model (pageContent, modal) =
   let

@@ -13,6 +13,10 @@ import Msg exposing (Msg)
 import Model exposing (..)
 
 
+{-| Render a standard HTML5 video player element
+    https://www.w3schools.com/html/html5_video.asp
+    https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video
+-}
 viewHtml5VideoPlayer : Model -> OerUrl -> Element Msg
 viewHtml5VideoPlayer model oerUrl =
   let

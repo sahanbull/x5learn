@@ -484,8 +484,8 @@ actionButtonWithoutIcon labelAttrs buttonAttrs str onPress =
       button buttonAttrs { onPress = onPress, label = label }
 
 
-actionButtonWithoutIconNoBobble : List (Attribute Msg) -> String -> Msg -> Element Msg
-actionButtonWithoutIconNoBobble attrs str onPress =
+actionButtonWithoutIconNoBubble : List (Attribute Msg) -> String -> Msg -> Element Msg
+actionButtonWithoutIconNoBubble attrs str onPress =
   str
   |> bodyNoWrap []
   |> el (attrs ++ [ onClickNoBubble onPress ])

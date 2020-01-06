@@ -16,7 +16,7 @@ import Msg exposing (..)
 import View.Utility exposing (..)
 import View.FragmentsBar exposing (..)
 import View.Html5VideoPlayer exposing (..)
-import View.HtmlPdfViewer exposing (..)
+import View.PdfViewer exposing (..)
 
 import Animation exposing (..)
 
@@ -117,7 +117,7 @@ inspectorContentDefault model {oer, fragmentStart} =
             if isVideoFile oer.url then
               viewHtml5VideoPlayer model oer.url
             else if isPdfFile oer.url then
-              viewHtmlPdfPlayer oer.url "45vh"
+              viewPdfViewer oer.url "45vh"
             else
               none
 

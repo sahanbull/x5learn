@@ -10,9 +10,13 @@ import List.Extra
 import Model exposing (..)
 
 
+{-| This module is responsible for updating bubblograms
+-}
 type alias PositionedCluster = { posX : Float, cluster : Cluster }
 
 
+{-| This function takes an existing enrichment and adds a new bubblogram to it
+-}
 addBubblogram : Model -> OerId -> WikichunkEnrichment -> WikichunkEnrichment
 addBubblogram model oerId ({chunks, clusters, mentions, bubblogram, errors} as enrichment) =
   if errors || bubblogram /= Nothing || List.isEmpty clusters then
@@ -46,6 +50,8 @@ addBubblogram model oerId ({chunks, clusters, mentions, bubblogram, errors} as e
           enrichment
 
 
+{-| Convert occurrences to entities
+-}
 entitiesFromOccurrences : List Occurrence -> List Entity
 entitiesFromOccurrences occurrences =
   occurrences
@@ -53,6 +59,10 @@ entitiesFromOccurrences occurrences =
   |> List.Extra.uniqueBy .id
 
 
+{-| Calculate the relevance of an entity by simply counting the number of occurences
+    TODO: In future versions, we might also consider additional factors, such as average rank (e.g. index in chunk) and trueskill values
+-}
+entityRelevance : List Occurrence -> Entity -> Int
 entityRelevance occurrences entity =
   let
       frequency =
@@ -60,9 +70,11 @@ entityRelevance occurrences entity =
         |> List.filter (\occurrence -> occurrence.entity.id == entity.id)
         |> List.length
   in
-      frequency -- also consider adding extra factors e.g. average rank (e.g. index in chunk) and trueskill values
+      frequency
 
 
+{-| Convert chunks to occurrences
+-}
 occurrencesFromChunks : List Chunk -> List Occurrence
 occurrencesFromChunks chunks =
   let
@@ -73,6 +85,8 @@ occurrencesFromChunks chunks =
       |> List.concat
 
 
+{-| Convert a single chunk to occurrences
+-}
 occurrencesFromChunk : Float -> Int -> Chunk -> List Occurrence
 occurrencesFromChunk nChunksMinus1max1 chunkIndex {entities, length} =
   let
@@ -86,6 +100,8 @@ occurrencesFromChunk nChunksMinus1max1 chunkIndex {entities, length} =
       |> List.indexedMap (occurrenceFromEntity approximatePositionInText nEntitiesMinus1)
 
 
+{-| Convert an entity to an occurrence
+-}
 occurrenceFromEntity : Float -> Int -> Int -> Entity -> Occurrence
 occurrenceFromEntity approximatePositionInText nEntitiesMinus1 entityIndex entity =
   let
@@ -95,6 +111,8 @@ occurrenceFromEntity approximatePositionInText nEntitiesMinus1 entityIndex entit
       Occurrence entity approximatePositionInText rank
 
 
+{-| Convert an entity to a bubble
+-}
 bubbleFromEntity : Model -> List Occurrence -> Int -> Entity -> Bubble
 bubbleFromEntity model occurrences index entity =
   let
@@ -152,6 +170,8 @@ bubbleFromEntity model occurrences index entity =
       }
 
 
+{-| Calculate the positions of bubbles
+-}
 layoutBubbles : List Cluster -> List Bubble -> List Bubble
 layoutBubbles clusters bubbles =
   let
@@ -295,6 +315,9 @@ layoutBubbles clusters bubbles =
       |> List.map setPosXbyCluster
 
 
+{-| Calculate the mean of a list of floats
+    A default value is required in case the list is empty
+-}
 mean : Float -> List Float -> Float
 mean default xs =
   if xs == [] then
@@ -303,6 +326,8 @@ mean default xs =
     (List.sum xs) / (List.length xs |> toFloat)
 
 
+{-| Estimated width of the text label
+-}
 approximateLabelWidth : Bubble -> Float
 approximateLabelWidth {entity} =
   (toFloat <| String.length entity.title) * 0.025

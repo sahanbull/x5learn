@@ -6,6 +6,8 @@ import Dict
 import Model exposing (..)
 
 
+{-| This module is responsible for updating the popup in a bubblogram
+-}
 updateBubblePopupOnTagLabelClicked : Model -> OerId -> Maybe Popup -> Maybe Popup
 updateBubblePopupOnTagLabelClicked model oerId oldPopup =
   case model.hoveringTagEntityId of
@@ -18,7 +20,7 @@ updateBubblePopupOnTagLabelClicked model oerId oldPopup =
           if state.oerId==oerId && state.entityId==entityId then
             case state.content of
               MentionInBubblePopup _ ->
-                updatedPopup state
+                stepPopup state
 
               _ ->
                 initialPopup model oerId entityId
@@ -29,6 +31,8 @@ updateBubblePopupOnTagLabelClicked model oerId oldPopup =
           initialPopup model oerId entityId
 
 
+{-| Change the popup content to show the text of a particular mention
+-}
 setBubblePopupToMention : OerId -> EntityId -> MentionInOer -> Model -> Model
 setBubblePopupToMention oerId entityId mention model =
   let
@@ -38,6 +42,8 @@ setBubblePopupToMention oerId entityId mention model =
       { model | popup = popup }
 
 
+{-| Initial popup content
+-}
 initialPopup : Model -> OerId -> String -> Maybe Popup
 initialPopup model oerId entityId =
   let
@@ -54,8 +60,10 @@ initialPopup model oerId entityId =
           Nothing
 
 
-updatedPopup : BubblePopupState -> Maybe Popup
-updatedPopup state =
+{-| Change the popup content to the next in the queue
+-}
+stepPopup : BubblePopupState -> Maybe Popup
+stepPopup state =
   case state.nextContents of
     [] ->
       Nothing

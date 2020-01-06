@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestLabStudyLogEvent, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResource, requestResourceRecommendations, requestSendResourceFeedback)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResource, requestResourceRecommendations)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -17,10 +17,14 @@ import Model exposing (..)
 import Msg exposing (..)
 
 
+{-| This module is responsible for most of the data fetching via JSON GET/POST requests.
+-}
 apiRoot =
   "api/v1"
 
 
+{-| Fetch the current user (logged in or not)
+-}
 requestSession : Cmd Msg
 requestSession =
   Http.get
@@ -29,6 +33,8 @@ requestSession =
     }
 
 
+{-| Fetch OER search results from the backend
+-}
 searchOers : String -> Cmd Msg
 searchOers searchText =
   Http.get
@@ -45,6 +51,8 @@ searchOers searchText =
 --     }
 
 
+{-| Fetch OER data from the server.
+-}
 requestOers : List OerId -> Cmd Msg
 requestOers oerIds =
   let
@@ -59,6 +67,8 @@ requestOers oerIds =
         }
 
 
+{-| Fetch featured Oers from the backend.
+-}
 requestFeaturedOers : Cmd Msg
 requestFeaturedOers =
   Http.get
@@ -67,6 +77,8 @@ requestFeaturedOers =
     }
 
 
+{-| Fetch enrichment data from the backend
+-}
 requestWikichunkEnrichments : List OerId -> Cmd Msg
 requestWikichunkEnrichments ids =
   Http.post
@@ -76,6 +88,8 @@ requestWikichunkEnrichments ids =
     }
 
 
+{-| Fetch entity definitions from the backend
+-}
 requestEntityDefinitions : List String -> Cmd Msg
 requestEntityDefinitions entityIds =
   Http.get
@@ -84,6 +98,8 @@ requestEntityDefinitions entityIds =
     }
 
 
+{-| Persist the user profile data when the user submits the form
+-}
 requestSaveUserProfile : UserProfile -> Cmd Msg
 requestSaveUserProfile userProfile =
   Http.post
@@ -93,6 +109,72 @@ requestSaveUserProfile userProfile =
     }
 
 
+{-| Fetch course data
+-}
+requestLoadCourse : Cmd Msg
+requestLoadCourse =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "load_course/" ] []
+    , body = Http.jsonBody <| Encode.object []
+    , expect = Http.expectJson RequestLoadCourse courseDecoder
+    }
+
+
+{-| Persist changes in the course
+-}
+requestSaveCourse : Course -> Cmd Msg
+requestSaveCourse course =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "save_course/" ] []
+    , body = Http.jsonBody <| Encode.object [ ("items", Encode.list courseItemEncoder course.items) ]
+    , expect = Http.expectString RequestSaveCourse
+    }
+
+
+{-| Persist UI events
+-}
+requestSaveLoggedEvents : Model -> Cmd Msg
+requestSaveLoggedEvents {currentTime, loggedEvents} =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "save_ui_logged_events_batch/" ] []
+    , body = Http.jsonBody <| Encode.object [ ("clientTime", Encode.string (currentTime |> posixToMillis |> String.fromInt)), ("text", Encode.string (loggedEvents |> List.reverse |> String.join "\n")) ]
+    , expect = Http.expectString RequestSaveLoggedEvents
+    }
+
+
+{-| Fetch resource in full-page resource view
+-}
+requestResource : Int -> Cmd Msg
+requestResource oerId =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "resource/" ] []
+    , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId) ]
+    , expect = Http.expectJson RequestResource oerDecoder
+    }
+
+
+{-| Fetch related resources in full-page resource view
+-}
+requestResourceRecommendations : OerId -> Cmd Msg
+requestResourceRecommendations oerId =
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "recommendations/" ] [ Url.Builder.int "oerId" oerId ]
+    , expect = Http.expectJson RequestResourceRecommendations (list oerDecoder)
+    }
+
+
+{-| Fetch data regarding which parts of videos the user has watched
+-}
+requestVideoUsages : Cmd Msg
+requestVideoUsages =
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "video_usages" ] []
+    , expect = Http.expectJson RequestVideoUsages (dict (list rangeDecoder))
+    }
+
+
+{-| JSON decoders and encoders for custom types are defined below.
+-}
 userProfileEncoder : UserProfile -> Encode.Value
 userProfileEncoder userProfile =
   Encode.object
@@ -117,85 +199,6 @@ rangeEncoder range =
     [ ("start", Encode.float range.start)
     , ("length", Encode.float range.length)
     ]
-
-
-requestLabStudyLogEvent : Int -> String -> List String -> Cmd Msg
-requestLabStudyLogEvent time eventType params =
-  Http.post
-    { url = Url.Builder.absolute [ apiRoot, "log_event_for_lab_study/" ] []
-    , body = Http.jsonBody <| Encode.object [ ("browserTime", Encode.int time), ("eventType", Encode.string eventType), ("params", Encode.list Encode.string params) ]
-    , expect = Http.expectString RequestLabStudyLogEvent
-    }
-
-
-requestLoadCourse : Cmd Msg
-requestLoadCourse =
-  Http.post
-    { url = Url.Builder.absolute [ apiRoot, "load_course/" ] []
-    , body = Http.jsonBody <| Encode.object []
-    , expect = Http.expectJson RequestLoadCourse courseDecoder
-    }
-
-
-requestSaveCourse : Course -> Cmd Msg
-requestSaveCourse course =
-  Http.post
-    { url = Url.Builder.absolute [ apiRoot, "save_course/" ] []
-    , body = Http.jsonBody <| Encode.object [ ("items", Encode.list courseItemEncoder course.items) ]
-    , expect = Http.expectString RequestSaveCourse
-    }
-
-
-requestSaveLoggedEvents : Model -> Cmd Msg
-requestSaveLoggedEvents {currentTime, loggedEvents} =
-  Http.post
-    { url = Url.Builder.absolute [ apiRoot, "save_ui_logged_events_batch/" ] []
-    , body = Http.jsonBody <| Encode.object [ ("clientTime", Encode.string (currentTime |> posixToMillis |> String.fromInt)), ("text", Encode.string (loggedEvents |> List.reverse |> String.join "\n")) ]
-    , expect = Http.expectString RequestSaveLoggedEvents
-    }
-
-
--- requestUpdatePlayingVideo : Float -> Cmd Msg
--- requestUpdatePlayingVideo currentTimeInVideo =
---   Http.post
---     { url = Url.Builder.absolute [ apiRoot, "playing_video/" ] []
---     , body = Http.jsonBody <| Encode.object [ ("currentTimeInVideo", Encode.float currentTimeInVideo) ]
---     , expect = Http.expectString RequestUpdatePlayingVideo
---     }
-
-
-requestResource : Int -> Cmd Msg
-requestResource oerId =
-  Http.post
-    { url = Url.Builder.absolute [ apiRoot, "resource/" ] []
-    , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId) ]
-    , expect = Http.expectJson RequestResource oerDecoder
-    }
-
-
-requestResourceRecommendations : OerId -> Cmd Msg
-requestResourceRecommendations oerId =
-  Http.get
-    { url = Url.Builder.absolute [ apiRoot, "recommendations/" ] [ Url.Builder.int "oerId" oerId ]
-    , expect = Http.expectJson RequestResourceRecommendations (list oerDecoder)
-    }
-
-
-requestSendResourceFeedback : Int -> String -> Cmd Msg
-requestSendResourceFeedback oerId text =
-  Http.post
-    { url = Url.Builder.absolute [ apiRoot, "resource_feedback/" ] []
-    , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId), ("text", Encode.string text) ]
-    , expect = Http.expectString RequestSendResourceFeedback
-    }
-
-
-requestVideoUsages : Cmd Msg
-requestVideoUsages =
-  Http.get
-    { url = Url.Builder.absolute [ apiRoot, "video_usages" ] []
-    , expect = Http.expectJson RequestVideoUsages (dict (list rangeDecoder))
-    }
 
 
 courseItemDecoder : Decoder CourseItem

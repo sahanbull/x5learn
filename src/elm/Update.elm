@@ -350,12 +350,6 @@ update msg ({nav, userProfileForm} as model) =
       -- in
       ( { model | snackbar = createSnackbar model "Some changes were not saved", userProfileFormSubmitted = False }, Cmd.none )
 
-    RequestSendResourceFeedback (Ok _) ->
-      (model, Cmd.none)
-
-    RequestSendResourceFeedback (Err err) ->
-      (model, Cmd.none)
-
     RequestLabStudyLogEvent (Ok _) ->
       (model, Cmd.none)
 
@@ -524,7 +518,7 @@ update msg ({nav, userProfileForm} as model) =
     --   |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ String.fromInt oerId, getOerNoteForm model oerId ]
 
     SubmittedResourceFeedback oerId text ->
-      ({ model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", requestSendResourceFeedback oerId text)
+      ({ model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", Cmd.none)
       |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, text ]
       |> saveAction 8 [ ("OER id", Encode.int oerId), ("user feedback", Encode.string text) ]
 

@@ -78,6 +78,7 @@ type alias Model =
   , userProfileForm : UserProfileForm -- for the user to fill in their name etc
   , userProfileFormSubmitted : Bool -- show a loading spinner while waiting for HTTP response
   -- Lab study
+  , currentTaskName : Maybe String
   , startedLabStudyTask : Maybe (LabStudyTask, Posix) -- when the user presses button to start a task (lab study only)
   -- Full-page resource view
   , currentResource : Maybe CurrentResource -- in full-page view: the loaded OER e.g. x5learn.org/resource/12345
@@ -581,6 +582,7 @@ initialModel nav flags =
   , loggedEvents = []
   , lastTimeLoggedEventsSaved = initialTime
   , timeWhenSessionLoaded = initialTime
+  , currentTaskName = Nothing
   -- , oerNoteboards = Dict.empty
   -- , oerNoteForms = Dict.empty
   }

@@ -797,6 +797,29 @@ update msg ({nav, userProfileForm} as model) =
       ( model |> markCourseAsChanged, setBrowserFocus "")
       |> logEventForLabStudy "SubmittedCourseItemComment" []
 
+    StartTask taskName ->
+      let
+          searchText =
+            case taskName of
+              "Task 1" ->
+                "labstudytask1"
+
+              "Task 2" ->
+                "labstudytask2"
+
+              _ ->
+                "labstudypractice"
+
+          newModel =
+            { model | currentTaskName = Just taskName, searchInputTyping = searchText, searchState = Just <| newSearch searchText, snackbar = Nothing }
+      in
+          ( newModel, [ setBrowserFocus "", searchOers searchText] |> Cmd.batch)
+          |> logEventForLabStudy "StartTask" [ taskName ]
+
+    CompleteTask ->
+      ( { model | currentTaskName = Nothing }, setBrowserFocus "")
+      |> logEventForLabStudy "CompleteTask" []
+
 
 -- createNote : OerId -> String -> Model -> Model
 -- createNote oerId text model =
@@ -1317,7 +1340,7 @@ markCourseAsChanged model =
 
 saveLoggedEventsIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
 saveLoggedEventsIfNeeded (oldModel, oldCmd) =
-  if oldModel.loggedEvents/=[] && oldModel.session/=Nothing && millisSince oldModel oldModel.timeWhenSessionLoaded > 10000 && millisSince oldModel oldModel.lastTimeLoggedEventsSaved > 5000 then
+  if oldModel.loggedEvents/=[] && millisSince oldModel oldModel.timeWhenSessionLoaded > 10000 && millisSince oldModel oldModel.lastTimeLoggedEventsSaved > 5000 then
     ({ oldModel | loggedEvents = [], lastTimeLoggedEventsSaved = oldModel.currentTime }, [ requestSaveLoggedEvents oldModel, oldCmd ] |> Cmd.batch)
   else
     (oldModel, oldCmd)

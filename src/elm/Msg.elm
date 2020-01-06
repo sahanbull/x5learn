@@ -95,6 +95,8 @@ type Msg
   | MovedCourseItemDown Int
   | SubmittedCourseItemComment
   | ChangedCommentTextInCourseItem OerId String
+  | StartTask String
+  | CompleteTask
 
 
 type UserProfileField

@@ -19,6 +19,8 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
+{-| Render landing page including featured OER content
+-}
 viewFeaturedPage : Model -> PageWithModal
 viewFeaturedPage model =
   let
@@ -44,6 +46,8 @@ viewFeaturedPage model =
       (page, viewInspectorModalOrEmpty model)
 
 
+{-| Render multiple OERs (when loaded)
+-}
 viewFeaturedOers : Model -> Element Msg
 viewFeaturedOers model =
   case model.featuredOers of

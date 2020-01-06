@@ -669,7 +669,7 @@ getYoutubeVideoId oerUrl =
 
 modalId : String
 modalId =
-  "inspectorModal"
+  "InspectorModal"
 
 
 {-| Number of milliseconds that have passed since a certain point in time

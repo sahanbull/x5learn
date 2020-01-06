@@ -21,6 +21,9 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
+{-| Render the search page, mainly including the search results
+    Note that the search field is part of the NavigationDrawer
+-}
 viewSearchPage : Model -> SearchState -> PageWithModal
 viewSearchPage model searchState =
   let
@@ -33,6 +36,8 @@ viewSearchPage model searchState =
       (content, modal)
 
 
+{-| Render the main part of the search pge
+-}
 viewBody : Model -> SearchState -> Element Msg
 viewBody model searchState =
   case searchState.searchResults of

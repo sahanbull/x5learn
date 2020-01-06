@@ -358,7 +358,7 @@ onClickNoBubble message =
 
 hoverCircleBackground : Attribute Msg
 hoverCircleBackground =
-  htmlClass "hoverCircleBackground"
+  htmlClass "HoverCircleBackground"
 
 
 embedYoutubePlayer : String -> Int -> Element Msg

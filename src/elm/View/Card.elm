@@ -208,7 +208,7 @@ viewVisibleOerCard model position barId enableShadow oer =
             []
 
       shadow =
-        if enableShadow then [ htmlClass "materialCard" ] else [ Border.width 1, borderColorDivider ]
+        if enableShadow then [ htmlClass "MaterialCard" ] else [ Border.width 1, borderColorDivider ]
 
       card =
         [ graphic ]
@@ -281,7 +281,7 @@ viewCoverImage model oer thumbFromSpritesheet =
   let
       upperImage attrs url =
         none
-        |> el ([ width fill, height <| px <| imageHeight, Background.image <| url, htmlClass (if isFromVideoLecturesNet oer then "materialHoverZoomThumb-videolectures" else "materialHoverZoomThumb") ] ++ thumbFromSpritesheet ++ attrs)
+        |> el ([ width fill, height <| px <| imageHeight, Background.image <| url, htmlClass (if isFromVideoLecturesNet oer then "MaterialHoverZoomThumb__Videolectures" else "MaterialHoverZoomThumb") ] ++ thumbFromSpritesheet ++ attrs)
   in
       case oer.images of
         [] ->

@@ -15,6 +15,8 @@ import View.Utility exposing (..)
 import Msg exposing (..)
 
 
+{-| Render the user profile page
+-}
 viewProfilePage : Model -> UserProfile -> UserProfileForm -> PageWithModal
 viewProfilePage model savedUserProfile {userProfile, saved} =
   let

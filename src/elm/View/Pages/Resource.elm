@@ -29,6 +29,9 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
+{-| Render the full-page resource view.
+    (NB at the time of writing, this page has been temporarily disabled until the recommender system produces sufficiently good results.)
+-}
 viewResourcePage : Model -> PageWithModal
 viewResourcePage model =
   let
@@ -51,7 +54,7 @@ viewResourcePage model =
       (page, [])
 
 
-viewResource : Model -> Oer -> Element Msg -- TODO remove some code duplication with Inspector.elm
+viewResource : Model -> Oer -> Element Msg -- TODO refactor to remove some code duplication with Inspector.elm
 viewResource model oer =
   let
       header =
@@ -276,7 +279,7 @@ viewRecommendationCard model oer =
         height <| px <| recommendationCardHeight
   in
       [ title, bottomInfo ]
-      |> column [ widthOfCard, heightOfCard, paddingXY 15 12, spacing 15, htmlClass "materialCard" ]
+      |> column [ widthOfCard, heightOfCard, paddingXY 15 12, spacing 15, htmlClass "MaterialCard" ]
       |> linkTo [] (resourceUrlPath oer.id)
 
 

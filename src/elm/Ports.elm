@@ -7,16 +7,22 @@ import Animation exposing (..)
 
 import Model exposing (..)
 
+{-|  This module defines the ports for communication with JavaScript.
+     Outgoing ports are defined below.
+-}
 port setBrowserFocus : String -> Cmd msg
 port copyClipboard : String -> Cmd msg
-port openModalAnimation : YoutubeEmbedParams -> Cmd msg
--- port embedYoutubePlayerOnResourcePage : YoutubeEmbedParams -> Cmd msg
+port openModalAnimation : VideoEmbedParams -> Cmd msg
+-- port embedYoutubePlayerOnResourcePage : VideoEmbedParams -> Cmd msg
 -- port youtubeSeekTo : Float -> Cmd msg
 -- port youtubeDestroyPlayer : Bool -> Cmd msg
 port getOerCardPlaceholderPositions : Bool -> Cmd msg
 port askPageScrollState : Bool -> Cmd msg
 port startCurrentHtml5Video : Float -> Cmd msg
 
+
+{-| Incoming ports are defined below
+-}
 port modalAnimationStart : (BoxAnimation -> msg) -> Sub msg
 port modalAnimationStop : (Int -> msg) -> Sub msg
 port closePopup : (Int -> msg) -> Sub msg
@@ -35,11 +41,3 @@ port html5VideoDuration : (Float -> msg) -> Sub msg
 port pageScrolled : (PageScrollState -> msg) -> Sub msg
 port receiveCardPlaceholderPositions : ((List OerCardPlaceholderPosition) -> msg) -> Sub msg
 port receiveFlyingHeartRelativeStartPosition : (Point -> msg) -> Sub msg
-
-
-type alias YoutubeEmbedParams =
-  { modalId : String
-  , videoId : String
-  , videoStartPosition : Float
-  , playWhenReady : Bool
-  }

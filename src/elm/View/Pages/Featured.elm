@@ -10,7 +10,7 @@ import Element.Background as Background
 import Element.Font as Font
 
 import Model exposing (..)
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 import View.Inspector exposing (..)
 import View.Card exposing (..)
 
@@ -19,6 +19,8 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
+{-| Render landing page including featured OER content
+-}
 viewFeaturedPage : Model -> PageWithModal
 viewFeaturedPage model =
   let
@@ -44,6 +46,8 @@ viewFeaturedPage model =
       (page, viewInspectorModalOrEmpty model)
 
 
+{-| Render multiple OERs (when loaded)
+-}
 viewFeaturedOers : Model -> Element Msg
 viewFeaturedOers model =
   case model.featuredOers of

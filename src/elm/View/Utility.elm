@@ -1,4 +1,4 @@
-module View.Shared exposing (..)
+module View.Utility exposing (..)
 
 import Html
 import Html.Attributes
@@ -27,98 +27,117 @@ type IconPosition
   | IconRight
 
 
+materialDark : Color
 materialDark =
   grey 11
 
 
+materialScrimBackground : Attribute Msg
 materialScrimBackground =
   Background.color <| rgba 0 0 0 materialScrimAlpha
 
 
+superLightBackground : Attribute Msg
 superLightBackground =
   Background.color <| rgb255 242 242 242
 
 
+greyDivider : Color
 greyDivider =
   rgb 0.8 0.8 0.8
 
 
+materialDarkAlpha : Attribute Msg
 materialDarkAlpha =
   alpha 0.87
 
 
+whiteText : Attribute Msg
 whiteText =
   Font.color white
 
 
+greyText : Attribute Msg
 greyText =
   Font.color <| grey 160
 
 
+greyTextDisabled : Attribute Msg
 greyTextDisabled =
   Font.color <| grey 180
 
 
+feedbackOptionButtonColor : Color
 feedbackOptionButtonColor =
   rgb255 80 170 120
 
 
+x5color : Color
 x5color =
   rgb255 82 134 148
 
 
+x5colorSemiTransparent : Color
 x5colorSemiTransparent =
   rgba255 82 134 148 0.3
 
 
+x5colorDark : Color
 x5colorDark =
   rgb255 38 63 71
 
 
+pageHeaderHeight : Int
 pageHeaderHeight =
   40
 
 
+paddingTop : Int -> Attribute Msg
 paddingTop px =
   paddingEach { allSidesZero | top = px }
 
 
+paddingBottom : Int -> Attribute Msg
 paddingBottom px =
   paddingEach { allSidesZero | bottom = px }
 
 
+paddingLeft : Int -> Attribute Msg
 paddingLeft px =
   paddingEach { allSidesZero | left = px }
 
 
+paddingRight : Int -> Attribute Msg
 paddingRight px =
   paddingEach { allSidesZero | right = px }
 
 
-paddingTRBL t r b l =
-  paddingEach { top = t, right = r, bottom = b, left = l }
-
-
+bigButtonPadding : Attribute Msg
 bigButtonPadding =
   paddingXY 13 10
 
 
+borderTop : Int -> Attribute Msg
 borderTop px =
   Border.widthEach { allSidesZero | top = px }
 
 
+borderBottom : Int -> Attribute Msg
 borderBottom px =
   Border.widthEach { allSidesZero | bottom = px }
 
 
+borderLeft : Int -> Attribute Msg
 borderLeft px =
   Border.widthEach { allSidesZero | left = px }
 
 
+borderColorDivider : Attribute Msg
 borderColorDivider =
   Border.color <| greyDivider
 
 
+allSidesZero : { bottom : number, left : number1, right : number2, top : number3 }
 allSidesZero =
   { top = 0
   , right = 0
@@ -127,114 +146,142 @@ allSidesZero =
   }
 
 
+wrapText : List (Attribute Msg) -> String -> Element Msg
 wrapText attrs str =
   [ text str ] |> paragraph attrs
 
 
+captionTextAttrs : List (Attribute Msg)
 captionTextAttrs =
   [ Font.size 12, Font.color materialDark ]
 
 
+bodyTextAttrs : List (Attribute Msg)
 bodyTextAttrs =
   [ Font.size 14, Font.color materialDark ]
 
 
+captionNowrap : List (Attribute Msg) -> String -> Element Msg
 captionNowrap attrs str =
   text str |> el (captionTextAttrs ++ attrs)
 
 
+bodyWrap : List (Attribute Msg) -> String -> Element Msg
 bodyWrap attrs str =
   [ text str ] |> paragraph (bodyTextAttrs ++ attrs)
 
 
+bodyNoWrap : List (Attribute Msg) -> String -> Element Msg
 bodyNoWrap attrs str =
   text str |> el (bodyTextAttrs ++ attrs)
 
 
+subSubheaderNoWrap : List (Attribute Msg) -> String -> Element Msg
 subSubheaderNoWrap attrs str =
   text str |> el ([ Font.size 16, Font.color materialDark ] ++ attrs)
 
 
+subSubheaderWrap : List (Attribute Msg) -> String -> Element Msg
 subSubheaderWrap attrs str =
   [ text str ] |> paragraph ([ Font.size 16, Font.color materialDark ] ++ attrs)
 
 
+subheaderWrap : List (Attribute Msg) -> String -> Element Msg
 subheaderWrap attrs str =
   [ text str ] |> paragraph ([ Font.size 21, Font.color materialDark ] ++ attrs)
 
 
+headlineWrap : List (Attribute Msg) -> String -> Element Msg
 headlineWrap attrs str =
   [ text str ] |> paragraph ([ Font.size 24, Font.color materialDark ] ++ attrs)
 
 
+italicText : String -> Element Msg
 italicText =
   bodyWrap [ Font.italic ]
 
 
+white : Color
 white =
   rgb 1 1 1
 
 
+yellow : Color
 yellow =
   rgba255 255 240 0 0.9
 
 
+red : Color
 red =
   rgba255 240 30 0 1
 
 
+orange : Color
 orange =
   rgb255 255 120 0
 
 
+blue : Color
 blue =
   rgb255 0 190 250
 
 
+linkBlue : Color
 linkBlue =
   rgb255 0 115 230
 
 
+grey40 : Color
 grey40 =
   grey 40
 
 
+grey80 : Color
 grey80 =
   grey 80
 
 
+greyMedium : Color
 greyMedium =
   grey 160
 
 
+veryTransparentWhite : Color
 veryTransparentWhite =
   rgba 1 1 1 0.25
 
 
+transparentWhite : Color
 transparentWhite =
   rgba 1 1 1 0.4
 
 
+semiTransparentWhite : Color
 semiTransparentWhite =
   rgba 1 1 1 0.95
 
 
+semiTransparent : Attribute Msg
 semiTransparent =
   alpha 0.5
 
 
+fullyTransparentColor : Color
 fullyTransparentColor =
   rgba 0 0 0 0
 
 
+grey : Int -> Color
 grey value =
   rgb255 value value value
 
 
+htmlClass : String -> Attribute Msg
 htmlClass name =
   Html.Attributes.class name |> htmlAttribute
 
 
+htmlId : String -> Attribute Msg
 htmlId name =
   Html.Attributes.id name |> htmlAttribute
 
@@ -244,14 +291,17 @@ htmlStyle name value =
   Html.Attributes.style name value |> htmlAttribute
 
 
+htmlDataAttribute : String -> Attribute Msg
 htmlDataAttribute str =
   Html.Attributes.attribute "data-oerid" str |> htmlAttribute
 
 
+whiteBackground : Attribute Msg
 whiteBackground =
   Background.color white
 
 
+pageBodyBackground : Model -> Attribute Msg
 pageBodyBackground model =
   -- Background.image <| imgPath "bg.jpg"
   if isLabStudy1 model then
@@ -261,10 +311,12 @@ pageBodyBackground model =
     Background.image <| imgPath "bg.jpg"
 
 
+imgPath : String -> String
 imgPath str =
   "/static/dist/img/" ++ str
 
 
+svgPath : String -> String
 svgPath str =
   "/static/dist/img_svg/" ++ str ++ ".svg"
 
@@ -304,15 +356,18 @@ onClickNoBubble message =
   |> htmlAttribute
 
 
+hoverCircleBackground : Attribute Msg
 hoverCircleBackground =
-  htmlClass "hoverCircleBackground"
+  htmlClass "HoverCircleBackground"
 
 
+embedYoutubePlayer : String -> Int -> Element Msg
 embedYoutubePlayer youtubeId startTime =
   none
   |> el [ htmlId "playerElement", width (px playerWidth), height (px 410) ]
 
 
+dialogShadow : Attribute Msg
 dialogShadow =
   Border.shadow
     { offset = (0, 20)
@@ -322,14 +377,17 @@ dialogShadow =
     }
 
 
+linkTo : List (Attribute Msg) -> String -> Element Msg -> Element Msg
 linkTo attrs url label =
   link attrs { url = url, label = label }
 
 
+newTabLinkTo : List (Attribute Msg) -> String -> Element Msg -> Element Msg
 newTabLinkTo attrs url label =
   newTabLink attrs { url = url, label = label }
 
 
+viewSearchWidget : Model -> Length -> String -> String -> Element Msg
 viewSearchWidget model widthAttr placeholder searchInputTyping =
   let
       submit =
@@ -379,6 +437,7 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
       |> column [ spacing 10, centerX ]
 
 
+svgIcon : String -> Element Msg
 svgIcon stub=
   image [ materialDarkAlpha ] { src = svgPath stub, description = "" }
 
@@ -387,6 +446,7 @@ navigationDrawerWidth =
   230
 
 
+actionButtonWithIcon : List (Attribute Msg) -> IconPosition -> String -> String -> Maybe Msg -> Element Msg
 actionButtonWithIcon textAttrs iconPosition svgIconStub str onPress =
   let
       icon =
@@ -424,8 +484,8 @@ actionButtonWithoutIcon labelAttrs buttonAttrs str onPress =
       button buttonAttrs { onPress = onPress, label = label }
 
 
-actionButtonWithoutIconNoBobble : List (Attribute Msg) -> String -> Msg -> Element Msg
-actionButtonWithoutIconNoBobble attrs str onPress =
+actionButtonWithoutIconNoBubble : List (Attribute Msg) -> String -> Msg -> Element Msg
+actionButtonWithoutIconNoBubble attrs str onPress =
   str
   |> bodyNoWrap []
   |> el (attrs ++ [ onClickNoBubble onPress ])
@@ -470,30 +530,36 @@ playerWidth =
   720
 
 
+milkyWhiteCenteredContainer : Element Msg -> Element Msg
 milkyWhiteCenteredContainer =
   el [ centerX, centerY, padding 20, Background.color semiTransparentWhite, Border.rounded 2 ]
 
 
+closeIcon : Element Msg
 closeIcon =
   image [  materialDarkAlpha, hoverCircleBackground ] { src = svgPath "close", description = "close" }
 
 
+trashIcon : Element Msg
 trashIcon =
   image [  materialDarkAlpha, hoverCircleBackground, width <| px 30 ] { src = svgPath "delete", description = "delete" }
 
 
+viewCenterNote : String -> Element Msg
 viewCenterNote str =
   str
   |> bodyWrap []
   |> milkyWhiteCenteredContainer
 
 
+viewLoadingSpinner : Element Msg
 viewLoadingSpinner =
   none
   |> el [ htmlClass "loader", centerX, centerY ]
   |> el [ centerX, centerY ]
 
 
+menuButtonDisabled : String -> Element Msg
 menuButtonDisabled str =
   let
       label =
@@ -505,18 +571,22 @@ menuButtonDisabled str =
       button [ width fill, padding 5 ] { onPress = Nothing, label = label }
 
 
+popupOnMouseEnter : Popup -> Attribute Msg
 popupOnMouseEnter popup =
   onMouseEnter (SetPopup popup)
 
 
+closePopupOnMouseLeave : Attribute Msg
 closePopupOnMouseLeave =
   onMouseLeave ClosePopup
 
 
+menuColumn : List (Attribute Msg) -> List (Element Msg) -> Element Msg
 menuColumn attrs =
   column ([ Background.color white, Border.rounded 4, Border.color <| grey80, dialogShadow ] ++ attrs)
 
 
+truncateSentence : Int -> String -> String
 truncateSentence characterLimit sentence =
   if (String.length sentence) <= characterLimit then
     sentence
@@ -578,10 +648,12 @@ truncateSentence characterLimit sentence =
 --       leftPart ++ "/..." ++ rightPart
 
 
+avatarImage : Element Msg
 avatarImage =
   image [ alpha 0.5 ] { src = svgPath "user_default_avatar", description = "user menu" }
 
 
+openInspectorOnPress : Model -> Oer -> Maybe Msg
 openInspectorOnPress model oer =
   case model.inspectorState of
     Nothing ->
@@ -591,26 +663,32 @@ openInspectorOnPress model oer =
       Nothing
 
 
+imageHeight : Int
 imageHeight =
   175
 
 
+cardWidth : Int
 cardWidth =
   332
 
 
+cardHeight : Int
 cardHeight =
   280
 
 
+horizontalSpacingBetweenCards : Int
 horizontalSpacingBetweenCards =
   70
 
 
+verticalSpacingBetweenCards : Int
 verticalSpacingBetweenCards =
   90
 
 
+pointerEventsNone : Attribute Msg
 pointerEventsNone =
   htmlClass "PointerEventsNone"
 

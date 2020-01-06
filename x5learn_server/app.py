@@ -158,16 +158,6 @@ def notes():
     return render_template('home.html')
 
 
-@app.route("/recent")
-def recent():
-    return render_template('home.html')
-
-
-@app.route("/viewed")
-def viewed():
-    return render_template('home.html')
-
-
 @app.route("/resource/<oer_id>")
 def resource(oer_id):
     return render_template('home.html')
@@ -1011,6 +1001,11 @@ def initiate_action_types_table():
     action_type = ActionType.query.filter_by(id=7).first()
     if action_type is None:
         action_type = ActionType('ContentFlow setting changed')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=8).first()
+    if action_type is None:
+        action_type = ActionType('Feedback on OER content')
         db_session.add(action_type)
         db_session.commit()
 

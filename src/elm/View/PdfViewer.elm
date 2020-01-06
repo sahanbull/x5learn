@@ -1,4 +1,4 @@
-module View.HtmlPdfViewer exposing (viewHtmlPdfPlayer)
+module View.PdfViewer exposing (viewPdfViewer)
 
 import Html
 import Html.Attributes as Attributes
@@ -8,13 +8,15 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 import Msg exposing (Msg)
 import Model exposing (..)
 
 
-viewHtmlPdfPlayer : OerUrl -> String -> Element Msg
-viewHtmlPdfPlayer oerUrl height =
+{-| Render a simple embedded pdf viewer
+-}
+viewPdfViewer : OerUrl -> String -> Element Msg
+viewPdfViewer oerUrl height =
   let
       fallbackContent =
         Html.a [ Attributes.href oerUrl ] [ Html.text oerUrl ]

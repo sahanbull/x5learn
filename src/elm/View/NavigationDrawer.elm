@@ -12,13 +12,16 @@ import Element.Font as Font
 import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
 
 import Model exposing (..)
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 import View.ContentFlowToggle exposing (..)
 import View.Course exposing (..)
 
 import Msg exposing (..)
 
 
+{-| Add a navigation drawer (sidebar) to a given page
+    https://material.io/components/navigation-drawer/
+-}
 withNavigationDrawer : Model -> PageWithModal -> PageWithModal
 withNavigationDrawer model (pageContent, modal) =
   let
@@ -44,11 +47,7 @@ withNavigationDrawer model (pageContent, modal) =
           ]
           |> column [ spacing 40, width fill ]
         else
-          -- [ navButton False "/next_steps" "nav_next_steps" "Next Steps"
-          -- , navButton False "/journeys" "nav_journeys" "Journeys"
           -- [ navButton True "/favorites" "nav_favorites" "Favorites" |> heartAnimationWrapper
-          -- , navButton True "/viewed" "nav_viewed" "Viewed"
-          -- , navButton False "/peers" "nav_peers" "Peers"
           []
           |> column [ width fill, spacing 8 ]
 
@@ -81,7 +80,7 @@ withNavigationDrawer model (pageContent, modal) =
                     Just startPoint ->
                       let
                           phase =
-                            ((millisSince model startTime |> toFloat) / (flyingHeartAnimationDuration - 300)) ^ 0.9 |> min 1
+                            ((millisSince model startTime |> toFloat) / ((toFloat flyingHeartAnimationDuration) - 300)) ^ 0.9 |> min 1
 
                           x =
                             startPoint.x * (1-phase)

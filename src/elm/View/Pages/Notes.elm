@@ -17,7 +17,7 @@ import Element.Font as Font
 
 import Model exposing (..)
 import Animation exposing (..)
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 import View.Inspector exposing (..)
 import View.Card exposing (..)
 import View.Noteboard exposing (..)
@@ -27,6 +27,8 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
+{-| Render a page containing the notes the user has made
+-}
 viewNotesPage : Model -> PageWithModal
 viewNotesPage model =
   let
@@ -65,6 +67,9 @@ viewNotesPage model =
       (page, viewInspectorModalOrEmpty model)
 
 
+{-| Render a single card representing a note
+-}
+viewNoteCard : Model -> Oer -> Note -> Element Msg
 viewNoteCard model oer note =
   let
       date =
@@ -80,9 +85,11 @@ viewNoteCard model oer note =
         ]
         |> row [ spacing 10, width (boxWidth - cardWidth - 65 |> px) ]
   in
-      button [ htmlClass "materialCard", htmlClass "CloseInspectorOnClickOutside", padding 10 ] { onPress = openInspectorOnPress model oer, label = card }
+      button [ htmlClass "MaterialCard", htmlClass "CloseInspectorOnClickOutside", padding 10 ] { onPress = openInspectorOnPress model oer, label = card }
 
 
+{-| A little trickery is involved in grouping the cards by OER
+-}
 viewOerBoxAndDetachedCard : Model -> Int -> Oer -> { box : Element Msg, card : Maybe (Attribute Msg) }
 viewOerBoxAndDetachedCard model index oer =
   let
@@ -115,7 +122,7 @@ viewOerBoxAndDetachedCard model index oer =
         |> row [ spacing 15, padding 15 ]
 
       box =
-        button [ width (px boxWidth), Border.rounded 2, htmlClass "materialCard", htmlClass "CloseInspectorOnClickOutside", Background.color semiTransparentWhite, centerX ] { onPress = openInspectorOnPress model oer, label = boxContent }
+        button [ width (px boxWidth), Border.rounded 2, htmlClass "MaterialCard", htmlClass "CloseInspectorOnClickOutside", Background.color semiTransparentWhite, centerX ] { onPress = openInspectorOnPress model oer, label = boxContent }
   in
       { box = box, card = card }
 

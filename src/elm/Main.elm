@@ -7,7 +7,7 @@ import Element exposing (..)
 import Msg exposing (..)
 
 import Model exposing (..)
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 import View.PageHeader exposing (viewPageHeader)
 import View.NavigationDrawer exposing (..)
 import View.Pages.Featured exposing (viewFeaturedPage)
@@ -16,13 +16,22 @@ import View.Pages.Search exposing (viewSearchPage)
 -- import View.Pages.Notes exposing (viewNotesPage)
 -- import View.Pages.Favorites exposing (viewFavoritesPage)
 import View.Pages.Profile exposing (viewProfilePage)
--- import View.Pages.Viewed exposing (viewViewedPage)
 import View.Pages.Resource exposing (viewResourcePage)
 
 import Update exposing (..)
 import Request exposing (..)
 
 
+{-| This module comprises the core of the Elm application.
+    It contains the essential "main" function and some of its key arguments,
+    particularly "init" and "view" (since they are small functions).
+    The "update" function is large enough to deserve its own module.
+
+
+    Set up the Elm application, using the "Browser" module.
+    https://package.elm-lang.org/packages/elm/browser/1.0.1/Browser#application
+    (NB check if the version number is in sync with elm.json)
+-}
 main : Program Flags Model Msg
 main =
   Browser.application
@@ -35,6 +44,8 @@ main =
     }
 
 
+{-| Initialise the Elm application
+-}
 init : Flags -> Url.Url -> Navigation.Key -> ( Model, Cmd Msg )
 init flags url key =
   let
@@ -45,6 +56,9 @@ init flags url key =
       ( model, cmd )
 
 
+{-| This is the top-level view functions.
+    All it does is delegate to the appropriate view function to render the current page
+-}
 view : Model -> Browser.Document Msg
 view model =
   let
@@ -94,12 +108,10 @@ view model =
                 -- Notes ->
                 --   viewNotesPage model |> withNavigationDrawer model
 
-                -- Viewed ->
-                --   viewViewedPage model |> withNavigationDrawer model
-
                 Resource ->
                   viewResourcePage model |> withNavigationDrawer model
 
+      header : Attribute Msg
       header =
         viewPageHeader model
         |> inFront

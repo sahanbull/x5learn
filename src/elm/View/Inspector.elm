@@ -13,10 +13,10 @@ import Json.Decode
 import Model exposing (..)
 import Msg exposing (..)
 
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 import View.FragmentsBar exposing (..)
 import View.Html5VideoPlayer exposing (..)
-import View.HtmlPdfViewer exposing (..)
+import View.PdfViewer exposing (..)
 
 import Animation exposing (..)
 
@@ -35,12 +35,7 @@ viewModal : Model -> InspectorState -> Element Msg
 viewModal model inspectorState =
   let
       content =
-        case inspectorState.activeMenu of
-          Nothing ->
-            inspectorContentDefault model inspectorState
-
-          Just QualitySurvey ->
-            inspectorContentDefault model inspectorState -- TODO
+        inspectorContentDefault model inspectorState
 
       header =
         [ content.header
@@ -51,12 +46,12 @@ viewModal model inspectorState =
 
       fullPageButton =
         none
-        -- image [ alpha 0.8, hoverCircleBackground ] { src = svgPath "fullscreen", description = "View this resource in full-page mode" }
-        -- |> linkTo [ alignRight ] (resourceUrlPath inspectorState.oer.id)
-
-      -- footer =
-      --   content.footer
-      --   |> row [ spacing 20, width fill ]
+        -- TODO: Re-enable the full-page view once the recommender system works well
+        -- if isLabStudy1 model then
+        --   none
+        -- else
+        --   image [ alpha 0.8, hoverCircleBackground ] { src = svgPath "fullscreen", description = "View this resource in full-page mode" }
+        --   |> linkTo [ alignRight ] (resourceUrlPath inspectorState.oer.id)
 
       hideWhileOpening =
         alpha <| if model.animationsPending |> Set.member modalId then 0.01 else 1
@@ -67,7 +62,6 @@ viewModal model inspectorState =
       sheet =
         [ header
         , body
-        -- , footer
         ]
         |> column [ htmlClass "CloseInspectorOnClickOutside", width (px sheetWidth), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow, inFront content.fixed ]
 
@@ -85,7 +79,7 @@ viewModal model inspectorState =
                     (interpolateBoxes animation.start animation.end, 0)
             in
                 none
-                |> el [ whiteBackground, width (box.sx |> round |> px), height (box.sy |> round |> px), moveRight box.x, moveDown box.y, htmlClass "modalAnimation", alpha opacity, Border.rounded 5 ]
+                |> el [ whiteBackground, width (box.sx |> round |> px), height (box.sy |> round |> px), moveRight box.x, moveDown box.y, htmlClass "ModalAnimation", alpha opacity, Border.rounded 5 ]
 
       scrim =
         let
@@ -101,7 +95,7 @@ viewModal model inspectorState =
                   materialScrimAlpha
         in
             none
-            |> el [ Background.color <| rgba 0 0 0 opacity, width (model.windowWidth - navigationDrawerWidth |> px), height (fill |> maximum (model.windowHeight - pageHeaderHeight)), moveDown pageHeaderHeight, moveRight navigationDrawerWidth,  htmlClass "modalScrim" ]
+            |> el [ Background.color <| rgba 0 0 0 opacity, width (model.windowWidth - navigationDrawerWidth |> px), height (fill |> maximum (model.windowHeight - pageHeaderHeight)), moveDown (toFloat pageHeaderHeight), moveRight navigationDrawerWidth,  htmlClass "ModalScrim" ]
   in
       sheet
       |> el [ width fill, height fill, behindContent scrim, inFront animatingBox ]
@@ -123,7 +117,7 @@ inspectorContentDefault model {oer, fragmentStart} =
             if isVideoFile oer.url then
               viewHtml5VideoPlayer model oer.url
             else if isPdfFile oer.url then
-              viewHtmlPdfPlayer oer.url "45vh"
+              viewPdfViewer oer.url "45vh"
             else
               none
 
@@ -147,6 +141,7 @@ inspectorContentDefault model {oer, fragmentStart} =
 
 
 
+viewDescription : Oer -> Element Msg
 viewDescription oer =
   case oer.description of
     "" ->
@@ -160,6 +155,7 @@ viewDescription oer =
       |> column [ spacing 7, height fill, scrollbarY, paddingTop 30 ]
 
 
+viewLinkToFile : Oer -> Element Msg
 viewLinkToFile oer =
   newTabLink [] { url = oer.url, label = oer.url |> bodyWrap [] }
 
@@ -168,8 +164,10 @@ sheetWidth =
   752
 
 
+viewProviderLinkAndFavoriteButton : Model -> Oer -> Element Msg
 viewProviderLinkAndFavoriteButton model oer =
   let
+      favoriteButton : Element Msg
       favoriteButton =
         let
             heart =
@@ -179,6 +177,7 @@ viewProviderLinkAndFavoriteButton model oer =
             none
             |> el [ alignRight, width <| px 34, inFront heart ]
 
+      providerLink : Element Msg
       providerLink =
         case oer.provider of
           "" ->
@@ -186,7 +185,7 @@ viewProviderLinkAndFavoriteButton model oer =
 
           provider ->
             [ "Provider:" |> bodyNoWrap []
-            , newTabLink [] { url = oer.url, label = provider |> trimTailingEllipsisIfNeeded |> bodyNoWrap [] }
+            , newTabLink [] { url = oer.url, label = provider |> bodyNoWrap [] }
             ]
             |> row [ spacing 10 ]
   in
@@ -196,12 +195,7 @@ viewProviderLinkAndFavoriteButton model oer =
       |> row [ width fill ]
 
 
-viewCourseButton model oer =
-  [ none |> el [ width fill ]
-  , actionButtonWithIcon [] IconLeft "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
-  ]
-
-
+viewCourseSettings : Model -> Oer -> CourseItem -> List (Element Msg)
 viewCourseSettings model oer {range, comment} =
   let
       topRow =
@@ -219,7 +213,7 @@ viewCourseSettings model oer {range, comment} =
         |> row [ spacing 10 ]
 
       commentField =
-        Input.text [ width fill, htmlId "textInputFieldForCommentOnCourseItem", onEnter <| SubmittedCourseItemComment, Border.color x5color, Font.size 14, padding 3, moveDown 5 ] { onChange = ChangedCommentTextInCourseItem oer.id, text = comment, placeholder = Just ("Enter any notes or comments about this item" |> text |> Input.placeholder [ Font.size 14, moveDown 6 ]), label = Input.labelHidden "Comment on course item" }
+        Input.text [ width fill, htmlId "TextInputFieldForCommentOnCourseItem", onEnter <| SubmittedCourseItemComment, Border.color x5color, Font.size 14, padding 3, moveDown 5 ] { onChange = ChangedCommentTextInCourseItem oer.id, text = comment, placeholder = Just ("Enter any notes or comments about this item" |> text |> Input.placeholder [ Font.size 14, moveDown 6 ]), label = Input.labelHidden "Comment on course item" }
 
       changesSaved =
         if model.courseChangesSaved then
@@ -239,7 +233,9 @@ viewFragmentsBarWrapper model oer =
         if isLabStudy1 model then
           case getCourseItem model oer of
             Nothing ->
-              viewCourseButton model oer
+              [ none |> el [ width fill ]
+              , actionButtonWithIcon [] IconLeft "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
+              ]
 
             Just item ->
               viewCourseSettings model oer item

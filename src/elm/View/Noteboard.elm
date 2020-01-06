@@ -15,9 +15,11 @@ import Json.Decode
 import Model exposing (..)
 import Msg exposing (..)
 
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 
 
+{-| Render a list of user notes to a given OER
+-}
 viewNoteboard : Model -> Bool -> OerId -> Element Msg
 viewNoteboard model includeHeading oerId =
   let
@@ -79,6 +81,8 @@ viewNoteboard model includeHeading oerId =
       |> Keyed.column [ width fill ]
 
 
+{-| Render a single Note
+-}
 viewNote : Model -> Note -> Element Msg
 viewNote model note =
   if note.id==0 then -- hide new notes until they are persisted on the db
@@ -100,6 +104,9 @@ viewNote model note =
         |> row [ spacing 10, width fill ]
 
 
+{-| Display a given time (e.g. the creation time of a Note) in a form like: 3 days ago
+-}
+humanReadableRelativeTime : Model -> Posix -> String
 humanReadableRelativeTime {currentTime} time =
   let
       minutesAgo =

@@ -8,15 +8,18 @@ import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 import Msg exposing (Msg)
 import Model exposing (..)
 
 
+{-| Render a standard HTML5 video player element
+    https://www.w3schools.com/html/html5_video.asp
+    https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video
+-}
 viewHtml5VideoPlayer : Model -> OerUrl -> Element Msg
 viewHtml5VideoPlayer model oerUrl =
   let
-
       fallbackMessage =
         [ [ "Your browser does not support HTML5 video." |> Html.text ] |> Html.div []
         ]

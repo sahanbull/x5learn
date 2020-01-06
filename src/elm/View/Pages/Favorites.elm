@@ -17,7 +17,7 @@ import Element.Font as Font
 
 import Model exposing (..)
 import Animation exposing (..)
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 import View.Inspector exposing (..)
 import View.Card exposing (..)
 
@@ -26,6 +26,8 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
+{-| Render the Favorites page
+-}
 viewFavoritesPage : Model -> PageWithModal
 viewFavoritesPage model =
   let
@@ -46,6 +48,8 @@ viewFavoritesPage model =
       (page, viewInspectorModalOrEmpty model)
 
 
+{-| View OERs as cards in a single-column layout
+-}
 viewOerCardsVertically : Model -> List Oer -> Element Msg
 viewOerCardsVertically model oers =
   let

@@ -9,9 +9,11 @@ import Element.Events as Events exposing (onClick)
 
 import Model exposing (..)
 import Msg exposing (..)
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 
 
+{-| Render the widget for the user to switch ContentFlow on and off
+-}
 viewContentFlowToggle : Model -> Element Msg
 viewContentFlowToggle model =
   [ "ContentFlow is "++(if isContentFlowEnabled model then "ON" else "OFF") |> bodyNoWrap [ width fill ]

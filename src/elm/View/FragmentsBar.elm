@@ -11,11 +11,25 @@ import Element.Events as Events exposing (onMouseLeave)
 import Dict
 
 import Model exposing (..)
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 import Msg exposing (..)
 import Animation exposing (..)
 
 
+{-| Render the FragmentsBar, with or without ContentFlow enabled.
+    Note that the FragmentsBar can appear on an OER card or in other places, such as the inspector modal.
+    The behavior varies slightly. At the time of writing:
+    A) on a card:
+      - hover triggers the ChunkPopup AND causes scrubbing in the card's thumbnail
+      - click opens the inspector modal
+    B) otherwise:
+      - hover triggers the ChunkPopup
+      - click jumps to the position in the video (if applicable)
+    NB The behaviour may further vary depending on:
+    - the type of resource (video or otherwise)
+    - whether ContentFlow is enabled or disabled
+    - the return value of isLabStudy1
+-}
 viewFragmentsBar : Model -> Oer -> List Chunk -> Int -> String -> Element Msg
 viewFragmentsBar model oer chunks barWidth barId =
   let
@@ -77,6 +91,8 @@ viewFragmentsBar model oer chunks barWidth barId =
       pxFromSeconds seconds =
         (barWidth |> toFloat) * seconds / oer.durationInSeconds
 
+      -- A chunkTrigger is a transparent rectangle that triggers a ChunkPopup on mouseover.
+      -- NB the mouse event handling on this one is fairly complex. It happens on the JavaScript side in port.js
       chunkTrigger chunkIndex chunk =
         let
             chunkPopup =
@@ -136,17 +152,6 @@ viewFragmentsBar model oer chunks barWidth barId =
               else
                 []
 
-            -- clickHandler =
-            --   case model.inspectorState of
-            --     Nothing ->
-            --       [ onClickNoBubble <| InspectOer oer chunk.start chunk.length True ]
-
-            --     _ ->
-            --       -- if hasYoutubeVideo oer.url then
-            --       --   [ onClickNoBubble <| YoutubeSeekTo chunk.start ]
-            --       -- else
-            --         []
-
             chunkWidth =
               floor <| chunk.length * (toFloat barWidth) + (if chunkIndex == (List.length chunks)-1 then 0 else 1)
         in
@@ -167,6 +172,7 @@ viewFragmentsBar model oer chunks barWidth barId =
       background =
         [ Background.color materialDark ]
 
+      -- Here is where we define the effects of hover and click, depending on whether the bar is on a card or not
       scrubDisplayAndClickHandler =
         if isHovering model oer || isInspecting model oer then
           case model.timelineHoverState of
@@ -194,12 +200,10 @@ viewFragmentsBar model oer chunks barWidth barId =
                         [ cursor, timeDisplay ]
 
                   clickHandler =
-                    case model.inspectorState of
-                      Nothing ->
-                        onClickNoBubble <| InspectOer oer position True
-
-                      _ ->
-                        onClickNoBubble <| StartCurrentHtml5Video (position * oer.durationInSeconds)
+                    if isHovering model oer then
+                      onClickNoBubble <| InspectOer oer position True
+                    else
+                      onClickNoBubble <| StartCurrentHtml5Video (position * oer.durationInSeconds)
               in
                   scrubDisplay ++ [ clickHandler ]
         else
@@ -208,10 +212,13 @@ viewFragmentsBar model oer chunks barWidth barId =
       mouseLeaveHandler =
         [ onMouseLeave <| TimelineMouseLeave ]
   in
-    none
-    |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background ++ visitedRangeMarkers ++ courseRangeMarkers ++ scrubDisplayAndClickHandler ++ mouseLeaveHandler)
+      none
+      |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background ++ visitedRangeMarkers ++ courseRangeMarkers ++ scrubDisplayAndClickHandler ++ mouseLeaveHandler)
 
 
+{-| Render the ChunkPopup as a (cascading) dropdown menu
+-}
+viewChunkPopup : Model -> ChunkPopup -> Element Msg
 viewChunkPopup model chunkPopup =
   let
       entitiesSection =
@@ -228,6 +235,8 @@ viewChunkPopup model chunkPopup =
       |> el [ moveLeft 30, moveDown fragmentsBarHeight ]
 
 
+{-| Render a particular entity as a button in the dropdown menu
+-}
 viewEntityButton : Model -> ChunkPopup -> Entity -> Element Msg
 viewEntityButton model chunkPopup entity =
   let
@@ -252,6 +261,9 @@ viewEntityButton model chunkPopup entity =
         button ([ padding 5, width fill, popupOnMouseEnter (ChunkOnBar { chunkPopup | entityPopup = Just { entityId = entity.id, hoveringAction = Nothing } }) ] ++ backgroundAndSubmenu) { onPress = Nothing, label = label }
 
 
+{-| Render the submenu that contains the Entity's wikipedia definition (and potentially further action buttons)
+-}
+viewEntityPopup : Model -> ChunkPopup -> EntityPopup -> Entity -> List (Attribute Msg)
 viewEntityPopup model chunkPopup entityPopup entity =
   let
       actionButtons =
@@ -274,6 +286,9 @@ viewEntityPopup model chunkPopup entityPopup entity =
       |> List.singleton
 
 
+{-| Render a button that triggers an action associated with an entity (e.g. Search)
+-}
+entityActionButton : ChunkPopup -> EntityPopup -> (EntityTitle, Msg) -> Element Msg
 entityActionButton chunkPopup entityPopup (title, clickAction) =
   let
       hoverAction =
@@ -288,9 +303,11 @@ entityActionButton chunkPopup entityPopup (title, clickAction) =
       attrs =
         hoverAction :: ([ width fill, padding 10 ] ++ background)
   in
-      actionButtonWithoutIconNoBobble attrs title clickAction
+      actionButtonWithoutIconNoBubble attrs title clickAction
 
 
+{-| Render an Entity's definition if available, or a placeholder otherwise
+-}
 viewDefinition : Model -> EntityId -> Element Msg
 viewDefinition model entityId =
   let
@@ -313,8 +330,14 @@ viewDefinition model entityId =
                 "“" ++ text ++ "” (Wikipedia)" |> bodyWrap [ Font.italic, padding 10, width <| px 200 ]
 
 
+{-| Height of the FragmentsBar in pixels
+-}
 fragmentsBarHeight = 16
 
 
+{-| Check whether we are close to the right screen edge
+    (In this case, the submenu should open on the LEFT to avoid exceeding the screen edge
+-}
+isHoverMenuNearRightEdge : Model -> Float -> Bool
 isHoverMenuNearRightEdge model margin =
   model.mousePositionXwhenOnChunkTrigger > (toFloat model.windowWidth)-margin

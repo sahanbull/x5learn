@@ -21,12 +21,16 @@ import Element.Border as Border
 import Color -- avh4/elm-color
 
 import Model exposing (..)
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 import View.FragmentsBar exposing (..)
 
 import Msg exposing (..)
 
 
+{-| This module is responsible for rendering a bubblogram.
+    It exposes only a single function: viewBubblogram.
+    The other functions are local helpers.
+-}
 viewBubblogram : Model -> BubblogramType -> OerId -> Bubblogram -> (Element Msg, List (Element.Attribute Msg))
 viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
   let
@@ -38,7 +42,7 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
 
       svgBubbles =
         bubbles
-        |> List.concatMap (viewTag model bubblogramType oerId animationPhase)
+        |> List.concatMap (viewSvgBubbleIncludingMentions model bubblogramType oerId animationPhase)
 
       background =
         rect [ width widthString, height heightString, fill "#191919" ] []
@@ -66,13 +70,13 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
                       {posX, posY, size} =
                         animatedBubbleCurrentCoordinates animationPhase bubble
                   in
-                      { px = (posX + 0*size*1.1*bubbleZoom) * contentWidth + marginX, py = (posY + 0.1 -  0*size*1.1*bubbleZoom) * contentHeight + marginTop - 15 }
+                      { px = (posX + 0*size*1.1*bubbleZoom) * (toFloat contentWidth) + marginX, py = (posY + 0.1 -  0*size*1.1*bubbleZoom) * (toFloat contentHeight) + marginTop - 15 }
 
                 TopicMentions ->
                   { px = 9, py = bubblePosYfromIndex bubble + 3 }
 
             isHovering =
-              hoveringBubbleOrFragmentsBarEntityId model == Just entity.id
+              isHoveringOverEntity model entity
 
             highlight =
               if isHovering then
@@ -138,14 +142,17 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
       (graphic, popup)
 
 
-viewTag : Model -> BubblogramType -> OerId -> Float -> Bubble -> List (Svg Msg)
-viewTag model bubblogramType oerId animationPhase ({entity, index} as bubble) =
+{-| Render a single bubble as SVG.
+    When applicable, also render the mentions as interactive dots.
+-}
+viewSvgBubbleIncludingMentions : Model -> BubblogramType -> OerId -> Float -> Bubble -> List (Svg Msg)
+viewSvgBubbleIncludingMentions model bubblogramType oerId animationPhase ({entity, index} as bubble) =
   let
       {posX, posY, size} =
         animatedBubbleCurrentCoordinates animationPhase bubble
 
       isHovering =
-        hoveringBubbleOrFragmentsBarEntityId model == Just entity.id
+        isHoveringOverEntity model entity
 
       outline =
         case bubblogramType of
@@ -226,36 +233,44 @@ viewTag model bubblogramType oerId animationPhase ({entity, index} as bubble) =
       mentionDots ++ [ body ]
 
 
+{-| Get a bubble's color
+-}
 colorFromBubble : Bubble -> Color.Color
 colorFromBubble {hue, alpha, saturation} =
   Color.hsla hue saturation 0.5 alpha
 
 
-hoveringBubbleOrFragmentsBarEntityId model =
+{-| Check whether the mouse is hovering over a particular entity
+-}
+isHoveringOverEntity : Model -> Entity -> Bool
+isHoveringOverEntity model entity =
   case model.hoveringTagEntityId of
     Just entityId ->
-      Just entityId
+      entityId == entity.id
 
     Nothing ->
       case model.popup of
         Just (ChunkOnBar chunkPopup) ->
           case chunkPopup.entityPopup of
             Nothing ->
-              Nothing
+              False
 
             Just entityPopup ->
-              Just entityPopup.entityId
+              entityPopup.entityId == entity.id
 
         _ ->
-          Nothing
+          False
 
 
+{-| Render the popup
+-}
 viewPopup : Model -> BubblogramType -> BubblePopupState -> Bubble -> List (Element.Attribute Msg)
 viewPopup model bubblogramType {oerId, entityId, content} bubble =
   let
       {posX, posY, size} =
         animatedBubbleCurrentCoordinates 1 bubble
 
+      -- Scale the zoom factor, depending on bubblogramType and text length
       zoomFromText text =
         case bubblogramType of
           TopicNames ->
@@ -289,15 +304,13 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
                             unavailable
                           else
                             ("“" ++ text ++ "” (Wikipedia)" |> bodyWrap [ Font.italic ], zoomFromText text)
-
-                        -- DefinitionUnavailable ->
-                        -- unavailable
             in
                 element
 
           MentionInBubblePopup {sentence} ->
             (sentence |> bodyWrap [], zoomFromText sentence)
 
+      -- render the main part of the popup as a box with rounded corners
       box =
         let
             roundedBorder =
@@ -312,17 +325,19 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
             |> List.singleton
             |> menuColumn ([ Element.width <| px <| round popupWidth, padding 10, pointerEventsNone, Element.clipY ] ++ roundedBorder)
 
+      -- render the pointy-triangle part of the popup that makes it look like a speech bubble, pointing to the current mention
       tail =
         case content of
           MentionInBubblePopup {positionInResource} ->
             let
+                sizeY : Float
                 sizeY =
                   case bubblogramType of
                     TopicNames ->
                       35
 
                     TopicConnections ->
-                      containerHeight - verticalOffset
+                      (toFloat containerHeight) - verticalOffset
 
                     TopicMentions ->
                       35
@@ -331,13 +346,14 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
                   sizeY
                   |> String.fromFloat
 
+                tipX : Float
                 tipX =
-                  positionInResource * containerWidth
+                  positionInResource * (toFloat containerWidth)
 
                 rootX =
-                  tipX * 3 / 4 + (containerWidth/8)
+                  tipX * 3 / 4 + ((toFloat containerWidth)/8)
                   |> Basics.min (popupWidth-rootMargin-rootWidth - 30)
-                  |> Basics.min (containerWidth - rootMargin - 35)
+                  |> Basics.min ((toFloat containerWidth) - rootMargin - 35)
                   |> Basics.max 25
 
                 rootWidth =
@@ -363,27 +379,31 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
           _ ->
             []
 
+      -- calculate horizontal position and width of the popup
       (horizontalOffset, popupWidth) =
         let
             allowedMargin =
               horizontalSpacingBetweenCards - 5
 
+            smallest : { horizontalOffset : Float, popupWidth : Float }
             smallest =
-              { horizontalOffset = (posX/2 + 1/4) * contentWidth + marginX - 300/2, popupWidth = 300 }
+              { horizontalOffset = (posX/2 + 1/4) * (toFloat contentWidth) + marginX - 300/2, popupWidth = 300 }
 
+            largest : { horizontalOffset : Float, popupWidth : Float }
             largest =
-              { horizontalOffset = -allowedMargin, popupWidth = cardWidth + 2*allowedMargin }
+              { horizontalOffset = -allowedMargin |> toFloat, popupWidth = cardWidth + 2*allowedMargin |> toFloat }
         in
             (interp zoom smallest.horizontalOffset largest.horizontalOffset
             , interp zoom smallest.popupWidth largest.popupWidth)
 
+      -- calculate vertical position
       verticalOffset =
         case bubblogramType of
           TopicNames ->
             bubblePosYfromIndex bubble
 
           TopicConnections ->
-            Basics.max 10 <| (posY - size*3.5*bubbleZoom) * contentHeight + marginTop - 5
+            Basics.max 10 <| (posY - size*3.5*bubbleZoom) * (toFloat contentHeight) + marginTop - 5
 
           TopicMentions ->
             bubblePosYfromIndex bubble
@@ -394,37 +414,60 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
       |> List.singleton
 
 
+{-| Outer width of the bubblogram
+-}
 containerWidth =
   cardWidth
 
 
+{-| Outer height of the bubblogram
+-}
 containerHeight =
   imageHeight - fragmentsBarHeight
 
 
+{-| Inner width of the bubblogram
+-}
 contentWidth =
   cardWidth - 2*marginX
 
 
+{-| Inner height of the bubblogram
+-}
 contentHeight =
   imageHeight - 2*marginX - fragmentsBarHeight - 10
 
 
+{-| Space between the upper edge and content
+-}
 marginTop =
   marginX + 10
 
 
+{-| Space between the left and right edges and the content
+-}
 marginX =
   25
 
 
+{-| The width as a String
+    (SVG uses string parameters)
+-}
+widthString : String
 widthString =
   containerWidth |> String.fromInt
 
+
+{-| The height as a String
+    (SVG uses string parameters)
+-}
+heightString : String
 heightString =
   containerHeight |> String.fromInt
 
 
+{-| Current coordinates of a particular bubble, taking animation into account
+-}
 animatedBubbleCurrentCoordinates : Float -> Bubble -> BubbleCoordinates
 animatedBubbleCurrentCoordinates phase {initialCoordinates, finalCoordinates} =
   { posX = interp phase initialCoordinates.posX finalCoordinates.posX
@@ -433,10 +476,14 @@ animatedBubbleCurrentCoordinates phase {initialCoordinates, finalCoordinates} =
   }
 
 
+{-| CSS class to control mouseover behaviour
+-}
 hoverableClass =
   "UserSelectNone CursorPointer"
 
 
+{-| Render the mentions as interactive dots
+-}
 viewMentionDots : Model -> BubblogramType -> OerId -> EntityId -> Bubble -> Bool -> Bool -> List (Svg Msg)
 viewMentionDots model bubblogramType oerId entityId bubble isHoveringOnCurrentTag isSearchTerm =
   let
@@ -447,7 +494,7 @@ viewMentionDots model bubblogramType oerId entityId bubble isHoveringOnCurrentTa
               (bubblePosYfromIndex bubble) + 23
 
             TopicConnections ->
-              containerHeight - 8
+              containerHeight - 8 |> toFloat
 
             TopicMentions ->
               (bubblePosYfromIndex bubble) + 23
@@ -456,7 +503,7 @@ viewMentionDots model bubblogramType oerId entityId bubble isHoveringOnCurrentTa
       dot ({positionInResource, sentence} as mention) =
         let
             circlePosX =
-              positionInResource * containerWidth
+              positionInResource * (toFloat containerWidth)
               |> String.fromFloat
 
             circleRadius =
@@ -493,6 +540,8 @@ viewMentionDots model bubblogramType oerId entityId bubble isHoveringOnCurrentTa
       |> List.map dot
 
 
+{-| Convert corners to SVG points
+-}
 svgPointsFromCorners : List (Float, Float) -> String
 svgPointsFromCorners corners =
   corners
@@ -500,17 +549,25 @@ svgPointsFromCorners corners =
   |> String.join " "
 
 
+{-| mouseleave handler
+-}
 onMouseLeave : msg -> Attribute msg
 onMouseLeave msg =
   Html.Events.on "mouseleave" (Decode.succeed msg)
 
 
+{-| Calculate vertical bubble position from its index
+-}
 bubblePosYfromIndex : Bubble -> Float
 bubblePosYfromIndex bubble =
   bubble.index * containerHeight // 5
   |> toFloat
 
 
+{-| Check whether a particular entity is what the user searched for.
+    Used to control yellow highlighting
+-}
+isEntityEqualToSearchTerm : Model -> EntityId -> Bool
 isEntityEqualToSearchTerm model entityId =
   case getEntityTitleFromEntityId model entityId of
     Nothing ->

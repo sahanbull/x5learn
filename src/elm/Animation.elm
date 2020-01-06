@@ -1,5 +1,10 @@
 module Animation exposing (..)
 
+{-| This module is for things flying around on the screen.
+    E.g. the subtle zoom effect when opening the inspector modal.
+-}
+
+
 import Time exposing (Posix)
 
 
@@ -24,6 +29,8 @@ type alias BoxAnimation =
   }
 
 
+{-| Calculate the average between two rectangles
+-}
 interpolateBoxes : Box -> Box -> Box
 interpolateBoxes a b =
   { x = (a.x + b.x) / 2

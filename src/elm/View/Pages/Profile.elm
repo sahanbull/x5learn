@@ -10,11 +10,13 @@ import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Element.Font as Font
 
 import Model exposing (..)
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 
 import Msg exposing (..)
 
 
+{-| Render the user profile page
+-}
 viewProfilePage : Model -> UserProfile -> UserProfileForm -> PageWithModal
 viewProfilePage model savedUserProfile {userProfile, saved} =
   let
@@ -28,16 +30,14 @@ viewProfilePage model savedUserProfile {userProfile, saved} =
         textInput LastName "Last Name" userProfile.lastName
 
       saveButton =
-        case model.userProfileFormSubmitted of
-          Just _ ->
-            viewLoadingSpinner
-            |> el [ width (px 77), height (px 37) ]
-
-          Nothing ->
-            if saved then
-              "✓ Saved" |> bodyWrap [ greyTextDisabled, width fill ]
-            else
-              button [ paddingXY 16 8, width fill, Background.color x5color, whiteText ] { onPress = Just SubmittedUserProfile, label = "Save" |> text |> el [] }
+        if model.userProfileFormSubmitted then
+          viewLoadingSpinner
+          |> el [ width (px 77), height (px 37) ]
+        else
+          if saved then
+            "✓ Saved" |> bodyWrap [ greyTextDisabled, width fill ]
+          else
+            button [ paddingXY 16 8, width fill, Background.color x5color, whiteText ] { onPress = Just SubmittedUserProfile, label = "Save" |> text |> el [] }
 
       page =
         -- [ "My profile" |> headlineWrap []

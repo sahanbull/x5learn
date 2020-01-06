@@ -15,7 +15,7 @@ import Element.Font as Font
 
 import Model exposing (..)
 import Animation exposing (..)
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 import View.Card exposing (..)
 import View.Inspector exposing (..)
 
@@ -24,6 +24,9 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
+{-| Render a message saying that the site is down.
+    Let's hope we'll never need this.
+-}
 viewMaintenancePage : PageWithModal
 viewMaintenancePage =
   let

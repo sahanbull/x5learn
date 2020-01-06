@@ -22,11 +22,6 @@ function position(el) {
 
 
 function setupPorts(app){
-  // app.ports.copyClipboard.subscribe(function(dummy) {
-  //   document.querySelector('#ClipboardCopyTarget').select();
-  //   document.execCommand('copy');
-  // });
-
   app.ports.openModalAnimation.subscribe(startAnimationWhenModalIsReady);
   // app.ports.embedYoutubePlayerOnResourcePage.subscribe(embedYoutubePlayerOnResourcePage);
 
@@ -95,11 +90,11 @@ function sendPageScrollState(requestedByElm){
 }
 
 
-function startAnimationWhenModalIsReady(youtubeEmbedParams) {
-  var modalId = youtubeEmbedParams.modalId;
+function startAnimationWhenModalIsReady(videoEmbedParams) {
+  var modalId = videoEmbedParams.modalId;
   if(window.document.getElementById(modalId)==null) {
     setTimeout(function() {
-      startAnimationWhenModalIsReady(youtubeEmbedParams);
+      startAnimationWhenModalIsReady(videoEmbedParams);
     }, 15);
   }
   else{
@@ -109,13 +104,13 @@ function startAnimationWhenModalIsReady(youtubeEmbedParams) {
     app.ports.modalAnimationStart.send({frameCount: 0, start: positionAndSize(card), end: positionAndSize(modal)});
     setTimeout(function(){
       app.ports.modalAnimationStop.send(12345);
-      if(youtubeEmbedParams.videoId.length>0){
-        embedYoutubeVideo(youtubeEmbedParams);
+      if(videoEmbedParams.videoId.length>0){
+        embedYoutubeVideo(videoEmbedParams);
       }else{
         var vid = getHtml5VideoPlayer();
         if(vid){
-          if(youtubeEmbedParams.playWhenReady){
-            playWhenPossible(vid, youtubeEmbedParams.videoStartPosition);
+          if(videoEmbedParams.playWhenReady){
+            playWhenPossible(vid, videoEmbedParams.videoStartPosition);
           }
 
           vid.onplay = function() {
@@ -123,31 +118,26 @@ function startAnimationWhenModalIsReady(youtubeEmbedParams) {
             videoPlayPosition = vid.currentTime;
             app.ports.html5VideoStarted.send(videoPlayPosition);
             videoEventThrottlePosition = videoPlayPosition;
-            // console.log('started!');
           };
           vid.onpause = function() {
             isVideoPlaying = false;
             videoPlayPosition = vid.currentTime;
             app.ports.html5VideoPaused.send(videoPlayPosition);
-            // console.log('paused!');
           };
           vid.ontimeupdate = function() {
             videoPlayPosition = vid.currentTime;
             if(isVideoPlaying){
               if(videoPlayPosition > videoEventThrottlePosition + 10){
-                // console.log("SENT");
                 app.ports.html5VideoStillPlaying.send(videoPlayPosition);
                 videoEventThrottlePosition = videoPlayPosition;
               }
-              // console.log('still playing: '+videoPlayPosition);
             }else{
               app.ports.html5VideoSeeked.send(videoPlayPosition);
               videoEventThrottlePosition = 0;
-              // console.log('seek: '+videoPlayPosition);
             }
           };
         }else{
-          // console.log('video not found');
+          // video not found
         }
       }
     }, 110);
@@ -160,15 +150,22 @@ function getHtml5VideoPlayer(){
   return document.getElementById("Html5VideoPlayer");
 }
 
-// function embedYoutubePlayerOnResourcePage(youtubeEmbedParams) {
+// function embedYoutubePlayerOnResourcePage(videoEmbedParams) {
 //     setTimeout(function(){
-//       if(youtubeEmbedParams.videoId.length>0){
-//         embedYoutubeVideo(youtubeEmbedParams);
+//       if(videoEmbedParams.videoId.length>0){
+//         embedYoutubeVideo(videoEmbedParams);
 //       }
 //     }, 200);
 // }
 
 
+
+/* setupEventHandlers
+ * Note that we add the event listeners directly to the document, i.e. at the root level.
+ * Adding them to individual elements further down the tree wouldn't be wise
+ * because the Elm createth and taketh them away dynamically.
+ * We can use classes and e.target.closest(...) to check where an event fired from.
+ */
 function setupEventHandlers(){
   document.addEventListener("click", function(e){
     if(!e.target.closest('.CloseInspectorOnClickOutside')){
@@ -198,7 +195,6 @@ function setupEventHandlers(){
 
   [ 'mousedown', 'mouseup', 'mousemove' ].forEach(registerTimelineMouseEvent);
 
-
   document.onkeydown = function checkKey(e) {
     e = e || window.event;
     if(e.target.closest('#SearchField') || e.target.closest('#AutocompleteSuggestions')){
@@ -211,6 +207,7 @@ function setupEventHandlers(){
     }
   }
 }
+
 
 function changeFocusOnAutocompleteSuggestions(direction){
   var field = document.getElementById('SearchField');
@@ -309,8 +306,8 @@ function playWhenPossible(vid, position){
   tryPlaying(vid, position, 50);
 }
 
+
 function tryPlaying(vid, position, attempts){
-  // console.log('tryPlaying '+vid+' '+position+' '+attempts);
   if(vid.readyState>=2){//HAVE_CURRENT_DATA
     vid.play();
   }else if(attempts>0){

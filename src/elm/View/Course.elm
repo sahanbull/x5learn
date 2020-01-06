@@ -12,12 +12,13 @@ import Element.Font as Font
 import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
 
 import Model exposing (..)
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 
 import Msg exposing (..)
 
 
-
+{-| Render the user's course as a list of items
+-}
 viewCourse : Model -> Element Msg
 viewCourse model =
   if model.course.items==[] then
@@ -39,6 +40,9 @@ viewCourse model =
         |> column [ spacing 10 ]
 
 
+{-| Render a single course item
+-}
+viewCourseItem : Model -> Int -> CourseItem -> Element Msg
 viewCourseItem model index item =
   case model.cachedOers |> Dict.get item.oerId of
     Nothing ->

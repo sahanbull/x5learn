@@ -58,14 +58,8 @@ update msg ({nav, userProfileForm} as model) =
               (Profile, (model, Cmd.none))
             -- else if path |> String.startsWith notesPath then
             --   (Notes, ({ model | oerCardPlaceholderPositions = [] }, [ getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch))
-            -- else if path |> String.startsWith recentPath then
-            --   (Viewed, (model, Navigation.load "/viewed"))
-            -- else if path |> String.startsWith viewedPath then
-            --   (Viewed, (model, askPageScrollState True))
             -- else if path |> String.startsWith favoritesPath then
             --   (Favorites, (model, askPageScrollState True))
-            -- else if path |> String.startsWith coursePath then
-            --   (Course, (model, askPageScrollState True))
             else if path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
             else if path |> String.startsWith resourcePath then
@@ -120,15 +114,15 @@ update msg ({nav, userProfileForm} as model) =
 
     InspectOer oer fragmentStart playWhenReady ->
       let
-          youtubeEmbedParams : YoutubeEmbedParams
-          youtubeEmbedParams =
+          videoEmbedParams : VideoEmbedParams
+          videoEmbedParams =
             { modalId = modalId
             , videoId = getYoutubeVideoId oer.url |> Maybe.withDefault ""
             , videoStartPosition = fragmentStart * oer.durationInSeconds
             , playWhenReady = playWhenReady
             }
       in
-          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation youtubeEmbedParams)
+          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation videoEmbedParams)
           |> saveAction 1 [ ("oerId", Encode.int oer.id) ]
           |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat, "playWhenReady:"++(if playWhenReady then "True" else "False") ]
 
@@ -347,21 +341,14 @@ update msg ({nav, userProfileForm} as model) =
     --   ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     RequestSaveUserProfile (Ok _) ->
-      ({ model | userProfileForm = { userProfileForm | saved = True }, userProfileFormSubmitted = Nothing }, Cmd.none)
+      ({ model | userProfileForm = { userProfileForm | saved = True }, userProfileFormSubmitted = False }, Cmd.none)
 
     RequestSaveUserProfile (Err err) ->
       -- let
       --     dummy =
       --       err |> Debug.log "Error in RequestSaveUserProfile"
       -- in
-      -- ( { model | snackbar = createSnackbar model "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
-      ( { model | snackbar = createSnackbar model "Some changes were not saved", userProfileFormSubmitted = Nothing }, Cmd.none )
-
-    RequestSendResourceFeedback (Ok _) ->
-      (model, Cmd.none)
-
-    RequestSendResourceFeedback (Err err) ->
-      (model, Cmd.none)
+      ( { model | snackbar = createSnackbar model "Some changes were not saved", userProfileFormSubmitted = False }, Cmd.none )
 
     RequestLabStudyLogEvent (Ok _) ->
       (model, Cmd.none)
@@ -414,15 +401,15 @@ update msg ({nav, userProfileForm} as model) =
 
           --     Just videoId ->
           --       let
-          --           youtubeEmbedParams : YoutubeEmbedParams
-          --           youtubeEmbedParams =
+          --           videoEmbedParams : VideoEmbedParams
+          --           videoEmbedParams =
           --             { modalId = ""
           --             , videoId = videoId
           --             , fragmentStart = 0
           --             , playWhenReady = False
           --             }
           --       in
-          --           embedYoutubePlayerOnResourcePage youtubeEmbedParams
+          --           embedYoutubePlayerOnResourcePage videoEmbedParams
 
           newModel =
             { model | currentResource = Just <| Loaded oer.id } |> cacheOersFromList [ oer ]
@@ -513,7 +500,7 @@ update msg ({nav, userProfileForm} as model) =
           |> logEventForLabStudy "EditUserProfile" []
 
     SubmittedUserProfile ->
-      ( { model | userProfileFormSubmitted = Just userProfileForm }, requestSaveUserProfile model.userProfileForm.userProfile)
+      ( { model | userProfileFormSubmitted = True }, requestSaveUserProfile model.userProfileForm.userProfile)
       |> logEventForLabStudy "SubmittedUserProfile" []
 
     -- ChangedTextInNewNoteFormInOerNoteboard oerId str ->
@@ -531,8 +518,9 @@ update msg ({nav, userProfileForm} as model) =
     --   |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ String.fromInt oerId, getOerNoteForm model oerId ]
 
     SubmittedResourceFeedback oerId text ->
-      ({ model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", requestSendResourceFeedback oerId text)
-      |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, getResourceFeedbackFormValue model oerId ]
+      ({ model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", Cmd.none)
+      |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, text ]
+      |> saveAction 8 [ ("OER id", Encode.int oerId), ("user feedback", Encode.string text) ]
 
     -- PressedKeyInNewNoteFormInOerNoteboard oerId keyCode ->
     --   if keyCode==13 then
@@ -591,15 +579,6 @@ update msg ({nav, userProfileForm} as model) =
 
     OerCardPlaceholderPositionsReceived positions ->
       ({ model | oerCardPlaceholderPositions = positions }, Cmd.none)
-
-    StartLabStudyTask task ->
-      { model | startedLabStudyTask = Just (task, model.currentTime) }
-      |> update (TriggerSearch task.dataset)
-      |> logEventForLabStudy "StartLabStudyTask" [ task.title, task.durationInMinutes |> String.fromInt ]
-
-    StoppedLabStudyTask ->
-      ({ model | startedLabStudyTask = Nothing }, setBrowserFocus "")
-      |> logEventForLabStudy "StoppedLabStudyTask" []
 
     SelectResourceSidebarTab tab oerId ->
       let
@@ -871,6 +850,7 @@ updateSearch transformFunction model =
       { model | searchState = Just (searchState |> transformFunction) }
 
 
+insertSearchResults : List OerId -> SearchState -> SearchState
 insertSearchResults oerIds searchState =
   { searchState | searchResults = Just oerIds }
 
@@ -1013,6 +993,7 @@ updateBubblogramsIfNeeded model =
   { model | wikichunkEnrichments = model.wikichunkEnrichments |> Dict.map (addBubblogram model) }
 
 
+logEventForLabStudy : String -> List String -> (Model, Cmd Msg) -> (Model, Cmd Msg)
 logEventForLabStudy eventType params (model, cmd) =
   -- let
   --     dummy =
@@ -1150,6 +1131,7 @@ updateSnackbar model =
         Just snackbar
 
 
+snackbarMessageReloadPage : String
 snackbarMessageReloadPage =
   "There was a problem - please reload the page"
 

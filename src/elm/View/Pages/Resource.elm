@@ -17,11 +17,11 @@ import Element.Font as Font
 import Element.Keyed as Keyed
 
 import Model exposing (..)
-import View.Shared exposing (..)
+import View.Utility exposing (..)
 import View.FragmentsBar exposing (..)
 -- import View.Noteboard exposing (..)
 import View.Html5VideoPlayer exposing (..)
-import View.HtmlPdfViewer exposing (..)
+import View.PdfViewer exposing (..)
 
 
 import Msg exposing (..)
@@ -29,6 +29,9 @@ import Msg exposing (..)
 import Json.Decode as Decode
 
 
+{-| Render the full-page resource view.
+    (NB at the time of writing, this page has been temporarily disabled until the recommender system produces sufficiently good results.)
+-}
 viewResourcePage : Model -> PageWithModal
 viewResourcePage model =
   let
@@ -51,7 +54,7 @@ viewResourcePage model =
       (page, [])
 
 
-viewResource : Model -> Oer -> Element Msg -- TODO remove some code duplication with Inspector.elm
+viewResource : Model -> Oer -> Element Msg -- TODO refactor to remove some code duplication with Inspector.elm
 viewResource model oer =
   let
       header =
@@ -71,7 +74,7 @@ viewResource model oer =
             if isVideoFile oer.url then
               viewHtml5VideoPlayer model oer.url
             else if isPdfFile oer.url then
-              viewHtmlPdfPlayer oer.url "60vh"
+              viewPdfViewer oer.url "60vh"
             else
               none
 
@@ -218,7 +221,7 @@ viewResource model oer =
 
           provider ->
             [ "Provider:" |> bodyNoWrap []
-            , newTabLink [] { url = oer.url, label = provider |> trimTailingEllipsisIfNeeded |> bodyNoWrap [] }
+            , newTabLink [] { url = oer.url, label = provider |> bodyNoWrap [] }
             ]
             |> row [ spacing 10 ]
   in
@@ -234,6 +237,7 @@ fragmentsBarWrapperHeight =
   200
 
 
+sheetWidth : Model -> Int
 sheetWidth model =
   model.windowWidth - navigationDrawerWidth
 
@@ -247,12 +251,6 @@ viewRecommendationCard model oer =
         |> Html.div [ style "width" (((recommendationCardWidth model) - 32 |> String.fromInt)++"px"), style "font-size" "16px", Attributes.class "ClipEllipsis" ]
         |> html
         |> el []
-
-      -- modalityIcon =
-      --   if hasYoutubeVideo oer.url then
-      --     image [ moveRight 280, moveUp 50, width (px 30) ] { src = svgPath "playIcon", description = "play icon" }
-      --   else
-      --     none
 
       bottomInfo =
         let
@@ -275,24 +273,27 @@ viewRecommendationCard model oer =
             |> row [ width fill, height fill, alignBottom ]
 
       widthOfCard =
-        width (px (recommendationCardWidth model))
+        width <| px <| recommendationCardWidth model
 
       heightOfCard =
-        height (px recommendationCardHeight)
+        height <| px <| recommendationCardHeight
   in
       [ title, bottomInfo ]
-      |> column [ widthOfCard, heightOfCard, paddingXY 15 12, spacing 15, htmlClass "materialCard" ]
+      |> column [ widthOfCard, heightOfCard, paddingXY 15 12, spacing 15, htmlClass "MaterialCard" ]
       |> linkTo [] (resourceUrlPath oer.id)
 
 
+recommendationCardHeight : Int
 recommendationCardHeight =
   80
 
 
+recommendationCardWidth : Model -> Int
 recommendationCardWidth model =
   sidebarWidth model - 50
 
 
+viewFeedbackTab : Model -> Oer -> Element Msg
 viewFeedbackTab model oer =
   let
       formValue =
@@ -325,6 +326,7 @@ viewFeedbackTab model oer =
       |> column [ width fill, spacing 20 ]
 
 
+viewFeedbackConfirmation : Element Msg
 viewFeedbackConfirmation =
   [ "Thanks 😊" |> headlineWrap [ Font.size 24 ]
   , "✔ Your feedback has been recorded." |> bodyWrap []

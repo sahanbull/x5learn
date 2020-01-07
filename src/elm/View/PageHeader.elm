@@ -37,7 +37,7 @@ viewPageHeader model =
                 opacity =
                   if time < snackbarDuration - 1500 then 1 else 0
             in
-                [ text |> bodyWrap [ htmlClass "Snackbar", alpha opacity, pointerEventsNone, Background.color <| grey 50, paddingXY 25 15, centerX, Font.size 13, greyTextDisabled, Border.rounded 4, Font.color <| greyMedium, centerX, moveDown <| toFloat <| model.windowHeight - pageHeaderHeight - 50 ] |> el [ paddingLeft <| navigationDrawerWidth, centerX ]  |> below ]
+                [ text |> bodyWrap [ htmlClass "Snackbar", alpha opacity, pointerEventsNone, Background.color <| grey 50, paddingXY 25 15, centerX, Font.size 13, greyText, Border.rounded 4, Font.color <| greyMedium, centerX, moveDown <| toFloat <| model.windowHeight - pageHeaderHeight - 50 ] |> el [ paddingLeft <| navigationDrawerWidth, centerX ]  |> below ]
 
       attrs =
         [ width fill

@@ -71,10 +71,7 @@ viewOerGrid model playlist =
               |> List.map inFront
         in
             [ playlist.title |> captionNowrap [ paddingLeft <| round <| (cardPositionAtIndex 0).x - 20, moveDown 55, Font.color grey80 ]
-            -- [ playlist.title |> subSubheaderWrap [ whiteText, centerX ]
-            -- [ playlist.title |> (if isLabStudy1 model then captionNowrap [ Font.color grey80 ] else subheaderWrap [ whiteText ])
             ]
-            -- |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Background.color transparentWhite, Border.rounded 2 ] ++ cards)
             |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
 
 

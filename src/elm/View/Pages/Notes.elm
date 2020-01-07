@@ -75,7 +75,7 @@ viewNoteCard model oer note =
       date =
         note.time
         |> humanReadableRelativeTime model
-        |> captionNowrap [ greyTextDisabled, alignRight ]
+        |> captionNowrap [ greyText, alignRight ]
         |> el [ width (px 60) ]
 
       card =

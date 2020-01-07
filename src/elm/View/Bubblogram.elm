@@ -85,7 +85,7 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
                 [ Element.alpha 0.8 ]
 
             labelClickHandler =
-              [ onClickNoBubble (OverviewTagLabelClicked oerId) ]
+              [ onClickStopPropagation (OverviewTagLabelClicked oerId) ]
 
             textAttrs =
               case bubblogramType of
@@ -131,7 +131,7 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
                     Just (_, {positionInResource}) ->
                       positionInResource - 0.0007
             in
-                [ onClickNoBubble <| InspectOer oer fragmentStart True ]
+                [ onClickStopPropagation <| InspectOer oer fragmentStart True ]
 
       graphic =
         [ background ] ++ svgBubbles

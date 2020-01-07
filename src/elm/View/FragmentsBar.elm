@@ -201,9 +201,9 @@ viewFragmentsBar model oer chunks barWidth barId =
 
                   clickHandler =
                     if isHovering model oer then
-                      onClickNoBubble <| InspectOer oer position True
+                      onClickStopPropagation <| InspectOer oer position True
                     else
-                      onClickNoBubble <| StartCurrentHtml5Video (position * oer.durationInSeconds)
+                      onClickStopPropagation <| StartCurrentHtml5Video (position * oer.durationInSeconds)
               in
                   scrubDisplay ++ [ clickHandler ]
         else
@@ -303,7 +303,7 @@ entityActionButton chunkPopup entityPopup (title, clickAction) =
       attrs =
         hoverAction :: ([ width fill, padding 10 ] ++ background)
   in
-      actionButtonWithoutIconNoBubble attrs title clickAction
+      actionButtonWithoutIconStopPropagation attrs title clickAction
 
 
 {-| Render an Entity's definition if available, or a placeholder otherwise

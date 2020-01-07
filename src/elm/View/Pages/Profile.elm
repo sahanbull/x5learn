@@ -35,7 +35,7 @@ viewProfilePage model savedUserProfile {userProfile, saved} =
           |> el [ width (px 77), height (px 37) ]
         else
           if saved then
-            "✓ Saved" |> bodyWrap [ greyTextDisabled, width fill ]
+            "✓ Saved" |> bodyWrap [ greyText, width fill ]
           else
             button [ paddingXY 16 8, width fill, Background.color x5color, whiteText ] { onPress = Just SubmittedUserProfile, label = "Save" |> text |> el [] }
 

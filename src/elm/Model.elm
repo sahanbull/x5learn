@@ -55,7 +55,7 @@ type alias Model =
   , wikichunkEnrichmentRequestFailCount : Int -- exponential(ish) backoff strategy: keep nagging the server for enrichments. count the attempts
   , wikichunkEnrichmentRetryTime : Posix -- exponential(ish) backoff strategy: wait a bit longer every time
   -- Wikipedia definitions data
-  , entityDefinitions : Dict String EntityDefinition -- wikipedia definitions loaded from the server
+  , entityDefinitions : Dict EntityTitle EntityDefinition -- wikipedia definitions loaded from the server
   , requestingEntityDefinitions : Bool -- waiting for wikipedia definitions from the server
   -- OER cards
   , hoveringOerId : Maybe OerId -- When the mouse is hovering over an OER card then we store its ID here
@@ -156,7 +156,7 @@ type BubblogramType
 -}
 type alias VideoUsage = List Range
 
-{-| when the user likes an OER
+{-| when the user likes an OER (favorites)
 -}
 type alias FlyingHeartAnimation =
   { startTime : Posix
@@ -1019,7 +1019,7 @@ bubbleZoom =
   0.042
 
 
-{-| Check it the OER is a video file
+{-| Check if the OER is a video file
 -}
 isVideoFile : OerUrl -> Bool
 isVideoFile oerUrl =

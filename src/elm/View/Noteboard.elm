@@ -92,7 +92,7 @@ viewNote model note =
         date =
           note.time
           |> humanReadableRelativeTime model
-          |> captionNowrap [ greyTextDisabled ]
+          |> captionNowrap [ greyText ]
 
         actions =
           button [] { onPress = Just <| RemoveNote note, label = trashIcon }

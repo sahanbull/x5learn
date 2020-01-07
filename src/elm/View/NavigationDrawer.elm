@@ -13,6 +13,7 @@ import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
 
 import Model exposing (..)
 import View.Utility exposing (..)
+import View.SearchWidget exposing (..)
 import View.ContentFlowToggle exposing (..)
 import View.Course exposing (..)
 
@@ -135,7 +136,7 @@ taskButtons model =
               ]
               |> row [ spacing 20 ]
             else
-              confirmButton [ alpha 0.3, greyTextDisabled ] ("Start "++taskName) Nothing
+              confirmButton [ alpha 0.3, greyText ] ("Start "++taskName) Nothing
   in
       [ taskButton "Practice"
       , taskButton "Task 1"

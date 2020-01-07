@@ -147,7 +147,7 @@ viewResource model oer =
                     if isCurrent then
                       (Font.color white, Border.color white)
                     else
-                      (greyTextDisabled, Border.color fullyTransparentColor)
+                      (greyText, Border.color fullyTransparentColor)
               in
                   simpleButton [ Font.size 16, paddingXY 1 20, borderBottom 4, centerX, borderColor, textColor ] title (Just <| SelectResourceSidebarTab tab oer.id)
 
@@ -321,7 +321,6 @@ viewFeedbackTab model oer =
       , quickOptions
       , "Other" |> bodyWrap []
       , textField
-      -- , "[ submit button goes here ]" |> bodyWrap [ greyTextDisabled ]
       ]
       |> column [ width fill, spacing 20 ]
 

@@ -72,7 +72,7 @@ viewResource model oer =
         case getYoutubeVideoId oer.url of
           Nothing ->
             if isVideoFile oer.url then
-              viewHtml5VideoPlayer model oer.url
+              viewHtml5VideoPlayer model oer
             else if isPdfFile oer.url then
               viewPdfViewer oer.url "60vh"
             else

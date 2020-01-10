@@ -333,6 +333,7 @@ type alias Oer =
   , title : String
   , url : String
   , mediatype : String
+  , translations : Dict String String
   }
 
 

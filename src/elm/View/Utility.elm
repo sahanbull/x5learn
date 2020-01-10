@@ -32,6 +32,11 @@ materialDark =
   grey 11
 
 
+slightlyTransparentBlack : Color
+slightlyTransparentBlack =
+  rgba 0 0 0 0.7
+
+
 superLightBackground : Attribute Msg
 superLightBackground =
   Background.color <| rgb255 242 242 242

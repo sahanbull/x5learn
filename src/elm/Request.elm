@@ -260,8 +260,8 @@ searchResultsDecoder =
   list oerDecoder
 
 
-oerDecoder : Decoder Oer
-oerDecoder =
+oerDecoderWithTranslations : Decoder Oer
+oerDecoderWithTranslations =
   Decode.succeed Oer
   |> andMap (field "id" int)
   |> andMap (field "date" string)
@@ -273,6 +273,30 @@ oerDecoder =
   |> andMap (field "title" string)
   |> andMap (field "url" string)
   |> andMap (field "mediatype" string)
+  |> andMap (field "translations" (dict string))
+
+
+oerDecoderWithoutTranslations : Decoder Oer
+oerDecoderWithoutTranslations =
+  Decode.succeed (\a b c d e f g h i j -> Oer a b c d e f g h i j Dict.empty)
+  |> andMap (field "id" int)
+  |> andMap (field "date" string)
+  |> andMap (field "description" string)
+  |> andMap (field "duration" string)
+  |> andMap (field "durationInSeconds" float)
+  |> andMap (field "images" (list string))
+  |> andMap (field "provider" string)
+  |> andMap (field "title" string)
+  |> andMap (field "url" string)
+  |> andMap (field "mediatype" string)
+
+
+oerDecoder : Decoder Oer
+oerDecoder =
+  oneOf
+    [ oerDecoderWithTranslations
+    , oerDecoderWithoutTranslations
+    ]
 
 
 wikichunkEnrichmentDecoder : Decoder WikichunkEnrichment

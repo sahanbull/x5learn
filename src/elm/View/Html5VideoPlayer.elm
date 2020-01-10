@@ -1,5 +1,7 @@
 module View.Html5VideoPlayer exposing (viewHtml5VideoPlayer)
 
+import Dict
+import Url
 import Html
 import Html.Attributes as Attributes
 
@@ -17,17 +19,49 @@ import Model exposing (..)
     https://www.w3schools.com/html/html5_video.asp
     https://developer.mozilla.org/en-US/docs/Web/HTML/Element/video
 -}
-viewHtml5VideoPlayer : Model -> OerUrl -> Element Msg
-viewHtml5VideoPlayer model oerUrl =
+viewHtml5VideoPlayer : Model -> Oer -> Element Msg
+viewHtml5VideoPlayer model oer =
   let
       fallbackMessage =
         [ [ "Your browser does not support HTML5 video." |> Html.text ] |> Html.div []
         ]
         |> Html.div [ Attributes.class "Html5VideoPlayerMessage" ]
-  in
-        [ Html.source [ Attributes.src oerUrl ] []
-        , fallbackMessage
+
+      subtitleTracks =
+        oer.translations
+        |> Dict.toList
+        |> List.map subtitleTrack
+
+      attrs =
+        [ Attributes.id "Html5VideoPlayer"
+        , Attributes.controls True
+        , Attributes.height (max 200 (model.windowHeight - 450))
         ]
-        |> Html.video [ Attributes.id "Html5VideoPlayer", Attributes.controls True, Attributes.height (max 200 (model.windowHeight - 450)) ]
-        |> Element.html
-        |> el [ width <| px 720 ]
+
+      children =
+        [ Html.source [ Attributes.src oer.url ] []
+        , fallbackMessage
+        ] ++ subtitleTracks
+  in
+      children
+      |> Html.video attrs
+      |> Element.html
+      |> el [ width <| px 720 ]
+
+
+{-| Create an HTML tag like
+-- <track src="subtitles_en.vtt" kind="subtitles" srclang="en" label="English">
+-- except that src contains the vtt data directly as a data URI
+-- https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs
+-}
+subtitleTrack : (String, String) -> Html.Html Msg
+subtitleTrack (language, text) =
+  let
+      attrs =
+        [ Attributes.src <| "data:,"++(text |> Url.percentEncode)
+        , Attributes.kind "subtitles"
+        , Attributes.srclang language
+        -- , Attributes.label language
+        ]
+  in
+      Html.track attrs []

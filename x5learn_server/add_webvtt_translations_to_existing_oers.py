@@ -8,7 +8,7 @@ db_session = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.models import Oer
 
 
-# This background worker script keeps iterating over all the existing OERs
+# This background worker script iterates over all the existing OERs
 # in the X5Learn database, looking for missing translation data. When it finds
 # an OER for which we haven't added webvtt translations yet, it requests them
 # from the X5GON API.
@@ -63,12 +63,12 @@ def request_translations(oer):
     return translations
 
 
-def check_db_for_missing_translations(force):
+def add_translations():
     print('Checking for missing translations...')
     for oer in Oer.query.all():
         if 'material_id' not in oer.data:
             continue # ignore any OERs that didn't come from X5GON
-        if force or 'translations' not in oer.data:
+        if 'translations' not in oer.data:
             translations = request_translations(oer)
             if translations=={}:
                 print('<no translations available>')
@@ -82,15 +82,31 @@ def check_db_for_missing_translations(force):
             print()
 
 
-def main(args):
-    while(True):
-        check_db_for_missing_translations(args['force'])
-        sleep(3)
+def clear_all():
+    for oer in Oer.query.all():
+        if 'material_id' not in oer.data:
+            continue # ignore any OERs that didn't come from X5GON
+        if 'translations' in oer.data:
+            # copy the dict, see https://stackoverflow.com/a/53977819/2237986
+            new_data = json.loads(json.dumps(oer.data))
+            del new_data['translations']
+            oer.data = new_data
+            db_session.commit()
 
 
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser(description='USAGE: See sourcecode')
-    parser.add_argument('--force', action='store_true', help='Request translations no matter what. Overwrite any existing translations')
+    parser.add_argument('--clear-all', action='store_true', help="Don't add any translations. Instead, delete all existing translations. Also, delete any information about missing translations. This mode can be useful to enforce a complete refresh.")
+    parser.add_argument('--endless-loop', action='store_true', help="Run the script in an endless loop, going through the database over and over (rather than only once which is the default). This mode can be useful in a background process. It cannot be used in combination with --clear-all.")
     args = vars(parser.parse_args())
-    main(args)
+    # print('Flags:', args)
+    if args['clear_all']:
+        clear_all()
+    elif args['endless_loop']:
+        while(True):
+            add_translations()
+            sleep(3)
+    else:
+        add_translations()
+    print('Done.')

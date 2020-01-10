@@ -56,7 +56,7 @@ def request_translations(oer):
     contents = requests.get(url).json()
     translations = {}
     for content in contents["oer_contents"]:
-        if content["type"] == "translation" and content["extension"] == "webvtt":
+        if (content["type"] == "translation" or content["type"] == "transcription") and content["extension"] == "webvtt":
             language = content["language"]
             text = content["value"]["value"]
             translations[language] = text

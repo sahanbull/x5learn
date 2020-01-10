@@ -135,6 +135,20 @@ viewVisibleOerCard model position barId enableShadow oer =
           --           Just bubblogram ->
           --             viewBubblogram model bubblogramType oer.id bubblogram
 
+      availableTranslations =
+        if oer.mediatype/="video" || Dict.isEmpty oer.translations then
+          []
+        else
+          let
+              languages =
+                oer.translations
+                |> Dict.keys
+          in
+              "Subtitles: " ++ (languages |> String.join " ")
+              |> captionNowrap [ paddingXY 3 2, Background.color slightlyTransparentBlack, greyText ]
+              |> inFront
+              |> List.singleton
+
       title =
         let
             fontSize =
@@ -209,7 +223,7 @@ viewVisibleOerCard model position barId enableShadow oer =
 
       card =
         [ graphic ]
-        |> column ([ widthOfCard, heightOfCard, onMouseEnter (SetHover (Just oer.id)), onMouseLeave (SetHover Nothing), title, bottomInfo ] ++ fragmentsBar ++ shadow ++ clickHandler ++ popup)
+        |> column ([ widthOfCard, heightOfCard, onMouseEnter (SetHover (Just oer.id)), onMouseLeave (SetHover Nothing), title, bottomInfo ] ++ availableTranslations ++ fragmentsBar ++ shadow ++ clickHandler ++ popup)
 
       wrapperAttrs =
         [ htmlClass "CloseInspectorOnClickOutside OerCard", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y, htmlDataAttribute <| String.fromInt oer.id, htmlClass "CursorPointer" ]

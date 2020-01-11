@@ -1230,14 +1230,11 @@ extendVideoUsages pos model =
               Just ranges ->
                 ranges
       in
-          if oldRanges |> List.any (\{start, length} -> pos>start && pos<start+length + 7) then
-            model
-          else
-            let
-                newRanges =
-                  (Range pos 10) :: oldRanges
-            in
-                { model | videoUsages = Dict.insert oer.id newRanges model.videoUsages  }
+          let
+              newRanges =
+                (Range pos 10) :: oldRanges
+          in
+              { model | videoUsages = Dict.insert oer.id newRanges model.videoUsages  }
 
 
 courseToString : Course -> String

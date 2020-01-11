@@ -8,6 +8,11 @@ var videoEventThrottlePosition = 0; // Limit the frequency of events sent to Elm
 var isVideoPlaying = false;
 var videoPlayPosition = 0;
 
+// Number of seconds between actions that report the ongoing video play position.
+// Keep this constant in sync with videoPlayReportingInterval in Elm
+// and VIDEO_PLAY_REPORTING_INTERVAL in python
+var videoPlayReportingInterval = 10;
+
 
 function positionAndSize(el) {
   var rect = el.getBoundingClientRect(), scrollLeft = window.pageXOffset || document.documentElement.scrollLeft, scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -127,7 +132,7 @@ function startAnimationWhenModalIsReady(videoEmbedParams) {
           vid.ontimeupdate = function() {
             videoPlayPosition = vid.currentTime;
             if(isVideoPlaying){
-              if(videoPlayPosition > videoEventThrottlePosition + 10){
+              if(videoPlayPosition > videoEventThrottlePosition + videoPlayReportingInterval){
                 app.ports.html5VideoStillPlaying.send(videoPlayPosition);
                 videoEventThrottlePosition = videoPlayPosition;
               }

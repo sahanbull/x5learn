@@ -75,6 +75,10 @@ mail.init_app(app)
 CURRENT_ENRICHMENT_VERSION = 1
 MAX_SEARCH_RESULTS = 18 # number divisible by 2 and 3 to fit nicely into grid
 
+# Number of seconds between actions that report the ongoing video play position.
+# Keep this constant in sync with videoPlayReportingInterval on the frontend!
+VIDEO_PLAY_REPORTING_INTERVAL = 10
+
 
 # create database when starting the app
 @app.before_first_request
@@ -259,7 +263,7 @@ def api_oers():
 @app.route("/api/v1/video_usages/", methods=['GET'])
 def api_video_usages():
     actions = Action.query.filter(Action.user_login_id == current_user.get_id(),
-                                  Action.action_type_id.in_([4, 5, 6])).order_by(Action.id).all()
+                                  Action.action_type_id.in_([4, 5, 6, 9])).order_by(Action.id).all()
     positions_per_oer = defaultdict(list)
     for action in actions:
         oer_id = str(action.params['oerId'])
@@ -305,10 +309,12 @@ def video_usage_ranges_from_positions(positions):
     ranges = []
     positions = sorted(positions)
     for index, position in enumerate(positions):
-        if index>0 and position >= ranges[-1]['start'] and position < ranges[-1]['start'] + ranges[-1]['length'] + 10:
-            ranges[-1]['length'] = position - ranges[-1]['start'] + 10
+        if index>0 and position >= ranges[-1]['start'] and position < ranges[-1]['start'] + ranges[-1]['length'] + VIDEO_PLAY_REPORTING_INTERVAL:
+            # extend the last range
+            ranges[-1]['length'] = position - ranges[-1]['start'] + VIDEO_PLAY_REPORTING_INTERVAL
         else:
-            ranges.append({'start': position, 'length': 10})
+            # add a new range
+            ranges.append({'start': position, 'length': VIDEO_PLAY_REPORTING_INTERVAL})
     return ranges
 
 
@@ -1006,6 +1012,11 @@ def initiate_action_types_table():
     action_type = ActionType.query.filter_by(id=8).first()
     if action_type is None:
         action_type = ActionType('Feedback on OER content')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=9).first()
+    if action_type is None:
+        action_type = ActionType('Video still playing')
         db_session.add(action_type)
         db_session.commit()
 

@@ -704,6 +704,7 @@ update msg ({nav, userProfileForm} as model) =
 
     Html5VideoStillPlaying pos ->
       (model |> updateVideoPlayer (PositionChanged pos) |> extendVideoUsages pos, Cmd.none)
+      |> saveVideoAction 9
 
     Html5VideoDuration duration ->
       let
@@ -1230,14 +1231,11 @@ extendVideoUsages pos model =
               Just ranges ->
                 ranges
       in
-          if oldRanges |> List.any (\{start, length} -> pos>start && pos<start+length + 7) then
-            model
-          else
-            let
-                newRanges =
-                  (Range pos 10) :: oldRanges
-            in
-                { model | videoUsages = Dict.insert oer.id newRanges model.videoUsages  }
+          let
+              newRanges =
+                (Range pos videoPlayReportingInterval) :: oldRanges
+          in
+              { model | videoUsages = Dict.insert oer.id newRanges model.videoUsages  }
 
 
 courseToString : Course -> String
@@ -1335,3 +1333,13 @@ saveLoggedEventsIfNeeded (oldModel, oldCmd) =
     ({ oldModel | loggedEvents = [], lastTimeLoggedEventsSaved = oldModel.currentTime }, [ requestSaveLoggedEvents oldModel, oldCmd ] |> Cmd.batch)
   else
     (oldModel, oldCmd)
+
+
+{-| Number of seconds between HTTP requests to report the ongoing
+    video play position.
+    Keep this constant in sync with the JavaScript constant (same name)
+    and VIDEO_PLAY_REPORTING_INTERVAL in python
+-}
+videoPlayReportingInterval : Float
+videoPlayReportingInterval =
+  10

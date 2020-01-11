@@ -75,6 +75,10 @@ mail.init_app(app)
 CURRENT_ENRICHMENT_VERSION = 1
 MAX_SEARCH_RESULTS = 18 # number divisible by 2 and 3 to fit nicely into grid
 
+# Number of seconds between actions that report the ongoing video play position.
+# Keep this constant in sync with videoPlayReportingInterval on the frontend!
+VIDEO_PLAY_REPORTING_INTERVAL = 10
+
 
 # create database when starting the app
 @app.before_first_request
@@ -305,10 +309,12 @@ def video_usage_ranges_from_positions(positions):
     ranges = []
     positions = sorted(positions)
     for index, position in enumerate(positions):
-        if index>0 and position >= ranges[-1]['start'] and position < ranges[-1]['start'] + ranges[-1]['length'] + 10:
-            ranges[-1]['length'] = position - ranges[-1]['start'] + 10
+        if index>0 and position >= ranges[-1]['start'] and position < ranges[-1]['start'] + ranges[-1]['length'] + VIDEO_PLAY_REPORTING_INTERVAL:
+            # extend the last range
+            ranges[-1]['length'] = position - ranges[-1]['start'] + VIDEO_PLAY_REPORTING_INTERVAL
         else:
-            ranges.append({'start': position, 'length': 10})
+            # add a new range
+            ranges.append({'start': position, 'length': VIDEO_PLAY_REPORTING_INTERVAL})
     return ranges
 
 

@@ -53,13 +53,16 @@ def request_translations(oer):
     print('Material id:', material_id)
     # get the list of contents relevant to this material
     url = "{}/oer_materials/{}/contents".format(PLATFORM_URL, material_id)
-    contents = requests.get(url).json()
     translations = {}
-    for content in contents["oer_contents"]:
-        if (content["type"] == "translation" or content["type"] == "transcription") and content["extension"] == "webvtt":
-            language = content["language"]
-            text = content["value"]["value"]
-            translations[language] = text
+    try:
+        contents = requests.get(url).json()
+        for content in contents["oer_contents"]:
+            if (content["type"] == "translation" or content["type"] == "transcription") and content["extension"] == "webvtt":
+                language = content["language"]
+                text = content["value"]["value"]
+                translations[language] = text
+    except json.decoder.JSONDecodeError:
+        print('Bad JSON from platform API! Caught json.decoder.JSONDecodeError')
     return translations
 
 

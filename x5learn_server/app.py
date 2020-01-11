@@ -259,7 +259,7 @@ def api_oers():
 @app.route("/api/v1/video_usages/", methods=['GET'])
 def api_video_usages():
     actions = Action.query.filter(Action.user_login_id == current_user.get_id(),
-                                  Action.action_type_id.in_([4, 5, 6])).order_by(Action.id).all()
+                                  Action.action_type_id.in_([4, 5, 6, 9])).order_by(Action.id).all()
     positions_per_oer = defaultdict(list)
     for action in actions:
         oer_id = str(action.params['oerId'])
@@ -1006,6 +1006,11 @@ def initiate_action_types_table():
     action_type = ActionType.query.filter_by(id=8).first()
     if action_type is None:
         action_type = ActionType('Feedback on OER content')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=9).first()
+    if action_type is None:
+        action_type = ActionType('Video still playing')
         db_session.add(action_type)
         db_session.commit()
 

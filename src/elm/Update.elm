@@ -704,6 +704,7 @@ update msg ({nav, userProfileForm} as model) =
 
     Html5VideoStillPlaying pos ->
       (model |> updateVideoPlayer (PositionChanged pos) |> extendVideoUsages pos, Cmd.none)
+      |> saveVideoAction 9
 
     Html5VideoDuration duration ->
       let

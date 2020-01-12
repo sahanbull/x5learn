@@ -264,7 +264,7 @@ viewFragmentsBarWrapper model oer =
 
 
 sidebarWidth =
-  300
+  272
 
 
 viewInspectorSidebar : Model -> InspectorState -> Element Msg
@@ -283,7 +283,7 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
                     recommendations ->
                       recommendations
                       |> List.map (viewRecommendationCard model)
-                      |> column [ spacing 12, paddingBottom 54 ]
+                      |> column [ spacing 12 ]
             in
                 ("Related material"
                 , sidebarContent
@@ -326,7 +326,7 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
           |> el [ padding 20 ]
   in
       [ tabsMenu |> el [ width fill ]
-      , tabContent
+      , tabContent |> el [ scrollbarY, height (fill |> maximum 510) ]
       ]
       |> column [ spacing 25, width <| px sidebarWidth, height fill, alignTop, borderLeft 1, borderColorDivider, moveRight ((sheetWidth model) - sidebarWidth - 35 |> toFloat), Background.color white ]
 
@@ -379,7 +379,7 @@ recommendationCardHeight =
 
 recommendationCardWidth : Model -> Int
 recommendationCardWidth model =
-  sidebarWidth - 50
+  sidebarWidth - 23
 
 
 viewFeedbackTab : Model -> Oer -> Element Msg
@@ -390,23 +390,19 @@ viewFeedbackTab model oer =
 
       quickOptions =
         ([ "Inspiring"
-        , "Boring"
-        , "Up-to-date"
+        , "Outstanding"
         , "Outdated"
-        , "Well explained"
-        , "Incomprehensible"
-        , "Factually inaccurate"
-        , "Inappropriate"
-        , "Poor text quality"
-        , "Poor visual quality"
-        ] ++ (if isVideoFile oer.url || hasYoutubeVideo oer.url then [ "Poor audio quality" ] else []))
+        , "Language errors"
+        , "Poor content"
+        , "Poor image"
+        ] ++ (if isVideoFile oer.url || hasYoutubeVideo oer.url then [ "Poor audio" ] else []))
         |> List.map (\option -> simpleButton [ paddingXY 9 5, Background.color feedbackOptionButtonColor, Font.size 14, whiteText ] option (Just <| SubmittedResourceFeedback oer.id (">>>"++option)))
         |> column [ spacing 10 ]
 
       textField =
         Input.text [ width fill, htmlId "textInputFieldForNotesOrFeedback", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5color ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Let us know" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
   in
-      [ "Any comments about this material?" |> bodyWrap []
+      [ "How would you rate this material?" |> bodyWrap []
       , quickOptions
       , "Other" |> bodyWrap []
       , textField

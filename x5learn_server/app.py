@@ -328,14 +328,6 @@ def api_featured():
     return jsonify(oers)
 
 
-@app.route("/api/v1/resource/", methods=['POST'])
-def api_material():
-    oer_id = request.get_json()['oerId']
-    oer = Oer.query.filter_by(id=oer_id).first()
-    push_enrichment_task_if_needed(oer.data['url'], 10000)
-    return jsonify(oer.data_and_id())
-
-
 @app.route("/api/v1/resource_feedback/", methods=['POST'])  # to be replaced by Actions API
 def api_resource_feedback():
     oer_id = request.get_json()['oerId']

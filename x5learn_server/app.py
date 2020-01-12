@@ -235,7 +235,13 @@ def api_search():
 
     """
     text = request.args['text'].lower().strip()
-    results = search_results_from_x5gon_api(text)
+    try:
+        # if the text is a number, attempt to retrieve the oer with that id
+        oer_id = int(text)
+        oer = Oer.query.get(oer_id)
+        results = [] if oer is None else [ oer ]
+    except ValueError:
+        results = search_results_from_x5gon_api(text)
     return jsonify([oer.data_and_id() for oer in results])
 
 

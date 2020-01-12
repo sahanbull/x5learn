@@ -1,4 +1,4 @@
-module View.Inspector exposing (viewInspectorModalOrEmpty)
+module View.Inspector exposing (viewInspector)
 
 import Set
 
@@ -21,8 +21,8 @@ import View.PdfViewer exposing (..)
 import Animation exposing (..)
 
 
-viewInspectorModalOrEmpty : Model -> List (Attribute Msg)
-viewInspectorModalOrEmpty model =
+viewInspector : Model -> List (Attribute Msg)
+viewInspector model =
   case model.inspectorState of
     Nothing ->
       []
@@ -34,36 +34,31 @@ viewInspectorModalOrEmpty model =
 viewModal : Model -> InspectorState -> Element Msg
 viewModal model inspectorState =
   let
-      content =
-        inspectorContentDefault model inspectorState
+      title =
+        case inspectorState.oer.title of
+          "" ->
+            "Title unavailable" |> headlineWrap [ Font.italic ]
 
-      header =
-        [ content.header
-        , fullPageButton
-        , button [] { onPress = Just UninspectSearchResult, label = closeIcon }
-        ]
-        |> row [ width fill, spacing 4 ]
+          titleText ->
+            titleText |> headlineWrap []
 
-      fullPageButton =
-        none
-        -- TODO: Re-enable the full-page view once the recommender system works well
-        -- if isLabStudy1 model then
-        --   none
-        -- else
-        --   image [ alpha 0.8, hoverCircleBackground ] { src = svgPath "fullscreen", description = "View this resource in full-page mode" }
-        --   |> linkTo [ alignRight ] (resourceUrlPath inspectorState.oer.id)
+      body =
+        viewInspectorBody model inspectorState
 
       hideWhileOpening =
         alpha <| if model.animationsPending |> Set.member modalId then 0.01 else 1
 
-      body =
-        content.body
+      header =
+        [ title
+        , button [] { onPress = Just UninspectSearchResult, label = closeIcon }
+        ]
+        |> row [ width fill, spacing 4 ]
 
       sheet =
         [ header
         , body
         ]
-        |> column [ htmlClass "CloseInspectorOnClickOutside", width (px sheetWidth), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow, inFront content.fixed ]
+        |> column [ htmlClass "CloseInspectorOnClickOutside", width (px sheetWidth), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow ]
 
       animatingBox =
         case model.modalAnimation of
@@ -101,16 +96,9 @@ viewModal model inspectorState =
       |> el [ width fill, height fill, behindContent scrim, inFront animatingBox ]
 
 
-inspectorContentDefault model {oer, fragmentStart} =
+viewInspectorBody : Model -> InspectorState -> Element Msg
+viewInspectorBody model {oer, fragmentStart} =
   let
-      header =
-        case oer.title of
-          "" ->
-            "Title unavailable" |> headlineWrap [ Font.italic ]
-
-          title ->
-            title |> headlineWrap []
-
       player =
         case getYoutubeVideoId oer.url of
           Nothing ->
@@ -127,17 +115,11 @@ inspectorContentDefault model {oer, fragmentStart} =
                   fragmentStart * oer.durationInSeconds |> floor
             in
                 embedYoutubePlayer youtubeId startTime
-
-      body =
-        [ player
-        , viewFragmentsBarWrapper model oer
-        ]
-        |> column [ width (px playerWidth) ]
-
-      footer =
-        []
   in
-      { header = header, body = body, footer = footer, fixed = none }
+      [ player
+      , viewFragmentsBarWrapper model oer
+      ]
+      |> column [ width (px playerWidth) ]
 
 
 

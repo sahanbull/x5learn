@@ -45,7 +45,7 @@ viewFavoritesPage model =
           |> List.reverse
           |> viewOerCardsVertically model
   in
-      (page, viewInspectorModalOrEmpty model)
+      (page, viewInspector model)
 
 
 {-| View OERs as cards in a single-column layout

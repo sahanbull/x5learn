@@ -266,7 +266,6 @@ update msg ({nav, userProfileForm} as model) =
     RequestFeatured (Ok oers) ->
       ( { model | featuredOers = oers |> List.map .id |> Just } |> cacheOersFromList oers, Cmd.none )
 
-
     RequestFeatured (Err err) ->
       ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none)
 

@@ -1,7 +1,9 @@
 from flask import Flask, jsonify, render_template, request, redirect
 from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required
+from flask_security.forms import LoginForm
 from flask_sqlalchemy import SQLAlchemy
+from wtforms import BooleanField, validators
 import json
 import os # apologies
 import http.client
@@ -44,6 +46,9 @@ app.config['SECURITY_SEND_REGISTER_EMAIL'] = True
 app.config['SECURITY_CONFIRMABLE'] = True
 app.config['SECURITY_POST_REGISTER_VIEW'] = '/login'
 
+# redirect to data collection page after login
+app.config['SECURITY_POST_LOGIN_VIEW'] = '/data_collection'
+
 # user password configs
 app.config['SECURITY_CHANGEABLE'] = True
 app.config['SECURITY_CHANGE_URL'] = '/password_change'
@@ -60,7 +65,12 @@ user_datastore = SQLAlchemySessionUserDatastore(db_session,
 app.config["SQLALCHEMY_DATABASE_URI"] = DB_ENGINE_URI
 db = SQLAlchemy(app)
 
-security = Security(app, user_datastore)
+# extending flask security login form to support additional fields
+class ExtendedLoginForm(LoginForm):
+    privacy_policy = BooleanField('privacy_policy', [validators.DataRequired(message="Please read and agree to the privacy policy.")])
+    terms_and_conditions = BooleanField('term_and_conditions', [validators.DataRequired(message="Please read and agree to the terms and conditions.")])
+
+security = Security(app, user_datastore, login_form=ExtendedLoginForm)
 
 # Setup Flask-Mail Server
 app.config['MAIL_SERVER'] = MAIL_SERVER
@@ -74,6 +84,7 @@ mail.init_app(app)
 
 CURRENT_ENRICHMENT_VERSION = 1
 MAX_SEARCH_RESULTS = 18 # number divisible by 2 and 3 to fit nicely into grid
+
 
 # Number of seconds between actions that report the ongoing video play position.
 # Keep this constant in sync with videoPlayReportingInterval on the frontend!
@@ -173,6 +184,28 @@ def profile():
     return render_template('home.html')
 
 
+# Added new route to data collection consent page for users who has not set preference
+@app.route("/data_collection")
+def data_collection(): 
+    if current_user.user_profile is None:
+        return render_template('data_collection.html')
+
+    profile = json.loads(current_user.user_profile)
+    if profile.get('allow_data_collection') is None:
+        return render_template('data_collection.html')
+    else:
+        return redirect("/")
+
+
+# Saves preference in user profile for data collection consent
+@app.route("/data_collection", methods=['POST'])
+def submit_data_collection():
+    allow_data_collection = request.form['allow_data_collection']
+    current_user.user_profile = json.dumps({'allow_data_collection': allow_data_collection})
+    db_session.commit()
+    return redirect("/")
+
+
 @app.route("/api/v1/session/", methods=['GET'])
 def api_session():
     if current_user.is_authenticated:
@@ -182,8 +215,11 @@ def api_session():
 
 
 def get_logged_in_user_profile_and_state():
-    profile = current_user.user_profile if current_user.user_profile is not None else {
-        'email': current_user.email}
+    if current_user.user_profile is not None:
+        profile = json.loads(current_user.user_profile)  
+        profile['email'] = current_user.email
+    else:
+        profile = {'email': current_user.email}
     # Look at actions to determine whether contentflow is enabled or disabled
     action = Action.query.filter(Action.user_login_id == current_user.get_id(),
                                  Action.action_type_id.in_([7])).order_by(Action.id.desc()).first()

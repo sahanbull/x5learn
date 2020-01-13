@@ -10,6 +10,12 @@
       {{ render_field_with_errors(login_user_form.email, autofocus=true, placeholder='Email or username') }}
       {{ render_field_with_errors(login_user_form.password, placeholder='Password') }}
       {{ render_field_with_errors(login_user_form.remember) }}
+      <h5>Privacy Policy</h5>
+      <textarea style="width:100%" readonly>This privacy notice discloses the privacy practices for (website address). This privacy notice applies solely to information collected by this website.</textarea>
+      <p>{{ login_user_form.privacy_policy }} <small>I agree to the above Cookie & Privacy Policy.</small></p>
+      <h5>Terms & Conditions</h5>
+      <textarea style="width:100%" readonly>These Website Standard Terms and Conditions written on this webpage shall manage your use of our website, Webiste Name accessible at Website.com.</textarea>
+      <p>{{ login_user_form.terms_and_conditions }}  <small>I agree to the above Terms of User.</small></p>
       {{ render_field(login_user_form.submit) }}
     </form>
     <p class="centernote">New to X5Learn? <a href="/signup">Create an account.</a> <br><br> <a href="/recover">Forgot Password</a></p>

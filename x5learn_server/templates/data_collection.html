@@ -1,0 +1,14 @@
+{% extends "security/base.html" %}
+{% from "security/_macros.html" import render_field_with_errors, render_field %}
+
+{% block content %}
+  <div class="centerblock">
+    {% include "security/_messages.html" %}
+    <h4>Data Collection For Research Purposes</h4>
+    <form action="/data_collection" method="POST" name="data_collection_form">
+      <textarea style="width:100%" readonly>These Website Standard Terms and Conditions written on this webpage shall manage your use of our website, Webiste Name accessible at Website.com.</textarea>
+      <p><input type="checkbox" id="allow_data_collection" name="allow_data_collection">I agree</p>
+      <input id="submit" name="submit" type="submit" value="Submit">
+    </form>
+  </div>
+{% endblock %}

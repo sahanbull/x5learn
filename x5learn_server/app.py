@@ -74,6 +74,7 @@ mail.init_app(app)
 
 CURRENT_ENRICHMENT_VERSION = 1
 MAX_SEARCH_RESULTS = 18 # number divisible by 2 and 3 to fit nicely into grid
+USE_RECOMMENDATIONS_FROM_LAM = True # if true, uses the new solution see #290
 
 # Number of seconds between actions that report the ongoing video play position.
 # Keep this constant in sync with videoPlayReportingInterval on the frontend!
@@ -210,18 +211,10 @@ def get_logged_in_user_profile_and_state():
 @app.route("/api/v1/recommendations/", methods=['GET'])
 def api_recommendations():
     oer_id = int(request.args['oerId'])
-    main_topics = find_enrichment_by_oer_id(oer_id).main_topics()
-    print(main_topics)
-    urls_with_similarity = [(enrichment.url, enrichment.get_topic_overlap(main_topics)) for enrichment in
-                            WikichunkEnrichment.query.all()]
-    most_similar = sorted(urls_with_similarity, key=lambda x: x[1], reverse=True)
-    results = []
-    for candidate in most_similar:
-        oer = Oer.query.filter_by(url=candidate[0]).first()
-        if oer is not None and 'youtu' not in oer.url:
-            results.append(oer)
-        if len(results) > 9:
-            break
+    if USE_RECOMMENDATIONS_FROM_LAM:
+        results = recommendations_from_lam_api(oer_id) # new
+    else:
+        results = recommendations_from_wikichunk_enrichments(oer_id) # old
     return jsonify([oer.data_and_id() for oer in results])
 
 
@@ -1033,6 +1026,39 @@ def find_enrichment_by_oer_id(oer_id):
     if oer is None:
         return None
     return WikichunkEnrichment.query.filter_by(url=oer.url).first()
+
+
+
+# old solution - wouldn't scale well to millions of oers - see issue #290
+def recommendations_from_wikichunk_enrichments(oer_id):
+    main_topics = find_enrichment_by_oer_id(oer_id).main_topics()
+    print(main_topics)
+    urls_with_similarity = [(enrichment.url, enrichment.get_topic_overlap(main_topics)) for enrichment in
+                            WikichunkEnrichment.query.all()]
+    most_similar = sorted(urls_with_similarity, key=lambda x: x[1], reverse=True)
+    results = []
+    for candidate in most_similar:
+        oer = Oer.query.filter_by(url=candidate[0]).first()
+        if oer is not None and 'youtu' not in oer.url:
+            results.append(oer)
+        if len(results) > 9:
+            break
+    return results
+
+
+# new solution - using LAM API (Nantes) - see issue #290
+def recommendations_from_lam_api(oer_id):
+    conn = http.client.HTTPSConnection("wp3.x5gon.org")
+    params = urllib.parse.urlencode({'resource_id': oer_id, 'n_neighbors': 20, 'remove_duplicates': 1, 'model_type': 'doc2vec'})
+    headers = {"Content-type": "application/json", "Accept": "application/json"}
+    conn.request('POST', '/recommendsystem/v1', params, headers)
+    response = conn.getresponse().read().decode("utf-8")
+    print(response)
+    print('__________________________')
+    items = json.loads(response)['output']['rec_materials']
+    print(len(items))
+    # filter by media-type: include videos only
+    return results
 
 
 if __name__ == '__main__':

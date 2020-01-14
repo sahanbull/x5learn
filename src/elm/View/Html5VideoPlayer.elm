@@ -35,7 +35,6 @@ viewHtml5VideoPlayer model oer =
       attrs =
         [ Attributes.id "Html5VideoPlayer"
         , Attributes.controls True
-        , Attributes.height (max 200 (model.windowHeight - 450))
         ]
 
       children =

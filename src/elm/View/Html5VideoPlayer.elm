@@ -45,7 +45,7 @@ viewHtml5VideoPlayer model oer =
       children
       |> Html.video attrs
       |> Element.html
-      |> el [ width <| px 720 ]
+      |> el [ width <| px <| playerWidth model ]
 
 
 {-| Create an HTML tag like

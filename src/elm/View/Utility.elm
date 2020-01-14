@@ -324,10 +324,10 @@ hoverCircleBackground =
   htmlClass "HoverCircleBackground"
 
 
-embedYoutubePlayer : String -> Int -> Element Msg
-embedYoutubePlayer youtubeId startTime =
+embedYoutubePlayer : Model -> String -> Int -> Element Msg
+embedYoutubePlayer model youtubeId startTime =
   none
-  |> el [ htmlId "playerElement", width (px playerWidth), height (px 410) ]
+  |> el [ htmlId "playerElement", width <| px <| playerWidth model, height (px 410) ]
 
 
 dialogShadow : Attribute Msg
@@ -439,8 +439,8 @@ materialScrimAlpha =
   0.32
 
 
-playerWidth =
-  720
+playerWidth model =
+  520
 
 
 milkyWhiteCenteredContainer : Element Msg -> Element Msg

@@ -120,12 +120,12 @@ viewInspectorBody model {oer, fragmentStart} =
                 startTime =
                   fragmentStart * oer.durationInSeconds |> floor
             in
-                embedYoutubePlayer youtubeId startTime
+                embedYoutubePlayer model youtubeId startTime
   in
       [ player
       , viewFragmentsBarWrapper model oer
       ]
-      |> column [ width (px playerWidth), moveLeft sidebarWidth ]
+      |> column [ width <| px <| playerWidth model, moveLeft sidebarWidth ]
 
 
 
@@ -150,7 +150,7 @@ viewLinkToFile oer =
 
 sheetWidth model =
   model.windowWidth - navigationDrawerWidth
-  |> min (playerWidth + sidebarWidth + 35)
+  |> min (playerWidth model + sidebarWidth + 35)
 
 
 viewProviderLinkAndFavoriteButton : Model -> Oer -> Element Msg
@@ -249,8 +249,8 @@ viewFragmentsBarWrapper model oer =
             wikichunks ->
               let
                   barWrapper =
-                    viewFragmentsBar model oer wikichunks playerWidth "inspector"
-                    |> el [ width (px playerWidth), height (px 16) ]
+                    viewFragmentsBar model oer wikichunks (playerWidth model) "inspector"
+                    |> el [ width <| px <| playerWidth model, height (px 16) ]
               in
                   none
                   |> el [ inFront barWrapper, moveUp (0 - fragmentsBarHeight), height <| px containerHeight ]
@@ -260,7 +260,7 @@ viewFragmentsBarWrapper model oer =
           []
   in
       components
-      |> column ([ width (px playerWidth), height <| px <| containerHeight, moveDown 1, paddingTop 25, spacing 4 ] ++ fragmentsBar)
+      |> column ([ width <| px <| playerWidth model, height <| px <| containerHeight, moveDown 1, paddingTop 25, spacing 4 ] ++ fragmentsBar)
 
 
 sidebarWidth =

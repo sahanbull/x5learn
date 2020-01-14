@@ -47,7 +47,7 @@ viewModal model inspectorState =
 
       bodyAndSidebar =
         if isBrowserWindowTooSmall model then
-          "Sorry! This content requires a larger screen" |> bodyWrap []
+          "Sorry! This content requires a larger screen." |> bodyWrap [ paddingXY 0 40 ]
         else
           [ viewInspectorSidebar model inspectorState
           , viewInspectorBody model inspectorState

@@ -4,6 +4,7 @@ from flask_security import Security, SQLAlchemySessionUserDatastore, current_use
 from flask_sqlalchemy import SQLAlchemy
 import json
 import os # apologies
+import requests
 import http.client
 import urllib
 from collections import defaultdict
@@ -75,6 +76,8 @@ mail.init_app(app)
 CURRENT_ENRICHMENT_VERSION = 1
 MAX_SEARCH_RESULTS = 18 # number divisible by 2 and 3 to fit nicely into grid
 USE_RECOMMENDATIONS_FROM_LAM = True # if true, uses the new solution see #290
+SUPPORTED_VIDEO_FORMATS = ['video', 'mp4', 'mov', 'webm', 'ogg']
+SUPPORTED_FILE_FORMATS = SUPPORTED_VIDEO_FORMATS + [ 'pdf' ]
 
 # Number of seconds between actions that report the ongoing video play position.
 # Keep this constant in sync with videoPlayReportingInterval on the frontend!
@@ -212,10 +215,10 @@ def get_logged_in_user_profile_and_state():
 def api_recommendations():
     oer_id = int(request.args['oerId'])
     if USE_RECOMMENDATIONS_FROM_LAM:
-        results = recommendations_from_lam_api(oer_id) # new
+        oers = recommendations_from_lam_api(oer_id) # new
     else:
-        results = recommendations_from_wikichunk_enrichments(oer_id) # old
-    return jsonify([oer.data_and_id() for oer in results])
+        oers = recommendations_from_wikichunk_enrichments(oer_id) # old
+    return jsonify([oer.data_and_id() for oer in oers])
 
 
 @app.route("/api/v1/search/", methods=['GET'])
@@ -229,7 +232,7 @@ def api_search():
     """
     text = request.args['text'].lower().strip()
     try:
-        # if the text is a number, attempt to retrieve the oer with that id
+        # if the text is a number, retrieve the oer with that material_id
         oer_id = int(text)
         oer = Oer.query.get(oer_id)
         results = [] if oer is None else [ oer ]
@@ -444,22 +447,28 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
         # Temporary fix: ignore search results with very long urls
         if len(url) > 255:
             continue
-        oer = Oer.query.filter_by(url=url).first()
-        if oer is None:
-            oer = Oer(url, convert_x5_material_to_oer(material, url))
-            db_session.add(oer)
-            db_session.commit()
-        # Fix a problem with videolectures lacking duration info
-        if oer.data['mediatype']=='video' and oer.data['duration']=='' and ('durationInSeconds' not in oer.data):
-            oer = inject_duration(oer)
+        oer = retrieve_oer_or_create_from_x5gon_material(url, material)
+        push_enrichment_task(url, int(1000 / (index + 1)) + 1)
         oers.append(oer)
-        push_enrichment_task_if_needed(url, int(1000 / (index + 1)) + 1)
     oers = oers[:MAX_SEARCH_RESULTS]
     if len(oers) == n_initial_oers:  # no more results on page -> stop querying
         return oers
     if len(oers) >= MAX_SEARCH_RESULTS:
         return oers
     return search_results_from_x5gon_api_pages(text, page_number + 1, oers)
+
+
+def retrieve_oer_or_create_from_x5gon_material(url, material):
+    oer = Oer.query.filter_by(url=url).first()
+    if oer is None:
+        oer = Oer(url, convert_x5_material_to_oer(material, url))
+        db_session.add(oer)
+        db_session.commit()
+    # Fix a problem with videolectures lacking duration info
+    if oer.data['mediatype'] in SUPPORTED_VIDEO_FORMATS and oer.data['duration']=='' and ('durationInSeconds' not in oer.data):
+        oer = inject_duration(oer)
+    push_enrichment_task_if_needed(url, 1)
+    return oer
 
 
 def inject_duration(oer):
@@ -1048,17 +1057,41 @@ def recommendations_from_wikichunk_enrichments(oer_id):
 
 # new solution - using LAM API (Nantes) - see issue #290
 def recommendations_from_lam_api(oer_id):
-    conn = http.client.HTTPSConnection("wp3.x5gon.org")
-    params = urllib.parse.urlencode({'resource_id': oer_id, 'n_neighbors': 20, 'remove_duplicates': 1, 'model_type': 'doc2vec'})
-    headers = {"Content-type": "application/json", "Accept": "application/json"}
-    conn.request('POST', '/recommendsystem/v1', params, headers)
-    response = conn.getresponse().read().decode("utf-8")
-    print(response)
-    print('__________________________')
-    items = json.loads(response)['output']['rec_materials']
-    print(len(items))
-    # filter by media-type: include videos only
-    return results
+    # LAM API base url
+    LAM_API_URL = "http://wp3.x5gon.org"
+
+    # setup appropriate headers
+    HEADERS = {
+        'accept': 'application/json',
+        'Content-Type': 'application/json',
+    }
+
+    # endpoint
+    RECOMMENDER_ENDPOINT = '/recommendsystem/v1'
+
+    # request enough items so we can filter the results afterwards
+    data = {'resource_id': oer_id, 'n_neighbors': 8, 'remove_duplicates': 1, 'model_type': 'doc2vec'}
+    response = requests.post(LAM_API_URL + RECOMMENDER_ENDPOINT,
+                         headers= HEADERS,
+                         data=json.dumps(data))
+    materials = response.json()['output']['rec_materials']
+    oers = []
+    for material in materials:
+        # stop once we have enough items
+        if len(oers)>4:
+            break
+        # include only supported media formats
+        if material['type'] not in SUPPORTED_FILE_FORMATS:
+            continue
+        url = material['url']
+        # Some urls that were longer than 255 caused errors.
+        # TODO: change the type of all url colums from String(255) to Text()
+        # Temporary fix: ignore search results with very long urls
+        if len(url) > 255:
+            continue
+        oer = retrieve_oer_or_create_from_x5gon_material(url, material)
+        oers.append(oer)
+    return oers
 
 
 if __name__ == '__main__':

@@ -401,6 +401,7 @@ update msg ({nav, userProfileForm} as model) =
           oers =
             oersUnfiltered
             |> List.filter (\oer -> isBeingInspected oer.id |> not)
+            |> List.Extra.uniqueBy .id -- remove any duplicates
             |> List.take 5
 
           newInspectorState =

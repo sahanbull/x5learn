@@ -350,7 +350,8 @@ viewRecommendationCard model oer =
               dateStr |> captionNowrap [ alignLeft ]
 
             provider =
-              oer.provider |> domainOnly |> truncateSentence 24 |> captionNowrap [ if dateStr=="" then alignLeft else centerX ]
+              (if oer.mediatype=="pdf" then "PDF from " else "") ++ (oer.provider |> domainOnly |> truncateSentence 24)
+              |> captionNowrap [ if dateStr=="" then alignLeft else centerX ]
 
             duration =
               oer.duration |> captionNowrap [ alignRight ]

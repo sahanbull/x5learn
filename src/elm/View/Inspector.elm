@@ -277,7 +277,7 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
                   case resourceRecommendations of
                     [] ->
                       viewLoadingSpinner
-                      |> el [ moveDown 80, width fill ]
+                      |> el [ moveDown 160, width fill, centerX ]
 
                     recommendations ->
                       recommendations
@@ -326,7 +326,7 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
           |> el [ padding 20 ]
   in
       [ tabsMenu |> el [ width fill ]
-      , tabContent |> el [ scrollbarY, height (fill |> maximum 510) ]
+      , tabContent |> el [ scrollbarY, height (fill |> maximum 510), width fill ]
       ]
       |> column [ spacing 25, width <| px inspectorSidebarWidth, height fill, alignTop, borderLeft 1, borderColorDivider, moveRight ((sheetWidth model) - inspectorSidebarWidth - 35 |> toFloat), Background.color white ]
 
@@ -350,7 +350,8 @@ viewRecommendationCard model oer =
               dateStr |> captionNowrap [ alignLeft ]
 
             provider =
-              oer.provider |> domainOnly |> truncateSentence 24 |> captionNowrap [ if dateStr=="" then alignLeft else centerX ]
+              (if oer.mediatype=="pdf" then "PDF from " else "") ++ (oer.provider |> domainOnly |> truncateSentence 24)
+              |> captionNowrap [ if dateStr=="" then alignLeft else centerX ]
 
             duration =
               oer.duration |> captionNowrap [ alignRight ]

@@ -20,15 +20,16 @@
      instructions how to enable JavaScript in your web browser</a>.
     </noscript>
     <script>
-      var flags = {windowWidth: window.innerWidth, windowHeight: window.innerHeight};
+      const minWindowWidth=800;
+      const minWindowHeight=600;
+      var flags = {windowWidth: window.innerWidth, windowHeight: window.innerHeight, minWindowWidth: minWindowWidth, minWindowHeight: minWindowHeight};
       var app = Elm.Main.init({flags: flags});
       setupPorts(app);
 
-      const minWindowWidth=1280;
-      if(screen.width<minWindowWidth){
-        alert('You seem to be using this site on a small device. We are working to support mobile devices soon but for now we recommend that you use a large screen (apologies). You can still use the site but some functions will not work as expected. Currently, the minimum recommended screen width is '+minWindowWidth+' pixels.');
-      }else if(window.innerWidth<minWindowWidth){
-        alert('You seem to be using this site in a small window. This early version of the interface needs a lot of screen space (apologies). Please consider making the window larger if possible. Otherwise, some functions may not work as expected.');
+      if(screen.width<minWindowWidth || screen.height<minWindowHeight){
+        alert('We recommend using this website on a larger screen (at least '+minWindowWidth+'x'+minWindowHeight+' pixels). Otherwise, some functions may not work as expected.');
+      }else if(window.innerWidth<minWindowWidth || window.innerHeight<minWindowHeight){
+        alert('We recommend using this website in a larger window (at least '+minWindowWidth+'x'+minWindowHeight+' pixels). Otherwise, some functions may not work as expected.');
       }
     </script>
   </body>

@@ -460,11 +460,9 @@ playerWidth model =
 
             Just videoPlayer ->
               (model.windowHeight - pageHeaderHeight - 380 |> toFloat) * videoPlayer.aspectRatio
-              |> min (model.windowWidth - navigationDrawerWidth - inspectorSidebarWidth |> toFloat)
+              |> min (model.windowWidth - navigationDrawerWidth - inspectorSidebarWidth - 40 |> toFloat)
               |> min 720
               |> floor
-              |> Debug.log "playerWidth"
-
 
 
 milkyWhiteCenteredContainer : Element Msg -> Element Msg

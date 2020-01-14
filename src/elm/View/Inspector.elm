@@ -46,10 +46,13 @@ viewModal model inspectorState =
             titleText |> subheaderWrap []
 
       bodyAndSidebar =
-        [ viewInspectorSidebar model inspectorState
-        , viewInspectorBody model inspectorState
-        ]
-        |> row []
+        if isBrowserWindowTooSmall model then
+          "Sorry! This content requires a larger screen" |> bodyWrap []
+        else
+          [ viewInspectorSidebar model inspectorState
+          , viewInspectorBody model inspectorState
+          ]
+          |> row []
 
       hideWhileOpening =
         alpha <| if model.animationsPending |> Set.member modalId then 0.01 else 1

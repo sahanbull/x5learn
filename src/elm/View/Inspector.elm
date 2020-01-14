@@ -40,10 +40,10 @@ viewModal model inspectorState =
       title =
         case inspectorState.oer.title of
           "" ->
-            "Title unavailable" |> headlineWrap [ Font.italic ]
+            "Title unavailable" |> subheaderWrap [ Font.italic ]
 
           titleText ->
-            titleText |> headlineWrap []
+            titleText |> subheaderWrap []
 
       bodyAndSidebar =
         [ viewInspectorSidebar model inspectorState

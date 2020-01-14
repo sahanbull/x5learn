@@ -125,7 +125,7 @@ viewInspectorBody model {oer, fragmentStart} =
       [ player
       , viewFragmentsBarWrapper model oer
       ]
-      |> column [ width <| px <| playerWidth model, moveLeft sidebarWidth ]
+      |> column [ width <| px <| playerWidth model, moveLeft inspectorSidebarWidth ]
 
 
 
@@ -150,7 +150,7 @@ viewLinkToFile oer =
 
 sheetWidth model =
   model.windowWidth - navigationDrawerWidth
-  |> min (playerWidth model + sidebarWidth + 35)
+  |> min (playerWidth model + inspectorSidebarWidth + 35)
 
 
 viewProviderLinkAndFavoriteButton : Model -> Oer -> Element Msg
@@ -263,10 +263,6 @@ viewFragmentsBarWrapper model oer =
       |> column ([ width <| px <| playerWidth model, height <| px <| containerHeight, moveDown 1, paddingTop 25, spacing 4 ] ++ fragmentsBar)
 
 
-sidebarWidth =
-  230
-
-
 viewInspectorSidebar : Model -> InspectorState -> Element Msg
 viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
   let
@@ -329,7 +325,7 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
       [ tabsMenu |> el [ width fill ]
       , tabContent |> el [ scrollbarY, height (fill |> maximum 510) ]
       ]
-      |> column [ spacing 25, width <| px sidebarWidth, height fill, alignTop, borderLeft 1, borderColorDivider, moveRight ((sheetWidth model) - sidebarWidth - 35 |> toFloat), Background.color white ]
+      |> column [ spacing 25, width <| px inspectorSidebarWidth, height fill, alignTop, borderLeft 1, borderColorDivider, moveRight ((sheetWidth model) - inspectorSidebarWidth - 35 |> toFloat), Background.color white ]
 
 
 viewRecommendationCard : Model -> Oer -> Element Msg
@@ -380,7 +376,7 @@ recommendationCardHeight =
 
 recommendationCardWidth : Model -> Int
 recommendationCardWidth model =
-  sidebarWidth - 23
+  inspectorSidebarWidth - 23
 
 
 viewFeedbackTab : Model -> Oer -> Element Msg

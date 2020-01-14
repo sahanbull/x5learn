@@ -710,6 +710,19 @@ update msg ({nav, userProfileForm} as model) =
       (model |> updateVideoPlayer (PositionChanged pos) |> extendVideoUsages pos, Cmd.none)
       |> saveVideoAction 9
 
+    Html5VideoAspectRatio aspectRatio ->
+      case model.inspectorState of
+        Nothing ->
+          (model, Cmd.none)
+
+        Just inspectorState ->
+          case inspectorState.videoPlayer of
+            Nothing ->
+              (model, Cmd.none)
+
+            Just videoPlayer ->
+              ({ model | inspectorState = Just { inspectorState | videoPlayer = Just { videoPlayer | aspectRatio = aspectRatio } } }, Cmd.none)
+
     StartCurrentHtml5Video pos ->
       (model |> extendVideoUsages pos, startCurrentHtml5Video pos)
       |> logEventForLabStudy "StartCurrentHtml5Video" [ pos |> String.fromFloat ]

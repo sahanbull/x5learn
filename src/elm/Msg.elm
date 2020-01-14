@@ -84,6 +84,7 @@ type Msg
   | Html5VideoPaused Float
   | Html5VideoSeeked Float
   | Html5VideoStillPlaying Float
+  | Html5VideoAspectRatio Float
   | StartCurrentHtml5Video Float
   | ToggleContentFlow
   | AddedOerToCourse OerId Range
@@ -119,7 +120,6 @@ subscriptions model =
   , Ports.html5VideoPaused Html5VideoPaused
   , Ports.html5VideoSeeked Html5VideoSeeked
   , Ports.html5VideoStillPlaying Html5VideoStillPlaying
-  , Ports.html5VideoDuration Html5VideoDuration
   , Ports.pageScrolled PageScrolled
   , Ports.receiveCardPlaceholderPositions OerCardPlaceholderPositionsReceived
   , Ports.receiveFlyingHeartRelativeStartPosition FlyingHeartRelativeStartPositionReceived

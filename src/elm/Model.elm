@@ -308,6 +308,7 @@ type alias Html5VideoPlayer =
   { isPlaying : Bool
   , currentTime : Float
   , duration : Float
+  , aspectRatio : Float
   }
 
 
@@ -617,6 +618,7 @@ newInspectorState oer fragmentStart =
             { isPlaying = False
             , currentTime = 0
             , duration = 0
+            , aspectRatio = 1.3
             }
         else
           Nothing

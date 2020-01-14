@@ -439,8 +439,32 @@ materialScrimAlpha =
   0.32
 
 
+inspectorSidebarWidth =
+  230
+
+
+playerWidth : Model -> Int
 playerWidth model =
-  520
+  let
+      default =
+        520
+  in
+      case model.inspectorState of
+        Nothing ->
+          default
+
+        Just inspectorState ->
+          case inspectorState.videoPlayer of
+            Nothing ->
+              default
+
+            Just videoPlayer ->
+              (model.windowHeight - pageHeaderHeight - 380 |> toFloat) * videoPlayer.aspectRatio
+              |> min (model.windowWidth - navigationDrawerWidth - inspectorSidebarWidth |> toFloat)
+              |> min 720
+              |> floor
+              |> Debug.log "playerWidth"
+
 
 
 milkyWhiteCenteredContainer : Element Msg -> Element Msg

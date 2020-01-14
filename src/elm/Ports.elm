@@ -37,7 +37,6 @@ port html5VideoStarted : (Float -> msg) -> Sub msg
 port html5VideoPaused : (Float -> msg) -> Sub msg
 port html5VideoSeeked : (Float -> msg) -> Sub msg
 port html5VideoStillPlaying : (Float -> msg) -> Sub msg
-port html5VideoDuration : (Float -> msg) -> Sub msg
 port pageScrolled : (PageScrollState -> msg) -> Sub msg
 port receiveCardPlaceholderPositions : ((List OerCardPlaceholderPosition) -> msg) -> Sub msg
 port receiveFlyingHeartRelativeStartPosition : (Point -> msg) -> Sub msg

@@ -40,16 +40,19 @@ viewModal model inspectorState =
       title =
         case inspectorState.oer.title of
           "" ->
-            "Title unavailable" |> headlineWrap [ Font.italic ]
+            "Title unavailable" |> subheaderWrap [ Font.italic ]
 
           titleText ->
-            titleText |> headlineWrap []
+            titleText |> subheaderWrap []
 
       bodyAndSidebar =
-        [ viewInspectorSidebar model inspectorState
-        , viewInspectorBody model inspectorState
-        ]
-        |> row []
+        if isBrowserWindowTooSmall model then
+          "Sorry! This content requires a larger screen" |> bodyWrap []
+        else
+          [ viewInspectorSidebar model inspectorState
+          , viewInspectorBody model inspectorState
+          ]
+          |> row []
 
       hideWhileOpening =
         alpha <| if model.animationsPending |> Set.member modalId then 0.01 else 1
@@ -120,12 +123,12 @@ viewInspectorBody model {oer, fragmentStart} =
                 startTime =
                   fragmentStart * oer.durationInSeconds |> floor
             in
-                embedYoutubePlayer youtubeId startTime
+                embedYoutubePlayer model youtubeId startTime
   in
       [ player
       , viewFragmentsBarWrapper model oer
       ]
-      |> column [ width (px playerWidth), moveLeft sidebarWidth ]
+      |> column [ width <| px <| playerWidth model, moveLeft inspectorSidebarWidth ]
 
 
 
@@ -150,7 +153,7 @@ viewLinkToFile oer =
 
 sheetWidth model =
   model.windowWidth - navigationDrawerWidth
-  |> min (playerWidth + sidebarWidth + 35)
+  |> min (playerWidth model + inspectorSidebarWidth + 35)
 
 
 viewProviderLinkAndFavoriteButton : Model -> Oer -> Element Msg
@@ -231,7 +234,7 @@ viewFragmentsBarWrapper model oer =
               viewCourseSettings model oer item
         else
           [ viewDescription oer
-          , [ viewLinkToFile oer, viewProviderLinkAndFavoriteButton model oer ] |> column [ width fill, spacing 15, paddingTop 30 ]
+          -- , [ viewLinkToFile oer, viewProviderLinkAndFavoriteButton model oer ] |> column [ width fill, spacing 15, paddingTop 30 ]
           ]
 
       containerHeight =
@@ -249,8 +252,8 @@ viewFragmentsBarWrapper model oer =
             wikichunks ->
               let
                   barWrapper =
-                    viewFragmentsBar model oer wikichunks playerWidth "inspector"
-                    |> el [ width (px playerWidth), height (px 16) ]
+                    viewFragmentsBar model oer wikichunks (playerWidth model) "inspector"
+                    |> el [ width <| px <| playerWidth model, height (px 16) ]
               in
                   none
                   |> el [ inFront barWrapper, moveUp (0 - fragmentsBarHeight), height <| px containerHeight ]
@@ -260,11 +263,7 @@ viewFragmentsBarWrapper model oer =
           []
   in
       components
-      |> column ([ width (px playerWidth), height <| px <| containerHeight, moveDown 1, paddingTop 25, spacing 4 ] ++ fragmentsBar)
-
-
-sidebarWidth =
-  230
+      |> column ([ width <| px <| playerWidth model, height <| px <| containerHeight, moveDown 1, paddingTop 25, spacing 4 ] ++ fragmentsBar)
 
 
 viewInspectorSidebar : Model -> InspectorState -> Element Msg
@@ -316,8 +315,9 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
 
       tabContent =
         if isLoggedIn model then
-          [ heading |> headlineWrap []
-          , content
+          -- [ heading |> headlineWrap []
+          -- , content
+          [ content
           ]
           |> column [ width fill, paddingXY 20 0, spacing 25 ]
         else
@@ -328,7 +328,7 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
       [ tabsMenu |> el [ width fill ]
       , tabContent |> el [ scrollbarY, height (fill |> maximum 510) ]
       ]
-      |> column [ spacing 25, width <| px sidebarWidth, height fill, alignTop, borderLeft 1, borderColorDivider, moveRight ((sheetWidth model) - sidebarWidth - 35 |> toFloat), Background.color white ]
+      |> column [ spacing 25, width <| px inspectorSidebarWidth, height fill, alignTop, borderLeft 1, borderColorDivider, moveRight ((sheetWidth model) - inspectorSidebarWidth - 35 |> toFloat), Background.color white ]
 
 
 viewRecommendationCard : Model -> Oer -> Element Msg
@@ -379,7 +379,7 @@ recommendationCardHeight =
 
 recommendationCardWidth : Model -> Int
 recommendationCardWidth model =
-  sidebarWidth - 23
+  inspectorSidebarWidth - 23
 
 
 viewFeedbackTab : Model -> Oer -> Element Msg
@@ -400,11 +400,11 @@ viewFeedbackTab model oer =
         |> column [ spacing 10 ]
 
       textField =
-        Input.text [ width fill, htmlId "textInputFieldForNotesOrFeedback", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5color ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Let us know" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
+        Input.text [ width fill, htmlId "textInputFieldForNotesOrFeedback", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5color ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your comments" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
   in
-      [ "How would you rate this material?" |> bodyWrap []
+      [ "How would you describe this material?" |> bodyWrap []
       , quickOptions
-      , "Other" |> bodyWrap []
+      , "Comments (optional)" |> bodyWrap []
       , textField
       ]
       |> column [ width fill, spacing 20 ]

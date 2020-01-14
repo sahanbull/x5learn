@@ -93,6 +93,8 @@ type alias Model =
   -- screen dimensions
   , windowWidth : Int -- width of the browser window in pixels
   , windowHeight : Int -- height of the browser window in pixels
+  , minWindowWidth : Int -- minimum recommended browser width for the interface to work properly
+  , minWindowHeight : Int -- minimum recommended browser height for the interface to work properly
   -- scrolling and scrubbing
   , pageScrollState : PageScrollState -- vertical page scrolling. NB This value can also change when resizing the window or rotating the device.
   , mousePositionXwhenOnChunkTrigger : Float -- crude method to determine whether the ContentFlow menu should open to the left or right (to prevent exceeding the screen borders)
@@ -262,6 +264,8 @@ type alias UserProfile =
 type alias Flags =
   { windowWidth : Int
   , windowHeight : Int
+  , minWindowWidth : Int
+  , minWindowHeight : Int
   }
 
 
@@ -308,6 +312,7 @@ type alias Html5VideoPlayer =
   { isPlaying : Bool
   , currentTime : Float
   , duration : Float
+  , aspectRatio : Float
   }
 
 
@@ -548,6 +553,8 @@ initialModel nav flags =
   , flyingHeartAnimationStartPoint = Nothing
   , windowWidth = flags.windowWidth
   , windowHeight = flags.windowHeight
+  , minWindowWidth = flags.minWindowWidth
+  , minWindowHeight = flags.minWindowHeight
   , pageScrollState = PageScrollState 0 0 0 False
   , mousePositionXwhenOnChunkTrigger = 0
   , timelineHoverState = Nothing
@@ -617,6 +624,7 @@ newInspectorState oer fragmentStart =
             { isPlaying = False
             , currentTime = 0
             , duration = 0
+            , aspectRatio = 1.3
             }
         else
           Nothing
@@ -1186,3 +1194,8 @@ multiplyRange factor {start, length} =
   { start = start * factor
   , length = length * factor
   }
+
+
+isBrowserWindowTooSmall : Model -> Bool
+isBrowserWindowTooSmall model =
+  model.windowWidth < model.minWindowWidth || model.windowHeight < model.minWindowHeight

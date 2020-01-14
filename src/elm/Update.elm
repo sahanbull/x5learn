@@ -401,6 +401,7 @@ update msg ({nav, userProfileForm} as model) =
           oers =
             oersUnfiltered
             |> List.filter (\oer -> isBeingInspected oer.id |> not)
+            |> List.Extra.uniqueBy .id -- remove any duplicates
             |> List.take 5
 
           newInspectorState =
@@ -709,24 +710,18 @@ update msg ({nav, userProfileForm} as model) =
       (model |> updateVideoPlayer (PositionChanged pos) |> extendVideoUsages pos, Cmd.none)
       |> saveVideoAction 9
 
-    Html5VideoDuration duration ->
-      let
-          (newModel, cmd) =
-            case model.inspectorState of
-              Nothing ->
-                (model, Cmd.none) -- impossible
+    Html5VideoAspectRatio aspectRatio ->
+      case model.inspectorState of
+        Nothing ->
+          (model, Cmd.none)
 
-              Just {oer} ->
-                if oer.durationInSeconds < 0.1 then
-                  let
-                      cachedOers =
-                        model.cachedOers |> Dict.map (\oerId o -> if oerId==oer.id then { o | durationInSeconds = duration } else o)
-                  in
-                      ({ model | cachedOers = cachedOers }, Cmd.none)
-                else
-                  (model, Cmd.none)
-      in
-          (newModel |> updateVideoPlayer (Duration duration), cmd)
+        Just inspectorState ->
+          case inspectorState.videoPlayer of
+            Nothing ->
+              (model, Cmd.none)
+
+            Just videoPlayer ->
+              ({ model | inspectorState = Just { inspectorState | videoPlayer = Just { videoPlayer | aspectRatio = aspectRatio } } }, Cmd.none)
 
     StartCurrentHtml5Video pos ->
       (model |> extendVideoUsages pos, startCurrentHtml5Video pos)

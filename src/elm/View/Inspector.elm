@@ -264,7 +264,7 @@ viewFragmentsBarWrapper model oer =
 
 
 sidebarWidth =
-  272
+  230
 
 
 viewInspectorSidebar : Model -> InspectorState -> Element Msg
@@ -285,7 +285,7 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
                       |> List.map (viewRecommendationCard model)
                       |> column [ spacing 12 ]
             in
-                ("Related material"
+                ("Related materials"
                 , sidebarContent
                 )
 
@@ -309,7 +309,7 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
 
       tabsMenu =
         [ (FeedbackTab, "Feedback")
-        , (RecommendationsTab, "Recommendations")
+        , (RecommendationsTab, "Related")
         ]
         |> List.map renderTab
         |> row [ width fill, paddingXY 20 0, spacing 25, Background.color x5colorDark ]

@@ -79,10 +79,6 @@ type alias Model =
   , userProfileFormSubmitted : Bool -- show a loading spinner while waiting for HTTP response
   -- Lab study
   , currentTaskName : Maybe String
-  -- Full-page resource view
-  , currentResource : Maybe CurrentResource -- in full-page view: the loaded OER e.g. x5learn.org/resource/12345
-  , resourceSidebarTab : ResourceSidebarTab -- in full-page view: switch between recommendations, notes and feedback
-  , resourceRecommendations : List Oer -- in full-page view: OER recommendations in the sidebar tab
   -- Explicit user feedback about OER content
   , feedbackForms : Dict OerId String -- allowing the user to type feedback on different OERs
   , timeOfLastFeedbackRecorded : Posix -- used to show a brief thank you message
@@ -127,17 +123,11 @@ type EntityDefinition
   = DefinitionScheduledForLoading
   | DefinitionLoaded String
 
-{-| Sidebar in full-page view
+{-| Sidebar in inspector
 -}
-type ResourceSidebarTab
+type InspectorSidebarTab
   = RecommendationsTab
   | FeedbackTab
-
-{-| Current resource in full-page view
--}
-type CurrentResource
-  = Loaded OerId
-  | Error
 
 {-| Toggle between thumbnails and bubblograms
 -}
@@ -291,7 +281,6 @@ type Subpage
   | Search
   -- | Favorites
   -- | Notes
-  | Resource
 
 
 {-| Search for OERs
@@ -308,6 +297,8 @@ type alias InspectorState =
   { oer : Oer
   , fragmentStart : Float
   , videoPlayer : Maybe Html5VideoPlayer
+  , inspectorSidebarTab : InspectorSidebarTab -- switch between sidebar contents, such as feedback and recommendations
+  , resourceRecommendations : List Oer -- OER recommendations in the sidebar tab
   }
 
 
@@ -547,9 +538,6 @@ initialModel nav flags =
   , suggestionSelectionOnHoverEnabled = True
   , userProfileForm = freshUserProfileForm (initialUserProfile "")
   , userProfileFormSubmitted = False
-  , currentResource = Nothing
-  , resourceSidebarTab = initialResourceSidebarTab
-  , resourceRecommendations = []
   , feedbackForms = Dict.empty
   , timeOfLastFeedbackRecorded = initialTime
   , videoUsages = Dict.empty
@@ -633,7 +621,7 @@ newInspectorState oer fragmentStart =
         else
           Nothing
   in
-      InspectorState oer fragmentStart videoPlayer
+      InspectorState oer fragmentStart videoPlayer FeedbackTab []
 
 
 hasYoutubeVideo : OerUrl -> Bool
@@ -965,9 +953,6 @@ searchPath =
 favoritesPath =
   "/favorites"
 
-resourcePath =
-  "/resource"
-
 loginPath =
    "/login"
 
@@ -1042,7 +1027,7 @@ isPdfFile oerUrl =
 -}
 resourceUrlPath : OerId -> String
 resourceUrlPath oerId =
-  resourcePath ++ "/" ++ (String.fromInt oerId)
+  searchPath ++ "?q=" ++ (String.fromInt oerId) ++ "&i=" ++ (String.fromInt oerId)
 
 
 {-| In an emergency, temporarily set this to true, then compile and redeploy
@@ -1120,13 +1105,6 @@ isFlyingHeartAnimating model =
 flyingHeartAnimationDuration : Int
 flyingHeartAnimationDuration =
   900
-
-
-{-| In the full-page OER view, which tab should be shown in the sidebar by default
--}
-initialResourceSidebarTab : ResourceSidebarTab
-initialResourceSidebarTab =
-  FeedbackTab
 
 
 {-| Check whether the mouse is hovering over a particular OER

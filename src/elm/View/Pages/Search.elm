@@ -29,7 +29,7 @@ viewSearchPage : Model -> SearchState -> PageWithModal
 viewSearchPage model searchState =
   let
       modal =
-        viewInspectorModalOrEmpty model
+        viewInspector model
 
       content =
         viewBody model searchState

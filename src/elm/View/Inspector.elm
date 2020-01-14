@@ -1,6 +1,9 @@
-module View.Inspector exposing (viewInspectorModalOrEmpty)
+module View.Inspector exposing (viewInspector)
 
 import Set
+
+import Html
+import Html.Attributes as Attributes exposing (style)
 
 import Element exposing (..)
 import Element.Background as Background
@@ -21,8 +24,8 @@ import View.PdfViewer exposing (..)
 import Animation exposing (..)
 
 
-viewInspectorModalOrEmpty : Model -> List (Attribute Msg)
-viewInspectorModalOrEmpty model =
+viewInspector : Model -> List (Attribute Msg)
+viewInspector model =
   case model.inspectorState of
     Nothing ->
       []
@@ -34,36 +37,34 @@ viewInspectorModalOrEmpty model =
 viewModal : Model -> InspectorState -> Element Msg
 viewModal model inspectorState =
   let
-      content =
-        inspectorContentDefault model inspectorState
+      title =
+        case inspectorState.oer.title of
+          "" ->
+            "Title unavailable" |> headlineWrap [ Font.italic ]
 
-      header =
-        [ content.header
-        , fullPageButton
-        , button [] { onPress = Just UninspectSearchResult, label = closeIcon }
+          titleText ->
+            titleText |> headlineWrap []
+
+      bodyAndSidebar =
+        [ viewInspectorSidebar model inspectorState
+        , viewInspectorBody model inspectorState
         ]
-        |> row [ width fill, spacing 4 ]
-
-      fullPageButton =
-        none
-        -- TODO: Re-enable the full-page view once the recommender system works well
-        -- if isLabStudy1 model then
-        --   none
-        -- else
-        --   image [ alpha 0.8, hoverCircleBackground ] { src = svgPath "fullscreen", description = "View this resource in full-page mode" }
-        --   |> linkTo [ alignRight ] (resourceUrlPath inspectorState.oer.id)
+        |> row []
 
       hideWhileOpening =
         alpha <| if model.animationsPending |> Set.member modalId then 0.01 else 1
 
-      body =
-        content.body
+      header =
+        [ title
+        , button [] { onPress = Just UninspectSearchResult, label = closeIcon }
+        ]
+        |> row [ width fill, spacing 4 ]
 
       sheet =
         [ header
-        , body
+        , bodyAndSidebar
         ]
-        |> column [ htmlClass "CloseInspectorOnClickOutside", width (px sheetWidth), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow, inFront content.fixed ]
+        |> column [ htmlClass "CloseInspectorOnClickOutside", width (px <| sheetWidth model), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow ]
 
       animatingBox =
         case model.modalAnimation of
@@ -101,16 +102,9 @@ viewModal model inspectorState =
       |> el [ width fill, height fill, behindContent scrim, inFront animatingBox ]
 
 
-inspectorContentDefault model {oer, fragmentStart} =
+viewInspectorBody : Model -> InspectorState -> Element Msg
+viewInspectorBody model {oer, fragmentStart} =
   let
-      header =
-        case oer.title of
-          "" ->
-            "Title unavailable" |> headlineWrap [ Font.italic ]
-
-          title ->
-            title |> headlineWrap []
-
       player =
         case getYoutubeVideoId oer.url of
           Nothing ->
@@ -127,17 +121,11 @@ inspectorContentDefault model {oer, fragmentStart} =
                   fragmentStart * oer.durationInSeconds |> floor
             in
                 embedYoutubePlayer youtubeId startTime
-
-      body =
-        [ player
-        , viewFragmentsBarWrapper model oer
-        ]
-        |> column [ width (px playerWidth) ]
-
-      footer =
-        []
   in
-      { header = header, body = body, footer = footer, fixed = none }
+      [ player
+      , viewFragmentsBarWrapper model oer
+      ]
+      |> column [ width (px playerWidth), moveLeft sidebarWidth ]
 
 
 
@@ -160,8 +148,9 @@ viewLinkToFile oer =
   newTabLink [] { url = oer.url, label = oer.url |> bodyWrap [] }
 
 
-sheetWidth =
-  752
+sheetWidth model =
+  model.windowWidth - navigationDrawerWidth
+  |> min (playerWidth + sidebarWidth + 35)
 
 
 viewProviderLinkAndFavoriteButton : Model -> Oer -> Element Msg
@@ -227,6 +216,7 @@ viewCourseSettings model oer {range, comment} =
       ]
 
 
+viewFragmentsBarWrapper : Model -> Oer -> Element Msg
 viewFragmentsBarWrapper model oer =
   let
       components =
@@ -271,3 +261,158 @@ viewFragmentsBarWrapper model oer =
   in
       components
       |> column ([ width (px playerWidth), height <| px <| containerHeight, moveDown 1, paddingTop 25, spacing 4 ] ++ fragmentsBar)
+
+
+sidebarWidth =
+  230
+
+
+viewInspectorSidebar : Model -> InspectorState -> Element Msg
+viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
+  let
+      (heading, content) =
+        case inspectorSidebarTab of
+          RecommendationsTab ->
+            let
+                sidebarContent =
+                  case resourceRecommendations of
+                    [] ->
+                      viewLoadingSpinner
+                      |> el [ moveDown 80, width fill ]
+
+                    recommendations ->
+                      recommendations
+                      |> List.map (viewRecommendationCard model)
+                      |> column [ spacing 12 ]
+            in
+                ("Related materials"
+                , sidebarContent
+                )
+
+          FeedbackTab ->
+            ("Feedback"
+            , if (millisSince model model.timeOfLastFeedbackRecorded) < 2000 then viewFeedbackConfirmation else viewFeedbackTab model oer
+            )
+
+      renderTab (tab, title) =
+        let
+            isCurrent =
+              inspectorSidebarTab==tab
+
+            (textColor, borderColor) =
+              if isCurrent then
+                (Font.color white, Border.color white)
+              else
+                (greyText, Border.color fullyTransparentColor)
+        in
+            simpleButton [ Font.size 16, paddingXY 1 20, borderBottom 4, centerX, borderColor, textColor ] title (Just <| SelectInspectorSidebarTab tab oer.id)
+
+      tabsMenu =
+        [ (FeedbackTab, "Feedback")
+        , (RecommendationsTab, "Related")
+        ]
+        |> List.map renderTab
+        |> row [ width fill, paddingXY 20 0, spacing 25, Background.color x5colorDark ]
+
+      tabContent =
+        if isLoggedIn model then
+          [ heading |> headlineWrap []
+          , content
+          ]
+          |> column [ width fill, paddingXY 20 0, spacing 25 ]
+        else
+          guestCallToSignup "In order to use all the features and save your changes"
+          |> el [ width fill, paddingXY 15 12, Background.color <| rgb 1 0.85 0.6 ]
+          |> el [ padding 20 ]
+  in
+      [ tabsMenu |> el [ width fill ]
+      , tabContent |> el [ scrollbarY, height (fill |> maximum 510) ]
+      ]
+      |> column [ spacing 25, width <| px sidebarWidth, height fill, alignTop, borderLeft 1, borderColorDivider, moveRight ((sheetWidth model) - sidebarWidth - 35 |> toFloat), Background.color white ]
+
+
+viewRecommendationCard : Model -> Oer -> Element Msg
+viewRecommendationCard model oer =
+  let
+      title =
+        -- |> subSubheaderNoWrap [ paddingXY 16 10, htmlClass "ClipEllipsis", width <| px (recommendationCardWidth - 52) ]
+        [ oer.title |> Html.text ]
+        |> Html.div [ style "width" (((recommendationCardWidth model) - 32 |> String.fromInt)++"px"), style "font-size" "16px", Attributes.class "ClipEllipsis" ]
+        |> html
+        |> el []
+
+      bottomInfo =
+        let
+            dateStr =
+              if oer.date |> String.startsWith "Published on " then oer.date |> String.dropLeft ("Published on " |> String.length) else oer.date
+
+            date =
+              dateStr |> captionNowrap [ alignLeft ]
+
+            provider =
+              oer.provider |> domainOnly |> truncateSentence 24 |> captionNowrap [ if dateStr=="" then alignLeft else centerX ]
+
+            duration =
+              oer.duration |> captionNowrap [ alignRight ]
+
+            content =
+              [ date, provider, duration ]
+        in
+            content
+            |> row [ width fill, height fill, alignBottom ]
+
+      widthOfCard =
+        width <| px <| recommendationCardWidth model
+
+      heightOfCard =
+        height <| px <| recommendationCardHeight
+  in
+      [ title, bottomInfo ]
+      |> column [ widthOfCard, heightOfCard, paddingXY 15 12, spacing 15, htmlClass "MaterialCard" ]
+      |> linkTo [] (resourceUrlPath oer.id)
+
+
+recommendationCardHeight : Int
+recommendationCardHeight =
+  80
+
+
+recommendationCardWidth : Model -> Int
+recommendationCardWidth model =
+  sidebarWidth - 23
+
+
+viewFeedbackTab : Model -> Oer -> Element Msg
+viewFeedbackTab model oer =
+  let
+      formValue =
+        getResourceFeedbackFormValue model oer.id
+
+      quickOptions =
+        ([ "Inspiring"
+        , "Outstanding"
+        , "Outdated"
+        , "Language errors"
+        , "Poor content"
+        , "Poor image"
+        ] ++ (if isVideoFile oer.url || hasYoutubeVideo oer.url then [ "Poor audio" ] else []))
+        |> List.map (\option -> simpleButton [ paddingXY 9 5, Background.color feedbackOptionButtonColor, Font.size 14, whiteText ] option (Just <| SubmittedResourceFeedback oer.id (">>>"++option)))
+        |> column [ spacing 10 ]
+
+      textField =
+        Input.text [ width fill, htmlId "textInputFieldForNotesOrFeedback", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5color ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Let us know" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
+  in
+      [ "How would you rate this material?" |> bodyWrap []
+      , quickOptions
+      , "Other" |> bodyWrap []
+      , textField
+      ]
+      |> column [ width fill, spacing 20 ]
+
+
+viewFeedbackConfirmation : Element Msg
+viewFeedbackConfirmation =
+  [ "Thanks 😊" |> headlineWrap [ Font.size 24 ]
+  , "✔ Your feedback has been recorded." |> bodyWrap []
+  ]
+  |> column [ spacing 30, paddingTop 200 ]

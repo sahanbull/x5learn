@@ -41,7 +41,6 @@ type Msg
   -- | RequestAutocompleteTerms (Result Http.Error (List String))
   | RequestSaveUserProfile (Result Http.Error String)
   | RequestLabStudyLogEvent (Result Http.Error String)
-  | RequestResource (Result Http.Error Oer)
   | RequestResourceRecommendations (Result Http.Error (List Oer))
   | RequestSaveAction (Result Http.Error String)
   | RequestLoadCourse (Result Http.Error Course)
@@ -73,7 +72,7 @@ type Msg
   | OverviewTagLabelClicked OerId
   | PageScrolled PageScrollState
   | OerCardPlaceholderPositionsReceived (List OerCardPlaceholderPosition)
-  | SelectResourceSidebarTab ResourceSidebarTab OerId
+  | SelectInspectorSidebarTab InspectorSidebarTab OerId
   -- | MouseMovedOnStoryTag Float
   | SelectedOverviewType OverviewType
   | MouseEnterMentionInBubbblogramOverview OerId EntityId MentionInOer

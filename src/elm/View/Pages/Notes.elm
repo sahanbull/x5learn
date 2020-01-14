@@ -64,7 +64,7 @@ viewNotesPage model =
         content
         |> el ([ centerY, width fill, paddingXY 20 140, htmlId "OerCardsContainer" ] ++ oerCards)
   in
-      (page, viewInspectorModalOrEmpty model)
+      (page, viewInspector model)
 
 
 {-| Render a single card representing a note

@@ -62,13 +62,11 @@ update msg ({nav, userProfileForm} as model) =
             --   (Favorites, (model, askPageScrollState True))
             else if path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
-            else if path |> String.startsWith resourcePath then
-              (Resource, model |> requestResourceAfterUrlChanged url)
             else
               (Home, (model, (if model.featuredOers==Nothing then requestFeaturedOers else Cmd.none)))
       in
-          ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage, resourceSidebarTab = initialResourceSidebarTab, resourceRecommendations = [] } |> closePopup |> resetUserProfileForm, cmd)
-          |> logEventForLabStudy "UrlChanged" [ path ]
+          ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage } |> closePopup |> resetUserProfileForm, cmd)
+          |> logEventForLabStudy "UrlChanged" [ path, url.query |> Maybe.withDefault "" ]
 
     ClockTick time ->
       ( { model | currentTime = time, enrichmentsAnimating = anyBubblogramsAnimating model, snackbar = updateSnackbar model }, getOerCardPlaceholderPositions True)
@@ -113,18 +111,9 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, askPageScrollState True)
 
     InspectOer oer fragmentStart playWhenReady ->
-      let
-          videoEmbedParams : VideoEmbedParams
-          videoEmbedParams =
-            { modalId = modalId
-            , videoId = getYoutubeVideoId oer.url |> Maybe.withDefault ""
-            , videoStartPosition = fragmentStart * oer.durationInSeconds
-            , playWhenReady = playWhenReady
-            }
-      in
-          ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup, openModalAnimation videoEmbedParams)
-          |> saveAction 1 [ ("oerId", Encode.int oer.id) ]
-          |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat, "playWhenReady:"++(if playWhenReady then "True" else "False") ]
+      inspectOer model oer fragmentStart playWhenReady
+      |> saveAction 1 [ ("oerId", Encode.int oer.id) ]
+      |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat, "playWhenReady:"++(if playWhenReady then "True" else "False") ]
 
     InspectCourseItem oer ->
       model
@@ -240,9 +229,16 @@ update msg ({nav, userProfileForm} as model) =
     --   ( { model | snackbar = createSnackbar model "Some changes were not saved." }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
-      (model |> updateSearch (insertSearchResults (oers |> List.map .id)) |> cacheOersFromList oers, [ setBrowserFocus "SearchField", getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch)
-      |> requestWikichunkEnrichmentsIfNeeded
-      |> logEventForLabStudy "RequestOerSearch" (oers |> List.map .id |> List.map String.fromInt)
+      let
+          (newModel, cmd) =
+            model
+            |> updateSearch (insertSearchResults (oers |> List.map .id))
+            |> cacheOersFromList oers
+            |> inspectOerBasedOnUrlParameter
+      in
+          (newModel, [ cmd, setBrowserFocus "SearchField", getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch)
+          |> requestWikichunkEnrichmentsIfNeeded
+          |> logEventForLabStudy "RequestOerSearch" (oers |> List.map .id |> List.map String.fromInt)
 
     RequestOerSearch (Err err) ->
       -- let
@@ -265,7 +261,6 @@ update msg ({nav, userProfileForm} as model) =
 
     RequestFeatured (Ok oers) ->
       ( { model | featuredOers = oers |> List.map .id |> Just } |> cacheOersFromList oers, Cmd.none )
-
 
     RequestFeatured (Err err) ->
       ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none)
@@ -392,39 +387,31 @@ update msg ({nav, userProfileForm} as model) =
     -- RequestSaveNote (Err err) ->
     --   ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
-    RequestResource (Ok oer) ->
-      let
-          -- cmdYoutube =
-          --   case getYoutubeVideoId oer.url of
-          --     Nothing ->
-          --       youtubeDestroyPlayer True
-
-          --     Just videoId ->
-          --       let
-          --           videoEmbedParams : VideoEmbedParams
-          --           videoEmbedParams =
-          --             { modalId = ""
-          --             , videoId = videoId
-          --             , fragmentStart = 0
-          --             , playWhenReady = False
-          --             }
-          --       in
-          --           embedYoutubePlayerOnResourcePage videoEmbedParams
-
-          newModel =
-            { model | currentResource = Just <| Loaded oer.id } |> cacheOersFromList [ oer ]
-      in
-          (newModel, Cmd.none)
-
-    RequestResource (Err err) ->
-      ( { model | currentResource = Just Error }, Cmd.none )
-
     RequestResourceRecommendations (Ok oersUnfiltered) ->
       let
+          isBeingInspected oerId =
+            case model.inspectorState of
+              Nothing ->
+                False
+
+              Just {oer} ->
+                oer.id == oerId
+
+          -- ensure that the resource itself isn't included in the recommendations
           oers =
-            oersUnfiltered |> List.filter (\oer -> model.currentResource /= Just (Loaded oer.id)) -- ensure that the resource itself isn't included in the recommendations
+            oersUnfiltered
+            |> List.filter (\oer -> isBeingInspected oer.id |> not)
+            |> List.take 5
+
+          newInspectorState =
+            case model.inspectorState of
+              Nothing ->
+                Nothing
+
+              Just inspectorState ->
+                Just { inspectorState | resourceRecommendations = oers }
       in
-          ({ model | resourceRecommendations = oers } |> cacheOersFromList oers, setBrowserFocus "")
+          ({ model | inspectorState = newInspectorState } |> cacheOersFromList oers, setBrowserFocus "")
           |> requestWikichunkEnrichmentsIfNeeded
           |> logEventForLabStudy "RequestResourceRecommendations" (oers |> List.map .url)
 
@@ -433,8 +420,8 @@ update msg ({nav, userProfileForm} as model) =
       --     dummy =
       --       err |> Debug.log "Error in RequestResourceRecommendations"
       -- in
-      -- ( { model | resourceRecommendations = [], snackbar = createSnackbar model "An error occurred while loading recommendations" }, Cmd.none )
-      ( { model | resourceRecommendations = [], snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
+      -- ( { model | snackbar = createSnackbar model "An error occurred while loading recommendations" }, Cmd.none )
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     SetHover maybeOerId ->
       let
@@ -580,16 +567,32 @@ update msg ({nav, userProfileForm} as model) =
     OerCardPlaceholderPositionsReceived positions ->
       ({ model | oerCardPlaceholderPositions = positions }, Cmd.none)
 
-    SelectResourceSidebarTab tab oerId ->
+    SelectInspectorSidebarTab tab oerId ->
       let
           cmd =
             if tab==RecommendationsTab then
               requestResourceRecommendations oerId
             else
               Cmd.none
+
+          newInspectorState =
+            case model.inspectorState of
+              Nothing ->
+                Nothing
+
+              Just inspectorState ->
+                Just { inspectorState | inspectorSidebarTab = tab }
+
+          tabName =
+            case tab of
+              FeedbackTab ->
+                "FeedbackTab"
+
+              RecommendationsTab ->
+                "RecommendationsTab"
       in
-          ({ model | resourceSidebarTab = tab }, [ cmd, setBrowserFocus "textInputFieldForNotesOrFeedback" ] |> Cmd.batch )
-          |> logEventForLabStudy "SelectResourceSidebarTab" []
+          ({ model | inspectorState = newInspectorState }, [ cmd, setBrowserFocus "textInputFieldForNotesOrFeedback" ] |> Cmd.batch )
+          |> logEventForLabStudy "SelectInspectorSidebarTab" [ String.fromInt oerId, tabName ]
 
     -- MouseMovedOnStoryTag mousePosXonCard ->
     --   case model.overviewType of
@@ -958,25 +961,29 @@ cacheOersFromList oers model =
       { model | cachedOers = Dict.union oersDict model.cachedOers }
 
 
--- addFragmentAccess : Fragment -> Posix -> Model -> Model
--- addFragmentAccess fragment time model =
---   if List.member fragment (Dict.values model.videoUsages) then
---     model
---   else
---       let
---           maxNumberOfItemsToKeep =
---             30 -- arbitrary value. There used to be some performance implications associated with this number but I forgot what the issue was and I'm unsure whether it still applies. Should test empirically.
+inspectOerBasedOnUrlParameter : Model -> (Model, Cmd Msg)
+inspectOerBasedOnUrlParameter model =
+  let
+      urlParameter =
+        model.nav.url.query
+        |> Maybe.withDefault ""
+        |> String.split "&i="
+        |> List.drop 1
+        |> List.head
+        |> Maybe.withDefault ""
+        |> String.toInt
+  in
+      case urlParameter of
+        Nothing ->
+          (model, Cmd.none)
 
---           videoUsages =
---             model.videoUsages
---             |> Dict.toList
---             |> List.reverse
---             |> List.take maxNumberOfItemsToKeep
---             |> List.reverse
---             |> Dict.fromList
---             |> Dict.insert (posixToMillis time) fragment
---       in
---           { model | videoUsages = videoUsages }
+        Just oerId ->
+          case model.cachedOers |> Dict.get oerId of
+            Nothing ->
+              (model, Cmd.none)
+
+            Just oer ->
+              inspectOer model oer 0 False
 
 
 -- setTextInNoteForm : OerId -> String -> Model -> Model
@@ -996,12 +1003,12 @@ updateBubblogramsIfNeeded model =
 
 logEventForLabStudy : String -> List String -> (Model, Cmd Msg) -> (Model, Cmd Msg)
 logEventForLabStudy eventType params (model, cmd) =
-  -- let
-  --     dummy =
-  --       eventType :: params
-  --       |> String.join " "
-  --       |> Debug.log "logEventForLabStudy"
-  -- in
+  let
+      dummy =
+        eventType :: params
+        |> String.join " "
+        |> Debug.log "logEventForLabStudy"
+  in
   if isLabStudy1 model then
     let
         timeString =
@@ -1071,23 +1078,6 @@ executeSearchAfterUrlChanged model url =
   in
         ( newModel |> closePopup, searchOers textParam)
         |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam ]
-
-
-requestResourceAfterUrlChanged : Url -> Model -> (Model, Cmd Msg)
-requestResourceAfterUrlChanged url model =
-  let
-      resourceId =
-        url.path
-        |> String.dropLeft 10 -- TODO A much cleaner method is to use Url.Query.parser
-        |> String.toInt
-  in
-      case resourceId of
-        Nothing ->
-          ({ model | currentResource = Just Error }, Cmd.none)
-
-        Just oerId ->
-          (model, requestResource oerId)
-
 
 
 saveVideoAction : Int -> (Model, Cmd Msg)-> (Model, Cmd Msg)
@@ -1343,3 +1333,18 @@ saveLoggedEventsIfNeeded (oldModel, oldCmd) =
 videoPlayReportingInterval : Float
 videoPlayReportingInterval =
   10
+
+
+inspectOer : Model -> Oer -> Float -> Bool -> (Model, Cmd Msg)
+inspectOer model oer fragmentStart playWhenReady =
+  let
+      videoEmbedParams : VideoEmbedParams
+      videoEmbedParams =
+        { modalId = modalId
+        , videoId = getYoutubeVideoId oer.url |> Maybe.withDefault ""
+        , videoStartPosition = fragmentStart * oer.durationInSeconds
+        , playWhenReady = playWhenReady
+        }
+  in
+      ({ model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup
+      , openModalAnimation videoEmbedParams)

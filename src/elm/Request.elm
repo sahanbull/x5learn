@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResource, requestResourceRecommendations)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -139,17 +139,6 @@ requestSaveLoggedEvents {currentTime, loggedEvents} =
     { url = Url.Builder.absolute [ apiRoot, "save_ui_logged_events_batch/" ] []
     , body = Http.jsonBody <| Encode.object [ ("clientTime", Encode.string (currentTime |> posixToMillis |> String.fromInt)), ("text", Encode.string (loggedEvents |> List.reverse |> String.join "\n")) ]
     , expect = Http.expectString RequestSaveLoggedEvents
-    }
-
-
-{-| Fetch resource in full-page resource view
--}
-requestResource : Int -> Cmd Msg
-requestResource oerId =
-  Http.post
-    { url = Url.Builder.absolute [ apiRoot, "resource/" ] []
-    , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId) ]
-    , expect = Http.expectJson RequestResource oerDecoder
     }
 
 

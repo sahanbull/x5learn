@@ -235,7 +235,13 @@ def api_search():
 
     """
     text = request.args['text'].lower().strip()
-    results = search_results_from_x5gon_api(text)
+    try:
+        # if the text is a number, attempt to retrieve the oer with that id
+        oer_id = int(text)
+        oer = Oer.query.get(oer_id)
+        results = [] if oer is None else [ oer ]
+    except ValueError:
+        results = search_results_from_x5gon_api(text)
     return jsonify([oer.data_and_id() for oer in results])
 
 
@@ -326,14 +332,6 @@ def api_featured():
             'http://hydro.ijs.si/v00a/63/mpklwd24fti34fzr3wtfqsrwri77fg2i.mp4']
     oers = [oer.data_and_id() for oer in Oer.query.filter(Oer.url.in_(urls)).order_by(Oer.url.desc()).all()]
     return jsonify(oers)
-
-
-@app.route("/api/v1/resource/", methods=['POST'])
-def api_material():
-    oer_id = request.get_json()['oerId']
-    oer = Oer.query.filter_by(id=oer_id).first()
-    push_enrichment_task_if_needed(oer.data['url'], 10000)
-    return jsonify(oer.data_and_id())
 
 
 @app.route("/api/v1/resource_feedback/", methods=['POST'])  # to be replaced by Actions API

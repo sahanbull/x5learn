@@ -1027,7 +1027,7 @@ isPdfFile oerUrl =
 -}
 resourceUrlPath : OerId -> String
 resourceUrlPath oerId =
-  searchPath ++ "?q=" ++ (String.fromInt oerId)
+  searchPath ++ "?q=" ++ (String.fromInt oerId) ++ "&i=" ++ (String.fromInt oerId)
 
 
 {-| In an emergency, temporarily set this to true, then compile and redeploy

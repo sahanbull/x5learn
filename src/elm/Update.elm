@@ -709,25 +709,6 @@ update msg ({nav, userProfileForm} as model) =
       (model |> updateVideoPlayer (PositionChanged pos) |> extendVideoUsages pos, Cmd.none)
       |> saveVideoAction 9
 
-    Html5VideoDuration duration ->
-      let
-          (newModel, cmd) =
-            case model.inspectorState of
-              Nothing ->
-                (model, Cmd.none) -- impossible
-
-              Just {oer} ->
-                if oer.durationInSeconds < 0.1 then
-                  let
-                      cachedOers =
-                        model.cachedOers |> Dict.map (\oerId o -> if oerId==oer.id then { o | durationInSeconds = duration } else o)
-                  in
-                      ({ model | cachedOers = cachedOers }, Cmd.none)
-                else
-                  (model, Cmd.none)
-      in
-          (newModel |> updateVideoPlayer (Duration duration), cmd)
-
     StartCurrentHtml5Video pos ->
       (model |> extendVideoUsages pos, startCurrentHtml5Video pos)
       |> logEventForLabStudy "StartCurrentHtml5Video" [ pos |> String.fromFloat ]

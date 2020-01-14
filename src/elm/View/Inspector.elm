@@ -397,11 +397,11 @@ viewFeedbackTab model oer =
         |> column [ spacing 10 ]
 
       textField =
-        Input.text [ width fill, htmlId "textInputFieldForNotesOrFeedback", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5color ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Let us know" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
+        Input.text [ width fill, htmlId "textInputFieldForNotesOrFeedback", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5color ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your comments" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
   in
-      [ "How would you rate this material?" |> bodyWrap []
+      [ "How would you describe this material?" |> bodyWrap []
       , quickOptions
-      , "Other" |> bodyWrap []
+      , "Comments (optional)" |> bodyWrap []
       , textField
       ]
       |> column [ width fill, spacing 20 ]

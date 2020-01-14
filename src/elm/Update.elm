@@ -1003,12 +1003,12 @@ updateBubblogramsIfNeeded model =
 
 logEventForLabStudy : String -> List String -> (Model, Cmd Msg) -> (Model, Cmd Msg)
 logEventForLabStudy eventType params (model, cmd) =
-  let
-      dummy =
-        eventType :: params
-        |> String.join " "
-        |> Debug.log "logEventForLabStudy"
-  in
+  -- let
+  --     dummy =
+  --       eventType :: params
+  --       |> String.join " "
+  --       |> Debug.log "logEventForLabStudy"
+  -- in
   if isLabStudy1 model then
     let
         timeString =

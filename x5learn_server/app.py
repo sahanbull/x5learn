@@ -218,7 +218,7 @@ def api_recommendations():
     results = []
     for candidate in most_similar:
         oer = Oer.query.filter_by(url=candidate[0]).first()
-        if oer is not None:
+        if oer is not None and 'youtu' not in oer.url:
             results.append(oer)
         if len(results) > 9:
             break

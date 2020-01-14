@@ -231,7 +231,7 @@ viewFragmentsBarWrapper model oer =
               viewCourseSettings model oer item
         else
           [ viewDescription oer
-          , [ viewLinkToFile oer, viewProviderLinkAndFavoriteButton model oer ] |> column [ width fill, spacing 15, paddingTop 30 ]
+          -- , [ viewLinkToFile oer, viewProviderLinkAndFavoriteButton model oer ] |> column [ width fill, spacing 15, paddingTop 30 ]
           ]
 
       containerHeight =
@@ -316,8 +316,9 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
 
       tabContent =
         if isLoggedIn model then
-          [ heading |> headlineWrap []
-          , content
+          -- [ heading |> headlineWrap []
+          -- , content
+          [ content
           ]
           |> column [ width fill, paddingXY 20 0, spacing 25 ]
         else

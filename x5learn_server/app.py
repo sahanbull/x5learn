@@ -485,8 +485,11 @@ def inject_duration(oer):
 def filter_x5gon_search_results(materials):
     # (un)comment the lines below to enable/disable filters as desired
 
-    # filter out videos only
+    # include videos only
     materials = [m for m in materials if is_video(m['url'])]
+
+    # exclude youtube videos
+    materials = [m for m in materials if 'youtu' not in m['url']]
 
     # filter by file suffix
     # materials = [m for m in materials if m['url'].endswith(

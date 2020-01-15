@@ -1075,12 +1075,7 @@ def recommendations_from_lam_api(oer_id):
         print('WARNING: requested recommendations for missing OER', oer_id)
         return []
 
-    # Ensure that the OER has an X5GON material_id
-    try:
-        material_id = int(oer.data['material_id'])
-    except:
-        print('WARNING: missing material_id in OER', oer_id)
-        return []
+    material_id = int(oer.data['material_id'])
 
     # request enough items so we can filter the results by type afterwards
     # TODO: get the API improved so that we can filter as part of the request

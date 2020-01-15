@@ -1069,7 +1069,6 @@ def recommendations_from_lam_api(oer_id):
     # endpoint
     RECOMMENDER_ENDPOINT = '/recommendsystem/v1'
 
-    print(oer_id)
     # Ensure that the OER exists
     oer = Oer.query.get(oer_id)
     if oer is None:
@@ -1079,14 +1078,13 @@ def recommendations_from_lam_api(oer_id):
     # Ensure that the OER has an X5GON material_id
     try:
         material_id = int(oer.data['material_id'])
-        print('material_id', material_id, 'type', type(material_id))
     except:
         print('WARNING: missing material_id in OER', oer_id)
         return []
 
     # request enough items so we can filter the results by type afterwards
     # TODO: get the API improved so that we can filter as part of the request
-    data = {'resource_id': material_id, 'n_neighbors': 20, 'remove_duplicates': 1, 'model_type': 'doc2vec'}
+    data = {'resource_id': material_id, 'n_neighbors': 20, 'remove_duplicates': 1, 'model_type': 'wikifier'}
     response = requests.post(LAM_API_URL + RECOMMENDER_ENDPOINT,
                          headers= HEADERS,
                          data=json.dumps(data))

@@ -1069,14 +1069,40 @@ def recommendations_from_lam_api(oer_id):
     # endpoint
     RECOMMENDER_ENDPOINT = '/recommendsystem/v1'
 
-    # request enough items so we can filter the results afterwards
-    data = {'resource_id': oer_id, 'n_neighbors': 8, 'remove_duplicates': 1, 'model_type': 'doc2vec'}
+    print(oer_id)
+    # Ensure that the OER exists
+    oer = Oer.query.get(oer_id)
+    if oer is None:
+        print('WARNING: requested recommendations for missing OER', oer_id)
+        return []
+
+    # Ensure that the OER has an X5GON material_id
+    try:
+        material_id = int(oer.data['material_id'])
+        print('material_id', material_id, 'type', type(material_id))
+    except:
+        print('WARNING: missing material_id in OER', oer_id)
+        return []
+
+    # request enough items so we can filter the results by type afterwards
+    # TODO: get the API improved so that we can filter as part of the request
+    data = {'resource_id': material_id, 'n_neighbors': 20, 'remove_duplicates': 1, 'model_type': 'doc2vec'}
     response = requests.post(LAM_API_URL + RECOMMENDER_ENDPOINT,
                          headers= HEADERS,
                          data=json.dumps(data))
-    materials = response.json()['output']['rec_materials']
+    response_json = response.json()
+    try:
+        materials = response_json['output']['rec_materials']
+    except KeyError as err:
+        print('KeyError')
+        print(err)
+        print(err.args)
+        print(type(response_json))
+        print(response_json)
+        return []
     oers = []
     for material in materials:
+        # print(material['material_id'], material['weight'], material['type'])
         # stop once we have enough items
         if len(oers)>4:
             break

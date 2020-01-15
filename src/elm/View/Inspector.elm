@@ -282,7 +282,7 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
                     recommendations ->
                       recommendations
                       |> List.map (viewRecommendationCard model)
-                      |> column [ spacing 12 ]
+                      |> column [ spacing 12, paddingBottom 9 ]
             in
                 ("Related materials"
                 , sidebarContent

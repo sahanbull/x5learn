@@ -1068,8 +1068,18 @@ executeSearchAfterUrlChanged model url =
         |> Url.percentDecode
         |> Maybe.withDefault ""
 
+      -- when searching by ID, don't change the value in the input field
+      -- see issue #298
+      searchInputTyping =
+        case textParam |> String.toInt of
+          Nothing ->
+            textParam
+
+          Just _ ->
+            model.searchInputTyping
+
       newModel =
-        { model | searchInputTyping = textParam,  searchState = Just <| newSearch textParam, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, snackbar = Nothing }
+        { model | searchInputTyping = searchInputTyping,  searchState = Just <| newSearch textParam, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, snackbar = Nothing }
   in
         ( newModel |> closePopup, searchOers textParam)
         |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam ]

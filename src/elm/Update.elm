@@ -608,8 +608,13 @@ update msg ({nav, userProfileForm} as model) =
     --       |> selectOrUnselectMentionInStory mousePosXonCard
 
     SelectedOverviewType overviewType ->
-      ({ model | overviewType = overviewType, hoveringTagEntityId = Nothing } |> closePopup, Cmd.none)
-      |> logEventForLabStudy "SelectedOverviewType" [ overviewTypeName overviewType ]
+      let
+          name =
+            overviewTypeName overviewType
+      in
+          ({ model | overviewType = overviewType, hoveringTagEntityId = Nothing } |> closePopup, Cmd.none)
+          |> logEventForLabStudy "SelectedOverviewType" [ name ]
+          |> saveAction 10 [ ("option", Encode.string name) ]
 
     MouseEnterMentionInBubbblogramOverview oerId entityId mention ->
       ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")

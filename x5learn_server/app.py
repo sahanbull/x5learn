@@ -1022,6 +1022,11 @@ def initiate_action_types_table():
         action_type = ActionType('Video still playing')
         db_session.add(action_type)
         db_session.commit()
+    action_type = ActionType.query.filter_by(id=10).first()
+    if action_type is None:
+        action_type = ActionType('OverviewType selected')
+        db_session.add(action_type)
+        db_session.commit()
 
 
 def find_enrichment_by_oer_id(oer_id):

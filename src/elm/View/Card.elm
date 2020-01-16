@@ -382,7 +382,7 @@ viewOverviewModeMenu : Model -> Element Msg
 viewOverviewModeMenu model =
   let
       option overviewType =
-        actionButtonWithoutIcon [] [ bigButtonPadding, width fill ] (overviewTypeDisplayName overviewType) (Just <| SelectedOverviewType overviewType)
+        actionButtonWithoutIcon [] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] (overviewTypeDisplayName overviewType) (Just <| SelectedOverviewType overviewType)
 
       options : List (Attribute Msg)
       options =

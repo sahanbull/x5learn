@@ -608,20 +608,8 @@ update msg ({nav, userProfileForm} as model) =
     --       |> selectOrUnselectMentionInStory mousePosXonCard
 
     SelectedOverviewType overviewType ->
-      let
-          logTitle =
-            case overviewType of
-              ImageOverview ->
-                "ImageOverview"
-              BubblogramOverview TopicNames ->
-                "TopicNames"
-              BubblogramOverview TopicMentions ->
-                "TopicMentions"
-              BubblogramOverview TopicConnections ->
-                "TopicConnections"
-      in
-          ({ model | overviewType = overviewType, hoveringTagEntityId = Nothing } |> closePopup, Cmd.none)
-          |> logEventForLabStudy "SelectedOverviewType" [ logTitle ]
+      ({ model | overviewType = overviewType, hoveringTagEntityId = Nothing } |> closePopup, Cmd.none)
+      |> logEventForLabStudy "SelectedOverviewType" [ overviewTypeName overviewType ]
 
     MouseEnterMentionInBubbblogramOverview oerId entityId mention ->
       ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
@@ -809,6 +797,10 @@ update msg ({nav, userProfileForm} as model) =
     CompleteTask ->
       ( { model | currentTaskName = Nothing }, setBrowserFocus "")
       |> logEventForLabStudy "CompleteTask" []
+
+    OpenedOverviewModePopup ->
+      ( { model | popup = Just OverviewModePopup }, setBrowserFocus "")
+      |> logEventForLabStudy "OpenedOverviewModePopup" []
 
 
 -- createNote : OerId -> String -> Model -> Model
@@ -1053,6 +1045,9 @@ popupToStrings maybePopup =
                     "Mention " ++ (positionInResource |> String.fromFloat) ++ " " ++ sentence
           in
               [ oerId |> String.fromInt, entityId, contentString ]
+
+        OverviewModePopup ->
+          [ "OverviewModePopup" ]
 
 
 executeSearchAfterUrlChanged : Model -> Url -> (Model, Cmd Msg)

@@ -379,6 +379,7 @@ type Popup
   = ChunkOnBar ChunkPopup -- chunk on FragmentsBar
   | UserMenu -- when the user clicks on the avatar icon at the top right
   | BubblePopup BubblePopupState -- Certain types of bubblograms open a popup when the mouse hovers over a bubble
+  | OverviewModePopup -- Allowing the user to toggle between thumbnails and bubblograms
 
 
 {-| Cascading menu containing wikipedia topics
@@ -1196,6 +1197,27 @@ multiplyRange factor {start, length} =
   }
 
 
+{-| The interface works best on large screens.
+    Users with screens that are too small should see a warning.
+-}
 isBrowserWindowTooSmall : Model -> Bool
 isBrowserWindowTooSmall model =
   model.windowWidth < model.minWindowWidth || model.windowHeight < model.minWindowHeight
+
+
+{-| Display names of overview types
+-}
+overviewTypeName : OverviewType -> String
+overviewTypeName overviewType =
+  case overviewType of
+    ImageOverview ->
+      "Thumbnail"
+
+    BubblogramOverview TopicNames ->
+      "Topic names"
+
+    BubblogramOverview TopicMentions ->
+      "Swimlanes"
+
+    BubblogramOverview TopicConnections ->
+      "Bubbles"

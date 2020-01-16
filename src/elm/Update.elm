@@ -803,9 +803,9 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | currentTaskName = Nothing }, setBrowserFocus "")
       |> logEventForLabStudy "CompleteTask" []
 
-    OpenedOverviewModePopup ->
-      ( { model | popup = Just OverviewModePopup }, setBrowserFocus "")
-      |> logEventForLabStudy "OpenedOverviewModePopup" []
+    OpenedOverviewTypeMenu ->
+      ( { model | popup = Just OverviewTypePopup }, setBrowserFocus "")
+      |> logEventForLabStudy "OpenedOverviewTypeMenu" []
 
 
 -- createNote : OerId -> String -> Model -> Model
@@ -1051,8 +1051,8 @@ popupToStrings maybePopup =
           in
               [ oerId |> String.fromInt, entityId, contentString ]
 
-        OverviewModePopup ->
-          [ "OverviewModePopup" ]
+        OverviewTypePopup ->
+          [ "OverviewTypePopup" ]
 
 
 executeSearchAfterUrlChanged : Model -> Url -> (Model, Cmd Msg)

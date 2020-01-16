@@ -379,7 +379,7 @@ type Popup
   = ChunkOnBar ChunkPopup -- chunk on FragmentsBar
   | UserMenu -- when the user clicks on the avatar icon at the top right
   | BubblePopup BubblePopupState -- Certain types of bubblograms open a popup when the mouse hovers over a bubble
-  | OverviewModePopup -- Allowing the user to toggle between thumbnails and bubblograms
+  | OverviewTypePopup -- Allowing the user to toggle between thumbnails and bubblograms
 
 
 {-| Cascading menu containing wikipedia topics

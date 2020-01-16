@@ -70,14 +70,14 @@ viewOerGrid model playlist =
               |> List.reverse
               |> List.map inFront
 
-            overviewModeMenu =
-              if isLabStudy1 model then [] else [ viewOverviewModeMenu model |> inFront ]
+            overviewTypeMenu =
+              if isLabStudy1 model then [] else [ viewOverviewTypeMenu model |> inFront ]
 
             rawAttributes =
-              [ height (rowHeight * nrows + 100 |> px), spacing 20, padding 20, width fill ] ++ cards ++ overviewModeMenu
+              [ height (rowHeight * nrows + 100 |> px), spacing 20, padding 20, width fill ] ++ cards ++ overviewTypeMenu
 
             attrs =
-              if model.popup == Just OverviewModePopup then
+              if model.popup == Just OverviewTypePopup then
                 rawAttributes -- render the menu in front of the card content
               else
                 rawAttributes |> List.reverse -- render the card content (particularly the speech bubbles) in front of the menu
@@ -377,8 +377,8 @@ thumbUrl oer =
   "http://145.14.12.67/files/thumbs/tn_"++(String.fromInt oer.id)++"_332x175.jpg"
 
 
-viewOverviewModeMenu : Model -> Element Msg
-viewOverviewModeMenu model =
+viewOverviewTypeMenu : Model -> Element Msg
+viewOverviewTypeMenu model =
   let
       option overviewType =
         actionButtonWithoutIcon [] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] (overviewTypeDisplayName overviewType) (Just <| SelectedOverviewType overviewType)
@@ -386,7 +386,7 @@ viewOverviewModeMenu model =
       options : List (Attribute Msg)
       options =
         case model.popup of
-          Just OverviewModePopup ->
+          Just OverviewTypePopup ->
             [ option ImageOverview
             , option <| BubblogramOverview TopicNames
             , option <| BubblogramOverview TopicConnections
@@ -402,5 +402,5 @@ viewOverviewModeMenu model =
       attrs =
         [ alignRight, moveLeft 130, moveDown 30, Border.width 2, Border.color white, htmlClass "ClosePopupOnClickOutside" ] ++ options
   in
-      actionButtonWithIcon [ whiteText, paddingXY 12 10 ] IconLeft "format_list_white" "Visual Mode" (Just OpenedOverviewModePopup)
+      actionButtonWithIcon [ whiteText, paddingXY 12 10 ] IconLeft "format_list_white" "Visual Mode" (Just OpenedOverviewTypeMenu)
       |> el attrs

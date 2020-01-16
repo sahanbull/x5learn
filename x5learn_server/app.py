@@ -188,12 +188,15 @@ def api_session():
 def get_logged_in_user_profile_and_state():
     profile = current_user.user_profile if current_user.user_profile is not None else {
         'email': current_user.email}
-    # Look at actions to determine whether contentflow is enabled or disabled
+    logged_in_user = {'userProfile': profile, 'isContentFlowEnabled': is_contentflow_enabled()}
+    return jsonify({'loggedInUser': logged_in_user})
+
+
+# Look at actions to determine whether ContentFlow is enabled or disabled
+def is_contentflow_enabled():
     action = Action.query.filter(Action.user_login_id == current_user.get_id(),
                                  Action.action_type_id.in_([7])).order_by(Action.id.desc()).first()
-    is_contentflow_enabled = True if action is None else action.params['enable']
-    logged_in_user = {'userProfile': profile, 'isContentFlowEnabled': is_contentflow_enabled}
-    return jsonify({'loggedInUser': logged_in_user})
+    return True if action is None else action.params['enable']
 
 
 # @user_registered.connect_via(app)

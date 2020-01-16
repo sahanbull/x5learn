@@ -221,14 +221,15 @@ sessionDecoder =
 
 loggedInUserDecoder : Decoder Session
 loggedInUserDecoder =
-  map2 (\userProfile isContentFlowEnabled -> Session (LoggedInUser userProfile) isContentFlowEnabled)
+  map3 (\userProfile isContentFlowEnabled overviewTypeId -> Session (LoggedInUser userProfile) isContentFlowEnabled overviewTypeId)
     (field "userProfile" userProfileDecoder)
     (field "isContentFlowEnabled" bool)
+    (field "overviewTypeId" string)
 
 
 guestUserDecoder : Decoder Session
 guestUserDecoder =
-  map (\_ -> Session GuestUser True)
+  map (\_ -> Session GuestUser True "")
     string
 
 

@@ -488,6 +488,7 @@ type AnimationStatus
 type alias Session =
   { loginState : LoginState
   , isContentFlowEnabled : Bool
+  , overviewTypeId : String
   }
 
 
@@ -1205,19 +1206,54 @@ isBrowserWindowTooSmall model =
   model.windowWidth < model.minWindowWidth || model.windowHeight < model.minWindowHeight
 
 
-{-| Display names of overview types
+{-| Display names of overview types.
+    These are the names as they appear in the GUI, not necessarily in the database.
 -}
-overviewTypeName : OverviewType -> String
-overviewTypeName overviewType =
-  case overviewType of
-    ImageOverview ->
-      "Thumbnail"
+overviewTypeDisplayName : OverviewType -> String
+overviewTypeDisplayName overviewType =
+  case overviewTypes |> List.filter (\entry -> entry.overviewType == overviewType) |> List.head of
+    Nothing ->
+      "Unknown OverviewType" -- make sure this never happens
 
-    BubblogramOverview TopicNames ->
-      "Topic names"
+    Just entry ->
+      entry.displayName
 
-    BubblogramOverview TopicMentions ->
-      "Swimlanes"
 
-    BubblogramOverview TopicConnections ->
-      "Bubbles"
+{-| Permanent IDs of overview types.
+    These are the names as they appear in the database, not necessarily in the GUI.
+-}
+overviewTypeId : OverviewType -> String
+overviewTypeId overviewType =
+  case overviewTypes |> List.filter (\entry -> entry.overviewType == overviewType) |> List.head of
+    Nothing ->
+      "unknown" -- make sure this never happens
+
+    Just entry ->
+      entry.id
+
+
+{-| This function takes an id (as in the database) and returns the corresponding Elm value.
+-}
+overviewTypeFromId : String -> OverviewType
+overviewTypeFromId id =
+  case overviewTypes |> List.filter (\entry -> entry.id == id) |> List.head of
+    Nothing ->
+      ImageOverview -- Default to thumbnails
+
+    Just entry ->
+      entry.overviewType
+
+
+{-| For each value of OverviewType, we need a displayName (as shown in the GUI) and a permanent ID (for the database).
+    Two things are essential here:
+    1. You MUST include every possible value of OverviewType in this list.
+    2. You MUST keep the values for ID the same, in order to prevent inconsistent states on the server.
+    In contrast, feel free to change the values for displayName as needed: These affect only the GUI.
+-}
+overviewTypes : List { id : String, displayName : String, overviewType : OverviewType }
+overviewTypes =
+  [ { id = "thumbnail", displayName = "Thumbnail", overviewType = ImageOverview }
+  , { id = "topicnames", displayName = "Topic Names", overviewType = BubblogramOverview TopicNames }
+  , { id = "bubbles", displayName = "Bubbles", overviewType = BubblogramOverview TopicConnections }
+  , { id = "swimlanes", displayName = "Swimlanes", overviewType = BubblogramOverview TopicMentions }
+  ]

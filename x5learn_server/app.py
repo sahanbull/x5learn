@@ -188,7 +188,7 @@ def api_session():
 def get_logged_in_user_profile_and_state():
     profile = current_user.user_profile if current_user.user_profile is not None else {
         'email': current_user.email}
-    logged_in_user = {'userProfile': profile, 'isContentFlowEnabled': is_contentflow_enabled()}
+    logged_in_user = {'userProfile': profile, 'isContentFlowEnabled': is_contentflow_enabled(), 'overviewTypeId': get_overview_type_setting()}
     return jsonify({'loggedInUser': logged_in_user})
 
 
@@ -197,6 +197,13 @@ def is_contentflow_enabled():
     action = Action.query.filter(Action.user_login_id == current_user.get_id(),
                                  Action.action_type_id.in_([7])).order_by(Action.id.desc()).first()
     return True if action is None else action.params['enable']
+
+
+# Look at actions to determine the OverviewType setting
+def get_overview_type_setting():
+    action = Action.query.filter(Action.user_login_id == current_user.get_id(),
+                                 Action.action_type_id.in_([10])).order_by(Action.id.desc()).first()
+    return 'thumbnail' if action is None else action.params['selectedMode']
 
 
 # @user_registered.connect_via(app)

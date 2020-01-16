@@ -133,7 +133,7 @@ update msg ({nav, userProfileForm} as model) =
     RequestSession (Ok session) ->
       let
           newModel =
-            { model | session = Just session, timeWhenSessionLoaded = model.currentTime }
+            { model | session = Just session, timeWhenSessionLoaded = model.currentTime, overviewType = overviewTypeFromId session.overviewTypeId }
 
           cmd =
             case session.loginState of
@@ -609,12 +609,12 @@ update msg ({nav, userProfileForm} as model) =
 
     SelectedOverviewType overviewType ->
       let
-          name =
-            overviewTypeName overviewType
+          selectedMode =
+            overviewTypeId overviewType
       in
           ({ model | overviewType = overviewType, hoveringTagEntityId = Nothing } |> closePopup, Cmd.none)
-          |> logEventForLabStudy "SelectedOverviewType" [ name ]
-          |> saveAction 10 [ ("option", Encode.string name) ]
+          |> logEventForLabStudy "SelectedOverviewType" [ selectedMode ]
+          |> saveAction 10 [ ("selectedMode", Encode.string selectedMode) ]
 
     MouseEnterMentionInBubbblogramOverview oerId entityId mention ->
       ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")

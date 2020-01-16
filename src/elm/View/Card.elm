@@ -71,11 +71,10 @@ viewOerGrid model playlist =
               |> List.map inFront
 
             overviewModeMenu =
-              viewOverviewModeMenu model
-              |> inFront
+              if isLabStudy1 model then [] else [ viewOverviewModeMenu model |> inFront ]
 
             rawAttributes =
-              [ height (rowHeight * nrows + 100 |> px), spacing 20, padding 20, width fill ] ++ cards ++ [ overviewModeMenu ]
+              [ height (rowHeight * nrows + 100 |> px), spacing 20, padding 20, width fill ] ++ cards ++ overviewModeMenu
 
             attrs =
               if model.popup == Just OverviewModePopup then

@@ -99,7 +99,7 @@ viewContentFlowBar model oer chunks barWidth barId =
               let
                   entityPopup =
                     case model.popup of
-                      Just (ChunkOnBar p) ->
+                      Just (ContentFlowPopup p) ->
                         p.entityPopup
 
                       _ ->
@@ -109,7 +109,7 @@ viewContentFlowBar model oer chunks barWidth barId =
 
             isPopupOpen =
               case model.popup of
-                Just (ChunkOnBar p) ->
+                Just (ContentFlowPopup p) ->
                   barId == p.barId && chunk == p.chunk
 
                 _ ->
@@ -156,7 +156,7 @@ viewContentFlowBar model oer chunks barWidth barId =
               floor <| chunk.length * (toFloat barWidth) + (if chunkIndex == (List.length chunks)-1 then 0 else 1)
         in
             none
-            |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ appearance ++ popup)
+            |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), popupOnMouseEnter (ContentFlowPopup chunkPopup), closePopupOnMouseLeave ] ++ appearance ++ popup)
             |> inFront
 
       chunkTriggers =
@@ -258,7 +258,7 @@ viewEntityButton model chunkPopup entity =
             else
               []
     in
-        button ([ padding 5, width fill, popupOnMouseEnter (ChunkOnBar { chunkPopup | entityPopup = Just { entityId = entity.id, hoveringAction = Nothing } }) ] ++ backgroundAndSubmenu) { onPress = Nothing, label = label }
+        button ([ padding 5, width fill, popupOnMouseEnter (ContentFlowPopup { chunkPopup | entityPopup = Just { entityId = entity.id, hoveringAction = Nothing } }) ] ++ backgroundAndSubmenu) { onPress = Nothing, label = label }
 
 
 {-| Render the submenu that contains the Entity's wikipedia definition (and potentially further action buttons)
@@ -292,7 +292,7 @@ entityActionButton : ChunkPopup -> EntityPopup -> (EntityTitle, Msg) -> Element 
 entityActionButton chunkPopup entityPopup (title, clickAction) =
   let
       hoverAction =
-        popupOnMouseEnter <| ChunkOnBar { chunkPopup | entityPopup = Just { entityPopup | hoveringAction = Just title } }
+        popupOnMouseEnter <| ContentFlowPopup { chunkPopup | entityPopup = Just { entityPopup | hoveringAction = Just title } }
 
       background =
         if entityPopup.hoveringAction == Just title then

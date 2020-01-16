@@ -376,7 +376,7 @@ type alias Entity =
     (They are mutually exclusive, i.e. only one popup can be open at any time)
 -}
 type Popup
-  = ChunkOnBar ChunkPopup -- chunk on ContentFlowBar
+  = ContentFlowPopup ChunkPopup -- chunk on ContentFlowBar
   | UserMenu -- when the user clicks on the avatar icon at the top right
   | BubblePopup BubblePopupState -- Certain types of bubblograms open a popup when the mouse hovers over a bubble
   | OverviewTypePopup -- Allowing the user to toggle between thumbnails and bubblograms

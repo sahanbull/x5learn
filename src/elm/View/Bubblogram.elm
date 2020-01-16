@@ -250,7 +250,7 @@ isHoveringOverEntity model entity =
 
     Nothing ->
       case model.popup of
-        Just (ChunkOnBar chunkPopup) ->
+        Just (ContentFlowPopup chunkPopup) ->
           case chunkPopup.entityPopup of
             Nothing ->
               False

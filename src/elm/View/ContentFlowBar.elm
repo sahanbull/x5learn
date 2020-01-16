@@ -1,4 +1,4 @@
-module View.FragmentsBar exposing (..)
+module View.ContentFlowBar exposing (..)
 
 import Json.Decode
 
@@ -16,8 +16,8 @@ import Msg exposing (..)
 import Animation exposing (..)
 
 
-{-| Render the FragmentsBar, with or without ContentFlow enabled.
-    Note that the FragmentsBar can appear on an OER card or in other places, such as the inspector modal.
+{-| Render the ContentFlowBar, with or without ContentFlow enabled.
+    Note that the ContentFlowBar can appear on an OER card or in other places, such as the inspector modal.
     The behavior varies slightly. At the time of writing:
     A) on a card:
       - hover triggers the ChunkPopup AND causes scrubbing in the card's thumbnail
@@ -30,8 +30,8 @@ import Animation exposing (..)
     - whether ContentFlow is enabled or disabled
     - the return value of isLabStudy1
 -}
-viewFragmentsBar : Model -> Oer -> List Chunk -> Int -> String -> Element Msg
-viewFragmentsBar model oer chunks barWidth barId =
+viewContentFlowBar : Model -> Oer -> List Chunk -> Int -> String -> Element Msg
+viewContentFlowBar model oer chunks barWidth barId =
   let
       visitedRangeMarkers =
         case model.videoUsages |> Dict.get oer.id of
@@ -99,7 +99,7 @@ viewFragmentsBar model oer chunks barWidth barId =
               let
                   entityPopup =
                     case model.popup of
-                      Just (ChunkOnBar p) ->
+                      Just (ContentFlowPopup p) ->
                         p.entityPopup
 
                       _ ->
@@ -109,7 +109,7 @@ viewFragmentsBar model oer chunks barWidth barId =
 
             isPopupOpen =
               case model.popup of
-                Just (ChunkOnBar p) ->
+                Just (ContentFlowPopup p) ->
                   barId == p.barId && chunk == p.chunk
 
                 _ ->
@@ -125,7 +125,7 @@ viewFragmentsBar model oer chunks barWidth barId =
 
                   leftBorder =
                     none
-                    |> el [ width <| px 1, height <| px fragmentsBarHeight, Background.color veryTransparentWhite ]
+                    |> el [ width <| px 1, height <| px contentFlowBarHeight, Background.color veryTransparentWhite ]
                     |> inFront
 
                   queryHighlight =
@@ -156,7 +156,7 @@ viewFragmentsBar model oer chunks barWidth barId =
               floor <| chunk.length * (toFloat barWidth) + (if chunkIndex == (List.length chunks)-1 then 0 else 1)
         in
             none
-            |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), popupOnMouseEnter (ChunkOnBar chunkPopup), closePopupOnMouseLeave ] ++ appearance ++ popup)
+            |> el ([ htmlClass "ChunkTrigger", width <| px <| chunkWidth, height fill, moveRight <| chunk.start * (toFloat barWidth), popupOnMouseEnter (ContentFlowPopup chunkPopup), closePopupOnMouseLeave ] ++ appearance ++ popup)
             |> inFront
 
       chunkTriggers =
@@ -213,7 +213,7 @@ viewFragmentsBar model oer chunks barWidth barId =
         [ onMouseLeave <| TimelineMouseLeave ]
   in
       none
-      |> el ([ htmlClass "FragmentsBar", width fill, height <| px <| fragmentsBarHeight, moveUp fragmentsBarHeight ] ++ chunkTriggers ++ border ++ background ++ visitedRangeMarkers ++ courseRangeMarkers ++ scrubDisplayAndClickHandler ++ mouseLeaveHandler)
+      |> el ([ htmlClass "ContentFlowBar", width fill, height <| px <| contentFlowBarHeight, moveUp contentFlowBarHeight ] ++ chunkTriggers ++ border ++ background ++ visitedRangeMarkers ++ courseRangeMarkers ++ scrubDisplayAndClickHandler ++ mouseLeaveHandler)
 
 
 {-| Render the ChunkPopup as a (cascading) dropdown menu
@@ -232,7 +232,7 @@ viewChunkPopup model chunkPopup =
   in
       entitiesSection
       |> menuColumn []
-      |> el [ moveLeft 30, moveDown fragmentsBarHeight ]
+      |> el [ moveLeft 30, moveDown contentFlowBarHeight ]
 
 
 {-| Render a particular entity as a button in the dropdown menu
@@ -258,7 +258,7 @@ viewEntityButton model chunkPopup entity =
             else
               []
     in
-        button ([ padding 5, width fill, popupOnMouseEnter (ChunkOnBar { chunkPopup | entityPopup = Just { entityId = entity.id, hoveringAction = Nothing } }) ] ++ backgroundAndSubmenu) { onPress = Nothing, label = label }
+        button ([ padding 5, width fill, popupOnMouseEnter (ContentFlowPopup { chunkPopup | entityPopup = Just { entityId = entity.id, hoveringAction = Nothing } }) ] ++ backgroundAndSubmenu) { onPress = Nothing, label = label }
 
 
 {-| Render the submenu that contains the Entity's wikipedia definition (and potentially further action buttons)
@@ -292,7 +292,7 @@ entityActionButton : ChunkPopup -> EntityPopup -> (EntityTitle, Msg) -> Element 
 entityActionButton chunkPopup entityPopup (title, clickAction) =
   let
       hoverAction =
-        popupOnMouseEnter <| ChunkOnBar { chunkPopup | entityPopup = Just { entityPopup | hoveringAction = Just title } }
+        popupOnMouseEnter <| ContentFlowPopup { chunkPopup | entityPopup = Just { entityPopup | hoveringAction = Just title } }
 
       background =
         if entityPopup.hoveringAction == Just title then
@@ -330,9 +330,9 @@ viewDefinition model entityId =
                 "“" ++ text ++ "” (Wikipedia)" |> bodyWrap [ Font.italic, padding 10, width <| px 200 ]
 
 
-{-| Height of the FragmentsBar in pixels
+{-| Height of the ContentFlowBar in pixels
 -}
-fragmentsBarHeight = 16
+contentFlowBarHeight = 16
 
 
 {-| Check whether we are close to the right screen edge

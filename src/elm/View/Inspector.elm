@@ -17,7 +17,7 @@ import Model exposing (..)
 import Msg exposing (..)
 
 import View.Utility exposing (..)
-import View.FragmentsBar exposing (..)
+import View.ContentFlowBar exposing (..)
 import View.Html5VideoPlayer exposing (..)
 import View.PdfViewer exposing (..)
 
@@ -128,7 +128,7 @@ viewInspectorBody model {oer, fragmentStart} =
                 embedYoutubePlayer model youtubeId startTime
   in
       [ player
-      , viewFragmentsBarWrapper model oer
+      , viewContentFlowBarWrapper model oer
       ]
       |> column [ width <| px <| playerWidth model, moveLeft inspectorSidebarWidth ]
 
@@ -221,8 +221,8 @@ viewCourseSettings model oer {range, comment} =
       ]
 
 
-viewFragmentsBarWrapper : Model -> Oer -> Element Msg
-viewFragmentsBarWrapper model oer =
+viewContentFlowBarWrapper : Model -> Oer -> Element Msg
+viewContentFlowBarWrapper model oer =
   let
       components =
         if isLabStudy1 model then
@@ -245,7 +245,7 @@ viewFragmentsBarWrapper model oer =
         else
           200
 
-      fragmentsBar =
+      contentFlowBar =
         if oer.mediatype == "video" then
           case chunksFromOerId model oer.id of
             [] ->
@@ -254,18 +254,18 @@ viewFragmentsBarWrapper model oer =
             wikichunks ->
               let
                   barWrapper =
-                    viewFragmentsBar model oer wikichunks (playerWidth model) "inspector"
+                    viewContentFlowBar model oer wikichunks (playerWidth model) "inspector"
                     |> el [ width <| px <| playerWidth model, height (px 16) ]
               in
                   none
-                  |> el [ inFront barWrapper, moveUp (0 - fragmentsBarHeight), height <| px containerHeight ]
+                  |> el [ inFront barWrapper, moveUp (0 - contentFlowBarHeight), height <| px containerHeight ]
                   |> inFront
                   |> List.singleton
         else
           []
   in
       components
-      |> column ([ width <| px <| playerWidth model, height <| px <| containerHeight, moveDown 1, paddingTop 25, spacing 4 ] ++ fragmentsBar)
+      |> column ([ width <| px <| playerWidth model, height <| px <| containerHeight, moveDown 1, paddingTop 25, spacing 4 ] ++ contentFlowBar)
 
 
 viewInspectorSidebar : Model -> InspectorState -> Element Msg

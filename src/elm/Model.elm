@@ -376,10 +376,10 @@ type alias Entity =
     (They are mutually exclusive, i.e. only one popup can be open at any time)
 -}
 type Popup
-  = ChunkOnBar ChunkPopup -- chunk on FragmentsBar
+  = ContentFlowPopup ChunkPopup -- chunk on ContentFlowBar
   | UserMenu -- when the user clicks on the avatar icon at the top right
   | BubblePopup BubblePopupState -- Certain types of bubblograms open a popup when the mouse hovers over a bubble
-  | OverviewModePopup -- Allowing the user to toggle between thumbnails and bubblograms
+  | OverviewTypePopup -- Allowing the user to toggle between thumbnails and bubblograms
 
 
 {-| Cascading menu containing wikipedia topics
@@ -431,7 +431,7 @@ type alias Range =
   , length : Float -- 0 to 1
   }
 
-{-| TimelineHoverState relates to the FragmentsBar and serves 2 purposes:
+{-| TimelineHoverState relates to the ContentFlowBar and serves 2 purposes:
     1. scrubbing to preview video content
     2. specifying a range for a CourseItem by dragging
 -}

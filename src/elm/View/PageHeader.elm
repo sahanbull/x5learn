@@ -90,13 +90,22 @@ viewUserMenu model userProfile =
 
       menu =
         if model.popup == Just UserMenu then
-          ([ link [] { url = "/profile", label = displayName userProfile |> captionNowrap [ padding 15 ] }
-          , if isLabStudy1 model then none else navButton "/profile" "My profile"
-          , navButton "/logout" "Log out"
-          ])
-          |> menuColumn [ Background.color white, moveRight 67, moveDown 38 ]
-          |> onLeft
-          |> List.singleton
+          let
+              menuItems =
+                if isLabStudy1 model then
+                  [ displayName userProfile |> captionNowrap [ padding 15 ]
+                  , navButton "/logout" "Log out"
+                  ]
+                else
+                  [ link [] { url = "/profile", label = displayName userProfile |> captionNowrap [ padding 15 ] }
+                  , navButton "/profile" "My profile"
+                  , navButton "/logout" "Log out"
+                  ]
+          in
+              menuItems
+              |> menuColumn [ Background.color white, moveRight 67, moveDown 38 ]
+              |> onLeft
+              |> List.singleton
         else
           []
 

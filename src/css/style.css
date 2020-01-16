@@ -54,6 +54,10 @@ a:hover {
   background-size: cover;
 }
 
+.HoverGreyBackground:hover{
+  background-color: rgb(242,242,242) !important;
+}
+
 .ModalAnimation{
   -webkit-filter: blur(1px); /* Safari */
   filter: blur(1px);

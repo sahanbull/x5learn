@@ -69,10 +69,23 @@ viewOerGrid model playlist =
               |> List.indexedMap (\index oer -> viewOerCard model (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) True oer)
               |> List.reverse
               |> List.map inFront
+
+            overviewModeMenu =
+              viewOverviewModeMenu model
+              |> inFront
+
+            rawAttributes =
+              [ height (rowHeight * nrows + 100 |> px), spacing 20, padding 20, width fill ] ++ cards ++ [ overviewModeMenu ]
+
+            attrs =
+              if model.popup == Just OverviewModePopup then
+                rawAttributes -- render the menu in front of the card content
+              else
+                rawAttributes |> List.reverse -- render the card content (particularly the speech bubbles) in front of the menu
         in
             [ playlist.title |> captionNowrap [ paddingLeft <| round <| (cardPositionAtIndex 0).x - 20, moveDown 55, Font.color grey80 ]
             ]
-            |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
+            |> column attrs
 
 
 {-| Render an OER as a card
@@ -110,30 +123,33 @@ viewVisibleOerCard model position barId enableShadow oer =
               |> List.singleton
 
       (graphic, popup) =
-        (viewCarousel model oer, [])
-          -- BubblogramOverview bubblogramType ->
-          --   case Dict.get oer.id model.wikichunkEnrichments of
-          --     Nothing ->
-          --       (none |> el [ width fill, height (px imageHeight), Background.color x5color ]
-          --       , [])
+        case model.overviewType of
+          ImageOverview ->
+            (viewCarousel model oer, [])
 
-          --     Just enrichment ->
-          --       if enrichment.errors then
-          --         if isVideoFile oer.url then
-          --           (image [ alpha 0.9, centerX, centerY ] { src = svgPath "playIcon", description = "Video file" }
-          --            |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
-          --           , [])
-          --         else
-          --           ("no preview available" |> captionNowrap [ alpha 0.75, whiteText, centerX, centerY ]
-          --            |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
-          --           , [])
-          --       else
-          --         case enrichment.bubblogram of
-          --           Nothing -> -- shouldn't happen for more than a second
-          --             (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color materialDark, inFront viewLoadingSpinner ], [])
+          BubblogramOverview bubblogramType ->
+            case Dict.get oer.id model.wikichunkEnrichments of
+              Nothing ->
+                (none |> el [ width fill, height (px imageHeight), Background.color x5color ]
+                , [])
 
-          --           Just bubblogram ->
-          --             viewBubblogram model bubblogramType oer.id bubblogram
+              Just enrichment ->
+                if enrichment.errors then
+                  if isVideoFile oer.url then
+                    (image [ alpha 0.9, centerX, centerY ] { src = svgPath "playIcon", description = "Video file" }
+                     |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
+                    , [])
+                  else
+                    ("no preview available" |> captionNowrap [ alpha 0.75, whiteText, centerX, centerY ]
+                     |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
+                    , [])
+                else
+                  case enrichment.bubblogram of
+                    Nothing -> -- shouldn't happen for more than a second
+                      (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color materialDark, inFront viewLoadingSpinner ], [])
+
+                    Just bubblogram ->
+                      viewBubblogram model bubblogramType oer.id bubblogram
 
       availableTranslations =
         if oer.mediatype/="video" || Dict.isEmpty oer.translations then
@@ -360,3 +376,32 @@ spritesheetUrl oer =
 thumbUrl : Oer -> String
 thumbUrl oer =
   "http://145.14.12.67/files/thumbs/tn_"++(String.fromInt oer.id)++"_332x175.jpg"
+
+
+viewOverviewModeMenu : Model -> Element Msg
+viewOverviewModeMenu model =
+  let
+      option overviewType =
+        actionButtonWithoutIcon [] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] (overviewTypeDisplayName overviewType) (Just <| SelectedOverviewType overviewType)
+
+      options : List (Attribute Msg)
+      options =
+        case model.popup of
+          Just OverviewModePopup ->
+            [ option ImageOverview
+            , option <| BubblogramOverview TopicNames
+            , option <| BubblogramOverview TopicConnections
+            , option <| BubblogramOverview TopicMentions
+            ]
+            |> menuColumn []
+            |> onLeft
+            |> List.singleton
+
+          _ ->
+            []
+
+      attrs =
+        [ alignRight, moveLeft 130, moveDown 30, Border.width 2, Border.color white, htmlClass "ClosePopupOnClickOutside" ] ++ options
+  in
+      actionButtonWithIcon [ whiteText, paddingXY 12 10 ] IconLeft "format_list_white" "Visual Mode" (Just OpenedOverviewModePopup)
+      |> el attrs

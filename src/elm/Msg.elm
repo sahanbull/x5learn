@@ -94,6 +94,7 @@ type Msg
   | ChangedCommentTextInCourseItem OerId String
   | StartTask String
   | CompleteTask
+  | OpenedOverviewModePopup
 
 
 type UserProfileField

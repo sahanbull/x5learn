@@ -188,12 +188,22 @@ def api_session():
 def get_logged_in_user_profile_and_state():
     profile = current_user.user_profile if current_user.user_profile is not None else {
         'email': current_user.email}
-    # Look at actions to determine whether contentflow is enabled or disabled
+    logged_in_user = {'userProfile': profile, 'isContentFlowEnabled': is_contentflow_enabled(), 'overviewTypeId': get_overview_type_setting()}
+    return jsonify({'loggedInUser': logged_in_user})
+
+
+# Look at actions to determine whether ContentFlow is enabled or disabled
+def is_contentflow_enabled():
     action = Action.query.filter(Action.user_login_id == current_user.get_id(),
                                  Action.action_type_id.in_([7])).order_by(Action.id.desc()).first()
-    is_contentflow_enabled = True if action is None else action.params['enable']
-    logged_in_user = {'userProfile': profile, 'isContentFlowEnabled': is_contentflow_enabled}
-    return jsonify({'loggedInUser': logged_in_user})
+    return True if action is None else action.params['enable']
+
+
+# Look at actions to determine the OverviewType setting
+def get_overview_type_setting():
+    action = Action.query.filter(Action.user_login_id == current_user.get_id(),
+                                 Action.action_type_id.in_([10])).order_by(Action.id.desc()).first()
+    return 'thumbnail' if action is None else action.params['selectedMode']
 
 
 # @user_registered.connect_via(app)
@@ -1020,6 +1030,11 @@ def initiate_action_types_table():
     action_type = ActionType.query.filter_by(id=9).first()
     if action_type is None:
         action_type = ActionType('Video still playing')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=10).first()
+    if action_type is None:
+        action_type = ActionType('OverviewType selected')
         db_session.add(action_type)
         db_session.commit()
 

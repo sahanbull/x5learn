@@ -11,7 +11,7 @@ import Dict exposing (Dict)
 
 import Model exposing (..)
 import View.Utility exposing (..)
-import View.FragmentsBar exposing (..)
+import View.ContentFlowBar exposing (..)
 import View.Bubblogram exposing (..)
 
 import Msg exposing (..)
@@ -107,7 +107,7 @@ viewOerCard ({pageScrollState} as model) position barId enableShadow oer =
 viewVisibleOerCard : Model -> Point -> String -> Bool -> Oer -> Element Msg
 viewVisibleOerCard model position barId enableShadow oer =
   let
-      fragmentsBar =
+      contentFlowBar =
         case Dict.get oer.id model.wikichunkEnrichments of
           Nothing ->
             [ viewLoadingSpinner |> el [ moveDown 80, width fill ] |> inFront ]
@@ -116,7 +116,7 @@ viewVisibleOerCard model position barId enableShadow oer =
             if enrichment.errors then
               []
             else
-              viewFragmentsBar model oer enrichment.chunks cardWidth barId
+              viewContentFlowBar model oer enrichment.chunks cardWidth barId
               |> el [ width fill, moveDown (toFloat imageHeight) ]
               |> inFront
               |> List.singleton
@@ -238,7 +238,7 @@ viewVisibleOerCard model position barId enableShadow oer =
 
       card =
         [ graphic ]
-        |> column ([ widthOfCard, heightOfCard, onMouseEnter (SetHover (Just oer.id)), onMouseLeave (SetHover Nothing), title, bottomInfo ] ++ availableTranslations ++ fragmentsBar ++ shadow ++ clickHandler ++ popup)
+        |> column ([ widthOfCard, heightOfCard, onMouseEnter (SetHover (Just oer.id)), onMouseLeave (SetHover Nothing), title, bottomInfo ] ++ availableTranslations ++ contentFlowBar ++ shadow ++ clickHandler ++ popup)
 
       wrapperAttrs =
         [ htmlClass "CloseInspectorOnClickOutside OerCard", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y, htmlDataAttribute <| String.fromInt oer.id, htmlClass "CursorPointer" ]

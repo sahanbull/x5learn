@@ -22,7 +22,7 @@ import Color -- avh4/elm-color
 
 import Model exposing (..)
 import View.Utility exposing (..)
-import View.FragmentsBar exposing (..)
+import View.ContentFlowBar exposing (..)
 
 import Msg exposing (..)
 
@@ -423,7 +423,7 @@ containerWidth =
 {-| Outer height of the bubblogram
 -}
 containerHeight =
-  imageHeight - fragmentsBarHeight
+  imageHeight - contentFlowBarHeight
 
 
 {-| Inner width of the bubblogram
@@ -435,7 +435,7 @@ contentWidth =
 {-| Inner height of the bubblogram
 -}
 contentHeight =
-  imageHeight - 2*marginX - fragmentsBarHeight - 10
+  imageHeight - 2*marginX - contentFlowBarHeight - 10
 
 
 {-| Space between the upper edge and content

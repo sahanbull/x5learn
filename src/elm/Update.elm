@@ -734,6 +734,14 @@ update msg ({nav, userProfileForm} as model) =
               |> saveAction 7 [ ("enable", Encode.bool enabled) ]
               |> logEventForLabStudy "ToggleContentFlow" [ if enabled then "enabled" else "disabled" ]
 
+    ToggleExplainer ->
+      let
+          isExplainerEnabled =
+            not model.isExplainerEnabled
+      in
+          ({ model | isExplainerEnabled = isExplainerEnabled }, Cmd.none)
+          |> saveAction 11 [ ("enable", Encode.bool isExplainerEnabled) ]
+
     AddedOerToCourse oerId range ->
       let
           newItem =

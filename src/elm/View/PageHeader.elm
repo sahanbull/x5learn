@@ -12,6 +12,7 @@ import Element.Input as Input exposing (button)
 import Model exposing (..)
 
 import View.Utility exposing (..)
+import View.ToggleIndicator exposing (..)
 
 import Msg exposing (..)
 
@@ -57,8 +58,8 @@ viewPageHeader model =
           Just session ->
             case session.loginState of
               LoggedInUser userProfile ->
-                -- [ labStudyTaskTimer model
-                [ viewUserMenu model userProfile
+                [ viewExplainerToggle model
+                , viewUserMenu model userProfile
                 ]
 
               GuestUser ->
@@ -113,3 +114,18 @@ viewUserMenu model userProfile =
         if model.popup == Just UserMenu then ClosePopup else SetPopup UserMenu
   in
       button ([ htmlClass "ClosePopupOnClickOutside", alignRight ] ++ menu) { onPress = Just <| clickMsg, label = label }
+
+
+{-| Render the widget for the user to switch Explainer on and off
+-}
+viewExplainerToggle : Model -> Element Msg
+viewExplainerToggle model =
+  let
+      enabled =
+        model.isExplainerEnabled
+  in
+  [ "Transparent AI" |> bodyNoWrap ([ width fill ] ++ (if enabled then [ Font.color magenta ] else []))
+  , viewToggleIndicator enabled (if enabled then "MagentaBackground" else "") |> el [ paddingRight 10 ]
+  ]
+  |> row [ spacing 10, onClick ToggleExplainer, htmlClass "CursorPointer" ]
+  |> el [ alignRight ]

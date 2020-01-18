@@ -211,6 +211,11 @@ orange =
   rgb255 255 120 0
 
 
+magenta : Color
+magenta =
+  rgb255 250 0 230
+
+
 blue : Color
 blue =
   rgb255 0 190 250

@@ -13,6 +13,7 @@ import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
 
 import Model exposing (..)
 import View.Utility exposing (..)
+import View.Explainer exposing (..)
 import View.SearchWidget exposing (..)
 import View.ContentFlowToggle exposing (..)
 import View.Course exposing (..)
@@ -53,7 +54,7 @@ withNavigationDrawer model (pageContent, modal) =
           |> column [ width fill, spacing 8 ]
 
       drawer =
-        [ if isLabStudy1 model then none else model.searchInputTyping |> viewSearchWidget model fill "Search"
+        [ if isLabStudy1 model then none else model.searchInputTyping |> viewSearchWidget model fill "Search" |> explainify model "Text entered here is forwarded to the X5GON search API."
         , navButtons
         ]
         |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 12, spacing 30, whiteBackground ]

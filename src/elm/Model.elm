@@ -116,6 +116,7 @@ type alias Model =
   -- deactivated code
   -- , oerNoteboards : Dict OerId Noteboard
   -- , oerNoteForms : Dict OerId String
+  , isExplainerEnabled : Bool
   }
 
 
@@ -573,6 +574,7 @@ initialModel nav flags =
   , currentTaskName = Nothing
   -- , oerNoteboards = Dict.empty
   -- , oerNoteForms = Dict.empty
+  , isExplainerEnabled = False
   }
 
 

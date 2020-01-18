@@ -742,6 +742,10 @@ update msg ({nav, userProfileForm} as model) =
           ({ model | isExplainerEnabled = isExplainerEnabled }, Cmd.none)
           |> saveAction 11 [ ("enable", Encode.bool isExplainerEnabled) ]
 
+    OpenExplanationPopup componentId ->
+      ({ model | popup = Just <| ExplanationPopup componentId }, Cmd.none)
+      |> saveAction 12 [ ("componentId", Encode.string componentId) ]
+
     AddedOerToCourse oerId range ->
       let
           newItem =
@@ -1061,6 +1065,9 @@ popupToStrings maybePopup =
 
         OverviewTypePopup ->
           [ "OverviewTypePopup" ]
+
+        ExplanationPopup componentId ->
+          [ "ExplanationPopup", componentId ]
 
 
 executeSearchAfterUrlChanged : Model -> Url -> (Model, Cmd Msg)

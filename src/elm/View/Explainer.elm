@@ -21,29 +21,53 @@ import Msg exposing (..)
     This is achieved by wrapping the element in a transparent container
     which adds highlighting and additional functionality
 -}
-explainify : Model -> String -> Element Msg -> Element Msg
-explainify {isExplainerEnabled} blurb element =
+explainify : Model -> String -> String -> String -> Element Msg -> Element Msg
+explainify ({isExplainerEnabled} as model) componentId blurb url element =
   if not isExplainerEnabled then
     element
   else
     let
         wrapperAttrs =
-          [ overlay ]
+          [ overlay model componentId blurb url ]
     in
         element
         |> el wrapperAttrs
 
 
-overlay : Attribute Msg
-overlay =
+overlay : Model -> String -> String -> String -> Attribute Msg
+overlay {popup} componentId blurb url =
   let
       infoButton =
-        simpleButton [ Background.color magenta, whiteText, alignRight, Font.size 12, paddingXY 5 4, moveUp 3, moveRight 3 ] "explain" Nothing
+        let
+            buttonAttrs =
+              [ Background.color magenta, whiteText, alignRight, Font.size 12, paddingXY 5 4, moveUp 3, moveRight 3, htmlClass "ClosePopupOnClickOutside" ] ++ explanationPopup
+        in
+            simpleButton buttonAttrs "explain" (Just <| OpenExplanationPopup componentId)
+
+      explanationPopup =
+        if popup == Just (ExplanationPopup componentId) then
+          viewExplanationPopup blurb url
+        else
+          []
 
       content =
         infoButton
-
   in
       content
       |> el [ width fill, height fill, Border.width 3, Border.color magenta, htmlClass "ZIndex100" ]
       |> inFront
+
+
+viewExplanationPopup : String -> String -> List (Attribute Msg)
+viewExplanationPopup blurb url =
+  let
+      content =
+        [ blurb |> bodyWrap []
+        , "Learn more" |> bodyNoWrap [ Font.color linkBlue ] |> newTabLinkTo [] url
+        ]
+        |> column [ spacing 15 ]
+  in
+      content
+      |> el [ Background.color white, centerX, padding 16, dialogShadow, width <| px 220 ]
+      |> onRight
+      |> List.singleton

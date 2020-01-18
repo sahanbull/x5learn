@@ -574,19 +574,20 @@ pointerEventsNone =
   htmlClass "PointerEventsNone"
 
 
+inlineLinkAttrs : List (Attribute Msg)
+inlineLinkAttrs =
+  [ paddingXY 5 0, Font.color linkBlue ]
+
+
 guestCallToSignup : String -> Element Msg
 guestCallToSignup incentive =
-  let
-      linkAttrs =
-        [ paddingXY 5 0, Font.color linkBlue ]
-  in
-      [ "You are currently not logged in. "++incentive++", please" |> text
-      , "log in" |> text |> linkTo linkAttrs loginPath
-      , "or" |> text
-      , "create an account" |> text |> linkTo linkAttrs signupPath
-      , "." |> text
-      ]
-      |> paragraph [ Font.size 14, Font.color materialDark ]
+  [ "You are currently not logged in. "++incentive++", please" |> text
+  , "log in" |> text |> linkTo inlineLinkAttrs loginPath
+  , "or" |> text
+  , "create an account" |> text |> linkTo inlineLinkAttrs signupPath
+  , "." |> text
+  ]
+  |> paragraph [ Font.size 14, Font.color materialDark ]
 
 
 viewHeartButton : Model -> OerId -> Element Msg

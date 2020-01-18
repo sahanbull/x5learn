@@ -381,6 +381,7 @@ type Popup
   | UserMenu -- when the user clicks on the avatar icon at the top right
   | BubblePopup BubblePopupState -- Certain types of bubblograms open a popup when the mouse hovers over a bubble
   | OverviewTypePopup -- Allowing the user to toggle between thumbnails and bubblograms
+  | ExplanationPopup String -- Showing extra information for a component if isExplainerEnabled
 
 
 {-| Cascading menu containing wikipedia topics

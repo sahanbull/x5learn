@@ -88,6 +88,7 @@ type Msg
   | StartCurrentHtml5Video Float
   | ToggleContentFlow
   | ToggleExplainer
+  | OpenExplanationPopup String
   | AddedOerToCourse OerId Range
   | RemovedOerFromCourse OerId
   | MovedCourseItemDown Int

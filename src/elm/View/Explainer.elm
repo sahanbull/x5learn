@@ -1,4 +1,4 @@
-module View.Explainer exposing (explainify)
+module View.Explainer exposing (..)
 
 -- import Dict
 -- import Set
@@ -21,21 +21,21 @@ import Msg exposing (..)
     This is achieved by wrapping the element in a transparent container
     which adds highlighting and additional functionality
 -}
-explainify : Model -> String -> String -> String -> Element Msg -> Element Msg
-explainify ({isExplainerEnabled} as model) componentId blurb url element =
+explainify : Model -> Explanation -> Element Msg -> Element Msg
+explainify ({isExplainerEnabled} as model) explanation element =
   if not isExplainerEnabled then
     element
   else
     let
         wrapperAttrs =
-          [ overlay model componentId blurb url ]
+          [ viewExplainerOverlay model explanation ]
     in
         element
         |> el wrapperAttrs
 
 
-overlay : Model -> String -> String -> String -> Attribute Msg
-overlay {popup} componentId blurb url =
+viewExplainerOverlay : Model -> Explanation -> Attribute Msg
+viewExplainerOverlay {popup} {componentId, blurb, url} =
   let
       infoButton =
         let
@@ -71,3 +71,11 @@ viewExplanationPopup blurb url =
       |> el [ Background.color white, centerX, padding 16, dialogShadow, width <| px 220 ]
       |> onRight
       |> List.singleton
+
+
+explanationForSearchField : Explanation
+explanationForSearchField =
+  { componentId = "searchField"
+  , blurb = "Text entered here is forwarded to the X5GON Discovery API. The results do not depend on your user data."
+  , url = "https://platform.x5gon.org/products/discovery"
+  }

@@ -511,6 +511,15 @@ type alias VideoEmbedParams =
   }
 
 
+{-| Explanation for a particular UI component
+-}
+type alias Explanation =
+  { componentId : String -- arbitrary unique name e.g. searchField. Used to distinguish which ExplanationPopup is currently open
+  , blurb : String -- e.g. "Text entered here is forwarded to the Discovery API."
+  , url : String -- e.g. "https://platform.x5gon.org/products/discovery"
+  }
+
+
 {-| Initial model state
 -}
 initialModel : Nav -> Flags -> Model

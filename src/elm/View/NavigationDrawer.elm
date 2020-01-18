@@ -54,7 +54,7 @@ withNavigationDrawer model (pageContent, modal) =
           |> column [ width fill, spacing 8 ]
 
       drawer =
-        [ if isLabStudy1 model then none else model.searchInputTyping |> viewSearchWidget model fill "Search" |> explainify model "searchField" "Text entered here is forwarded to the X5GON Discovery API. The results do not depend on your user data." "https://platform.x5gon.org/products/discovery"
+        [ if isLabStudy1 model then none else model.searchInputTyping |> viewSearchWidget model fill "Search" |> explainify model explanationForSearchField
         , navButtons
         ]
         |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 12, spacing 30, whiteBackground ]

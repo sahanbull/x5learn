@@ -50,7 +50,8 @@ withNavigationDrawer model (pageContent, modal) =
           |> column [ spacing 40, width fill ]
         else
           -- [ navButton True "/favorites" "nav_favorites" "Favorites" |> heartAnimationWrapper
-          []
+          [ viewCourse model
+          ]
           |> column [ width fill, spacing 8 ]
 
       drawer =

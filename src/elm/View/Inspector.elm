@@ -224,20 +224,22 @@ viewCourseSettings model oer {range, comment} =
 viewContentFlowBarWrapper : Model -> Oer -> Element Msg
 viewContentFlowBarWrapper model oer =
   let
+      courseSettings =
+        case getCourseItem model oer of
+          Nothing ->
+            [ none |> el [ width fill ]
+            , actionButtonWithIcon [] IconLeft "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
+            ]
+
+          Just item ->
+            viewCourseSettings model oer item
+
       components =
         if isLabStudy1 model then
-          case getCourseItem model oer of
-            Nothing ->
-              [ none |> el [ width fill ]
-              , actionButtonWithIcon [] IconLeft "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
-              ]
-
-            Just item ->
-              viewCourseSettings model oer item
+          courseSettings
         else
-          [ viewDescription oer
+          [ viewDescription oer ] ++ courseSettings
           -- , [ viewLinkToFile oer, viewProviderLinkAndFavoriteButton model oer ] |> column [ width fill, spacing 15, paddingTop 30 ]
-          ]
 
       containerHeight =
         if isLabStudy1 model then

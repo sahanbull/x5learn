@@ -1,8 +1,4 @@
-module View.Explainer exposing (..)
-
--- import Dict
--- import Set
--- import Json.Decode as Decode
+module View.Explainer exposing (explainify)
 
 import Element exposing (..)
 import Element.Input as Input exposing (button)
@@ -17,9 +13,9 @@ import View.Utility exposing (..)
 import Msg exposing (..)
 
 
-{-| Decorate an Element with an info button if isExplainerEnabled
+{-| Decorate an Element with an info button if isExplainerEnabled.
     This is achieved by wrapping the element in a transparent container
-    which adds highlighting and additional functionality
+    which adds highlighting and additional functionality (button and popup).
 -}
 explainify : Model -> Explanation -> Element Msg -> Element Msg
 explainify ({isExplainerEnabled} as model) explanation element =
@@ -35,7 +31,7 @@ explainify ({isExplainerEnabled} as model) explanation element =
 
 
 viewExplainerOverlay : Model -> Explanation -> Attribute Msg
-viewExplainerOverlay {popup} {componentId, blurb, url} =
+viewExplainerOverlay {popup} {flyoutDirection, componentId, blurb, url} =
   let
       infoButton =
         let
@@ -46,7 +42,7 @@ viewExplainerOverlay {popup} {componentId, blurb, url} =
 
       explanationPopup =
         if popup == Just (ExplanationPopup componentId) then
-          viewExplanationPopup blurb url
+          [ viewExplanationPopup flyoutDirection blurb url ]
         else
           []
 
@@ -58,24 +54,21 @@ viewExplainerOverlay {popup} {componentId, blurb, url} =
       |> inFront
 
 
-viewExplanationPopup : String -> String -> List (Attribute Msg)
-viewExplanationPopup blurb url =
+viewExplanationPopup : LeftOrRight -> String -> String -> Attribute Msg
+viewExplanationPopup flyoutDirection blurb url =
   let
+      weblink =
+        if url=="" then
+           none
+         else
+           "Learn more" |> bodyNoWrap [ Font.color linkBlue ] |> newTabLinkTo [] url
+
       content =
         [ blurb |> bodyWrap []
-        , "Learn more" |> bodyNoWrap [ Font.color linkBlue ] |> newTabLinkTo [] url
+        , weblink
         ]
         |> column [ spacing 15 ]
   in
       content
       |> el [ Background.color white, centerX, padding 16, dialogShadow, width <| px 220 ]
-      |> onRight
-      |> List.singleton
-
-
-explanationForSearchField : Explanation
-explanationForSearchField =
-  { componentId = "searchField"
-  , blurb = "Text entered here is forwarded to the X5GON Discovery API. The results do not depend on your user data."
-  , url = "https://platform.x5gon.org/products/discovery"
-  }
+      |> if flyoutDirection==Left then onLeft else onRight

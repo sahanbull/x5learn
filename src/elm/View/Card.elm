@@ -117,7 +117,7 @@ viewVisibleOerCard model position barId enableShadow oer =
             if enrichment.errors then
               []
             else
-              viewContentFlowBar model oer enrichment.chunks cardWidth (barId |> Debug.log "barId")
+              viewContentFlowBar model oer enrichment.chunks cardWidth barId
               |> el [ width fill, moveDown (toFloat imageHeight) ]
               |> inFront
               |> List.singleton

@@ -87,6 +87,8 @@ type Msg
   | Html5VideoAspectRatio Float
   | StartCurrentHtml5Video Float
   | ToggleContentFlow
+  | ToggleExplainer
+  | OpenExplanationPopup String
   | AddedOerToCourse OerId Range
   | RemovedOerFromCourse OerId
   | MovedCourseItemDown Int

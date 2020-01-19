@@ -11,6 +11,7 @@ import Dict exposing (Dict)
 
 import Model exposing (..)
 import View.Utility exposing (..)
+import View.Explainer exposing (..)
 import View.ContentFlowBar exposing (..)
 import View.Bubblogram exposing (..)
 
@@ -116,7 +117,7 @@ viewVisibleOerCard model position barId enableShadow oer =
             if enrichment.errors then
               []
             else
-              viewContentFlowBar model oer enrichment.chunks cardWidth barId
+              viewContentFlowBar model oer enrichment.chunks cardWidth (barId |> Debug.log "barId")
               |> el [ width fill, moveDown (toFloat imageHeight) ]
               |> inFront
               |> List.singleton
@@ -239,13 +240,19 @@ viewVisibleOerCard model position barId enableShadow oer =
       card =
         [ graphic ]
         |> column ([ widthOfCard, heightOfCard, onMouseEnter (SetHover (Just oer.id)), onMouseLeave (SetHover Nothing), title, bottomInfo ] ++ availableTranslations ++ contentFlowBar ++ shadow ++ clickHandler ++ popup)
+        |> explanationWrapper
+
+      explanationWrapper =
+          if barId |> String.startsWith "Featured Content" then
+            explainify model explanationForFeaturedContent
+          else
+            noOp
 
       wrapperAttrs =
         [ htmlClass "CloseInspectorOnClickOutside OerCard", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y, htmlDataAttribute <| String.fromInt oer.id, htmlClass "CursorPointer" ]
   in
       none
       |> el wrapperAttrs
-
 
 {-| If the Oer has several images, show them as a slideshow
 -}
@@ -404,3 +411,12 @@ viewOverviewTypeMenu model =
   in
       actionButtonWithIcon [ whiteText, paddingXY 12 10 ] IconLeft "format_list_white" "Visual Mode" (Just OpenedOverviewTypeMenu)
       |> el attrs
+
+
+explanationForFeaturedContent : Explanation
+explanationForFeaturedContent =
+  { componentId = "featuredContent"
+  , flyoutDirection = Left
+  , blurb = "Featured content comprises a small set of Open Educational Resources, curated by the makers of X5Learn"
+  , url = ""
+  }

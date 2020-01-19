@@ -116,6 +116,7 @@ type alias Model =
   -- deactivated code
   -- , oerNoteboards : Dict OerId Noteboard
   -- , oerNoteForms : Dict OerId String
+  , isExplainerEnabled : Bool
   }
 
 
@@ -380,6 +381,7 @@ type Popup
   | UserMenu -- when the user clicks on the avatar icon at the top right
   | BubblePopup BubblePopupState -- Certain types of bubblograms open a popup when the mouse hovers over a bubble
   | OverviewTypePopup -- Allowing the user to toggle between thumbnails and bubblograms
+  | ExplanationPopup String -- Showing extra information for a component if isExplainerEnabled
 
 
 {-| Cascading menu containing wikipedia topics
@@ -509,6 +511,20 @@ type alias VideoEmbedParams =
   }
 
 
+type LeftOrRight
+  = Left
+  | Right
+
+{-| Explanation for a particular UI component
+-}
+type alias Explanation =
+  { componentId : String -- arbitrary unique name e.g. searchField. Used to distinguish which ExplanationPopup is currently open
+  , blurb : String -- e.g. "Text entered here is forwarded to the Discovery API."
+  , url : String -- e.g. "https://platform.x5gon.org/products/discovery"
+  , flyoutDirection : LeftOrRight -- e.g. Right (preferable unless the component is likely to be too close to the right edge of the screen)
+  }
+
+
 {-| Initial model state
 -}
 initialModel : Nav -> Flags -> Model
@@ -573,6 +589,7 @@ initialModel nav flags =
   , currentTaskName = Nothing
   -- , oerNoteboards = Dict.empty
   -- , oerNoteForms = Dict.empty
+  , isExplainerEnabled = False
   }
 
 
@@ -1257,3 +1274,10 @@ overviewTypes =
   , { id = "bubbles", displayName = "Bubbles", overviewType = BubblogramOverview TopicConnections }
   , { id = "swimlanes", displayName = "Swimlanes", overviewType = BubblogramOverview TopicMentions }
   ]
+
+
+{-| Function that does nothing
+-}
+noOp : a -> a
+noOp x =
+  x

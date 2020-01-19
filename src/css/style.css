@@ -212,6 +212,10 @@ a:hover {
   background-color: #2196F3;
 }
 
+.MagentaBackground {
+  background-color: #f0e !important;
+}
+
 .ToggleEnabled + .ToggleSlider:before {
   -webkit-transform: translateX(20px);
   -ms-transform: translateX(20px);
@@ -233,4 +237,8 @@ a:hover {
   border: none;
   border-bottom: 1px solid #999;
   border-radius: 0;
+}
+
+.ZIndex100{
+  z-index: 100;
 }

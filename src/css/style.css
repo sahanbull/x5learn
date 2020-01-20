@@ -230,3 +230,7 @@ a:hover {
   border-bottom: 1px solid #999;
   border-radius: 0;
 }
+
+.custom-container {
+  padding: 20px;
+}

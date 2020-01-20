@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, render_template, request, redirect
 from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required
-from flask_security.forms import LoginForm
+from flask_security.forms import RegisterForm
 from flask_sqlalchemy import SQLAlchemy
 from wtforms import BooleanField, validators
 import json
@@ -65,12 +65,12 @@ user_datastore = SQLAlchemySessionUserDatastore(db_session,
 app.config["SQLALCHEMY_DATABASE_URI"] = DB_ENGINE_URI
 db = SQLAlchemy(app)
 
-# extending flask security login form to support additional fields
-class ExtendedLoginForm(LoginForm):
+# extending flask security register form to support additional fields
+class ExtendedRegisterForm(RegisterForm):
     privacy_policy = BooleanField('privacy_policy', [validators.DataRequired(message="Please read and agree to the privacy policy.")])
     terms_and_conditions = BooleanField('term_and_conditions', [validators.DataRequired(message="Please read and agree to the terms and conditions.")])
 
-security = Security(app, user_datastore, login_form=ExtendedLoginForm)
+security = Security(app, user_datastore, confirm_register_form=ExtendedRegisterForm)
 
 # Setup Flask-Mail Server
 app.config['MAIL_SERVER'] = MAIL_SERVER
@@ -191,7 +191,14 @@ def data_collection():
         return render_template('data_collection.html')
 
     profile = json.loads(current_user.user_profile)
+
     if profile.get('allow_data_collection') is None:
+        return render_template('data_collection.html')
+
+    last_data_collection_prompt_datetime = datetime.fromtimestamp(profile.get('last_data_collection_prompt'))
+    datediff = datetime.now() - last_data_collection_prompt_datetime
+
+    if datediff.days > 1:
         return render_template('data_collection.html')
     else:
         return redirect("/")
@@ -201,7 +208,7 @@ def data_collection():
 @app.route("/data_collection", methods=['POST'])
 def submit_data_collection():
     allow_data_collection = request.form['allow_data_collection']
-    current_user.user_profile = json.dumps({'allow_data_collection': allow_data_collection})
+    current_user.user_profile = json.dumps({'allow_data_collection': allow_data_collection, 'last_data_collection_prompt': datetime.timestamp(datetime.now())})
     db_session.commit()
     return redirect("/")
 

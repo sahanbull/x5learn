@@ -50,7 +50,7 @@ viewExplainerOverlay {popup} {flyoutDirection, componentId, links} =
         infoButton
   in
       content
-      |> el [ width fill, height fill, Border.width 3, Border.color magenta, htmlClass "ZIndex100" ]
+      |> el [ width fill, height fill, Border.width 3, Border.color magenta, htmlClass "ZIndex100", pointerEventsNone ]
       |> inFront
 
 

@@ -286,6 +286,7 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
                       recommendations
                       |> List.map (viewRecommendationCard model)
                       |> column [ spacing 12, paddingBottom 9 ]
+                      |> explainify model explanationForRelatedTab
             in
                 ("Related materials"
                 , sidebarContent
@@ -427,4 +428,12 @@ explanationForHtml5VideoPlayer =
   { componentId = "html5VideoPlayer"
   , flyoutDirection = Left
   , links = [ explanationLinkForTranslation, explanationLinkForWikification ]
+  }
+
+
+explanationForRelatedTab : Explanation
+explanationForRelatedTab =
+  { componentId = "relatedTab"
+  , flyoutDirection = Down
+  , links = [ explanationLinkForItemRecommender ]
   }

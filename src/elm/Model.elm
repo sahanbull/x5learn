@@ -511,9 +511,10 @@ type alias VideoEmbedParams =
   }
 
 
-type LeftOrRight
+type FlyoutDirection
   = Left
   | Right
+  | Down
 
 
 {-| Explanation for a particular UI component
@@ -521,7 +522,7 @@ type LeftOrRight
 type alias Explanation =
   { componentId : String -- arbitrary unique name e.g. searchField. Used to distinguish which ExplanationPopup is currently open
   , links : List WebLink -- e.g. { label = "Discovery API", url = "https://platform.x5gon.org/products/discovery" }
-  , flyoutDirection : LeftOrRight -- e.g. Right (preferable unless the component is likely to be too close to the right edge of the screen)
+  , flyoutDirection : FlyoutDirection -- e.g. Right (preferable unless the component is likely to be too close to the right edge of the screen)
   }
 
 

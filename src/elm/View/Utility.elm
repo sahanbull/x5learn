@@ -646,6 +646,6 @@ explanationLinkForItemRecommender =
 
 explanationLinkForTranslation : WebLink
 explanationLinkForTranslation =
-  { label = "Automatic Translation/Transcription"
+  { label = "Translation / Transcription"
   , url = "https://platform.x5gon.org/products/translate"
   }

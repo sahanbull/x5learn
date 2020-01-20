@@ -54,7 +54,7 @@ viewExplainerButton {popup} {flyoutDirection, componentId, links} =
       |> inFront
 
 
-viewExplanationPopup : LeftOrRight -> List WebLink -> Attribute Msg
+viewExplanationPopup : FlyoutDirection -> List WebLink -> Attribute Msg
 viewExplanationPopup flyoutDirection links =
   let
       introText =
@@ -72,7 +72,18 @@ viewExplanationPopup flyoutDirection links =
         , weblinks
         ]
         |> column [ spacing 15 ]
+
+      flyoutPosition =
+        case flyoutDirection of
+          Left ->
+            onLeft
+
+          Right ->
+            onRight
+
+          Down ->
+            below
   in
       content
-      |> el [ Background.color white, centerX, padding 16, dialogShadow, width <| px 260 ]
-      |> if flyoutDirection==Left then onLeft else onRight
+      |> el [ Background.color white, centerX, padding 16, dialogShadow, width <| px 208, moveLeft (if flyoutDirection==Down then 80 else 0) ]
+      |> flyoutPosition

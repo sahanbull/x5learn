@@ -31,7 +31,7 @@ explainify ({isExplainerEnabled} as model) explanation element =
 
 
 viewExplainerOverlay : Model -> Explanation -> Attribute Msg
-viewExplainerOverlay {popup} {flyoutDirection, componentId, blurb, url} =
+viewExplainerOverlay {popup} {flyoutDirection, componentId, links} =
   let
       infoButton =
         let
@@ -42,7 +42,7 @@ viewExplainerOverlay {popup} {flyoutDirection, componentId, blurb, url} =
 
       explanationPopup =
         if popup == Just (ExplanationPopup componentId) then
-          [ viewExplanationPopup flyoutDirection blurb url ]
+          [ viewExplanationPopup flyoutDirection links ]
         else
           []
 
@@ -54,21 +54,23 @@ viewExplainerOverlay {popup} {flyoutDirection, componentId, blurb, url} =
       |> inFront
 
 
-viewExplanationPopup : LeftOrRight -> String -> String -> Attribute Msg
-viewExplanationPopup flyoutDirection blurb url =
+viewExplanationPopup : LeftOrRight -> List WebLink -> Attribute Msg
+viewExplanationPopup flyoutDirection links =
   let
-      weblink =
-        if url=="" then
-           none
-         else
-           "Learn more" |> bodyNoWrap [ Font.color linkBlue ] |> newTabLinkTo [] url
+      introText =
+        "The following AI components are used here"
+
+      weblinks =
+        links
+        |> List.map (\{label, url} -> label |> bodyNoWrap [ Font.color linkBlue ] |> newTabLinkTo [] url)
+        |> column [ spacing 10 ]
 
       content =
-        [ blurb |> bodyWrap []
-        , weblink
+        [ introText |> bodyWrap []
+        , weblinks
         ]
         |> column [ spacing 15 ]
   in
       content
-      |> el [ Background.color white, centerX, padding 16, dialogShadow, width <| px 220 ]
+      |> el [ Background.color white, centerX, padding 16, dialogShadow, width <| px 260 ]
       |> if flyoutDirection==Left then onLeft else onRight

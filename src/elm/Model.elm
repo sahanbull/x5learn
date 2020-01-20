@@ -515,13 +515,21 @@ type LeftOrRight
   = Left
   | Right
 
+
 {-| Explanation for a particular UI component
 -}
 type alias Explanation =
   { componentId : String -- arbitrary unique name e.g. searchField. Used to distinguish which ExplanationPopup is currently open
-  , blurb : String -- e.g. "Text entered here is forwarded to the Discovery API."
-  , url : String -- e.g. "https://platform.x5gon.org/products/discovery"
+  , links : List WebLink -- e.g. { label = "Discovery API", url = "https://platform.x5gon.org/products/discovery" }
   , flyoutDirection : LeftOrRight -- e.g. Right (preferable unless the component is likely to be too close to the right edge of the screen)
+  }
+
+
+{-| Just a regular web link with a label and a URL
+-}
+type alias WebLink =
+  { label : String
+  , url : String
   }
 
 

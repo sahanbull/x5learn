@@ -243,10 +243,7 @@ viewVisibleOerCard model position barId enableShadow oer =
         |> explanationWrapper
 
       explanationWrapper =
-          if barId |> String.startsWith "Featured Content" then
-            explainify model explanationForFeaturedContent
-          else
-            noOp
+        explainify model explanationForOerCard
 
       wrapperAttrs =
         [ htmlClass "CloseInspectorOnClickOutside OerCard", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y, htmlDataAttribute <| String.fromInt oer.id, htmlClass "CursorPointer" ]
@@ -413,10 +410,9 @@ viewOverviewTypeMenu model =
       |> el attrs
 
 
-explanationForFeaturedContent : Explanation
-explanationForFeaturedContent =
-  { componentId = "featuredContent"
+explanationForOerCard : Explanation
+explanationForOerCard =
+  { componentId = "oerCard"
   , flyoutDirection = Left
-  , blurb = "Featured content comprises a small set of Open Educational Resources, curated by the makers of X5Learn"
-  , url = ""
+  , links = [ explanationLinkForWikification, explanationLinkForTranslation ]
   }

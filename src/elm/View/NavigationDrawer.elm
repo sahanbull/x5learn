@@ -138,6 +138,5 @@ explanationForSearchField : Explanation
 explanationForSearchField =
   { componentId = "searchField"
   , flyoutDirection = Right
-  , blurb = "Text entered here is forwarded to the X5GON Discovery API. The results do not depend on your user data."
-  , url = "https://platform.x5gon.org/products/discovery"
+  , links = [ explanationLinkForSearch ]
   }

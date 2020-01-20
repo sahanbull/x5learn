@@ -58,7 +58,9 @@ viewExplanationPopup : LeftOrRight -> List WebLink -> Attribute Msg
 viewExplanationPopup flyoutDirection links =
   let
       introText =
-        "The following AI components are used here"
+        -- "This part of the interface uses the following AI components:"
+        -- "The following AI components are used here"
+        "AI components in use here:"
 
       weblinks =
         links

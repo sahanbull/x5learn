@@ -20,6 +20,7 @@ import View.Utility exposing (..)
 import View.ContentFlowBar exposing (..)
 import View.Html5VideoPlayer exposing (..)
 import View.PdfViewer exposing (..)
+import View.Explainer exposing (..)
 
 import Animation exposing (..)
 
@@ -115,6 +116,7 @@ viewInspectorBody model {oer, fragmentStart} =
           Nothing ->
             if isVideoFile oer.url then
               viewHtml5VideoPlayer model oer
+              |> explainify model explanationForHtml5VideoPlayer
             else if isPdfFile oer.url then
               viewPdfViewer oer.url "45vh"
             else
@@ -131,7 +133,6 @@ viewInspectorBody model {oer, fragmentStart} =
       , viewContentFlowBarWrapper model oer
       ]
       |> column [ width <| px <| playerWidth model, moveLeft inspectorSidebarWidth ]
-
 
 
 viewDescription : Oer -> Element Msg
@@ -419,3 +420,11 @@ viewFeedbackConfirmation =
   , "✔ Your feedback has been recorded." |> bodyWrap []
   ]
   |> column [ spacing 30, paddingTop 200 ]
+
+
+explanationForHtml5VideoPlayer : Explanation
+explanationForHtml5VideoPlayer =
+  { componentId = "html5VideoPlayer"
+  , flyoutDirection = Left
+  , links = [ explanationLinkForTranslation, explanationLinkForWikification ]
+  }

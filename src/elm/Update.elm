@@ -99,13 +99,13 @@ update msg ({nav, userProfileForm} as model) =
           ( { model | searchInputTyping = str, autocompleteSuggestions = autocompleteSuggestions } |> closePopup, Cmd.none)
           |> logEventForLabStudy "ChangeSearchText" [ str ]
 
-    TriggerSearch str ->
+    TriggerSearch str isFromSearchField ->
       let
           searchUrl =
             Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" (String.trim str) ]
       in
           ({ model | inspectorState = Nothing } |> closePopup, Navigation.pushUrl nav.key searchUrl)
-          |> logEventForLabStudy "TriggerSearch" [ str ]
+          |> saveAction 13 [ ("text", Encode.string str), ("isFromSearchField", Encode.bool isFromSearchField) ]
 
     ResizeBrowser x y ->
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, askPageScrollState True)

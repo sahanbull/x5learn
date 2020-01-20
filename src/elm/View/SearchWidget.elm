@@ -19,7 +19,7 @@ viewSearchWidget : Model -> Length -> String -> String -> Element Msg
 viewSearchWidget model widthAttr placeholder searchInputTyping =
   let
       submit =
-        TriggerSearch searchInputTyping
+        TriggerSearch searchInputTyping True
 
       submitButton =
         let
@@ -48,8 +48,11 @@ viewSearchWidget model widthAttr placeholder searchInputTyping =
                 [ onMouseEnter <| SelectSuggestion str ]
               else
                 []
+
+            attrs =
+              [ width fill, clipX, onFocus <| SelectSuggestion str ] ++ background ++ mouseEnterHandler
         in
-            button ([ width fill, clipX, onFocus <| SelectSuggestion str ]++background++mouseEnterHandler) { onPress = Just <| TriggerSearch str, label = label }
+            button attrs { onPress = Just <| TriggerSearch str True, label = label }
 
       suggestions =
         if List.isEmpty model.autocompleteTerms || String.length searchInputTyping < 1 then

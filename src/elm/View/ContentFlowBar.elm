@@ -270,7 +270,7 @@ viewEntityPopup model chunkPopup entityPopup entity =
         if isLabStudy1 model then
           []
         else
-          [ ("Search", TriggerSearch entity.title)
+          [ ("Search", TriggerSearch entity.title False)
           ]
           |> List.map (\item -> entityActionButton chunkPopup entityPopup item |> el [ width fill ])
 

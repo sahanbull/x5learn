@@ -51,7 +51,7 @@ type Msg
   | SetPopup Popup
   | ClosePopup
   | CloseInspector
-  | TriggerSearch String
+  | TriggerSearch String Bool
   | ClickedOnDocument
   | SelectSuggestion String
   | MouseOverChunkTrigger Float

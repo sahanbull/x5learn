@@ -129,7 +129,7 @@ borderLeft px =
 
 borderColorDivider : Attribute Msg
 borderColorDivider =
-  Border.color <| greyDivider
+  Border.color greyDivider
 
 
 allSidesZero : { bottom : number, left : number1, right : number2, top : number3 }

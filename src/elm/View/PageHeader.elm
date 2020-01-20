@@ -45,7 +45,7 @@ viewPageHeader model =
         , height (px pageHeaderHeight)
         , spacing 20
         , paddingEach { allSidesZero | top = 0, left = 13, right = 16 }
-        , Background.color <| rgb 1 1 1
+        , Background.color white
         , borderBottom 1
         , borderColorDivider
         ] ++ snackbar

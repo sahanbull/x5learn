@@ -91,13 +91,8 @@ update msg ({nav, userProfileForm} as model) =
           ( { newModel | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
 
     ChangeSearchText str ->
-      let
-          autocompleteSuggestions =
-            model.autocompleteTerms
-            |> List.filter (\term -> String.startsWith (String.toLower str) (String.toLower term))
-      in
-          ( { model | searchInputTyping = str, autocompleteSuggestions = autocompleteSuggestions } |> closePopup, Cmd.none)
-          |> logEventForLabStudy "ChangeSearchText" [ str ]
+      ( { model | searchInputTyping = str } |> closePopup, Cmd.none)
+      |> logEventForLabStudy "ChangeSearchText" [ str ]
 
     TriggerSearch str isFromSearchField ->
       let

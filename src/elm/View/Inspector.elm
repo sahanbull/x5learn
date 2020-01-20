@@ -193,13 +193,20 @@ viewCourseSettings : Model -> Oer -> CourseItem -> List (Element Msg)
 viewCourseSettings model oer {range, comment} =
   let
       topRow =
-        [ "This video has been added to your workspace." |> bodyWrap [ width fill ]
-        , actionButtonWithIcon [] IconLeft "delete" "Remove" <| Just <| RemovedOerFromCourse oer.id
-        ]
-        |> row [ width fill ]
+        let
+            rangeText =
+              if (range |> Debug.log "range") == Range 0 1 then
+                ""
+                else
+                "(Range "
+        in
+            [ "This video has been added to your workspace." ++ rangeText |> bodyWrap [ width fill ]
+            , actionButtonWithIcon [] IconLeft "delete" "Remove" <| Just <| RemovedOerFromCourse oer.id
+            ]
+            |> row [ width fill, borderTop 1, Border.color greyDivider, paddingTop 10 ]
 
       fields =
-        [ "Selected Range:" |> bodyNoWrap [ width fill ]
+        [ "Selected Range:"
         , range.start |> floor |> secondsToString |> bodyNoWrap [ width fill ]
         , "-" |> bodyNoWrap [ width fill ]
         , range.start + range.length |> floor |> secondsToString |> bodyNoWrap [ width fill ]

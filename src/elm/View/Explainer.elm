@@ -24,33 +24,33 @@ explainify ({isExplainerEnabled} as model) explanation element =
   else
     let
         wrapperAttrs =
-          [ viewExplainerOverlay model explanation ]
+          [ viewExplainerOverlayBorder
+          , viewExplainerButton model explanation ]
     in
         element
         |> el wrapperAttrs
 
 
-viewExplainerOverlay : Model -> Explanation -> Attribute Msg
-viewExplainerOverlay {popup} {flyoutDirection, componentId, links} =
+viewExplainerOverlayBorder : Attribute Msg
+viewExplainerOverlayBorder =
+  none
+  |> el [ width fill, height fill, Border.width 3, Border.color magenta, htmlClass "ZIndex100", pointerEventsNone ]
+  |> inFront
+
+
+viewExplainerButton : Model -> Explanation -> Attribute Msg
+viewExplainerButton {popup} {flyoutDirection, componentId, links} =
   let
-      infoButton =
-        let
-            buttonAttrs =
-              [ Background.color magenta, whiteText, alignRight, Font.size 12, paddingXY 5 4, moveUp 3, moveRight 3, htmlClass "ClosePopupOnClickOutside" ] ++ explanationPopup
-        in
-            simpleButton buttonAttrs "explain" (Just <| OpenExplanationPopup componentId)
+      buttonAttrs =
+        [ Background.color magenta, whiteText, alignRight, Font.size 12, paddingXY 5 4, htmlClass "ZIndex100 ClosePopupOnClickOutside" ] ++ explanationPopup
 
       explanationPopup =
         if popup == Just (ExplanationPopup componentId) then
           [ viewExplanationPopup flyoutDirection links ]
         else
           []
-
-      content =
-        infoButton
   in
-      content
-      |> el [ width fill, height fill, Border.width 3, Border.color magenta, htmlClass "ZIndex100", pointerEventsNone ]
+      simpleButton buttonAttrs "explain" (Just <| OpenExplanationPopup componentId)
       |> inFront
 
 

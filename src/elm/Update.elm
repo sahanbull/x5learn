@@ -51,22 +51,22 @@ update msg ({nav, userProfileForm} as model) =
           ( model |> closePopup, Navigation.load href )
           |> logEventForLabStudy "LinkClickedExternal" [ href ]
 
-    UrlChanged ({path} as url) ->
+    UrlChanged url ->
       let
           (subpage, (newModel, cmd)) =
-            if path |> String.startsWith profilePath then
+            if url.path |> String.startsWith profilePath then
               (Profile, (model, Cmd.none))
-            -- else if path |> String.startsWith notesPath then
-            --   (Notes, ({ model | oerCardPlaceholderPositions = [] }, [ getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch))
-            -- else if path |> String.startsWith favoritesPath then
-            --   (Favorites, (model, askPageScrollState True))
-            else if path |> String.startsWith searchPath then
+            else if url.path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
             else
               (Home, (model, (if model.featuredOers==Nothing then requestFeaturedOers else Cmd.none)))
+
+          query =
+            url.query |> Maybe.withDefault ""
       in
           ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage } |> closePopup |> resetUserProfileForm, cmd)
-          |> logEventForLabStudy "UrlChanged" [ path, url.query |> Maybe.withDefault "" ]
+          |> logEventForLabStudy "UrlChanged" [ url.path, query ]
+          |> saveAction 14 [ ("path", Encode.string url.path), ("query", Encode.string query) ]
 
     ClockTick time ->
       ( { model | currentTime = time, enrichmentsAnimating = anyBubblogramsAnimating model, snackbar = updateSnackbar model }, getOerCardPlaceholderPositions True)

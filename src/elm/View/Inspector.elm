@@ -231,14 +231,17 @@ viewContentFlowBarWrapper : Model -> Oer -> Element Msg
 viewContentFlowBarWrapper model oer =
   let
       courseSettings =
-        case getCourseItem model oer of
-          Nothing ->
-            [ none |> el [ width fill ]
-            , actionButtonWithIcon [] IconLeft "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
-            ]
+        if isLoggedIn model then -- this feature is only available for registered users
+          case getCourseItem model oer of
+            Nothing ->
+              [ none |> el [ width fill ]
+              , actionButtonWithIcon [] IconLeft "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
+              ]
 
-          Just item ->
-            viewCourseSettings model oer item
+            Just item ->
+              viewCourseSettings model oer item
+        else
+          []
 
       components =
         if isLabStudy1 model then

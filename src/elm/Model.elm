@@ -514,7 +514,6 @@ type alias VideoEmbedParams =
 type FlyoutDirection
   = Left
   | Right
-  | Down
 
 
 {-| Explanation for a particular UI component

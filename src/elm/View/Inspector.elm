@@ -434,6 +434,6 @@ explanationForHtml5VideoPlayer =
 explanationForRelatedTab : Explanation
 explanationForRelatedTab =
   { componentId = "relatedTab"
-  , flyoutDirection = Down
+  , flyoutDirection = Left
   , links = [ explanationLinkForItemRecommender ]
   }

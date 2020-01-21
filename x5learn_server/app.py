@@ -287,6 +287,15 @@ def api_video_usages():
     return jsonify(ranges_per_oer)
 
 
+@app.route("/api/v1/course_optimization/", methods=['POST'])
+def api_course_optimization():
+    oer_ids = request.get_json()['oerIds']
+    print(oer_ids)
+    oer_ids.reverse()
+    print(oer_ids)
+    return jsonify(oer_ids)
+
+
 @app.route("/api/v1/load_course/", methods=['POST'])
 def api_load_course():
     course = Course.query.filter(Course.user_login_id == current_user.get_id()).order_by(Course.id.desc()).first()

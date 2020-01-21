@@ -364,7 +364,7 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
     RequestLoadCourse (Ok course) ->
-      ({ model | course = course, courseNeedsSaving = False, courseInUndoBuffer = Nothing }, Cmd.none)
+      ({ model | course = course, courseNeedsSaving = False, courseOptimization = Nothing }, Cmd.none)
 
     RequestLoadCourse (Err err) ->
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
@@ -422,6 +422,24 @@ update msg ({nav, userProfileForm} as model) =
       --       err |> Debug.log "Error in RequestResourceRecommendations"
       -- in
       -- ( { model | snackbar = createSnackbar model "An error occurred while loading recommendations" }, Cmd.none )
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
+
+    RequestCourseOptimization (Ok newSequenceOerIds) ->
+      let
+          oldCourse =
+            model.course
+
+          newItems =
+            newSequenceOerIds
+            |> List.filterMap (\oerId -> oldCourse.items |> List.filter (\item -> item.oerId==oerId) |> List.head)
+
+          newCourse =
+            { oldCourse | items = newItems }
+      in
+          ({ model | course = newCourse, courseOptimization = Just (UndoAvailable oldCourse) }, Cmd.none)
+          |> saveCourseNow
+
+    RequestCourseOptimization (Err err) ->
       ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     SetHover maybeOerId ->
@@ -760,7 +778,7 @@ update msg ({nav, userProfileForm} as model) =
           newCourse =
             { oldCourse | items = newItem :: oldCourse.items}
       in
-          ({ model | course = newCourse, courseInUndoBuffer = Nothing }, Cmd.none)
+          ({ model | course = newCourse, courseOptimization = Nothing }, Cmd.none)
           |> logEventForLabStudy "AddedOerToCourse" [ oerId |> String.fromInt, courseToString newCourse ]
           |> saveCourseNow
 
@@ -772,7 +790,7 @@ update msg ({nav, userProfileForm} as model) =
           newCourse =
             { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId/=oerId)}
       in
-          ({ model | course = newCourse, courseInUndoBuffer = Nothing }, Cmd.none)
+          ({ model | course = newCourse, courseOptimization = Nothing }, Cmd.none)
           |> logEventForLabStudy "RemovedOerFromCourse" [ oerId |> String.fromInt, courseToString newCourse ]
           |> saveCourseNow
 
@@ -784,25 +802,17 @@ update msg ({nav, userProfileForm} as model) =
           newCourse =
             { oldCourse | items = oldCourse.items |> swapListItemWithNext index}
       in
-          ({ model | course = newCourse, courseInUndoBuffer = Nothing }, Cmd.none)
+          ({ model | course = newCourse, courseOptimization = Nothing }, Cmd.none)
           |> logEventForLabStudy "MovedCourseItemDown" [ index |> String.fromInt, courseToString newCourse ]
           |> saveCourseNow
 
     PressedOptimiseLearningPath ->
-      let
-          oldCourse =
-            model.course
+      ({ model | courseOptimization = Just Loading }, [ setBrowserFocus "", requestCourseOptimization model.course ] |> Cmd.batch)
+      |> logEventForLabStudy "PressedOptimiseLearningPath" []
 
-          newCourse =
-            { oldCourse | items = oldCourse.items |> swapListItemWithNext 0 }
-      in
-          ({ model | course = newCourse, courseInUndoBuffer = Just oldCourse }, setBrowserFocus "")
-          |> logEventForLabStudy "PressedOptimiseLearningPath" [ courseToString newCourse ]
-          |> saveCourseNow
-
-    PressedUndoCourse courseInUndoBuffer ->
-      ({ model | course = courseInUndoBuffer, courseInUndoBuffer = Nothing }, Cmd.none)
-      |> logEventForLabStudy "PressedUndoCourse" [ courseToString courseInUndoBuffer ]
+    PressedUndoCourse savedPreviousCourse ->
+      ({ model | course = savedPreviousCourse, courseOptimization = Nothing }, Cmd.none)
+      |> logEventForLabStudy "PressedUndoCourse" [ courseToString savedPreviousCourse ]
       |> saveCourseNow
 
     ChangedCommentTextInCourseItem oerId str ->
@@ -1342,7 +1352,7 @@ setCommentTextInCourseItem oerId str model =
       newCourse =
         { oldCourse | items = newItems }
   in
-      { model | course = newCourse, courseInUndoBuffer = Nothing } |> markCourseAsChanged
+      { model | course = newCourse, courseOptimization = Nothing } |> markCourseAsChanged
 
 
 saveCourseIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)

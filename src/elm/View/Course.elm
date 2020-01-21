@@ -100,12 +100,15 @@ viewCoursePathFinderContainer model =
 -}
 viewCoursePathFinderWidget : Model -> Element Msg
 viewCoursePathFinderWidget model =
-  case model.courseInUndoBuffer of
+  case model.courseOptimization of
     Nothing ->
       actionButtonWithIcon [ whiteText, paddingXY 12 10, width fill, centerX ] [ Background.color linkBlue, width fill ] IconLeft 1 "directions_walk_white" "Optimise learning path" (Just PressedOptimiseLearningPath)
 
-    Just courseInUndoBuffer ->
+    Just Loading ->
+      viewLoadingSpinner
+
+    Just (UndoAvailable savedPreviousCourse) ->
       [ "Our algorithm has changed the sequence of your items." |> captionWrap [ whiteText ]
-      , simpleButton [ Font.size 12, Font.color blue ] "Undo" (Just <| PressedUndoCourse courseInUndoBuffer)
+      , simpleButton [ Font.size 12, Font.color blue ] "Undo" (Just <| PressedUndoCourse savedPreviousCourse)
       ]
       |> column [ spacing 15, padding 10, Background.color <| grey 50, Border.rounded 10 ]

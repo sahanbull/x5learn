@@ -221,6 +221,11 @@ magenta =
   rgb255 250 0 230
 
 
+darkPurple : Color
+darkPurple =
+  rgb255 150 0 130
+
+
 blue : Color
 blue =
   rgb255 0 190 250
@@ -369,11 +374,11 @@ navigationDrawerWidth =
   230
 
 
-actionButtonWithIcon : List (Attribute Msg) -> IconPosition -> String -> String -> Maybe Msg -> Element Msg
-actionButtonWithIcon textAttrs iconPosition svgIconStub str onPress =
+actionButtonWithIcon : List (Attribute Msg) -> List (Attribute Msg) -> IconPosition -> Float -> String -> String -> Maybe Msg -> Element Msg
+actionButtonWithIcon textAttrs buttonAttrs iconPosition iconAlpha svgIconStub str onPress =
   let
       icon =
-        image [ alpha 0.5 ] { src = svgPath svgIconStub, description = "" }
+        image [ alpha iconAlpha ] { src = svgPath svgIconStub, description = "" }
 
       title =
         str |> bodyNoWrap (textAttrs ++ [ width fill ])
@@ -386,7 +391,7 @@ actionButtonWithIcon textAttrs iconPosition svgIconStub str onPress =
           IconRight ->
             [ title, icon ]
   in
-      button [ htmlClass "CloseInspectorOnClickOutside" ] { onPress = onPress, label = label |> row [ width fill, spacing 3, Border.rounded 4 ]}
+      button ([ htmlClass "CloseInspectorOnClickOutside" ] ++ buttonAttrs) { onPress = onPress, label = label |> row [ width fill, spacing 3, Border.rounded 4 ]}
 
 
 actionButtonWithoutIcon : List (Attribute Msg) -> List (Attribute Msg) -> String -> Maybe Msg -> Element Msg

@@ -208,7 +208,7 @@ viewCourseSettings model oer {range, comment} =
         -- in
             -- [ "This video has been added to your workspace." ++ rangeText |> bodyWrap [ width fill ]
             [ "This video has been added to your workspace." |> bodyWrap [ width fill ]
-            , actionButtonWithIcon [] IconLeft "delete" "Remove" <| Just <| RemovedOerFromCourse oer.id
+            , actionButtonWithIcon [] [] IconLeft 0.7 "delete" "Remove" <| Just <| RemovedOerFromCourse oer.id
             ]
             |> row [ width fill, borderTop 1, Border.color greyDivider, paddingTop 10 ]
 
@@ -235,7 +235,7 @@ viewContentFlowBarWrapper model oer =
           case getCourseItem model oer of
             Nothing ->
               [ none |> el [ width fill ]
-              , actionButtonWithIcon [] IconLeft "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
+              , actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
               ]
 
             Just item ->

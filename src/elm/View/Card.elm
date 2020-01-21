@@ -409,7 +409,7 @@ viewOverviewTypeMenu model =
       attrs =
         [ alignRight, moveLeft 130, moveDown 30, Border.width 2, Border.color white, htmlClass "ClosePopupOnClickOutside" ] ++ options
   in
-      actionButtonWithIcon [ whiteText, paddingXY 12 10 ] IconLeft "format_list_white" "Visual Mode" (Just OpenedOverviewTypeMenu)
+      actionButtonWithIcon [ whiteText, paddingXY 12 10 ] [] IconLeft 0.7 "format_list_white" "Visual Mode" (Just OpenedOverviewTypeMenu)
       |> el attrs
 
 

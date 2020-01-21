@@ -28,6 +28,7 @@ from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichmen
 
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
 from x5learn_server.lab_study import frozen_search_results_for_lab_study, is_special_search_key_for_lab_study
+from x5learn_server.course_optimization import optimize_course
 
 # Create app
 app = Flask(__name__)
@@ -289,11 +290,12 @@ def api_video_usages():
 
 @app.route("/api/v1/course_optimization/", methods=['POST'])
 def api_course_optimization():
-    oer_ids = request.get_json()['oerIds']
-    print(oer_ids)
-    oer_ids.reverse()
-    print(oer_ids)
-    return jsonify(oer_ids)
+    old_oer_ids = request.get_json()['oerIds']
+    new_oer_ids = optimize_course(old_oer_ids)
+    print('course_optimization')
+    print(old_oer_ids)
+    print(new_oer_ids)
+    return jsonify(new_oer_ids)
 
 
 @app.route("/api/v1/load_course/", methods=['POST'])

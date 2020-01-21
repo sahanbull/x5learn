@@ -63,7 +63,8 @@ viewPageHeader model =
                 ]
 
               GuestUser ->
-                [ link [ alignRight, paddingXY 15 10 ] { url = loginPath, label = "Log in" |> bodyNoWrap [] }
+                [ viewExplainerToggle model
+                , link [ alignRight, paddingXY 15 10 ] { url = loginPath, label = "Log in" |> bodyNoWrap [] }
                 , link [ alignRight, paddingXY 15 10 ] { url = signupPath, label = "Sign up" |> bodyNoWrap [] }
                 ]
   in
@@ -124,8 +125,8 @@ viewExplainerToggle model =
       enabled =
         model.isExplainerEnabled
   in
-  [ "Transparent AI" |> bodyNoWrap ([ width fill ] ++ (if enabled then [ Font.color magenta ] else []))
-  , viewToggleIndicator enabled (if enabled then "MagentaBackground" else "") |> el [ paddingRight 10 ]
-  ]
-  |> row [ spacing 10, onClick ToggleExplainer, htmlClass "CursorPointer" ]
-  |> el [ alignRight ]
+      [ "Transparent AI" |> bodyNoWrap ([ width fill ] ++ (if enabled then [ Font.color magenta ] else []))
+      , viewToggleIndicator enabled (if enabled then "MagentaBackground" else "") |> el [ paddingRight 10 ]
+      ]
+      |> row [ spacing 10, onClick ToggleExplainer, htmlClass "CursorPointer" ]
+      |> el [ alignRight ]

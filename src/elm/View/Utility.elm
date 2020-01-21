@@ -156,6 +156,11 @@ captionNowrap attrs str =
   text str |> el (captionTextAttrs ++ attrs)
 
 
+captionWrap : List (Attribute Msg) -> String -> Element Msg
+captionWrap attrs str =
+  [ text str ] |> paragraph (captionTextAttrs ++ attrs)
+
+
 bodyWrap : List (Attribute Msg) -> String -> Element Msg
 bodyWrap attrs str =
   [ text str ] |> paragraph (bodyTextAttrs ++ attrs)

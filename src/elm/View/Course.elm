@@ -25,19 +25,15 @@ viewCourse model =
     none
   else
     let
-        heading =
-          -- "Workspace" |> headlineWrap []
-          none
-
         items =
           model.course.items
           |> List.indexedMap (viewCourseItem model)
           |> column [ spacing 20, paddingTop 20, width fill ]
     in
-        [ heading
-        , items
+        [ items
+        , viewCoursePathFinderContainer model
         ]
-        |> column [ spacing 10, width fill ]
+        |> column [ spacing 50, width fill ]
 
 
 {-| Render a single course item
@@ -87,3 +83,39 @@ viewCourseItem model index item =
       in
           miniCard
           |> el [ width fill, htmlClass "CloseInspectorOnClickOutside", onClickStopPropagation <| InspectCourseItem oer ]
+
+
+{-| Render the coursePathFinder
+-}
+viewCoursePathFinderContainer : Model -> Element Msg
+viewCoursePathFinderContainer model =
+  if List.length model.course.items>1 then
+    viewCoursePathFinderWidget model
+  else
+    -- "Tip: Add more items to your workspace" |> captionWrap []
+    none
+
+
+{-| Render the widget that integrates the coursePathFinder API from Nantes
+-}
+viewCoursePathFinderWidget : Model -> Element Msg
+viewCoursePathFinderWidget model =
+  let
+      optimiseButton =
+        actionButtonWithIcon [ whiteText, paddingXY 12 10, Background.color orange, width fill, centerX ] IconLeft "directions_walk_white" "Optimise learning path" (Just PressedOptimiseLearningPath)
+
+      undoSection =
+        case model.courseInUndoBuffer of
+          Nothing ->
+            none
+
+          Just courseInUndoBuffer ->
+            [ "Our algorithm has changed the sequence of your items." |> captionWrap []
+            , simpleButton [ Font.size 12, Font.color blue ] "Undo" (Just <| PressedUndoCourse courseInUndoBuffer)
+            ]
+            |> column [ spacing 15 ]
+  in
+      [ optimiseButton
+      , undoSection
+      ]
+      |> column [ spacing 15 ]

@@ -92,6 +92,8 @@ type Msg
   | AddedOerToCourse OerId Range
   | RemovedOerFromCourse OerId
   | MovedCourseItemDown Int
+  | PressedOptimiseLearningPath
+  | PressedUndoCourse Course
   | SubmittedCourseItemComment
   | ChangedCommentTextInCourseItem OerId String
   | StartTask String

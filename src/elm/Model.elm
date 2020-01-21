@@ -45,6 +45,7 @@ type alias Model =
   , featuredOers : Maybe (List OerId) -- a handful of OERs to display on the start page
   -- Course data
   , course : Course -- essentially a list of commentable OER snippets that the user has bookmarked
+  , courseInUndoBuffer : Maybe Course -- allowing the user to undo certain changes
   , courseNeedsSaving : Bool -- true when the user changes any course items since last saving
   , courseChangesSaved : Bool -- used to display a message to the user
   , lastTimeCourseChanged : Posix -- wait a few seconds before saving changes, to avoid too frequent requests (e.g. while typing)
@@ -536,6 +537,7 @@ initialModel nav flags =
   , requestingOers = False
   , featuredOers = Nothing
   , course = Course []
+  , courseInUndoBuffer = Nothing
   , courseNeedsSaving = False
   , courseChangesSaved = False
   , lastTimeCourseChanged = initialTime

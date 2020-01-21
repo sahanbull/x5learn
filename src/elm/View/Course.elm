@@ -32,12 +32,12 @@ viewCourse model =
         items =
           model.course.items
           |> List.indexedMap (viewCourseItem model)
-          |> column [ spacing 20, paddingTop 20 ]
+          |> column [ spacing 20, paddingTop 20, width fill ]
     in
         [ heading
         , items
         ]
-        |> column [ spacing 10 ]
+        |> column [ spacing 10, width fill ]
 
 
 {-| Render a single course item
@@ -68,10 +68,17 @@ viewCourseItem model index item =
             else
               button buttonAttrs { onPress = Just <| MovedCourseItemDown index, label = "Move down" |> captionNowrap [ whiteText ] }
 
+          deleteButton =
+            if index==nCourseItems-1 then
+              none
+            else
+              button (buttonAttrs ++ [ Background.color red ]) { onPress = Just <| RemovedOerFromCourse oer.id, label = "Remove" |> captionNowrap [ whiteText ] }
+
           topRow =
             [ index+1 |> String.fromInt |> bodyNoWrap []
             , moveUpButton
             , moveDownButton
+            , deleteButton
             ]
             |> row [ width fill, spacing 10 ]
 

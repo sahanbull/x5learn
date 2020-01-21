@@ -364,7 +364,7 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
     RequestLoadCourse (Ok course) ->
-      ({ model | course = course, courseNeedsSaving = False}, Cmd.none)
+      ({ model | course = course, courseNeedsSaving = False, courseInUndoBuffer = Nothing }, Cmd.none)
 
     RequestLoadCourse (Err err) ->
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
@@ -760,7 +760,7 @@ update msg ({nav, userProfileForm} as model) =
           newCourse =
             { oldCourse | items = newItem :: oldCourse.items}
       in
-          ({ model | course = newCourse }, Cmd.none)
+          ({ model | course = newCourse, courseInUndoBuffer = Nothing }, Cmd.none)
           |> logEventForLabStudy "AddedOerToCourse" [ oerId |> String.fromInt, courseToString newCourse ]
           |> saveCourseNow
 
@@ -772,7 +772,7 @@ update msg ({nav, userProfileForm} as model) =
           newCourse =
             { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId/=oerId)}
       in
-          ({ model | course = newCourse }, Cmd.none)
+          ({ model | course = newCourse, courseInUndoBuffer = Nothing }, Cmd.none)
           |> logEventForLabStudy "RemovedOerFromCourse" [ oerId |> String.fromInt, courseToString newCourse ]
           |> saveCourseNow
 
@@ -784,7 +784,7 @@ update msg ({nav, userProfileForm} as model) =
           newCourse =
             { oldCourse | items = oldCourse.items |> swapListItemWithNext index}
       in
-          ({ model | course = newCourse}, Cmd.none)
+          ({ model | course = newCourse, courseInUndoBuffer = Nothing }, Cmd.none)
           |> logEventForLabStudy "MovedCourseItemDown" [ index |> String.fromInt, courseToString newCourse ]
           |> saveCourseNow
 
@@ -1342,7 +1342,7 @@ setCommentTextInCourseItem oerId str model =
       newCourse =
         { oldCourse | items = newItems }
   in
-      { model | course = newCourse} |> markCourseAsChanged
+      { model | course = newCourse, courseInUndoBuffer = Nothing } |> markCourseAsChanged
 
 
 saveCourseIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)

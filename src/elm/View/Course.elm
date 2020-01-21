@@ -100,22 +100,12 @@ viewCoursePathFinderContainer model =
 -}
 viewCoursePathFinderWidget : Model -> Element Msg
 viewCoursePathFinderWidget model =
-  let
-      optimiseButton =
-        actionButtonWithIcon [ whiteText, paddingXY 12 10, Background.color orange, width fill, centerX ] IconLeft "directions_walk_white" "Optimise learning path" (Just PressedOptimiseLearningPath)
+  case model.courseInUndoBuffer of
+    Nothing ->
+      actionButtonWithIcon [ whiteText, paddingXY 12 10, Background.color orange, width fill, centerX ] IconLeft "directions_walk_white" "Optimise learning path" (Just PressedOptimiseLearningPath)
 
-      undoSection =
-        case model.courseInUndoBuffer of
-          Nothing ->
-            none
-
-          Just courseInUndoBuffer ->
-            [ "Our algorithm has changed the sequence of your items." |> captionWrap []
-            , simpleButton [ Font.size 12, Font.color blue ] "Undo" (Just <| PressedUndoCourse courseInUndoBuffer)
-            ]
-            |> column [ spacing 15 ]
-  in
-      [ optimiseButton
-      , undoSection
+    Just courseInUndoBuffer ->
+      [ "Our algorithm has changed the sequence of your items." |> captionWrap []
+      , simpleButton [ Font.size 12, Font.color blue ] "Undo" (Just <| PressedUndoCourse courseInUndoBuffer)
       ]
       |> column [ spacing 15 ]

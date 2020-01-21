@@ -60,19 +60,16 @@ viewCourseItem model index item =
             if index==0 then
               none
             else
-              button buttonAttrs { onPress = Just <| MovedCourseItemDown (index-1), label = "Move up" |> captionNowrap [ whiteText ] }
+              button buttonAttrs { onPress = Just <| MovedCourseItemDown (index-1), label = "Move ↑" |> captionNowrap [ whiteText ] }
 
           moveDownButton =
             if index==nCourseItems-1 then
               none
             else
-              button buttonAttrs { onPress = Just <| MovedCourseItemDown index, label = "Move down" |> captionNowrap [ whiteText ] }
+              button buttonAttrs { onPress = Just <| MovedCourseItemDown index, label = "Move ↓" |> captionNowrap [ whiteText ] }
 
           deleteButton =
-            if index==nCourseItems-1 then
-              none
-            else
-              button (buttonAttrs ++ [ Background.color red ]) { onPress = Just <| RemovedOerFromCourse oer.id, label = "Remove" |> captionNowrap [ whiteText ] }
+            button (buttonAttrs ++ [ Background.color red ]) { onPress = Just <| RemovedOerFromCourse oer.id, label = "Remove" |> captionNowrap [ whiteText ] }
 
           topRow =
             [ index+1 |> String.fromInt |> bodyNoWrap []

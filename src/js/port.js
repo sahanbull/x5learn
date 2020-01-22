@@ -281,10 +281,20 @@ function registerTimelineMouseEvent(eventName){
     if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" ChunkTrigger ") > -1 ){
       var contentFlowBar = element.closest('.ContentFlowBar')
       reportTimelineMouseEvent(contentFlowBar, eventName, event);
+      return;
     }
     // When ContentFlow is disabled, the event is caught by ContentFlowBar
     if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" ContentFlowBar ") > -1 ){
       reportTimelineMouseEvent(element, eventName, event);
+      return;
+    }
+    console.log('mouse '+eventName)
+    if(eventName=='mousemove' && (" " + element.getAttribute("class") + " ").replace(/[\n\t]/g, " ").indexOf(" StoryTag ") > -1 ){
+      var rect = element.getBoundingClientRect();
+      var posX = window.scrollX + rect.left;
+      var positionInResource = (event.pageX - posX) / rect.width;
+      app.ports.mouseMovedOnStoryTag.send(positionInResource);
+      return;
     }
   });
 }

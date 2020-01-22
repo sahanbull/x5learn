@@ -73,7 +73,7 @@ type Msg
   | PageScrolled PageScrollState
   | OerCardPlaceholderPositionsReceived (List OerCardPlaceholderPosition)
   | SelectInspectorSidebarTab InspectorSidebarTab OerId
-  -- | MouseMovedOnStoryTag Float
+  | MouseMovedOnStoryTag Float
   | SelectedOverviewType OverviewType
   | MouseEnterMentionInBubbblogramOverview OerId EntityId MentionInOer
   -- | ClickedHeart OerId
@@ -118,7 +118,7 @@ subscriptions model =
   , Ports.closeInspector (\_ -> CloseInspector)
   , Ports.clickedOnDocument (\_ -> ClickedOnDocument)
   , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
-  -- , Ports.mouseMovedOnStoryTag MouseMovedOnStoryTag
+  , Ports.mouseMovedOnStoryTag MouseMovedOnStoryTag
   , Ports.timelineMouseEvent TimelineMouseEvent
   -- , Ports.youtubeVideoIsPlayingAtPosition YoutubeVideoIsPlayingAtPosition
   , Ports.html5VideoStarted Html5VideoStarted

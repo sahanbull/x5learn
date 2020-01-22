@@ -477,7 +477,6 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "SelectSuggestion" [ suggestion ]
 
     MouseOverChunkTrigger mousePositionX ->
-      -- ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX } |> unselectMentionInStory, Cmd.none )
       ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX, hoveringTagEntityId = Nothing } |> unselectMentionInStory, Cmd.none )
       |> logEventForLabStudy "MouseOverChunkTrigger" [ mousePositionX |> String.fromFloat ]
 
@@ -601,17 +600,17 @@ update msg ({nav, userProfileForm} as model) =
           ({ model | inspectorState = newInspectorState }, [ cmd, setBrowserFocus "textInputFieldForNotesOrFeedback" ] |> Cmd.batch )
           |> logEventForLabStudy "SelectInspectorSidebarTab" [ String.fromInt oerId, tabName ]
 
-    -- MouseMovedOnStoryTag mousePosXonCard ->
-    --   case model.overviewType of
-    --     ImageOverview ->
-    --       (model, Cmd.none)
+    MouseMovedOnStoryTag mousePosXonCard ->
+      case model.overviewType of
+        ImageOverview ->
+          (model, Cmd.none)
 
-    --     BubblogramOverview TopicNames ->
-    --       (model, Cmd.none)
+        BubblogramOverview TopicNames ->
+          (model, Cmd.none)
 
-    --     _ ->
-    --       model
-    --       |> selectOrUnselectMentionInStory mousePosXonCard
+        _ ->
+          model
+          |> selectOrUnselectMentionInStory mousePosXonCard
 
     SelectedOverviewType overviewType ->
       let

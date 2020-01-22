@@ -243,7 +243,7 @@ def api_search():
     """
     text = request.args['text'].lower().strip()
     try:
-        # if the text is a number, retrieve the oer with that material_id
+        # if the text is a number, retrieve the oer with that oer_id
         oer_id = int(text)
         oer = Oer.query.get(oer_id)
         results = [] if oer is None else [ oer ]
@@ -292,9 +292,6 @@ def api_video_usages():
 def api_course_optimization():
     old_oer_ids = request.get_json()['oerIds']
     new_oer_ids = optimize_course(old_oer_ids)
-    print('course_optimization')
-    print(old_oer_ids)
-    print(new_oer_ids)
     return jsonify(new_oer_ids)
 
 
@@ -343,10 +340,9 @@ def video_usage_ranges_from_positions(positions):
 
 @app.route("/api/v1/featured/", methods=['GET'])
 def api_featured():
-    # urls = ['https://www.youtube.com/watch?v=woy7_L2JKC4', 'https://www.youtube.com/watch?v=bRIL9kMJJSc',
-    #         'https://www.youtube.com/watch?v=4yYytLUViI4']
-    urls = ['http://hydro.ijs.si/v019/9a/tlsmr7i7ssoq7nvjsp7ysrhkobwdzwcy.mp4', 'http://hydro.ijs.si/v00b/84/qqxsxflkrrs7hkkrwxdjkix62g2b3v46.mp4',
-            'http://hydro.ijs.si/v00a/63/mpklwd24fti34fzr3wtfqsrwri77fg2i.mp4']
+    urls = ['http://hydro.ijs.si/v015/f9/7gh3dwpzrfpfvxnrl5fkaq4nedrqguh6.mp4',
+            'http://hydro.ijs.si/v00b/8c/rsctlkzcht24mvake5k3cyjkbtfvr22b.mp4',
+            'http://hydro.ijs.si/v001/46/i3fx77camctxek5oqnpt7hjfflfpezor.mp4']
     oers = [oer.data_and_id() for oer in Oer.query.filter(Oer.url.in_(urls)).order_by(Oer.url.desc()).all()]
     return jsonify(oers)
 

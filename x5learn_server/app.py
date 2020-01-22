@@ -18,7 +18,7 @@ import wikipedia
 # instantiate the user management db classes
 # NOTE WHEN PEP8'ING MODULE IMPORTS WILL MOVE TO THE TOP AND CAUSE EXCEPTION
 from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_SENDER, MAIL_USERNAME, MAIL_PASS, MAIL_SERVER, \
-    MAIL_PORT, LATEST_API_VERSION
+    MAIL_PORT, LATEST_API_VERSION, DATA_COLL_PROMPT_INTERVAL
 from x5learn_server.db.database import get_or_create_db
 
 _ = get_or_create_db(DB_ENGINE_URI)
@@ -66,11 +66,11 @@ app.config["SQLALCHEMY_DATABASE_URI"] = DB_ENGINE_URI
 db = SQLAlchemy(app)
 
 # extending flask security register form to support additional fields
-class ExtendedRegisterForm(RegisterForm):
+class X5LearnRegistrationForm(RegisterForm):
     privacy_policy = BooleanField('privacy_policy', [validators.DataRequired(message="Please read and agree to the privacy policy.")])
     terms_and_conditions = BooleanField('term_and_conditions', [validators.DataRequired(message="Please read and agree to the terms and conditions.")])
 
-security = Security(app, user_datastore, confirm_register_form=ExtendedRegisterForm)
+security = Security(app, user_datastore, confirm_register_form=X5LearnRegistrationForm)
 
 # Setup Flask-Mail Server
 app.config['MAIL_SERVER'] = MAIL_SERVER
@@ -85,11 +85,9 @@ mail.init_app(app)
 CURRENT_ENRICHMENT_VERSION = 1
 MAX_SEARCH_RESULTS = 18 # number divisible by 2 and 3 to fit nicely into grid
 
-
 # Number of seconds between actions that report the ongoing video play position.
 # Keep this constant in sync with videoPlayReportingInterval on the frontend!
 VIDEO_PLAY_REPORTING_INTERVAL = 10
-
 
 # create database when starting the app
 @app.before_first_request
@@ -195,19 +193,26 @@ def data_collection():
     if profile.get('allow_data_collection') is None:
         return render_template('data_collection.html')
 
-    last_data_collection_prompt_datetime = datetime.fromtimestamp(profile.get('last_data_collection_prompt'))
-    datediff = datetime.now() - last_data_collection_prompt_datetime
+    # If data collection is off the user will be prompted every other day at login
+    if (profile.get('allow_data_collection') == "off"):
+        last_data_collection_prompt_datetime = datetime.fromtimestamp(profile.get('last_data_collection_prompt'))
+        datediff = datetime.now() - last_data_collection_prompt_datetime
 
-    if datediff.days > 1:
-        return render_template('data_collection.html')
-    else:
-        return redirect("/")
+        if datediff.days > DATA_COLL_PROMPT_INTERVAL:
+            return render_template('data_collection.html')
+    
+    return redirect("/")
 
 
 # Saves preference in user profile for data collection consent
 @app.route("/data_collection", methods=['POST'])
 def submit_data_collection():
-    allow_data_collection = request.form['allow_data_collection']
+
+    if "allow_data_collection" in request.form:
+        allow_data_collection = request.form['allow_data_collection']
+    else:
+        allow_data_collection = "off"
+
     current_user.user_profile = json.dumps({'allow_data_collection': allow_data_collection, 'last_data_collection_prompt': datetime.timestamp(datetime.now())})
     db_session.commit()
     return redirect("/")

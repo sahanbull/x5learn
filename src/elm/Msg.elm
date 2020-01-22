@@ -66,10 +66,10 @@ type Msg
   -- | ClickedQuickNoteButton OerId String
   -- | RemoveNote Note
   | YoutubeVideoIsPlayingAtPosition Float
-  | OverviewTagMouseOver EntityId OerId
-  | OverviewTagMouseOut
-  | OverviewTagLabelMouseOver EntityId OerId
-  | OverviewTagLabelClicked OerId
+  | BubblogramTopicMouseOver EntityId OerId
+  | BubblogramTopicMouseOut
+  | BubblogramTopicLabelMouseOver EntityId OerId
+  | BubblogramTopicLabelClicked OerId
   | PageScrolled PageScrollState
   | OerCardPlaceholderPositionsReceived (List OerCardPlaceholderPosition)
   | SelectInspectorSidebarTab InspectorSidebarTab OerId

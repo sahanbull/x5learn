@@ -63,7 +63,7 @@ type alias Model =
   , oerCardPlaceholderPositions : List OerCardPlaceholderPosition -- dynamic layout of the cards on the screen
   -- OER Bubblograms
   , overviewType : OverviewType -- thumbnail or bubblogram
-  , hoveringTagEntityId : Maybe String -- when the user hovers over a topic in a bubblogram
+  , hoveringEntityId : Maybe EntityId -- when the user hovers over a topic in a bubblogram
   , timeOfLastUrlChange : Posix -- used to animate bubblograms
   , selectedMention : Maybe (OerId, MentionInOer) -- in bubblogram: hovering over a mention
   -- OER inspector modal
@@ -135,15 +135,15 @@ type InspectorSidebarTab
 {-| Toggle between thumbnails and bubblograms
 -}
 type OverviewType
-  = ImageOverview
+  = ThumbnailOverview
   | BubblogramOverview BubblogramType
 
 {-| Type of bubblogram to display
 -}
 type BubblogramType
   = TopicNames
-  | TopicConnections
-  | TopicMentions
+  | TopicBubbles
+  | TopicSwimlanes
 
 {-| For any (video) OER, which parts has the user watched
 -}
@@ -559,8 +559,8 @@ initialModel nav flags =
   , hoveringOerId = Nothing
   , timeOfLastMouseEnterOnCard = initialTime
   , oerCardPlaceholderPositions = []
-  , overviewType = ImageOverview
-  , hoveringTagEntityId = Nothing
+  , overviewType = ThumbnailOverview
+  , hoveringEntityId = Nothing
   , timeOfLastUrlChange = initialTime
   , selectedMention = Nothing
   , inspectorState = Nothing
@@ -1265,7 +1265,7 @@ overviewTypeFromId : String -> OverviewType
 overviewTypeFromId id =
   case overviewTypes |> List.filter (\entry -> entry.id == id) |> List.head of
     Nothing ->
-      ImageOverview -- Default to thumbnails
+      ThumbnailOverview -- Default to thumbnails
 
     Just entry ->
       entry.overviewType
@@ -1279,10 +1279,10 @@ overviewTypeFromId id =
 -}
 overviewTypes : List { id : String, displayName : String, overviewType : OverviewType }
 overviewTypes =
-  [ { id = "thumbnail", displayName = "Thumbnail", overviewType = ImageOverview }
+  [ { id = "thumbnail", displayName = "Thumbnail", overviewType = ThumbnailOverview }
   , { id = "topicnames", displayName = "Topic Names", overviewType = BubblogramOverview TopicNames }
-  , { id = "bubbles", displayName = "Bubbles", overviewType = BubblogramOverview TopicConnections }
-  , { id = "swimlanes", displayName = "Swimlanes", overviewType = BubblogramOverview TopicMentions }
+  , { id = "bubbles", displayName = "Bubbles", overviewType = BubblogramOverview TopicBubbles }
+  , { id = "swimlanes", displayName = "Swimlanes", overviewType = BubblogramOverview TopicSwimlanes }
   ]
 
 

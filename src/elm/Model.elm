@@ -257,6 +257,7 @@ type alias UserProfile =
   { email : String
   , firstName : String
   , lastName : String
+  , isDataCollectionConsent : Bool
   }
 
 
@@ -604,7 +605,7 @@ initialModel nav flags =
 
 initialUserProfile : String -> UserProfile
 initialUserProfile email =
-  UserProfile email "" ""
+  UserProfile email "" "" False
 
 
 -- getOerNoteboard : Model -> OerId -> Noteboard

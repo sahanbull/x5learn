@@ -170,6 +170,7 @@ userProfileEncoder userProfile =
     [ ("email", Encode.string userProfile.email)
     , ("firstName", Encode.string userProfile.firstName)
     , ("lastName", Encode.string userProfile.lastName)
+    , ("isDataCollectionConsent", Encode.bool userProfile.isDataCollectionConsent)
     ]
 
 
@@ -236,10 +237,11 @@ guestUserDecoder =
 userProfileDecoder : Decoder UserProfile
 userProfileDecoder =
   oneOf
-    [ map3 UserProfile
+    [ map4 UserProfile
         (field "email" string)
         (field "firstName" string)
         (field "lastName" string)
+        (field "isDataCollectionConsent" bool)
     , map initialUserProfile
         (field "email" string)
     ]

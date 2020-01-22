@@ -829,6 +829,20 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | inspectorState = Just { inspectorState | userPressedReadMore = True } }, Cmd.none)
       |> logEventForLabStudy "PressedReadMore" []
 
+    ToggleDataCollectionConsent enabled ->
+      let
+          oldProfile =
+            userProfileForm.userProfile
+
+          newProfile =
+            { oldProfile | isDataCollectionConsent = not enabled }
+
+          newForm =
+            { userProfileForm | userProfile = newProfile, saved = False }
+      in
+          ( { model | userProfileForm = newForm }, Cmd.none )
+          |> logEventForLabStudy "ToggleDataCollectionConsent" []
+
 
 -- createNote : OerId -> String -> Model -> Model
 -- createNote oerId text model =

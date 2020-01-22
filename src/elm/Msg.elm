@@ -98,6 +98,7 @@ type Msg
   | CompleteTask
   | OpenedOverviewTypeMenu
   | PressedReadMore InspectorState
+  | ToggleDataCollectionConsent Bool
 
 
 type UserProfileField

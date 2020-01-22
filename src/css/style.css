@@ -219,6 +219,10 @@ a:hover {
   background-color: #f0e !important;
 }
 
+.X5ColorBackground {
+  background-color: #528694 !important;
+}
+
 .ToggleEnabled + .ToggleSlider:before {
   -webkit-transform: translateX(20px);
   -ms-transform: translateX(20px);

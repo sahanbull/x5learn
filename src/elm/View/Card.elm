@@ -68,7 +68,7 @@ viewOerGrid model playlist =
             cards =
               oers
               |> List.indexedMap (\index oer -> viewOerCard model (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) True oer)
-              |> List.reverse
+              -- |> List.reverse
               |> List.map inFront
 
             overviewTypeMenu =

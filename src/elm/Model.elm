@@ -65,7 +65,7 @@ type alias Model =
   , overviewType : OverviewType -- thumbnail or bubblogram
   , hoveringTagEntityId : Maybe String -- when the user hovers over a topic in a bubblogram
   , timeOfLastUrlChange : Posix -- used to animate bubblograms
-  , selectedMentionInStory : Maybe (OerId, MentionInOer) -- in bubblogram: hovering over a mention
+  , selectedMention : Maybe (OerId, MentionInOer) -- in bubblogram: hovering over a mention
   -- OER inspector modal
   , inspectorState : Maybe InspectorState -- custom type, see definition below
   , modalAnimation : Maybe BoxAnimation -- When the user clicks on an OER card then the inspector modal doesn't just appear instantly - there is a bit of a zooming effect.
@@ -562,7 +562,7 @@ initialModel nav flags =
   , overviewType = ImageOverview
   , hoveringTagEntityId = Nothing
   , timeOfLastUrlChange = initialTime
-  , selectedMentionInStory = Nothing
+  , selectedMention = Nothing
   , inspectorState = Nothing
   , modalAnimation = Nothing
   , autocompleteTerms = []

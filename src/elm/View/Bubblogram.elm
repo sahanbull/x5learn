@@ -124,7 +124,7 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
           Just oer ->
             let
                 fragmentStart =
-                  case model.selectedMentionInStory of
+                  case model.selectedMention of
                     Nothing ->
                       0
 
@@ -195,7 +195,7 @@ viewSvgBubbleIncludingMentions model bubblogramType oerId animationPhase ({entit
               , height (containerHeight // 5 |> String.fromInt)
               , onMouseOver <| OverviewTagMouseOver entity.id oerId
               , onMouseLeave <| OverviewTagMouseOut
-              , class <| hoverableClass ++ " StoryTag"
+              , class <| hoverableClass ++ " TopicLane"
               ] ++ outline)
               []
 
@@ -225,7 +225,7 @@ viewSvgBubbleIncludingMentions model bubblogramType oerId animationPhase ({entit
               , height (containerHeight // 5 |> String.fromInt)
               , onMouseOver <| OverviewTagMouseOver entity.id oerId
               , onMouseLeave <| OverviewTagMouseOut
-              , class <| hoverableClass ++ " StoryTag"
+              , class <| hoverableClass ++ " TopicLane"
               ] ++ outline ++ strokeAttrs)
               []
 

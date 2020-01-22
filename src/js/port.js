@@ -288,12 +288,11 @@ function registerTimelineMouseEvent(eventName){
       reportTimelineMouseEvent(element, eventName, event);
       return;
     }
-    console.log('mouse '+eventName)
-    if(eventName=='mousemove' && (" " + element.getAttribute("class") + " ").replace(/[\n\t]/g, " ").indexOf(" StoryTag ") > -1 ){
+    if(eventName=='mousemove' && (" " + element.getAttribute("class") + " ").replace(/[\n\t]/g, " ").indexOf(" TopicLane ") > -1 ){
       var rect = element.getBoundingClientRect();
       var posX = window.scrollX + rect.left;
       var positionInResource = (event.pageX - posX) / rect.width;
-      app.ports.mouseMovedOnStoryTag.send(positionInResource);
+      app.ports.mouseMovedOnTopicLane.send(positionInResource);
       return;
     }
   });

@@ -440,7 +440,7 @@ update msg ({nav, userProfileForm} as model) =
               Just _ ->
                 (model.timelineHoverState, model.hoveringTagEntityId)
       in
-          ( { model | hoveringOerId = maybeOerId, timelineHoverState = timelineHoverState, hoveringTagEntityId = hoveringTagEntityId, timeOfLastMouseEnterOnCard = model.currentTime } |> unselectMentionInStory, Cmd.none )
+          ( { model | hoveringOerId = maybeOerId, timelineHoverState = timelineHoverState, hoveringTagEntityId = hoveringTagEntityId, timeOfLastMouseEnterOnCard = model.currentTime } |> unselectMention, Cmd.none )
           |> logEventForLabStudy "SetHover" [ maybeOerId |> Maybe.withDefault 0 |> String.fromInt ]
 
     SetPopup popup ->
@@ -477,7 +477,7 @@ update msg ({nav, userProfileForm} as model) =
       |> logEventForLabStudy "SelectSuggestion" [ suggestion ]
 
     MouseOverChunkTrigger mousePositionX ->
-      ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX, hoveringTagEntityId = Nothing } |> unselectMentionInStory, Cmd.none )
+      ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX, hoveringTagEntityId = Nothing } |> unselectMention, Cmd.none )
       |> logEventForLabStudy "MouseOverChunkTrigger" [ mousePositionX |> String.fromFloat ]
 
     -- YoutubeSeekTo fragmentStart ->
@@ -555,7 +555,7 @@ update msg ({nav, userProfileForm} as model) =
           |> logEventForLabStudy "OverviewTagLabelMouseOver" [ oerId |> String.fromInt, entityId ]
 
     OverviewTagMouseOut ->
-      ({model | hoveringTagEntityId = Nothing } |> unselectMentionInStory |> closePopup, Cmd.none)
+      ({model | hoveringTagEntityId = Nothing } |> unselectMention |> closePopup, Cmd.none)
       |> logEventForLabStudy "OverviewTagMouseOut" []
 
     OverviewTagLabelClicked oerId ->
@@ -600,7 +600,7 @@ update msg ({nav, userProfileForm} as model) =
           ({ model | inspectorState = newInspectorState }, [ cmd, setBrowserFocus "textInputFieldForNotesOrFeedback" ] |> Cmd.batch )
           |> logEventForLabStudy "SelectInspectorSidebarTab" [ String.fromInt oerId, tabName ]
 
-    MouseMovedOnStoryTag mousePosXonCard ->
+    MouseMovedOnTopicLane mousePosXonCard ->
       case model.overviewType of
         ImageOverview ->
           (model, Cmd.none)
@@ -610,7 +610,7 @@ update msg ({nav, userProfileForm} as model) =
 
         _ ->
           model
-          |> selectOrUnselectMentionInStory mousePosXonCard
+          |> selectOrUnselectMention mousePosXonCard
 
     SelectedOverviewType overviewType ->
       let
@@ -622,7 +622,7 @@ update msg ({nav, userProfileForm} as model) =
           |> saveAction 10 [ ("selectedMode", Encode.string selectedMode) ]
 
     MouseEnterMentionInBubbblogramOverview oerId entityId mention ->
-      ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
+      ({ model | selectedMention = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
 
     -- ClickedHeart oerId ->
     --   if isMarkedAsFavorite model oerId then
@@ -1169,17 +1169,17 @@ snackbarMessageReloadPage =
   "There was a problem - please reload the page"
 
 
-unselectMentionInStory : Model -> Model
-unselectMentionInStory model =
-  { model | selectedMentionInStory = Nothing }
+unselectMention : Model -> Model
+unselectMention model =
+  { model | selectedMention = Nothing }
 
 
-selectOrUnselectMentionInStory : Float -> Model -> (Model, Cmd Msg)
-selectOrUnselectMentionInStory mousePosXonCard model =
+selectOrUnselectMention : Float -> Model -> (Model, Cmd Msg)
+selectOrUnselectMention mousePosXonCard model =
   let
       unselect =
-        (model |> unselectMentionInStory, setBrowserFocus "")
-        |> logEventForLabStudy "UnselectMentionInStory" []
+        (model |> unselectMention, setBrowserFocus "")
+        |> logEventForLabStudy "UnselectMention" []
   in
       case model.hoveringTagEntityId of
         Nothing ->
@@ -1203,8 +1203,8 @@ selectOrUnselectMentionInStory mousePosXonCard model =
                       unselect
 
                     Just mention ->
-                      ({ model | selectedMentionInStory = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
-                      |> logEventForLabStudy "SelectMentionInStory" [ oerId |> String.fromInt, mousePosXonCard |> String.fromFloat, mention.positionInResource |> String.fromFloat, mention.sentence ]
+                      ({ model | selectedMention = Just (oerId, mention), hoveringTagEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
+                      |> logEventForLabStudy "SelectMention" [ oerId |> String.fromInt, mousePosXonCard |> String.fromFloat, mention.positionInResource |> String.fromFloat, mention.sentence ]
 
 
 type VideoPlayerMsg

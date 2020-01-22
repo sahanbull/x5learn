@@ -97,6 +97,7 @@ type Msg
   | StartTask String
   | CompleteTask
   | OpenedOverviewTypeMenu
+  | PressedReadMore InspectorState
 
 
 type UserProfileField

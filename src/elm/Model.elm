@@ -304,6 +304,7 @@ type alias InspectorState =
   , videoPlayer : Maybe Html5VideoPlayer
   , inspectorSidebarTab : InspectorSidebarTab -- switch between sidebar contents, such as feedback and recommendations
   , resourceRecommendations : List Oer -- OER recommendations in the sidebar tab
+  , userPressedReadMore : Bool
   }
 
 
@@ -656,7 +657,7 @@ newInspectorState oer fragmentStart =
         else
           Nothing
   in
-      InspectorState oer fragmentStart videoPlayer FeedbackTab []
+      InspectorState oer fragmentStart videoPlayer FeedbackTab [] False
 
 
 hasYoutubeVideo : OerUrl -> Bool

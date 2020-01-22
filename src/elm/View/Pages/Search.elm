@@ -46,7 +46,7 @@ viewBody model searchState =
       viewLoadingSpinner
 
     Just [] ->
-      "No results were found for \"" ++ searchState.lastSearch ++ "\". Please try a different search term." |> viewCenterNote
+      "No results were found for \"" ++ searchState.lastSearchText ++ "\". Please try a different search term." |> viewCenterNote
 
     Just oerIds ->
       Playlist "" oerIds

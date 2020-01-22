@@ -133,8 +133,8 @@ viewContentFlowBar model oer chunks barWidth barId =
                       Nothing ->
                         []
 
-                      Just {lastSearch} ->
-                        case indexOf (String.toLower lastSearch) (chunk.entities |> List.map (\{title} -> String.toLower title)) of
+                      Just {lastSearchText} ->
+                        case indexOf (String.toLower lastSearchText) (chunk.entities |> List.map (\{title} -> String.toLower title)) of
                           Nothing ->
                             []
 

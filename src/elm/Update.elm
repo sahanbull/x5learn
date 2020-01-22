@@ -227,7 +227,7 @@ update msg ({nav, userProfileForm} as model) =
       let
           (newModel, cmd) =
             model
-            |> updateSearch (insertSearchResults (oers |> List.map .id))
+            |> insertSearchResults (oers |> List.map .id)
             |> cacheOersFromList oers
             |> inspectOerBasedOnUrlParameter
       in
@@ -843,19 +843,18 @@ update msg ({nav, userProfileForm} as model) =
 --      { model | oerNoteboards = model.oerNoteboards |> Dict.map filter }
 
 
-updateSearch : (SearchState -> SearchState) -> Model -> Model
-updateSearch transformFunction model =
-  case model.searchState of
-    Nothing ->
-      model
+insertSearchResults : List OerId -> Model -> Model
+insertSearchResults oerIds model =
+  let
+      newSearchState =
+        case model.searchState of
+          Nothing ->
+            Nothing -- impossible
 
-    Just searchState ->
-      { model | searchState = Just (searchState |> transformFunction) }
-
-
-insertSearchResults : List OerId -> SearchState -> SearchState
-insertSearchResults oerIds searchState =
-  { searchState | searchResults = Just oerIds }
+          Just searchState ->
+            Just { searchState | searchResults = Just oerIds }
+  in
+      { model | searchState = newSearchState }
 
 
 incrementFrameCountInModalAnimation : Model -> Model
@@ -877,7 +876,7 @@ requestWikichunkEnrichmentsIfNeeded (model, oldCmd) =
         missing =
           model.cachedOers
           |> Dict.keys
-          |> List.filter (\url -> Dict.member url model.wikichunkEnrichments |> not)
+          |> List.filter (\oerId -> Dict.member oerId model.wikichunkEnrichments |> not)
     in
         if List.isEmpty missing then
           (model, oldCmd)

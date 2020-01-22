@@ -291,7 +291,7 @@ type Subpage
 {-| Search for OERs
 -}
 type alias SearchState =
-  { lastSearch : String
+  { lastSearchText : String
   , searchResults : Maybe (List OerId)
   }
 
@@ -637,7 +637,7 @@ initialTime =
 
 newSearch : String -> SearchState
 newSearch str =
-  { lastSearch = str
+  { lastSearchText = str
   , searchResults = Nothing
   }
 
@@ -907,7 +907,7 @@ isEqualToSearchString model entityTitle =
       False
 
     Just searchState ->
-      (entityTitle |> String.toLower) == (searchState.lastSearch |> String.toLower)
+      (entityTitle |> String.toLower) == (searchState.lastSearchText |> String.toLower)
 
 
 {-| Returns all the mentions of a particular Entity in a particular OER

@@ -114,7 +114,7 @@ viewUserMenu model userProfile =
       clickMsg =
         if model.popup == Just UserMenu then ClosePopup else SetPopup UserMenu
   in
-      button ([ htmlClass "ClosePopupOnClickOutside", alignRight ] ++ menu) { onPress = Just <| clickMsg, label = label }
+      button ([ htmlClass "ClosePopupOnClickOutside", alignRight ] ++ menu) { onPress = Just clickMsg, label = label }
 
 
 {-| Render the widget for the user to switch Explainer on and off

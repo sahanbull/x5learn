@@ -2,7 +2,7 @@ window.addEventListener("load", function() {
     window.cookieconsent.initialise({
       onInitialise: function(status) 
       {
-        if (this.hasConsented('required')) {
+        if (this.hasConsented('x5gon_cookie')) {
           // x5gon Cookie Init should go here
           console.log('Required cookies allowed.');
         }
@@ -10,7 +10,7 @@ window.addEventListener("load", function() {
     
       onAllow: function(category) 
       {
-        if (category == 'required') {
+        if (category == 'x5gon_cookie') {
           // x5gon Cookie Init should go here
           console.log('Required cookies just allowed.');
         }
@@ -18,7 +18,7 @@ window.addEventListener("load", function() {
     
       onRevoke: function(category) 
       {
-        if (category == 'required') {
+        if (category == 'x5gon_cookie') {
           // x5gon Cookie destroy should go here
           console.log('Required cookies just revoked.');
         }

@@ -825,6 +825,10 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | popup = Just OverviewTypePopup }, setBrowserFocus "")
       |> logEventForLabStudy "OpenedOverviewTypeMenu" []
 
+    PressedReadMore inspectorState ->
+      ( { model | inspectorState = Just { inspectorState | userPressedReadMore = True } }, Cmd.none)
+      |> logEventForLabStudy "PressedReadMore" []
+
 
 -- createNote : OerId -> String -> Model -> Model
 -- createNote oerId text model =

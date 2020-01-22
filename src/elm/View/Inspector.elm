@@ -109,7 +109,7 @@ viewModal model inspectorState =
 
 
 viewInspectorBody : Model -> InspectorState -> Element Msg
-viewInspectorBody model {oer, fragmentStart} =
+viewInspectorBody model ({oer, fragmentStart} as inspectorState) =
   let
       player =
         case getYoutubeVideoId oer.url of
@@ -130,23 +130,63 @@ viewInspectorBody model {oer, fragmentStart} =
                 embedYoutubePlayer model youtubeId startTime
   in
       [ player
-      , viewContentFlowBarWrapper model oer
+      , viewContentFlowBarWrapper model inspectorState oer
       ]
       |> column [ width <| px <| playerWidth model, moveLeft inspectorSidebarWidth ]
 
 
-viewDescription : Oer -> Element Msg
-viewDescription oer =
+viewDescription : InspectorState -> Oer -> Element Msg
+viewDescription inspectorState oer =
   case oer.description of
     "" ->
       "No description available" |> italicText |> el [ paddingTop 30 ]
 
-    desc ->
-      desc
+    str ->
+      let
+          characterLimit =
+            300
+      in
+          if String.length str < characterLimit then
+            str
+            |> viewString False
+          else if inspectorState.userPressedReadMore then
+            str
+            |> viewString True
+          else
+            [ str
+              |> truncateSentence characterLimit
+              |> viewString False
+              , viewReadMoreButton inspectorState
+            ]
+            |> column [ spacing 10 ]
+
+
+viewReadMoreButton : InspectorState -> Element Msg
+viewReadMoreButton inspectorState =
+  button
+    []
+    { onPress = Just <| PressedReadMore inspectorState
+    , label = "Read more" |> bodyNoWrap [ Font.color linkBlue ]
+    }
+
+
+viewString : Bool -> String -> Element Msg
+viewString isScrollbarEnabled str =
+  let
+      scrollbar =
+        if isScrollbarEnabled then
+          [ scrollbarY ]
+        else
+          []
+
+      attrs =
+        [ spacing 7, height fill, paddingTop 30 ] ++ scrollbar
+  in
+      str
       |> String.split("\n")
       |> List.filter (\line -> String.length line > 2)
       |> List.map (bodyWrap [])
-      |> column [ spacing 7, height fill, scrollbarY, paddingTop 30 ]
+      |> column attrs
 
 
 viewLinkToFile : Oer -> Element Msg
@@ -222,8 +262,8 @@ viewCourseSettings model oer {range, comment} =
       ]
 
 
-viewContentFlowBarWrapper : Model -> Oer -> Element Msg
-viewContentFlowBarWrapper model oer =
+viewContentFlowBarWrapper : Model -> InspectorState -> Oer -> Element Msg
+viewContentFlowBarWrapper model inspectorState oer =
   let
       components =
         if isLabStudy1 model then
@@ -236,7 +276,7 @@ viewContentFlowBarWrapper model oer =
             Just item ->
               viewCourseSettings model oer item
         else
-          [ viewDescription oer
+          [ viewDescription inspectorState oer
           -- , [ viewLinkToFile oer, viewProviderLinkAndFavoriteButton model oer ] |> column [ width fill, spacing 15, paddingTop 30 ]
           ]
 

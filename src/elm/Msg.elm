@@ -66,14 +66,14 @@ type Msg
   -- | ClickedQuickNoteButton OerId String
   -- | RemoveNote Note
   | YoutubeVideoIsPlayingAtPosition Float
-  | OverviewTagMouseOver EntityId OerId
-  | OverviewTagMouseOut
-  | OverviewTagLabelMouseOver EntityId OerId
-  | OverviewTagLabelClicked OerId
+  | BubblogramTopicMouseOver EntityId OerId
+  | BubblogramTopicMouseOut
+  | BubblogramTopicLabelMouseOver EntityId OerId
+  | BubblogramTopicLabelClicked OerId
   | PageScrolled PageScrollState
   | OerCardPlaceholderPositionsReceived (List OerCardPlaceholderPosition)
   | SelectInspectorSidebarTab InspectorSidebarTab OerId
-  -- | MouseMovedOnStoryTag Float
+  | MouseMovedOnTopicLane Float
   | SelectedOverviewType OverviewType
   | MouseEnterMentionInBubbblogramOverview OerId EntityId MentionInOer
   -- | ClickedHeart OerId
@@ -118,7 +118,7 @@ subscriptions model =
   , Ports.closeInspector (\_ -> CloseInspector)
   , Ports.clickedOnDocument (\_ -> ClickedOnDocument)
   , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
-  -- , Ports.mouseMovedOnStoryTag MouseMovedOnStoryTag
+  , Ports.mouseMovedOnTopicLane MouseMovedOnTopicLane
   , Ports.timelineMouseEvent TimelineMouseEvent
   -- , Ports.youtubeVideoIsPlayingAtPosition YoutubeVideoIsPlayingAtPosition
   , Ports.html5VideoStarted Html5VideoStarted

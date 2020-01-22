@@ -65,14 +65,14 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
                 TopicNames ->
                   { px = 9, py = bubblePosYfromIndex bubble + 8 }
 
-                TopicConnections ->
+                TopicBubbles ->
                   let
                       {posX, posY, size} =
                         animatedBubbleCurrentCoordinates animationPhase bubble
                   in
                       { px = (posX + 0*size*1.1*bubbleZoom) * (toFloat contentWidth) + marginX, py = (posY + 0.1 -  0*size*1.1*bubbleZoom) * (toFloat contentHeight) + marginTop - 15 }
 
-                TopicMentions ->
+                TopicSwimlanes ->
                   { px = 9, py = bubblePosYfromIndex bubble + 3 }
 
             isHovering =
@@ -85,7 +85,7 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
                 [ Element.alpha 0.8 ]
 
             labelClickHandler =
-              [ onClickStopPropagation (OverviewTagLabelClicked oerId) ]
+              [ onClickStopPropagation (BubblogramTopicLabelClicked oerId) ]
 
             textAttrs =
               case bubblogramType of
@@ -96,7 +96,7 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
                   []
         in
             entity.title
-            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| OverviewTagLabelMouseOver entity.id oerId, htmlClass hoverableClass ] ++ highlight ++ labelClickHandler ++ textAttrs)
+            |> captionNowrap ([ whiteText, moveRight px, moveDown py, Events.onMouseEnter <| BubblogramTopicLabelMouseOver entity.id oerId, htmlClass hoverableClass ] ++ highlight ++ labelClickHandler ++ textAttrs)
             |> inFront
             |> List.singleton
 
@@ -124,7 +124,7 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
           Just oer ->
             let
                 fragmentStart =
-                  case model.selectedMentionInStory of
+                  case model.selectedMention of
                     Nothing ->
                       0
 
@@ -162,13 +162,13 @@ viewSvgBubbleIncludingMentions model bubblogramType oerId animationPhase ({entit
             else
               [ fill "rgba(255,255,255,0)" ]
 
-          TopicConnections ->
+          TopicBubbles ->
             if isHovering then
               [ fill "#f93" ]
             else
               []
 
-          TopicMentions ->
+          TopicSwimlanes ->
             if isHovering then
               [ fill "rgba(255,255,255,0.1)" ]
             else
@@ -180,7 +180,7 @@ viewSvgBubbleIncludingMentions model bubblogramType oerId animationPhase ({entit
       mentionDots =
         if bubblogramType==TopicNames then
           []
-        else if isHovering || bubblogramType==TopicMentions then
+        else if isHovering || bubblogramType==TopicSwimlanes then
           viewMentionDots model bubblogramType oerId entity.id bubble isHovering isSearchTerm
         else
           []
@@ -193,13 +193,13 @@ viewSvgBubbleIncludingMentions model bubblogramType oerId animationPhase ({entit
               , y (bubblePosYfromIndex bubble |> floor |> String.fromInt)
               , width (containerWidth |> String.fromInt)
               , height (containerHeight // 5 |> String.fromInt)
-              , onMouseOver <| OverviewTagMouseOver entity.id oerId
-              , onMouseLeave <| OverviewTagMouseOut
-              , class <| hoverableClass ++ " StoryTag"
+              , onMouseOver <| BubblogramTopicMouseOver entity.id oerId
+              , onMouseLeave <| BubblogramTopicMouseOut
+              , class <| hoverableClass ++ " TopicLane"
               ] ++ outline)
               []
 
-          TopicConnections ->
+          TopicBubbles ->
             circle
               ([ cx (posX * (toFloat contentWidth) + marginX |> String.fromFloat)
               , cy (posY * (toFloat contentHeight) + marginTop |> String.fromFloat)
@@ -208,7 +208,7 @@ viewSvgBubbleIncludingMentions model bubblogramType oerId animationPhase ({entit
               ] ++ outline)
               []
 
-          TopicMentions ->
+          TopicSwimlanes ->
             let
                 strokeAttrs =
                   if index==0 then
@@ -223,9 +223,9 @@ viewSvgBubbleIncludingMentions model bubblogramType oerId animationPhase ({entit
               , y (bubblePosYfromIndex bubble |> floor |> String.fromInt)
               , width (containerWidth |> String.fromInt)
               , height (containerHeight // 5 |> String.fromInt)
-              , onMouseOver <| OverviewTagMouseOver entity.id oerId
-              , onMouseLeave <| OverviewTagMouseOut
-              , class <| hoverableClass ++ " StoryTag"
+              , onMouseOver <| BubblogramTopicMouseOver entity.id oerId
+              , onMouseLeave <| BubblogramTopicMouseOut
+              , class <| hoverableClass ++ " TopicLane"
               ] ++ outline ++ strokeAttrs)
               []
 
@@ -244,7 +244,7 @@ colorFromBubble {hue, alpha, saturation} =
 -}
 isHoveringOverEntity : Model -> Entity -> Bool
 isHoveringOverEntity model entity =
-  case model.hoveringTagEntityId of
+  case model.hoveringEntityId of
     Just entityId ->
       entityId == entity.id
 
@@ -276,10 +276,10 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
           TopicNames ->
             (String.length text |> toFloat) / 200 - ((toFloat bubble.index)*0.05) |> Basics.min 1
 
-          TopicConnections ->
+          TopicBubbles ->
             (String.length text |> toFloat) / 200 - posY*0.5 |> Basics.min 1
 
-          TopicMentions ->
+          TopicSwimlanes ->
             (String.length text |> toFloat) / 200 - ((toFloat bubble.index)*0.05) |> Basics.min 1
 
       (contentElement, zoom) =
@@ -336,10 +336,10 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
                     TopicNames ->
                       35
 
-                    TopicConnections ->
+                    TopicBubbles ->
                       (toFloat containerHeight) - verticalOffset
 
-                    TopicMentions ->
+                    TopicSwimlanes ->
                       35
 
                 tailHeightString =
@@ -402,10 +402,10 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
           TopicNames ->
             bubblePosYfromIndex bubble
 
-          TopicConnections ->
+          TopicBubbles ->
             Basics.max 10 <| (posY - size*3.5*bubbleZoom) * (toFloat contentHeight) + marginTop - 5
 
-          TopicMentions ->
+          TopicSwimlanes ->
             bubblePosYfromIndex bubble
   in
       none
@@ -485,7 +485,7 @@ hoverableClass =
 {-| Render the mentions as interactive dots
 -}
 viewMentionDots : Model -> BubblogramType -> OerId -> EntityId -> Bubble -> Bool -> Bool -> List (Svg Msg)
-viewMentionDots model bubblogramType oerId entityId bubble isHoveringOnCurrentTag isSearchTerm =
+viewMentionDots model bubblogramType oerId entityId bubble isHoveringOnCurrentTopic isSearchTerm =
   let
       circlePosY =
         String.fromFloat <|
@@ -493,10 +493,10 @@ viewMentionDots model bubblogramType oerId entityId bubble isHoveringOnCurrentTa
             TopicNames ->
               (bubblePosYfromIndex bubble) + 23
 
-            TopicConnections ->
+            TopicBubbles ->
               containerHeight - 8 |> toFloat
 
-            TopicMentions ->
+            TopicSwimlanes ->
               (bubblePosYfromIndex bubble) + 23
 
       dot : MentionInOer -> Svg Msg
@@ -507,7 +507,7 @@ viewMentionDots model bubblogramType oerId entityId bubble isHoveringOnCurrentTa
               |> String.fromFloat
 
             circleRadius =
-              if isHoveringOnCurrentTag then
+              if isHoveringOnCurrentTopic then
                 "5"
               else
                 "2.5"
@@ -515,7 +515,7 @@ viewMentionDots model bubblogramType oerId entityId bubble isHoveringOnCurrentTa
             color =
               if isSearchTerm then
                 "rgba(255,240,0,1)"
-              else if isHoveringOnCurrentTag then
+              else if isHoveringOnCurrentTopic then
                 "rgba(255,140,0,1)"
               else
                 "rgba(255,140,0,0.4)"
@@ -525,10 +525,10 @@ viewMentionDots model bubblogramType oerId entityId bubble isHoveringOnCurrentTa
                 TopicNames ->
                   []
 
-                TopicConnections ->
+                TopicBubbles ->
                   [ onMouseOver <| MouseEnterMentionInBubbblogramOverview oerId entityId mention ]
 
-                TopicMentions ->
+                TopicSwimlanes ->
                   []
         in
             circle ([ cx circlePosX, cy circlePosY, r circleRadius, fill color ]++hoverHandler) []

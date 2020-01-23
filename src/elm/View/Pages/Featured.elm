@@ -43,7 +43,7 @@ viewFeaturedPage model =
         ]
         |> column [ centerX, paddingXY 15 80, spacing 20, width fill, height fill ]
   in
-      (page, viewInspectorModalOrEmpty model)
+      (page, viewInspector model)
 
 
 {-| Render multiple OERs (when loaded)

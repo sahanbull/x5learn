@@ -41,7 +41,6 @@ type Msg
   -- | RequestAutocompleteTerms (Result Http.Error (List String))
   | RequestSaveUserProfile (Result Http.Error String)
   | RequestLabStudyLogEvent (Result Http.Error String)
-  | RequestResource (Result Http.Error Oer)
   | RequestResourceRecommendations (Result Http.Error (List Oer))
   | RequestSaveAction (Result Http.Error String)
   | RequestLoadCourse (Result Http.Error Course)
@@ -52,7 +51,7 @@ type Msg
   | SetPopup Popup
   | ClosePopup
   | CloseInspector
-  | TriggerSearch String
+  | TriggerSearch String Bool
   | ClickedOnDocument
   | SelectSuggestion String
   | MouseOverChunkTrigger Float
@@ -67,14 +66,14 @@ type Msg
   -- | ClickedQuickNoteButton OerId String
   -- | RemoveNote Note
   | YoutubeVideoIsPlayingAtPosition Float
-  | OverviewTagMouseOver EntityId OerId
-  | OverviewTagMouseOut
-  | OverviewTagLabelMouseOver EntityId OerId
-  | OverviewTagLabelClicked OerId
+  | BubblogramTopicMouseOver EntityId OerId
+  | BubblogramTopicMouseOut
+  | BubblogramTopicLabelMouseOver EntityId OerId
+  | BubblogramTopicLabelClicked OerId
   | PageScrolled PageScrollState
   | OerCardPlaceholderPositionsReceived (List OerCardPlaceholderPosition)
-  | SelectResourceSidebarTab ResourceSidebarTab OerId
-  -- | MouseMovedOnStoryTag Float
+  | SelectInspectorSidebarTab InspectorSidebarTab OerId
+  | MouseMovedOnTopicLane Float
   | SelectedOverviewType OverviewType
   | MouseEnterMentionInBubbblogramOverview OerId EntityId MentionInOer
   -- | ClickedHeart OerId
@@ -85,9 +84,11 @@ type Msg
   | Html5VideoPaused Float
   | Html5VideoSeeked Float
   | Html5VideoStillPlaying Float
-  | Html5VideoDuration Float
+  | Html5VideoAspectRatio Float
   | StartCurrentHtml5Video Float
   | ToggleContentFlow
+  | ToggleExplainer
+  | OpenExplanationPopup String
   | AddedOerToCourse OerId Range
   | RemovedOerFromCourse OerId
   | MovedCourseItemDown Int
@@ -95,6 +96,9 @@ type Msg
   | ChangedCommentTextInCourseItem OerId String
   | StartTask String
   | CompleteTask
+  | OpenedOverviewTypeMenu
+  | PressedReadMore InspectorState
+  | ToggleDataCollectionConsent Bool
 
 
 type UserProfileField
@@ -114,14 +118,13 @@ subscriptions model =
   , Ports.closeInspector (\_ -> CloseInspector)
   , Ports.clickedOnDocument (\_ -> ClickedOnDocument)
   , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
-  -- , Ports.mouseMovedOnStoryTag MouseMovedOnStoryTag
+  , Ports.mouseMovedOnTopicLane MouseMovedOnTopicLane
   , Ports.timelineMouseEvent TimelineMouseEvent
   -- , Ports.youtubeVideoIsPlayingAtPosition YoutubeVideoIsPlayingAtPosition
   , Ports.html5VideoStarted Html5VideoStarted
   , Ports.html5VideoPaused Html5VideoPaused
   , Ports.html5VideoSeeked Html5VideoSeeked
   , Ports.html5VideoStillPlaying Html5VideoStillPlaying
-  , Ports.html5VideoDuration Html5VideoDuration
   , Ports.pageScrolled PageScrolled
   , Ports.receiveCardPlaceholderPositions OerCardPlaceholderPositionsReceived
   , Ports.receiveFlyingHeartRelativeStartPosition FlyingHeartRelativeStartPositionReceived

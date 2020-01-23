@@ -29,7 +29,7 @@ viewSearchPage : Model -> SearchState -> PageWithModal
 viewSearchPage model searchState =
   let
       modal =
-        viewInspectorModalOrEmpty model
+        viewInspector model
 
       content =
         viewBody model searchState
@@ -46,7 +46,7 @@ viewBody model searchState =
       viewLoadingSpinner
 
     Just [] ->
-      "No results were found for \"" ++ searchState.lastSearch ++ "\". Please try a different search term." |> viewCenterNote
+      "No results were found for \"" ++ searchState.lastSearchText ++ "\". Please try a different search term." |> viewCenterNote
 
     Just oerIds ->
       Playlist "" oerIds

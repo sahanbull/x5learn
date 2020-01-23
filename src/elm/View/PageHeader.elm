@@ -12,6 +12,7 @@ import Element.Input as Input exposing (button)
 import Model exposing (..)
 
 import View.Utility exposing (..)
+import View.ToggleIndicator exposing (..)
 
 import Msg exposing (..)
 
@@ -44,7 +45,7 @@ viewPageHeader model =
         , height (px pageHeaderHeight)
         , spacing 20
         , paddingEach { allSidesZero | top = 0, left = 13, right = 16 }
-        , Background.color <| rgb 1 1 1
+        , Background.color white
         , borderBottom 1
         , borderColorDivider
         ] ++ snackbar
@@ -57,12 +58,13 @@ viewPageHeader model =
           Just session ->
             case session.loginState of
               LoggedInUser userProfile ->
-                -- [ labStudyTaskTimer model
-                [ viewUserMenu model userProfile
+                [ viewExplainerToggle model
+                , viewUserMenu model userProfile
                 ]
 
               GuestUser ->
-                [ link [ alignRight, paddingXY 15 10 ] { url = loginPath, label = "Log in" |> bodyNoWrap [] }
+                [ viewExplainerToggle model
+                , link [ alignRight, paddingXY 15 10 ] { url = loginPath, label = "Log in" |> bodyNoWrap [] }
                 , link [ alignRight, paddingXY 15 10 ] { url = signupPath, label = "Sign up" |> bodyNoWrap [] }
                 ]
   in
@@ -90,17 +92,41 @@ viewUserMenu model userProfile =
 
       menu =
         if model.popup == Just UserMenu then
-          ([ link [] { url = "/profile", label = displayName userProfile |> captionNowrap [ padding 15 ] }
-          , if isLabStudy1 model then none else navButton "/profile" "My profile"
-          , navButton "/logout" "Log out"
-          ])
-          |> menuColumn [ Background.color white, moveRight 67, moveDown 38 ]
-          |> onLeft
-          |> List.singleton
+          let
+              menuItems =
+                if isLabStudy1 model then
+                  [ displayName userProfile |> captionNowrap [ padding 15 ]
+                  , navButton "/logout" "Log out"
+                  ]
+                else
+                  [ link [] { url = "/profile", label = displayName userProfile |> captionNowrap [ padding 15 ] }
+                  , navButton "/profile" "My profile"
+                  , navButton "/logout" "Log out"
+                  ]
+          in
+              menuItems
+              |> menuColumn [ Background.color white, moveRight 67, moveDown 38 ]
+              |> onLeft
+              |> List.singleton
         else
           []
 
       clickMsg =
         if model.popup == Just UserMenu then ClosePopup else SetPopup UserMenu
   in
-      button ([ htmlClass "ClosePopupOnClickOutside", alignRight ] ++ menu) { onPress = Just <| clickMsg, label = label }
+      button ([ htmlClass "ClosePopupOnClickOutside", alignRight ] ++ menu) { onPress = Just clickMsg, label = label }
+
+
+{-| Render the widget for the user to switch Explainer on and off
+-}
+viewExplainerToggle : Model -> Element Msg
+viewExplainerToggle model =
+  let
+      enabled =
+        model.isExplainerEnabled
+  in
+      [ "Transparent AI" |> bodyNoWrap ([ width fill ] ++ (if enabled then [ Font.color magenta ] else []))
+      , viewToggleIndicator enabled (if enabled then "MagentaBackground" else "") |> el [ paddingRight 10 ]
+      ]
+      |> row [ spacing 10, onClick ToggleExplainer, htmlClass "CursorPointer" ]
+      |> el [ alignRight ]

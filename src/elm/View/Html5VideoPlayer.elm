@@ -4,15 +4,18 @@ import Dict
 import Url
 import Html
 import Html.Attributes as Attributes
+import Html.Events exposing (on)
 
 import Element exposing (..)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
 
-import View.Utility exposing (..)
-import Msg exposing (Msg)
+import Json.Decode as Decode
+
 import Model exposing (..)
+import View.Utility exposing (..)
+import Msg exposing (..)
 
 
 {-| Render a standard HTML5 video player element
@@ -35,7 +38,7 @@ viewHtml5VideoPlayer model oer =
       attrs =
         [ Attributes.id "Html5VideoPlayer"
         , Attributes.controls True
-        , Attributes.height (max 200 (model.windowHeight - 450))
+        , on "loadedmetadata" (Decode.map2 (\w h -> Html5VideoAspectRatio (w/h)) (Decode.at [ "srcElement", "videoWidth" ] Decode.float) (Decode.at [ "srcElement", "videoHeight" ] Decode.float))
         ]
 
       children =
@@ -46,7 +49,7 @@ viewHtml5VideoPlayer model oer =
       children
       |> Html.video attrs
       |> Element.html
-      |> el [ width <| px 720 ]
+      |> el [ width <| px <| playerWidth model ]
 
 
 {-| Create an HTML tag like

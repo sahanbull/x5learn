@@ -129,7 +129,7 @@ borderLeft px =
 
 borderColorDivider : Attribute Msg
 borderColorDivider =
-  Border.color <| greyDivider
+  Border.color greyDivider
 
 
 allSidesZero : { bottom : number, left : number1, right : number2, top : number3 }
@@ -209,6 +209,11 @@ red =
 orange : Color
 orange =
   rgb255 255 120 0
+
+
+magenta : Color
+magenta =
+  rgb255 250 0 230
 
 
 blue : Color
@@ -324,10 +329,10 @@ hoverCircleBackground =
   htmlClass "HoverCircleBackground"
 
 
-embedYoutubePlayer : String -> Int -> Element Msg
-embedYoutubePlayer youtubeId startTime =
+embedYoutubePlayer : Model -> String -> Int -> Element Msg
+embedYoutubePlayer model youtubeId startTime =
   none
-  |> el [ htmlId "playerElement", width (px playerWidth), height (px 410) ]
+  |> el [ htmlId "playerElement", width <| px <| playerWidth model, height (px 410) ]
 
 
 dialogShadow : Attribute Msg
@@ -439,8 +444,30 @@ materialScrimAlpha =
   0.32
 
 
-playerWidth =
-  720
+inspectorSidebarWidth =
+  230
+
+
+playerWidth : Model -> Int
+playerWidth model =
+  let
+      default =
+        520
+  in
+      case model.inspectorState of
+        Nothing ->
+          default
+
+        Just inspectorState ->
+          case inspectorState.videoPlayer of
+            Nothing ->
+              default
+
+            Just videoPlayer ->
+              (model.windowHeight - pageHeaderHeight - 380 |> toFloat) * videoPlayer.aspectRatio
+              |> min (model.windowWidth - navigationDrawerWidth - inspectorSidebarWidth - 40 |> toFloat)
+              |> min 720
+              |> floor
 
 
 milkyWhiteCenteredContainer : Element Msg -> Element Msg
@@ -547,19 +574,20 @@ pointerEventsNone =
   htmlClass "PointerEventsNone"
 
 
+inlineLinkAttrs : List (Attribute Msg)
+inlineLinkAttrs =
+  [ paddingXY 5 0, Font.color linkBlue ]
+
+
 guestCallToSignup : String -> Element Msg
 guestCallToSignup incentive =
-  let
-      linkAttrs =
-        [ paddingXY 5 0, Font.color linkBlue ]
-  in
-      [ "You are currently not logged in. "++incentive++", please" |> text
-      , "log in" |> text |> linkTo linkAttrs loginPath
-      , "or" |> text
-      , "create an account" |> text |> linkTo linkAttrs signupPath
-      , "." |> text
-      ]
-      |> paragraph [ Font.size 14, Font.color materialDark ]
+  [ "You are currently not logged in. "++incentive++", please" |> text
+  , "log in" |> text |> linkTo inlineLinkAttrs loginPath
+  , "or" |> text
+  , "create an account" |> text |> linkTo inlineLinkAttrs signupPath
+  , "." |> text
+  ]
+  |> paragraph [ Font.size 14, Font.color materialDark ]
 
 
 viewHeartButton : Model -> OerId -> Element Msg
@@ -586,3 +614,38 @@ trashIcon =
 avatarImage : Element Msg
 avatarImage =
   image [ alpha 0.5 ] { src = svgPath "user_default_avatar", description = "user menu" }
+
+
+explanationLinkForWikification : WebLink
+explanationLinkForWikification =
+  { label = "Wikification"
+  , url = "http://wikifier.org" -- TODO improve
+  }
+
+
+explanationLinkForSearch : WebLink
+explanationLinkForSearch =
+  { label = "AI-based Search"
+  , url = "https://platform.x5gon.org/search" -- TODO improve
+  }
+
+
+explanationLinkForTrueLearn : WebLink
+explanationLinkForTrueLearn =
+  { label = "Personalised Recommendation"
+  , url = "https://platform.x5gon.org"
+  }
+
+
+explanationLinkForItemRecommender : WebLink
+explanationLinkForItemRecommender =
+  { label = "Item-based Recommendation"
+  , url = "https://platform.x5gon.org/products/recommend"
+  }
+
+
+explanationLinkForTranslation : WebLink
+explanationLinkForTranslation =
+  { label = "Translation / Transcription"
+  , url = "https://platform.x5gon.org/products/translate"
+  }

@@ -11,6 +11,7 @@ import Element.Font as Font
 
 import Model exposing (..)
 import View.Utility exposing (..)
+import View.ToggleIndicator exposing (..)
 
 import Msg exposing (..)
 
@@ -40,13 +41,22 @@ viewProfilePage model savedUserProfile {userProfile, saved} =
             button [ paddingXY 16 8, width fill, Background.color x5color, whiteText ] { onPress = Just SubmittedUserProfile, label = "Save" |> text |> el [] }
 
       page =
-        -- [ "My profile" |> headlineWrap []
         [ image [ alpha 0.5, centerX, width <| px 75 ] { src = svgPath "user_default_avatar", description = "user menu" }
         , "Email: " ++ userProfile.email |> captionNowrap [ centerX ]
         , [ firstNameField, lastNameField ] |> wrappedRow [ spacing 20 ]
+        , viewDataCollectionConsentToggle userProfile.isDataCollectionConsent
         , [ saveButton ] |> wrappedRow [ spacing 20, height <| px 40 ]
         ]
         |> column [ spacing 30, padding 5 ]
         |> milkyWhiteCenteredContainer
   in
       (page, [])
+
+
+viewDataCollectionConsentToggle : Bool -> Element Msg
+viewDataCollectionConsentToggle enabled =
+  [ "Allow X5GON to collect data about my activity on this site for research" |> bodyWrap [ width fill ]
+  , viewToggleIndicator enabled (if enabled then "X5ColorBackground" else "") |> el [ paddingRight 10 ]
+  ]
+  |> row [ spacing 10, onClick (ToggleDataCollectionConsent enabled), htmlClass "CursorPointer" ]
+  |> el [ alignRight ]

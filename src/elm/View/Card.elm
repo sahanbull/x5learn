@@ -11,7 +11,8 @@ import Dict exposing (Dict)
 
 import Model exposing (..)
 import View.Utility exposing (..)
-import View.FragmentsBar exposing (..)
+import View.Explainer exposing (..)
+import View.ContentFlowBar exposing (..)
 import View.Bubblogram exposing (..)
 
 import Msg exposing (..)
@@ -67,12 +68,24 @@ viewOerGrid model playlist =
             cards =
               oers
               |> List.indexedMap (\index oer -> viewOerCard model (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) True oer)
-              |> List.reverse
+              -- |> List.reverse
               |> List.map inFront
+
+            overviewTypeMenu =
+              if isLabStudy1 model then [] else [ viewOverviewTypeMenu model |> inFront ]
+
+            rawAttributes =
+              [ height (rowHeight * nrows + 100 |> px), spacing 20, padding 20, width fill ] ++ cards ++ overviewTypeMenu
+
+            attrs =
+              if model.popup == Just OverviewTypePopup then
+                rawAttributes -- render the menu in front of the card content
+              else
+                rawAttributes |> List.reverse -- render the card content (particularly the speech bubbles) in front of the menu
         in
             [ playlist.title |> captionNowrap [ paddingLeft <| round <| (cardPositionAtIndex 0).x - 20, moveDown 55, Font.color grey80 ]
             ]
-            |> column ([ height (rowHeight * nrows + 100|> px), spacing 20, padding 20, width fill, Border.rounded 2 ] ++ cards)
+            |> column attrs
 
 
 {-| Render an OER as a card
@@ -95,7 +108,7 @@ viewOerCard ({pageScrollState} as model) position barId enableShadow oer =
 viewVisibleOerCard : Model -> Point -> String -> Bool -> Oer -> Element Msg
 viewVisibleOerCard model position barId enableShadow oer =
   let
-      fragmentsBar =
+      contentFlowBar =
         case Dict.get oer.id model.wikichunkEnrichments of
           Nothing ->
             [ viewLoadingSpinner |> el [ moveDown 80, width fill ] |> inFront ]
@@ -104,36 +117,39 @@ viewVisibleOerCard model position barId enableShadow oer =
             if enrichment.errors then
               []
             else
-              viewFragmentsBar model oer enrichment.chunks cardWidth barId
+              viewContentFlowBar model oer enrichment.chunks cardWidth barId
               |> el [ width fill, moveDown (toFloat imageHeight) ]
               |> inFront
               |> List.singleton
 
       (graphic, popup) =
-        (viewCarousel model oer, [])
-          -- BubblogramOverview bubblogramType ->
-          --   case Dict.get oer.id model.wikichunkEnrichments of
-          --     Nothing ->
-          --       (none |> el [ width fill, height (px imageHeight), Background.color x5color ]
-          --       , [])
+        case model.overviewType of
+          ThumbnailOverview ->
+            (viewCarousel model oer, [])
 
-          --     Just enrichment ->
-          --       if enrichment.errors then
-          --         if isVideoFile oer.url then
-          --           (image [ alpha 0.9, centerX, centerY ] { src = svgPath "playIcon", description = "Video file" }
-          --            |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
-          --           , [])
-          --         else
-          --           ("no preview available" |> captionNowrap [ alpha 0.75, whiteText, centerX, centerY ]
-          --            |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
-          --           , [])
-          --       else
-          --         case enrichment.bubblogram of
-          --           Nothing -> -- shouldn't happen for more than a second
-          --             (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color materialDark, inFront viewLoadingSpinner ], [])
+          BubblogramOverview bubblogramType ->
+            case Dict.get oer.id model.wikichunkEnrichments of
+              Nothing ->
+                (none |> el [ width fill, height (px imageHeight), Background.color x5color ]
+                , [])
 
-          --           Just bubblogram ->
-          --             viewBubblogram model bubblogramType oer.id bubblogram
+              Just enrichment ->
+                if enrichment.errors then
+                  if isVideoFile oer.url then
+                    (image [ alpha 0.9, centerX, centerY ] { src = svgPath "playIcon", description = "Video file" }
+                     |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
+                    , [])
+                  else
+                    ("no preview available" |> captionNowrap [ alpha 0.75, whiteText, centerX, centerY ]
+                     |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
+                    , [])
+                else
+                  case enrichment.bubblogram of
+                    Nothing -> -- shouldn't happen for more than a second
+                      (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color materialDark, inFront viewLoadingSpinner ], [])
+
+                    Just bubblogram ->
+                      viewBubblogram model bubblogramType oer.id bubblogram
 
       availableTranslations =
         if oer.mediatype/="video" || Dict.isEmpty oer.translations then
@@ -223,14 +239,17 @@ viewVisibleOerCard model position barId enableShadow oer =
 
       card =
         [ graphic ]
-        |> column ([ widthOfCard, heightOfCard, onMouseEnter (SetHover (Just oer.id)), onMouseLeave (SetHover Nothing), title, bottomInfo ] ++ availableTranslations ++ fragmentsBar ++ shadow ++ clickHandler ++ popup)
+        |> column ([ widthOfCard, heightOfCard, onMouseEnter (SetHover (Just oer.id)), onMouseLeave (SetHover Nothing), title, bottomInfo ] ++ availableTranslations ++ contentFlowBar ++ shadow ++ clickHandler ++ popup)
+        |> explanationWrapper
+
+      explanationWrapper =
+        explainify model explanationForOerCard
 
       wrapperAttrs =
         [ htmlClass "CloseInspectorOnClickOutside OerCard", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y, htmlDataAttribute <| String.fromInt oer.id, htmlClass "CursorPointer" ]
   in
       none
       |> el wrapperAttrs
-
 
 {-| If the Oer has several images, show them as a slideshow
 -}
@@ -360,3 +379,40 @@ spritesheetUrl oer =
 thumbUrl : Oer -> String
 thumbUrl oer =
   "http://145.14.12.67/files/thumbs/tn_"++(String.fromInt oer.id)++"_332x175.jpg"
+
+
+viewOverviewTypeMenu : Model -> Element Msg
+viewOverviewTypeMenu model =
+  let
+      option overviewType =
+        actionButtonWithoutIcon [] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] (overviewTypeDisplayName overviewType) (Just <| SelectedOverviewType overviewType)
+
+      options : List (Attribute Msg)
+      options =
+        case model.popup of
+          Just OverviewTypePopup ->
+            [ option ThumbnailOverview
+            , option <| BubblogramOverview TopicNames
+            , option <| BubblogramOverview TopicBubbles
+            , option <| BubblogramOverview TopicSwimlanes
+            ]
+            |> menuColumn []
+            |> onLeft
+            |> List.singleton
+
+          _ ->
+            []
+
+      attrs =
+        [ alignRight, moveLeft 130, moveDown 30, Border.width 2, Border.color white, htmlClass "ClosePopupOnClickOutside" ] ++ options
+  in
+      actionButtonWithIcon [ whiteText, paddingXY 12 10 ] IconLeft "format_list_white" "View as..." (Just OpenedOverviewTypeMenu)
+      |> el attrs
+
+
+explanationForOerCard : Explanation
+explanationForOerCard =
+  { componentId = "oerCard"
+  , flyoutDirection = Left
+  , links = [ explanationLinkForWikification, explanationLinkForTranslation ]
+  }

@@ -279,12 +279,21 @@ function registerTimelineMouseEvent(eventName){
     var element = event.target;
     // When ContentFlow is enabled, the event is caught by ChunkTrigger
     if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" ChunkTrigger ") > -1 ){
-      var fragmentsBar = element.closest('.FragmentsBar')
-      reportTimelineMouseEvent(fragmentsBar, eventName, event);
+      var contentFlowBar = element.closest('.ContentFlowBar')
+      reportTimelineMouseEvent(contentFlowBar, eventName, event);
+      return;
     }
-    // When ContentFlow is disabled, the event is caught by FragmentsBar
-    if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" FragmentsBar ") > -1 ){
+    // When ContentFlow is disabled, the event is caught by ContentFlowBar
+    if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" ContentFlowBar ") > -1 ){
       reportTimelineMouseEvent(element, eventName, event);
+      return;
+    }
+    if(eventName=='mousemove' && (" " + element.getAttribute("class") + " ").replace(/[\n\t]/g, " ").indexOf(" TopicLane ") > -1 ){
+      var rect = element.getBoundingClientRect();
+      var posX = window.scrollX + rect.left;
+      var positionInResource = (event.pageX - posX) / rect.width;
+      app.ports.mouseMovedOnTopicLane.send(positionInResource);
+      return;
     }
   });
 }

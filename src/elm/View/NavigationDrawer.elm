@@ -13,6 +13,7 @@ import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
 
 import Model exposing (..)
 import View.Utility exposing (..)
+import View.Explainer exposing (..)
 import View.SearchWidget exposing (..)
 import View.ContentFlowToggle exposing (..)
 import View.Course exposing (..)
@@ -53,7 +54,7 @@ withNavigationDrawer model (pageContent, modal) =
           |> column [ width fill, spacing 8 ]
 
       drawer =
-        [ if isLabStudy1 model then none else model.searchInputTyping |> viewSearchWidget model fill "Search"
+        [ if isLabStudy1 model then none else model.searchInputTyping |> viewSearchWidget model fill "Search" |> explainify model explanationForSearchField
         , navButtons
         ]
         |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 12, spacing 30, whiteBackground ]
@@ -109,18 +110,6 @@ withNavigationDrawer model (pageContent, modal) =
       (page, modal ++ [ drawer ])
 
 
-dataSetSelectionWidget model searchInputTyping =
-  let
-      submit =
-        TriggerSearch searchInputTyping
-
-      searchField =
-        Input.text [ htmlId "SearchField", width fill, Input.focusedOnLoad, onEnter <| submit ] { onChange = ChangeSearchText, text = searchInputTyping, placeholder = Just ("Dataset" |> text |> Input.placeholder []), label = Input.labelHidden "search" }
-        |> el [ width fill, centerX ]
-  in
-      searchField
-
-
 taskButtons : Model -> Element Msg
 taskButtons model =
   let
@@ -143,3 +132,11 @@ taskButtons model =
       , taskButton "Task 2"
       ]
       |> column [ spacing 10 ]
+
+
+explanationForSearchField : Explanation
+explanationForSearchField =
+  { componentId = "searchField"
+  , flyoutDirection = Right
+  , links = [ explanationLinkForSearch ]
+  }

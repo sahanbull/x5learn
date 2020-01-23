@@ -16,7 +16,6 @@ import View.Pages.Search exposing (viewSearchPage)
 -- import View.Pages.Notes exposing (viewNotesPage)
 -- import View.Pages.Favorites exposing (viewFavoritesPage)
 import View.Pages.Profile exposing (viewProfilePage)
-import View.Pages.Resource exposing (viewResourcePage)
 
 import Update exposing (..)
 import Request exposing (..)
@@ -108,8 +107,6 @@ view model =
                 -- Notes ->
                 --   viewNotesPage model |> withNavigationDrawer model
 
-                Resource ->
-                  viewResourcePage model |> withNavigationDrawer model
 
       header : Attribute Msg
       header =

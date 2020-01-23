@@ -63,9 +63,9 @@ type alias Model =
   , oerCardPlaceholderPositions : List OerCardPlaceholderPosition -- dynamic layout of the cards on the screen
   -- OER Bubblograms
   , overviewType : OverviewType -- thumbnail or bubblogram
-  , hoveringTagEntityId : Maybe String -- when the user hovers over a topic in a bubblogram
+  , hoveringEntityId : Maybe EntityId -- when the user hovers over a topic in a bubblogram
   , timeOfLastUrlChange : Posix -- used to animate bubblograms
-  , selectedMentionInStory : Maybe (OerId, MentionInOer) -- in bubblogram: hovering over a mention
+  , selectedMention : Maybe (OerId, MentionInOer) -- in bubblogram: hovering over a mention
   -- OER inspector modal
   , inspectorState : Maybe InspectorState -- custom type, see definition below
   , modalAnimation : Maybe BoxAnimation -- When the user clicks on an OER card then the inspector modal doesn't just appear instantly - there is a bit of a zooming effect.
@@ -79,10 +79,6 @@ type alias Model =
   , userProfileFormSubmitted : Bool -- show a loading spinner while waiting for HTTP response
   -- Lab study
   , currentTaskName : Maybe String
-  -- Full-page resource view
-  , currentResource : Maybe CurrentResource -- in full-page view: the loaded OER e.g. x5learn.org/resource/12345
-  , resourceSidebarTab : ResourceSidebarTab -- in full-page view: switch between recommendations, notes and feedback
-  , resourceRecommendations : List Oer -- in full-page view: OER recommendations in the sidebar tab
   -- Explicit user feedback about OER content
   , feedbackForms : Dict OerId String -- allowing the user to type feedback on different OERs
   , timeOfLastFeedbackRecorded : Posix -- used to show a brief thank you message
@@ -97,6 +93,8 @@ type alias Model =
   -- screen dimensions
   , windowWidth : Int -- width of the browser window in pixels
   , windowHeight : Int -- height of the browser window in pixels
+  , minWindowWidth : Int -- minimum recommended browser width for the interface to work properly
+  , minWindowHeight : Int -- minimum recommended browser height for the interface to work properly
   -- scrolling and scrubbing
   , pageScrollState : PageScrollState -- vertical page scrolling. NB This value can also change when resizing the window or rotating the device.
   , mousePositionXwhenOnChunkTrigger : Float -- crude method to determine whether the ContentFlow menu should open to the left or right (to prevent exceeding the screen borders)
@@ -118,6 +116,7 @@ type alias Model =
   -- deactivated code
   -- , oerNoteboards : Dict OerId Noteboard
   -- , oerNoteForms : Dict OerId String
+  , isExplainerEnabled : Bool
   }
 
 
@@ -127,30 +126,24 @@ type EntityDefinition
   = DefinitionScheduledForLoading
   | DefinitionLoaded String
 
-{-| Sidebar in full-page view
+{-| Sidebar in inspector
 -}
-type ResourceSidebarTab
+type InspectorSidebarTab
   = RecommendationsTab
   | FeedbackTab
-
-{-| Current resource in full-page view
--}
-type CurrentResource
-  = Loaded OerId
-  | Error
 
 {-| Toggle between thumbnails and bubblograms
 -}
 type OverviewType
-  = ImageOverview
+  = ThumbnailOverview
   | BubblogramOverview BubblogramType
 
 {-| Type of bubblogram to display
 -}
 type BubblogramType
   = TopicNames
-  | TopicConnections
-  | TopicMentions
+  | TopicBubbles
+  | TopicSwimlanes
 
 {-| For any (video) OER, which parts has the user watched
 -}
@@ -264,6 +257,7 @@ type alias UserProfile =
   { email : String
   , firstName : String
   , lastName : String
+  , isDataCollectionConsent : Bool
   }
 
 
@@ -272,6 +266,8 @@ type alias UserProfile =
 type alias Flags =
   { windowWidth : Int
   , windowHeight : Int
+  , minWindowWidth : Int
+  , minWindowHeight : Int
   }
 
 
@@ -291,13 +287,12 @@ type Subpage
   | Search
   -- | Favorites
   -- | Notes
-  | Resource
 
 
 {-| Search for OERs
 -}
 type alias SearchState =
-  { lastSearch : String
+  { lastSearchText : String
   , searchResults : Maybe (List OerId)
   }
 
@@ -308,6 +303,9 @@ type alias InspectorState =
   { oer : Oer
   , fragmentStart : Float
   , videoPlayer : Maybe Html5VideoPlayer
+  , inspectorSidebarTab : InspectorSidebarTab -- switch between sidebar contents, such as feedback and recommendations
+  , resourceRecommendations : List Oer -- OER recommendations in the sidebar tab
+  , userPressedReadMore : Bool
   }
 
 
@@ -317,6 +315,7 @@ type alias Html5VideoPlayer =
   { isPlaying : Bool
   , currentTime : Float
   , duration : Float
+  , aspectRatio : Float
   }
 
 
@@ -380,9 +379,11 @@ type alias Entity =
     (They are mutually exclusive, i.e. only one popup can be open at any time)
 -}
 type Popup
-  = ChunkOnBar ChunkPopup -- chunk on FragmentsBar
+  = ContentFlowPopup ChunkPopup -- chunk on ContentFlowBar
   | UserMenu -- when the user clicks on the avatar icon at the top right
   | BubblePopup BubblePopupState -- Certain types of bubblograms open a popup when the mouse hovers over a bubble
+  | OverviewTypePopup -- Allowing the user to toggle between thumbnails and bubblograms
+  | ExplanationPopup String -- Showing extra information for a component if isExplainerEnabled
 
 
 {-| Cascading menu containing wikipedia topics
@@ -434,7 +435,7 @@ type alias Range =
   , length : Float -- 0 to 1
   }
 
-{-| TimelineHoverState relates to the FragmentsBar and serves 2 purposes:
+{-| TimelineHoverState relates to the ContentFlowBar and serves 2 purposes:
     1. scrubbing to preview video content
     2. specifying a range for a CourseItem by dragging
 -}
@@ -491,6 +492,7 @@ type AnimationStatus
 type alias Session =
   { loginState : LoginState
   , isContentFlowEnabled : Bool
+  , overviewTypeId : String
   }
 
 
@@ -508,6 +510,28 @@ type alias VideoEmbedParams =
   , videoId : String
   , videoStartPosition : Float
   , playWhenReady : Bool
+  }
+
+
+type FlyoutDirection
+  = Left
+  | Right
+
+
+{-| Explanation for a particular UI component
+-}
+type alias Explanation =
+  { componentId : String -- arbitrary unique name e.g. searchField. Used to distinguish which ExplanationPopup is currently open
+  , links : List WebLink -- e.g. { label = "Discovery API", url = "https://platform.x5gon.org/products/discovery" }
+  , flyoutDirection : FlyoutDirection -- e.g. Right (preferable unless the component is likely to be too close to the right edge of the screen)
+  }
+
+
+{-| Just a regular web link with a label and a URL
+-}
+type alias WebLink =
+  { label : String
+  , url : String
   }
 
 
@@ -535,10 +559,10 @@ initialModel nav flags =
   , hoveringOerId = Nothing
   , timeOfLastMouseEnterOnCard = initialTime
   , oerCardPlaceholderPositions = []
-  , overviewType = ImageOverview
-  , hoveringTagEntityId = Nothing
+  , overviewType = ThumbnailOverview
+  , hoveringEntityId = Nothing
   , timeOfLastUrlChange = initialTime
-  , selectedMentionInStory = Nothing
+  , selectedMention = Nothing
   , inspectorState = Nothing
   , modalAnimation = Nothing
   , autocompleteTerms = []
@@ -547,9 +571,6 @@ initialModel nav flags =
   , suggestionSelectionOnHoverEnabled = True
   , userProfileForm = freshUserProfileForm (initialUserProfile "")
   , userProfileFormSubmitted = False
-  , currentResource = Nothing
-  , resourceSidebarTab = initialResourceSidebarTab
-  , resourceRecommendations = []
   , feedbackForms = Dict.empty
   , timeOfLastFeedbackRecorded = initialTime
   , videoUsages = Dict.empty
@@ -560,6 +581,8 @@ initialModel nav flags =
   , flyingHeartAnimationStartPoint = Nothing
   , windowWidth = flags.windowWidth
   , windowHeight = flags.windowHeight
+  , minWindowWidth = flags.minWindowWidth
+  , minWindowHeight = flags.minWindowHeight
   , pageScrollState = PageScrollState 0 0 0 False
   , mousePositionXwhenOnChunkTrigger = 0
   , timelineHoverState = Nothing
@@ -576,12 +599,13 @@ initialModel nav flags =
   , currentTaskName = Nothing
   -- , oerNoteboards = Dict.empty
   -- , oerNoteForms = Dict.empty
+  , isExplainerEnabled = False
   }
 
 
 initialUserProfile : String -> UserProfile
 initialUserProfile email =
-  UserProfile email "" ""
+  UserProfile email "" "" False
 
 
 -- getOerNoteboard : Model -> OerId -> Noteboard
@@ -615,7 +639,7 @@ initialTime =
 
 newSearch : String -> SearchState
 newSearch str =
-  { lastSearch = str
+  { lastSearchText = str
   , searchResults = Nothing
   }
 
@@ -629,11 +653,12 @@ newInspectorState oer fragmentStart =
             { isPlaying = False
             , currentTime = 0
             , duration = 0
+            , aspectRatio = 1.3
             }
         else
           Nothing
   in
-      InspectorState oer fragmentStart videoPlayer
+      InspectorState oer fragmentStart videoPlayer FeedbackTab [] False
 
 
 hasYoutubeVideo : OerUrl -> Bool
@@ -884,7 +909,7 @@ isEqualToSearchString model entityTitle =
       False
 
     Just searchState ->
-      (entityTitle |> String.toLower) == (searchState.lastSearch |> String.toLower)
+      (entityTitle |> String.toLower) == (searchState.lastSearchText |> String.toLower)
 
 
 {-| Returns all the mentions of a particular Entity in a particular OER
@@ -965,9 +990,6 @@ searchPath =
 favoritesPath =
   "/favorites"
 
-resourcePath =
-  "/resource"
-
 loginPath =
    "/login"
 
@@ -1042,7 +1064,7 @@ isPdfFile oerUrl =
 -}
 resourceUrlPath : OerId -> String
 resourceUrlPath oerId =
-  resourcePath ++ "/" ++ (String.fromInt oerId)
+  searchPath ++ "?q=" ++ (String.fromInt oerId) ++ "&i=" ++ (String.fromInt oerId)
 
 
 {-| In an emergency, temporarily set this to true, then compile and redeploy
@@ -1120,13 +1142,6 @@ isFlyingHeartAnimating model =
 flyingHeartAnimationDuration : Int
 flyingHeartAnimationDuration =
   900
-
-
-{-| In the full-page OER view, which tab should be shown in the sidebar by default
--}
-initialResourceSidebarTab : ResourceSidebarTab
-initialResourceSidebarTab =
-  FeedbackTab
 
 
 {-| Check whether the mouse is hovering over a particular OER
@@ -1208,3 +1223,71 @@ multiplyRange factor {start, length} =
   { start = start * factor
   , length = length * factor
   }
+
+
+{-| The interface works best on large screens.
+    Users with screens that are too small should see a warning.
+-}
+isBrowserWindowTooSmall : Model -> Bool
+isBrowserWindowTooSmall model =
+  model.windowWidth < model.minWindowWidth || model.windowHeight < model.minWindowHeight
+
+
+{-| Display names of overview types.
+    These are the names as they appear in the GUI, not necessarily in the database.
+-}
+overviewTypeDisplayName : OverviewType -> String
+overviewTypeDisplayName overviewType =
+  case overviewTypes |> List.filter (\entry -> entry.overviewType == overviewType) |> List.head of
+    Nothing ->
+      "Unknown OverviewType" -- make sure this never happens
+
+    Just entry ->
+      entry.displayName
+
+
+{-| Permanent IDs of overview types.
+    These are the names as they appear in the database, not necessarily in the GUI.
+-}
+overviewTypeId : OverviewType -> String
+overviewTypeId overviewType =
+  case overviewTypes |> List.filter (\entry -> entry.overviewType == overviewType) |> List.head of
+    Nothing ->
+      "unknown" -- make sure this never happens
+
+    Just entry ->
+      entry.id
+
+
+{-| This function takes an id (as in the database) and returns the corresponding Elm value.
+-}
+overviewTypeFromId : String -> OverviewType
+overviewTypeFromId id =
+  case overviewTypes |> List.filter (\entry -> entry.id == id) |> List.head of
+    Nothing ->
+      ThumbnailOverview -- Default to thumbnails
+
+    Just entry ->
+      entry.overviewType
+
+
+{-| For each value of OverviewType, we need a displayName (as shown in the GUI) and a permanent ID (for the database).
+    Two things are essential here:
+    1. You MUST include every possible value of OverviewType in this list.
+    2. You MUST keep the values for ID the same, in order to prevent inconsistent states on the server.
+    In contrast, feel free to change the values for displayName as needed: These affect only the GUI.
+-}
+overviewTypes : List { id : String, displayName : String, overviewType : OverviewType }
+overviewTypes =
+  [ { id = "thumbnail", displayName = "Thumbnail", overviewType = ThumbnailOverview }
+  , { id = "topicnames", displayName = "Topic Names", overviewType = BubblogramOverview TopicNames }
+  , { id = "bubbles", displayName = "Bubbles", overviewType = BubblogramOverview TopicBubbles }
+  , { id = "swimlanes", displayName = "Swimlanes", overviewType = BubblogramOverview TopicSwimlanes }
+  ]
+
+
+{-| Function that does nothing
+-}
+noOp : a -> a
+noOp x =
+  x

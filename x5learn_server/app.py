@@ -6,6 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from wtforms import BooleanField, validators
 import json
 import os # apologies
+import requests
 import http.client
 import urllib
 from collections import defaultdict
@@ -84,6 +85,9 @@ mail.init_app(app)
 
 CURRENT_ENRICHMENT_VERSION = 1
 MAX_SEARCH_RESULTS = 18 # number divisible by 2 and 3 to fit nicely into grid
+USE_RECOMMENDATIONS_FROM_LAM = True # if true, uses the new solution see #290
+SUPPORTED_VIDEO_FORMATS = ['video', 'mp4', 'mov', 'webm', 'ogg']
+SUPPORTED_FILE_FORMATS = SUPPORTED_VIDEO_FORMATS + [ 'pdf' ]
 
 # Number of seconds between actions that report the ongoing video play position.
 # Keep this constant in sync with videoPlayReportingInterval on the frontend!
@@ -190,11 +194,11 @@ def data_collection():
 
     profile = json.loads(current_user.user_profile)
 
-    if profile.get('allow_data_collection') is None:
+    if profile.get('isDataCollectionConsent') is None:
         return render_template('data_collection.html')
 
     # If data collection is off the user will be prompted every other day at login
-    if (profile.get('allow_data_collection') == "off"):
+    if (profile.get('isDataCollectionConsent') == "off"):
         last_data_collection_prompt_datetime = datetime.fromtimestamp(profile.get('last_data_collection_prompt'))
         datediff = datetime.now() - last_data_collection_prompt_datetime
 
@@ -208,12 +212,12 @@ def data_collection():
 @app.route("/data_collection", methods=['POST'])
 def submit_data_collection():
 
-    if "allow_data_collection" in request.form:
-        allow_data_collection = request.form['allow_data_collection']
+    if "isDataCollectionConsent" in request.form:
+        allow_data_collection = request.form['isDataCollectionConsent']
     else:
         allow_data_collection = "off"
 
-    current_user.user_profile = json.dumps({'allow_data_collection': allow_data_collection, 'last_data_collection_prompt': datetime.timestamp(datetime.now())})
+    current_user.user_profile = json.dumps({'isDataCollectionConsent': allow_data_collection, 'last_data_collection_prompt': datetime.timestamp(datetime.now())})
     db_session.commit()
     return redirect("/")
 
@@ -233,11 +237,24 @@ def get_logged_in_user_profile_and_state():
     else:
         profile = {'email': current_user.email}
     # Look at actions to determine whether contentflow is enabled or disabled
+    profile = current_user.user_profile if current_user.user_profile is not None else {
+        'email': current_user.email}
+    logged_in_user = {'userProfile': profile, 'isContentFlowEnabled': is_contentflow_enabled(), 'overviewTypeId': get_overview_type_setting()}
+    return jsonify({'loggedInUser': logged_in_user})
+
+
+# Look at actions to determine whether ContentFlow is enabled or disabled
+def is_contentflow_enabled():
     action = Action.query.filter(Action.user_login_id == current_user.get_id(),
                                  Action.action_type_id.in_([7])).order_by(Action.id.desc()).first()
-    is_contentflow_enabled = True if action is None else action.params['enable']
-    logged_in_user = {'userProfile': profile, 'isContentFlowEnabled': is_contentflow_enabled}
-    return jsonify({'loggedInUser': logged_in_user})
+    return True if action is None else action.params['enable']
+
+
+# Look at actions to determine the OverviewType setting
+def get_overview_type_setting():
+    action = Action.query.filter(Action.user_login_id == current_user.get_id(),
+                                 Action.action_type_id.in_([10])).order_by(Action.id.desc()).first()
+    return 'thumbnail' if action is None else action.params['selectedMode']
 
 
 # @user_registered.connect_via(app)
@@ -258,19 +275,14 @@ def get_logged_in_user_profile_and_state():
 @app.route("/api/v1/recommendations/", methods=['GET'])
 def api_recommendations():
     oer_id = int(request.args['oerId'])
-    main_topics = find_enrichment_by_oer_id(oer_id).main_topics()
-    print(main_topics)
-    urls_with_similarity = [(enrichment.url, enrichment.get_topic_overlap(main_topics)) for enrichment in
-                            WikichunkEnrichment.query.all()]
-    most_similar = sorted(urls_with_similarity, key=lambda x: x[1], reverse=True)
-    results = []
-    for candidate in most_similar:
-        oer = Oer.query.filter_by(url=candidate[0]).first()
-        if oer is not None:
-            results.append(oer)
-        if len(results) > 9:
-            break
-    return jsonify([oer.data_and_id() for oer in results])
+    if USE_RECOMMENDATIONS_FROM_LAM:
+        oers = recommendations_from_lam_api(oer_id) # new
+    else:
+        oers = recommendations_from_wikichunk_enrichments(oer_id) # old
+    for oer in oers:
+        print(oer.id, oer.data['material_id'])
+    # TODO: save as new action 'ContentRecommendations'
+    return jsonify([oer.data_and_id() for oer in oers])
 
 
 @app.route("/api/v1/search/", methods=['GET'])
@@ -283,7 +295,13 @@ def api_search():
 
     """
     text = request.args['text'].lower().strip()
-    results = search_results_from_x5gon_api(text)
+    try:
+        # if the text is a number, retrieve the oer with that material_id
+        oer_id = int(text)
+        oer = Oer.query.get(oer_id)
+        results = [] if oer is None else [ oer ]
+    except ValueError:
+        results = search_results_from_x5gon_api(text)
     return jsonify([oer.data_and_id() for oer in results])
 
 
@@ -374,14 +392,6 @@ def api_featured():
             'http://hydro.ijs.si/v00a/63/mpklwd24fti34fzr3wtfqsrwri77fg2i.mp4']
     oers = [oer.data_and_id() for oer in Oer.query.filter(Oer.url.in_(urls)).order_by(Oer.url.desc()).all()]
     return jsonify(oers)
-
-
-@app.route("/api/v1/resource/", methods=['POST'])
-def api_material():
-    oer_id = request.get_json()['oerId']
-    oer = Oer.query.filter_by(id=oer_id).first()
-    push_enrichment_task_if_needed(oer.data['url'], 10000)
-    return jsonify(oer.data_and_id())
 
 
 @app.route("/api/v1/resource_feedback/", methods=['POST'])  # to be replaced by Actions API
@@ -501,22 +511,28 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
         # Temporary fix: ignore search results with very long urls
         if len(url) > 255:
             continue
-        oer = Oer.query.filter_by(url=url).first()
-        if oer is None:
-            oer = Oer(url, convert_x5_material_to_oer(material, url))
-            db_session.add(oer)
-            db_session.commit()
-        # Fix a problem with videolectures lacking duration info
-        if oer.data['mediatype']=='video' and oer.data['duration']=='' and ('durationInSeconds' not in oer.data):
-            oer = inject_duration(oer)
+        oer = retrieve_oer_or_create_from_x5gon_material(url, material)
+        push_enrichment_task(url, int(1000 / (index + 1)) + 1)
         oers.append(oer)
-        push_enrichment_task_if_needed(url, int(1000 / (index + 1)) + 1)
     oers = oers[:MAX_SEARCH_RESULTS]
     if len(oers) == n_initial_oers:  # no more results on page -> stop querying
         return oers
     if len(oers) >= MAX_SEARCH_RESULTS:
         return oers
     return search_results_from_x5gon_api_pages(text, page_number + 1, oers)
+
+
+def retrieve_oer_or_create_from_x5gon_material(url, material):
+    oer = Oer.query.filter_by(url=url).first()
+    if oer is None:
+        oer = Oer(url, convert_x5_material_to_oer(material, url))
+        db_session.add(oer)
+        db_session.commit()
+    # Fix a problem with videolectures lacking duration info
+    if oer.data['mediatype'] in SUPPORTED_VIDEO_FORMATS and oer.data['duration']=='' and ('durationInSeconds' not in oer.data):
+        oer = inject_duration(oer)
+    push_enrichment_task_if_needed(url, 1)
+    return oer
 
 
 def inject_duration(oer):
@@ -535,8 +551,11 @@ def inject_duration(oer):
 def filter_x5gon_search_results(materials):
     # (un)comment the lines below to enable/disable filters as desired
 
-    # filter out videos only
+    # include videos only
     materials = [m for m in materials if is_video(m['url'])]
+
+    # exclude youtube videos
+    materials = [m for m in materials if 'youtu' not in m['url']]
 
     # filter by file suffix
     # materials = [m for m in materials if m['url'].endswith(
@@ -1067,6 +1086,31 @@ def initiate_action_types_table():
         action_type = ActionType('Video still playing')
         db_session.add(action_type)
         db_session.commit()
+    action_type = ActionType.query.filter_by(id=10).first()
+    if action_type is None:
+        action_type = ActionType('OverviewType selected')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=11).first()
+    if action_type is None:
+        action_type = ActionType('ToggleExplainer')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=12).first()
+    if action_type is None:
+        action_type = ActionType('OpenExplanationPopup')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=13).first()
+    if action_type is None:
+        action_type = ActionType('TriggerSearch')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=14).first()
+    if action_type is None:
+        action_type = ActionType('UrlChanged')
+        db_session.add(action_type)
+        db_session.commit()
 
 
 def find_enrichment_by_oer_id(oer_id):
@@ -1080,6 +1124,82 @@ def find_enrichment_by_oer_id(oer_id):
     if oer is None:
         return None
     return WikichunkEnrichment.query.filter_by(url=oer.url).first()
+
+
+
+# old solution - wouldn't scale well to millions of oers - see issue #290
+def recommendations_from_wikichunk_enrichments(oer_id):
+    main_topics = find_enrichment_by_oer_id(oer_id).main_topics()
+    print(main_topics)
+    urls_with_similarity = [(enrichment.url, enrichment.get_topic_overlap(main_topics)) for enrichment in
+                            WikichunkEnrichment.query.all()]
+    most_similar = sorted(urls_with_similarity, key=lambda x: x[1], reverse=True)
+    results = []
+    for candidate in most_similar:
+        oer = Oer.query.filter_by(url=candidate[0]).first()
+        if oer is not None and 'youtu' not in oer.url:
+            results.append(oer)
+        if len(results) > 9:
+            break
+    return results
+
+
+# new solution - using LAM API (Nantes) - see issue #290
+def recommendations_from_lam_api(oer_id):
+    # LAM API base url
+    LAM_API_URL = "http://wp3.x5gon.org"
+
+    # setup appropriate headers
+    HEADERS = {
+        'accept': 'application/json',
+        'Content-Type': 'application/json',
+    }
+
+    # endpoint
+    RECOMMENDER_ENDPOINT = '/recommendsystem/v1'
+
+    # Ensure that the OER exists
+    oer = Oer.query.get(oer_id)
+    if oer is None:
+        print('WARNING: requested recommendations for missing OER', oer_id)
+        return []
+
+    material_id = int(oer.data['material_id'])
+
+    # request enough items so we can filter the results by type afterwards
+    # TODO: get the API improved so that we can filter as part of the request
+    data = {'resource_id': material_id, 'n_neighbors': 20, 'remove_duplicates': 1, 'model_type': 'wikifier'}
+    response = requests.post(LAM_API_URL + RECOMMENDER_ENDPOINT,
+                         headers= HEADERS,
+                         data=json.dumps(data))
+    response_json = response.json()
+    try:
+        materials = response_json['output']['rec_materials']
+    except KeyError as err:
+        print('KeyError')
+        print(err)
+        print(err.args)
+        print(type(response_json))
+        print(response_json)
+        return []
+    oers = []
+    for material in materials:
+        # print(material['material_id'], material['weight'], material['type'])
+        # stop once we have enough items
+        if len(oers)>4:
+            break
+        # include only supported media formats
+        if material['type'] not in SUPPORTED_FILE_FORMATS:
+            continue
+        url = material['url']
+        # Some urls that were longer than 255 caused errors.
+        # TODO: change the type of all url colums from String(255) to Text()
+        # Temporary fix: ignore search results with very long urls
+        if len(url) > 255:
+            continue
+        oer = retrieve_oer_or_create_from_x5gon_material(url, material)
+        oers.append(oer)
+    return oers
 
 
 if __name__ == '__main__':

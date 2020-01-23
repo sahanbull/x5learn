@@ -54,6 +54,10 @@ a:hover {
   background-size: cover;
 }
 
+.HoverGreyBackground:hover{
+  background-color: rgb(242,242,242) !important;
+}
+
 .ModalAnimation{
   -webkit-filter: blur(1px); /* Safari */
   filter: blur(1px);
@@ -117,6 +121,9 @@ a:hover {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
 }
+
+/* End of loding spinner */
+
 
 .UserSelectNone {
   -moz-user-select: none;
@@ -208,6 +215,14 @@ a:hover {
   background-color: #2196F3;
 }
 
+.MagentaBackground {
+  background-color: #f0e !important;
+}
+
+.X5ColorBackground {
+  background-color: #528694 !important;
+}
+
 .ToggleEnabled + .ToggleSlider:before {
   -webkit-transform: translateX(20px);
   -ms-transform: translateX(20px);
@@ -229,4 +244,8 @@ a:hover {
   border: none;
   border-bottom: 1px solid #999;
   border-radius: 0;
+}
+
+.ZIndex100{
+  z-index: 100;
 }

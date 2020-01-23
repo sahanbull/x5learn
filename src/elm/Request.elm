@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResource, requestResourceRecommendations)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -142,17 +142,6 @@ requestSaveLoggedEvents {currentTime, loggedEvents} =
     }
 
 
-{-| Fetch resource in full-page resource view
--}
-requestResource : Int -> Cmd Msg
-requestResource oerId =
-  Http.post
-    { url = Url.Builder.absolute [ apiRoot, "resource/" ] []
-    , body = Http.jsonBody <| Encode.object [ ("oerId", Encode.int oerId) ]
-    , expect = Http.expectJson RequestResource oerDecoder
-    }
-
-
 {-| Fetch related resources in full-page resource view
 -}
 requestResourceRecommendations : OerId -> Cmd Msg
@@ -181,6 +170,7 @@ userProfileEncoder userProfile =
     [ ("email", Encode.string userProfile.email)
     , ("firstName", Encode.string userProfile.firstName)
     , ("lastName", Encode.string userProfile.lastName)
+    , ("isDataCollectionConsent", Encode.bool userProfile.isDataCollectionConsent)
     ]
 
 
@@ -232,24 +222,26 @@ sessionDecoder =
 
 loggedInUserDecoder : Decoder Session
 loggedInUserDecoder =
-  map2 (\userProfile isContentFlowEnabled -> Session (LoggedInUser userProfile) isContentFlowEnabled)
+  map3 (\userProfile isContentFlowEnabled overviewTypeId -> Session (LoggedInUser userProfile) isContentFlowEnabled overviewTypeId)
     (field "userProfile" userProfileDecoder)
     (field "isContentFlowEnabled" bool)
+    (field "overviewTypeId" string)
 
 
 guestUserDecoder : Decoder Session
 guestUserDecoder =
-  map (\_ -> Session GuestUser True)
+  map (\_ -> Session GuestUser True "")
     string
 
 
 userProfileDecoder : Decoder UserProfile
 userProfileDecoder =
   oneOf
-    [ map3 UserProfile
+    [ map4 UserProfile
         (field "email" string)
         (field "firstName" string)
         (field "lastName" string)
+        (field "isDataCollectionConsent" bool)
     , map initialUserProfile
         (field "email" string)
     ]

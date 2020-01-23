@@ -46,6 +46,7 @@ type Msg
   | RequestLoadCourse (Result Http.Error Course)
   | RequestSaveCourse (Result Http.Error String)
   | RequestSaveLoggedEvents (Result Http.Error String)
+  | RequestCourseOptimization (Result Http.Error (List OerId))
   -- | RequestSaveNote (Result Http.Error String)
   | SetHover (Maybe OerId)
   | SetPopup Popup
@@ -92,6 +93,8 @@ type Msg
   | AddedOerToCourse OerId Range
   | RemovedOerFromCourse OerId
   | MovedCourseItemDown Int
+  | PressedOptimiseLearningPath
+  | PressedUndoCourse Course
   | SubmittedCourseItemComment
   | ChangedCommentTextInCourseItem OerId String
   | StartTask String

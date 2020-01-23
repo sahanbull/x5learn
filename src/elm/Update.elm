@@ -370,7 +370,7 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
     RequestLoadCourse (Ok course) ->
-      ({ model | course = course, courseNeedsSaving = False}, Cmd.none)
+      ({ model | course = course, courseNeedsSaving = False, courseOptimization = Nothing }, Cmd.none)
 
     RequestLoadCourse (Err err) ->
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
@@ -428,6 +428,24 @@ update msg ({nav, userProfileForm} as model) =
       --       err |> Debug.log "Error in RequestResourceRecommendations"
       -- in
       -- ( { model | snackbar = createSnackbar model "An error occurred while loading recommendations" }, Cmd.none )
+      ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
+
+    RequestCourseOptimization (Ok newSequenceOerIds) ->
+      let
+          oldCourse =
+            model.course
+
+          newItems =
+            newSequenceOerIds
+            |> List.filterMap (\oerId -> oldCourse.items |> List.filter (\item -> item.oerId==oerId) |> List.head)
+
+          newCourse =
+            { oldCourse | items = newItems }
+      in
+          ({ model | course = newCourse, courseOptimization = Just (UndoAvailable oldCourse) }, Cmd.none)
+          |> saveCourseNow
+
+    RequestCourseOptimization (Err err) ->
       ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     SetHover maybeOerId ->
@@ -765,8 +783,9 @@ update msg ({nav, userProfileForm} as model) =
           newCourse =
             { oldCourse | items = newItem :: oldCourse.items}
       in
-          ({ model | course = newCourse } |> markCourseAsChanged, Cmd.none)
+          ({ model | course = newCourse, courseOptimization = Nothing }, Cmd.none)
           |> logEventForLabStudy "AddedOerToCourse" [ oerId |> String.fromInt, courseToString newCourse ]
+          |> saveCourseNow
 
     RemovedOerFromCourse oerId ->
       let
@@ -776,8 +795,9 @@ update msg ({nav, userProfileForm} as model) =
           newCourse =
             { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId/=oerId)}
       in
-          ({ model | course = newCourse } |> markCourseAsChanged, Cmd.none)
+          ({ model | course = newCourse, courseOptimization = Nothing }, Cmd.none)
           |> logEventForLabStudy "RemovedOerFromCourse" [ oerId |> String.fromInt, courseToString newCourse ]
+          |> saveCourseNow
 
     MovedCourseItemDown index ->
       let
@@ -787,15 +807,26 @@ update msg ({nav, userProfileForm} as model) =
           newCourse =
             { oldCourse | items = oldCourse.items |> swapListItemWithNext index}
       in
-          ({ model | course = newCourse} |> markCourseAsChanged, Cmd.none)
+          ({ model | course = newCourse, courseOptimization = Nothing }, Cmd.none)
           |> logEventForLabStudy "MovedCourseItemDown" [ index |> String.fromInt, courseToString newCourse ]
+          |> saveCourseNow
+
+    PressedOptimiseLearningPath ->
+      ({ model | courseOptimization = Just Loading }, [ setBrowserFocus "", requestCourseOptimization model.course ] |> Cmd.batch)
+      |> logEventForLabStudy "PressedOptimiseLearningPath" []
+
+    PressedUndoCourse savedPreviousCourse ->
+      ({ model | course = savedPreviousCourse, courseOptimization = Nothing }, Cmd.none)
+      |> logEventForLabStudy "PressedUndoCourse" [ courseToString savedPreviousCourse ]
+      |> saveCourseNow
 
     ChangedCommentTextInCourseItem oerId str ->
       ( model |> setCommentTextInCourseItem oerId str, Cmd.none)
 
     SubmittedCourseItemComment ->
-      ( model |> markCourseAsChanged, setBrowserFocus "")
+      ( model, setBrowserFocus "")
       |> logEventForLabStudy "SubmittedCourseItemComment" []
+      |> saveCourseNow
 
     StartTask taskName ->
       let
@@ -1343,15 +1374,21 @@ setCommentTextInCourseItem oerId str model =
       newCourse =
         { oldCourse | items = newItems }
   in
-      { model | course = newCourse} |> markCourseAsChanged
+      { model | course = newCourse, courseOptimization = Nothing } |> markCourseAsChanged
 
 
 saveCourseIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
 saveCourseIfNeeded (oldModel, oldCmd) =
   if oldModel.courseNeedsSaving && millisSince oldModel oldModel.lastTimeCourseChanged > 2000 then
-    ({ oldModel | courseNeedsSaving = False }, [ requestSaveCourse oldModel.course, oldCmd ] |> Cmd.batch)
+    (oldModel, oldCmd)
+    |> saveCourseNow
   else
     (oldModel, oldCmd)
+
+
+saveCourseNow : (Model, Cmd Msg) -> (Model, Cmd Msg)
+saveCourseNow (oldModel, oldCmd) =
+  ({ oldModel | courseNeedsSaving = False }, [ requestSaveCourse oldModel.course, oldCmd ] |> Cmd.batch)
 
 
 markCourseAsChanged : Model -> Model

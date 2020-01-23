@@ -108,7 +108,15 @@ viewCoursePathFinderWidget model =
       viewLoadingSpinner
 
     Just (UndoAvailable savedPreviousCourse) ->
-      [ "Our algorithm has changed the sequence of your items." |> captionWrap [ whiteText ]
-      , simpleButton [ Font.size 12, Font.color blue ] "Undo" (Just <| PressedUndoCourse savedPreviousCourse)
-      ]
-      |> column [ spacing 15, padding 10, Background.color <| grey 50, Border.rounded 10 ]
+      let
+          content =
+            if savedPreviousCourse == model.course then
+              [ "Your workspace is in a good sequence for learning, according to our algorithm. No changes needed." |> captionWrap [ whiteText ]
+              ]
+            else
+              [ "Our algorithm has changed the sequence of your items." |> captionWrap [ whiteText ]
+              , simpleButton [ Font.size 12, Font.color blue ] "Undo" (Just <| PressedUndoCourse savedPreviousCourse)
+              ]
+      in
+          content
+          |> column [ spacing 15, padding 10, Background.color <| grey 50, Border.rounded 10 ]

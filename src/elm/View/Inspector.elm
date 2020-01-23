@@ -249,6 +249,7 @@ viewCourseSettings model oer {range, comment} =
         -- in
             -- [ "This video has been added to your workspace." ++ rangeText |> bodyWrap [ width fill ]
             [ "This video has been added to your workspace." |> bodyWrap [ width fill ]
+            , changesSaved
             , actionButtonWithIcon [] [] IconLeft 0.7 "delete" "Remove" <| Just <| RemovedOerFromCourse oer.id
             ]
             |> row [ width fill, borderTop 1, Border.color greyDivider, paddingTop 10 ]
@@ -263,7 +264,6 @@ viewCourseSettings model oer {range, comment} =
           none
   in
       [ topRow
-      , [ changesSaved ] |> row [ width fill ]
       , commentField
       ]
 

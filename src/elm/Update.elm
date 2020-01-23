@@ -376,7 +376,7 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
     RequestSaveCourse (Ok _) ->
-      ({ model | courseChangesSaved = True }, Cmd.none)
+      ({ model | courseChangesSaved = model.courseNeedsSaving, courseNeedsSaving = False }, Cmd.none)
 
     RequestSaveCourse (Err err) ->
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
@@ -1388,7 +1388,7 @@ saveCourseIfNeeded (oldModel, oldCmd) =
 
 saveCourseNow : (Model, Cmd Msg) -> (Model, Cmd Msg)
 saveCourseNow (oldModel, oldCmd) =
-  ({ oldModel | courseNeedsSaving = False }, [ requestSaveCourse oldModel.course, oldCmd ] |> Cmd.batch)
+  (oldModel, [ requestSaveCourse oldModel.course, oldCmd ] |> Cmd.batch)
 
 
 markCourseAsChanged : Model -> Model

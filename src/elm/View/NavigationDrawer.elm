@@ -111,18 +111,6 @@ withNavigationDrawer model (pageContent, modal) =
       (page, modal ++ [ drawer ])
 
 
-dataSetSelectionWidget model searchInputTyping =
-  let
-      submit =
-        TriggerSearch searchInputTyping
-
-      searchField =
-        Input.text [ htmlId "SearchField", width fill, Input.focusedOnLoad, onEnter <| submit ] { onChange = ChangeSearchText, text = searchInputTyping, placeholder = Just ("Dataset" |> text |> Input.placeholder []), label = Input.labelHidden "search" }
-        |> el [ width fill, centerX ]
-  in
-      searchField
-
-
 taskButtons : Model -> Element Msg
 taskButtons model =
   let
@@ -151,6 +139,5 @@ explanationForSearchField : Explanation
 explanationForSearchField =
   { componentId = "searchField"
   , flyoutDirection = Right
-  , blurb = "Text entered here is forwarded to the X5GON Discovery API. The results do not depend on your user data."
-  , url = "https://platform.x5gon.org/products/discovery"
+  , links = [ explanationLinkForSearch ]
   }

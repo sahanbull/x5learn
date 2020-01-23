@@ -129,7 +129,7 @@ borderLeft px =
 
 borderColorDivider : Attribute Msg
 borderColorDivider =
-  Border.color <| greyDivider
+  Border.color greyDivider
 
 
 allSidesZero : { bottom : number, left : number1, right : number2, top : number3 }
@@ -624,3 +624,38 @@ trashIcon =
 avatarImage : Element Msg
 avatarImage =
   image [ alpha 0.5 ] { src = svgPath "user_default_avatar", description = "user menu" }
+
+
+explanationLinkForWikification : WebLink
+explanationLinkForWikification =
+  { label = "Wikification"
+  , url = "http://wikifier.org" -- TODO improve
+  }
+
+
+explanationLinkForSearch : WebLink
+explanationLinkForSearch =
+  { label = "AI-based Search"
+  , url = "https://platform.x5gon.org/search" -- TODO improve
+  }
+
+
+explanationLinkForTrueLearn : WebLink
+explanationLinkForTrueLearn =
+  { label = "Personalised Recommendation"
+  , url = "https://platform.x5gon.org"
+  }
+
+
+explanationLinkForItemRecommender : WebLink
+explanationLinkForItemRecommender =
+  { label = "Item-based Recommendation"
+  , url = "https://platform.x5gon.org/products/recommend"
+  }
+
+
+explanationLinkForTranslation : WebLink
+explanationLinkForTranslation =
+  { label = "Translation / Transcription"
+  , url = "https://platform.x5gon.org/products/translate"
+  }

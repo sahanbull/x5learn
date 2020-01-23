@@ -64,9 +64,9 @@ type alias Model =
   , oerCardPlaceholderPositions : List OerCardPlaceholderPosition -- dynamic layout of the cards on the screen
   -- OER Bubblograms
   , overviewType : OverviewType -- thumbnail or bubblogram
-  , hoveringTagEntityId : Maybe String -- when the user hovers over a topic in a bubblogram
+  , hoveringEntityId : Maybe EntityId -- when the user hovers over a topic in a bubblogram
   , timeOfLastUrlChange : Posix -- used to animate bubblograms
-  , selectedMentionInStory : Maybe (OerId, MentionInOer) -- in bubblogram: hovering over a mention
+  , selectedMention : Maybe (OerId, MentionInOer) -- in bubblogram: hovering over a mention
   -- OER inspector modal
   , inspectorState : Maybe InspectorState -- custom type, see definition below
   , modalAnimation : Maybe BoxAnimation -- When the user clicks on an OER card then the inspector modal doesn't just appear instantly - there is a bit of a zooming effect.
@@ -136,15 +136,15 @@ type InspectorSidebarTab
 {-| Toggle between thumbnails and bubblograms
 -}
 type OverviewType
-  = ImageOverview
+  = ThumbnailOverview
   | BubblogramOverview BubblogramType
 
 {-| Type of bubblogram to display
 -}
 type BubblogramType
   = TopicNames
-  | TopicConnections
-  | TopicMentions
+  | TopicBubbles
+  | TopicSwimlanes
 
 {-| For any (video) OER, which parts has the user watched
 -}
@@ -258,6 +258,7 @@ type alias UserProfile =
   { email : String
   , firstName : String
   , lastName : String
+  , isDataCollectionConsent : Bool
   }
 
 
@@ -292,7 +293,7 @@ type Subpage
 {-| Search for OERs
 -}
 type alias SearchState =
-  { lastSearch : String
+  { lastSearchText : String
   , searchResults : Maybe (List OerId)
   }
 
@@ -305,6 +306,7 @@ type alias InspectorState =
   , videoPlayer : Maybe Html5VideoPlayer
   , inspectorSidebarTab : InspectorSidebarTab -- switch between sidebar contents, such as feedback and recommendations
   , resourceRecommendations : List Oer -- OER recommendations in the sidebar tab
+  , userPressedReadMore : Bool
   }
 
 
@@ -517,17 +519,25 @@ type alias VideoEmbedParams =
   }
 
 
-type LeftOrRight
+type FlyoutDirection
   = Left
   | Right
+
 
 {-| Explanation for a particular UI component
 -}
 type alias Explanation =
   { componentId : String -- arbitrary unique name e.g. searchField. Used to distinguish which ExplanationPopup is currently open
-  , blurb : String -- e.g. "Text entered here is forwarded to the Discovery API."
-  , url : String -- e.g. "https://platform.x5gon.org/products/discovery"
-  , flyoutDirection : LeftOrRight -- e.g. Right (preferable unless the component is likely to be too close to the right edge of the screen)
+  , links : List WebLink -- e.g. { label = "Discovery API", url = "https://platform.x5gon.org/products/discovery" }
+  , flyoutDirection : FlyoutDirection -- e.g. Right (preferable unless the component is likely to be too close to the right edge of the screen)
+  }
+
+
+{-| Just a regular web link with a label and a URL
+-}
+type alias WebLink =
+  { label : String
+  , url : String
   }
 
 
@@ -556,10 +566,10 @@ initialModel nav flags =
   , hoveringOerId = Nothing
   , timeOfLastMouseEnterOnCard = initialTime
   , oerCardPlaceholderPositions = []
-  , overviewType = ImageOverview
-  , hoveringTagEntityId = Nothing
+  , overviewType = ThumbnailOverview
+  , hoveringEntityId = Nothing
   , timeOfLastUrlChange = initialTime
-  , selectedMentionInStory = Nothing
+  , selectedMention = Nothing
   , inspectorState = Nothing
   , modalAnimation = Nothing
   , autocompleteTerms = []
@@ -602,7 +612,7 @@ initialModel nav flags =
 
 initialUserProfile : String -> UserProfile
 initialUserProfile email =
-  UserProfile email "" ""
+  UserProfile email "" "" False
 
 
 -- getOerNoteboard : Model -> OerId -> Noteboard
@@ -636,7 +646,7 @@ initialTime =
 
 newSearch : String -> SearchState
 newSearch str =
-  { lastSearch = str
+  { lastSearchText = str
   , searchResults = Nothing
   }
 
@@ -655,7 +665,7 @@ newInspectorState oer fragmentStart =
         else
           Nothing
   in
-      InspectorState oer fragmentStart videoPlayer FeedbackTab []
+      InspectorState oer fragmentStart videoPlayer FeedbackTab [] False
 
 
 hasYoutubeVideo : OerUrl -> Bool
@@ -906,7 +916,7 @@ isEqualToSearchString model entityTitle =
       False
 
     Just searchState ->
-      (entityTitle |> String.toLower) == (searchState.lastSearch |> String.toLower)
+      (entityTitle |> String.toLower) == (searchState.lastSearchText |> String.toLower)
 
 
 {-| Returns all the mentions of a particular Entity in a particular OER
@@ -1262,7 +1272,7 @@ overviewTypeFromId : String -> OverviewType
 overviewTypeFromId id =
   case overviewTypes |> List.filter (\entry -> entry.id == id) |> List.head of
     Nothing ->
-      ImageOverview -- Default to thumbnails
+      ThumbnailOverview -- Default to thumbnails
 
     Just entry ->
       entry.overviewType
@@ -1276,10 +1286,10 @@ overviewTypeFromId id =
 -}
 overviewTypes : List { id : String, displayName : String, overviewType : OverviewType }
 overviewTypes =
-  [ { id = "thumbnail", displayName = "Thumbnail", overviewType = ImageOverview }
+  [ { id = "thumbnail", displayName = "Thumbnail", overviewType = ThumbnailOverview }
   , { id = "topicnames", displayName = "Topic Names", overviewType = BubblogramOverview TopicNames }
-  , { id = "bubbles", displayName = "Bubbles", overviewType = BubblogramOverview TopicConnections }
-  , { id = "swimlanes", displayName = "Swimlanes", overviewType = BubblogramOverview TopicMentions }
+  , { id = "bubbles", displayName = "Bubbles", overviewType = BubblogramOverview TopicBubbles }
+  , { id = "swimlanes", displayName = "Swimlanes", overviewType = BubblogramOverview TopicSwimlanes }
   ]
 
 

@@ -229,6 +229,9 @@ def api_recommendations():
         oers = recommendations_from_lam_api(oer_id) # new
     else:
         oers = recommendations_from_wikichunk_enrichments(oer_id) # old
+    for oer in oers:
+        print(oer.id, oer.data['material_id'])
+    # TODO: save as new action 'ContentRecommendations'
     return jsonify([oer.data_and_id() for oer in oers])
 
 
@@ -1052,6 +1055,16 @@ def initiate_action_types_table():
     action_type = ActionType.query.filter_by(id=12).first()
     if action_type is None:
         action_type = ActionType('OpenExplanationPopup')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=13).first()
+    if action_type is None:
+        action_type = ActionType('TriggerSearch')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=14).first()
+    if action_type is None:
+        action_type = ActionType('UrlChanged')
         db_session.add(action_type)
         db_session.commit()
 

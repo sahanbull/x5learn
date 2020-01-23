@@ -122,6 +122,9 @@ a:hover {
   100% { transform: rotate(360deg); }
 }
 
+/* End of loding spinner */
+
+
 .UserSelectNone {
   -moz-user-select: none;
   -webkit-user-select: none;
@@ -214,6 +217,10 @@ a:hover {
 
 .MagentaBackground {
   background-color: #f0e !important;
+}
+
+.X5ColorBackground {
+  background-color: #528694 !important;
 }
 
 .ToggleEnabled + .ToggleSlider:before {

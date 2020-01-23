@@ -45,7 +45,7 @@ viewPageHeader model =
         , height (px pageHeaderHeight)
         , spacing 20
         , paddingEach { allSidesZero | top = 0, left = 13, right = 16 }
-        , Background.color <| rgb 1 1 1
+        , Background.color white
         , borderBottom 1
         , borderColorDivider
         ] ++ snackbar
@@ -63,7 +63,8 @@ viewPageHeader model =
                 ]
 
               GuestUser ->
-                [ link [ alignRight, paddingXY 15 10 ] { url = loginPath, label = "Log in" |> bodyNoWrap [] }
+                [ viewExplainerToggle model
+                , link [ alignRight, paddingXY 15 10 ] { url = loginPath, label = "Log in" |> bodyNoWrap [] }
                 , link [ alignRight, paddingXY 15 10 ] { url = signupPath, label = "Sign up" |> bodyNoWrap [] }
                 ]
   in
@@ -113,7 +114,7 @@ viewUserMenu model userProfile =
       clickMsg =
         if model.popup == Just UserMenu then ClosePopup else SetPopup UserMenu
   in
-      button ([ htmlClass "ClosePopupOnClickOutside", alignRight ] ++ menu) { onPress = Just <| clickMsg, label = label }
+      button ([ htmlClass "ClosePopupOnClickOutside", alignRight ] ++ menu) { onPress = Just clickMsg, label = label }
 
 
 {-| Render the widget for the user to switch Explainer on and off
@@ -124,8 +125,8 @@ viewExplainerToggle model =
       enabled =
         model.isExplainerEnabled
   in
-  [ "Transparent AI" |> bodyNoWrap ([ width fill ] ++ (if enabled then [ Font.color magenta ] else []))
-  , viewToggleIndicator enabled (if enabled then "MagentaBackground" else "") |> el [ paddingRight 10 ]
-  ]
-  |> row [ spacing 10, onClick ToggleExplainer, htmlClass "CursorPointer" ]
-  |> el [ alignRight ]
+      [ "Transparent AI" |> bodyNoWrap ([ width fill ] ++ (if enabled then [ Font.color magenta ] else []))
+      , viewToggleIndicator enabled (if enabled then "MagentaBackground" else "") |> el [ paddingRight 10 ]
+      ]
+      |> row [ spacing 10, onClick ToggleExplainer, htmlClass "CursorPointer" ]
+      |> el [ alignRight ]

@@ -68,7 +68,7 @@ viewOerGrid model playlist =
             cards =
               oers
               |> List.indexedMap (\index oer -> viewOerCard model (cardPositionAtIndex index) (playlist.title++"-"++ (String.fromInt index)) True oer)
-              |> List.reverse
+              -- |> List.reverse
               |> List.map inFront
 
             overviewTypeMenu =
@@ -124,7 +124,7 @@ viewVisibleOerCard model position barId enableShadow oer =
 
       (graphic, popup) =
         case model.overviewType of
-          ImageOverview ->
+          ThumbnailOverview ->
             (viewCarousel model oer, [])
 
           BubblogramOverview bubblogramType ->
@@ -243,10 +243,7 @@ viewVisibleOerCard model position barId enableShadow oer =
         |> explanationWrapper
 
       explanationWrapper =
-          if barId |> String.startsWith "Featured Content" then
-            explainify model explanationForFeaturedContent
-          else
-            noOp
+        explainify model explanationForOerCard
 
       wrapperAttrs =
         [ htmlClass "CloseInspectorOnClickOutside OerCard", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y, htmlDataAttribute <| String.fromInt oer.id, htmlClass "CursorPointer" ]
@@ -394,10 +391,10 @@ viewOverviewTypeMenu model =
       options =
         case model.popup of
           Just OverviewTypePopup ->
-            [ option ImageOverview
+            [ option ThumbnailOverview
             , option <| BubblogramOverview TopicNames
-            , option <| BubblogramOverview TopicConnections
-            , option <| BubblogramOverview TopicMentions
+            , option <| BubblogramOverview TopicBubbles
+            , option <| BubblogramOverview TopicSwimlanes
             ]
             |> menuColumn []
             |> onLeft
@@ -409,14 +406,13 @@ viewOverviewTypeMenu model =
       attrs =
         [ alignRight, moveLeft 130, moveDown 30, Border.width 2, Border.color white, htmlClass "ClosePopupOnClickOutside" ] ++ options
   in
-      actionButtonWithIcon [ whiteText, paddingXY 12 10 ] [] IconLeft 0.7 "format_list_white" "Visual Mode" (Just OpenedOverviewTypeMenu)
+      actionButtonWithIcon [ whiteText, paddingXY 12 10 ] [] IconLeft 0.9 "format_list_white" "View as..." (Just OpenedOverviewTypeMenu)
       |> el attrs
 
 
-explanationForFeaturedContent : Explanation
-explanationForFeaturedContent =
-  { componentId = "featuredContent"
+explanationForOerCard : Explanation
+explanationForOerCard =
+  { componentId = "oerCard"
   , flyoutDirection = Left
-  , blurb = "Featured content comprises a small set of Open Educational Resources, curated by the makers of X5Learn"
-  , url = ""
+  , links = [ explanationLinkForWikification, explanationLinkForTranslation ]
   }

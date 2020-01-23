@@ -24,51 +24,55 @@ explainify ({isExplainerEnabled} as model) explanation element =
   else
     let
         wrapperAttrs =
-          [ viewExplainerOverlay model explanation ]
+          [ viewExplainerOverlayBorder
+          , viewExplainerButton model explanation ]
     in
         element
         |> el wrapperAttrs
 
 
-viewExplainerOverlay : Model -> Explanation -> Attribute Msg
-viewExplainerOverlay {popup} {flyoutDirection, componentId, blurb, url} =
+viewExplainerOverlayBorder : Attribute Msg
+viewExplainerOverlayBorder =
+  none
+  |> el [ width fill, height fill, Border.width 3, Border.color magenta, htmlClass "ZIndex100", pointerEventsNone ]
+  |> inFront
+
+
+viewExplainerButton : Model -> Explanation -> Attribute Msg
+viewExplainerButton {popup} {flyoutDirection, componentId, links} =
   let
-      infoButton =
-        let
-            buttonAttrs =
-              [ Background.color magenta, whiteText, alignRight, Font.size 12, paddingXY 5 4, moveUp 3, moveRight 3, htmlClass "ClosePopupOnClickOutside" ] ++ explanationPopup
-        in
-            simpleButton buttonAttrs "explain" (Just <| OpenExplanationPopup componentId)
+      buttonAttrs =
+        [ Background.color magenta, whiteText, alignRight, Font.size 12, paddingXY 5 4, htmlClass "ZIndex100 ClosePopupOnClickOutside" ] ++ explanationPopup
 
       explanationPopup =
         if popup == Just (ExplanationPopup componentId) then
-          [ viewExplanationPopup flyoutDirection blurb url ]
+          [ viewExplanationPopup flyoutDirection links ]
         else
           []
-
-      content =
-        infoButton
   in
-      content
-      |> el [ width fill, height fill, Border.width 3, Border.color magenta, htmlClass "ZIndex100" ]
+      simpleButton buttonAttrs "explain" (Just <| OpenExplanationPopup componentId)
       |> inFront
 
 
-viewExplanationPopup : LeftOrRight -> String -> String -> Attribute Msg
-viewExplanationPopup flyoutDirection blurb url =
+viewExplanationPopup : FlyoutDirection -> List WebLink -> Attribute Msg
+viewExplanationPopup flyoutDirection links =
   let
-      weblink =
-        if url=="" then
-           none
-         else
-           "Learn more" |> bodyNoWrap [ Font.color linkBlue ] |> newTabLinkTo [] url
+      introText =
+        -- "This part of the interface uses the following AI components:"
+        -- "The following AI components are used here"
+        "AI components in use here:"
+
+      weblinks =
+        links
+        |> List.map (\{label, url} -> label |> bodyNoWrap [ Font.color linkBlue ] |> newTabLinkTo [] url)
+        |> column [ spacing 10 ]
 
       content =
-        [ blurb |> bodyWrap []
-        , weblink
+        [ introText |> bodyWrap []
+        , weblinks
         ]
         |> column [ spacing 15 ]
   in
       content
-      |> el [ Background.color white, centerX, padding 16, dialogShadow, width <| px 220 ]
-      |> if flyoutDirection==Left then onLeft else onRight
+      |> el [ Background.color white, centerX, padding 16, dialogShadow, width <| px 208, moveRight (if flyoutDirection==Right then 80 else -80) ]
+      |> below

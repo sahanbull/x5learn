@@ -133,8 +133,8 @@ viewContentFlowBar model oer chunks barWidth barId =
                       Nothing ->
                         []
 
-                      Just {lastSearch} ->
-                        case indexOf (String.toLower lastSearch) (chunk.entities |> List.map (\{title} -> String.toLower title)) of
+                      Just {lastSearchText} ->
+                        case indexOf (String.toLower lastSearchText) (chunk.entities |> List.map (\{title} -> String.toLower title)) of
                           Nothing ->
                             []
 
@@ -270,7 +270,7 @@ viewEntityPopup model chunkPopup entityPopup entity =
         if isLabStudy1 model then
           []
         else
-          [ ("Search", TriggerSearch entity.title)
+          [ ("Search", TriggerSearch entity.title False)
           ]
           |> List.map (\item -> entityActionButton chunkPopup entityPopup item |> el [ width fill ])
 

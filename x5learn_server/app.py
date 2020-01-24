@@ -17,7 +17,7 @@ import wikipedia
 # instantiate the user management db classes
 # NOTE WHEN PEP8'ING MODULE IMPORTS WILL MOVE TO THE TOP AND CAUSE EXCEPTION
 from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_SENDER, MAIL_USERNAME, MAIL_PASS, MAIL_SERVER, \
-    MAIL_PORT, LATEST_API_VERSION
+    MAIL_PORT, LATEST_API_VERSION, SERVER_NAME
 from x5learn_server.db.database import get_or_create_db
 
 _ = get_or_create_db(DB_ENGINE_URI)
@@ -34,6 +34,7 @@ from x5learn_server.course_optimization import optimize_course
 app = Flask(__name__)
 mail = Mail()
 
+app.config['SERVER_NAME'] = SERVER_NAME
 app.config['DEBUG'] = False
 app.config['SECRET_KEY'] = PASSWORD_SECRET
 app.config['SECURITY_PASSWORD_HASH'] = "bcrypt"

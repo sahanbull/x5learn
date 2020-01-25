@@ -36,3 +36,6 @@ MAIL_USERNAME = os.environ["X5LEARN_MAIL_USERNAME"]
 MAIL_PASS = os.environ["X5LEARN_MAIL_PASS"]
 MAIL_SERVER = os.environ["X5LEARN_MAIL_SERVER"]
 MAIL_PORT = int(os.environ["X5LEARN_MAIL_PORT"])
+
+# Getting server name
+SERVER_NAME = os.environ.get("SERVER_NAME") or "127.0.0.1:5000"

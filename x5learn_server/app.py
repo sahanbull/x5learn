@@ -92,7 +92,7 @@ def initiate_login_db():
     from x5learn_server.db.database import initiate_login_table_and_admin_profile
     initiate_login_table_and_admin_profile(user_datastore)
     initiate_action_types_table()
-    cleanup_enrichment_errors()
+    # cleanup_enrichment_errors()
 
 
 def cleanup_enrichment_errors():

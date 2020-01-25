@@ -9,6 +9,7 @@ import http.client
 import urllib
 from collections import defaultdict
 from datetime import datetime, timedelta
+from dateutil import parser
 from sqlalchemy import or_, and_, cast, Integer
 from sqlalchemy.orm.attributes import flag_modified
 from flask_restplus import Api, Resource, fields, reqparse
@@ -429,6 +430,30 @@ def ingest_wikichunk_enrichment():
     return 'OK'
 
 
+@app.route("/api/v1/ingest_oer/", methods=['POST'])
+def ingest_oer():
+    j = request.get_json(force=True)
+    material_id = j['material_id']
+    print('ingest_oer', material_id)
+    return do_ingest_oer(material_id)
+
+
+def do_ingest_oer(material_id):
+    oer = find_oer_by_material_id(material_id)
+    if oer is not None:
+        return jsonify({'ok': 'Oer with material_id {} EXISTS. URL = {}'.format(material_id, oer.url)})
+    conn = http.client.HTTPSConnection("platform.x5gon.org")
+    conn.request('GET', '/api/v1/oer_materials/' + str(material_id))
+    response = conn.getresponse().read().decode("utf-8")
+    material = json.loads(response)['oer_materials']
+    url = material['url']
+    oer = Oer(url, convert_x5_material_to_oer_data(material))
+    db_session.add(oer)
+    db_session.commit()
+    push_enrichment_task(url, 1)
+    return jsonify({'ok': 'Oer with material_id {} CREATED. Enrichment task started. URL = {}'.format(material_id, url)})
+
+
 @app.route("/api/v1/entity_definitions/", methods=['GET'])
 def api_entity_descriptions():
     entity_ids = request.args['ids'].split(',')
@@ -467,7 +492,7 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
         # Temporary fix: ignore search results with very long urls
         if len(url) > 255:
             continue
-        oer = retrieve_oer_or_create_from_x5gon_material(url, material)
+        oer = retrieve_oer_or_create_from_x5gon_material(material)
         push_enrichment_task(url, int(1000 / (index + 1)) + 1)
         oers.append(oer)
     oers = oers[:MAX_SEARCH_RESULTS]
@@ -478,10 +503,11 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     return search_results_from_x5gon_api_pages(text, page_number + 1, oers)
 
 
-def retrieve_oer_or_create_from_x5gon_material(url, material):
+def retrieve_oer_or_create_from_x5gon_material(material):
+    url = material['url']
     oer = Oer.query.filter_by(url=url).first()
     if oer is None:
-        oer = Oer(url, convert_x5_material_to_oer(material, url))
+        oer = Oer(url, convert_x5_material_to_oer_data(material))
         db_session.add(oer)
         db_session.commit()
     # Fix a problem with videolectures lacking duration info
@@ -554,15 +580,27 @@ def filter_x5gon_search_results(materials):
 #     return included_materials
 
 
-def convert_x5_material_to_oer(material, url):
+def convert_x5_material_to_oer_data(material):
     # Insert some fields that the frontend expects, using values from the x5gon search result when possible, otherwise default values.
     data = {}
-    data['url'] = url
+    data['url'] = material['url']
     data['material_id'] = material['material_id']
     data['title'] = material['title'] or '(Title unavailable)'
-    data['provider'] = material['provider'] or ''
+
+    provider = material['provider'] or ''
+    if 'provider_name' in provider: # sometimes provider comes as a dict
+        provider = provider['provider_name']
+    data['provider'] = provider
+
     data['description'] = material['description'] or ''
+
     data['date'] = ''
+    if 'creation_date' in material:
+        try:
+            data['date'] = parser.parse(material['creation_date']).strftime("%Y-%m-%d")
+        except Exception:
+            pass
+
     data['duration'] = ''
     data['images'] = []
     data['mediatype'] = material['type']
@@ -1153,9 +1191,13 @@ def recommendations_from_lam_api(oer_id):
         # Temporary fix: ignore search results with very long urls
         if len(url) > 255:
             continue
-        oer = retrieve_oer_or_create_from_x5gon_material(url, material)
+        oer = retrieve_oer_or_create_from_x5gon_material(material)
         oers.append(oer)
     return oers
+
+
+def find_oer_by_material_id(material_id):
+    return Oer.query.filter(Oer.data['material_id'].astext == str(material_id)).order_by(Oer.id.desc()).first()
 
 
 if __name__ == '__main__':

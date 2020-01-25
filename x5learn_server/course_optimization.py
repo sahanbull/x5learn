@@ -58,7 +58,4 @@ def get_material_id(oer_id):
 
 
 def find_oer_by_material_id(material_id):
-    print('find_oer_by_material_id', len(Oer.query.filter(Oer.data['material_id'].astext == str(material_id)).all()))
-    for o in Oer.query.filter(Oer.data['material_id'].astext == str(material_id)).all():
-        print(o.url)
     return Oer.query.filter(Oer.data['material_id'].astext == str(material_id)).order_by(Oer.id.desc()).first()

@@ -43,6 +43,7 @@ class UserLogin(Base, UserMixin):
     user = relationship('User', uselist=False, backref='user_login')
 
 
+# I suspect that the User table is obsolete
 class User(Base):
     __tablename__ = 'user'
     __table_args__ = {'extend_existing': True}
@@ -287,14 +288,24 @@ class UiLogBatch(Base):
     id = Column(Integer(), primary_key=True)
     user_login_id = Column(Integer())
     client_time = Column(String())
-    text = Column(String())
+    events = Column(JSON())
     created_at = Column(DateTime())
 
     def __init__(self, user_login_id, client_time, text):
         self.user_login_id = user_login_id
         self.client_time = client_time
-        self.text = text
         self.created_at = datetime.datetime.now()
+        self.events = self.parse_events(text)
+
+    def parse_events(self, text):
+        events = []
+        for line in text.split('\n'):
+            s = line.split(' ')
+            events.append({'clientTime': s[0], 'eventType': s[1], 'args': s[2:]})
+        # import pdb; pdb.set_trace()
+        print(events)
+        print()
+        return events
 
 
 # Repository pattern implemented for CRUD

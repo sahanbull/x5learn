@@ -30,6 +30,8 @@ if __name__ == '__main__':
         response = requests.post(API_URL + ENDPOINT,
                              headers= HEADERS,
                              data=json.dumps(data))
-        response_json = response.json()
-        print(response_json)
+        if response.ok:
+            print(response.json())
+        else:
+            print(response.status_code, response.reason)
         material_id += 1

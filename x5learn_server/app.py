@@ -444,8 +444,11 @@ def do_ingest_oer(material_id):
         return jsonify({'ok': 'Oer with material_id {} EXISTS. URL = {}'.format(material_id, oer.url)})
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request('GET', '/api/v1/oer_materials/' + str(material_id))
-    response = conn.getresponse().read().decode("utf-8")
-    material = json.loads(response)['oer_materials']
+    response = conn.getresponse()
+    if response.status != 200:
+        return jsonify({'error': 'Oer with material_id {} FAILED with status code {}. Reason: {}'.format(material_id, response.status, response.reason)})
+    body = response.read().decode("utf-8")
+    material = json.loads(body)['oer_materials']
     url = material['url']
     oer = Oer(url, convert_x5_material_to_oer_data(material))
     db_session.add(oer)

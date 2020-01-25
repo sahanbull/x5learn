@@ -3,6 +3,13 @@ import requests
 import json
 import os
 
+# Recommended usage:
+# nohup python ingest_oer_loop.py 1 105000 >ingest_oer_loop.out &
+
+# This writes the output to a separate file ingest_oer_loop.out
+
+# NB the FLASK_API_ROOT environment variable needs to be set. Consider source .env
+
 
 API_URL = os.environ["FLASK_API_ROOT"]
 

@@ -43,6 +43,7 @@ class UserLogin(Base, UserMixin):
     user = relationship('User', uselist=False, backref='user_login')
 
 
+# I suspect that the User table is obsolete
 class User(Base):
     __tablename__ = 'user'
     __table_args__ = {'extend_existing': True}

@@ -306,6 +306,9 @@ def api_load_course():
     if course is None:
         user_login_id = current_user.get_id()  # Assuming that guests cannot use this feature
         course = Course(user_login_id, {'items': []})
+    else:
+        # remove OERs that don't exist anymore
+        course.data['items'] = [ item for item in course.data['items'] if Oer.query.get(item['oerId']) is not None ]
     return jsonify(course.data)
 
 

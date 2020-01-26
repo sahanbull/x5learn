@@ -237,7 +237,7 @@ viewVisibleOerCard model position barId enableShadow oer =
         explainify model explanationForOerCard
 
       wrapperAttrs =
-        [ htmlClass "CloseInspectorOnClickOutside OerCard", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y, htmlDataAttribute <| String.fromInt oer.id, htmlClass "CursorPointer" ]
+        [ htmlClass "PreventClosingInspectorOnClick OerCard", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y, htmlDataAttribute <| String.fromInt oer.id, htmlClass "CursorPointer" ]
   in
       none
       |> el wrapperAttrs
@@ -395,7 +395,7 @@ viewOverviewTypeMenu model =
             []
 
       attrs =
-        [ alignRight, moveLeft 130, moveDown 30, Border.width 2, Border.color white, htmlClass "ClosePopupOnClickOutside" ] ++ options
+        [ alignRight, moveLeft 130, moveDown 30, Border.width 2, Border.color white, htmlClass "PreventClosingThePopupOnClick" ] ++ options
   in
       actionButtonWithIcon [ whiteText, paddingXY 12 10 ] [] IconLeft 0.9 "format_list_white" "View as..." (Just OpenedOverviewTypeMenu)
       |> el attrs

@@ -32,11 +32,11 @@ viewInspector model =
       []
 
     Just inspectorState ->
-      [ inFront <| viewModal model inspectorState ]
+      [ inFront <| viewTheInspector model inspectorState ]
 
 
-viewModal : Model -> InspectorState -> Element Msg
-viewModal model inspectorState =
+viewTheInspector : Model -> InspectorState -> Element Msg
+viewTheInspector model inspectorState =
   let
       title =
         case inspectorState.oer.title of
@@ -58,11 +58,11 @@ viewModal model inspectorState =
           |> row []
 
       hideWhileOpening =
-        alpha <| if model.animationsPending |> Set.member modalId then 0.01 else 1
+        alpha <| if model.animationsPending |> Set.member inspectorId then 0.01 else 1
 
       header =
         [ title
-        , button [] { onPress = Just UninspectSearchResult, label = closeIcon }
+        , button [] { onPress = Just PressedCloseButtonInInspector, label = closeIcon }
         ]
         |> row [ width fill, spacing 4 ]
 
@@ -70,10 +70,10 @@ viewModal model inspectorState =
         [ header
         , bodyAndSidebar
         ]
-        |> column [ htmlClass "CloseInspectorOnClickOutside", width (px <| sheetWidth model), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow ]
+        |> column [ htmlClass "PreventClosingInspectorOnClick", width (px <| sheetWidth model), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId inspectorId, hideWhileOpening, dialogShadow ]
 
       animatingBox =
-        case model.modalAnimation of
+        case model.inspectorAnimation of
           Nothing ->
             none
 
@@ -86,12 +86,12 @@ viewModal model inspectorState =
                     (interpolateBoxes animation.start animation.end, 0)
             in
                 none
-                |> el [ whiteBackground, width (box.sx |> round |> px), height (box.sy |> round |> px), moveRight box.x, moveDown box.y, htmlClass "ModalAnimation", alpha opacity, Border.rounded 5 ]
+                |> el [ whiteBackground, width (box.sx |> round |> px), height (box.sy |> round |> px), moveRight box.x, moveDown box.y, htmlClass "InspectorAnimation", alpha opacity, Border.rounded 5 ]
 
       scrim =
         let
             opacity =
-              case modalAnimationStatus model of
+              case inspectorAnimationStatus model of
                 Inactive ->
                   materialScrimAlpha
 
@@ -102,7 +102,7 @@ viewModal model inspectorState =
                   materialScrimAlpha
         in
             none
-            |> el [ Background.color <| rgba 0 0 0 opacity, width (model.windowWidth - navigationDrawerWidth |> px), height (fill |> maximum (model.windowHeight - pageHeaderHeight)), moveDown (toFloat pageHeaderHeight), moveRight navigationDrawerWidth,  htmlClass "ModalScrim" ]
+            |> el [ Background.color <| rgba 0 0 0 opacity, width (model.windowWidth - navigationDrawerWidth |> px), height (fill |> maximum (model.windowHeight - pageHeaderHeight)), moveDown (toFloat pageHeaderHeight), moveRight navigationDrawerWidth,  htmlClass "InspectorScrim" ]
   in
       sheet
       |> el [ width fill, height fill, behindContent scrim, inFront animatingBox ]

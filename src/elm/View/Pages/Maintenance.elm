@@ -27,7 +27,7 @@ import Json.Decode as Decode
 {-| Render a message saying that the site is down.
     Let's hope we'll never need this.
 -}
-viewMaintenancePage : PageWithModal
+viewMaintenancePage : PageWithInspector
 viewMaintenancePage =
   let
       message =

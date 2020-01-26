@@ -29,7 +29,7 @@ update msg ({nav, userProfileForm} as model) =
   --       msg |> Debug.log "action"
   -- in
   case msg of
-    Initialized url ->
+    ModelInitialized url ->
       let
           (newModel, cmd) =
             model |> update (UrlChanged url)
@@ -67,19 +67,19 @@ update msg ({nav, userProfileForm} as model) =
           |> logEventForLabStudy "UrlChanged" [ url.path, query ]
           |> saveAction 14 [ ("path", Encode.string url.path), ("query", Encode.string query) ]
 
-    ClockTick time ->
-      ( { model | currentTime = time, enrichmentsAnimating = anyBubblogramsAnimating model, snackbar = updateSnackbar model }, getOerCardPlaceholderPositions True)
+    ClockTicked currentTime ->
+      ( { model | currentTime = currentTime, enrichmentsAnimating = anyBubblogramsAnimating model, snackbar = updateSnackbar model }, getOerCardPlaceholderPositions True)
       |> requestWikichunkEnrichmentsIfNeeded
       |> requestEntityDefinitionsIfNeeded
       |> saveCourseIfNeeded
       |> saveLoggedEventsIfNeeded
 
-    AnimationTick time ->
-      ( { model | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
+    AnimationTick currentTime ->
+      ( { model | currentTime = currentTime } |> incrementFrameCountInInspectorAnimation, Cmd.none )
 
-    ChangeSearchText str ->
+    SearchFieldChanged str ->
       ( { model | searchInputTyping = str } |> closePopup, Cmd.none)
-      |> logEventForLabStudy "ChangeSearchText" [ str ]
+      |> logEventForLabStudy "SearchFieldChanged" [ str ]
 
     TriggerSearch str isFromSearchField ->
       let
@@ -89,7 +89,7 @@ update msg ({nav, userProfileForm} as model) =
           ({ model | inspectorState = Nothing } |> closePopup, Navigation.pushUrl nav.key searchUrl)
           |> saveAction 13 [ ("text", Encode.string str), ("isFromSearchField", Encode.bool isFromSearchField) ]
 
-    ResizeBrowser x y ->
+    BrowserResized x y ->
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, askPageScrollState True)
 
     InspectOer oer fragmentStart playWhenReady ->
@@ -97,20 +97,20 @@ update msg ({nav, userProfileForm} as model) =
       |> saveAction 1 [ ("oerId", Encode.int oer.id) ]
       |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat, "playWhenReady:"++(if playWhenReady then "True" else "False") ]
 
-    InspectCourseItem oer ->
+    ClickedOnCourseItem oer ->
       model
       |> update (InspectOer oer 0 False)
-      |> logEventForLabStudy "InspectCourseItem" [ oer.id |> String.fromInt ]
+      |> logEventForLabStudy "ClickedOnCourseItem" [ oer.id |> String.fromInt ]
 
-    UninspectSearchResult ->
+    PressedCloseButtonInInspector ->
       ( { model | inspectorState = Nothing}, Cmd.none)
-      |> logEventForLabStudy "UninspectSearchResult" []
+      |> logEventForLabStudy "PressedCloseButtonInInspector" []
 
-    ModalAnimationStart animation ->
-      ( { model | modalAnimation = Just animation }, Cmd.none )
+    InspectorAnimationStart animation ->
+      ( { model | inspectorAnimation = Just animation }, Cmd.none )
 
-    ModalAnimationStop dummy ->
-      ( { model | modalAnimation = Nothing, animationsPending = model.animationsPending |> Set.remove modalId }, Cmd.none )
+    InspectorAnimationStop dummy ->
+      ( { model | inspectorAnimation = Nothing, animationsPending = model.animationsPending |> Set.remove inspectorId }, Cmd.none )
 
     RequestSession (Ok session) ->
       let
@@ -747,14 +747,14 @@ insertSearchResults oerIds model =
       { model | searchState = newSearchState }
 
 
-incrementFrameCountInModalAnimation : Model -> Model
-incrementFrameCountInModalAnimation model =
-  case model.modalAnimation of
+incrementFrameCountInInspectorAnimation : Model -> Model
+incrementFrameCountInInspectorAnimation model =
+  case model.inspectorAnimation of
     Nothing ->
       model
 
     Just animation ->
-      { model | modalAnimation = Just { animation | frameCount = animation.frameCount + 1 } }
+      { model | inspectorAnimation = Just { animation | frameCount = animation.frameCount + 1 } }
 
 
 requestWikichunkEnrichmentsIfNeeded : (Model, Cmd Msg) -> (Model, Cmd Msg)
@@ -1245,10 +1245,10 @@ inspectOer model oer fragmentStart playWhenReady =
   let
       videoEmbedParams : VideoEmbedParams
       videoEmbedParams =
-        { modalId = modalId
+        { inspectorId = inspectorId
         , videoStartPosition = fragmentStart * oer.durationInSeconds
         , playWhenReady = playWhenReady
         }
   in
-      ({ model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert modalId } |> closePopup
-      , openModalAnimation videoEmbedParams)
+      ({ model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert inspectorId } |> closePopup
+      , openInspectorAnimation videoEmbedParams)

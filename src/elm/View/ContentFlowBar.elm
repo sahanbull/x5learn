@@ -17,11 +17,11 @@ import Animation exposing (..)
 
 
 {-| Render the ContentFlowBar, with or without ContentFlow enabled.
-    Note that the ContentFlowBar can appear on an OER card or in other places, such as the inspector modal.
+    Note that the ContentFlowBar can appear on an OER card or in other places, such as the inspector.
     The behavior varies slightly. At the time of writing:
     A) on a card:
       - hover triggers the ChunkPopup AND causes scrubbing in the card's thumbnail
-      - click opens the inspector modal
+      - click opens the inspector
     B) otherwise:
       - hover triggers the ChunkPopup
       - click jumps to the position in the video (if applicable)

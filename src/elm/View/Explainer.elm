@@ -42,7 +42,7 @@ viewExplainerButton : Model -> Explanation -> Attribute Msg
 viewExplainerButton {popup} {flyoutDirection, componentId, links} =
   let
       buttonAttrs =
-        [ Background.color magenta, whiteText, alignRight, Font.size 12, paddingXY 5 4, htmlClass "ZIndex100 ClosePopupOnClickOutside" ] ++ explanationPopup
+        [ Background.color magenta, whiteText, alignRight, Font.size 12, paddingXY 5 4, htmlClass "ZIndex100 PreventClosingThePopupOnClick" ] ++ explanationPopup
 
       explanationPopup =
         if popup == Just (ExplanationPopup componentId) then

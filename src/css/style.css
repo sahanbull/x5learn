@@ -58,13 +58,13 @@ a:hover {
   background-color: rgb(242,242,242) !important;
 }
 
-.ModalAnimation{
+.InspectorAnimation{
   -webkit-filter: blur(1px); /* Safari */
   filter: blur(1px);
   transition: all 0.1s ease-out;
 }
 
-.ModalScrim{
+.InspectorScrim{
   transition: all 0.5s ease-out;
 }
 

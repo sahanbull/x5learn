@@ -56,8 +56,7 @@ class Oer(Base):
     __tablename__ = 'oer'
     __table_args__ = {'extend_existing': True}
     id = Column(Integer(), primary_key=True)
-    url = Column(String(255), unique=True, nullable=False)
-    # TODO allow long urls. change String(255) to Text()
+    url = Column(Text(), nullable=False)
     data = Column(JSON())
 
     def __init__(self, url, data):

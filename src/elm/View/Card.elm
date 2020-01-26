@@ -204,17 +204,8 @@ viewVisibleOerCard model position barId enableShadow oer =
               else
                 oer.duration |> captionNowrap [ alignRight, paddingRight 8 ]
 
-            favoriteButton =
-              let
-                  heart =
-                    viewHeartButton model oer.id
-                    |> el [ moveRight 12, moveUp 14 ]
-              in
-                  none
-                  |> el [ alignRight, width <| px 34, inFront heart ]
-
             content =
-              [ date, provider, duration ]--, favoriteButton ]
+              [ date, provider, duration ]
         in
             content
             |> row [ width fill, paddingXY 16 0, moveDown 255 ]

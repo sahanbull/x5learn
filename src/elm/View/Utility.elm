@@ -594,17 +594,6 @@ guestCallToSignup incentive =
   |> paragraph [ Font.size 14, Font.color materialDark ]
 
 
-viewHeartButton : Model -> OerId -> Element Msg
-viewHeartButton model oerId =
-  none
-    -- let
-    --     class =
-    --       "Heart " ++ (if isMarkedAsFavorite model oerId then "HeartFilled" else "HeartOutline")
-    -- in
-    --     none
-    --     |> el [ width <| px 20, height <| px 22, onClickStopPropagation (ClickedHeart oerId), htmlClass class  ]
-
-
 closeIcon : Element Msg
 closeIcon =
   image [  materialDarkAlpha, hoverCircleBackground ] { src = svgPath "close", description = "close" }

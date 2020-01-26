@@ -159,11 +159,6 @@ def search():
     return render_template('home.html')
 
 
-@app.route("/favorites")
-def favorites():
-    return render_template('home.html')
-
-
 @app.route("/resource/<oer_id>")
 def resource(oer_id):
     return render_template('home.html')
@@ -250,21 +245,6 @@ def api_search():
     except ValueError:
         results = search_results_from_x5gon_api(text)
     return jsonify([oer.data_and_id() for oer in results])
-
-
-@app.route("/api/v1/favorites/", methods=['GET'])
-def api_favorites():
-    actions = Action.query.filter(Action.user_login_id == current_user.get_id(),
-                                  Action.action_type_id.in_([2, 3])).order_by(Action.id).all()
-    favorites = []
-    # reconstruct list by replaying the sequence of "like" and "unlike" actions
-    for action in actions:
-        oer_id = action.params['oerId']
-        if oer_id in favorites:
-            favorites.remove(oer_id)  # remove in any case to avoid duplicates
-        if action.action_type_id == 2:
-            favorites.append(oer_id)
-    return jsonify(favorites)
 
 
 @app.route("/api/v1/oers/", methods=['POST'])
@@ -930,12 +910,12 @@ def initiate_action_types_table():
         db_session.commit()
     action_type = ActionType.query.filter_by(id=2).first()
     if action_type is None:
-        action_type = ActionType('OER marked as favorite')
+        action_type = ActionType('OER marked as favorite (no longer in use)')
         db_session.add(action_type)
         db_session.commit()
     action_type = ActionType.query.filter_by(id=3).first()
     if action_type is None:
-        action_type = ActionType('OER unmarked as favorite')
+        action_type = ActionType('OER unmarked as favorite (no longer in use)')
         db_session.add(action_type)
         db_session.commit()
     action_type = ActionType.query.filter_by(id=4).first()

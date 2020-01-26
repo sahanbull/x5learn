@@ -190,37 +190,6 @@ sheetWidth model =
   |> min (playerWidth model + inspectorSidebarWidth + 35)
 
 
-viewProviderLinkAndFavoriteButton : Model -> Oer -> Element Msg
-viewProviderLinkAndFavoriteButton model oer =
-  let
-      favoriteButton : Element Msg
-      favoriteButton =
-        let
-            heart =
-              viewHeartButton model oer.id
-              |> el [ moveRight 12, moveUp 14 ]
-        in
-            none
-            |> el [ alignRight, width <| px 34, inFront heart ]
-
-      providerLink : Element Msg
-      providerLink =
-        case oer.provider of
-          "" ->
-            none
-
-          provider ->
-            [ "Provider:" |> bodyNoWrap []
-            , newTabLink [] { url = oer.url, label = provider |> bodyNoWrap [] }
-            ]
-            |> row [ spacing 10 ]
-  in
-      [ providerLink
-      , favoriteButton
-      ]
-      |> row [ width fill ]
-
-
 viewCourseSettings : Model -> Oer -> CourseItem -> List (Element Msg)
 viewCourseSettings model oer {range, comment} =
   let

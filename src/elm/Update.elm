@@ -75,19 +75,7 @@ update msg ({nav, userProfileForm} as model) =
       |> saveLoggedEventsIfNeeded
 
     AnimationTick time ->
-      let
-          newModel =
-            case model.flyingHeartAnimation of
-              Nothing ->
-                model
-
-              Just {startTime} ->
-                if millisSince model startTime > flyingHeartAnimationDuration then
-                  { model | flyingHeartAnimation = Nothing }
-                else
-                  model
-      in
-          ( { newModel | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
+      ( { model | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
 
     ChangeSearchText str ->
       ( { model | searchInputTyping = str } |> closePopup, Cmd.none)
@@ -265,20 +253,6 @@ update msg ({nav, userProfileForm} as model) =
       -- in
       -- ( { model | snackbar = createSnackbar model "There was a problem while fetching the wiki definitions data", requestingEntityDefinitions = False }, Cmd.none )
       ( { model | snackbar = createSnackbar model snackbarMessageReloadPage, requestingEntityDefinitions = False }, Cmd.none )
-
-    -- RequestFavorites (Ok favorites) ->
-    --   let
-    --       newModel = { model | favorites = favorites }
-    --   in
-    --       ( newModel, requestOersByIds newModel favorites)
-    --       |> logEventForLabStudy "RequestFavorites" []
-
-    -- RequestFavorites (Err err) ->
-    --   -- let
-    --   --     dummy =
-    --   --       err |> Debug.log "Error in RequestFavorites"
-    --   -- in
-    --   ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     RequestSaveUserProfile (Ok _) ->
       ({ model | userProfileForm = { userProfileForm | saved = True }, userProfileFormSubmitted = False }, Cmd.none)
@@ -542,22 +516,6 @@ update msg ({nav, userProfileForm} as model) =
 
     MouseEnterMentionInBubbblogramOverview oerId entityId mention ->
       ({ model | selectedMention = Just (oerId, mention), hoveringEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
-
-    -- ClickedHeart oerId ->
-    --   if isMarkedAsFavorite model oerId then
-    --     ( { model | removedFavorites = model.removedFavorites |> Set.insert oerId }, Cmd.none)
-    --     |> saveAction 3 [ ("oerId", Encode.int oerId) ]
-    --   else
-    --     let
-    --         favorites =
-    --           model.favorites ++ [ oerId ]
-    --           |> List.Extra.unique
-    --     in
-    --       ( { model | favorites = favorites, removedFavorites = model.removedFavorites |> Set.remove oerId, flyingHeartAnimation = Just { startTime = model.currentTime } }, Cmd.none)
-    --       |> saveAction 2 [ ("oerId", Encode.int oerId) ]
-
-    FlyingHeartRelativeStartPositionReceived startPoint ->
-      ( { model | flyingHeartAnimationStartPoint = Just startPoint }, Cmd.none)
 
     TimelineMouseEvent {eventName, position} ->
       let

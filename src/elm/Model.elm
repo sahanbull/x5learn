@@ -80,12 +80,6 @@ type alias Model =
   , timeOfLastFeedbackRecorded : Posix -- used to show a brief thank you message
   -- VideoUsages
   , videoUsages : Dict OerId VideoUsage -- for each (video) OER, which parts has the user watched
-  -- favorites
-  , favorites : List OerId -- OERs marked as favourite (heart icon)
-  , removedFavorites : Set OerId -- keep a client-side record of removed items so that cards on the favorites page don't simply disappear when unliked
-  , hoveringHeart : Maybe OerId -- if the user hovers over a heart, which OER is it
-  , flyingHeartAnimation : Maybe FlyingHeartAnimation -- when the user likes an OER
-  , flyingHeartAnimationStartPoint : Maybe Point -- when the user likes an OER
   -- screen dimensions
   , windowWidth : Int -- width of the browser window in pixels
   , windowHeight : Int -- height of the browser window in pixels
@@ -141,12 +135,6 @@ type BubblogramType
 {-| For any (video) OER, which parts has the user watched
 -}
 type alias VideoUsage = List Range
-
-{-| when the user likes an OER (favorites)
--}
-type alias FlyingHeartAnimation =
-  { startTime : Posix
-  }
 
 {-| Item in a bubblogram representing an entity as a circle
 -}
@@ -266,7 +254,6 @@ type Subpage
   = Home
   | Profile
   | Search
-  -- | Favorites
 
 
 {-| Search for OERs
@@ -555,11 +542,6 @@ initialModel nav flags =
   , feedbackForms = Dict.empty
   , timeOfLastFeedbackRecorded = initialTime
   , videoUsages = Dict.empty
-  , favorites = []
-  , removedFavorites = Set.empty
-  , hoveringHeart = Nothing
-  , flyingHeartAnimation = Nothing
-  , flyingHeartAnimationStartPoint = Nothing
   , windowWidth = flags.windowWidth
   , windowHeight = flags.windowHeight
   , minWindowWidth = flags.minWindowWidth
@@ -914,9 +896,6 @@ profilePath =
 searchPath =
   "/search"
 
-favoritesPath =
-  "/favorites"
-
 loginPath =
    "/login"
 
@@ -1047,28 +1026,6 @@ indexOf element list =
             Nothing
   in
       helper 0 list
-
-
-{-| Check whether a particular OER is one of the user's favourites
--}
-isMarkedAsFavorite : Model -> OerId -> Bool
-isMarkedAsFavorite model oerId =
-  List.member oerId model.favorites && (Set.member oerId model.removedFavorites |> not)
-
-
-{-| Check whether the user has just "favorited" an OER in the last second or so
--}
-isFlyingHeartAnimating : Model -> Bool
-isFlyingHeartAnimating model =
-  model.flyingHeartAnimation /= Nothing
-
-
-{-| When the user adds an OER to their favorites, there is a short animation.
-    This is the duration in milliseconds.
--}
-flyingHeartAnimationDuration : Int
-flyingHeartAnimationDuration =
-  900
 
 
 {-| Check whether the mouse is hovering over a particular OER

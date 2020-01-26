@@ -370,7 +370,15 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
     RequestLoadCourse (Ok course) ->
-      ({ model | course = course, courseNeedsSaving = False, courseOptimization = Nothing }, Cmd.none)
+      let
+          newModel =
+            { model | course = course, courseNeedsSaving = False, courseOptimization = Nothing }
+
+          oerIds =
+            course.items
+            |> List.map .oerId
+      in
+          (newModel, requestOersByIds newModel oerIds)
 
     RequestLoadCourse (Err err) ->
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )

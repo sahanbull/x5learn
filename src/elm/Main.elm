@@ -50,7 +50,7 @@ init flags url key =
   let
       (model, cmd) =
         initialModel (Nav url key) flags
-        |> update (Initialized url) -- ensure that subpage-specific state is loaded when starting on a subpage
+        |> update (ModelInitialized url) -- ensure that subpage-specific state is loaded when starting on a subpage
   in
       ( model, cmd )
 

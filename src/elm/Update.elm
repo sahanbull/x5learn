@@ -29,7 +29,7 @@ update msg ({nav, userProfileForm} as model) =
   --       msg |> Debug.log "action"
   -- in
   case msg of
-    Initialized url ->
+    ModelInitialized url ->
       let
           (newModel, cmd) =
             model |> update (UrlChanged url)
@@ -67,19 +67,19 @@ update msg ({nav, userProfileForm} as model) =
           |> logEventForLabStudy "UrlChanged" [ url.path, query ]
           |> saveAction 14 [ ("path", Encode.string url.path), ("query", Encode.string query) ]
 
-    ClockTick time ->
-      ( { model | currentTime = time, enrichmentsAnimating = anyBubblogramsAnimating model, snackbar = updateSnackbar model }, getOerCardPlaceholderPositions True)
+    ClockTicked currentTime ->
+      ( { model | currentTime = currentTime, enrichmentsAnimating = anyBubblogramsAnimating model, snackbar = updateSnackbar model }, getOerCardPlaceholderPositions True)
       |> requestWikichunkEnrichmentsIfNeeded
       |> requestEntityDefinitionsIfNeeded
       |> saveCourseIfNeeded
       |> saveLoggedEventsIfNeeded
 
-    AnimationTick time ->
-      ( { model | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
+    AnimationTick currentTime ->
+      ( { model | currentTime = currentTime } |> incrementFrameCountInModalAnimation, Cmd.none )
 
-    ChangeSearchText str ->
+    SearchFieldChanged str ->
       ( { model | searchInputTyping = str } |> closePopup, Cmd.none)
-      |> logEventForLabStudy "ChangeSearchText" [ str ]
+      |> logEventForLabStudy "SearchFieldChanged" [ str ]
 
     TriggerSearch str isFromSearchField ->
       let
@@ -89,7 +89,7 @@ update msg ({nav, userProfileForm} as model) =
           ({ model | inspectorState = Nothing } |> closePopup, Navigation.pushUrl nav.key searchUrl)
           |> saveAction 13 [ ("text", Encode.string str), ("isFromSearchField", Encode.bool isFromSearchField) ]
 
-    ResizeBrowser x y ->
+    BrowserResized x y ->
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, askPageScrollState True)
 
     InspectOer oer fragmentStart playWhenReady ->

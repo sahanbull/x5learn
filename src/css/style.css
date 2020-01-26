@@ -152,26 +152,6 @@ a:hover {
   text-overflow: ellipsis !important;
 }
 
-.Heart{
-  background-repeat: no-repeat !important;
-  background-position: center !important;
-  background-size: 92% !important;
-  transition: all 0.2s;
-}
-
-.Heart:hover{
-  background-size: 123% !important;
-  cursor: pointer;
-}
-
-.HeartOutline{
-  background: url('/static/dist/img_svg/favorite_outline.svg');
-}
-
-.HeartFilled{
-  background: url('/static/dist/img_svg/favorite_filled.svg');
-}
-
 /* Toggle for ContentFlow */
 
 .ToggleSwitch {

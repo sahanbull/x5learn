@@ -479,8 +479,8 @@ milkyWhiteCenteredContainer =
   el [ centerX, centerY, padding 20, Background.color semiTransparentWhite, Border.rounded 2 ]
 
 
-viewCenterNote : String -> Element Msg
-viewCenterNote str =
+viewCenterMessage : String -> Element Msg
+viewCenterMessage str =
   str
   |> bodyWrap []
   |> milkyWhiteCenteredContainer
@@ -592,17 +592,6 @@ guestCallToSignup incentive =
   , "." |> text
   ]
   |> paragraph [ Font.size 14, Font.color materialDark ]
-
-
-viewHeartButton : Model -> OerId -> Element Msg
-viewHeartButton model oerId =
-  none
-    -- let
-    --     class =
-    --       "Heart " ++ (if isMarkedAsFavorite model oerId then "HeartFilled" else "HeartOutline")
-    -- in
-    --     none
-    --     |> el [ width <| px 20, height <| px 22, onClickStopPropagation (ClickedHeart oerId), htmlClass class  ]
 
 
 closeIcon : Element Msg

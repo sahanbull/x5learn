@@ -190,37 +190,6 @@ sheetWidth model =
   |> min (playerWidth model + inspectorSidebarWidth + 35)
 
 
-viewProviderLinkAndFavoriteButton : Model -> Oer -> Element Msg
-viewProviderLinkAndFavoriteButton model oer =
-  let
-      favoriteButton : Element Msg
-      favoriteButton =
-        let
-            heart =
-              viewHeartButton model oer.id
-              |> el [ moveRight 12, moveUp 14 ]
-        in
-            none
-            |> el [ alignRight, width <| px 34, inFront heart ]
-
-      providerLink : Element Msg
-      providerLink =
-        case oer.provider of
-          "" ->
-            none
-
-          provider ->
-            [ "Provider:" |> bodyNoWrap []
-            , newTabLink [] { url = oer.url, label = provider |> bodyNoWrap [] }
-            ]
-            |> row [ spacing 10 ]
-  in
-      [ providerLink
-      , favoriteButton
-      ]
-      |> row [ width fill ]
-
-
 viewCourseSettings : Model -> Oer -> CourseItem -> List (Element Msg)
 viewCourseSettings model oer {range, comment} =
   let
@@ -246,7 +215,7 @@ viewCourseSettings model oer {range, comment} =
             |> row [ width fill, borderTop 1, Border.color greyDivider, paddingTop 10 ]
 
       commentField =
-        Input.text [ width fill, htmlId "TextInputFieldForCommentOnCourseItem", onEnter <| SubmittedCourseItemComment, Border.color x5color, Font.size 14, padding 3, moveDown 5 ] { onChange = ChangedCommentTextInCourseItem oer.id, text = comment, placeholder = Just ("Enter any notes or comments about this item" |> text |> Input.placeholder [ Font.size 14, moveDown 6 ]), label = Input.labelHidden "Comment on course item" }
+        Input.text [ width fill, htmlId "TextInputFieldForCommentOnCourseItem", onEnter <| SubmittedCourseItemComment, Border.color x5color, Font.size 14, padding 3, moveDown 5 ] { onChange = ChangedCommentTextInCourseItem oer.id, text = comment, placeholder = Just ("Enter any comments about this item" |> text |> Input.placeholder [ Font.size 14, moveDown 6 ]), label = Input.labelHidden "Comment on course item" }
 
       changesSaved =
         if model.courseChangesSaved then
@@ -446,7 +415,7 @@ viewFeedbackTab model oer =
         |> column [ spacing 10 ]
 
       textField =
-        Input.text [ width fill, htmlId "textInputFieldForNotesOrFeedback", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5color ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your comments" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
+        Input.text [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5color ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your comments" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
   in
       [ "How would you describe this material?" |> bodyWrap []
       , quickOptions

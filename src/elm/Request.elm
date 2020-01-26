@@ -43,14 +43,6 @@ searchOers searchText =
     }
 
 
--- requestFavorites : Cmd Msg
--- requestFavorites =
---   Http.get
---     { url = Url.Builder.absolute [ apiRoot, "favorites/" ] []
---     , expect = Http.expectJson RequestFavorites (list int)
---     }
-
-
 {-| Fetch OER data from the server.
 -}
 requestOers : List OerId -> Cmd Msg

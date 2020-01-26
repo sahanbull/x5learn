@@ -80,12 +80,6 @@ type alias Model =
   , timeOfLastFeedbackRecorded : Posix -- used to show a brief thank you message
   -- VideoUsages
   , videoUsages : Dict OerId VideoUsage -- for each (video) OER, which parts has the user watched
-  -- favorites
-  , favorites : List OerId -- OERs marked as favourite (heart icon)
-  , removedFavorites : Set OerId -- keep a client-side record of removed items so that cards on the favorites page don't simply disappear when unliked
-  , hoveringHeart : Maybe OerId -- if the user hovers over a heart, which OER is it
-  , flyingHeartAnimation : Maybe FlyingHeartAnimation -- when the user likes an OER
-  , flyingHeartAnimationStartPoint : Maybe Point -- when the user likes an OER
   -- screen dimensions
   , windowWidth : Int -- width of the browser window in pixels
   , windowHeight : Int -- height of the browser window in pixels
@@ -109,8 +103,6 @@ type alias Model =
   , lastTimeLoggedEventsSaved : Posix -- wait a few seconds between batches
   , timeWhenSessionLoaded : Posix -- wait a few seconds before logging UI events
   -- deactivated code
-  -- , oerNoteboards : Dict OerId Noteboard
-  -- , oerNoteForms : Dict OerId String
   , isExplainerEnabled : Bool
   }
 
@@ -143,12 +135,6 @@ type BubblogramType
 {-| For any (video) OER, which parts has the user watched
 -}
 type alias VideoUsage = List Range
-
-{-| when the user likes an OER (favorites)
--}
-type alias FlyingHeartAnimation =
-  { startTime : Posix
-  }
 
 {-| Item in a bubblogram representing an entity as a circle
 -}
@@ -197,8 +183,6 @@ type alias EntityId = String
 
 type alias EntityTitle = String
 
-type alias Noteboard = List Note
-
 
 {-| Knowing what part of the page the user is seeing
 -}
@@ -225,16 +209,6 @@ type alias OerCardPlaceholderPosition =
   { x : Float
   , y : Float
   , oerId : Int
-  }
-
-
-{-| User comments on OER
--}
-type alias Note =
-  { text : String
-  , time : Posix
-  , oerId : OerId
-  , id : Int
   }
 
 
@@ -280,8 +254,6 @@ type Subpage
   = Home
   | Profile
   | Search
-  -- | Favorites
-  -- | Notes
 
 
 {-| Search for OERs
@@ -570,11 +542,6 @@ initialModel nav flags =
   , feedbackForms = Dict.empty
   , timeOfLastFeedbackRecorded = initialTime
   , videoUsages = Dict.empty
-  , favorites = []
-  , removedFavorites = Set.empty
-  , hoveringHeart = Nothing
-  , flyingHeartAnimation = Nothing
-  , flyingHeartAnimationStartPoint = Nothing
   , windowWidth = flags.windowWidth
   , windowHeight = flags.windowHeight
   , minWindowWidth = flags.minWindowWidth
@@ -592,8 +559,6 @@ initialModel nav flags =
   , lastTimeLoggedEventsSaved = initialTime
   , timeWhenSessionLoaded = initialTime
   , currentTaskName = Nothing
-  -- , oerNoteboards = Dict.empty
-  -- , oerNoteForms = Dict.empty
   , isExplainerEnabled = False
   }
 
@@ -601,30 +566,6 @@ initialModel nav flags =
 initialUserProfile : String -> UserProfile
 initialUserProfile email =
   UserProfile email "" "" False
-
-
--- getOerNoteboard : Model -> OerId -> Noteboard
--- getOerNoteboard model oerId =
---   model.oerNoteboards
---   |> Dict.get oerId
---   |> Maybe.withDefault []
-
-
--- getOerNoteForm : Model -> OerId -> String
--- getOerNoteForm model oerId =
---   model.oerNoteForms
---   |> Dict.get oerId
---   |> Maybe.withDefault ""
-
-
--- getOerIdFromOerId : Model -> OerId -> OerId
--- getOerIdFromOerId model oerId =
---   case model.cachedOers |> Dict.get oerId of
---     Just oer ->
---       oer.id
-
-    -- Nothing ->
-    --   0
 
 
 initialTime : Posix
@@ -955,12 +896,6 @@ profilePath =
 searchPath =
   "/search"
 
--- notesPath =
---   "/notes"
-
-favoritesPath =
-  "/favorites"
-
 loginPath =
    "/login"
 
@@ -1091,28 +1026,6 @@ indexOf element list =
             Nothing
   in
       helper 0 list
-
-
-{-| Check whether a particular OER is one of the user's favourites
--}
-isMarkedAsFavorite : Model -> OerId -> Bool
-isMarkedAsFavorite model oerId =
-  List.member oerId model.favorites && (Set.member oerId model.removedFavorites |> not)
-
-
-{-| Check whether the user has just "favorited" an OER in the last second or so
--}
-isFlyingHeartAnimating : Model -> Bool
-isFlyingHeartAnimating model =
-  model.flyingHeartAnimation /= Nothing
-
-
-{-| When the user adds an OER to their favorites, there is a short animation.
-    This is the duration in milliseconds.
--}
-flyingHeartAnimationDuration : Int
-flyingHeartAnimationDuration =
-  900
 
 
 {-| Check whether the mouse is hovering over a particular OER

@@ -49,7 +49,6 @@ withNavigationDrawer model (pageContent, modal) =
           ]
           |> column [ spacing 40, width fill ]
         else
-          -- [ navButton True "/favorites" "nav_favorites" "Favorites" |> heartAnimationWrapper
           [ viewCourse model
           ]
           |> column [ width fill, spacing 8 ]
@@ -67,46 +66,6 @@ withNavigationDrawer model (pageContent, modal) =
         , pageContent
         ]
         |> row [ width fill, height fill ]
-
-      heartAnimationWrapper =
-        let
-            animationLayer =
-              case model.flyingHeartAnimation of
-                Nothing ->
-                  []
-
-                Just {startTime} ->
-                  case model.flyingHeartAnimationStartPoint of
-                    Nothing ->
-                      []
-
-                    Just startPoint ->
-                      let
-                          phase =
-                            ((millisSince model startTime |> toFloat) / ((toFloat flyingHeartAnimationDuration) - 300)) ^ 0.9 |> min 1
-
-                          x =
-                            startPoint.x * (1-phase)
-
-                          y =
-                            startPoint.y * (1-phase)
-
-                          size =
-                            px 25
-
-                          opacity =
-                            phase^0.8
-
-                          transition =
-                            htmlStyle "transition-duration" "0.1s"
-
-                          heart =
-                            none
-                            |> el [ width <| size, height <| size, moveDown <| 10 + y, moveRight <| 6 + x, htmlClass "Heart HeartFilled HeartFlying PointerEventsNone", Element.alpha opacity, transition ]
-                      in
-                          [ inFront heart ]
-        in
-            el ([ width fill, htmlClass "HeartAnimWrapper" ] ++ animationLayer)
   in
       (page, modal ++ [ drawer ])
 

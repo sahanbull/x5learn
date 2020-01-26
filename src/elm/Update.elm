@@ -20,7 +20,6 @@ import Msg exposing (..)
 import Ports exposing (..)
 import Request exposing (..)
 import ActionApi exposing (..)
--- import NotesApi exposing (..)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -76,19 +75,7 @@ update msg ({nav, userProfileForm} as model) =
       |> saveLoggedEventsIfNeeded
 
     AnimationTick time ->
-      let
-          newModel =
-            case model.flyingHeartAnimation of
-              Nothing ->
-                model
-
-              Just {startTime} ->
-                if millisSince model startTime > flyingHeartAnimationDuration then
-                  { model | flyingHeartAnimation = Nothing }
-                else
-                  model
-      in
-          ( { newModel | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
+      ( { model | currentTime = time } |> incrementFrameCountInModalAnimation, Cmd.none )
 
     ChangeSearchText str ->
       ( { model | searchInputTyping = str } |> closePopup, Cmd.none)
@@ -176,52 +163,6 @@ update msg ({nav, userProfileForm} as model) =
     --         err |> Debug.log "Error in RequestUpdatePlayingVideo"
     --   in
     --   ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
-
-    -- RequestNotes (Ok notes) ->
-    --   let
-    --       addNoteToNoteboard : Note -> Dict OerId Noteboard -> Dict OerId Noteboard
-    --       addNoteToNoteboard note oerNoteboards =
-    --         let
-    --             oldNoteboard =
-    --               oerNoteboards |> Dict.get note.oerId |> Maybe.withDefault []
-    --         in
-    --             oerNoteboards |> Dict.insert note.oerId (note::oldNoteboard)
-
-    --       newOerNoteboards : Dict OerId Noteboard
-    --       newOerNoteboards =
-    --         notes
-    --         |> List.foldl (\note noteboards -> noteboards |> addNoteToNoteboard note) Dict.empty
-
-    --       newModel =
-    --         { model | oerNoteboards = newOerNoteboards}
-
-    --       oerIds =
-    --         notes
-    --         |> List.map .oerId
-    --         |> List.Extra.unique
-    --   in
-    --       ( newModel, requestOersByIds newModel oerIds)
-    --       |> logEventForLabStudy "RequestNotes" []
-
-    -- RequestNotes (Err err) ->
-    --   -- let
-    --   --     dummy =
-    --   --       err |> Debug.log "Error in RequestNotes"
-    --   -- in
-    --   -- ( { model | snackbar = createSnackbar model "An error occurred. Please reload the page." }, Cmd.none )
-    --   ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
-
-    -- RequestDeleteNote (Ok _) ->
-    --   ( model, requestNotes)
-    --   |> logEventForLabStudy "RequestDeleteNote" []
-
-    -- RequestDeleteNote (Err err) ->
-    --   -- let
-    --   --     dummy =
-    --   --       err |> Debug.log "Error in RequestDeleteNote"
-    --   -- in
-    --   -- ( { model | snackbar = createSnackbar model "Some changes were not saved." }, Cmd.none )
-    --   ( { model | snackbar = createSnackbar model "Some changes were not saved." }, Cmd.none )
 
     RequestOerSearch (Ok oers) ->
       let
@@ -313,20 +254,6 @@ update msg ({nav, userProfileForm} as model) =
       -- ( { model | snackbar = createSnackbar model "There was a problem while fetching the wiki definitions data", requestingEntityDefinitions = False }, Cmd.none )
       ( { model | snackbar = createSnackbar model snackbarMessageReloadPage, requestingEntityDefinitions = False }, Cmd.none )
 
-    -- RequestFavorites (Ok favorites) ->
-    --   let
-    --       newModel = { model | favorites = favorites }
-    --   in
-    --       ( newModel, requestOersByIds newModel favorites)
-    --       |> logEventForLabStudy "RequestFavorites" []
-
-    -- RequestFavorites (Err err) ->
-    --   -- let
-    --   --     dummy =
-    --   --       err |> Debug.log "Error in RequestFavorites"
-    --   -- in
-    --   ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
-
     RequestSaveUserProfile (Ok _) ->
       ({ model | userProfileForm = { userProfileForm | saved = True }, userProfileFormSubmitted = False }, Cmd.none)
 
@@ -380,12 +307,6 @@ update msg ({nav, userProfileForm} as model) =
 
     RequestSaveLoggedEvents (Err err) ->
       ( { model | snackbar = createSnackbar model "Some logs were not saved" }, Cmd.none )
-
-    -- RequestSaveNote (Ok _) ->
-    --   (model, requestNotes)
-
-    -- RequestSaveNote (Err err) ->
-    --   ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
     RequestResourceRecommendations (Ok oersUnfiltered) ->
       let
@@ -497,38 +418,13 @@ update msg ({nav, userProfileForm} as model) =
       ( { model | userProfileFormSubmitted = True }, requestSaveUserProfile model.userProfileForm.userProfile)
       |> logEventForLabStudy "SubmittedUserProfile" []
 
-    -- ChangedTextInNewNoteFormInOerNoteboard oerId str ->
-    --   ( model |> setTextInNoteForm oerId str, Cmd.none)
-
     ChangedTextInResourceFeedbackForm oerId str ->
       ( model |> setTextInResourceFeedbackForm oerId str, Cmd.none)
-
-    -- SubmittedNewNoteInOerNoteboard oerId ->
-    --   let
-    --       text =
-    --         getOerNoteForm model oerId
-    --   in
-    --   (model |> createNote oerId text |> setTextInNoteForm oerId "", [ setBrowserFocus "textInputFieldForNotesOrFeedback", saveNote oerId text ] |> Cmd.batch)
-    --   |> logEventForLabStudy "SubmittedNewNoteInOerNoteboard" [ String.fromInt oerId, getOerNoteForm model oerId ]
 
     SubmittedResourceFeedback oerId text ->
       ({ model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", Cmd.none)
       |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, text ]
       |> saveAction 8 [ ("OER id", Encode.int oerId), ("user feedback", Encode.string text) ]
-
-    -- PressedKeyInNewNoteFormInOerNoteboard oerId keyCode ->
-    --   if keyCode==13 then
-    --     model |> update (SubmittedNewNoteInOerNoteboard oerId)
-    --   else
-    --     (model, Cmd.none)
-
-    -- ClickedQuickNoteButton oerId text ->
-    --   (model |> createNote oerId text |> setTextInNoteForm oerId "" , saveNote oerId text)
-    --   |> logEventForLabStudy "ClickedQuickNoteButtond" [ String.fromInt oerId, text ]
-
-    -- RemoveNote note ->
-    --   (model |> removeNote note, NotesApi.deleteNote note)
-    --   |> logEventForLabStudy "RemoveNote" [ note.oerId |> String.fromInt, note.text ]
 
     BubblogramTopicMouseOver entityId oerId ->
       let
@@ -594,7 +490,7 @@ update msg ({nav, userProfileForm} as model) =
               RecommendationsTab ->
                 "RecommendationsTab"
       in
-          ({ model | inspectorState = newInspectorState }, [ cmd, setBrowserFocus "textInputFieldForNotesOrFeedback" ] |> Cmd.batch )
+          ({ model | inspectorState = newInspectorState }, [ cmd, setBrowserFocus "feedbackTextInputField" ] |> Cmd.batch )
           |> logEventForLabStudy "SelectInspectorSidebarTab" [ String.fromInt oerId, tabName ]
 
     MouseMovedOnTopicLane mousePosXonCard ->
@@ -620,22 +516,6 @@ update msg ({nav, userProfileForm} as model) =
 
     MouseEnterMentionInBubbblogramOverview oerId entityId mention ->
       ({ model | selectedMention = Just (oerId, mention), hoveringEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
-
-    -- ClickedHeart oerId ->
-    --   if isMarkedAsFavorite model oerId then
-    --     ( { model | removedFavorites = model.removedFavorites |> Set.insert oerId }, Cmd.none)
-    --     |> saveAction 3 [ ("oerId", Encode.int oerId) ]
-    --   else
-    --     let
-    --         favorites =
-    --           model.favorites ++ [ oerId ]
-    --           |> List.Extra.unique
-    --     in
-    --       ( { model | favorites = favorites, removedFavorites = model.removedFavorites |> Set.remove oerId, flyingHeartAnimation = Just { startTime = model.currentTime } }, Cmd.none)
-    --       |> saveAction 2 [ ("oerId", Encode.int oerId) ]
-
-    FlyingHeartRelativeStartPositionReceived startPoint ->
-      ( { model | flyingHeartAnimationStartPoint = Just startPoint }, Cmd.none)
 
     TimelineMouseEvent {eventName, position} ->
       let
@@ -853,34 +733,6 @@ update msg ({nav, userProfileForm} as model) =
           |> logEventForLabStudy "ToggleDataCollectionConsent" []
 
 
--- createNote : OerId -> String -> Model -> Model
--- createNote oerId text model =
---   let
---       newNote =
---         Note text model.currentTime oerId 0
-
---       oldNoteboard : Noteboard
---       oldNoteboard =
---         getOerNoteboard model oerId
-
---       newNoteboard : Noteboard
---       newNoteboard =
---         newNote :: oldNoteboard
---   in
---       { model | oerNoteboards = model.oerNoteboards |> Dict.insert oerId newNoteboard }
-
-
--- removeNote : Note -> Model -> Model
--- removeNote note model =
---   let
---       filter : OerId -> Noteboard -> Noteboard
---       filter _ notes =
---         notes
---         |> List.filter (\n -> n /= note)
---   in
---      { model | oerNoteboards = model.oerNoteboards |> Dict.map filter }
-
-
 insertSearchResults : List OerId -> Model -> Model
 insertSearchResults oerIds model =
   let
@@ -1020,11 +872,6 @@ inspectOerBasedOnUrlParameter model =
 
             Just oer ->
               inspectOer model oer 0 False
-
-
--- setTextInNoteForm : OerId -> String -> Model -> Model
--- setTextInNoteForm oerId str model =
---   { model | oerNoteForms = model.oerNoteForms |> Dict.insert oerId str }
 
 
 setTextInResourceFeedbackForm : OerId -> String -> Model -> Model

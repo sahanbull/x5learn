@@ -159,13 +159,6 @@ function setupEventHandlers(){
 
   document.addEventListener("mouseover", function(event){
     var element = event.target;
-    if(element.classList.contains('Heart') &! element.classList.contains('HeartFlying')){
-      var eventPosition = getEventPosition(event);
-      var wrapperPositionY = position(document.getElementsByClassName('HeartAnimWrapper')[0]).y;
-      var hoveringHeartPosition = {x: eventPosition.x-30, y: eventPosition.y-20-wrapperPositionY};
-      app.ports.receiveFlyingHeartRelativeStartPosition.send(hoveringHeartPosition);
-      return
-    }
     if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" ChunkTrigger ") > -1 ){
       app.ports.mouseOverChunkTrigger.send(event.pageX);
       return

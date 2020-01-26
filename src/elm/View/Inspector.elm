@@ -70,7 +70,7 @@ viewModal model inspectorState =
         [ header
         , bodyAndSidebar
         ]
-        |> column [ htmlClass "CloseInspectorOnClickOutside", width (px <| sheetWidth model), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow ]
+        |> column [ htmlClass "PreventClosingInspectorOnClick", width (px <| sheetWidth model), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow ]
 
       animatingBox =
         case model.modalAnimation of

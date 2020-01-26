@@ -147,10 +147,10 @@ function getHtml5VideoPlayer(){
  */
 function setupEventHandlers(){
   document.addEventListener("click", function(e){
-    if(!e.target.closest('.CloseInspectorOnClickOutside')){
+    if(!e.target.closest('.PreventClosingInspectorOnClick')){
       app.ports.closeInspector.send(12345);
     }
-    if(!e.target.closest('.ClosePopupOnClickOutside')){
+    if(!e.target.closest('.PreventClosingThePopupOnClick')){
       app.ports.closePopup.send(12345);
       e.stopPropagation();
     }

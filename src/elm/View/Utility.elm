@@ -385,7 +385,7 @@ actionButtonWithIcon textAttrs buttonAttrs iconPosition iconAlpha svgIconStub st
           IconRight ->
             [ title, icon ]
   in
-      button ([ htmlClass "CloseInspectorOnClickOutside" ] ++ buttonAttrs) { onPress = onPress, label = label |> row [ width fill, spacing 3, Border.rounded 4 ]}
+      button ([ htmlClass "PreventClosingInspectorOnClick" ] ++ buttonAttrs) { onPress = onPress, label = label |> row [ width fill, spacing 3, Border.rounded 4 ]}
 
 
 actionButtonWithoutIcon : List (Attribute Msg) -> List (Attribute Msg) -> String -> Maybe Msg -> Element Msg

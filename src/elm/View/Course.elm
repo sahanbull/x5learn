@@ -82,7 +82,7 @@ viewCourseItem model index item =
             |> column [ width fill, spacing 10, paddingTop 10, borderTop 1, Border.color <| greyDivider ]
       in
           miniCard
-          |> el [ width fill, htmlClass "CloseInspectorOnClickOutside", onClickStopPropagation <| InspectCourseItem oer ]
+          |> el [ width fill, htmlClass "PreventClosingInspectorOnClick", onClickStopPropagation <| InspectCourseItem oer ]
 
 
 {-| Render the coursePathFinder

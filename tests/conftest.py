@@ -28,11 +28,6 @@ def repository():
 
 
 @pytest.fixture(scope='session')
-def notes_repository():
-    return _app.NotesRepository()
-
-
-@pytest.fixture(scope='session')
 def actions_repository():
     return _app.ActionsRepository()
 

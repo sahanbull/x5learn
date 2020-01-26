@@ -109,8 +109,6 @@ type alias Model =
   , lastTimeLoggedEventsSaved : Posix -- wait a few seconds between batches
   , timeWhenSessionLoaded : Posix -- wait a few seconds before logging UI events
   -- deactivated code
-  -- , oerNoteboards : Dict OerId Noteboard
-  -- , oerNoteForms : Dict OerId String
   , isExplainerEnabled : Bool
   }
 
@@ -197,8 +195,6 @@ type alias EntityId = String
 
 type alias EntityTitle = String
 
-type alias Noteboard = List Note
-
 
 {-| Knowing what part of the page the user is seeing
 -}
@@ -225,16 +221,6 @@ type alias OerCardPlaceholderPosition =
   { x : Float
   , y : Float
   , oerId : Int
-  }
-
-
-{-| User comments on OER
--}
-type alias Note =
-  { text : String
-  , time : Posix
-  , oerId : OerId
-  , id : Int
   }
 
 
@@ -281,7 +267,6 @@ type Subpage
   | Profile
   | Search
   -- | Favorites
-  -- | Notes
 
 
 {-| Search for OERs
@@ -592,8 +577,6 @@ initialModel nav flags =
   , lastTimeLoggedEventsSaved = initialTime
   , timeWhenSessionLoaded = initialTime
   , currentTaskName = Nothing
-  -- , oerNoteboards = Dict.empty
-  -- , oerNoteForms = Dict.empty
   , isExplainerEnabled = False
   }
 
@@ -601,30 +584,6 @@ initialModel nav flags =
 initialUserProfile : String -> UserProfile
 initialUserProfile email =
   UserProfile email "" "" False
-
-
--- getOerNoteboard : Model -> OerId -> Noteboard
--- getOerNoteboard model oerId =
---   model.oerNoteboards
---   |> Dict.get oerId
---   |> Maybe.withDefault []
-
-
--- getOerNoteForm : Model -> OerId -> String
--- getOerNoteForm model oerId =
---   model.oerNoteForms
---   |> Dict.get oerId
---   |> Maybe.withDefault ""
-
-
--- getOerIdFromOerId : Model -> OerId -> OerId
--- getOerIdFromOerId model oerId =
---   case model.cachedOers |> Dict.get oerId of
---     Just oer ->
---       oer.id
-
-    -- Nothing ->
-    --   0
 
 
 initialTime : Posix
@@ -954,9 +913,6 @@ profilePath =
 
 searchPath =
   "/search"
-
--- notesPath =
---   "/notes"
 
 favoritesPath =
   "/favorites"

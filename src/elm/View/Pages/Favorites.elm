@@ -34,7 +34,7 @@ viewFavoritesPage model =
       page =
         if model.favorites |> List.isEmpty then
           if isLoggedIn model then
-            viewCenterNote "Your favorite items will appear here"
+            viewCenterMessage "Your favorite items will appear here"
           else
             guestCallToSignup "In order to save your favorite items"
             |> milkyWhiteCenteredContainer

@@ -31,8 +31,6 @@ type Msg
   | RequestSession (Result Http.Error Session)
   -- | RequestFavorites (Result Http.Error (List OerId))
   | RequestVideoUsages (Result Http.Error (Dict String (List Range)))
-  -- | RequestNotes (Result Http.Error (List Note))
-  -- | RequestDeleteNote (Result Http.Error String)
   | RequestOerSearch (Result Http.Error (List Oer))
   | RequestOers (Result Http.Error (List Oer))
   | RequestFeatured (Result Http.Error (List Oer))
@@ -46,7 +44,6 @@ type Msg
   | RequestSaveCourse (Result Http.Error String)
   | RequestSaveLoggedEvents (Result Http.Error String)
   | RequestCourseOptimization (Result Http.Error (List OerId))
-  -- | RequestSaveNote (Result Http.Error String)
   | SetHover (Maybe OerId)
   | SetPopup Popup
   | ClosePopup
@@ -55,13 +52,8 @@ type Msg
   | MouseOverChunkTrigger Float
   | EditUserProfile UserProfileField String
   | SubmittedUserProfile
-  -- | ChangedTextInNewNoteFormInOerNoteboard OerId String
   | ChangedTextInResourceFeedbackForm OerId String
-  -- | SubmittedNewNoteInOerNoteboard OerId
   | SubmittedResourceFeedback OerId String
-  -- | PressedKeyInNewNoteFormInOerNoteboard OerId Int
-  -- | ClickedQuickNoteButton OerId String
-  -- | RemoveNote Note
   | BubblogramTopicMouseOver EntityId OerId
   | BubblogramTopicMouseOut
   | BubblogramTopicLabelMouseOver EntityId OerId

@@ -30,14 +30,14 @@ import Json.Decode as Decode
 viewMaintenancePage : PageWithModal
 viewMaintenancePage =
   let
-      note =
+      message =
         [ "Hey 😊" |> headlineWrap []
         , "This website is currently undergoing a major update during which the site will be offline. Please check back in a few days." |> bodyWrap []
         ]
         |> column [ padding 20, spacing 30, width (px 440) ]
 
       page =
-        note
+        message
         |> milkyWhiteCenteredContainer
   in
       (page, [])

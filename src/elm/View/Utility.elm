@@ -479,8 +479,8 @@ milkyWhiteCenteredContainer =
   el [ centerX, centerY, padding 20, Background.color semiTransparentWhite, Border.rounded 2 ]
 
 
-viewCenterNote : String -> Element Msg
-viewCenterNote str =
+viewCenterMessage : String -> Element Msg
+viewCenterMessage str =
   str
   |> bodyWrap []
   |> milkyWhiteCenteredContainer

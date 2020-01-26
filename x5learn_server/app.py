@@ -24,7 +24,7 @@ from x5learn_server.db.database import get_or_create_db
 _ = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
 from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, \
-    EntityDefinition, ResourceFeedback, Action, ActionType, Note, Repository, NotesRepository, \
+    EntityDefinition, ResourceFeedback, Action, ActionType, Repository, \
     ActionsRepository, UserRepository, DefinitionsRepository, Course, UiLogBatch
 
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
@@ -161,11 +161,6 @@ def search():
 
 @app.route("/favorites")
 def favorites():
-    return render_template('home.html')
-
-
-@app.route("/notes")
-def notes():
     return render_template('home.html')
 
 
@@ -730,120 +725,6 @@ class APIInfo(Resource):
                 'status': 'under development'}
 
 
-# Defining notes resource for API access
-ns_notes = api.namespace('api/v1/note', description='Notes')
-
-m_note = api.model('Note', {
-    'oer_id': fields.Integer(required=True, description='The material id of the note associated with'),
-    'text': fields.String(required=True, description='The content of the note')
-})
-
-
-@ns_notes.route('/')
-class NotesList(Resource):
-    '''Shows a list of all notes, and lets you POST to add new notes'''
-
-    @ns_notes.doc('list_notes', params={'oer_id': 'Filter result set by material id',
-                                        'sort': 'Sort results by timestamp (Default: desc)',
-                                        'offset': 'Offset result set by number specified (Default: 0)',
-                                        'limit': 'Limits the number of records in the result set (Default: None)'})
-    def get(self):
-        '''Fetches multiple notes from database based on params'''
-        if not current_user.is_authenticated:
-            return {'result': 'User not logged in'}, 401
-        else:
-            # Declaring and processing params available for request
-            parser = reqparse.RequestParser()
-            parser.add_argument('oer_id', type=int)
-            parser.add_argument('sort', default='desc', choices=(
-                'asc', 'desc'), help='Bad choice')
-            parser.add_argument('offset', default=0, type=int)
-            parser.add_argument('limit', default=None, type=int)
-            args = parser.parse_args()
-
-            # Creating a note repository for unique data fetch
-            notes_repository = NotesRepository()
-            result_list = notes_repository.get_notes(current_user.get_id(), args['oer_id'], args['sort'],
-                                                     args['offset'], args['limit'])
-            # Converting result list to JSON friendly format
-            serializable_list = list()
-            if (result_list):
-                serializable_list = [i.serialize for i in result_list]
-
-            return serializable_list
-
-    @ns_notes.doc('create_note')
-    @ns_notes.expect(m_note, validate=True)
-    def post(self):
-        '''Creates a new note in database'''
-        if not current_user.is_authenticated:
-            return {'result': 'User not logged in'}, 401
-
-        if not api.payload['text'] or not api.payload['oer_id']:
-            return {'result': 'Material id and text params cannot be empty'}, 400
-        else:
-            note = Note(
-                api.payload['oer_id'], api.payload['text'], current_user.get_id(), False)
-
-            repository.add(note)
-            return {'result': 'Note added'}, 201
-
-
-@ns_notes.route('/<int:id>')
-@ns_notes.response(404, 'Note not found')
-@ns_notes.param('id', 'The note identifier')
-class Notes(Resource):
-    '''Show a single note item and lets you update or delete them'''
-
-    @ns_notes.doc('get_note')
-    def get(self, id):
-        '''Fetch requested note from database'''
-        if not current_user.is_authenticated:
-            return {'result': 'User not logged in'}, 401
-
-        note = repository.get_by_id(Note, id, current_user.get_id())
-
-        if not note:
-            return {}, 400
-
-        return note.serialize, 200
-
-    @ns_notes.doc('update_note', params={'text': 'Text to update'})
-    def put(self, id):
-        '''Update selected note'''
-        if not current_user.is_authenticated:
-            return {'result': 'User not logged in'}, 401
-
-        # Declaring and processing params available for request
-        parser = reqparse.RequestParser()
-        parser.add_argument('text', required=True)
-        args = parser.parse_args()
-
-        note = repository.get_by_id(Note, id, current_user.get_id())
-
-        if not note:
-            return {}, 400
-
-        setattr(note, 'text', args['text'])
-        _ = repository.update()
-        return {'result': 'Note updated'}, 201
-
-    @ns_notes.doc('delete_note')
-    def delete(self, id):
-        '''Delete selected note'''
-        if not current_user.is_authenticated:
-            return {'result': 'User not logged in'}, 401
-
-        note = repository.get_by_id(Note, id, current_user.get_id())
-
-        if not note:
-            return {}, 400
-
-        setattr(note, 'is_deactivated', True)
-        _ = repository.update()
-        return {'result': 'Note deleted'}, 201
-
-
 # Defining actions resource for API access
 ns_action = api.namespace('api/v1/action', description='Actions')
 
@@ -940,7 +821,7 @@ class UserApi(Resource):
     '''Api to manage user'''
 
     def delete(self):
-        '''Delete user actions, notes and user'''
+        '''Delete user actions and user'''
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
         else:

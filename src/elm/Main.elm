@@ -15,7 +15,6 @@ import View.NavigationDrawer exposing (..)
 import View.Pages.Featured exposing (viewFeaturedPage)
 import View.Pages.Maintenance exposing (viewMaintenancePage)
 import View.Pages.Search exposing (viewSearchPage)
--- import View.Pages.Notes exposing (viewNotesPage)
 -- import View.Pages.Favorites exposing (viewFavoritesPage)
 import View.Pages.Profile exposing (viewProfilePage)
 
@@ -105,10 +104,6 @@ view model =
 
                 -- Favorites ->
                 --   viewFavoritesPage model |> withNavigationDrawer model
-
-                -- Notes ->
-                --   viewNotesPage model |> withNavigationDrawer model
-
 
       header : Attribute Msg
       header =

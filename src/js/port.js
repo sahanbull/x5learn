@@ -28,7 +28,6 @@ function position(el) {
 
 function setupPorts(app){
   app.ports.openModalAnimation.subscribe(startAnimationWhenModalIsReady);
-  // app.ports.embedYoutubePlayerOnResourcePage.subscribe(embedYoutubePlayerOnResourcePage);
 
   app.ports.setBrowserFocus.subscribe(function(elementId) {
     document.activeElement.blur();
@@ -64,17 +63,6 @@ function setupPorts(app){
     }
   });
 
-  // app.ports.youtubeSeekTo.subscribe(function(fragmentStart) {
-  //   player.seekTo(fragmentStart * player.getDuration());
-  //   player.playVideo();
-  // });
-
-  // app.ports.youtubeDestroyPlayer.subscribe(function(dummy) {
-  //   if(typeof player !== 'undefined' && player.getIframe()!==null){
-  //     player.destroy();
-  //   }
-  // });
-
   setupEventHandlers();
 
   setupScrollDetector();
@@ -109,41 +97,37 @@ function startAnimationWhenModalIsReady(videoEmbedParams) {
     app.ports.modalAnimationStart.send({frameCount: 0, start: positionAndSize(card), end: positionAndSize(modal)});
     setTimeout(function(){
       app.ports.modalAnimationStop.send(12345);
-      if(videoEmbedParams.videoId.length>0){
-        embedYoutubeVideo(videoEmbedParams);
-      }else{
-        var vid = getHtml5VideoPlayer();
-        if(vid){
-          if(videoEmbedParams.playWhenReady){
-            playWhenPossible(vid, videoEmbedParams.videoStartPosition);
-          }
-
-          vid.onplay = function() {
-            isVideoPlaying = true;
-            videoPlayPosition = vid.currentTime;
-            app.ports.html5VideoStarted.send(videoPlayPosition);
-            videoEventThrottlePosition = videoPlayPosition;
-          };
-          vid.onpause = function() {
-            isVideoPlaying = false;
-            videoPlayPosition = vid.currentTime;
-            app.ports.html5VideoPaused.send(videoPlayPosition);
-          };
-          vid.ontimeupdate = function() {
-            videoPlayPosition = vid.currentTime;
-            if(isVideoPlaying){
-              if(videoPlayPosition > videoEventThrottlePosition + videoPlayReportingInterval){
-                app.ports.html5VideoStillPlaying.send(videoPlayPosition);
-                videoEventThrottlePosition = videoPlayPosition;
-              }
-            }else{
-              app.ports.html5VideoSeeked.send(videoPlayPosition);
-              videoEventThrottlePosition = 0;
-            }
-          };
-        }else{
-          // video not found
+      var vid = getHtml5VideoPlayer();
+      if(vid){
+        if(videoEmbedParams.playWhenReady){
+          playWhenPossible(vid, videoEmbedParams.videoStartPosition);
         }
+
+        vid.onplay = function() {
+          isVideoPlaying = true;
+          videoPlayPosition = vid.currentTime;
+          app.ports.html5VideoStarted.send(videoPlayPosition);
+          videoEventThrottlePosition = videoPlayPosition;
+        };
+        vid.onpause = function() {
+          isVideoPlaying = false;
+          videoPlayPosition = vid.currentTime;
+          app.ports.html5VideoPaused.send(videoPlayPosition);
+        };
+        vid.ontimeupdate = function() {
+          videoPlayPosition = vid.currentTime;
+          if(isVideoPlaying){
+            if(videoPlayPosition > videoEventThrottlePosition + videoPlayReportingInterval){
+              app.ports.html5VideoStillPlaying.send(videoPlayPosition);
+              videoEventThrottlePosition = videoPlayPosition;
+            }
+          }else{
+            app.ports.html5VideoSeeked.send(videoPlayPosition);
+            videoEventThrottlePosition = 0;
+          }
+        };
+      }else{
+        // video not found
       }
     }, 110);
     return;
@@ -154,16 +138,6 @@ function startAnimationWhenModalIsReady(videoEmbedParams) {
 function getHtml5VideoPlayer(){
   return document.getElementById("Html5VideoPlayer");
 }
-
-// function embedYoutubePlayerOnResourcePage(videoEmbedParams) {
-//     setTimeout(function(){
-//       if(videoEmbedParams.videoId.length>0){
-//         embedYoutubeVideo(videoEmbedParams);
-//       }
-//     }, 200);
-// }
-
-
 
 /* setupEventHandlers
  * Note that we add the event listeners directly to the document, i.e. at the root level.
@@ -199,40 +173,6 @@ function setupEventHandlers(){
   });
 
   [ 'mousedown', 'mouseup', 'mousemove' ].forEach(registerTimelineMouseEvent);
-
-  document.onkeydown = function checkKey(e) {
-    e = e || window.event;
-    if(e.target.closest('#SearchField') || e.target.closest('#AutocompleteSuggestions')){
-      if (e.keyCode == '38') {
-        changeFocusOnAutocompleteSuggestions(-1);
-      }
-      else if (e.keyCode == '40') {
-        changeFocusOnAutocompleteSuggestions(1);
-      }
-    }
-  }
-}
-
-
-function changeFocusOnAutocompleteSuggestions(direction){
-  var field = document.getElementById('SearchField');
-  var suggestions = document.getElementById('AutocompleteSuggestions');
-  if(!suggestions){
-    return
-  }
-  var activeElement = document.activeElement;
-  var options = suggestions.childNodes[0].childNodes;
-  var n = options.length;
-  var index = -1;
-  for(i=0;i<n; i++){
-    if(options[i]==document.activeElement){
-      index = i;
-      break
-    }
-  }
-  activeElement.blur();
-  var newIndex = Math.max(0, Math.min(index + direction, n-1));
-  options[newIndex].focus();
 }
 
 

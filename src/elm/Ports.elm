@@ -13,9 +13,6 @@ import Model exposing (..)
 port setBrowserFocus : String -> Cmd msg
 port copyClipboard : String -> Cmd msg
 port openModalAnimation : VideoEmbedParams -> Cmd msg
--- port embedYoutubePlayerOnResourcePage : VideoEmbedParams -> Cmd msg
--- port youtubeSeekTo : Float -> Cmd msg
--- port youtubeDestroyPlayer : Bool -> Cmd msg
 port getOerCardPlaceholderPositions : Bool -> Cmd msg
 port askPageScrollState : Bool -> Cmd msg
 port startCurrentHtml5Video : Float -> Cmd msg

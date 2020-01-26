@@ -313,20 +313,6 @@ update msg ({nav, userProfileForm} as model) =
       -- ( { model | snackbar = createSnackbar model "There was a problem while fetching the wiki definitions data", requestingEntityDefinitions = False }, Cmd.none )
       ( { model | snackbar = createSnackbar model snackbarMessageReloadPage, requestingEntityDefinitions = False }, Cmd.none )
 
-    -- RequestAutocompleteTerms (Ok autocompleteTerms) ->
-    --   if (millisSince model model.timeOfLastSearch) < 2000 then
-    --     (model, Cmd.none)
-    --   else
-    --     ({ model | autocompleteTerms = autocompleteTerms, suggestionSelectionOnHoverEnabled = False }, Cmd.none)
-
-    -- RequestAutocompleteTerms (Err err) ->
-    --   -- let
-    --   --     dummy =
-    --   --       err |> Debug.log "Error in RequestAutocompleteTerms"
-    --   -- in
-    --   -- ( { model | snackbar = createSnackbar model "There was a problem while fetching search suggestions" }, Cmd.none )
-    --   ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
-
     -- RequestFavorites (Ok favorites) ->
     --   let
     --       newModel = { model | favorites = favorites }
@@ -495,20 +481,9 @@ update msg ({nav, userProfileForm} as model) =
           ( { model | inspectorState = Nothing }, Cmd.none )
           |> logEventForLabStudy "CloseInspector" []
 
-    ClickedOnDocument ->
-      ( { model | autocompleteSuggestions = [] }, Cmd.none )
-
-    SelectSuggestion suggestion ->
-      ( { model | selectedSuggestion = suggestion }, Cmd.none )
-      |> logEventForLabStudy "SelectSuggestion" [ suggestion ]
-
     MouseOverChunkTrigger mousePositionX ->
       ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX, hoveringEntityId = Nothing } |> unselectMention, Cmd.none )
       |> logEventForLabStudy "MouseOverChunkTrigger" [ mousePositionX |> String.fromFloat ]
-
-    -- YoutubeSeekTo fragmentStart ->
-    --   ( model, youtubeSeekTo fragmentStart)
-    --   |> logEventForLabStudy "YoutubeSeekTo" [ fragmentStart |> String.fromFloat ]
 
     EditUserProfile field value ->
       let
@@ -554,10 +529,6 @@ update msg ({nav, userProfileForm} as model) =
     -- RemoveNote note ->
     --   (model |> removeNote note, NotesApi.deleteNote note)
     --   |> logEventForLabStudy "RemoveNote" [ note.oerId |> String.fromInt, note.text ]
-
-    YoutubeVideoIsPlayingAtPosition position ->
-      (model, Cmd.none)
-      |> logEventForLabStudy "YoutubeVideoIsPlayingAtPosition" [ position |> String.fromFloat]
 
     BubblogramTopicMouseOver entityId oerId ->
       let
@@ -1155,7 +1126,7 @@ executeSearchAfterUrlChanged model url =
             model.searchInputTyping
 
       newModel =
-        { model | searchInputTyping = searchInputTyping,  searchState = Just <| newSearch textParam, autocompleteSuggestions = [], timeOfLastSearch = model.currentTime, snackbar = Nothing }
+        { model | searchInputTyping = searchInputTyping,  searchState = Just <| newSearch textParam, snackbar = Nothing }
   in
         ( newModel |> closePopup, searchOers textParam)
         |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam ]
@@ -1428,7 +1399,6 @@ inspectOer model oer fragmentStart playWhenReady =
       videoEmbedParams : VideoEmbedParams
       videoEmbedParams =
         { modalId = modalId
-        , videoId = getYoutubeVideoId oer.url |> Maybe.withDefault ""
         , videoStartPosition = fragmentStart * oer.durationInSeconds
         , playWhenReady = playWhenReady
         }

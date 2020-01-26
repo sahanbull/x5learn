@@ -38,7 +38,6 @@ type Msg
   | RequestFeatured (Result Http.Error (List Oer))
   | RequestWikichunkEnrichments (Result Http.Error (List WikichunkEnrichment))
   | RequestEntityDefinitions (Result Http.Error (Dict String String))
-  -- | RequestAutocompleteTerms (Result Http.Error (List String))
   | RequestSaveUserProfile (Result Http.Error String)
   | RequestLabStudyLogEvent (Result Http.Error String)
   | RequestResourceRecommendations (Result Http.Error (List Oer))
@@ -53,10 +52,7 @@ type Msg
   | ClosePopup
   | CloseInspector
   | TriggerSearch String Bool
-  | ClickedOnDocument
-  | SelectSuggestion String
   | MouseOverChunkTrigger Float
-  -- | YoutubeSeekTo Float
   | EditUserProfile UserProfileField String
   | SubmittedUserProfile
   -- | ChangedTextInNewNoteFormInOerNoteboard OerId String
@@ -66,7 +62,6 @@ type Msg
   -- | PressedKeyInNewNoteFormInOerNoteboard OerId Int
   -- | ClickedQuickNoteButton OerId String
   -- | RemoveNote Note
-  | YoutubeVideoIsPlayingAtPosition Float
   | BubblogramTopicMouseOver EntityId OerId
   | BubblogramTopicMouseOut
   | BubblogramTopicLabelMouseOver EntityId OerId
@@ -119,11 +114,9 @@ subscriptions model =
   , Ports.modalAnimationStop ModalAnimationStop
   , Ports.closePopup (\_ -> ClosePopup)
   , Ports.closeInspector (\_ -> CloseInspector)
-  , Ports.clickedOnDocument (\_ -> ClickedOnDocument)
   , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
   , Ports.mouseMovedOnTopicLane MouseMovedOnTopicLane
   , Ports.timelineMouseEvent TimelineMouseEvent
-  -- , Ports.youtubeVideoIsPlayingAtPosition YoutubeVideoIsPlayingAtPosition
   , Ports.html5VideoStarted Html5VideoStarted
   , Ports.html5VideoPaused Html5VideoPaused
   , Ports.html5VideoSeeked Html5VideoSeeked

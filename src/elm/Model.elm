@@ -70,11 +70,6 @@ type alias Model =
   -- OER inspector modal
   , inspectorState : Maybe InspectorState -- custom type, see definition below
   , modalAnimation : Maybe BoxAnimation -- When the user clicks on an OER card then the inspector modal doesn't just appear instantly - there is a bit of a zooming effect.
-  -- Autocomplete for suggested search terms
-  , autocompleteTerms : List String -- list of wiki topics that may be used as autocompleteSuggestions
-  , autocompleteSuggestions : List String -- when the user enters text in the search field, an earlier prototype version of the UI used to suggest wiki topics as search terms (currently disabled)
-  , selectedSuggestion : String -- hovering over one of the autocompleteSuggestions selects the item
-  , suggestionSelectionOnHoverEnabled : Bool -- dynamic flag to prevent accidental selection when the menu appears under the mouse pointer
   -- User profile
   , userProfileForm : UserProfileForm -- for the user to fill in their name etc
   , userProfileFormSubmitted : Bool -- show a loading spinner while waiting for HTTP response
@@ -109,7 +104,6 @@ type alias Model =
   -- search
   , searchInputTyping : String -- text the user types into the search field
   , searchState : Maybe SearchState -- custom type, see definition below
-  , timeOfLastSearch : Posix -- important to briefly disable autocomplete immediately after a search
   -- UI log events
   , loggedEvents : List String -- temporary buffer for frequent UI events that will be sent to the server in delayed batches
   , lastTimeLoggedEventsSaved : Posix -- wait a few seconds between batches
@@ -509,11 +503,10 @@ type LoginState
   | LoggedInUser UserProfile
 
 
-{-| VideoEmbedParams is a helper type for embedding YouTube or HTML5 videos.
+{-| VideoEmbedParams is a helper type for embedding HTML5 videos.
 -}
 type alias VideoEmbedParams =
   { modalId : String
-  , videoId : String
   , videoStartPosition : Float
   , playWhenReady : Bool
   }
@@ -572,10 +565,6 @@ initialModel nav flags =
   , selectedMention = Nothing
   , inspectorState = Nothing
   , modalAnimation = Nothing
-  , autocompleteTerms = []
-  , autocompleteSuggestions = []
-  , selectedSuggestion = ""
-  , suggestionSelectionOnHoverEnabled = True
   , userProfileForm = freshUserProfileForm (initialUserProfile "")
   , userProfileFormSubmitted = False
   , feedbackForms = Dict.empty
@@ -599,7 +588,6 @@ initialModel nav flags =
   , animationsPending = Set.empty
   , searchInputTyping = ""
   , searchState = Nothing
-  , timeOfLastSearch = initialTime
   , loggedEvents = []
   , lastTimeLoggedEventsSaved = initialTime
   , timeWhenSessionLoaded = initialTime
@@ -655,7 +643,7 @@ newInspectorState : Oer -> Float -> InspectorState
 newInspectorState oer fragmentStart =
   let
       videoPlayer =
-        if oer.mediatype=="video" && (hasYoutubeVideo oer.url |> not) then
+        if oer.mediatype=="video" then
           Just <|
             { isPlaying = False
             , currentTime = 0
@@ -666,30 +654,6 @@ newInspectorState oer fragmentStart =
           Nothing
   in
       InspectorState oer fragmentStart videoPlayer FeedbackTab [] False
-
-
-hasYoutubeVideo : OerUrl -> Bool
-hasYoutubeVideo oerUrl =
-  case getYoutubeVideoId oerUrl of
-    Nothing ->
-      False
-
-    Just _ ->
-      True
-
-
-getYoutubeVideoId : OerUrl -> Maybe String
-getYoutubeVideoId oerUrl =
-  if (oerUrl |> String.contains "://youtu") || (oerUrl |> String.contains "://www.youtu") then
-    oerUrl
-    |> String.split "="
-    |> List.drop 1
-    |> List.head
-    |> Maybe.withDefault ""
-    |> String.split "&"
-    |> List.head
-  else
-    Nothing
 
 
 modalId : String

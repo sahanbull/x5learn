@@ -27,7 +27,7 @@ function position(el) {
 
 
 function setupPorts(app){
-  app.ports.openModalAnimation.subscribe(startAnimationWhenModalIsReady);
+  app.ports.openInspectorAnimation.subscribe(startAnimationWhenInspectorIsReady);
 
   app.ports.setBrowserFocus.subscribe(function(elementId) {
     document.activeElement.blur();
@@ -83,20 +83,20 @@ function sendPageScrollState(requestedByElm){
 }
 
 
-function startAnimationWhenModalIsReady(videoEmbedParams) {
-  var modalId = videoEmbedParams.modalId;
-  if(window.document.getElementById(modalId)==null) {
+function startAnimationWhenInspectorIsReady(videoEmbedParams) {
+  var inspectorId = videoEmbedParams.inspectorId;
+  if(window.document.getElementById(inspectorId)==null) {
     setTimeout(function() {
-      startAnimationWhenModalIsReady(videoEmbedParams);
+      startAnimationWhenInspectorIsReady(videoEmbedParams);
     }, 15);
   }
   else{
     var card = document.activeElement;
-    var modal = document.getElementById(modalId);
+    var inspector = document.getElementById(inspectorId);
     card.blur(); // remove the blue outline
-    app.ports.modalAnimationStart.send({frameCount: 0, start: positionAndSize(card), end: positionAndSize(modal)});
+    app.ports.inspectorAnimationStart.send({frameCount: 0, start: positionAndSize(card), end: positionAndSize(inspector)});
     setTimeout(function(){
-      app.ports.modalAnimationStop.send(12345);
+      app.ports.inspectorAnimationStop.send(12345);
       var vid = getHtml5VideoPlayer();
       if(vid){
         if(videoEmbedParams.playWhenReady){

@@ -64,7 +64,7 @@ view model =
       featuredPage =
         viewFeaturedPage model |> withNavigationDrawer model
 
-      (body, modal) =
+      (body, inspector) =
         if isSiteUnderMaintenance then
           viewMaintenancePage
         else
@@ -109,7 +109,7 @@ view model =
       page =
         body
         |> el [ width fill, spacing 50, pageBodyBackground model, height (fill |> maximum (model.windowHeight - pageHeaderHeight)), scrollbarY, htmlId "MainPageContent" ]
-        |> layout (modal ++ [ header, paddingTop pageHeaderHeight, width fill ])
+        |> layout (inspector ++ [ header, paddingTop pageHeaderHeight, width fill ])
   in
       { title = "X5Learn"
       , body = [ page ]

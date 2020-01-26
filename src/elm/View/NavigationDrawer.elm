@@ -24,8 +24,8 @@ import Msg exposing (..)
 {-| Add a navigation drawer (sidebar) to a given page
     https://material.io/components/navigation-drawer/
 -}
-withNavigationDrawer : Model -> PageWithModal -> PageWithModal
-withNavigationDrawer model (pageContent, modal) =
+withNavigationDrawer : Model -> PageWithInspector -> PageWithInspector
+withNavigationDrawer model (pageContent, inspector) =
   let
       navButton enabled url svgIconStub label =
         let
@@ -67,7 +67,7 @@ withNavigationDrawer model (pageContent, modal) =
         ]
         |> row [ width fill, height fill ]
   in
-      (page, modal ++ [ drawer ])
+      (page, inspector ++ [ drawer ])
 
 
 taskButtons : Model -> Element Msg

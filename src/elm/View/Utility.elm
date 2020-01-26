@@ -20,7 +20,7 @@ import Model exposing (..)
 import Msg exposing (..)
 import Animation exposing (..)
 
-type alias PageWithModal = (Element Msg, List (Attribute Msg))
+type alias PageWithInspector = (Element Msg, List (Attribute Msg))
 
 type IconPosition
   = IconLeft

@@ -67,9 +67,9 @@ type alias Model =
   , hoveringEntityId : Maybe EntityId -- when the user hovers over a topic in a bubblogram
   , timeOfLastUrlChange : Posix -- used to animate bubblograms
   , selectedMention : Maybe (OerId, MentionInOer) -- in bubblogram: hovering over a mention
-  -- OER inspector modal
+  -- OER inspector
   , inspectorState : Maybe InspectorState -- custom type, see definition below
-  , modalAnimation : Maybe BoxAnimation -- When the user clicks on an OER card then the inspector modal doesn't just appear instantly - there is a bit of a zooming effect.
+  , inspectorAnimation : Maybe BoxAnimation -- When the user clicks on an OER card then the inspector doesn't just appear instantly - there is a bit of a zooming effect.
   -- User profile
   , userProfileForm : UserProfileForm -- for the user to fill in their name etc
   , userProfileFormSubmitted : Bool -- show a loading spinner while waiting for HTTP response
@@ -94,7 +94,7 @@ type alias Model =
   , popup : Maybe Popup -- There can be only one popup at a time. See the type definition below.
   -- time
   , currentTime : Posix -- updated a few times a second. Mind the limited precision
-  , animationsPending : Set String -- Keeping track of multiple GUI animations, including the inspector modal. We're using a Set of Strings, assuming that there can be multiple animations in parallel, each having a unique String ID.
+  , animationsPending : Set String -- Keeping track of multiple GUI animations, including the inspector. We're using a Set of Strings, assuming that there can be multiple animations in parallel, each having a unique String ID.
   -- search
   , searchInputTyping : String -- text the user types into the search field
   , searchState : Maybe SearchState -- custom type, see definition below
@@ -264,7 +264,7 @@ type alias SearchState =
   }
 
 
-{-| Content of the OER inspector modal
+{-| Content of the OER inspector
 -}
 type alias InspectorState =
   { oer : Oer
@@ -451,7 +451,7 @@ type alias Playlist =
   }
 
 
-{-| Used to control the zoom animation when opening the inspector modal
+{-| Used to control the zoom animation when opening the inspector
 -}
 type AnimationStatus
   = Inactive
@@ -478,7 +478,7 @@ type LoginState
 {-| VideoEmbedParams is a helper type for embedding HTML5 videos.
 -}
 type alias VideoEmbedParams =
-  { modalId : String
+  { inspectorId : String
   , videoStartPosition : Float
   , playWhenReady : Bool
   }
@@ -536,7 +536,7 @@ initialModel nav flags =
   , timeOfLastUrlChange = initialTime
   , selectedMention = Nothing
   , inspectorState = Nothing
-  , modalAnimation = Nothing
+  , inspectorAnimation = Nothing
   , userProfileForm = freshUserProfileForm (initialUserProfile "")
   , userProfileFormSubmitted = False
   , feedbackForms = Dict.empty
@@ -597,8 +597,8 @@ newInspectorState oer fragmentStart =
       InspectorState oer fragmentStart videoPlayer FeedbackTab [] False
 
 
-modalId : String
-modalId =
+inspectorId : String
+inspectorId =
   "InspectorModal"
 
 
@@ -609,12 +609,12 @@ millisSince model pastPointInTime =
   (posixToMillis model.currentTime) - (posixToMillis pastPointInTime)
 
 
-{-| Status of the animation of the inspector modal
+{-| Status of the animation of the inspector
 -}
-modalAnimationStatus : Model -> AnimationStatus
-modalAnimationStatus model =
-  if model.animationsPending |> Set.member modalId then
-    case model.modalAnimation of
+inspectorAnimationStatus : Model -> AnimationStatus
+inspectorAnimationStatus model =
+  if model.animationsPending |> Set.member inspectorId then
+    case model.inspectorAnimation of
       Nothing ->
         Prestart
 
@@ -702,15 +702,15 @@ displayName userProfile =
         name
 
 
-{-| Check whether the inspector modal is currently animating.
-    The inspector modal was designed to open with a short zoom animation.
+{-| Check whether the inspector is currently animating.
+    The inspector was designed to open with a short zoom animation.
 -}
-isModalAnimating : Model -> Bool
-isModalAnimating model =
+isInspectorAnimating : Model -> Bool
+isInspectorAnimating model =
   if model.animationsPending |> Set.isEmpty then
      False
   else
-    case model.modalAnimation of
+    case model.inspectorAnimation of
       Nothing ->
         True
 
@@ -1036,7 +1036,7 @@ isHovering model oer =
   model.hoveringOerId == Just oer.id
 
 
-{-| Check whether a particular OER is currently in the open inspector modal
+{-| Check whether a particular OER is currently in the open inspector
 -}
 isInspecting : Model -> Oer -> Bool
 isInspecting model {id} =

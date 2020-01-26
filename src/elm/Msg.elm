@@ -23,11 +23,11 @@ type Msg
   | AnimationTick Posix -- Called once per animation frame (e.g. 60-ish times per second), only while something is animating
   | SearchFieldChanged String -- User changed the text in the search field, e.g. typing, paste, undo...
   | BrowserResized Int Int -- User changed the width/height of the browser window, or rotated the device
-  | InspectOer Oer Float Bool
-  | InspectCourseItem Oer
-  | UninspectSearchResult
-  | ModalAnimationStart BoxAnimation
-  | ModalAnimationStop Int
+  | InspectOer Oer Float Bool -- User did something that should open the Inspector
+  | ClickedOnCourseItem Oer -- User clicked on a course item, causing it to open in the Inspector
+  | PressedCloseButtonInInspector -- User pressed the X button
+  | InspectorAnimationStart BoxAnimation
+  | InspectorAnimationStop Int
   | RequestSession (Result Http.Error Session)
   | RequestVideoUsages (Result Http.Error (Dict String (List Range)))
   | RequestOerSearch (Result Http.Error (List Oer))
@@ -99,8 +99,8 @@ type UserProfileField
 subscriptions : Model -> Sub Msg
 subscriptions model =
   ([ Browser.Events.onResize BrowserResized
-  , Ports.modalAnimationStart ModalAnimationStart
-  , Ports.modalAnimationStop ModalAnimationStop
+  , Ports.inspectorAnimationStart InspectorAnimationStart
+  , Ports.inspectorAnimationStop InspectorAnimationStop
   , Ports.closePopup (\_ -> ClosePopup)
   , Ports.closeInspector (\_ -> CloseInspector)
   , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
@@ -113,5 +113,5 @@ subscriptions model =
   , Ports.pageScrolled PageScrolled
   , Ports.receiveCardPlaceholderPositions OerCardPlaceholderPositionsReceived
   , Time.every (if model.currentTime==initialTime then 1 else if model.timelineHoverState==Nothing then 500 else 200) ClockTicked
-  ] ++ (if anyBubblogramsAnimating model || isModalAnimating model then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
+  ] ++ (if anyBubblogramsAnimating model || isInspectorAnimating model then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
   |> Sub.batch

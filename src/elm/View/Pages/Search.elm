@@ -25,16 +25,16 @@ import Json.Decode as Decode
 {-| Render the search page, mainly including the search results
     Note that the search field is part of the NavigationDrawer
 -}
-viewSearchPage : Model -> SearchState -> PageWithModal
+viewSearchPage : Model -> SearchState -> PageWithInspector
 viewSearchPage model searchState =
   let
-      modal =
+      inspector =
         viewInspector model
 
       content =
         viewBody model searchState
   in
-      (content, modal)
+      (content, inspector)
 
 
 {-| Render the main part of the search pge

@@ -189,17 +189,25 @@ def profile():
 # Added new route to data collection consent page for users who has not set preference
 @app.route("/data_collection")
 def data_collection(): 
+    current_user.last_login_at = current_user.current_login_at
+    current_user.current_login_at = datetime.now()
+    db_session.commit()
+
     if current_user.user_profile is None:
         return render_template('data_collection.html')
 
-    profile = json.loads(current_user.user_profile)
+    profile = current_user.user_profile
 
     if profile.get('isDataCollectionConsent') is None:
         return render_template('data_collection.html')
 
     # If data collection is off the user will be prompted every other day at login
-    if (profile.get('isDataCollectionConsent') == "off"):
-        last_data_collection_prompt_datetime = datetime.fromtimestamp(profile.get('last_data_collection_prompt'))
+    if (profile.get('isDataCollectionConsent') == False):
+
+        if current_user.last_login_at is None:
+            return render_template('data_collection.html')
+
+        last_data_collection_prompt_datetime = current_user.last_login_at
         datediff = datetime.now() - last_data_collection_prompt_datetime
 
         if datediff.days > DATA_COLL_PROMPT_INTERVAL:
@@ -212,12 +220,12 @@ def data_collection():
 @app.route("/data_collection", methods=['POST'])
 def submit_data_collection():
 
-    if "isDataCollectionConsent" in request.form:
-        allow_data_collection = request.form['isDataCollectionConsent']
-    else:
-        allow_data_collection = "off"
+    allow_data_collection = False
 
-    current_user.user_profile = json.dumps({'isDataCollectionConsent': allow_data_collection, 'last_data_collection_prompt': datetime.timestamp(datetime.now())})
+    if "allow_data_collection" in request.form and request.form['allow_data_collection'] == "on":
+        allow_data_collection = True
+
+    current_user.user_profile = {'isDataCollectionConsent': allow_data_collection}
     db_session.commit()
     return redirect("/")
 
@@ -231,14 +239,14 @@ def api_session():
 
 
 def get_logged_in_user_profile_and_state():
+
+    profile = {'email': current_user.email}
+
     if current_user.user_profile is not None:
-        profile = json.loads(current_user.user_profile)  
+        profile = current_user.user_profile
+        # There could be an instance where user profile is not None but does not have the 'email' key
         profile['email'] = current_user.email
-    else:
-        profile = {'email': current_user.email}
-    # Look at actions to determine whether contentflow is enabled or disabled
-    profile = current_user.user_profile if current_user.user_profile is not None else {
-        'email': current_user.email}
+
     logged_in_user = {'userProfile': profile, 'isContentFlowEnabled': is_contentflow_enabled(), 'overviewTypeId': get_overview_type_setting()}
     return jsonify({'loggedInUser': logged_in_user})
 

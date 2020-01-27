@@ -242,8 +242,9 @@ userProfileDecoder =
         (field "firstName" string)
         (field "lastName" string)
         (field "isDataCollectionConsent" bool)
-    , map initialUserProfile
+    , map2 initialUserProfile
         (field "email" string)
+        (field "isDataCollectionConsent" bool)
     ]
 
 

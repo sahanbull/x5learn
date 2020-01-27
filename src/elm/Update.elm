@@ -620,8 +620,11 @@ update msg ({nav, userProfileForm} as model) =
       let
           isExplainerEnabled =
             not model.isExplainerEnabled
+
+          popup =
+            if isExplainerEnabled then Just ExplainerMetaInformationPopup else Nothing
       in
-          ({ model | isExplainerEnabled = isExplainerEnabled }, Cmd.none)
+          ({ model | isExplainerEnabled = isExplainerEnabled, popup = popup }, Cmd.none)
           |> saveAction 11 [ ("enable", Encode.bool isExplainerEnabled) ]
 
     OpenExplanationPopup componentId ->
@@ -947,6 +950,9 @@ popupToStrings maybePopup =
 
         ExplanationPopup componentId ->
           [ "ExplanationPopup", componentId ]
+
+        ExplainerMetaInformationPopup ->
+          [ "ExplainerMetaInformationPopup" ]
 
 
 executeSearchAfterUrlChanged : Model -> Url -> (Model, Cmd Msg)

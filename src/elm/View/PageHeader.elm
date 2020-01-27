@@ -105,7 +105,7 @@ viewUserMenu model userProfile =
                   ]
           in
               menuItems
-              |> menuColumn [ Background.color white, moveRight 67, moveDown 38 ]
+              |> menuColumn [ moveRight 67, moveDown 38 ]
               |> onLeft
               |> List.singleton
         else
@@ -124,9 +124,21 @@ viewExplainerToggle model =
   let
       enabled =
         model.isExplainerEnabled
+
+      popup =
+        case model.popup of
+          Just ExplainerMetaInformationPopup ->
+            [ "This mode allows you to see which AI components are involved in specific parts of the user interface. Use the 'explain' buttons for links to further information." |> bodyWrap [] ]
+            |> menuColumn [ padding 15, moveDown 10 ]
+            |> below
+            |> List.singleton
+
+          _ ->
+            []
+            |> Debug.log "none"
   in
       [ "Transparent AI" |> bodyNoWrap ([ width fill ] ++ (if enabled then [ Font.color magenta ] else []))
       , viewToggleIndicator enabled (if enabled then "MagentaBackground" else "") |> el [ paddingRight 10 ]
       ]
-      |> row [ spacing 10, onClick ToggleExplainer, htmlClass "CursorPointer" ]
+      |> row ([ spacing 10, onClick ToggleExplainer, htmlClass "CursorPointer PreventClosingThePopupOnClick" ] ++ popup)
       |> el [ alignRight ]

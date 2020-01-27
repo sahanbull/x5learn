@@ -154,7 +154,6 @@ function setupEventHandlers(){
       app.ports.closePopup.send(12345);
       e.stopPropagation();
     }
-    app.ports.clickedOnDocument.send(12345);
   });
 
   document.addEventListener("mouseover", function(event){

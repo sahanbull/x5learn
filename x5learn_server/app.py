@@ -405,7 +405,10 @@ def ingest_wikichunk_enrichment():
         db_session.delete(task)
     db_session.commit()
     save_enrichment(url, data)
-    save_definitions(data)
+
+    print('WARNING: ADDING WIKIPEDIA DEFINITIONS TEMPORARILY DISABLED DUE TO ISSUE #340')
+    # save_definitions(data) TEMPORARILY DISABLED DUE TO ISSUE #340
+
     return 'OK'
 
 

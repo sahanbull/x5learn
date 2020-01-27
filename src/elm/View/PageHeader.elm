@@ -135,7 +135,6 @@ viewExplainerToggle model =
 
           _ ->
             []
-            |> Debug.log "none"
   in
       [ "Transparent AI" |> bodyNoWrap ([ width fill ] ++ (if enabled then [ Font.color magenta ] else []))
       , viewToggleIndicator enabled (if enabled then "MagentaBackground" else "") |> el [ paddingRight 10 ]

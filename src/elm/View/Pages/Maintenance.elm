@@ -27,17 +27,17 @@ import Json.Decode as Decode
 {-| Render a message saying that the site is down.
     Let's hope we'll never need this.
 -}
-viewMaintenancePage : PageWithModal
+viewMaintenancePage : PageWithInspector
 viewMaintenancePage =
   let
-      note =
+      message =
         [ "Hey 😊" |> headlineWrap []
         , "This website is currently undergoing a major update during which the site will be offline. Please check back in a few days." |> bodyWrap []
         ]
         |> column [ padding 20, spacing 30, width (px 440) ]
 
       page =
-        note
+        message
         |> milkyWhiteCenteredContainer
   in
       (page, [])

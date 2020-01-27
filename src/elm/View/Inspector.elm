@@ -32,11 +32,11 @@ viewInspector model =
       []
 
     Just inspectorState ->
-      [ inFront <| viewModal model inspectorState ]
+      [ inFront <| viewTheInspector model inspectorState ]
 
 
-viewModal : Model -> InspectorState -> Element Msg
-viewModal model inspectorState =
+viewTheInspector : Model -> InspectorState -> Element Msg
+viewTheInspector model inspectorState =
   let
       title =
         case inspectorState.oer.title of
@@ -58,11 +58,11 @@ viewModal model inspectorState =
           |> row []
 
       hideWhileOpening =
-        alpha <| if model.animationsPending |> Set.member modalId then 0.01 else 1
+        alpha <| if model.animationsPending |> Set.member inspectorId then 0.01 else 1
 
       header =
         [ title
-        , button [] { onPress = Just UninspectSearchResult, label = closeIcon }
+        , button [] { onPress = Just PressedCloseButtonInInspector, label = closeIcon }
         ]
         |> row [ width fill, spacing 4 ]
 
@@ -70,10 +70,10 @@ viewModal model inspectorState =
         [ header
         , bodyAndSidebar
         ]
-        |> column [ htmlClass "CloseInspectorOnClickOutside", width (px <| sheetWidth model), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId modalId, hideWhileOpening, dialogShadow ]
+        |> column [ htmlClass "PreventClosingInspectorOnClick", width (px <| sheetWidth model), Background.color white, centerX, moveRight (navigationDrawerWidth/2),  centerY, padding 16, spacing 16, htmlId inspectorId, hideWhileOpening, dialogShadow ]
 
       animatingBox =
-        case model.modalAnimation of
+        case model.inspectorAnimation of
           Nothing ->
             none
 
@@ -86,12 +86,12 @@ viewModal model inspectorState =
                     (interpolateBoxes animation.start animation.end, 0)
             in
                 none
-                |> el [ whiteBackground, width (box.sx |> round |> px), height (box.sy |> round |> px), moveRight box.x, moveDown box.y, htmlClass "ModalAnimation", alpha opacity, Border.rounded 5 ]
+                |> el [ whiteBackground, width (box.sx |> round |> px), height (box.sy |> round |> px), moveRight box.x, moveDown box.y, htmlClass "InspectorAnimation", alpha opacity, Border.rounded 5 ]
 
       scrim =
         let
             opacity =
-              case modalAnimationStatus model of
+              case inspectorAnimationStatus model of
                 Inactive ->
                   materialScrimAlpha
 
@@ -102,7 +102,7 @@ viewModal model inspectorState =
                   materialScrimAlpha
         in
             none
-            |> el [ Background.color <| rgba 0 0 0 opacity, width (model.windowWidth - navigationDrawerWidth |> px), height (fill |> maximum (model.windowHeight - pageHeaderHeight)), moveDown (toFloat pageHeaderHeight), moveRight navigationDrawerWidth,  htmlClass "ModalScrim" ]
+            |> el [ Background.color <| rgba 0 0 0 opacity, width (model.windowWidth - navigationDrawerWidth |> px), height (fill |> maximum (model.windowHeight - pageHeaderHeight)), moveDown (toFloat pageHeaderHeight), moveRight navigationDrawerWidth,  htmlClass "InspectorScrim" ]
   in
       sheet
       |> el [ width fill, height fill, behindContent scrim, inFront animatingBox ]
@@ -112,22 +112,13 @@ viewInspectorBody : Model -> InspectorState -> Element Msg
 viewInspectorBody model ({oer, fragmentStart} as inspectorState) =
   let
       player =
-        case getYoutubeVideoId oer.url of
-          Nothing ->
-            if isVideoFile oer.url then
-              viewHtml5VideoPlayer model oer
-              |> explainify model explanationForHtml5VideoPlayer
-            else if isPdfFile oer.url then
-              viewPdfViewer oer.url "45vh"
-            else
-              none
-
-          Just youtubeId ->
-            let
-                startTime =
-                  fragmentStart * oer.durationInSeconds |> floor
-            in
-                embedYoutubePlayer model youtubeId startTime
+        if isVideoFile oer.url then
+          viewHtml5VideoPlayer model oer
+          |> explainify model explanationForHtml5VideoPlayer
+        else if isPdfFile oer.url then
+          viewPdfViewer oer.url "45vh"
+        else
+          none
   in
       [ player
       , viewContentFlowBarWrapper model inspectorState oer
@@ -199,56 +190,32 @@ sheetWidth model =
   |> min (playerWidth model + inspectorSidebarWidth + 35)
 
 
-viewProviderLinkAndFavoriteButton : Model -> Oer -> Element Msg
-viewProviderLinkAndFavoriteButton model oer =
-  let
-      favoriteButton : Element Msg
-      favoriteButton =
-        let
-            heart =
-              viewHeartButton model oer.id
-              |> el [ moveRight 12, moveUp 14 ]
-        in
-            none
-            |> el [ alignRight, width <| px 34, inFront heart ]
-
-      providerLink : Element Msg
-      providerLink =
-        case oer.provider of
-          "" ->
-            none
-
-          provider ->
-            [ "Provider:" |> bodyNoWrap []
-            , newTabLink [] { url = oer.url, label = provider |> bodyNoWrap [] }
-            ]
-            |> row [ spacing 10 ]
-  in
-      [ providerLink
-      , favoriteButton
-      ]
-      |> row [ width fill ]
-
-
 viewCourseSettings : Model -> Oer -> CourseItem -> List (Element Msg)
 viewCourseSettings model oer {range, comment} =
   let
       topRow =
-        [ "This video has been added to your workspace." |> bodyWrap [ width fill ]
-        , actionButtonWithIcon [] IconLeft "delete" "Remove" <| Just <| RemovedOerFromCourse oer.id
-        ]
-        |> row [ width fill ]
-
-      fields =
-        [ "Selected Range:" |> bodyNoWrap [ width fill ]
-        , range.start |> floor |> secondsToString |> bodyNoWrap [ width fill ]
-        , "-" |> bodyNoWrap [ width fill ]
-        , range.start + range.length |> floor |> secondsToString |> bodyNoWrap [ width fill ]
-        ]
-        |> row [ spacing 10 ]
+        -- let
+        --     rangeText =
+        --       if (range |> Debug.log "range") == Range 0 1 then
+        --         ""
+        --       else
+        --         [ "(Range "
+        --         , range.start |> floor |> secondsToString
+        --         , " - "
+        --         , range.start + range.length |> floor |> secondsToString
+        --         , ")"
+        --         ]
+        --         |> String.join ""
+        -- in
+            -- [ "This video has been added to your workspace." ++ rangeText |> bodyWrap [ width fill ]
+            [ "This video has been added to your workspace." |> bodyWrap [ width fill ]
+            , changesSaved
+            , actionButtonWithIcon [] [] IconLeft 0.7 "delete" "Remove" <| Just <| RemovedOerFromCourse oer.id
+            ]
+            |> row [ width fill, borderTop 1, Border.color greyDivider, paddingTop 10 ]
 
       commentField =
-        Input.text [ width fill, htmlId "TextInputFieldForCommentOnCourseItem", onEnter <| SubmittedCourseItemComment, Border.color x5color, Font.size 14, padding 3, moveDown 5 ] { onChange = ChangedCommentTextInCourseItem oer.id, text = comment, placeholder = Just ("Enter any notes or comments about this item" |> text |> Input.placeholder [ Font.size 14, moveDown 6 ]), label = Input.labelHidden "Comment on course item" }
+        Input.text [ width fill, htmlId "TextInputFieldForCommentOnCourseItem", onEnter <| SubmittedCourseItemComment, Border.color x5color, Font.size 14, padding 3, moveDown 5 ] { onChange = ChangedCommentTextInCourseItem oer.id, text = comment, placeholder = Just ("Enter any comments about this item" |> text |> Input.placeholder [ Font.size 14, moveDown 6 ]), label = Input.labelHidden "Comment on course item" }
 
       changesSaved =
         if model.courseChangesSaved then
@@ -257,7 +224,6 @@ viewCourseSettings model oer {range, comment} =
           none
   in
       [ topRow
-      , [ fields, changesSaved ] |> row [ width fill ]
       , commentField
       ]
 
@@ -265,20 +231,24 @@ viewCourseSettings model oer {range, comment} =
 viewContentFlowBarWrapper : Model -> InspectorState -> Oer -> Element Msg
 viewContentFlowBarWrapper model inspectorState oer =
   let
-      components =
-        if isLabStudy1 model then
+      courseSettings =
+        if isLoggedIn model then -- this feature is only available for registered users
           case getCourseItem model oer of
             Nothing ->
               [ none |> el [ width fill ]
-              , actionButtonWithIcon [] IconLeft "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
+              , actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
               ]
 
             Just item ->
               viewCourseSettings model oer item
         else
-          [ viewDescription inspectorState oer
-          -- , [ viewLinkToFile oer, viewProviderLinkAndFavoriteButton model oer ] |> column [ width fill, spacing 15, paddingTop 30 ]
-          ]
+          []
+
+      components =
+        if isLabStudy1 model then
+          courseSettings
+        else
+          [ viewDescription inspectorState oer ] ++ courseSettings
 
       containerHeight =
         if isLabStudy1 model then
@@ -440,12 +410,12 @@ viewFeedbackTab model oer =
         , "Language errors"
         , "Poor content"
         , "Poor image"
-        ] ++ (if isVideoFile oer.url || hasYoutubeVideo oer.url then [ "Poor audio" ] else []))
+        ] ++ (if isVideoFile oer.url then [ "Poor audio" ] else []))
         |> List.map (\option -> simpleButton [ paddingXY 9 5, Background.color feedbackOptionButtonColor, Font.size 14, whiteText ] option (Just <| SubmittedResourceFeedback oer.id (">>>"++option)))
         |> column [ spacing 10 ]
 
       textField =
-        Input.text [ width fill, htmlId "textInputFieldForNotesOrFeedback", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5color ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your comments" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
+        Input.text [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5color ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your comments" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
   in
       [ "How would you describe this material?" |> bodyWrap []
       , quickOptions

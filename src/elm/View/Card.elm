@@ -204,17 +204,8 @@ viewVisibleOerCard model position barId enableShadow oer =
               else
                 oer.duration |> captionNowrap [ alignRight, paddingRight 8 ]
 
-            favoriteButton =
-              let
-                  heart =
-                    viewHeartButton model oer.id
-                    |> el [ moveRight 12, moveUp 14 ]
-              in
-                  none
-                  |> el [ alignRight, width <| px 34, inFront heart ]
-
             content =
-              [ date, provider, duration ]--, favoriteButton ]
+              [ date, provider, duration ]
         in
             content
             |> row [ width fill, paddingXY 16 0, moveDown 255 ]
@@ -246,7 +237,7 @@ viewVisibleOerCard model position barId enableShadow oer =
         explainify model explanationForOerCard
 
       wrapperAttrs =
-        [ htmlClass "CloseInspectorOnClickOutside OerCard", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y, htmlDataAttribute <| String.fromInt oer.id, htmlClass "CursorPointer" ]
+        [ htmlClass "PreventClosingInspectorOnClick OerCard", widthOfCard, heightOfCard, inFront <| card, moveRight position.x, moveDown position.y, htmlDataAttribute <| String.fromInt oer.id, htmlClass "CursorPointer" ]
   in
       none
       |> el wrapperAttrs
@@ -257,7 +248,7 @@ viewCarousel : Model -> Oer -> Element Msg
 viewCarousel model oer =
   let
       thumbFromSpritesheet =
-        if oer.mediatype/="video" || hasYoutubeVideo oer.url then
+        if oer.mediatype/="video" then
           []
         else
           let
@@ -404,9 +395,9 @@ viewOverviewTypeMenu model =
             []
 
       attrs =
-        [ alignRight, moveLeft 130, moveDown 30, Border.width 2, Border.color white, htmlClass "ClosePopupOnClickOutside" ] ++ options
+        [ alignRight, moveLeft 130, moveDown 30, Border.width 2, Border.color white, htmlClass "PreventClosingThePopupOnClick" ] ++ options
   in
-      actionButtonWithIcon [ whiteText, paddingXY 12 10 ] IconLeft "format_list_white" "View as..." (Just OpenedOverviewTypeMenu)
+      actionButtonWithIcon [ whiteText, paddingXY 12 10 ] [] IconLeft 0.9 "format_list_white" "View as..." (Just OpenedOverviewTypeMenu)
       |> el attrs
 
 

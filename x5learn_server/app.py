@@ -11,6 +11,7 @@ import http.client
 import urllib
 from collections import defaultdict
 from datetime import datetime, timedelta
+from dateutil import parser
 from sqlalchemy import or_, and_, cast, Integer
 from sqlalchemy.orm.attributes import flag_modified
 from flask_restplus import Api, Resource, fields, reqparse
@@ -19,22 +20,24 @@ import wikipedia
 # instantiate the user management db classes
 # NOTE WHEN PEP8'ING MODULE IMPORTS WILL MOVE TO THE TOP AND CAUSE EXCEPTION
 from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_SENDER, MAIL_USERNAME, MAIL_PASS, MAIL_SERVER, \
-    MAIL_PORT, LATEST_API_VERSION, DATA_COLL_PROMPT_INTERVAL
+    MAIL_PORT, LATEST_API_VERSION, DATA_COLL_PROMPT_INTERVAL, SERVER_NAME
 from x5learn_server.db.database import get_or_create_db
 
 _ = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
 from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, \
-    EntityDefinition, ResourceFeedback, Action, ActionType, Note, Repository, NotesRepository, \
+    EntityDefinition, ResourceFeedback, Action, ActionType, Repository, \
     ActionsRepository, UserRepository, DefinitionsRepository, Course, UiLogBatch
 
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
 from x5learn_server.lab_study import frozen_search_results_for_lab_study, is_special_search_key_for_lab_study
+from x5learn_server.course_optimization import optimize_course
 
 # Create app
 app = Flask(__name__)
 mail = Mail()
 
+app.config['SERVER_NAME'] = SERVER_NAME
 app.config['DEBUG'] = False
 app.config['SECRET_KEY'] = PASSWORD_SECRET
 app.config['SECURITY_PASSWORD_HASH'] = "bcrypt"
@@ -99,7 +102,7 @@ def initiate_login_db():
     from x5learn_server.db.database import initiate_login_table_and_admin_profile
     initiate_login_table_and_admin_profile(user_datastore)
     initiate_action_types_table()
-    cleanup_enrichment_errors()
+    # cleanup_enrichment_errors()
 
 
 def cleanup_enrichment_errors():
@@ -162,16 +165,6 @@ def logout():
 
 @app.route("/search")
 def search():
-    return render_template('home.html')
-
-
-@app.route("/favorites")
-def favorites():
-    return render_template('home.html')
-
-
-@app.route("/notes")
-def notes():
     return render_template('home.html')
 
 
@@ -304,28 +297,13 @@ def api_search():
     """
     text = request.args['text'].lower().strip()
     try:
-        # if the text is a number, retrieve the oer with that material_id
+        # if the text is a number, retrieve the oer with that oer_id
         oer_id = int(text)
         oer = Oer.query.get(oer_id)
         results = [] if oer is None else [ oer ]
     except ValueError:
         results = search_results_from_x5gon_api(text)
     return jsonify([oer.data_and_id() for oer in results])
-
-
-@app.route("/api/v1/favorites/", methods=['GET'])
-def api_favorites():
-    actions = Action.query.filter(Action.user_login_id == current_user.get_id(),
-                                  Action.action_type_id.in_([2, 3])).order_by(Action.id).all()
-    favorites = []
-    # reconstruct list by replaying the sequence of "like" and "unlike" actions
-    for action in actions:
-        oer_id = action.params['oerId']
-        if oer_id in favorites:
-            favorites.remove(oer_id)  # remove in any case to avoid duplicates
-        if action.action_type_id == 2:
-            favorites.append(oer_id)
-    return jsonify(favorites)
 
 
 @app.route("/api/v1/oers/", methods=['POST'])
@@ -349,12 +327,22 @@ def api_video_usages():
     return jsonify(ranges_per_oer)
 
 
+@app.route("/api/v1/course_optimization/", methods=['POST'])
+def api_course_optimization():
+    old_oer_ids = request.get_json()['oerIds']
+    new_oer_ids = optimize_course(old_oer_ids)
+    return jsonify(new_oer_ids)
+
+
 @app.route("/api/v1/load_course/", methods=['POST'])
 def api_load_course():
     course = Course.query.filter(Course.user_login_id == current_user.get_id()).order_by(Course.id.desc()).first()
     if course is None:
         user_login_id = current_user.get_id()  # Assuming that guests cannot use this feature
         course = Course(user_login_id, {'items': []})
+    else:
+        # remove OERs that don't exist anymore
+        course.data['items'] = [ item for item in course.data['items'] if Oer.query.get(item['oerId']) is not None ]
     return jsonify(course.data)
 
 
@@ -394,10 +382,9 @@ def video_usage_ranges_from_positions(positions):
 
 @app.route("/api/v1/featured/", methods=['GET'])
 def api_featured():
-    # urls = ['https://www.youtube.com/watch?v=woy7_L2JKC4', 'https://www.youtube.com/watch?v=bRIL9kMJJSc',
-    #         'https://www.youtube.com/watch?v=4yYytLUViI4']
-    urls = ['http://hydro.ijs.si/v019/9a/tlsmr7i7ssoq7nvjsp7ysrhkobwdzwcy.mp4', 'http://hydro.ijs.si/v00b/84/qqxsxflkrrs7hkkrwxdjkix62g2b3v46.mp4',
-            'http://hydro.ijs.si/v00a/63/mpklwd24fti34fzr3wtfqsrwri77fg2i.mp4']
+    urls = ['http://hydro.ijs.si/v015/f9/7gh3dwpzrfpfvxnrl5fkaq4nedrqguh6.mp4',
+            'http://hydro.ijs.si/v00b/8c/rsctlkzcht24mvake5k3cyjkbtfvr22b.mp4',
+            'http://hydro.ijs.si/v001/46/i3fx77camctxek5oqnpt7hjfflfpezor.mp4']
     oers = [oer.data_and_id() for oer in Oer.query.filter(Oer.url.in_(urls)).order_by(Oer.url.desc()).all()]
     return jsonify(oers)
 
@@ -481,6 +468,33 @@ def ingest_wikichunk_enrichment():
     return 'OK'
 
 
+@app.route("/api/v1/ingest_oer/", methods=['POST'])
+def ingest_oer():
+    j = request.get_json(force=True)
+    material_id = j['material_id']
+    print('ingest_oer', material_id)
+    return do_ingest_oer(material_id)
+
+
+def do_ingest_oer(material_id):
+    oer = find_oer_by_material_id(material_id)
+    if oer is not None:
+        return jsonify({'ok': 'Oer with material_id {} EXISTS. URL = {}'.format(material_id, oer.url)})
+    conn = http.client.HTTPSConnection("platform.x5gon.org")
+    conn.request('GET', '/api/v1/oer_materials/' + str(material_id))
+    response = conn.getresponse()
+    if response.status != 200:
+        return jsonify({'error': 'Oer with material_id {} FAILED with status code {}. Reason: {}'.format(material_id, response.status, response.reason)})
+    body = response.read().decode("utf-8")
+    material = json.loads(body)['oer_materials']
+    url = material['url']
+    oer = Oer(url, convert_x5_material_to_oer_data(material))
+    db_session.add(oer)
+    db_session.commit()
+    push_enrichment_task(url, 1)
+    return jsonify({'ok': 'Oer with material_id {} CREATED. Enrichment task started. URL = {}'.format(material_id, url)})
+
+
 @app.route("/api/v1/entity_definitions/", methods=['GET'])
 def api_entity_descriptions():
     entity_ids = request.args['ids'].split(',')
@@ -519,7 +533,7 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
         # Temporary fix: ignore search results with very long urls
         if len(url) > 255:
             continue
-        oer = retrieve_oer_or_create_from_x5gon_material(url, material)
+        oer = retrieve_oer_or_create_from_x5gon_material(material)
         push_enrichment_task(url, int(1000 / (index + 1)) + 1)
         oers.append(oer)
     oers = oers[:MAX_SEARCH_RESULTS]
@@ -530,10 +544,11 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     return search_results_from_x5gon_api_pages(text, page_number + 1, oers)
 
 
-def retrieve_oer_or_create_from_x5gon_material(url, material):
+def retrieve_oer_or_create_from_x5gon_material(material):
+    url = material['url']
     oer = Oer.query.filter_by(url=url).first()
     if oer is None:
-        oer = Oer(url, convert_x5_material_to_oer(material, url))
+        oer = Oer(url, convert_x5_material_to_oer_data(material))
         db_session.add(oer)
         db_session.commit()
     # Fix a problem with videolectures lacking duration info
@@ -606,15 +621,27 @@ def filter_x5gon_search_results(materials):
 #     return included_materials
 
 
-def convert_x5_material_to_oer(material, url):
+def convert_x5_material_to_oer_data(material):
     # Insert some fields that the frontend expects, using values from the x5gon search result when possible, otherwise default values.
     data = {}
-    data['url'] = url
+    data['url'] = material['url']
     data['material_id'] = material['material_id']
     data['title'] = material['title'] or '(Title unavailable)'
-    data['provider'] = material['provider'] or ''
+
+    provider = material['provider'] or ''
+    if 'provider_name' in provider: # sometimes provider comes as a dict
+        provider = provider['provider_name']
+    data['provider'] = provider
+
     data['description'] = material['description'] or ''
+
     data['date'] = ''
+    if 'creation_date' in material:
+        try:
+            data['date'] = parser.parse(material['creation_date']).strftime("%Y-%m-%d")
+        except Exception:
+            pass
+
     data['duration'] = ''
     data['images'] = []
     data['mediatype'] = material['type']
@@ -737,120 +764,6 @@ class APIInfo(Resource):
                 'status': 'under development'}
 
 
-# Defining notes resource for API access
-ns_notes = api.namespace('api/v1/note', description='Notes')
-
-m_note = api.model('Note', {
-    'oer_id': fields.Integer(required=True, description='The material id of the note associated with'),
-    'text': fields.String(required=True, description='The content of the note')
-})
-
-
-@ns_notes.route('/')
-class NotesList(Resource):
-    '''Shows a list of all notes, and lets you POST to add new notes'''
-
-    @ns_notes.doc('list_notes', params={'oer_id': 'Filter result set by material id',
-                                        'sort': 'Sort results by timestamp (Default: desc)',
-                                        'offset': 'Offset result set by number specified (Default: 0)',
-                                        'limit': 'Limits the number of records in the result set (Default: None)'})
-    def get(self):
-        '''Fetches multiple notes from database based on params'''
-        if not current_user.is_authenticated:
-            return {'result': 'User not logged in'}, 401
-        else:
-            # Declaring and processing params available for request
-            parser = reqparse.RequestParser()
-            parser.add_argument('oer_id', type=int)
-            parser.add_argument('sort', default='desc', choices=(
-                'asc', 'desc'), help='Bad choice')
-            parser.add_argument('offset', default=0, type=int)
-            parser.add_argument('limit', default=None, type=int)
-            args = parser.parse_args()
-
-            # Creating a note repository for unique data fetch
-            notes_repository = NotesRepository()
-            result_list = notes_repository.get_notes(current_user.get_id(), args['oer_id'], args['sort'],
-                                                     args['offset'], args['limit'])
-            # Converting result list to JSON friendly format
-            serializable_list = list()
-            if (result_list):
-                serializable_list = [i.serialize for i in result_list]
-
-            return serializable_list
-
-    @ns_notes.doc('create_note')
-    @ns_notes.expect(m_note, validate=True)
-    def post(self):
-        '''Creates a new note in database'''
-        if not current_user.is_authenticated:
-            return {'result': 'User not logged in'}, 401
-
-        if not api.payload['text'] or not api.payload['oer_id']:
-            return {'result': 'Material id and text params cannot be empty'}, 400
-        else:
-            note = Note(
-                api.payload['oer_id'], api.payload['text'], current_user.get_id(), False)
-
-            repository.add(note)
-            return {'result': 'Note added'}, 201
-
-
-@ns_notes.route('/<int:id>')
-@ns_notes.response(404, 'Note not found')
-@ns_notes.param('id', 'The note identifier')
-class Notes(Resource):
-    '''Show a single note item and lets you update or delete them'''
-
-    @ns_notes.doc('get_note')
-    def get(self, id):
-        '''Fetch requested note from database'''
-        if not current_user.is_authenticated:
-            return {'result': 'User not logged in'}, 401
-
-        note = repository.get_by_id(Note, id, current_user.get_id())
-
-        if not note:
-            return {}, 400
-
-        return note.serialize, 200
-
-    @ns_notes.doc('update_note', params={'text': 'Text to update'})
-    def put(self, id):
-        '''Update selected note'''
-        if not current_user.is_authenticated:
-            return {'result': 'User not logged in'}, 401
-
-        # Declaring and processing params available for request
-        parser = reqparse.RequestParser()
-        parser.add_argument('text', required=True)
-        args = parser.parse_args()
-
-        note = repository.get_by_id(Note, id, current_user.get_id())
-
-        if not note:
-            return {}, 400
-
-        setattr(note, 'text', args['text'])
-        _ = repository.update()
-        return {'result': 'Note updated'}, 201
-
-    @ns_notes.doc('delete_note')
-    def delete(self, id):
-        '''Delete selected note'''
-        if not current_user.is_authenticated:
-            return {'result': 'User not logged in'}, 401
-
-        note = repository.get_by_id(Note, id, current_user.get_id())
-
-        if not note:
-            return {}, 400
-
-        setattr(note, 'is_deactivated', True)
-        _ = repository.update()
-        return {'result': 'Note deleted'}, 201
-
-
 # Defining actions resource for API access
 ns_action = api.namespace('api/v1/action', description='Actions')
 
@@ -947,7 +860,7 @@ class UserApi(Resource):
     '''Api to manage user'''
 
     def delete(self):
-        '''Delete user actions, notes and user'''
+        '''Delete user actions and user'''
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
         else:
@@ -1056,12 +969,12 @@ def initiate_action_types_table():
         db_session.commit()
     action_type = ActionType.query.filter_by(id=2).first()
     if action_type is None:
-        action_type = ActionType('OER marked as favorite')
+        action_type = ActionType('OER marked as favorite (no longer in use)')
         db_session.add(action_type)
         db_session.commit()
     action_type = ActionType.query.filter_by(id=3).first()
     if action_type is None:
-        action_type = ActionType('OER unmarked as favorite')
+        action_type = ActionType('OER unmarked as favorite (no longer in use)')
         db_session.add(action_type)
         db_session.commit()
     action_type = ActionType.query.filter_by(id=4).first()
@@ -1205,9 +1118,13 @@ def recommendations_from_lam_api(oer_id):
         # Temporary fix: ignore search results with very long urls
         if len(url) > 255:
             continue
-        oer = retrieve_oer_or_create_from_x5gon_material(url, material)
+        oer = retrieve_oer_or_create_from_x5gon_material(material)
         oers.append(oer)
     return oers
+
+
+def find_oer_by_material_id(material_id):
+    return Oer.query.filter(Oer.data['material_id'].astext == str(material_id)).order_by(Oer.id.desc()).first()
 
 
 if __name__ == '__main__':

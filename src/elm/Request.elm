@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -41,14 +41,6 @@ searchOers searchText =
     { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText ]
     , expect = Http.expectJson RequestOerSearch (list oerDecoder)
     }
-
-
--- requestFavorites : Cmd Msg
--- requestFavorites =
---   Http.get
---     { url = Url.Builder.absolute [ apiRoot, "favorites/" ] []
---     , expect = Http.expectJson RequestFavorites (list int)
---     }
 
 
 {-| Fetch OER data from the server.
@@ -157,9 +149,24 @@ requestResourceRecommendations oerId =
 requestVideoUsages : Cmd Msg
 requestVideoUsages =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "video_usages" ] []
+    { url = Url.Builder.absolute [ apiRoot, "video_usages/" ] []
     , expect = Http.expectJson RequestVideoUsages (dict (list rangeDecoder))
     }
+
+
+{-| Fetch data regarding which parts of videos the user has watched
+-}
+requestCourseOptimization : Course -> Cmd Msg
+requestCourseOptimization course =
+  let
+      oerIds =
+        course.items |> List.map .oerId
+  in
+      Http.post
+        { url = Url.Builder.absolute [ apiRoot, "course_optimization/" ] []
+        , body = Http.jsonBody <| Encode.object [ ("oerIds", (Encode.list Encode.int) oerIds) ]
+        , expect = Http.expectJson RequestCourseOptimization (list int)
+        }
 
 
 {-| JSON decoders and encoders for custom types are defined below.

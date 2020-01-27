@@ -6,7 +6,6 @@ from collections import defaultdict
 from langdetect import detect_langs
 
 from wikichunkifiers.pdf import extract_chunks_from_pdf
-from wikichunkifiers.youtube import extract_chunks_from_youtube_video
 from wikichunkifiers.generic import extract_chunks_from_generic_text
 from wikichunkifiers.video import extract_chunks_from_x5gon_video
 from wikichunkifiers.lib.util import EnrichmentError
@@ -101,8 +100,6 @@ def make_wikichunks(oer_data):
     # if the material is pdf:
     if url.lower().endswith('pdf'):
         return extract_chunks_from_pdf(url)
-    if 'youtu' in url and '/watch?v=' in url:
-        return extract_chunks_from_youtube_video(url, oer_data)
     if 'meetup.com/' in url:
         return extract_chunks_from_generic_text(url, oer_data)
     if url.lower().endswith('.mp4') and "material_id" in oer_data:  # if X5GON Video,

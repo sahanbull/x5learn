@@ -1,3 +1,5 @@
+module Main exposing (main)
+
 import Browser
 import Browser.Navigation as Navigation
 import Url
@@ -13,8 +15,6 @@ import View.NavigationDrawer exposing (..)
 import View.Pages.Featured exposing (viewFeaturedPage)
 import View.Pages.Maintenance exposing (viewMaintenancePage)
 import View.Pages.Search exposing (viewSearchPage)
--- import View.Pages.Notes exposing (viewNotesPage)
--- import View.Pages.Favorites exposing (viewFavoritesPage)
 import View.Pages.Profile exposing (viewProfilePage)
 
 import Update exposing (..)
@@ -50,7 +50,7 @@ init flags url key =
   let
       (model, cmd) =
         initialModel (Nav url key) flags
-        |> update (Initialized url) -- ensure that subpage-specific state is loaded when starting on a subpage
+        |> update (ModelInitialized url) -- ensure that subpage-specific state is loaded when starting on a subpage
   in
       ( model, cmd )
 
@@ -64,7 +64,7 @@ view model =
       featuredPage =
         viewFeaturedPage model |> withNavigationDrawer model
 
-      (body, modal) =
+      (body, inspector) =
         if isSiteUnderMaintenance then
           viewMaintenancePage
         else
@@ -101,13 +101,6 @@ view model =
                     Just searchState ->
                       viewSearchPage model searchState |> withNavigationDrawer model
 
-                -- Favorites ->
-                --   viewFavoritesPage model |> withNavigationDrawer model
-
-                -- Notes ->
-                --   viewNotesPage model |> withNavigationDrawer model
-
-
       header : Attribute Msg
       header =
         viewPageHeader model
@@ -116,7 +109,7 @@ view model =
       page =
         body
         |> el [ width fill, spacing 50, pageBodyBackground model, height (fill |> maximum (model.windowHeight - pageHeaderHeight)), scrollbarY, htmlId "MainPageContent" ]
-        |> layout (modal ++ [ header, paddingTop pageHeaderHeight, width fill ])
+        |> layout (inspector ++ [ header, paddingTop pageHeaderHeight, width fill ])
   in
       { title = "X5Learn"
       , body = [ page ]

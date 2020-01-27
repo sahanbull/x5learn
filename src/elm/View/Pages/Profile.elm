@@ -18,7 +18,7 @@ import Msg exposing (..)
 
 {-| Render the user profile page
 -}
-viewProfilePage : Model -> UserProfile -> UserProfileForm -> PageWithModal
+viewProfilePage : Model -> UserProfile -> UserProfileForm -> PageWithInspector
 viewProfilePage model savedUserProfile {userProfile, saved} =
   let
       textInput field labelText valueText =

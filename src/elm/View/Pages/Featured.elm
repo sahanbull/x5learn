@@ -21,7 +21,7 @@ import Json.Decode as Decode
 
 {-| Render landing page including featured OER content
 -}
-viewFeaturedPage : Model -> PageWithModal
+viewFeaturedPage : Model -> PageWithInspector
 viewFeaturedPage model =
   let
       title =

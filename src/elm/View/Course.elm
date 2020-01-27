@@ -25,19 +25,15 @@ viewCourse model =
     none
   else
     let
-        heading =
-          -- "Workspace" |> headlineWrap []
-          none
-
         items =
           model.course.items
           |> List.indexedMap (viewCourseItem model)
-          |> column [ spacing 20, paddingTop 20 ]
+          |> column [ spacing 20, paddingTop 20, width fill ]
     in
-        [ heading
-        , items
+        [ items
+        , viewCoursePathFinderContainer model
         ]
-        |> column [ spacing 10 ]
+        |> column [ spacing 50, width fill ]
 
 
 {-| Render a single course item
@@ -60,18 +56,22 @@ viewCourseItem model index item =
             if index==0 then
               none
             else
-              button buttonAttrs { onPress = Just <| MovedCourseItemDown (index-1), label = "Move up" |> captionNowrap [ whiteText ] }
+              button buttonAttrs { onPress = Just <| MovedCourseItemDown (index-1), label = "Move ↑" |> captionNowrap [ whiteText ] }
 
           moveDownButton =
             if index==nCourseItems-1 then
               none
             else
-              button buttonAttrs { onPress = Just <| MovedCourseItemDown index, label = "Move down" |> captionNowrap [ whiteText ] }
+              button buttonAttrs { onPress = Just <| MovedCourseItemDown index, label = "Move ↓" |> captionNowrap [ whiteText ] }
+
+          deleteButton =
+            button (buttonAttrs ++ [ Background.color red ]) { onPress = Just <| RemovedOerFromCourse oer.id, label = "Remove" |> captionNowrap [ whiteText ] }
 
           topRow =
             [ index+1 |> String.fromInt |> bodyNoWrap []
             , moveUpButton
             , moveDownButton
+            , deleteButton
             ]
             |> row [ width fill, spacing 10 ]
 
@@ -82,4 +82,41 @@ viewCourseItem model index item =
             |> column [ width fill, spacing 10, paddingTop 10, borderTop 1, Border.color <| greyDivider ]
       in
           miniCard
-          |> el [ width fill, htmlClass "CloseInspectorOnClickOutside", onClickStopPropagation <| InspectCourseItem oer ]
+          |> el [ width fill, htmlClass "PreventClosingInspectorOnClick", onClickStopPropagation <| ClickedOnCourseItem oer ]
+
+
+{-| Render the coursePathFinder
+-}
+viewCoursePathFinderContainer : Model -> Element Msg
+viewCoursePathFinderContainer model =
+  if List.length model.course.items>1 then
+    viewCoursePathFinderWidget model
+  else
+    -- "Tip: Add more items to your workspace" |> captionWrap []
+    none
+
+
+{-| Render the widget that integrates the coursePathFinder API from Nantes
+-}
+viewCoursePathFinderWidget : Model -> Element Msg
+viewCoursePathFinderWidget model =
+  case model.courseOptimization of
+    Nothing ->
+      actionButtonWithIcon [ whiteText, paddingXY 12 10, width fill, centerX ] [ Background.color linkBlue, width fill ] IconLeft 1 "directions_walk_white" "Optimise learning path" (Just PressedOptimiseLearningPath)
+
+    Just Loading ->
+      viewLoadingSpinner
+
+    Just (UndoAvailable savedPreviousCourse) ->
+      let
+          content =
+            if savedPreviousCourse == model.course then
+              [ "Your workspace is in a good sequence for learning, according to our algorithm. No changes needed." |> captionWrap [ whiteText ]
+              ]
+            else
+              [ "Our algorithm has changed the sequence of your items." |> captionWrap [ whiteText ]
+              , simpleButton [ Font.size 12, Font.color blue ] "Undo" (Just <| PressedUndoCourse savedPreviousCourse)
+              ]
+      in
+          content
+          |> column [ spacing 15, padding 10, Background.color <| grey 50, Border.rounded 10 ]

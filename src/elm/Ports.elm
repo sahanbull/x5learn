@@ -12,10 +12,7 @@ import Model exposing (..)
 -}
 port setBrowserFocus : String -> Cmd msg
 port copyClipboard : String -> Cmd msg
-port openModalAnimation : VideoEmbedParams -> Cmd msg
--- port embedYoutubePlayerOnResourcePage : VideoEmbedParams -> Cmd msg
--- port youtubeSeekTo : Float -> Cmd msg
--- port youtubeDestroyPlayer : Bool -> Cmd msg
+port openInspectorAnimation : VideoEmbedParams -> Cmd msg
 port getOerCardPlaceholderPositions : Bool -> Cmd msg
 port askPageScrollState : Bool -> Cmd msg
 port startCurrentHtml5Video : Float -> Cmd msg
@@ -23,8 +20,8 @@ port startCurrentHtml5Video : Float -> Cmd msg
 
 {-| Incoming ports are defined below
 -}
-port modalAnimationStart : (BoxAnimation -> msg) -> Sub msg
-port modalAnimationStop : (Int -> msg) -> Sub msg
+port inspectorAnimationStart : (BoxAnimation -> msg) -> Sub msg
+port inspectorAnimationStop : (Int -> msg) -> Sub msg
 port closePopup : (Int -> msg) -> Sub msg
 port closeInspector : (Int -> msg) -> Sub msg
 port popupTriggerPosition : (Point -> msg) -> Sub msg
@@ -39,4 +36,3 @@ port html5VideoSeeked : (Float -> msg) -> Sub msg
 port html5VideoStillPlaying : (Float -> msg) -> Sub msg
 port pageScrolled : (PageScrollState -> msg) -> Sub msg
 port receiveCardPlaceholderPositions : ((List OerCardPlaceholderPosition) -> msg) -> Sub msg
-port receiveFlyingHeartRelativeStartPosition : (Point -> msg) -> Sub msg

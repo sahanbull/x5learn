@@ -20,7 +20,7 @@ import Model exposing (..)
 import Msg exposing (..)
 import Animation exposing (..)
 
-type alias PageWithModal = (Element Msg, List (Attribute Msg))
+type alias PageWithInspector = (Element Msg, List (Attribute Msg))
 
 type IconPosition
   = IconLeft
@@ -156,6 +156,11 @@ captionNowrap attrs str =
   text str |> el (captionTextAttrs ++ attrs)
 
 
+captionWrap : List (Attribute Msg) -> String -> Element Msg
+captionWrap attrs str =
+  [ text str ] |> paragraph (captionTextAttrs ++ attrs)
+
+
 bodyWrap : List (Attribute Msg) -> String -> Element Msg
 bodyWrap attrs str =
   [ text str ] |> paragraph (bodyTextAttrs ++ attrs)
@@ -214,6 +219,11 @@ orange =
 magenta : Color
 magenta =
   rgb255 250 0 230
+
+
+darkPurple : Color
+darkPurple =
+  rgb255 150 0 130
 
 
 blue : Color
@@ -329,12 +339,6 @@ hoverCircleBackground =
   htmlClass "HoverCircleBackground"
 
 
-embedYoutubePlayer : Model -> String -> Int -> Element Msg
-embedYoutubePlayer model youtubeId startTime =
-  none
-  |> el [ htmlId "playerElement", width <| px <| playerWidth model, height (px 410) ]
-
-
 dialogShadow : Attribute Msg
 dialogShadow =
   Border.shadow
@@ -364,11 +368,11 @@ navigationDrawerWidth =
   230
 
 
-actionButtonWithIcon : List (Attribute Msg) -> IconPosition -> String -> String -> Maybe Msg -> Element Msg
-actionButtonWithIcon textAttrs iconPosition svgIconStub str onPress =
+actionButtonWithIcon : List (Attribute Msg) -> List (Attribute Msg) -> IconPosition -> Float -> String -> String -> Maybe Msg -> Element Msg
+actionButtonWithIcon textAttrs buttonAttrs iconPosition iconAlpha svgIconStub str onPress =
   let
       icon =
-        image [ alpha 0.5 ] { src = svgPath svgIconStub, description = "" }
+        image [ alpha iconAlpha ] { src = svgPath svgIconStub, description = "" }
 
       title =
         str |> bodyNoWrap (textAttrs ++ [ width fill ])
@@ -381,7 +385,7 @@ actionButtonWithIcon textAttrs iconPosition svgIconStub str onPress =
           IconRight ->
             [ title, icon ]
   in
-      button [ htmlClass "CloseInspectorOnClickOutside" ] { onPress = onPress, label = label |> row [ width fill, spacing 3, Border.rounded 4 ]}
+      button ([ htmlClass "PreventClosingInspectorOnClick" ] ++ buttonAttrs) { onPress = onPress, label = label |> row [ width fill, spacing 3, Border.rounded 4 ]}
 
 
 actionButtonWithoutIcon : List (Attribute Msg) -> List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
@@ -475,8 +479,8 @@ milkyWhiteCenteredContainer =
   el [ centerX, centerY, padding 20, Background.color semiTransparentWhite, Border.rounded 2 ]
 
 
-viewCenterNote : String -> Element Msg
-viewCenterNote str =
+viewCenterMessage : String -> Element Msg
+viewCenterMessage str =
   str
   |> bodyWrap []
   |> milkyWhiteCenteredContainer
@@ -588,17 +592,6 @@ guestCallToSignup incentive =
   , "." |> text
   ]
   |> paragraph [ Font.size 14, Font.color materialDark ]
-
-
-viewHeartButton : Model -> OerId -> Element Msg
-viewHeartButton model oerId =
-  none
-    -- let
-    --     class =
-    --       "Heart " ++ (if isMarkedAsFavorite model oerId then "HeartFilled" else "HeartOutline")
-    -- in
-    --     none
-    --     |> el [ width <| px 20, height <| px 22, onClickStopPropagation (ClickedHeart oerId), htmlClass class  ]
 
 
 closeIcon : Element Msg

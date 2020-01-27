@@ -45,6 +45,7 @@ type alias Model =
   , featuredOers : Maybe (List OerId) -- a handful of OERs to display on the start page
   -- Course data
   , course : Course -- essentially a list of commentable OER snippets that the user has bookmarked
+  , courseOptimization : Maybe CourseOptimization -- Changing the Course in the backend (using the API developed by Nantes)
   , courseNeedsSaving : Bool -- true when the user changes any course items since last saving
   , courseChangesSaved : Bool -- used to display a message to the user
   , lastTimeCourseChanged : Posix -- wait a few seconds before saving changes, to avoid too frequent requests (e.g. while typing)
@@ -66,14 +67,9 @@ type alias Model =
   , hoveringEntityId : Maybe EntityId -- when the user hovers over a topic in a bubblogram
   , timeOfLastUrlChange : Posix -- used to animate bubblograms
   , selectedMention : Maybe (OerId, MentionInOer) -- in bubblogram: hovering over a mention
-  -- OER inspector modal
+  -- OER inspector
   , inspectorState : Maybe InspectorState -- custom type, see definition below
-  , modalAnimation : Maybe BoxAnimation -- When the user clicks on an OER card then the inspector modal doesn't just appear instantly - there is a bit of a zooming effect.
-  -- Autocomplete for suggested search terms
-  , autocompleteTerms : List String -- list of wiki topics that may be used as autocompleteSuggestions
-  , autocompleteSuggestions : List String -- when the user enters text in the search field, an earlier prototype version of the UI used to suggest wiki topics as search terms (currently disabled)
-  , selectedSuggestion : String -- hovering over one of the autocompleteSuggestions selects the item
-  , suggestionSelectionOnHoverEnabled : Bool -- dynamic flag to prevent accidental selection when the menu appears under the mouse pointer
+  , inspectorAnimation : Maybe BoxAnimation -- When the user clicks on an OER card then the inspector doesn't just appear instantly - there is a bit of a zooming effect.
   -- User profile
   , userProfileForm : UserProfileForm -- for the user to fill in their name etc
   , userProfileFormSubmitted : Bool -- show a loading spinner while waiting for HTTP response
@@ -84,12 +80,6 @@ type alias Model =
   , timeOfLastFeedbackRecorded : Posix -- used to show a brief thank you message
   -- VideoUsages
   , videoUsages : Dict OerId VideoUsage -- for each (video) OER, which parts has the user watched
-  -- favorites
-  , favorites : List OerId -- OERs marked as favourite (heart icon)
-  , removedFavorites : Set OerId -- keep a client-side record of removed items so that cards on the favorites page don't simply disappear when unliked
-  , hoveringHeart : Maybe OerId -- if the user hovers over a heart, which OER is it
-  , flyingHeartAnimation : Maybe FlyingHeartAnimation -- when the user likes an OER
-  , flyingHeartAnimationStartPoint : Maybe Point -- when the user likes an OER
   -- screen dimensions
   , windowWidth : Int -- width of the browser window in pixels
   , windowHeight : Int -- height of the browser window in pixels
@@ -104,18 +94,15 @@ type alias Model =
   , popup : Maybe Popup -- There can be only one popup at a time. See the type definition below.
   -- time
   , currentTime : Posix -- updated a few times a second. Mind the limited precision
-  , animationsPending : Set String -- Keeping track of multiple GUI animations, including the inspector modal. We're using a Set of Strings, assuming that there can be multiple animations in parallel, each having a unique String ID.
+  , animationsPending : Set String -- Keeping track of multiple GUI animations, including the inspector. We're using a Set of Strings, assuming that there can be multiple animations in parallel, each having a unique String ID.
   -- search
   , searchInputTyping : String -- text the user types into the search field
   , searchState : Maybe SearchState -- custom type, see definition below
-  , timeOfLastSearch : Posix -- important to briefly disable autocomplete immediately after a search
   -- UI log events
   , loggedEvents : List String -- temporary buffer for frequent UI events that will be sent to the server in delayed batches
   , lastTimeLoggedEventsSaved : Posix -- wait a few seconds between batches
   , timeWhenSessionLoaded : Posix -- wait a few seconds before logging UI events
   -- deactivated code
-  -- , oerNoteboards : Dict OerId Noteboard
-  -- , oerNoteForms : Dict OerId String
   , isExplainerEnabled : Bool
   }
 
@@ -148,12 +135,6 @@ type BubblogramType
 {-| For any (video) OER, which parts has the user watched
 -}
 type alias VideoUsage = List Range
-
-{-| when the user likes an OER (favorites)
--}
-type alias FlyingHeartAnimation =
-  { startTime : Posix
-  }
 
 {-| Item in a bubblogram representing an entity as a circle
 -}
@@ -202,8 +183,6 @@ type alias EntityId = String
 
 type alias EntityTitle = String
 
-type alias Noteboard = List Note
-
 
 {-| Knowing what part of the page the user is seeing
 -}
@@ -230,16 +209,6 @@ type alias OerCardPlaceholderPosition =
   { x : Float
   , y : Float
   , oerId : Int
-  }
-
-
-{-| User comments on OER
--}
-type alias Note =
-  { text : String
-  , time : Posix
-  , oerId : OerId
-  , id : Int
   }
 
 
@@ -285,8 +254,6 @@ type Subpage
   = Home
   | Profile
   | Search
-  -- | Favorites
-  -- | Notes
 
 
 {-| Search for OERs
@@ -297,7 +264,7 @@ type alias SearchState =
   }
 
 
-{-| Content of the OER inspector modal
+{-| Content of the OER inspector
 -}
 type alias InspectorState =
   { oer : Oer
@@ -467,6 +434,11 @@ type alias CourseItem =
   , comment : String
   }
 
+{-| Asking the server for an alternative sequence of OERs
+-}
+type CourseOptimization
+  = Loading -- Waiting for response from the server
+  | UndoAvailable Course -- Response received. Previous state saved in order to allow the user to reject the suggestion.
 
 {-| Playlist is a historical name for: a list of OERs with a title.
     The name Playlist doesn't fit as well as it used to in earlier versions.
@@ -479,7 +451,7 @@ type alias Playlist =
   }
 
 
-{-| Used to control the zoom animation when opening the inspector modal
+{-| Used to control the zoom animation when opening the inspector
 -}
 type AnimationStatus
   = Inactive
@@ -503,11 +475,10 @@ type LoginState
   | LoggedInUser UserProfile
 
 
-{-| VideoEmbedParams is a helper type for embedding YouTube or HTML5 videos.
+{-| VideoEmbedParams is a helper type for embedding HTML5 videos.
 -}
 type alias VideoEmbedParams =
-  { modalId : String
-  , videoId : String
+  { inspectorId : String
   , videoStartPosition : Float
   , playWhenReady : Bool
   }
@@ -546,6 +517,7 @@ initialModel nav flags =
   , requestingOers = False
   , featuredOers = Nothing
   , course = Course []
+  , courseOptimization = Nothing
   , courseNeedsSaving = False
   , courseChangesSaved = False
   , lastTimeCourseChanged = initialTime
@@ -564,21 +536,12 @@ initialModel nav flags =
   , timeOfLastUrlChange = initialTime
   , selectedMention = Nothing
   , inspectorState = Nothing
-  , modalAnimation = Nothing
-  , autocompleteTerms = []
-  , autocompleteSuggestions = []
-  , selectedSuggestion = ""
-  , suggestionSelectionOnHoverEnabled = True
+  , inspectorAnimation = Nothing
   , userProfileForm = freshUserProfileForm (initialUserProfile "" False)
   , userProfileFormSubmitted = False
   , feedbackForms = Dict.empty
   , timeOfLastFeedbackRecorded = initialTime
   , videoUsages = Dict.empty
-  , favorites = []
-  , removedFavorites = Set.empty
-  , hoveringHeart = Nothing
-  , flyingHeartAnimation = Nothing
-  , flyingHeartAnimationStartPoint = Nothing
   , windowWidth = flags.windowWidth
   , windowHeight = flags.windowHeight
   , minWindowWidth = flags.minWindowWidth
@@ -592,13 +555,10 @@ initialModel nav flags =
   , animationsPending = Set.empty
   , searchInputTyping = ""
   , searchState = Nothing
-  , timeOfLastSearch = initialTime
   , loggedEvents = []
   , lastTimeLoggedEventsSaved = initialTime
   , timeWhenSessionLoaded = initialTime
   , currentTaskName = Nothing
-  -- , oerNoteboards = Dict.empty
-  -- , oerNoteForms = Dict.empty
   , isExplainerEnabled = False
   }
 
@@ -606,30 +566,6 @@ initialModel nav flags =
 initialUserProfile : String -> Bool -> UserProfile
 initialUserProfile email isDataCollectionConsent =
   UserProfile email "" "" isDataCollectionConsent
-
-
--- getOerNoteboard : Model -> OerId -> Noteboard
--- getOerNoteboard model oerId =
---   model.oerNoteboards
---   |> Dict.get oerId
---   |> Maybe.withDefault []
-
-
--- getOerNoteForm : Model -> OerId -> String
--- getOerNoteForm model oerId =
---   model.oerNoteForms
---   |> Dict.get oerId
---   |> Maybe.withDefault ""
-
-
--- getOerIdFromOerId : Model -> OerId -> OerId
--- getOerIdFromOerId model oerId =
---   case model.cachedOers |> Dict.get oerId of
---     Just oer ->
---       oer.id
-
-    -- Nothing ->
-    --   0
 
 
 initialTime : Posix
@@ -648,7 +584,7 @@ newInspectorState : Oer -> Float -> InspectorState
 newInspectorState oer fragmentStart =
   let
       videoPlayer =
-        if oer.mediatype=="video" && (hasYoutubeVideo oer.url |> not) then
+        if oer.mediatype=="video" then
           Just <|
             { isPlaying = False
             , currentTime = 0
@@ -661,32 +597,8 @@ newInspectorState oer fragmentStart =
       InspectorState oer fragmentStart videoPlayer FeedbackTab [] False
 
 
-hasYoutubeVideo : OerUrl -> Bool
-hasYoutubeVideo oerUrl =
-  case getYoutubeVideoId oerUrl of
-    Nothing ->
-      False
-
-    Just _ ->
-      True
-
-
-getYoutubeVideoId : OerUrl -> Maybe String
-getYoutubeVideoId oerUrl =
-  if (oerUrl |> String.contains "://youtu") || (oerUrl |> String.contains "://www.youtu") then
-    oerUrl
-    |> String.split "="
-    |> List.drop 1
-    |> List.head
-    |> Maybe.withDefault ""
-    |> String.split "&"
-    |> List.head
-  else
-    Nothing
-
-
-modalId : String
-modalId =
+inspectorId : String
+inspectorId =
   "InspectorModal"
 
 
@@ -697,12 +609,12 @@ millisSince model pastPointInTime =
   (posixToMillis model.currentTime) - (posixToMillis pastPointInTime)
 
 
-{-| Status of the animation of the inspector modal
+{-| Status of the animation of the inspector
 -}
-modalAnimationStatus : Model -> AnimationStatus
-modalAnimationStatus model =
-  if model.animationsPending |> Set.member modalId then
-    case model.modalAnimation of
+inspectorAnimationStatus : Model -> AnimationStatus
+inspectorAnimationStatus model =
+  if model.animationsPending |> Set.member inspectorId then
+    case model.inspectorAnimation of
       Nothing ->
         Prestart
 
@@ -790,15 +702,15 @@ displayName userProfile =
         name
 
 
-{-| Check whether the inspector modal is currently animating.
-    The inspector modal was designed to open with a short zoom animation.
+{-| Check whether the inspector is currently animating.
+    The inspector was designed to open with a short zoom animation.
 -}
-isModalAnimating : Model -> Bool
-isModalAnimating model =
+isInspectorAnimating : Model -> Bool
+isInspectorAnimating model =
   if model.animationsPending |> Set.isEmpty then
      False
   else
-    case model.modalAnimation of
+    case model.inspectorAnimation of
       Nothing ->
         True
 
@@ -984,12 +896,6 @@ profilePath =
 searchPath =
   "/search"
 
--- notesPath =
---   "/notes"
-
-favoritesPath =
-  "/favorites"
-
 loginPath =
    "/login"
 
@@ -1122,28 +1028,6 @@ indexOf element list =
       helper 0 list
 
 
-{-| Check whether a particular OER is one of the user's favourites
--}
-isMarkedAsFavorite : Model -> OerId -> Bool
-isMarkedAsFavorite model oerId =
-  List.member oerId model.favorites && (Set.member oerId model.removedFavorites |> not)
-
-
-{-| Check whether the user has just "favorited" an OER in the last second or so
--}
-isFlyingHeartAnimating : Model -> Bool
-isFlyingHeartAnimating model =
-  model.flyingHeartAnimation /= Nothing
-
-
-{-| When the user adds an OER to their favorites, there is a short animation.
-    This is the duration in milliseconds.
--}
-flyingHeartAnimationDuration : Int
-flyingHeartAnimationDuration =
-  900
-
-
 {-| Check whether the mouse is hovering over a particular OER
     TODO refactor to rename this function
 -}
@@ -1152,7 +1036,7 @@ isHovering model oer =
   model.hoveringOerId == Just oer.id
 
 
-{-| Check whether a particular OER is currently in the open inspector modal
+{-| Check whether a particular OER is currently in the open inspector
 -}
 isInspecting : Model -> Oer -> Bool
 isInspecting model {id} =

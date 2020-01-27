@@ -351,6 +351,7 @@ type Popup
   | BubblePopup BubblePopupState -- Certain types of bubblograms open a popup when the mouse hovers over a bubble
   | OverviewTypePopup -- Allowing the user to toggle between thumbnails and bubblograms
   | ExplanationPopup String -- Showing extra information for a component if isExplainerEnabled
+  | ExplainerMetaInformationPopup -- Showing information about the Explainer feature itself
 
 
 {-| Cascading menu containing wikipedia topics

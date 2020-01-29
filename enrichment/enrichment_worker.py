@@ -124,17 +124,15 @@ def extract_concept_clusters(chunks, mentions):
     print('Titles:', titles)
     clusters = []
 
-    print('WARNING: TOPIC CLUSTERING TEMPORARILY DISABLED DUE TO ISSUE #340')
-    # TEMPORARILY DISABLED DUE TO ISSUE #340
-    # for title in titles:
-    #     try:
-    #         links = wikipedia.page(title).links
-    #     except Exception as err:
-    #         links = []
-    #         print('Ignoring error: ', err)
-    #     links = [link for link in links if link in titles]
-    #     cluster = [title] + links
-    #     clusters.append(cluster)
+    for title in titles:
+        try:
+            links = wikipedia.page(title).links
+        except Exception as err:
+            links = []
+            print('Ignoring error: ', err)
+        links = [link for link in links if link in titles]
+        cluster = [title] + links
+        clusters.append(cluster)
 
     print('Raw:', clusters)
     clusters = merge_clusters(clusters)

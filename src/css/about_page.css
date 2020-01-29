@@ -76,7 +76,7 @@ body, html {
 }
 
 .AboutContent{
-  max-width: 800px;
+  max-width: 880px;
   margin: 0 auto;
 }
 
@@ -109,4 +109,46 @@ body, html {
   line-height: 1.75;
   letter-spacing: .4px;
   color: rgba(0,19,77,.6) !important;
+}
+
+
+/* Footer */
+
+.AboutFooter{
+  background-color: #141414;
+  color: #fff !important;
+  padding: 3rem !important;
+  font-family: "Open Sans",sans-serif;
+  font-size: 16px;
+  line-height: 28px;
+  font-weight: 400;
+}
+
+.AboutFooter > *{
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.AboutRow{
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.AboutColumnEuFlag{
+  flex: 0 0 12%;
+  max-width: 12%;
+}
+
+.AboutColumnEuText{
+  flex: 0 0 75%;
+  max-width: 75%;
+  padding-left: 15px;
+  font-size: 12px;
+  letter-spacing: .4px;
+  font-family: Open Sans,sans-serif;
+  line-height: 20px;
+}
+
+.AboutFooterText{
+  color: white;
 }

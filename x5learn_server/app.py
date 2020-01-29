@@ -157,6 +157,11 @@ def logout():
     return redirect("/")
 
 
+@app.route("/featured")
+def featured():
+    return render_template('home.html')
+
+
 @app.route("/search")
 def search():
     return render_template('home.html')

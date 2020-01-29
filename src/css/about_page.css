@@ -1,0 +1,80 @@
+/* Set height to 100% for body and html to enable the background image to cover the whole page: */
+body, html {
+  height: 100%
+}
+
+.bgimg {
+  /* Background image */
+  /* background-image: url('/static/dist/img/bg.jpg'); */
+  background-image: url('https://platform.x5gon.org/static/f44fea5e7d724d121834f7a92d7bdf43/b6d8d/transparency.webp');
+  /* Full-screen */
+  height: 40%;
+  /* Center the background image */
+  background-position: center;
+  /* Scale and zoom in the image */
+  background-size: cover;
+  /* Add position: relative to enable absolutely positioned elements inside the image (place text) */
+  position: relative;
+  /* Add a white text color to all elements inside the .bgimg container */
+  color: white;
+  /* Add a font */
+  font-family: "Courier New", Courier, monospace;
+  /* Set the font-size to 25 pixels */
+  font-size: 25px;
+  padding: 38px 40px;
+}
+
+/* Position text in the top-left corner */
+.topleft {
+  position: absolute;
+  top: 38px;
+  left: 40px;
+}
+
+/* /1* Position text in the bottom-left corner *1/ */
+/* .bottomleft { */
+/*   position: absolute; */
+/*   bottom: 0; */
+/*   left: 16px; */
+/* } */
+
+/* Position text in the middle */
+.middle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+/* Style the <hr> element */
+hr {
+  margin: auto;
+  width: 40%;
+}
+
+
+.button-green {
+  display: block;
+  margin: 0 auto;
+  max-width: 176px;
+  padding-top: 7px;
+  padding-bottom: 9px;
+  border-radius: 4px;
+  border: 1.5px solid transparent;
+  background: #00ad57;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  letter-spacing: .4px;
+  text-align: center;
+  color: #fff;
+}
+
+.button-green:hover {
+  background:
+  transparent;
+  color: #00ad57;
+  cursor: pointer;
+  border: 1.5px solid #00ad57;
+}

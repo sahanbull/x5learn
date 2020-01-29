@@ -8,7 +8,7 @@
     "test": "./node_modules/elm/bin/elm-test",
     "build:uncompressed:rm": "rimraf x5learn_server/static/dist/**",
     "build:uncompressed": "npm run build:uncompressed:rm",
-    "build:css:concat": "mkdir -p x5learn_server/static/dist/css && concat -o x5learn_server/static/dist/css/app.css src/css/style.css",
+    "build:css:concat": "mkdir -p x5learn_server/static/dist/css && concat -o x5learn_server/static/dist/css/app.css src/css/style.css src/css/about_page.css",
     "build:css:minify": "cleancss -o x5learn_server/static/dist/css/app.min.css x5learn_server/static/dist/css/app.css && rimraf x5learn_server/static/dist/css/app.css",
     "build:css": "npm run build:css:concat && npm run build:css:minify",
     "build:js:elm": "/usr/local/bin/elm make --optimize --output x5learn_server/static/dist/js/elm.js src/elm/Main.elm",

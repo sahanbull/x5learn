@@ -891,6 +891,9 @@ getEntityTitleFromEntityId model entityId =
 homePath =
   "/"
 
+aboutPath =
+  "/about"
+
 profilePath =
   "/profile"
 

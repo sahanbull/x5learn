@@ -144,7 +144,15 @@ repository = Repository()
 
 @app.route("/")
 def home():
-    return render_template('home.html')
+    if current_user.is_authenticated:
+        return render_template('home.html')
+    else:
+        return render_template('about.html')
+
+
+@app.route("/about")
+def about():
+    return render_template('about.html')
 
 
 @app.route("/logout")
@@ -152,6 +160,11 @@ def home():
 def logout():
     logout_user()
     return redirect("/")
+
+
+@app.route("/featured")
+def featured():
+    return render_template('home.html')
 
 
 @app.route("/search")

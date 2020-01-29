@@ -59,11 +59,13 @@ viewPageHeader model =
             case session.loginState of
               LoggedInUser userProfile ->
                 [ viewExplainerToggle model
+                , viewLinkToAboutPage
                 , viewUserMenu model userProfile
                 ]
 
               GuestUser ->
                 [ viewExplainerToggle model
+                , viewLinkToAboutPage
                 , link [ alignRight, paddingXY 15 10 ] { url = loginPath, label = "Log in" |> bodyNoWrap [] }
                 , link [ alignRight, paddingXY 15 10 ] { url = signupPath, label = "Sign up" |> bodyNoWrap [] }
                 ]
@@ -141,3 +143,10 @@ viewExplainerToggle model =
       ]
       |> row ([ spacing 10, onClick ToggleExplainer, htmlClass "CursorPointer PreventClosingThePopupOnClick" ] ++ popup)
       |> el [ alignRight ]
+
+
+{-| Render the link to the /about page
+-}
+viewLinkToAboutPage : Element Msg
+viewLinkToAboutPage =
+  link [ alignRight, paddingXY 15 10 ] { url = aboutPath, label = "About" |> bodyNoWrap [] }

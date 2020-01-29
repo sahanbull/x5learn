@@ -39,7 +39,7 @@ update msg ({nav, userProfileForm} as model) =
     LinkClicked urlRequest ->
       case urlRequest of
         Browser.Internal url ->
-          if List.member (url.path |> String.dropLeft 1) ("login signup logout" |> String.split " ") then
+          if List.member (url.path |> String.dropLeft 1) ("login signup logout about" |> String.split " ") then
             ( model |> closePopup, Navigation.load (Url.toString url) )
             |> logEventForLabStudy "LinkClickedInternal" [ url.path ]
           else

@@ -1,0 +1,154 @@
+/* Set height to 100% for body and html to enable the background image to cover the whole page: */
+body, html {
+  height: 100%
+}
+
+.bgimg {
+  /* Background image */
+  /* background-image: url('/static/dist/img/bg.jpg'); */
+  background-image: url('https://platform.x5gon.org/static/f44fea5e7d724d121834f7a92d7bdf43/b6d8d/transparency.webp');
+  /* Full-screen */
+  height: 680px;
+  /* Center the background image */
+  background-position: center;
+  /* Scale and zoom in the image */
+  background-size: cover;
+  /* Add position: relative to enable absolutely positioned elements inside the image (place text) */
+  position: relative;
+  /* Add a white text color to all elements inside the .bgimg container */
+  color: white;
+  /* Add a font */
+  font-family: "Courier New", Courier, monospace;
+  /* Set the font-size to 25 pixels */
+  font-size: 25px;
+}
+
+/* Position text in the top-left corner */
+.topleft {
+  position: absolute;
+  top: 35px;
+  left: 40px;
+}
+
+/* /1* Position text in the bottom-left corner *1/ */
+/* .bottomleft { */
+/*   position: absolute; */
+/*   bottom: 0; */
+/*   left: 16px; */
+/* } */
+
+/* Position text in the middle */
+.middle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.button-green {
+  display: block;
+  margin: 0 auto;
+  max-width: 176px;
+  padding-top: 7px;
+  padding-bottom: 9px;
+  border-radius: 4px;
+  border: 1.5px solid transparent;
+  background: #00ad57;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  letter-spacing: .4px;
+  text-align: center;
+  color: #fff;
+}
+
+.button-green:hover {
+  background:
+  transparent;
+  color: #00ad57;
+  cursor: pointer;
+  border: 1.5px solid #00ad57;
+}
+
+.text-white{
+  color: white;
+}
+
+.AboutContent{
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.AboutPageH1 {
+  font-family: "IBM Plex Serif", serif !important;
+  font-size: 96px !important;
+  font-weight: 200 !important;
+  line-height: 115.2px !important;
+}
+
+.AboutPageH2 {
+  font-family: "Open Sans", serif !important;
+  font-size: 36px !important;
+  font-weight: 300 !important;
+  line-height: 52px !important;
+}
+
+
+.AboutPageH4{
+  font-size: 2.25em !important;
+  line-height: 52px;
+  font-size: 36px;
+  font-weight: 300;
+  font-family: "Open Sans";
+  color: rgba(0,19,77,.6) !important;
+}
+
+.AboutParagraph{
+  font-size: 16px;
+  line-height: 1.75;
+  letter-spacing: .4px;
+  color: rgba(0,19,77,.6) !important;
+}
+
+
+/* Footer */
+
+.AboutFooter{
+  background-color: #141414;
+  color: #fff !important;
+  padding: 3rem !important;
+  font-family: "Open Sans",sans-serif;
+  font-size: 16px;
+  line-height: 28px;
+  font-weight: 400;
+}
+
+.AboutFooter > *{
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.AboutRow{
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.AboutColumnEuFlag{
+  flex: 0 0 12%;
+  max-width: 12%;
+}
+
+.AboutColumnEuText{
+  flex: 0 0 75%;
+  max-width: 75%;
+  padding-left: 15px;
+  font-size: 12px;
+  letter-spacing: .4px;
+  font-family: Open Sans,sans-serif;
+  line-height: 20px;
+}
+
+.AboutFooterText{
+  color: white;
+}

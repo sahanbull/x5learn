@@ -8,7 +8,7 @@ body, html {
   /* background-image: url('/static/dist/img/bg.jpg'); */
   background-image: url('https://platform.x5gon.org/static/f44fea5e7d724d121834f7a92d7bdf43/b6d8d/transparency.webp');
   /* Full-screen */
-  height: 40%;
+  height: 680px;
   /* Center the background image */
   background-position: center;
   /* Scale and zoom in the image */
@@ -21,13 +21,12 @@ body, html {
   font-family: "Courier New", Courier, monospace;
   /* Set the font-size to 25 pixels */
   font-size: 25px;
-  padding: 38px 40px;
 }
 
 /* Position text in the top-left corner */
 .topleft {
   position: absolute;
-  top: 38px;
+  top: 35px;
   left: 40px;
 }
 
@@ -46,13 +45,6 @@ body, html {
   transform: translate(-50%, -50%);
   text-align: center;
 }
-
-/* Style the <hr> element */
-hr {
-  margin: auto;
-  width: 40%;
-}
-
 
 .button-green {
   display: block;
@@ -77,4 +69,44 @@ hr {
   color: #00ad57;
   cursor: pointer;
   border: 1.5px solid #00ad57;
+}
+
+.text-white{
+  color: white;
+}
+
+.AboutContent{
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.AboutPageH1 {
+  font-family: "IBM Plex Serif", serif !important;
+  font-size: 96px !important;
+  font-weight: 200 !important;
+  line-height: 115.2px !important;
+}
+
+.AboutPageH2 {
+  font-family: "Open Sans", serif !important;
+  font-size: 36px !important;
+  font-weight: 300 !important;
+  line-height: 52px !important;
+}
+
+
+.AboutPageH4{
+  font-size: 2.25em !important;
+  line-height: 52px;
+  font-size: 36px;
+  font-weight: 300;
+  font-family: "Open Sans";
+  color: rgba(0,19,77,.6) !important;
+}
+
+.AboutParagraph{
+  font-size: 16px;
+  line-height: 1.75;
+  letter-spacing: .4px;
+  color: rgba(0,19,77,.6) !important;
 }

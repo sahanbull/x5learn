@@ -31,8 +31,8 @@ viewFeaturedPage model =
           |> column [ centerX, centerY, spacing 30 ]
           |> el [ width fill, height <| fillPortion 3 ]
         else
-          [ "Get a clearer view" |> text |> el [ whiteText, Font.size 60, centerX ]
-          , "X5Learn helps you find information in Open Educational Resources" |> text |> el [ whiteText, Font.size 20, centerX ]
+          [ "Explore Open Educational Resources" |> text |> el [ whiteText, Font.size 60, centerX ]
+          , "Find your ideal learning pathway" |> text |> el [ whiteText, Font.size 20, centerX ]
           ]
           |> column [ centerX, centerY, spacing 30 ]
           |> el [ width fill, height <| fillPortion 3 ]

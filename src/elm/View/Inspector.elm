@@ -157,7 +157,7 @@ viewReadMoreButton inspectorState =
   button
     []
     { onPress = Just <| PressedReadMore inspectorState
-    , label = "Read more" |> bodyNoWrap [ Font.color blueberryBlue ]
+    , label = "Read more" |> bodyNoWrap [ Font.color electricBlue ]
     }
 
 

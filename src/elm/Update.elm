@@ -1265,4 +1265,4 @@ inspectOer model oer fragmentStart playWhenReady =
 
 showLoginHintIfNeeded : Model -> Model
 showLoginHintIfNeeded model =
-  { model | popup = if isLoggedIn model then Nothing else Just LoginHintPopup |> Debug.log "popup"}
+  { model | popup = if isLoggedIn model then Nothing else Just LoginHintPopup }

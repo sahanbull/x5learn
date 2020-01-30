@@ -151,6 +151,10 @@ bodyTextAttrs =
   [ Font.size 14, Font.color materialDark ]
 
 
+bigHeadingTextAttrs =
+  [ Font.family [ Font.typeface "IBM Plex Serif" , Font.serif ] ]
+
+
 captionNowrap : List (Attribute Msg) -> String -> Element Msg
 captionNowrap attrs str =
   text str |> el (captionTextAttrs ++ attrs)

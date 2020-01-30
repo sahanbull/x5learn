@@ -4,7 +4,7 @@ html, head, body {
 }
 
 body * {
-  font-family: 'Roboto', 'Trebuchet MS', 'Lucida Grande', 'Bitstream Vera Sans', 'Helvetica Neue', sans-serif !important;
+  font-family: 'Open Sans', 'Trebuchet MS', 'Lucida Grande', 'Bitstream Vera Sans', 'Helvetica Neue', sans-serif;
   color: rgba(0,0,0,0.87);
 }
 
@@ -15,6 +15,13 @@ h1, h2, h3, h4 {
 a {
   color: rgba(0,0,0,0.87);
   text-decoration: none;
+}
+
+.BigHeadingFont{
+  font-family: "IBM Plex Serif",serif!important;
+  font-weight: 300 !important;
+  line-height: 96px !important;
+  font-size: 96px !important;
 }
 
 .Snackbar{

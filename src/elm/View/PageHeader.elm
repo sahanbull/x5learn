@@ -69,7 +69,7 @@ viewPageHeader model =
                       case model.popup of
                         Just LoginHintPopup ->
                           [ guestCallToSignup "To create your ideal personal learning pathway" ]
-                          |> menuColumn [ padding 15, moveDown 10, width <| px 166 ]
+                          |> menuColumn [ padding 15, moveDown 10, width <| px 176 ]
                           |> below
                           |> List.singleton
 

@@ -533,6 +533,7 @@ update msg ({nav, userProfileForm} as model) =
                     case mouseDownPosition of
                       Nothing ->
                         model -- impossible
+
                       Just dragStartPos ->
                         { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing } }
                         |> setCourseRange dragStartPos position

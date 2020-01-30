@@ -106,7 +106,6 @@ subscriptions model =
   , Ports.closeInspector (\_ -> CloseInspector)
   , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
   , Ports.mouseMovedOnTopicLane MouseMovedOnTopicLane
-  , Ports.timelineMouseEvent TimelineMouseEvent
   , Ports.html5VideoStarted Html5VideoStarted
   , Ports.html5VideoPaused Html5VideoPaused
   , Ports.html5VideoSeeked Html5VideoSeeked
@@ -114,5 +113,5 @@ subscriptions model =
   , Ports.pageScrolled PageScrolled
   , Ports.receiveCardPlaceholderPositions OerCardPlaceholderPositionsReceived
   , Time.every (if model.currentTime==initialTime then 1 else if model.timelineHoverState==Nothing then 500 else 200) ClockTicked
-  ] ++ (if anyBubblogramsAnimating model || isInspectorAnimating model then [ Browser.Events.onAnimationFrame AnimationTick ] else []))
+  ] ++ (if anyBubblogramsAnimating model || isInspectorAnimating model then [ Browser.Events.onAnimationFrame AnimationTick ] else [])) ++ (if isLabStudy1 model then [ Ports.timelineMouseEvent TimelineMouseEvent ] else [])
   |> Sub.batch

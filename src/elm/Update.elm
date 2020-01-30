@@ -733,7 +733,21 @@ update msg ({nav, userProfileForm} as model) =
             { userProfileForm | userProfile = newProfile, saved = False }
       in
           ( { model | userProfileForm = newForm }, Cmd.none )
-          |> logEventForLabStudy "ToggleDataCollectionConsent" []
+          |> logEventForLabStudy "ToggleDataCollectionConsent" [ if enabled then "enable" else "disable" ]
+
+    ClickedOnContentFlowBar oer position isCard ->
+      let
+          logFunction =
+            logEventForLabStudy "ClickedOnContentFlowBar" [ oer.id |> String.fromInt, position |> String.fromFloat, if isCard then "card" else "inspector" ]
+      in
+          if isCard then
+            model
+            |> update (InspectOer oer position True)
+            |> logFunction
+          else
+            model
+            |> update (StartCurrentHtml5Video (position * oer.durationInSeconds))
+            |> logFunction
 
 
 insertSearchResults : List OerId -> Model -> Model

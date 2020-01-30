@@ -86,6 +86,7 @@ type Msg
   | OpenedOverviewTypeMenu
   | PressedReadMore InspectorState
   | ToggleDataCollectionConsent Bool
+  | ClickedOnContentFlowBar Oer Float Bool
 
 
 type UserProfileField

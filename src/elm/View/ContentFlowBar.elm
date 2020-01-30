@@ -42,6 +42,9 @@ viewContentFlowBar model oer chunks barWidth barId =
             ranges
             |> List.map (\{start,length} -> none |> el [ width (length |> pxFromSeconds |> round |> max 4 |> px), height <| px 3, Background.color red, moveRight <| pxFromSeconds <| min start (oer.durationInSeconds-length), pointerEventsNone ] |> inFront)
 
+      isOnCard =
+        isHovering model oer
+
       courseRangeMarkers =
         let
             maybeRangeFromDragging =
@@ -49,7 +52,7 @@ viewContentFlowBar model oer chunks barWidth barId =
                 Nothing ->
                   Nothing
                 Just timelineHoverState ->
-                  if isHovering model oer || isInspecting model oer then
+                  if isOnCard || isInspecting model oer then
                     case timelineHoverState.mouseDownPosition of
                       Nothing ->
                         Nothing
@@ -174,7 +177,7 @@ viewContentFlowBar model oer chunks barWidth barId =
 
       -- Here is where we define the effects of hover and click, depending on whether the bar is on a card or not
       scrubDisplayAndClickHandler =
-        if isHovering model oer || isInspecting model oer then
+        if isOnCard || isInspecting model oer then
           case model.timelineHoverState of
             Nothing ->
               []
@@ -200,12 +203,9 @@ viewContentFlowBar model oer chunks barWidth barId =
                         [ cursor, timeDisplay ]
 
                   clickHandler =
-                    if isHovering model oer then
-                      onClickStopPropagation <| InspectOer oer position True
-                    else
-                      onClickStopPropagation <| StartCurrentHtml5Video (position * oer.durationInSeconds)
+                    onClickStopPropagation <| ClickedOnContentFlowBar oer position isOnCard
               in
-                  scrubDisplay ++ [ clickHandler ]
+                  scrubDisplay++ [ clickHandler ]
         else
           []
 

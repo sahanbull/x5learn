@@ -224,7 +224,7 @@ viewContentFlowBarWrapper model inspectorState oer =
           case getCourseItem model oer of
             Nothing ->
               [ none |> el [ width fill ]
-              , if isLabStudy1 model then none else actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
+              , if isLabStudy1 model then none else actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer
               ]
 
             Just item ->

@@ -1175,8 +1175,25 @@ overviewTypes =
   ]
 
 
-{-| Function that does nothing
+{-| Get the OER (if any) which the user is currently focusing on, either by hovering over a card or through the inspector
 -}
-noOp : a -> a
-noOp x =
-  x
+hoveringOrInspectingOer : Model -> Maybe Oer
+hoveringOrInspectingOer model =
+  case model.inspectorState of
+    Just {oer} ->
+      Just oer
+
+    Nothing ->
+      case model.hoveringOerId of
+        Just hoveringOerId ->
+          model.cachedOers |> Dict.get hoveringOerId
+
+        Nothing ->
+          Nothing
+
+
+{-| Check whether a number lies within the boundary of a Range
+-}
+isNumberInRange : Float -> Range -> Bool
+isNumberInRange point range =
+  point >= range.start && point <= range.start + range.length

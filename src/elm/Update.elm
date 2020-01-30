@@ -92,14 +92,14 @@ update msg ({nav, userProfileForm} as model) =
     BrowserResized x y ->
       ( { model | windowWidth = x, windowHeight = y } |> closePopup, askPageScrollState True)
 
-    InspectOer oer fragmentStart playWhenReady ->
+    InspectOer oer fragmentStart playWhenReady commentForLogging ->
       inspectOer model oer fragmentStart playWhenReady
       |> saveAction 1 [ ("oerId", Encode.int oer.id) ]
-      |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat, "playWhenReady:"++(if playWhenReady then "True" else "False") ]
+      |> logEventForLabStudy "InspectOer" [ oer.id |> String.fromInt, fragmentStart |> String.fromFloat, "playWhenReady:"++(if playWhenReady then "True" else "False"), commentForLogging ]
 
     ClickedOnCourseItem oer ->
       model
-      |> update (InspectOer oer 0 False)
+      |> update (InspectOer oer 0 False "ClickedOnCourseItem")
       |> logEventForLabStudy "ClickedOnCourseItem" [ oer.id |> String.fromInt ]
 
     PressedCloseButtonInInspector ->
@@ -518,57 +518,43 @@ update msg ({nav, userProfileForm} as model) =
       ({ model | selectedMention = Just (oerId, mention), hoveringEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
 
     TimelineMouseEvent {eventName, position} ->
-      let
-          newModel =
-            case eventName of
-              "mousedown" ->
-                { model | timelineHoverState = Just { position = position, mouseDownPosition = Just position } }
+      if isLabStudy1 model || eventName=="mouseup" then -- only lab study users can create ranges. But all users can click (mouseup).
+        case hoveringOrInspectingOer model of
+          Nothing ->
+            (model, Cmd.none) -- impossible
 
-              "mouseup" ->
-                case model.timelineHoverState of
-                  Nothing ->
-                    model -- impossible
-
-                  Just {mouseDownPosition} ->
-                    case mouseDownPosition of
-                      Nothing ->
-                        model -- impossible
-
-                      Just dragStartPos ->
-                        { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing } }
-                        |> setCourseRange dragStartPos position
-
-              "mousemove" ->
-                case model.timelineHoverState of
-                  Nothing ->
-                    { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing } }
-
-                  Just timelineHoverState ->
-                    { model | timelineHoverState = Just { position = position, mouseDownPosition = timelineHoverState.mouseDownPosition } }
-
-              _ ->
-                model -- impossible
-      in
-          (newModel, Cmd.none)
-          |> logEventForLabStudy "TimelineMouseEvent" [ eventName, position |> String.fromFloat ]
+          Just oer ->
+            (handleTimelineMouseEvent model oer eventName position, Cmd.none)
+            |> logEventForLabStudy "TimelineMouseEvent" [ eventName, position |> String.fromFloat ]
+      else
+        (model, Cmd.none)
 
     TimelineMouseLeave ->
-      let
-          newModel =
+      if isLabStudy1 model |> not then
+        (model, Cmd.none) -- only lab study users can create ranges
+      else
+        case hoveringOrInspectingOer model of
+          Nothing ->
+            (model, Cmd.none) -- impossible
+
+          Just oer ->
             case model.timelineHoverState of
               Nothing ->
-                model -- impossible
+                (model, Cmd.none) -- impossible
 
               Just {position, mouseDownPosition} ->
                 case mouseDownPosition of
                   Nothing ->
-                    model -- scrubbed but not dragged
+                    (model, Cmd.none) -- scrubbed but not dragged
 
                   Just dragStartPos ->
-                    model |> setCourseRange dragStartPos position
-      in
-          ({ newModel | timelineHoverState = Nothing }, Cmd.none)
-          |> logEventForLabStudy "TimelineMouseLeave" []
+                    let
+                        newModel =
+                          { model | timelineHoverState = Nothing }
+                          |> setCourseRange oer dragStartPos position
+                    in
+                        (newModel, Cmd.none)
+                        |> logEventForLabStudy "TimelineMouseLeave" [ position |> String.fromFloat ]
 
     Html5VideoStarted pos ->
       (model |> updateVideoPlayer (Started pos) |> extendVideoUsages pos, Cmd.none)
@@ -632,11 +618,11 @@ update msg ({nav, userProfileForm} as model) =
       ({ model | popup = Just <| ExplanationPopup componentId }, Cmd.none)
       |> saveAction 12 [ ("componentId", Encode.string componentId) ]
 
-    AddedOerToCourse oerId range ->
+    AddedOerToCourse oer ->
       let
           newItem =
-            { oerId = oerId
-            , range = range
+            { oerId = oer.id
+            , range = Range 0 oer.durationInSeconds
             , comment = ""
             }
 
@@ -647,7 +633,7 @@ update msg ({nav, userProfileForm} as model) =
             { oldCourse | items = newItem :: oldCourse.items}
       in
           ({ model | course = newCourse, courseOptimization = Nothing }, Cmd.none)
-          |> logEventForLabStudy "AddedOerToCourse" [ oerId |> String.fromInt, courseToString newCourse ]
+          |> logEventForLabStudy "AddedOerToCourse" [ oer.id |> String.fromInt, courseToString newCourse ]
           |> saveCourseNow
 
     RemovedOerFromCourse oerId ->
@@ -743,7 +729,7 @@ update msg ({nav, userProfileForm} as model) =
       in
           if isCard then
             model
-            |> update (InspectOer oer position True)
+            |> update (InspectOer oer position True "ClickedOnContentFlowBar")
             |> logFunction
           else
             model
@@ -889,7 +875,8 @@ inspectOerBasedOnUrlParameter model =
               (model, Cmd.none)
 
             Just oer ->
-              inspectOer model oer 0 False
+              model
+              |> update (InspectOer oer 0 False "inspectOerBasedOnUrlParameter")
 
 
 setTextInResourceFeedbackForm : OerId -> String -> Model -> Model
@@ -1158,57 +1145,60 @@ courseToString {items} =
   |> String.join ","
 
 
-setCourseRange : Float -> Float -> Model -> Model
-setCourseRange dragStartPosition dragEndPosition ({course} as model) =
+getCourseRange : Model -> Oer -> Float -> Maybe Range
+getCourseRange model oer position01 =
   let
-      newModel oerId duration =
-        let
-            range =
-              { start = dragStartPosition * duration
-              , length = (dragEndPosition - dragStartPosition) * duration
-              }
-              |> invertRangeIfNeeded
-
-            maybeExistingItem =
-              course.items
-              |> List.filter (\item -> item.oerId==oerId)
-              |> List.head
-
-            newItems =
-              case maybeExistingItem of
-                Nothing ->
-                  { oerId = oerId, range = range, comment = "" } :: course.items
-
-                Just existingItem ->
-                  course.items
-                  |> List.map (\item -> if item.oerId==existingItem.oerId then { item | range = range } else item)
-
-            oldCourse : Course
-            oldCourse =
-              model.course
-        in
-            if range.length > duration/100 then -- it needs to be drag, not click
-              { model | course = { oldCourse | items = newItems } }
-              |> markCourseAsChanged
-            else
-              model
+      maybeExistingItem =
+        model.course.items
+        |> List.filter (\item -> item.oerId==oer.id)
+        |> List.head
   in
-      case model.inspectorState of
-        Just {oer} ->
-          newModel oer.id oer.durationInSeconds
-
+      case maybeExistingItem of
         Nothing ->
-          case model.hoveringOerId of
-            Just hoveringOerId ->
-              case model.cachedOers |> Dict.get hoveringOerId of
-                Nothing ->
-                  model -- impossible
+          Nothing
 
-                Just oer ->
-                  newModel hoveringOerId oer.durationInSeconds
+        Just item ->
+          if isNumberInRange (position01 * oer.durationInSeconds) item.range then
+            Just item.range
+          else
+            Nothing
 
-            Nothing ->
-              model -- impossible
+
+setCourseRange : Oer -> Float -> Float -> Model -> Model
+setCourseRange oer dragStartPosition dragEndPosition ({course} as model) =
+  let
+      duration =
+        oer.durationInSeconds
+
+      range =
+        { start = dragStartPosition * duration
+        , length = (dragEndPosition - dragStartPosition) * duration
+        }
+        |> invertRangeIfNeeded
+
+      maybeExistingItem =
+        course.items
+        |> List.filter (\item -> item.oerId==oer.id)
+        |> List.head
+
+      newItems =
+        case maybeExistingItem of
+          Nothing ->
+            { oerId = oer.id, range = range, comment = "" } :: course.items
+
+          Just existingItem ->
+            course.items
+            |> List.map (\item -> if item.oerId==existingItem.oerId then { item | range = range } else item)
+
+      oldCourse : Course
+      oldCourse =
+        model.course
+  in
+      if range.length > duration/100 then -- it needs to be drag, not click
+        { model | course = { oldCourse | items = newItems } }
+        |> markCourseAsChanged
+      else
+        model
 
 
 setCommentTextInCourseItem : OerId -> String -> Model -> Model
@@ -1281,3 +1271,40 @@ inspectOer model oer fragmentStart playWhenReady =
 showLoginHintIfNeeded : Model -> Model
 showLoginHintIfNeeded model =
   { model | popup = if isLoggedIn model then Nothing else Just LoginHintPopup }
+
+
+handleTimelineMouseEvent : Model -> Oer -> String -> Float -> Model
+handleTimelineMouseEvent model oer eventName position =
+  case eventName of
+    "mousedown" ->
+      case getCourseRange model oer position of
+        Nothing ->
+          { model | timelineHoverState = Just { position = position, mouseDownPosition = Just position } }
+
+        Just range ->
+          { model | popup = Just LoginHintPopup }
+
+    "mouseup" ->
+      case model.timelineHoverState of
+        Nothing ->
+          model -- impossible
+
+        Just {mouseDownPosition} ->
+          case mouseDownPosition of
+            Nothing ->
+              model -- impossible
+
+            Just dragStartPos ->
+              { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing } }
+              |> setCourseRange oer dragStartPos position
+
+    "mousemove" ->
+      case model.timelineHoverState of
+        Nothing ->
+          { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing } }
+
+        Just timelineHoverState ->
+          { model | timelineHoverState = Just { position = position, mouseDownPosition = timelineHoverState.mouseDownPosition } }
+
+    _ ->
+      model -- impossible

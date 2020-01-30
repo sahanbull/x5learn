@@ -553,16 +553,6 @@ truncateSentence characterLimit sentence =
         (firstWords (sentence |> String.split " ")) ++ "…"
 
 
-openInspectorOnPress : Model -> Oer -> Maybe Msg
-openInspectorOnPress model oer =
-  case model.inspectorState of
-    Nothing ->
-      Just (InspectOer oer 0 False)
-
-    _ ->
-      Nothing
-
-
 imageHeight : Int
 imageHeight =
   175

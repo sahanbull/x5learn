@@ -131,7 +131,7 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
                     Just (_, {positionInResource}) ->
                       positionInResource - 0.0007
             in
-                [ onClickStopPropagation <| InspectOer oer fragmentStart True ]
+                [ onClickStopPropagation <| InspectOer oer fragmentStart True "Click on Bubblogram" ]
 
       graphic =
         [ background ] ++ svgBubbles

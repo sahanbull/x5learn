@@ -210,7 +210,7 @@ viewContentFlowBar model oer chunks barWidth barId =
           []
 
       mouseLeaveHandler =
-        [ onMouseLeave <| TimelineMouseLeave ]
+        [ onMouseLeave TimelineMouseLeave ]
   in
       none
       |> el ([ htmlClass "ContentFlowBar", width fill, height <| px <| contentFlowBarHeight, moveUp contentFlowBarHeight ] ++ chunkTriggers ++ border ++ background ++ visitedRangeMarkers ++ courseRangeMarkers ++ scrubDisplayAndClickHandler ++ mouseLeaveHandler)

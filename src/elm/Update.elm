@@ -530,31 +530,7 @@ update msg ({nav, userProfileForm} as model) =
         (model, Cmd.none)
 
     TimelineMouseLeave ->
-      if isLabStudy1 model |> not then
-        (model, Cmd.none) -- only lab study users can create ranges
-      else
-        case hoveringOrInspectingOer model of
-          Nothing ->
-            (model, Cmd.none) -- impossible
-
-          Just oer ->
-            case model.timelineHoverState of
-              Nothing ->
-                (model, Cmd.none) -- impossible
-
-              Just {position, mouseDownPosition} ->
-                case mouseDownPosition of
-                  Nothing ->
-                    (model, Cmd.none) -- scrubbed but not dragged
-
-                  Just dragStartPos ->
-                    let
-                        newModel =
-                          { model | timelineHoverState = Nothing }
-                          |> setCourseRange oer dragStartPos position
-                    in
-                        (newModel, Cmd.none)
-                        |> logEventForLabStudy "TimelineMouseLeave" [ position |> String.fromFloat ]
+      ({ model | timelineHoverState = Nothing }, Cmd.none)
 
     Html5VideoStarted pos ->
       (model |> updateVideoPlayer (Started pos) |> extendVideoUsages pos, Cmd.none)

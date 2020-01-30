@@ -65,11 +65,13 @@ viewCourseItem model index item =
               button buttonAttrs { onPress = Just <| MovedCourseItemDown index, label = "Move ↓" |> captionNowrap [ whiteText ] }
 
           deleteButton =
-            button [] { onPress = Just <| RemovedOerFromCourse oer.id, label = "Remove" |> captionNowrap [ greyText] }
+            button [ alignRight ] { onPress = Just <| RemovedOerFromCourse oer.id, label = "Remove" |> captionNowrap [ greyText ] }
 
           topRow =
-            [ index+1 |> String.fromInt |> bodyNoWrap []
-            , moveUpButton
+            oer.title |> bodyWrap []
+
+          buttonRow =
+            [ moveUpButton
             , moveDownButton
             , deleteButton
             ]
@@ -77,9 +79,9 @@ viewCourseItem model index item =
 
           miniCard =
             [ topRow
-            , oer.title |> bodyWrap []
+            , buttonRow
             ]
-            |> column [ width fill, spacing 10, paddingTop 10, borderTop 1, Border.color <| greyDivider ]
+            |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
       in
           miniCard
           |> el [ width fill, htmlClass "PreventClosingInspectorOnClick", onClickStopPropagation <| ClickedOnCourseItem oer ]

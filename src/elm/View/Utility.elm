@@ -59,9 +59,14 @@ oxfordBlue =
   rgb255 0 19 77
 
 
+superlightGrey : Color
+superlightGrey =
+  rgb255 242 243 244
+
+
 superLightBackground : Attribute Msg
 superLightBackground =
-  Background.color <| rgb255 242 243 244
+  Background.color superlightGrey
 
 
 -- additional UI colors
@@ -208,6 +213,11 @@ allSidesZero =
   , bottom = 0
   , left = 0
   }
+
+
+smallShadow : Attribute Msg
+smallShadow =
+  Border.shadow { offset = ( 0, 2 ) , size = 1 , blur = 3 , color = superlightGrey }
 
 
 captionTextAttrs : List (Attribute Msg)

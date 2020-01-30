@@ -51,6 +51,8 @@ viewTheInspector model inspectorState =
           "Sorry! This content requires a larger screen." |> bodyWrap [ paddingXY 0 40 ]
         else if inspectorState.oer.mediatype=="pdf" && model.windowWidth < 1005 then
           "Sorry! This content requires a wider screen." |> bodyWrap [ paddingXY 0 40 ]
+        else if isLabStudy1 model then
+          viewInspectorBody model inspectorState
         else
           [ viewInspectorSidebar model inspectorState
           , viewInspectorBody model inspectorState
@@ -123,7 +125,7 @@ viewInspectorBody model ({oer, fragmentStart} as inspectorState) =
       [ player
       , viewContentFlowBarWrapper model inspectorState oer
       ]
-      |> column [ width <| px <| playerWidth model, moveLeft inspectorSidebarWidth ]
+      |> column [ width <| px <| playerWidth model, moveLeft (inspectorSidebarWidth model) ]
 
 
 viewDescription : InspectorState -> Oer -> Element Msg
@@ -187,7 +189,7 @@ viewLinkToFile oer =
 
 sheetWidth model =
   model.windowWidth - navigationDrawerWidth
-  |> min (playerWidth model + inspectorSidebarWidth + 35)
+  |> min (playerWidth model + (inspectorSidebarWidth model) + 35)
 
 
 viewCourseSettings : Model -> Oer -> CourseItem -> List (Element Msg)
@@ -219,7 +221,7 @@ viewCourseSettings model oer {range, comment} =
 
       changesSaved =
         if model.courseChangesSaved then
-          "✓ Your changes have been saved" |> captionNowrap [ alignRight, greyText ]
+          "✓ Your changes have been saved" |> captionNowrap [ alignRight, greyText, paddingRight 10 ]
         else
           none
   in
@@ -236,7 +238,7 @@ viewContentFlowBarWrapper model inspectorState oer =
           case getCourseItem model oer of
             Nothing ->
               [ none |> el [ width fill ]
-              , actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
+              , if isLabStudy1 model then none else actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
               ]
 
             Just item ->
@@ -342,7 +344,7 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
       [ tabsMenu |> el [ width fill ]
       , tabContent |> el [ scrollbarY, height (fill |> maximum 510), width fill ]
       ]
-      |> column [ spacing 25, width <| px inspectorSidebarWidth, height fill, alignTop, borderLeft 1, borderColorDivider, moveRight ((sheetWidth model) - inspectorSidebarWidth - 35 |> toFloat), Background.color white ]
+      |> column [ spacing 25, width <| px (inspectorSidebarWidth model), height fill, alignTop, borderLeft 1, borderColorDivider, moveRight ((sheetWidth model) - (inspectorSidebarWidth model) - 35 |> toFloat), Background.color white ]
 
 
 viewRecommendationCard : Model -> Oer -> Element Msg
@@ -394,7 +396,7 @@ recommendationCardHeight =
 
 recommendationCardWidth : Model -> Int
 recommendationCardWidth model =
-  inspectorSidebarWidth - 23
+  (inspectorSidebarWidth model) - 23
 
 
 viewFeedbackTab : Model -> Oer -> Element Msg

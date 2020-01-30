@@ -196,25 +196,11 @@ viewCourseSettings : Model -> Oer -> CourseItem -> List (Element Msg)
 viewCourseSettings model oer {range, comment} =
   let
       topRow =
-        -- let
-        --     rangeText =
-        --       if (range |> Debug.log "range") == Range 0 1 then
-        --         ""
-        --       else
-        --         [ "(Range "
-        --         , range.start |> floor |> secondsToString
-        --         , " - "
-        --         , range.start + range.length |> floor |> secondsToString
-        --         , ")"
-        --         ]
-        --         |> String.join ""
-        -- in
-            -- [ "This video has been added to your workspace." ++ rangeText |> bodyWrap [ width fill ]
-            [ "This video has been added to your workspace." |> bodyWrap [ width fill ]
-            , changesSaved
-            , actionButtonWithIcon [] [] IconLeft 0.7 "delete" "Remove" <| Just <| RemovedOerFromCourse oer.id
-            ]
-            |> row [ width fill, borderTop 1, Border.color greyDivider, paddingTop 10 ]
+        [ "This video has been added to your workspace." |> bodyWrap [ width fill ]
+        , changesSaved
+        , actionButtonWithIcon [] [] IconLeft 0.7 "delete" "Remove" <| Just <| RemovedOerFromCourse oer.id
+        ]
+        |> row [ width fill, borderTop 1, Border.color greyDivider, paddingTop 10 ]
 
       commentField =
         Input.text [ width fill, htmlId "TextInputFieldForCommentOnCourseItem", onEnter <| SubmittedCourseItemComment, Border.color primaryGreen, Font.size 14, padding 3, moveDown 5 ] { onChange = ChangedCommentTextInCourseItem oer.id, text = comment, placeholder = Just ("Enter any comments about this item" |> text |> Input.placeholder [ Font.size 14, moveDown 6 ]), label = Input.labelHidden "Comment on course item" }

@@ -1170,11 +1170,8 @@ setCourseRange oer dragStartPosition dragEndPosition ({course} as model) =
       oldCourse =
         model.course
   in
-      if range.length > duration/100 then -- it needs to be drag, not click
-        { model | course = { oldCourse | items = newItems } }
-        |> markCourseAsChanged
-      else
-        model
+      { model | course = { oldCourse | items = newItems } }
+      |> markCourseAsChanged
 
 
 setCommentTextInCourseItem : OerId -> String -> Model -> Model
@@ -1271,8 +1268,11 @@ handleTimelineMouseEvent model oer eventName position =
               model -- impossible
 
             Just dragStartPos ->
-              { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing } }
-              |> setCourseRange oer dragStartPos position
+              if (position-dragStartPos |> abs) < 0.01 then -- don't count clicks as ranges
+                model
+              else
+                { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing } }
+                |> setCourseRange oer dragStartPos position
 
     "mousemove" ->
       case model.timelineHoverState of

@@ -46,29 +46,76 @@ body, html {
   text-align: center;
 }
 
+
+.AboutTopRightButtons{
+  position: absolute;
+  top: 35px;
+  right: 40px;
+}
+
+.AboutTopRightButtons a{
+  display: inline-block;
+}
+
+.AboutTopRightButtonsOr {
+  display: inline-block;
+  font-size: 16px;
+  margin-right: 20px;
+  /* color: white; */
+}
+
+
+
 .button-green {
   display: block;
   margin: 0 auto;
   max-width: 176px;
-  padding-top: 7px;
-  padding-bottom: 9px;
+  padding: 11px 19px 13px 19px;
   border-radius: 4px;
   border: 1.5px solid transparent;
   background: #00ad57;
-  font-size: 14px;
+  /* font-size: 14px; */
+  font-size: 16px;
   line-height: 20px;
-  font-weight: 600;
-  letter-spacing: .4px;
+  font-weight: 400;
+  letter-spacing: .8px;
   text-align: center;
   color: #fff;
 }
 
 .button-green:hover {
-  background:
-  transparent;
+  background: transparent;
   color: #00ad57;
   cursor: pointer;
   border: 1.5px solid #00ad57;
+}
+
+.AboutFatSignupButton{
+  padding: 18px 24px 17px;
+  font-size: 16px;
+  letter-spacing: 1.7px;
+}
+
+.AboutSignupButton{
+  color: #00ad57 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+.AboutSignupButton:hover{
+  color: 1.5px solid #00cc77 !important;
+}
+
+
+.AboutLoginButton{
+  background: transparent;
+  color: #00ad57;
+  cursor: pointer;
+  border: 1.5px solid #00ad57;
+}
+
+.AboutLoginButton:hover{
+  border: 1.5px solid #00cc77 !important;
 }
 
 .text-white{

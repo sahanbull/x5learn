@@ -53,13 +53,13 @@ viewCourseItem model index item =
             [ paddingXY 5 3, buttonRounding, Background.color primaryGreen, alignRight ]
 
           moveUpButton =
-            if index==0 then
+            if index==0 || isLabStudy1 model then
               none
             else
               button buttonAttrs { onPress = Just <| MovedCourseItemDown (index-1), label = "Move ↑" |> captionNowrap [ whiteText ] }
 
           moveDownButton =
-            if index==nCourseItems-1 then
+            if index==nCourseItems-1 || isLabStudy1 model then
               none
             else
               button buttonAttrs { onPress = Just <| MovedCourseItemDown index, label = "Move ↓" |> captionNowrap [ whiteText ] }
@@ -100,23 +100,26 @@ viewCoursePathFinderContainer model =
 -}
 viewCoursePathFinderWidget : Model -> Element Msg
 viewCoursePathFinderWidget model =
-  case model.courseOptimization of
-    Nothing ->
-      actionButtonWithIcon [ whiteText, paddingXY 12 10, width fill, centerX ] [ Background.color electricBlue, width fill, buttonRounding ] IconLeft 1 "directions_walk_white" "Optimise learning path" (Just PressedOptimiseLearningPath)
+  if isLabStudy1 model then
+    none
+  else
+    case model.courseOptimization of
+      Nothing ->
+        actionButtonWithIcon [ whiteText, paddingXY 12 10, width fill, centerX ] [ Background.color electricBlue, width fill, buttonRounding ] IconLeft 1 "directions_walk_white" "Optimise learning path" (Just PressedOptimiseLearningPath)
 
-    Just Loading ->
-      viewLoadingSpinner
+      Just Loading ->
+        viewLoadingSpinner
 
-    Just (UndoAvailable savedPreviousCourse) ->
-      let
-          content =
-            if savedPreviousCourse == model.course then
-              [ "Your workspace is in a good sequence for learning, according to our algorithm. No changes needed." |> captionWrap [ whiteText ]
-              ]
-            else
-              [ "Our algorithm has changed the sequence of your items." |> captionWrap [ whiteText ]
-              , simpleButton [ Font.size 12, Font.color electricBlue ] "Undo" (Just <| PressedUndoCourse savedPreviousCourse)
-              ]
-      in
-          content
-          |> column [ spacing 15, padding 10, Background.color <| grey 50, Border.rounded 10 ]
+      Just (UndoAvailable savedPreviousCourse) ->
+        let
+            content =
+              if savedPreviousCourse == model.course then
+                [ "Your workspace is in a good sequence for learning, according to our algorithm. No changes needed." |> captionWrap [ whiteText ]
+                ]
+              else
+                [ "Our algorithm has changed the sequence of your items." |> captionWrap [ whiteText ]
+                , simpleButton [ Font.size 12, Font.color electricBlue ] "Undo" (Just <| PressedUndoCourse savedPreviousCourse)
+                ]
+        in
+            content
+            |> column [ spacing 15, padding 10, Background.color <| grey 50, Border.rounded 10 ]

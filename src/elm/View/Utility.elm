@@ -34,8 +34,8 @@ midnightBlue =
   rgb255 0 13 50
 
 
-greyX5GON : Color
-greyX5GON =
+x5grey : Color
+x5grey =
   rgb255 74 84 114
 
 
@@ -143,7 +143,7 @@ whiteText =
 
 greyText : Attribute Msg
 greyText =
-  Font.color <| greyX5GON
+  Font.color <| x5grey
 
 
 pageHeaderHeight : Int
@@ -169,6 +169,11 @@ paddingLeft px =
 paddingRight : Int -> Attribute Msg
 paddingRight px =
   paddingEach { allSidesZero | right = px }
+
+
+buttonRounding : Attribute Msg
+buttonRounding =
+  Border.rounded 4
 
 
 bigButtonPadding : Attribute Msg
@@ -361,6 +366,10 @@ navigationDrawerWidth =
   230
 
 
+dropdownTriangle =
+  "▾" |> captionNowrap [ Font.color grey80 ]
+
+
 actionButtonWithIcon : List (Attribute Msg) -> List (Attribute Msg) -> IconPosition -> Float -> String -> String -> Maybe Msg -> Element Msg
 actionButtonWithIcon textAttrs buttonAttrs iconPosition iconAlpha svgIconStub str onPress =
   let
@@ -378,7 +387,7 @@ actionButtonWithIcon textAttrs buttonAttrs iconPosition iconAlpha svgIconStub st
           IconRight ->
             [ title, icon ]
   in
-      button ([ htmlClass "PreventClosingInspectorOnClick" ] ++ buttonAttrs) { onPress = onPress, label = label |> row [ width fill, spacing 3, Border.rounded 4 ]}
+      button ([ htmlClass "PreventClosingInspectorOnClick", buttonRounding ] ++ buttonAttrs) { onPress = onPress, label = label |> row [ width fill, spacing 3, buttonRounding ]}
 
 
 actionButtonWithoutIcon : List (Attribute Msg) -> List (Attribute Msg) -> String -> Maybe Msg -> Element Msg

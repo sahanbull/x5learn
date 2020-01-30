@@ -94,11 +94,8 @@ viewUserMenu model userProfile =
       icon =
         avatarImage
 
-      triangle =
-        "▾" |> captionNowrap [ Font.color grey80 ]
-
       label =
-        [ icon, triangle ]
+        [ icon, dropdownTriangle ]
         |> row [ width fill, paddingXY 12 3, spacing 5 ]
 
       navButton url buttonText =

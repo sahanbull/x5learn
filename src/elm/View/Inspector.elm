@@ -325,7 +325,7 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
         , (RecommendationsTab, "Related")
         ]
         |> List.map renderTab
-        |> row [ width fill, paddingXY 20 0, spacing 25, Background.color greyX5GON ]
+        |> row [ width fill, paddingXY 20 0, spacing 25, Background.color midnightBlue ]
 
       tabContent =
         if isLoggedIn model then
@@ -411,11 +411,11 @@ viewFeedbackTab model oer =
         , "Poor content"
         , "Poor image"
         ] ++ (if isVideoFile oer.url then [ "Poor audio" ] else []))
-        |> List.map (\option -> simpleButton [ paddingXY 9 5, Background.color primaryGreen, Font.size 14, whiteText ] option (Just <| SubmittedResourceFeedback oer.id (">>>"++option)))
+        |> List.map (\option -> simpleButton [ paddingXY 9 5, Background.color primaryGreen, buttonRounding, Font.size 14, whiteText ] option (Just <| SubmittedResourceFeedback oer.id (">>>"++option)))
         |> column [ spacing 10 ]
 
       textField =
-        Input.text [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color greyX5GON ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your comments" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
+        Input.text [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5grey ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your comments" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
   in
       [ "How would you describe this material?" |> bodyWrap []
       , quickOptions

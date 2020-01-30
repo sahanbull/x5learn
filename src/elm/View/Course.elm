@@ -102,7 +102,7 @@ viewCoursePathFinderWidget : Model -> Element Msg
 viewCoursePathFinderWidget model =
   case model.courseOptimization of
     Nothing ->
-      actionButtonWithIcon [ whiteText, paddingXY 12 10, width fill, centerX ] [ Background.color blueberryBlue, width fill, buttonRounding ] IconLeft 1 "directions_walk_white" "Optimise learning path" (Just PressedOptimiseLearningPath)
+      actionButtonWithIcon [ whiteText, paddingXY 12 10, width fill, centerX ] [ Background.color electricBlue, width fill, buttonRounding ] IconLeft 1 "directions_walk_white" "Optimise learning path" (Just PressedOptimiseLearningPath)
 
     Just Loading ->
       viewLoadingSpinner

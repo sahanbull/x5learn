@@ -73,7 +73,7 @@ white =
 
 yellow : Color
 yellow =
-  rgba255 255 245 0 0.93
+  rgba255 255 235 0 0.97
 
 
 red : Color

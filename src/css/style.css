@@ -108,7 +108,7 @@ a {
 .loader {
   border: 3px solid #fffb !important;
   border-radius: 50% !important;
-  border-top: 3px solid #528694 !important;
+  border-top: 3px solid #009CCC !important;
   width: 30px !important;
   height: 30px !important;
   -webkit-animation: spin 1s cubic-bezier(0.2, 0.5, 1.0, 0.2) infinite !important; /* Safari */
@@ -126,7 +126,7 @@ a {
   100% { transform: rotate(360deg); }
 }
 
-/* End of loding spinner */
+/* End of loading spinner */
 
 
 .UserSelectNone {

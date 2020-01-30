@@ -146,7 +146,7 @@ viewVisibleOerCard model position barId enableShadow oer =
                 else
                   case enrichment.bubblogram of
                     Nothing -> -- shouldn't happen for more than a second
-                      (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color midnightBlue, inFront viewLoadingSpinner ], [])
+                      (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color <| rgb255 0 10 20, inFront viewLoadingSpinner ], [])
 
                     Just bubblogram ->
                       viewBubblogram model bubblogramType oer.id bubblogram

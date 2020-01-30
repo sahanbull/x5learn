@@ -335,7 +335,7 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
           ]
           |> column [ width fill, paddingXY 20 0, spacing 25 ]
         else
-          guestCallToSignup "In order to use all the features and save your changes"
+          guestCallToSignup "In order to benefit from the full feature set, including personalised recommendations of learning materials"
           |> el [ width fill, paddingXY 15 12, Background.color <| rgb 1 0.85 0.6 ]
           |> el [ padding 20 ]
   in

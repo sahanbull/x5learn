@@ -64,11 +64,23 @@ viewPageHeader model =
                 ]
 
               GuestUser ->
-                [ viewExplainerToggle model
-                , viewLinkToAboutPage
-                , link [ alignRight, paddingXY 15 10 ] { url = loginPath, label = "Log in" |> bodyNoWrap [] }
-                , link [ alignRight, paddingXY 15 10 ] { url = signupPath, label = "Sign up" |> bodyNoWrap [] }
-                ]
+                let
+                    loginHintPopup =
+                      case model.popup of
+                        Just LoginHintPopup ->
+                          [ guestCallToSignup "To create your ideal personal learning pathway" ]
+                          |> menuColumn [ padding 15, moveDown 10, width <| px 166 ]
+                          |> below
+                          |> List.singleton
+
+                        _ ->
+                          []
+                in
+                    [ viewExplainerToggle model
+                    , viewLinkToAboutPage
+                    , link [ alignRight, paddingXY 15 10 ] { url = loginPath, label = "Log in" |> bodyNoWrap [] } |> el loginHintPopup
+                    , link [ alignRight, paddingXY 15 10 ] { url = signupPath, label = "Sign up" |> bodyNoWrap [] }
+                    ]
   in
       [ link [] { url = "/", label = image [ height (px 26) ] { src = imgPath "x5learn_logo.png", description = "X5Learn logo" } } ] ++ loginLogoutSignup
       |> row attrs

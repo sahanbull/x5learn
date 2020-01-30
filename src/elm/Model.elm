@@ -352,6 +352,7 @@ type Popup
   | OverviewTypePopup -- Allowing the user to toggle between thumbnails and bubblograms
   | ExplanationPopup String -- Showing extra information for a component if isExplainerEnabled
   | ExplainerMetaInformationPopup -- Showing information about the Explainer feature itself
+  | LoginHintPopup -- Nagging guest users to log or sign up
 
 
 {-| Cascading menu containing wikipedia topics

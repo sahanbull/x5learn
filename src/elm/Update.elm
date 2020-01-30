@@ -57,13 +57,13 @@ update msg ({nav, userProfileForm} as model) =
               (Profile, (model, Cmd.none))
             else if url.path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
-            else
+            else -- default to home page
               (Home, (model, (if model.featuredOers==Nothing then requestFeaturedOers else Cmd.none)))
 
           query =
             url.query |> Maybe.withDefault ""
       in
-          ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage } |> closePopup |> resetUserProfileForm, cmd)
+          ({ newModel | nav = { nav | url = url }, inspectorState = Nothing, timeOfLastUrlChange = model.currentTime, subpage = subpage } |> closePopup |> resetUserProfileForm |> showLoginHintIfNeeded, cmd)
           |> logEventForLabStudy "UrlChanged" [ url.path, query ]
           |> saveAction 14 [ ("path", Encode.string url.path), ("query", Encode.string query) ]
 
@@ -954,6 +954,9 @@ popupToStrings maybePopup =
         ExplainerMetaInformationPopup ->
           [ "ExplainerMetaInformationPopup" ]
 
+        LoginHintPopup ->
+          [ "LoginHintPopup" ]
+
 
 executeSearchAfterUrlChanged : Model -> Url -> (Model, Cmd Msg)
 executeSearchAfterUrlChanged model url =
@@ -1258,3 +1261,8 @@ inspectOer model oer fragmentStart playWhenReady =
   in
       ({ model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert inspectorId } |> closePopup
       , openInspectorAnimation videoEmbedParams)
+
+
+showLoginHintIfNeeded : Model -> Model
+showLoginHintIfNeeded model =
+  { model | popup = if isLoggedIn model then Nothing else Just LoginHintPopup |> Debug.log "popup"}

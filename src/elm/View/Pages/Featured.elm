@@ -31,9 +31,7 @@ viewFeaturedPage model =
           |> column [ centerX, centerY, spacing 30 ]
           |> el [ width fill, height <| fillPortion 3 ]
         else
-          [ "Explore Open Educational Resources" |> text |> el [ whiteText, Font.size 60, centerX ]
-          , "Find your ideal learning pathway" |> text |> el [ whiteText, Font.size 20, centerX ]
-          ]
+          userGreeting model
           |> column [ centerX, centerY, spacing 30 ]
           |> el [ width fill, height <| fillPortion 3 ]
 
@@ -57,3 +55,17 @@ viewFeaturedOers model =
     Just oers ->
       Playlist "Featured Content" oers
       |> viewOerGrid model
+
+
+{-| Big text to show to the user
+-}
+userGreeting : Model -> List (Element Msg)
+userGreeting model =
+  if isLoggedIn model then
+    [ "Welcome back" |> text |> el [ whiteText, Font.size 60, centerX ]
+    -- , "Find your ideal learning pathway" |> text |> el [ whiteText, Font.size 20, centerX ]
+    ]
+  else
+    [ "Welcome to X5Learn" |> text |> el [ whiteText, Font.size 60, centerX ]
+    , "Find your personal learning pathway" |> text |> el [ whiteText, Font.size 20, centerX ]
+    ]

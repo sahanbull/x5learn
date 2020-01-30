@@ -585,13 +585,12 @@ inlineLinkAttrs =
 
 guestCallToSignup : String -> Element Msg
 guestCallToSignup incentive =
-  [ "You are currently not logged in. "++incentive++", please" |> text
+  [ "You are not logged in. "++incentive++", make sure to" |> text
   , "log in" |> text |> linkTo inlineLinkAttrs loginPath
   , "or" |> text
-  , "create an account" |> text |> linkTo inlineLinkAttrs signupPath
-  , "." |> text
+  , "sign up" |> text |> linkTo inlineLinkAttrs signupPath
   ]
-  |> paragraph [ Font.size 14, Font.color materialDark ]
+  |> paragraph [ width fill, Font.size 14, Font.color materialDark ]
 
 
 closeIcon : Element Msg

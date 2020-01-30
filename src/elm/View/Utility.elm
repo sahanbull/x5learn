@@ -27,19 +27,103 @@ type IconPosition
   | IconRight
 
 
-materialDark : Color
-materialDark =
-  grey 11
+-- X5GON color palette
+
+midnightBlue : Color
+midnightBlue =
+  rgb255 0 13 50
+
+
+x5grey : Color
+x5grey =
+  rgb255 74 84 114
+
+
+electricBlue : Color
+electricBlue =
+  rgb255 0 156 204
+
+
+blueberryBlue : Color
+blueberryBlue =
+  rgb255 72 119 255
+
+
+primaryGreen : Color
+primaryGreen =
+  rgb255 0 173 87
+
+
+oxfordBlue : Color
+oxfordBlue =
+  rgb255 0 19 77
+
+
+superLightBackground : Attribute Msg
+superLightBackground =
+  Background.color <| rgb255 242 243 244
+
+
+-- additional UI colors
+
+white : Color
+white =
+  rgb 1 1 1
+
+
+yellow : Color
+yellow =
+  rgba255 255 235 0 0.97
+
+
+red : Color
+red =
+  rgba255 240 30 0 1
+
+
+magenta : Color
+magenta =
+  rgb255 250 0 230
+
+
+grey80 : Color
+grey80 =
+  grey 80
+
+
+greyMedium : Color
+greyMedium =
+  grey 160
+
+
+veryTransparentWhite : Color
+veryTransparentWhite =
+  rgba 1 1 1 0.25
+
+
+semiTransparentWhite : Color
+semiTransparentWhite =
+  rgba 1 1 1 0.95
+
+
+semiTransparent : Attribute Msg
+semiTransparent =
+  alpha 0.5
+
+
+fullyTransparentColor : Color
+fullyTransparentColor =
+  rgba 0 0 0 0
+
+
+grey : Int -> Color
+grey value =
+  rgb255 value value value
 
 
 slightlyTransparentBlack : Color
 slightlyTransparentBlack =
   rgba 0 0 0 0.7
-
-
-superLightBackground : Attribute Msg
-superLightBackground =
-  Background.color <| rgb255 242 242 242
 
 
 greyDivider : Color
@@ -59,27 +143,7 @@ whiteText =
 
 greyText : Attribute Msg
 greyText =
-  Font.color <| grey 160
-
-
-feedbackOptionButtonColor : Color
-feedbackOptionButtonColor =
-  rgb255 80 170 120
-
-
-x5color : Color
-x5color =
-  rgb255 82 134 148
-
-
-x5colorSemiTransparent : Color
-x5colorSemiTransparent =
-  rgba255 82 134 148 0.3
-
-
-x5colorDark : Color
-x5colorDark =
-  rgb255 38 63 71
+  Font.color <| x5grey
 
 
 pageHeaderHeight : Int
@@ -105,6 +169,11 @@ paddingLeft px =
 paddingRight : Int -> Attribute Msg
 paddingRight px =
   paddingEach { allSidesZero | right = px }
+
+
+buttonRounding : Attribute Msg
+buttonRounding =
+  Border.rounded 4
 
 
 bigButtonPadding : Attribute Msg
@@ -143,12 +212,16 @@ allSidesZero =
 
 captionTextAttrs : List (Attribute Msg)
 captionTextAttrs =
-  [ Font.size 12, Font.color materialDark ]
+  [ Font.size 12, Font.color midnightBlue ]
 
 
 bodyTextAttrs : List (Attribute Msg)
 bodyTextAttrs =
-  [ Font.size 14, Font.color materialDark ]
+  [ Font.size 14, Font.color midnightBlue ]
+
+
+bigHeadingTextAttrs =
+  [ Font.family [ Font.typeface "IBM Plex Serif" , Font.serif ] ]
 
 
 captionNowrap : List (Attribute Msg) -> String -> Element Msg
@@ -173,102 +246,27 @@ bodyNoWrap attrs str =
 
 subSubheaderNoWrap : List (Attribute Msg) -> String -> Element Msg
 subSubheaderNoWrap attrs str =
-  text str |> el ([ Font.size 16, Font.color materialDark ] ++ attrs)
+  text str |> el ([ Font.size 16, Font.color midnightBlue ] ++ attrs)
 
 
 subSubheaderWrap : List (Attribute Msg) -> String -> Element Msg
 subSubheaderWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 16, Font.color materialDark ] ++ attrs)
+  [ text str ] |> paragraph ([ Font.size 16, Font.color midnightBlue ] ++ attrs)
 
 
 subheaderWrap : List (Attribute Msg) -> String -> Element Msg
 subheaderWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 21, Font.color materialDark ] ++ attrs)
+  [ text str ] |> paragraph ([ Font.size 21, Font.color midnightBlue ] ++ attrs)
 
 
 headlineWrap : List (Attribute Msg) -> String -> Element Msg
 headlineWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 24, Font.color materialDark ] ++ attrs)
+  [ text str ] |> paragraph ([ Font.size 24, Font.color midnightBlue ] ++ attrs)
 
 
 italicText : String -> Element Msg
 italicText =
   bodyWrap [ Font.italic ]
-
-
-white : Color
-white =
-  rgb 1 1 1
-
-
-yellow : Color
-yellow =
-  rgba255 255 240 0 0.9
-
-
-red : Color
-red =
-  rgba255 240 30 0 1
-
-
-orange : Color
-orange =
-  rgb255 255 120 0
-
-
-magenta : Color
-magenta =
-  rgb255 250 0 230
-
-
-darkPurple : Color
-darkPurple =
-  rgb255 150 0 130
-
-
-blue : Color
-blue =
-  rgb255 0 190 250
-
-
-linkBlue : Color
-linkBlue =
-  rgb255 0 115 230
-
-
-grey80 : Color
-grey80 =
-  grey 80
-
-
-greyMedium : Color
-greyMedium =
-  grey 160
-
-
-veryTransparentWhite : Color
-veryTransparentWhite =
-  rgba 1 1 1 0.25
-
-
-semiTransparentWhite : Color
-semiTransparentWhite =
-  rgba 1 1 1 0.95
-
-
-semiTransparent : Attribute Msg
-semiTransparent =
-  alpha 0.5
-
-
-fullyTransparentColor : Color
-fullyTransparentColor =
-  rgba 0 0 0 0
-
-
-grey : Int -> Color
-grey value =
-  rgb255 value value value
 
 
 htmlClass : String -> Attribute Msg
@@ -368,6 +366,10 @@ navigationDrawerWidth =
   230
 
 
+dropdownTriangle =
+  "▾" |> captionNowrap [ Font.color grey80 ]
+
+
 actionButtonWithIcon : List (Attribute Msg) -> List (Attribute Msg) -> IconPosition -> Float -> String -> String -> Maybe Msg -> Element Msg
 actionButtonWithIcon textAttrs buttonAttrs iconPosition iconAlpha svgIconStub str onPress =
   let
@@ -385,7 +387,7 @@ actionButtonWithIcon textAttrs buttonAttrs iconPosition iconAlpha svgIconStub st
           IconRight ->
             [ title, icon ]
   in
-      button ([ htmlClass "PreventClosingInspectorOnClick" ] ++ buttonAttrs) { onPress = onPress, label = label |> row [ width fill, spacing 3, Border.rounded 4 ]}
+      button ([ htmlClass "PreventClosingInspectorOnClick", buttonRounding ] ++ buttonAttrs) { onPress = onPress, label = label |> row [ width fill, spacing 3, buttonRounding ]}
 
 
 actionButtonWithoutIcon : List (Attribute Msg) -> List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
@@ -417,7 +419,7 @@ confirmButton : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
 confirmButton attrs str onPress =
   let
       label =
-        str |> bodyNoWrap [ Background.color x5color, bigButtonPadding, whiteText ]
+        str |> bodyNoWrap [ Background.color primaryGreen, bigButtonPadding, whiteText ]
   in
       button attrs { onPress = onPress, label = label }
 
@@ -580,7 +582,7 @@ pointerEventsNone =
 
 inlineLinkAttrs : List (Attribute Msg)
 inlineLinkAttrs =
-  [ paddingXY 5 0, Font.color linkBlue ]
+  [ paddingXY 5 0, Font.color blueberryBlue ]
 
 
 guestCallToSignup : String -> Element Msg
@@ -590,7 +592,7 @@ guestCallToSignup incentive =
   , "or" |> text
   , "sign up" |> text |> linkTo inlineLinkAttrs signupPath
   ]
-  |> paragraph [ width fill, Font.size 14, Font.color materialDark ]
+  |> paragraph [ width fill, Font.size 14, Font.color midnightBlue ]
 
 
 closeIcon : Element Msg

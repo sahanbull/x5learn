@@ -38,7 +38,7 @@ viewProfilePage model savedUserProfile {userProfile, saved} =
           if saved then
             "✓ Saved" |> bodyWrap [ greyText, width fill ]
           else
-            button [ paddingXY 16 8, width fill, Background.color x5color, whiteText ] { onPress = Just SubmittedUserProfile, label = "Save" |> text |> el [] }
+            button [ paddingXY 16 8, width fill, Background.color primaryGreen, whiteText ] { onPress = Just SubmittedUserProfile, label = "Save" |> text |> el [] }
 
       page =
         [ image [ alpha 0.5, centerX, width <| px 75 ] { src = svgPath "user_default_avatar", description = "user menu" }
@@ -56,7 +56,7 @@ viewProfilePage model savedUserProfile {userProfile, saved} =
 viewDataCollectionConsentToggle : Bool -> Element Msg
 viewDataCollectionConsentToggle enabled =
   [ "Allow X5GON to collect data about my activity on this site for research" |> bodyWrap [ width fill ]
-  , viewToggleIndicator enabled (if enabled then "X5ColorBackground" else "") |> el [ paddingRight 10 ]
+  , viewToggleIndicator enabled (if enabled then "PrimaryGreenBackground" else "") |> el [ paddingRight 10 ]
   ]
   |> row [ spacing 10, onClick (ToggleDataCollectionConsent enabled), htmlClass "CursorPointer" ]
   |> el [ alignRight ]

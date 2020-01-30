@@ -61,11 +61,14 @@ viewFeaturedOers model =
 -}
 userGreeting : Model -> List (Element Msg)
 userGreeting model =
+  let
+      headingAttrs =
+        [ whiteText, Font.size 60, centerX, htmlClass "BigHeadingFont" ]
+  in
   if isLoggedIn model then
-    [ "Welcome back" |> text |> el [ whiteText, Font.size 60, centerX ]
-    -- , "Find your ideal learning pathway" |> text |> el [ whiteText, Font.size 20, centerX ]
+    [ "Welcome back" |> text |> el headingAttrs
     ]
   else
-    [ "Welcome to X5Learn" |> text |> el [ whiteText, Font.size 60, centerX ]
+    [ "Welcome to X5Learn" |> text |> el headingAttrs
     , "Find your personal learning pathway" |> text |> el [ whiteText, Font.size 20, centerX ]
     ]

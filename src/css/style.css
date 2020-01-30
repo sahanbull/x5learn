@@ -4,7 +4,7 @@ html, head, body {
 }
 
 body * {
-  font-family: 'Roboto', 'Trebuchet MS', 'Lucida Grande', 'Bitstream Vera Sans', 'Helvetica Neue', sans-serif !important;
+  font-family: 'Open Sans', 'Trebuchet MS', 'Lucida Grande', 'Bitstream Vera Sans', 'Helvetica Neue', sans-serif;
   color: rgba(0,0,0,0.87);
 }
 
@@ -15,6 +15,13 @@ h1, h2, h3, h4 {
 a {
   color: rgba(0,0,0,0.87);
   text-decoration: none;
+}
+
+.BigHeadingFont{
+  font-family: "IBM Plex Serif",serif!important;
+  font-weight: 300 !important;
+  line-height: 96px !important;
+  font-size: 96px !important;
 }
 
 .Snackbar{
@@ -101,7 +108,7 @@ a {
 .loader {
   border: 3px solid #fffb !important;
   border-radius: 50% !important;
-  border-top: 3px solid #528694 !important;
+  border-top: 3px solid #009CCC !important;
   width: 30px !important;
   height: 30px !important;
   -webkit-animation: spin 1s cubic-bezier(0.2, 0.5, 1.0, 0.2) infinite !important; /* Safari */
@@ -119,7 +126,7 @@ a {
   100% { transform: rotate(360deg); }
 }
 
-/* End of loding spinner */
+/* End of loading spinner */
 
 
 .UserSelectNone {
@@ -196,8 +203,8 @@ a {
   background-color: #f0e !important;
 }
 
-.X5ColorBackground {
-  background-color: #528694 !important;
+.PrimaryGreenBackground {
+  background-color: #00AD57 !important;
 }
 
 .ToggleEnabled + .ToggleSlider:before {

@@ -45,7 +45,7 @@ viewBubblogram model bubblogramType oerId {createdAt, bubbles} =
         |> List.concatMap (viewSvgBubbleIncludingMentions model bubblogramType oerId animationPhase)
 
       background =
-        rect [ width widthString, height heightString, fill "#191919" ] []
+        rect [ width widthString, height heightString, fill "#101418" ] []
 
       findBubbleByEntityId : String -> Maybe Bubble
       findBubbleByEntityId entityId =

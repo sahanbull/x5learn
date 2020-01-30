@@ -69,7 +69,7 @@ viewPageHeader model =
                       case model.popup of
                         Just LoginHintPopup ->
                           [ guestCallToSignup "To create your ideal personal learning pathway" ]
-                          |> menuColumn [ padding 15, moveDown 10, width <| px 166 ]
+                          |> menuColumn [ padding 15, moveDown 10, width <| px 176 ]
                           |> below
                           |> List.singleton
 
@@ -94,11 +94,8 @@ viewUserMenu model userProfile =
       icon =
         avatarImage
 
-      triangle =
-        "▾" |> captionNowrap [ Font.color grey80 ]
-
       label =
-        [ icon, triangle ]
+        [ icon, dropdownTriangle ]
         |> row [ width fill, paddingXY 12 3, spacing 5 ]
 
       navButton url buttonText =

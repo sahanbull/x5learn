@@ -82,7 +82,7 @@ viewContentFlowBar model oer chunks barWidth barId =
                     |> invertRangeIfNeeded
               in
                   none
-                  |> el [ width (length |> pxFromSeconds |> round |> max 4 |> px), height <| px 7, Background.color blue, Border.rounded 7, moveRight <| pxFromSeconds <| start, moveDown 4, pointerEventsNone ]
+                  |> el [ width (length |> pxFromSeconds |> round |> max 4 |> px), height <| px 7, Background.color electricBlue, Border.rounded 7, moveRight <| pxFromSeconds <| start, moveDown 4, pointerEventsNone ]
                   |> inFront
         in
             ranges
@@ -170,7 +170,7 @@ viewContentFlowBar model oer chunks barWidth barId =
         [ none |> el [ width fill , Background.color veryTransparentWhite, height <| px 1 ] |> above ]
 
       background =
-        [ Background.color materialDark ]
+        [ Background.color midnightBlue ]
 
       -- Here is where we define the effects of hover and click, depending on whether the bar is on a card or not
       scrubDisplayAndClickHandler =

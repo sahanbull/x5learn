@@ -50,7 +50,7 @@ viewCourseItem model index item =
             model.course.items |> List.length
 
           buttonAttrs =
-            [ paddingXY 5 3, Background.color x5color, alignRight ]
+            [ paddingXY 5 3, Background.color primaryGreen, alignRight ]
 
           moveUpButton =
             if index==0 then
@@ -65,7 +65,7 @@ viewCourseItem model index item =
               button buttonAttrs { onPress = Just <| MovedCourseItemDown index, label = "Move ↓" |> captionNowrap [ whiteText ] }
 
           deleteButton =
-            button (buttonAttrs ++ [ Background.color red ]) { onPress = Just <| RemovedOerFromCourse oer.id, label = "Remove" |> captionNowrap [ whiteText ] }
+            button [] { onPress = Just <| RemovedOerFromCourse oer.id, label = "Remove" |> captionNowrap [ Font.color greyX5GON ] }
 
           topRow =
             [ index+1 |> String.fromInt |> bodyNoWrap []
@@ -102,7 +102,7 @@ viewCoursePathFinderWidget : Model -> Element Msg
 viewCoursePathFinderWidget model =
   case model.courseOptimization of
     Nothing ->
-      actionButtonWithIcon [ whiteText, paddingXY 12 10, width fill, centerX ] [ Background.color linkBlue, width fill ] IconLeft 1 "directions_walk_white" "Optimise learning path" (Just PressedOptimiseLearningPath)
+      actionButtonWithIcon [ whiteText, paddingXY 12 10, width fill, centerX ] [ Background.color blueberryBlue, width fill ] IconLeft 1 "directions_walk_white" "Optimise learning path" (Just PressedOptimiseLearningPath)
 
     Just Loading ->
       viewLoadingSpinner
@@ -115,7 +115,7 @@ viewCoursePathFinderWidget model =
               ]
             else
               [ "Our algorithm has changed the sequence of your items." |> captionWrap [ whiteText ]
-              , simpleButton [ Font.size 12, Font.color blue ] "Undo" (Just <| PressedUndoCourse savedPreviousCourse)
+              , simpleButton [ Font.size 12, Font.color electricBlue ] "Undo" (Just <| PressedUndoCourse savedPreviousCourse)
               ]
       in
           content

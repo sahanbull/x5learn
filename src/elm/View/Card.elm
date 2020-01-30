@@ -130,23 +130,23 @@ viewVisibleOerCard model position barId enableShadow oer =
           BubblogramOverview bubblogramType ->
             case Dict.get oer.id model.wikichunkEnrichments of
               Nothing ->
-                (none |> el [ width fill, height (px imageHeight), Background.color x5color ]
+                (none |> el [ width fill, height (px imageHeight), Background.color primaryGreen ]
                 , [])
 
               Just enrichment ->
                 if enrichment.errors then
                   if isVideoFile oer.url then
                     (image [ alpha 0.9, centerX, centerY ] { src = svgPath "playIcon", description = "Video file" }
-                     |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
+                     |> el [ width fill, height (px imageHeight), Background.color oxfordBlue ]
                     , [])
                   else
                     ("no preview available" |> captionNowrap [ alpha 0.75, whiteText, centerX, centerY ]
-                     |> el [ width fill, height (px imageHeight), Background.color x5colorDark ]
+                     |> el [ width fill, height (px imageHeight), Background.color oxfordBlue ]
                     , [])
                 else
                   case enrichment.bubblogram of
                     Nothing -> -- shouldn't happen for more than a second
-                      (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color materialDark, inFront viewLoadingSpinner ], [])
+                      (none |> el [ width <| px cardWidth, height <| px imageHeight, Background.color midnightBlue, inFront viewLoadingSpinner ], [])
 
                     Just bubblogram ->
                       viewBubblogram model bubblogramType oer.id bubblogram
@@ -351,7 +351,7 @@ viewCoverImage model oer thumbFromSpritesheet =
 --           "mediatype_unknown"
 --   in
 --       image [ semiTransparent, centerX, centerY, width (px <| if isHovering then 60 else 50) ] { src = (svgPath stub), description = "" }
---       |> el [ width fill, height (px imageHeight), Background.color x5color ]
+--       |> el [ width fill, height (px imageHeight), Background.color primaryGreen ]
 
 
 spriteSheetNumberOfRows =

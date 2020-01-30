@@ -64,7 +64,7 @@ viewExplanationPopup flyoutDirection links =
 
       weblinks =
         links
-        |> List.map (\{label, url} -> label |> bodyNoWrap [ Font.color linkBlue ] |> newTabLinkTo [] url)
+        |> List.map (\{label, url} -> label |> bodyNoWrap [ Font.color blueberryBlue ] |> newTabLinkTo [] url)
         |> column [ spacing 10 ]
 
       content =

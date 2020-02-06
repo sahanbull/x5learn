@@ -489,6 +489,7 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
         # Temporary fix: ignore search results with very long urls
         if len(url) > 255:
             continue
+        material = fetch_captions_from_x5gon_api(material)
         oer = retrieve_oer_or_create_from_x5gon_material(material)
         push_enrichment_task(url, int(1000 / (index + 1)) + 1)
         oers.append(oer)
@@ -601,7 +602,22 @@ def convert_x5_material_to_oer_data(material):
     data['duration'] = ''
     data['images'] = []
     data['mediatype'] = material['type']
+    data['translations'] = material['translations']
+
     return data
+
+
+def fetch_captions_from_x5gon_api(material):
+    oer_translations_endpoint = "/oer_materials/{}/contents?extension=webvtt"
+    contents = requests.get("https://platform.x5gon.org/api/v1" + oer_translations_endpoint.format(material['material_id'])).json()
+
+    material['translations'] = {}
+    for content in contents['oer_contents']:
+        if content['extension'] != 'webvtt':
+            continue
+        material['translations'][content['language']] = content['value']['value']
+
+    return material
 
 
 def save_definitions(data):

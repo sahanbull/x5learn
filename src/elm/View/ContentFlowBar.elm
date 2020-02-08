@@ -69,15 +69,23 @@ viewContentFlowBar model oer chunks barWidth barId =
                   Just <| item.range
 
             ranges =
-              case maybeRangeFromDragging of
-                Just range ->
-                  [ range ]
-                Nothing ->
-                  case maybeRangeFromCourse of
-                    Just range ->
-                      [ range ]
-                    Nothing ->
-                      []
+              let
+                  rangeFromDragging =
+                    case maybeRangeFromDragging of
+                      Just range ->
+                        [ range ]
+                      Nothing ->
+                        []
+
+                  rangeFromCourse =
+                    case maybeRangeFromCourse of
+                      Just range ->
+                        [ range ]
+                      Nothing ->
+                        []
+              in
+                  rangeFromCourse ++ rangeFromDragging
+
             drawRange range =
               let
                   {start,length} =

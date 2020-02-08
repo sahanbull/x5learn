@@ -47,44 +47,33 @@ viewContentFlowBar model oer chunks barWidth barId =
 
       courseRangeMarkers =
         let
-            maybeRangeFromDragging =
+            rangeFromDragging : List Range
+            rangeFromDragging =
               case model.timelineHoverState of
                 Nothing ->
-                  Nothing
+                  []
+
                 Just timelineHoverState ->
                   if isOnCard || isInspecting model oer then
                     case timelineHoverState.mouseDownPosition of
                       Nothing ->
-                        Nothing
-                      Just dragStartPos ->
-                        Just (Range dragStartPos (timelineHoverState.position - dragStartPos) |> multiplyRange oer.durationInSeconds)
-                  else
-                    Nothing
+                        []
 
-            maybeRangeFromCourse =
+                      Just dragStartPos ->
+                        Range dragStartPos (timelineHoverState.position - dragStartPos)
+                        |> multiplyRange oer.durationInSeconds
+                        |> List.singleton
+                  else
+                    []
+
+            rangesFromCourse : List Range
+            rangesFromCourse =
               case model.course.items |> List.filter (\item -> item.oerId==oer.id) |> List.head of
                 Nothing ->
-                  Nothing
+                  []
+
                 Just item ->
-                  Just <| item.range
-
-            ranges =
-              let
-                  rangeFromDragging =
-                    case maybeRangeFromDragging of
-                      Just range ->
-                        [ range ]
-                      Nothing ->
-                        []
-
-                  rangeFromCourse =
-                    case maybeRangeFromCourse of
-                      Just range ->
-                        [ range ]
-                      Nothing ->
-                        []
-              in
-                  rangeFromCourse ++ rangeFromDragging
+                  item.ranges
 
             drawRange range =
               let
@@ -96,7 +85,7 @@ viewContentFlowBar model oer chunks barWidth barId =
                   |> el [ width (length |> pxFromSeconds |> round |> max 4 |> px), height <| px 7, Background.color electricBlue, Border.rounded 7, moveRight <| pxFromSeconds <| start, moveDown 4, pointerEventsNone ]
                   |> inFront
         in
-            ranges
+            rangesFromCourse ++ rangeFromDragging
             |> List.map drawRange
 
       pxFromSeconds seconds =

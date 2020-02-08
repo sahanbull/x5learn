@@ -193,7 +193,7 @@ sheetWidth model =
 
 
 viewCourseSettings : Model -> Oer -> CourseItem -> List (Element Msg)
-viewCourseSettings model oer {range, comment} =
+viewCourseSettings model oer {comment} =
   let
       topRow =
         [ "This video has been added to your workspace." |> bodyWrap [ width fill ]

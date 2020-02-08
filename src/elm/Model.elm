@@ -407,7 +407,7 @@ type alias Range =
 
 {-| TimelineHoverState relates to the ContentFlowBar and serves 2 purposes:
     1. scrubbing to preview video content
-    2. specifying a range for a CourseItem by dragging
+    2. specifying a new range for a CourseItem by dragging
 -}
 type alias TimelineHoverState =
   { position : Float
@@ -433,7 +433,7 @@ type alias Course =
 -}
 type alias CourseItem =
   { oerId : OerId
-  , range : Range
+  , ranges : List Range
   , comment : String
   }
 

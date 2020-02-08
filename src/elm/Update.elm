@@ -524,7 +524,7 @@ update msg ({nav, userProfileForm} as model) =
             (model, Cmd.none) -- impossible
 
           Just oer ->
-            (handleTimelineMouseEvent model oer eventName position, Cmd.none)
+            handleTimelineMouseEvent model oer eventName position
             |> logEventForLabStudy "TimelineMouseEvent" [ eventName, position |> String.fromFloat ]
       else
         (model, Cmd.none)
@@ -598,7 +598,7 @@ update msg ({nav, userProfileForm} as model) =
       let
           newItem =
             { oerId = oer.id
-            , range = Range 0 oer.durationInSeconds
+            , ranges = [ Range 0 oer.durationInSeconds ]
             , comment = ""
             }
 
@@ -1109,13 +1109,24 @@ extendVideoUsages pos model =
 
 courseToString : Course -> String
 courseToString {items} =
-  items
-  |> List.map (\item -> (String.fromInt item.oerId) ++ ":" ++ (item.range.start |> String.fromFloat) ++ "-" ++ (item.range.start + item.range.length |> String.fromFloat))
-  |> String.join ","
+  let
+      rangeToString range =
+        "{start: " ++ (range.start |> String.fromFloat) ++ ", end: " ++ (range.start + range.length |> String.fromFloat)++"}"
+
+      itemToString item =
+        "{oerId: "++(String.fromInt item.oerId) ++ ", ranges: [" ++ (item.ranges |> List.map rangeToString |> String.join ", ") ++"], comment: \""++item.comment++"\"}"
+
+      itemsAsString =
+        items
+        |> List.map itemToString
+        |> String.join ", "
+  in
+      "{items: [" ++ itemsAsString ++ "]}"
+      -- |> Debug.log "courseToString"
 
 
-getCourseRange : Model -> Oer -> Float -> Maybe Range
-getCourseRange model oer position01 =
+getCourseRangeAtPosition : Model -> Oer -> Float -> Maybe Range
+getCourseRangeAtPosition model oer position01 =
   let
       maybeExistingItem =
         model.course.items
@@ -1127,10 +1138,9 @@ getCourseRange model oer position01 =
           Nothing
 
         Just item ->
-          if isNumberInRange (position01 * oer.durationInSeconds) item.range then
-            Just item.range
-          else
-            Nothing
+          item.ranges
+          |> List.filter (\range -> isNumberInRange (position01 * oer.durationInSeconds) range)
+          |> List.head
 
 
 setCourseRange : Oer -> Float -> Float -> Model -> Model
@@ -1152,12 +1162,12 @@ setCourseRange oer dragStartPosition dragEndPosition ({course} as model) =
 
       newItems =
         case maybeExistingItem of
-          Nothing ->
-            { oerId = oer.id, range = range, comment = "" } :: course.items
+          Nothing -> -- add a newly created CourseItem to the Course
+            { oerId = oer.id, ranges = [ range ], comment = "" } :: course.items
 
-          Just existingItem ->
+          Just existingItem -> -- change an existing CourseItem
             course.items
-            |> List.map (\item -> if item.oerId==existingItem.oerId then { item | range = range } else item)
+            |> List.map (\item -> if item.oerId==existingItem.oerId then { item | ranges = range :: item.ranges } else item)
 
       oldCourse : Course
       oldCourse =
@@ -1239,41 +1249,60 @@ showLoginHintIfNeeded model =
   { model | popup = if isLoggedIn model then Nothing else Just LoginHintPopup }
 
 
-handleTimelineMouseEvent : Model -> Oer -> String -> Float -> Model
+handleTimelineMouseEvent : Model -> Oer -> String -> Float -> (Model, Cmd Msg)
 handleTimelineMouseEvent model oer eventName position =
   case eventName of
     "mousedown" ->
-      case getCourseRange model oer position of
+      case getCourseRangeAtPosition model oer position of
         Nothing ->
           { model | timelineHoverState = Just { position = position, mouseDownPosition = Just position } }
+          |> noCmd
 
         Just range ->
           { model | popup = Just LoginHintPopup }
+          |> noCmd
 
     "mouseup" ->
       case model.timelineHoverState of
-        Nothing ->
-          model -- impossible
+        Nothing -> -- impossible
+          model
+          |> noCmd
 
         Just {mouseDownPosition} ->
           case mouseDownPosition of
-            Nothing ->
-              model -- impossible
+            Nothing -> -- impossible
+              model
+              |> noCmd
 
             Just dragStartPos ->
               if (position-dragStartPos |> abs) < 0.01 then -- don't count clicks as ranges
                 { model | timelineHoverState = Nothing }
+                |> noCmd
               else
-                { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing } }
-                |> setCourseRange oer dragStartPos position
+                let
+                    newModel =
+                      { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing } }
+                      |> setCourseRange oer dragStartPos position
+                in
+                    newModel
+                    |> noCmd
+                    |> logEventForLabStudy "DragRange" [ oer.id |> String.fromInt, dragStartPos |> String.fromFloat, position |> String.fromFloat, courseToString newModel.course ]
 
     "mousemove" ->
       case model.timelineHoverState of
         Nothing ->
           { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing } }
+          |> noCmd
 
         Just timelineHoverState ->
           { model | timelineHoverState = Just { position = position, mouseDownPosition = timelineHoverState.mouseDownPosition } }
+          |> noCmd
 
-    _ ->
-      model -- impossible
+    _ -> -- impossible
+      model
+      |> noCmd
+
+
+noCmd : Model -> (Model, Cmd Msg)
+noCmd model =
+  (model, Cmd.none)

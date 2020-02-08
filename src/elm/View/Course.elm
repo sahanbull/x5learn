@@ -65,7 +65,11 @@ viewCourseItem model index item =
               button buttonAttrs { onPress = Just <| MovedCourseItemDown index, label = "Move ↓" |> captionNowrap [ whiteText ] }
 
           deleteButton =
-            button [ alignRight ] { onPress = Just <| RemovedOerFromCourse oer.id, label = "Remove" |> captionNowrap [ greyText ] }
+            -- button [ alignRight ] { onPress = Just <| RemovedOerFromCourse oer.id, label = "Remove" |> captionNowrap [ greyText ] }
+            -- We could use a button here but we don't want the click event to bubble up to the miniCard.
+            -- One quick way to prevent this is to use stopPropagation instead of elm-ui's button element
+            "Remove"
+            |> captionNowrap [ greyText, alignRight, htmlClass "CursorPointer", onClickStopPropagation (RemovedOerFromCourse oer.id) ]
 
           topRow =
             oer.title |> bodyWrap []

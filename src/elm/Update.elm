@@ -620,7 +620,7 @@ update msg ({nav, userProfileForm} as model) =
           newCourse =
             { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId/=oerId)}
       in
-          ({ model | course = newCourse, courseOptimization = Nothing }, Cmd.none)
+          ({ model | course = newCourse, courseOptimization = Nothing, inspectorState = Nothing }, Cmd.none)
           |> logEventForLabStudy "RemovedOerFromCourse" [ oerId |> String.fromInt, courseToString newCourse ]
           |> saveCourseNow
 

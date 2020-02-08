@@ -205,15 +205,19 @@ viewContentFlowBar model oer chunks barWidth barId =
                   clickHandler =
                     onClickStopPropagation <| ClickedOnContentFlowBar oer position isOnCard
               in
-                  scrubDisplay++ [ clickHandler ]
+                  scrubDisplay ++ [ clickHandler ]
         else
           []
 
       mouseLeaveHandler =
         [ onMouseLeave TimelineMouseLeave ]
+
+      postClickFlyout : List (Attribute Msg)
+      postClickFlyout =
+        viewPostClickFlyoutPopup model oer barWidth
   in
       none
-      |> el ([ htmlClass "ContentFlowBar", width fill, height <| px <| contentFlowBarHeight, moveUp contentFlowBarHeight ] ++ chunkTriggers ++ border ++ background ++ visitedRangeMarkers ++ courseRangeMarkers ++ scrubDisplayAndClickHandler ++ mouseLeaveHandler)
+      |> el ([ htmlClass "ContentFlowBar", width fill, height <| px <| contentFlowBarHeight, moveUp contentFlowBarHeight ] ++ chunkTriggers ++ border ++ background ++ visitedRangeMarkers ++ courseRangeMarkers ++ scrubDisplayAndClickHandler ++ mouseLeaveHandler ++ postClickFlyout)
 
 
 {-| Render the ChunkPopup as a (cascading) dropdown menu
@@ -341,3 +345,35 @@ contentFlowBarHeight = 16
 isHoverMenuNearRightEdge : Model -> Float -> Bool
 isHoverMenuNearRightEdge model margin =
   model.mousePositionXwhenOnChunkTrigger > (toFloat model.windowWidth)-margin
+
+
+{-| Render the flyout that appears when the user clicked on the ContentFlowBar
+-}
+viewPostClickFlyoutPopup : Model -> Oer -> Int -> List (Attribute Msg)
+viewPostClickFlyoutPopup model oer barWidth =
+  case model.popup of
+    Just (PopupAfterClickedOnContentFlowBar popupOer position isCard) ->
+      let
+          buttonAttrs =
+            [ bigButtonPadding ]
+
+          buttons =
+            if isCard then
+              [ actionButtonWithoutIconStopPropagation buttonAttrs "Play from here" (InspectOer oer position True "InspectOer PopupAfterClickedOnContentFlowBar Play from here")
+              ]
+            else if isVideoFile oer.url then
+              [ actionButtonWithoutIconStopPropagation buttonAttrs "Play from here" (StartCurrentHtml5Video (position * oer.durationInSeconds))
+              ]
+            else
+              []
+      in
+          if popupOer.id==oer.id then
+            buttons
+            |> menuColumn [ moveRight ((barWidth |> toFloat) * position - 15), moveUp 34 ]
+            |> inFront
+            |> List.singleton
+          else
+            []
+
+    _ ->
+      []

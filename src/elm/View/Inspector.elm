@@ -207,7 +207,7 @@ viewCourseSettings model oer {range, comment} =
 
       changesSaved =
         if model.courseChangesSaved then
-          "✓ Your changes have been saved" |> captionNowrap [ alignRight, greyText, paddingRight 10 ]
+          "✓ Saved" |> captionNowrap [ alignRight, greyText, paddingRight 10 ]
         else
           none
   in

@@ -219,9 +219,9 @@ viewVisibleOerCard model position barId enableShadow oer =
 
       clickHandler =
         if isInspecting model oer then
-          [ onClick <| InspectOer oer 0 False "Click on card" ]
-        else
           []
+        else
+          [ onClick <| InspectOer oer 0 False "Click on card" ]
 
       shadow =
         if enableShadow then [ htmlClass "MaterialCard" ] else [ Border.width 1, borderColorDivider ]

@@ -699,18 +699,8 @@ update msg ({nav, userProfileForm} as model) =
           |> logEventForLabStudy "ToggleDataCollectionConsent" [ if enabled then "enable" else "disable" ]
 
     ClickedOnContentFlowBar oer position isCard ->
-      let
-          logFunction =
-            logEventForLabStudy "ClickedOnContentFlowBar" [ oer.id |> String.fromInt, position |> String.fromFloat, if isCard then "card" else "inspector" ]
-      in
-          if isCard then
-            model
-            |> update (InspectOer oer position True "ClickedOnContentFlowBar")
-            |> logFunction
-          else
-            model
-            |> update (StartCurrentHtml5Video (position * oer.durationInSeconds))
-            |> logFunction
+      ({ model | popup = Just <| PopupAfterClickedOnContentFlowBar oer position isCard }, Cmd.none)
+      |> logEventForLabStudy "ClickedOnContentFlowBar" [ oer.id |> String.fromInt, position |> String.fromFloat, if isCard then "card" else "inspector" ]
 
 
 insertSearchResults : List OerId -> Model -> Model
@@ -934,6 +924,9 @@ popupToStrings maybePopup =
 
         LoginHintPopup ->
           [ "LoginHintPopup" ]
+
+        PopupAfterClickedOnContentFlowBar oer position isCard ->
+          [ "PopupAfterClickedOnContentFlowBar", position |> String.fromFloat, if isCard then "card" else "inspector" ]
 
 
 executeSearchAfterUrlChanged : Model -> Url -> (Model, Cmd Msg)
@@ -1269,7 +1262,7 @@ handleTimelineMouseEvent model oer eventName position =
 
             Just dragStartPos ->
               if (position-dragStartPos |> abs) < 0.01 then -- don't count clicks as ranges
-                model
+                { model | timelineHoverState = Nothing }
               else
                 { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing } }
                 |> setCourseRange oer dragStartPos position

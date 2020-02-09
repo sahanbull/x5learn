@@ -703,6 +703,10 @@ update msg ({nav, userProfileForm} as model) =
       (model, Cmd.none)
       |> logEventForLabStudy "ClickedOnContentFlowBar" [ oer.id |> String.fromInt, position |> String.fromFloat, if isCard then "card" else "inspector" ]
 
+    PressedRemoveRangeButton oerId range ->
+      (model |> removeRangeFromCourse oerId range |> closePopup, Cmd.none)
+      |> logEventForLabStudy "PressedRemoveRangeButton" [ oerId |> String.fromInt, range |> rangeToString ]
+
 
 insertSearchResults : List OerId -> Model -> Model
 insertSearchResults oerIds model =
@@ -926,8 +930,8 @@ popupToStrings maybePopup =
         LoginHintPopup ->
           [ "LoginHintPopup" ]
 
-        PopupAfterClickedOnContentFlowBar oer position isCard ->
-          [ "PopupAfterClickedOnContentFlowBar", position |> String.fromFloat, if isCard then "card" else "inspector" ]
+        PopupAfterClickedOnContentFlowBar oer position isCard maybeRange ->
+          [ "PopupAfterClickedOnContentFlowBar", position |> String.fromFloat, if isCard then "card" else "inspector", if maybeRange==Nothing then "Clicked on empty space" else "Clicked on range" ]
 
 
 executeSearchAfterUrlChanged : Model -> Url -> (Model, Cmd Msg)
@@ -1130,12 +1134,12 @@ rangeToString range =
 getCourseRangeAtPosition : Model -> Oer -> Float -> Maybe Range
 getCourseRangeAtPosition model oer position01 =
   let
-      maybeExistingItem =
+      maybeCourseItem =
         model.course.items
         |> List.filter (\item -> item.oerId==oer.id)
         |> List.head
   in
-      case maybeExistingItem of
+      case maybeCourseItem of
         Nothing ->
           Nothing
 
@@ -1145,8 +1149,8 @@ getCourseRangeAtPosition model oer position01 =
           |> List.head
 
 
-setCourseRange : Oer -> Float -> Float -> Model -> Model
-setCourseRange oer dragStartPosition dragEndPosition ({course} as model) =
+addRangeToCourse : Oer -> Float -> Float -> Model -> Model
+addRangeToCourse oer dragStartPosition dragEndPosition ({course} as model) =
   let
       duration =
         oer.durationInSeconds
@@ -1157,25 +1161,43 @@ setCourseRange oer dragStartPosition dragEndPosition ({course} as model) =
         }
         |> invertRangeIfNeeded
 
-      maybeExistingItem =
+      maybeCourseItem =
         course.items
         |> List.filter (\item -> item.oerId==oer.id)
         |> List.head
 
       newItems =
-        case maybeExistingItem of
+        case maybeCourseItem of
           Nothing -> -- add a newly created CourseItem to the Course
             { oerId = oer.id, ranges = [ range ], comment = "" } :: course.items
 
-          Just existingItem -> -- change an existing CourseItem
+          Just courseItem -> -- change an existing CourseItem
             course.items
-            |> List.map (\item -> if item.oerId==existingItem.oerId then { item | ranges = range :: item.ranges } else item)
-
-      oldCourse : Course
-      oldCourse =
-        model.course
+            |> List.map (\item -> if item.oerId==courseItem.oerId then { item | ranges = range :: item.ranges } else item)
   in
-      { model | course = { oldCourse | items = newItems } }
+      { model | course = { course | items = newItems } }
+      |> markCourseAsChanged
+
+
+removeRangeFromCourse : OerId -> Range -> Model -> Model
+removeRangeFromCourse oerId range ({course} as model) =
+  let
+      maybeCourseItem =
+        course.items
+        |> List.filter (\item -> item.oerId==oerId)
+        |> List.head
+
+      newItems =
+        case maybeCourseItem of
+          Nothing -> -- impossible
+            course.items
+
+          Just courseItem ->
+            course.items
+            |> List.map (\item -> if item.oerId==courseItem.oerId then { item | ranges = item.ranges |> List.filter (\r -> r /= range) } else item)
+            |> List.filter (\item -> item.ranges |> List.isEmpty |> not) -- remove the item from the course if the user deletes the last range
+  in
+      { model | course = { course | items = newItems } }
       |> markCourseAsChanged
 
 
@@ -1271,14 +1293,19 @@ handleTimelineMouseEvent model oer eventName position =
               |> noCmd
 
             Just dragStartPos ->
-              if (position-dragStartPos |> abs) < 0.01 then -- don't count clicks as ranges. Instead, open the popup
-                { model | timelineHoverState = Nothing, popup = Just <| PopupAfterClickedOnContentFlowBar oer position (isHovering model oer) }
+              if (position-dragStartPos |> abs) < 0.01 then
+                -- Click without horizontal dragging -> open the popup
+                { model
+                | timelineHoverState = Nothing
+                , popup = Just <| PopupAfterClickedOnContentFlowBar oer position (isHovering model oer) (getCourseRangeAtPosition model oer position)
+                }
                 |> noCmd
               else
+                -- Click with horizontal dragging -> add the range to the course
                 let
                     newModel =
                       { model | timelineHoverState = Just { position = position, mouseDownPosition = Nothing } }
-                      |> setCourseRange oer dragStartPos position
+                      |> addRangeToCourse oer dragStartPos position
                 in
                     newModel
                     |> noCmd

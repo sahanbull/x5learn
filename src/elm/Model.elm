@@ -353,7 +353,7 @@ type Popup
   | ExplanationPopup String -- Showing extra information for a component if isExplainerEnabled
   | ExplainerMetaInformationPopup -- Showing information about the Explainer feature itself
   | LoginHintPopup -- Nagging guest users to log or sign up
-  | PopupAfterClickedOnContentFlowBar Oer Float Bool -- Offer a set of actions when the user clicks on the ContentFlowBar
+  | PopupAfterClickedOnContentFlowBar Oer Float Bool (Maybe Range) -- Offer a set of actions when the user clicks on the ContentFlowBar
 
 
 {-| Cascading menu containing wikipedia topics

@@ -349,20 +349,33 @@ isHoverMenuNearRightEdge model margin =
 viewPostClickFlyoutPopup : Model -> Oer -> Int -> List (Attribute Msg)
 viewPostClickFlyoutPopup model oer barWidth =
   case model.popup of
-    Just (PopupAfterClickedOnContentFlowBar popupOer position isCard) ->
+    Just (PopupAfterClickedOnContentFlowBar popupOer position isCard maybeRange) ->
       let
           buttonAttrs =
             [ bigButtonPadding ]
 
-          buttons =
-            if isCard then
-              [ actionButtonWithoutIconStopPropagation buttonAttrs "Play from here" (InspectOer oer position True "InspectOer PopupAfterClickedOnContentFlowBar Play from here")
-              ]
-            else if isVideoFile oer.url then
-              [ actionButtonWithoutIconStopPropagation buttonAttrs "Play from here" (StartCurrentHtml5Video (position * oer.durationInSeconds))
-              ]
+          playButton =
+            if isVideoFile oer.url then
+              if isCard then
+                [ actionButtonWithoutIconStopPropagation buttonAttrs "Play from here" (InspectOer oer position True "InspectOer PopupAfterClickedOnContentFlowBar Play from here")
+                ]
+              else
+                [ actionButtonWithoutIconStopPropagation buttonAttrs "Play from here" (StartCurrentHtml5Video (position * oer.durationInSeconds))
+                ]
             else
               []
+
+          rangeDeleteButton =
+            case maybeRange of
+              Nothing ->
+                []
+
+              Just range ->
+                [ actionButtonWithoutIconStopPropagation buttonAttrs "Remove Range" (PressedRemoveRangeButton oer.id range)
+                ]
+
+          buttons =
+            playButton ++ rangeDeleteButton
       in
           if popupOer.id==oer.id then
             buttons

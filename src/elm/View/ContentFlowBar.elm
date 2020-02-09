@@ -374,8 +374,12 @@ viewPostClickFlyoutPopup model oer barWidth =
                 [ actionButtonWithoutIconStopPropagation buttonAttrs "Remove Range" (PressedRemoveRangeButton oer.id range)
                 ]
 
+          cancelButton =
+            [ actionButtonWithoutIconStopPropagation buttonAttrs "Cancel" ClosePopup
+            ]
+
           buttons =
-            playButton ++ rangeDeleteButton
+            playButton ++ rangeDeleteButton ++ cancelButton
       in
           if popupOer.id==oer.id then
             buttons

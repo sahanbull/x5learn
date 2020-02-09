@@ -357,10 +357,10 @@ viewPostClickFlyoutPopup model oer barWidth =
           playButton =
             if isVideoFile oer.url then
               if isCard then
-                [ actionButtonWithoutIconStopPropagation buttonAttrs "Play from here" (InspectOer oer position True "InspectOer PopupAfterClickedOnContentFlowBar Play from here")
+                [ actionButtonWithoutIconStopPropagation buttonAttrs "▶ Play from here" (InspectOer oer position True "InspectOer PopupAfterClickedOnContentFlowBar Play from here")
                 ]
               else
-                [ actionButtonWithoutIconStopPropagation buttonAttrs "Play from here" (StartCurrentHtml5Video (position * oer.durationInSeconds))
+                [ actionButtonWithoutIconStopPropagation buttonAttrs "▶ Play from here" (StartCurrentHtml5Video (position * oer.durationInSeconds))
                 ]
             else
               []
@@ -371,7 +371,7 @@ viewPostClickFlyoutPopup model oer barWidth =
                 []
 
               Just range ->
-                [ actionButtonWithoutIconStopPropagation buttonAttrs "Remove Range" (PressedRemoveRangeButton oer.id range)
+                [ actionButtonWithoutIconStopPropagation buttonAttrs "❌ Remove Range" (PressedRemoveRangeButton oer.id range)
                 ]
 
           cancelButton =

@@ -87,7 +87,6 @@ type Msg
   | PressedReadMore InspectorState
   | ToggleDataCollectionConsent Bool
   | ClickedOnContentFlowBar Oer Float Bool
-  | MousedownOnCourseRange OerId Range
 
 
 type UserProfileField

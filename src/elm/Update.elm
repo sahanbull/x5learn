@@ -703,10 +703,6 @@ update msg ({nav, userProfileForm} as model) =
       (model, Cmd.none)
       |> logEventForLabStudy "ClickedOnContentFlowBar" [ oer.id |> String.fromInt, position |> String.fromFloat, if isCard then "card" else "inspector" ]
 
-    MousedownOnCourseRange oerId range ->
-      (model, Cmd.none)
-      |> logEventForLabStudy "MousedownOnCourseRange" [ oerId |> String.fromInt, range |> rangeToString ]
-
 
 insertSearchResults : List OerId -> Model -> Model
 insertSearchResults oerIds model =

@@ -82,7 +82,7 @@ viewContentFlowBar model oer chunks barWidth barId =
                     |> invertRangeIfNeeded
               in
                   none
-                  |> el [ width (length |> pxFromSeconds |> round |> max 4 |> px), height <| px 7, Background.color electricBlue, Border.rounded 7, moveRight <| pxFromSeconds <| start, moveDown 4, pointerEventsNone, onMousedownStopPropagation <| MousedownOnCourseRange oer.id range ]
+                  |> el [ width (length |> pxFromSeconds |> round |> max 4 |> px), height <| px 7, Background.color electricBlue, Border.rounded 7, moveRight <| pxFromSeconds <| start, moveDown 4, pointerEventsNone ]
                   |> inFront
         in
             rangesFromCourse ++ rangeFromDragging

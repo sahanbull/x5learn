@@ -335,10 +335,15 @@ onEnter msg =
       |> htmlAttribute
 
 
--- NB: stopPropagation should be avoided, see https://css-tricks.com/dangers-stopping-event-propagation/
 onClickStopPropagation : msg -> Attribute msg
 onClickStopPropagation message =
   Html.Events.custom "click" (Json.Decode.succeed { message = message, stopPropagation = True, preventDefault = True })
+  |> htmlAttribute
+
+
+onMousedownStopPropagation : msg -> Attribute msg
+onMousedownStopPropagation message =
+  Html.Events.custom "mousedown" (Json.Decode.succeed { message = message, stopPropagation = True, preventDefault = True })
   |> htmlAttribute
 
 
@@ -551,16 +556,6 @@ truncateSentence characterLimit sentence =
                 firstWords (words |> List.reverse |> List.drop 1 |> List.reverse)
     in
         (firstWords (sentence |> String.split " ")) ++ "…"
-
-
-openInspectorOnPress : Model -> Oer -> Maybe Msg
-openInspectorOnPress model oer =
-  case model.inspectorState of
-    Nothing ->
-      Just (InspectOer oer 0 False)
-
-    _ ->
-      Nothing
 
 
 imageHeight : Int

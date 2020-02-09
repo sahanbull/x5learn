@@ -195,12 +195,15 @@ sheetWidth model =
 viewCourseSettings : Model -> Oer -> CourseItem -> List (Element Msg)
 viewCourseSettings model oer {comment} =
   let
+      topRowAttrs =
+        [ width fill, paddingTop 10 ] ++ (if isLabStudy1 model then [] else [ borderTop 1, Border.color greyDivider ])
+
       topRow =
         [ "This video has been added to your workspace." |> bodyWrap [ width fill ]
         , changesSaved
         , actionButtonWithIcon [] [] IconLeft 0.7 "delete" "Remove" <| Just <| RemovedOerFromCourse oer.id
         ]
-        |> row [ width fill, borderTop 1, Border.color greyDivider, paddingTop 10 ]
+        |> row topRowAttrs
 
       commentField =
         Input.text [ width fill, htmlId "TextInputFieldForCommentOnCourseItem", onEnter <| SubmittedCourseItemComment, Border.color primaryGreen, Font.size 14, padding 3, moveDown 5 ] { onChange = ChangedCommentTextInCourseItem oer.id, text = comment, placeholder = Just ("Enter any comments about this item" |> text |> Input.placeholder [ Font.size 14, moveDown 6 ]), label = Input.labelHidden "Comment on course item" }
@@ -223,9 +226,16 @@ viewContentFlowBarWrapper model inspectorState oer =
         if isLoggedIn model then -- this feature is only available for registered users
           case getCourseItem model oer of
             Nothing ->
-              [ none |> el [ width fill ]
-              , if isLabStudy1 model then none else actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer
-              ]
+              let
+                  content =
+                    if isLabStudy1 model then
+                      "You can add this video to your workspace by dragging a range on the timeline." |> captionNowrap [ paddingTop 8 ]
+                    else
+                      actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer
+              in
+                  [ none |> el [ width fill ]
+                  , content
+                  ]
 
             Just item ->
               viewCourseSettings model oer item

@@ -1264,7 +1264,7 @@ inspectOer model oer fragmentStart playWhenReady =
         , playWhenReady = playWhenReady
         }
   in
-      ({ model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert inspectorId } |> closePopup
+      ({ model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert inspectorId, hoveringOerId = Nothing } |> closePopup
       , openInspectorAnimation videoEmbedParams)
 
 

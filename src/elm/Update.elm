@@ -698,9 +698,14 @@ update msg ({nav, userProfileForm} as model) =
           ( { model | userProfileForm = newForm }, Cmd.none )
           |> logEventForLabStudy "ToggleDataCollectionConsent" [ if enabled then "enable" else "disable" ]
 
+    -- We need to catch the click event to prevent it from bubbling up to the card and opening the inspector
     ClickedOnContentFlowBar oer position isCard ->
-      ({ model | popup = Just <| PopupAfterClickedOnContentFlowBar oer position isCard }, Cmd.none)
+      (model, Cmd.none)
       |> logEventForLabStudy "ClickedOnContentFlowBar" [ oer.id |> String.fromInt, position |> String.fromFloat, if isCard then "card" else "inspector" ]
+
+    MousedownOnCourseRange oerId range ->
+      (model, Cmd.none)
+      |> logEventForLabStudy "MousedownOnCourseRange" [ oerId |> String.fromInt, range |> rangeToString ]
 
 
 insertSearchResults : List OerId -> Model -> Model
@@ -1110,9 +1115,6 @@ extendVideoUsages pos model =
 courseToString : Course -> String
 courseToString {items} =
   let
-      rangeToString range =
-        "{start: " ++ (range.start |> String.fromFloat) ++ ", end: " ++ (range.start + range.length |> String.fromFloat)++"}"
-
       itemToString item =
         "{oerId: "++(String.fromInt item.oerId) ++ ", ranges: [" ++ (item.ranges |> List.map rangeToString |> String.join ", ") ++"], comment: \""++item.comment++"\"}"
 
@@ -1122,7 +1124,11 @@ courseToString {items} =
         |> String.join ", "
   in
       "{items: [" ++ itemsAsString ++ "]}"
-      -- |> Debug.log "courseToString"
+
+
+rangeToString : Range -> String
+rangeToString range =
+  "{start: " ++ (range.start |> String.fromFloat) ++ ", end: " ++ (range.start + range.length |> String.fromFloat)++"}"
 
 
 getCourseRangeAtPosition : Model -> Oer -> Float -> Maybe Range
@@ -1253,30 +1259,24 @@ handleTimelineMouseEvent : Model -> Oer -> String -> Float -> (Model, Cmd Msg)
 handleTimelineMouseEvent model oer eventName position =
   case eventName of
     "mousedown" ->
-      case getCourseRangeAtPosition model oer position of
-        Nothing ->
-          { model | timelineHoverState = Just { position = position, mouseDownPosition = Just position } }
-          |> noCmd
-
-        Just range ->
-          { model | popup = Just LoginHintPopup }
-          |> noCmd
+      { model | timelineHoverState = Just { position = position, mouseDownPosition = Just position } }
+      |> noCmd
 
     "mouseup" ->
       case model.timelineHoverState of
-        Nothing -> -- impossible
+        Nothing -> -- ignore
           model
           |> noCmd
 
         Just {mouseDownPosition} ->
           case mouseDownPosition of
-            Nothing -> -- impossible
+            Nothing -> -- ignore
               model
               |> noCmd
 
             Just dragStartPos ->
-              if (position-dragStartPos |> abs) < 0.01 then -- don't count clicks as ranges
-                { model | timelineHoverState = Nothing }
+              if (position-dragStartPos |> abs) < 0.01 then -- don't count clicks as ranges. Instead, open the popup
+                { model | timelineHoverState = Nothing, popup = Just <| PopupAfterClickedOnContentFlowBar oer position (isHovering model oer) }
                 |> noCmd
               else
                 let

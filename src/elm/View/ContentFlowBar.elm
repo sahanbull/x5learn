@@ -160,11 +160,21 @@ viewContentFlowBar model oer chunks barWidth barId =
             |> inFront
 
       chunkTriggers =
-        if isContentFlowEnabled model then
-          chunks
-          |> List.indexedMap chunkTrigger
-        else
-          []
+        case model.timelineHoverState of
+          Nothing ->
+            []
+
+          Just {mouseDownPosition} ->
+            case mouseDownPosition of
+              Nothing -> -- mouse is not down, so the user is just hovering
+                if isContentFlowEnabled model then
+                  chunks
+                  |> List.indexedMap chunkTrigger
+                else
+                  []
+
+              Just _ -> -- mouse is down, so the user is either dragging a range or clicking. Either way, we want to hide contentflow in this case to avoid conflicting mouse events with the range menu.
+                []
 
       border =
         [ none |> el [ width fill , Background.color veryTransparentWhite, height <| px 1 ] |> above ]

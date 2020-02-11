@@ -651,3 +651,8 @@ explanationLinkForTranslation =
   { label = "Translation / Transcription"
   , url = "https://platform.x5gon.org/products/translate"
   }
+
+
+barIdInInspector : String
+barIdInInspector =
+  "inspector"

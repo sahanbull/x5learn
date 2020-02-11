@@ -221,7 +221,10 @@ viewContentFlowBar model oer chunks barWidth barId =
 
       postClickFlyout : List (Attribute Msg)
       postClickFlyout =
-        viewPostClickFlyoutPopup model oer barWidth
+        if model.inspectorState==Nothing || barId==barIdInInspector then
+          viewPostClickFlyoutPopup model oer barWidth
+        else
+          []
   in
       none
       |> el ([ htmlClass "ContentFlowBar", width fill, height <| px <| contentFlowBarHeight, moveUp contentFlowBarHeight ] ++ chunkTriggers ++ border ++ background ++ visitedRangeMarkers ++ courseRangeMarkers ++ scrubDisplayAndClickHandler ++ mouseLeaveHandler ++ postClickFlyout)

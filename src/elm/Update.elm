@@ -518,16 +518,13 @@ update msg ({nav, userProfileForm} as model) =
       ({ model | selectedMention = Just (oerId, mention), hoveringEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
 
     TimelineMouseEvent {eventName, position} ->
-      if isLabStudy1 model || eventName=="mouseup" then -- only lab study users can create ranges. But all users can click (mouseup).
-        case hoveringOrInspectingOer model of
-          Nothing ->
-            (model, Cmd.none) -- impossible
+      case hoveringOrInspectingOer model of
+        Nothing ->
+          (model, Cmd.none) -- impossible
 
-          Just oer ->
-            handleTimelineMouseEvent model oer eventName position
-            |> logEventForLabStudy "TimelineMouseEvent" [ eventName, position |> String.fromFloat ]
-      else
-        (model, Cmd.none)
+        Just oer ->
+          handleTimelineMouseEvent model oer eventName position
+          |> logEventForLabStudy "TimelineMouseEvent" [ eventName, position |> String.fromFloat ]
 
     TimelineMouseLeave ->
       ({ model | timelineHoverState = Nothing }, Cmd.none)
@@ -1318,8 +1315,15 @@ handleTimelineMouseEvent model oer eventName position =
           |> noCmd
 
         Just timelineHoverState ->
-          { model | timelineHoverState = Just { position = position, mouseDownPosition = timelineHoverState.mouseDownPosition } }
-          |> noCmd
+          let
+              mouseDownPosition =
+                if isLabStudy1 model then
+                  timelineHoverState.mouseDownPosition
+                else
+                  Nothing -- if the user isn't a labstudy participant, then they cannot drag ranges. We achieve this by pretending they didn't hold the mouse button down.
+          in
+              { model | timelineHoverState = Just { position = position, mouseDownPosition = mouseDownPosition } }
+              |> noCmd
 
     _ -> -- impossible
       model

@@ -309,7 +309,7 @@ pageBodyBackground model =
   if isLabStudy1 model then
     Background.color <| grey 224
   else
-    Background.image <| imgPath "bg.jpg"
+    Background.color <| grey 224
 
 
 imgPath : String -> String
@@ -651,3 +651,8 @@ explanationLinkForTranslation =
   { label = "Translation / Transcription"
   , url = "https://platform.x5gon.org/products/translate"
   }
+
+
+barIdInInspector : String
+barIdInInspector =
+  "inspector"

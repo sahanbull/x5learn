@@ -309,7 +309,7 @@ pageBodyBackground model =
   if isLabStudy1 model then
     Background.color <| grey 224
   else
-    Background.image <| imgPath "bg.jpg"
+    Background.color <| grey 224
 
 
 imgPath : String -> String

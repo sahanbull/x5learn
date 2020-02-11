@@ -235,7 +235,7 @@ function reportTimelineMouseEvent(element, eventName, event){
   if(eventName=='mousemove'){
     var now = new Date().getTime();
     // no need to report more than a handful mousemove events per second. be nice to the network.
-    if(now-timeOfLastMouseMove < 250){
+    if(now-timeOfLastMouseMove < 150){
       return;
     }
     timeOfLastMouseMove = now;

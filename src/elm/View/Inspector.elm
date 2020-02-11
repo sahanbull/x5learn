@@ -263,7 +263,7 @@ viewContentFlowBarWrapper model inspectorState oer =
             wikichunks ->
               let
                   barWrapper =
-                    viewContentFlowBar model oer wikichunks (playerWidth model) "inspector"
+                    viewContentFlowBar model oer wikichunks (playerWidth model) barIdInInspector
                     |> el [ width <| px <| playerWidth model, height (px 16) ]
               in
                   none

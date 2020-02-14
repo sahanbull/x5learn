@@ -515,6 +515,10 @@ def retrieve_oer_or_create_from_x5gon_material(material):
         new_data = json.loads(json.dumps(oer.data))
         new_data['provider'] = new_data['provider']['name']
         oer.data = new_data
+    elif not isinstance(oer.data['provider'], str):
+        new_data = json.loads(json.dumps(oer.data))
+        new_data['provider'] = " - "
+        oer.data = new_data
     push_enrichment_task_if_needed(url, 1)
     return oer
 

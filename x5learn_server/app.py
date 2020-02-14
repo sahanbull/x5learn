@@ -494,7 +494,7 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
         oers.append(oer)
     oers = oers[:MAX_SEARCH_RESULTS]
     # exits the search if exceeds the last page returned from the api
-    if page_number > metadata['total_pages']:
+    if page_number >= metadata['total_pages']:
         return oers
     if len(oers) >= MAX_SEARCH_RESULTS:
         return oers

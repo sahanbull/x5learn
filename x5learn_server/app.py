@@ -513,7 +513,7 @@ def retrieve_oer_or_create_from_x5gon_material(material):
     # Fix provider dict replaced with a string as expected by Elm
     if isinstance(oer.data['provider'], dict):
         new_data = json.loads(json.dumps(oer.data))
-        new_data['provider'] = new_data['provider']['name']
+        new_data['provider'] = new_data.get('provider', {}).get('name', 'Unknown')
         oer.data = new_data
     elif not isinstance(oer.data['provider'], str):
         new_data = json.loads(json.dumps(oer.data))

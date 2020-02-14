@@ -510,6 +510,15 @@ def retrieve_oer_or_create_from_x5gon_material(material):
     # Fix a problem with videolectures lacking duration info
     if oer.data['mediatype'] in SUPPORTED_VIDEO_FORMATS and oer.data['duration']=='' and ('durationInSeconds' not in oer.data):
         oer = inject_duration(oer)
+    # Fix provider dict replaced with a string as expected by Elm
+    if isinstance(oer.data['provider'], dict):
+        new_data = json.loads(json.dumps(oer.data))
+        new_data['provider'] = new_data.get('provider', {}).get('name', ' - ')
+        oer.data = new_data
+    elif not isinstance(oer.data['provider'], str):
+        new_data = json.loads(json.dumps(oer.data))
+        new_data['provider'] = " - "
+        oer.data = new_data
     push_enrichment_task_if_needed(url, 1)
     return oer
 

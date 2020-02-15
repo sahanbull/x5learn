@@ -519,7 +519,7 @@ initialModel nav flags =
   , cachedOers = Dict.empty
   , requestingOers = False
   , featuredOers = Nothing
-  , course = Course []
+  , course = initialCourse
   , courseOptimization = Nothing
   , courseNeedsSaving = False
   , courseChangesSaved = False
@@ -574,6 +574,11 @@ initialUserProfile email =
 initialTime : Posix
 initialTime =
   Time.millisToPosix 0
+
+
+initialCourse : Course
+initialCourse =
+  Course []
 
 
 newSearch : String -> SearchState

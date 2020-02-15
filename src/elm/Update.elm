@@ -670,7 +670,7 @@ update msg ({nav, userProfileForm} as model) =
           |> logEventForLabStudy "StartTask" [ taskName ]
 
     CompleteTask ->
-      ( { model | currentTaskName = Nothing }, setBrowserFocus "")
+      ( { model | currentTaskName = Nothing, course = initialCourse }, setBrowserFocus "")
       |> logEventForLabStudy "CompleteTask" []
 
     OpenedOverviewTypeMenu ->

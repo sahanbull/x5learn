@@ -623,9 +623,10 @@ def fetch_captions_from_x5gon_api(material):
 
     material['translations'] = {}
     for content in contents['oer_contents']:
+        # api does not seem to filter webvtt yet so doing it manually
         if content['extension'] != 'webvtt':
             continue
-        material['translations'][content['language']] = content['value']['value']
+        material['translations'][content['language']] = content.get('value', '').get('value', '')
 
     return material
 

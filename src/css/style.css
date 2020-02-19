@@ -233,3 +233,8 @@ a {
 .ZIndex100{
   z-index: 100;
 }
+
+#MainPageContent {
+  background: rgb(153,159,178);
+  background: radial-gradient(circle, rgba(153,159,178,1) 0%, rgba(219,221,228,1) 95%);
+}

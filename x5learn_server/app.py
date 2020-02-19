@@ -472,13 +472,13 @@ def search_results_from_x5gon_api(text):
 # This function is called recursively
 # until the number of search results hits a certain minimum or stops increasing
 def search_results_from_x5gon_api_pages(text, page_number, oers):
-    n_initial_oers = len(oers)
     # print('X5GON search page_number', page_number)
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request(
         'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text=' + text + '&page=' + str(
             page_number))
     response = conn.getresponse().read().decode("utf-8")
+    metadata = json.loads(response)['metadata']
     materials = json.loads(response)['rec_materials']
     materials = filter_x5gon_search_results(materials)
     # materials = remove_duplicates_from_x5gon_search_results(materials)
@@ -494,7 +494,8 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
         push_enrichment_task(url, int(1000 / (index + 1)) + 1)
         oers.append(oer)
     oers = oers[:MAX_SEARCH_RESULTS]
-    if len(oers) == n_initial_oers:  # no more results on page -> stop querying
+    # exits the search if exceeds the last page returned from the api
+    if page_number > metadata['total_pages']:
         return oers
     if len(oers) >= MAX_SEARCH_RESULTS:
         return oers
@@ -511,6 +512,15 @@ def retrieve_oer_or_create_from_x5gon_material(material):
     # Fix a problem with videolectures lacking duration info
     if oer.data['mediatype'] in SUPPORTED_VIDEO_FORMATS and oer.data['duration']=='' and ('durationInSeconds' not in oer.data):
         oer = inject_duration(oer)
+    # Fix provider dict replaced with a string as expected by Elm
+    if isinstance(oer.data['provider'], dict):
+        new_data = json.loads(json.dumps(oer.data))
+        new_data['provider'] = new_data.get('provider', {}).get('name', ' - ')
+        oer.data = new_data
+    elif not isinstance(oer.data['provider'], str):
+        new_data = json.loads(json.dumps(oer.data))
+        new_data['provider'] = " - "
+        oer.data = new_data
     push_enrichment_task_if_needed(url, 1)
     return oer
 

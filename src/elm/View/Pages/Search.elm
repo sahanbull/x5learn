@@ -49,6 +49,9 @@ viewBody model searchState =
       "No results were found for \"" ++ searchState.lastSearchText ++ "\". Please try a different search term." |> viewCenterMessage
 
     Just oerIds ->
-      Playlist "" oerIds
-      |> viewOerGrid model
-      |> el [ width fill, height fill, paddingBottom 100 ]
+      if isLabStudy1 model && model.currentTaskName==Nothing then
+        "Please wait for the researcher's instructions." |> viewCenterMessage
+      else
+        Playlist "" oerIds
+        |> viewOerGrid model
+        |> el [ width fill, height fill, paddingBottom 100 ]

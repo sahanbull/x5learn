@@ -353,6 +353,7 @@ type Popup
   | ExplanationPopup String -- Showing extra information for a component if isExplainerEnabled
   | ExplainerMetaInformationPopup -- Showing information about the Explainer feature itself
   | LoginHintPopup -- Nagging guest users to log or sign up
+  | PopupAfterClickedOnContentFlowBar Oer Float Bool (Maybe Range) -- Offer a set of actions when the user clicks on the ContentFlowBar
 
 
 {-| Cascading menu containing wikipedia topics
@@ -406,7 +407,7 @@ type alias Range =
 
 {-| TimelineHoverState relates to the ContentFlowBar and serves 2 purposes:
     1. scrubbing to preview video content
-    2. specifying a range for a CourseItem by dragging
+    2. specifying a new range for a CourseItem by dragging
 -}
 type alias TimelineHoverState =
   { position : Float
@@ -432,7 +433,7 @@ type alias Course =
 -}
 type alias CourseItem =
   { oerId : OerId
-  , range : Range
+  , ranges : List Range
   , comment : String
   }
 
@@ -518,7 +519,7 @@ initialModel nav flags =
   , cachedOers = Dict.empty
   , requestingOers = False
   , featuredOers = Nothing
-  , course = Course []
+  , course = initialCourse
   , courseOptimization = Nothing
   , courseNeedsSaving = False
   , courseChangesSaved = False
@@ -573,6 +574,11 @@ initialUserProfile email =
 initialTime : Posix
 initialTime =
   Time.millisToPosix 0
+
+
+initialCourse : Course
+initialCourse =
+  Course []
 
 
 newSearch : String -> SearchState
@@ -1175,8 +1181,25 @@ overviewTypes =
   ]
 
 
-{-| Function that does nothing
+{-| Get the OER (if any) which the user is currently focusing on, either by hovering over a card or through the inspector
 -}
-noOp : a -> a
-noOp x =
-  x
+hoveringOrInspectingOer : Model -> Maybe Oer
+hoveringOrInspectingOer model =
+  case model.inspectorState of
+    Just {oer} ->
+      Just oer
+
+    Nothing ->
+      case model.hoveringOerId of
+        Just hoveringOerId ->
+          model.cachedOers |> Dict.get hoveringOerId
+
+        Nothing ->
+          Nothing
+
+
+{-| Check whether a number lies within the boundary of a Range
+-}
+isNumberInRange : Float -> Range -> Bool
+isNumberInRange point range =
+  point >= range.start && point <= range.start + range.length

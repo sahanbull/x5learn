@@ -23,7 +23,7 @@ type Msg
   | AnimationTick Posix -- Called once per animation frame (e.g. 60-ish times per second), only while something is animating
   | SearchFieldChanged String -- User changed the text in the search field, e.g. typing, paste, undo...
   | BrowserResized Int Int -- User changed the width/height of the browser window, or rotated the device
-  | InspectOer Oer Float Bool -- User did something that should open the Inspector
+  | InspectOer Oer Float Bool String -- User did something that should open the Inspector
   | ClickedOnCourseItem Oer -- User clicked on a course item, causing it to open in the Inspector
   | PressedCloseButtonInInspector -- User pressed the X button
   | InspectorAnimationStart BoxAnimation
@@ -74,7 +74,7 @@ type Msg
   | ToggleContentFlow
   | ToggleExplainer
   | OpenExplanationPopup String
-  | AddedOerToCourse OerId Range
+  | AddedOerToCourse Oer
   | RemovedOerFromCourse OerId
   | MovedCourseItemDown Int
   | PressedOptimiseLearningPath
@@ -86,6 +86,8 @@ type Msg
   | OpenedOverviewTypeMenu
   | PressedReadMore InspectorState
   | ToggleDataCollectionConsent Bool
+  | ClickedOnContentFlowBar Oer Float Bool
+  | PressedRemoveRangeButton OerId Range
 
 
 type UserProfileField

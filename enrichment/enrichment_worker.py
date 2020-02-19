@@ -12,7 +12,7 @@ from wikichunkifiers.lib.util import EnrichmentError
 
 import wikipedia
 
-API_ROOT = os.environ["FLASK_API_ROOT"]
+API_ROOT = "http://x5learn.org/api/v1/"
 
 
 # API_ROOT = 'http://127.0.0.1:5000/api/v1/'

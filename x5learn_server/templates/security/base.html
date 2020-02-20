@@ -63,6 +63,36 @@
         padding: 24px 0;
         color: #999;
       }
+
+      .custom-container {
+        padding: 20px;
+      }
+
+      .document-container {
+        border: 1px solid #999;
+        padding: 10px;
+        height: 200px;
+        overflow-y: scroll;
+      }
+
+      .document-container h5 {
+        margin-top: 0;
+      }
+
+      .document-container p {
+        text-align: justify;
+      }
+
+      .document-container ul {
+        list-style-type: circle;
+        margin-left: 20px;
+        color: black;
+      }
+
+      .no-pad {
+        padding: 0;
+      }
+
     </style>
     <title>{% block title %}{{ title|default }}{% endblock title %}</title>
 

@@ -540,7 +540,7 @@ initialModel nav flags =
   , selectedMention = Nothing
   , inspectorState = Nothing
   , inspectorAnimation = Nothing
-  , userProfileForm = freshUserProfileForm (initialUserProfile "")
+  , userProfileForm = freshUserProfileForm (initialUserProfile "" False)
   , userProfileFormSubmitted = False
   , feedbackForms = Dict.empty
   , timeOfLastFeedbackRecorded = initialTime
@@ -566,9 +566,9 @@ initialModel nav flags =
   }
 
 
-initialUserProfile : String -> UserProfile
-initialUserProfile email =
-  UserProfile email "" "" False
+initialUserProfile : String -> Bool -> UserProfile
+initialUserProfile email isDataCollectionConsent =
+  UserProfile email "" "" isDataCollectionConsent
 
 
 initialTime : Posix

@@ -1,7 +1,9 @@
 from flask import Flask, jsonify, render_template, request, redirect
 from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required
+from flask_security.forms import RegisterForm
 from flask_sqlalchemy import SQLAlchemy
+from wtforms import BooleanField, validators
 import json
 import os # apologies
 import requests
@@ -18,7 +20,7 @@ import wikipedia
 # instantiate the user management db classes
 # NOTE WHEN PEP8'ING MODULE IMPORTS WILL MOVE TO THE TOP AND CAUSE EXCEPTION
 from x5learn_server._config import DB_ENGINE_URI, PASSWORD_SECRET, MAIL_SENDER, MAIL_USERNAME, MAIL_PASS, MAIL_SERVER, \
-    MAIL_PORT, LATEST_API_VERSION, SERVER_NAME
+    MAIL_PORT, LATEST_API_VERSION, DATA_COLL_PROMPT_INTERVAL, SERVER_NAME
 from x5learn_server.db.database import get_or_create_db
 
 _ = get_or_create_db(DB_ENGINE_URI)
@@ -48,6 +50,9 @@ app.config['SECURITY_SEND_REGISTER_EMAIL'] = True
 app.config['SECURITY_CONFIRMABLE'] = True
 app.config['SECURITY_POST_REGISTER_VIEW'] = '/login'
 
+# redirect to data collection page after login
+app.config['SECURITY_POST_LOGIN_VIEW'] = '/data_collection'
+
 # user password configs
 app.config['SECURITY_CHANGEABLE'] = True
 app.config['SECURITY_CHANGE_URL'] = '/password_change'
@@ -64,7 +69,12 @@ user_datastore = SQLAlchemySessionUserDatastore(db_session,
 app.config["SQLALCHEMY_DATABASE_URI"] = DB_ENGINE_URI
 db = SQLAlchemy(app)
 
-security = Security(app, user_datastore)
+# extending flask security register form to support additional fields
+class X5LearnRegistrationForm(RegisterForm):
+    privacy_policy = BooleanField('privacy_policy', [validators.DataRequired(message="Please read and agree to the privacy policy.")])
+    terms_and_conditions = BooleanField('term_and_conditions', [validators.DataRequired(message="Please read and agree to the terms and conditions.")])
+
+security = Security(app, user_datastore, confirm_register_form=X5LearnRegistrationForm)
 
 # Setup Flask-Mail Server
 app.config['MAIL_SERVER'] = MAIL_SERVER
@@ -85,7 +95,6 @@ SUPPORTED_FILE_FORMATS = SUPPORTED_VIDEO_FORMATS + [ 'pdf' ]
 # Number of seconds between actions that report the ongoing video play position.
 # Keep this constant in sync with videoPlayReportingInterval on the frontend!
 VIDEO_PLAY_REPORTING_INTERVAL = 10
-
 
 # create database when starting the app
 @app.before_first_request
@@ -183,6 +192,59 @@ def profile():
     return render_template('home.html')
 
 
+# Added new route to data collection consent page for users who has not set preference
+@app.route("/data_collection")
+def data_collection(): 
+    current_user.last_login_at = current_user.current_login_at
+    current_user.current_login_at = datetime.now()
+    db_session.commit()
+
+    if current_user.user_profile is None:
+        return render_template('data_collection.html')
+
+    profile = current_user.user_profile
+
+    if profile.get('isDataCollectionConsent') is None:
+        return render_template('data_collection.html')
+
+    # If data collection is off the user will be prompted every other day at login
+    if (profile.get('isDataCollectionConsent') == False):
+
+        if current_user.last_login_at is None:
+            return render_template('data_collection.html')
+
+        last_data_collection_prompt_datetime = current_user.last_login_at
+        datediff = datetime.now() - last_data_collection_prompt_datetime
+
+        if datediff.days > DATA_COLL_PROMPT_INTERVAL:
+            return render_template('data_collection.html')
+    
+    return redirect("/")
+
+# route to privacy policy page
+@app.route("/privacy_policy")
+def privacy_policy():
+    return render_template('info.html', subpage="privacy_policy")
+
+# route to terms page
+@app.route("/terms_of_use")
+def terms_of_use():
+    return render_template('info.html', subpage="terms_of_use")
+
+# Saves preference in user profile for data collection consent
+@app.route("/data_collection", methods=['POST'])
+def submit_data_collection():
+
+    allow_data_collection = False
+
+    if "allow_data_collection" in request.form and request.form['allow_data_collection'] == "on":
+        allow_data_collection = True
+
+    current_user.user_profile = {'isDataCollectionConsent': allow_data_collection}
+    db_session.commit()
+    return redirect("/")
+
+
 @app.route("/api/v1/session/", methods=['GET'])
 def api_session():
     if current_user.is_authenticated:
@@ -192,8 +254,14 @@ def api_session():
 
 
 def get_logged_in_user_profile_and_state():
-    profile = current_user.user_profile if current_user.user_profile is not None else {
-        'email': current_user.email}
+
+    profile = {'email': current_user.email}
+
+    if current_user.user_profile is not None:
+        profile = current_user.user_profile
+        # There could be an instance where user profile is not None but does not have the 'email' key
+        profile['email'] = current_user.email
+
     logged_in_user = {'userProfile': profile, 'isContentFlowEnabled': is_contentflow_enabled(), 'overviewTypeId': get_overview_type_setting()}
     return jsonify({'loggedInUser': logged_in_user})
 

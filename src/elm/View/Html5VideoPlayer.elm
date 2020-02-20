@@ -64,7 +64,7 @@ subtitleTrack (language, text) =
         [ Attributes.src <| "data:,"++(text |> Url.percentEncode)
         , Attributes.kind "subtitles"
         , Attributes.srclang language
-        -- , Attributes.label language
+        , Attributes.attribute "label" language
         ]
   in
       Html.track attrs []

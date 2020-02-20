@@ -208,6 +208,15 @@ def data_collection():
     
     return redirect("/")
 
+# route to privacy policy page
+@app.route("/privacy_policy")
+def privacy_policy():
+    return render_template('info.html', subpage="privacy_policy")
+
+# route to terms page
+@app.route("/terms_of_use")
+def terms_of_use():
+    return render_template('info.html', subpage="terms_of_use")
 
 # Saves preference in user profile for data collection consent
 @app.route("/data_collection", methods=['POST'])

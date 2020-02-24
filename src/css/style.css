@@ -238,3 +238,60 @@ a {
   background: rgb(153,159,178);
   background: radial-gradient(circle, rgba(153,159,178,1) 0%, rgba(219,221,228,1) 95%);
 }
+
+body {
+  background: rgb(153,159,178);
+  background: radial-gradient(circle, rgba(153,159,178,1) 0%, rgba(219,221,228,1) 95%);
+}
+
+/* Header */
+.header {
+  margin-bottom: 50px;
+}
+
+.top-left {
+  position: absolute;
+  top: 35px;
+  left: 40px;
+}
+
+/* Footer */
+
+.footer{
+  background-color: #141414;
+  color: #fff !important;
+  padding: 3rem !important;
+  font-family: "Open Sans",sans-serif;
+  font-size: 16px;
+  line-height: 28px;
+  font-weight: 400;
+}
+
+.footer > *{
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.footer-row{
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.footer-eu-flag{
+  flex: 0 0 12%;
+  max-width: 12%;
+}
+
+.footer-eu-text{
+  flex: 0 0 75%;
+  max-width: 75%;
+  padding-left: 15px;
+  font-size: 12px;
+  letter-spacing: .4px;
+  font-family: Open Sans,sans-serif;
+  line-height: 20px;
+}
+
+.footer-text{
+  color: white;
+}

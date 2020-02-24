@@ -103,14 +103,21 @@
       {%- block styles %}
       {%- endblock styles %}
     {%- endblock head %}
+
+    <link rel="stylesheet" href="/static/dist/css/app.min.css">
+    <link href="https://fonts.googleapis.com/css?family=IBM+Plex+Serif:200,300,400,700&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700&amp;display=swap" rel="stylesheet">
+    <link rel="icon" href="/static/dist/favicon.ico">
   </head>
   <body{% block body_attribs %}{% endblock body_attribs %}>
     {% block body -%}
 
-      <div style="border-bottom: 1px solid #ccc">
-        <a class="" href="/" rel="noopener noreferrer">
-          <img style="height: 26px; padding: 7px 16px 3px 16px" src="/static/dist/img/x5learn_logo.png" alt="X5Learn logo">
+      <div class="header">
+        <div class="top-left">
+        <a class="" href="https://platform.x5gon.org" rel="noopener noreferrer">
+          <img src="/static/dist/img_svg/x5gon_logo_dark.svg" height="22" alt="logo">
         </a>
+        </div>
       </div>
 
       {% block content -%}
@@ -118,6 +125,17 @@
 
       {% block scripts %}
       {%- endblock scripts %}
+
+      <div class="footer">
+        <div class="footer-row">
+          <div class="footer-eu-flag">
+            <img alt="european flag" src="/static/dist/img/euflag.png" width="100%">
+          </div>
+          <div class="footer-eu-text">
+            <p class="footer-text">This project has received funding from the European Union’s Horizon new policy 2020 research and innovation programme under grant agreement No 761758.</p>
+          </div>
+        </div>
+      </div>
     {%- endblock body %}
   </body>
   {%- endblock html %}

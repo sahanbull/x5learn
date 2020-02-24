@@ -4,7 +4,7 @@ html, head, body {
 }
 
 body * {
-  font-family: 'Roboto', 'Trebuchet MS', 'Lucida Grande', 'Bitstream Vera Sans', 'Helvetica Neue', sans-serif !important;
+  font-family: 'Open Sans', 'Trebuchet MS', 'Lucida Grande', 'Bitstream Vera Sans', 'Helvetica Neue', sans-serif;
   color: rgba(0,0,0,0.87);
 }
 
@@ -16,8 +16,12 @@ a {
   color: rgba(0,0,0,0.87);
   text-decoration: none;
 }
-a:hover {
-  text-decoration: underline;
+
+.BigHeadingFont{
+  font-family: "IBM Plex Serif",serif!important;
+  font-weight: 300 !important;
+  line-height: 96px !important;
+  font-size: 96px !important;
 }
 
 .Snackbar{
@@ -104,7 +108,7 @@ a:hover {
 .loader {
   border: 3px solid #fffb !important;
   border-radius: 50% !important;
-  border-top: 3px solid #528694 !important;
+  border-top: 3px solid #009CCC !important;
   width: 30px !important;
   height: 30px !important;
   -webkit-animation: spin 1s cubic-bezier(0.2, 0.5, 1.0, 0.2) infinite !important; /* Safari */
@@ -122,7 +126,7 @@ a:hover {
   100% { transform: rotate(360deg); }
 }
 
-/* End of loding spinner */
+/* End of loading spinner */
 
 
 .UserSelectNone {
@@ -199,8 +203,8 @@ a:hover {
   background-color: #f0e !important;
 }
 
-.X5ColorBackground {
-  background-color: #528694 !important;
+.PrimaryGreenBackground {
+  background-color: #00AD57 !important;
 }
 
 .ToggleEnabled + .ToggleSlider:before {
@@ -228,4 +232,9 @@ a:hover {
 
 .ZIndex100{
   z-index: 100;
+}
+
+#MainPageContent {
+  background: rgb(153,159,178);
+  background: radial-gradient(circle, rgba(153,159,178,1) 0%, rgba(219,221,228,1) 95%);
 }

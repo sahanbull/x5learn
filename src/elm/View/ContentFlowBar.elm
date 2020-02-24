@@ -42,39 +42,39 @@ viewContentFlowBar model oer chunks barWidth barId =
             ranges
             |> List.map (\{start,length} -> none |> el [ width (length |> pxFromSeconds |> round |> max 4 |> px), height <| px 3, Background.color red, moveRight <| pxFromSeconds <| min start (oer.durationInSeconds-length), pointerEventsNone ] |> inFront)
 
+      isOnCard =
+        isHovering model oer
+
       courseRangeMarkers =
         let
-            maybeRangeFromDragging =
+            rangeFromDragging : List Range
+            rangeFromDragging =
               case model.timelineHoverState of
                 Nothing ->
-                  Nothing
+                  []
+
                 Just timelineHoverState ->
-                  if isHovering model oer || isInspecting model oer then
+                  if isOnCard || isInspecting model oer then
                     case timelineHoverState.mouseDownPosition of
                       Nothing ->
-                        Nothing
-                      Just dragStartPos ->
-                        Just (Range dragStartPos (timelineHoverState.position - dragStartPos) |> multiplyRange oer.durationInSeconds)
-                  else
-                    Nothing
+                        []
 
-            maybeRangeFromCourse =
+                      Just dragStartPos ->
+                        Range dragStartPos (timelineHoverState.position - dragStartPos)
+                        |> multiplyRange oer.durationInSeconds
+                        |> List.singleton
+                  else
+                    []
+
+            rangesFromCourse : List Range
+            rangesFromCourse =
               case model.course.items |> List.filter (\item -> item.oerId==oer.id) |> List.head of
                 Nothing ->
-                  Nothing
-                Just item ->
-                  Just <| item.range
+                  []
 
-            ranges =
-              case maybeRangeFromDragging of
-                Just range ->
-                  [ range ]
-                Nothing ->
-                  case maybeRangeFromCourse of
-                    Just range ->
-                      [ range ]
-                    Nothing ->
-                      []
+                Just item ->
+                  item.ranges
+
             drawRange range =
               let
                   {start,length} =
@@ -82,10 +82,10 @@ viewContentFlowBar model oer chunks barWidth barId =
                     |> invertRangeIfNeeded
               in
                   none
-                  |> el [ width (length |> pxFromSeconds |> round |> max 4 |> px), height <| px 7, Background.color blue, Border.rounded 7, moveRight <| pxFromSeconds <| start, moveDown 4, pointerEventsNone ]
+                  |> el [ width (length |> pxFromSeconds |> round |> max 4 |> px), height <| px 7, Background.color electricBlue, Border.rounded 7, moveRight <| pxFromSeconds <| start, moveDown 4, pointerEventsNone ]
                   |> inFront
         in
-            ranges
+            rangesFromCourse ++ rangeFromDragging
             |> List.map drawRange
 
       pxFromSeconds seconds =
@@ -160,21 +160,31 @@ viewContentFlowBar model oer chunks barWidth barId =
             |> inFront
 
       chunkTriggers =
-        if isContentFlowEnabled model then
-          chunks
-          |> List.indexedMap chunkTrigger
-        else
-          []
+        case model.timelineHoverState of
+          Nothing ->
+            []
+
+          Just {mouseDownPosition} ->
+            case mouseDownPosition of
+              Nothing -> -- mouse is not down, so the user is just hovering
+                if isContentFlowEnabled model then
+                  chunks
+                  |> List.indexedMap chunkTrigger
+                else
+                  []
+
+              Just _ -> -- mouse is down, so the user is either dragging a range or clicking. Either way, we want to hide contentflow in this case to avoid conflicting mouse events with the range menu.
+                []
 
       border =
         [ none |> el [ width fill , Background.color veryTransparentWhite, height <| px 1 ] |> above ]
 
       background =
-        [ Background.color materialDark ]
+        [ Background.color midnightBlue ]
 
       -- Here is where we define the effects of hover and click, depending on whether the bar is on a card or not
       scrubDisplayAndClickHandler =
-        if isHovering model oer || isInspecting model oer then
+        if isOnCard || isInspecting model oer then
           case model.timelineHoverState of
             Nothing ->
               []
@@ -200,20 +210,24 @@ viewContentFlowBar model oer chunks barWidth barId =
                         [ cursor, timeDisplay ]
 
                   clickHandler =
-                    if isHovering model oer then
-                      onClickStopPropagation <| InspectOer oer position True
-                    else
-                      onClickStopPropagation <| StartCurrentHtml5Video (position * oer.durationInSeconds)
+                    onClickStopPropagation <| ClickedOnContentFlowBar oer position isOnCard
               in
                   scrubDisplay ++ [ clickHandler ]
         else
           []
 
       mouseLeaveHandler =
-        [ onMouseLeave <| TimelineMouseLeave ]
+        [ onMouseLeave TimelineMouseLeave ]
+
+      postClickFlyout : List (Attribute Msg)
+      postClickFlyout =
+        if model.inspectorState==Nothing || barId==barIdInInspector then
+          viewPostClickFlyoutPopup model oer barWidth
+        else
+          []
   in
       none
-      |> el ([ htmlClass "ContentFlowBar", width fill, height <| px <| contentFlowBarHeight, moveUp contentFlowBarHeight ] ++ chunkTriggers ++ border ++ background ++ visitedRangeMarkers ++ courseRangeMarkers ++ scrubDisplayAndClickHandler ++ mouseLeaveHandler)
+      |> el ([ htmlClass "ContentFlowBar", width fill, height <| px <| contentFlowBarHeight, moveUp contentFlowBarHeight ] ++ chunkTriggers ++ border ++ background ++ visitedRangeMarkers ++ courseRangeMarkers ++ scrubDisplayAndClickHandler ++ mouseLeaveHandler ++ postClickFlyout)
 
 
 {-| Render the ChunkPopup as a (cascading) dropdown menu
@@ -341,3 +355,52 @@ contentFlowBarHeight = 16
 isHoverMenuNearRightEdge : Model -> Float -> Bool
 isHoverMenuNearRightEdge model margin =
   model.mousePositionXwhenOnChunkTrigger > (toFloat model.windowWidth)-margin
+
+
+{-| Render the flyout that appears when the user clicked on the ContentFlowBar
+-}
+viewPostClickFlyoutPopup : Model -> Oer -> Int -> List (Attribute Msg)
+viewPostClickFlyoutPopup model oer barWidth =
+  case model.popup of
+    Just (PopupAfterClickedOnContentFlowBar popupOer position isCard maybeRange) ->
+      let
+          buttonAttrs =
+            [ bigButtonPadding ]
+
+          playButton =
+            if isVideoFile oer.url then
+              if isCard then
+                [ actionButtonWithoutIconStopPropagation buttonAttrs "▶ Play from here" (InspectOer oer position True "InspectOer PopupAfterClickedOnContentFlowBar Play from here")
+                ]
+              else
+                [ actionButtonWithoutIconStopPropagation buttonAttrs "▶ Play from here" (StartCurrentHtml5Video (position * oer.durationInSeconds))
+                ]
+            else
+              []
+
+          rangeDeleteButton =
+            case maybeRange of
+              Nothing ->
+                []
+
+              Just range ->
+                [ actionButtonWithoutIconStopPropagation buttonAttrs "❌ Remove Range" (PressedRemoveRangeButton oer.id range)
+                ]
+
+          cancelButton =
+            [ actionButtonWithoutIconStopPropagation buttonAttrs "Cancel" ClosePopup
+            ]
+
+          buttons =
+            playButton ++ rangeDeleteButton ++ cancelButton
+      in
+          if popupOer.id==oer.id then
+            buttons
+            |> menuColumn [ moveRight ((barWidth |> toFloat) * position - 15), moveUp 34 ]
+            |> inFront
+            |> List.singleton
+          else
+            []
+
+    _ ->
+      []

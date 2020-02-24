@@ -185,7 +185,7 @@ courseItemEncoder : CourseItem -> Encode.Value
 courseItemEncoder item =
   Encode.object
     [ ("oerId", Encode.int item.oerId)
-    , ("range", rangeEncoder item.range)
+    , ("ranges", Encode.list rangeEncoder item.ranges)
     , ("comment", Encode.string item.comment)
     ]
 
@@ -202,7 +202,7 @@ courseItemDecoder : Decoder CourseItem
 courseItemDecoder =
   map3 CourseItem
     (field "oerId" int)
-    (field "range" rangeDecoder)
+    (field "ranges" (list rangeDecoder))
     (field "comment" string)
 
 

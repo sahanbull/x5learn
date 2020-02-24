@@ -51,6 +51,8 @@ viewTheInspector model inspectorState =
           "Sorry! This content requires a larger screen." |> bodyWrap [ paddingXY 0 40 ]
         else if inspectorState.oer.mediatype=="pdf" && model.windowWidth < 1005 then
           "Sorry! This content requires a wider screen." |> bodyWrap [ paddingXY 0 40 ]
+        else if isLabStudy1 model then
+          viewInspectorBody model inspectorState
         else
           [ viewInspectorSidebar model inspectorState
           , viewInspectorBody model inspectorState
@@ -123,7 +125,7 @@ viewInspectorBody model ({oer, fragmentStart} as inspectorState) =
       [ player
       , viewContentFlowBarWrapper model inspectorState oer
       ]
-      |> column [ width <| px <| playerWidth model, moveLeft inspectorSidebarWidth ]
+      |> column [ width <| px <| playerWidth model, moveLeft (inspectorSidebarWidth model) ]
 
 
 viewDescription : InspectorState -> Oer -> Element Msg
@@ -157,7 +159,7 @@ viewReadMoreButton inspectorState =
   button
     []
     { onPress = Just <| PressedReadMore inspectorState
-    , label = "Read more" |> bodyNoWrap [ Font.color linkBlue ]
+    , label = "Read more" |> bodyNoWrap [ Font.color electricBlue ]
     }
 
 
@@ -187,39 +189,28 @@ viewLinkToFile oer =
 
 sheetWidth model =
   model.windowWidth - navigationDrawerWidth
-  |> min (playerWidth model + inspectorSidebarWidth + 35)
+  |> min (playerWidth model + (inspectorSidebarWidth model) + 35)
 
 
 viewCourseSettings : Model -> Oer -> CourseItem -> List (Element Msg)
-viewCourseSettings model oer {range, comment} =
+viewCourseSettings model oer {comment} =
   let
+      topRowAttrs =
+        [ width fill, paddingTop 10 ] ++ (if isLabStudy1 model then [] else [ borderTop 1, Border.color greyDivider ])
+
       topRow =
-        -- let
-        --     rangeText =
-        --       if (range |> Debug.log "range") == Range 0 1 then
-        --         ""
-        --       else
-        --         [ "(Range "
-        --         , range.start |> floor |> secondsToString
-        --         , " - "
-        --         , range.start + range.length |> floor |> secondsToString
-        --         , ")"
-        --         ]
-        --         |> String.join ""
-        -- in
-            -- [ "This video has been added to your workspace." ++ rangeText |> bodyWrap [ width fill ]
-            [ "This video has been added to your workspace." |> bodyWrap [ width fill ]
-            , changesSaved
-            , actionButtonWithIcon [] [] IconLeft 0.7 "delete" "Remove" <| Just <| RemovedOerFromCourse oer.id
-            ]
-            |> row [ width fill, borderTop 1, Border.color greyDivider, paddingTop 10 ]
+        [ "This video has been added to your workspace." |> bodyWrap [ width fill ]
+        , changesSaved
+        , actionButtonWithIcon [] [] IconLeft 0.7 "delete" "Remove" <| Just <| RemovedOerFromCourse oer.id
+        ]
+        |> row topRowAttrs
 
       commentField =
-        Input.text [ width fill, htmlId "TextInputFieldForCommentOnCourseItem", onEnter <| SubmittedCourseItemComment, Border.color x5color, Font.size 14, padding 3, moveDown 5 ] { onChange = ChangedCommentTextInCourseItem oer.id, text = comment, placeholder = Just ("Enter any comments about this item" |> text |> Input.placeholder [ Font.size 14, moveDown 6 ]), label = Input.labelHidden "Comment on course item" }
+        Input.text [ width fill, htmlId "TextInputFieldForCommentOnCourseItem", onEnter <| SubmittedCourseItemComment, Border.color primaryGreen, Font.size 14, padding 3, moveDown 5 ] { onChange = ChangedCommentTextInCourseItem oer.id, text = comment, placeholder = Just ("Enter any comments about this item" |> text |> Input.placeholder [ Font.size 14, moveDown 6 ]), label = Input.labelHidden "Comment on course item" }
 
       changesSaved =
         if model.courseChangesSaved then
-          "✓ Your changes have been saved" |> captionNowrap [ alignRight, greyText ]
+          "✓ Saved" |> captionNowrap [ alignRight, greyText, paddingRight 10 ]
         else
           none
   in
@@ -235,9 +226,16 @@ viewContentFlowBarWrapper model inspectorState oer =
         if isLoggedIn model then -- this feature is only available for registered users
           case getCourseItem model oer of
             Nothing ->
-              [ none |> el [ width fill ]
-              , actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer.id (Range 0 oer.durationInSeconds)
-              ]
+              let
+                  content =
+                    if isLabStudy1 model then
+                      "You can add this video to your workspace by dragging a range on the timeline." |> captionNowrap [ paddingTop 8 ]
+                    else
+                      actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer
+              in
+                  [ none |> el [ width fill ]
+                  , content
+                  ]
 
             Just item ->
               viewCourseSettings model oer item
@@ -265,7 +263,7 @@ viewContentFlowBarWrapper model inspectorState oer =
             wikichunks ->
               let
                   barWrapper =
-                    viewContentFlowBar model oer wikichunks (playerWidth model) "inspector"
+                    viewContentFlowBar model oer wikichunks (playerWidth model) barIdInInspector
                     |> el [ width <| px <| playerWidth model, height (px 16) ]
               in
                   none
@@ -325,7 +323,7 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
         , (RecommendationsTab, "Related")
         ]
         |> List.map renderTab
-        |> row [ width fill, paddingXY 20 0, spacing 25, Background.color x5colorDark ]
+        |> row [ width fill, paddingXY 20 0, spacing 25, Background.color midnightBlue ]
 
       tabContent =
         if isLoggedIn model then
@@ -335,14 +333,14 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
           ]
           |> column [ width fill, paddingXY 20 0, spacing 25 ]
         else
-          guestCallToSignup "In order to use all the features and save your changes"
+          guestCallToSignup "In order to benefit from the full feature set, including personalised recommendations of learning materials"
           |> el [ width fill, paddingXY 15 12, Background.color <| rgb 1 0.85 0.6 ]
           |> el [ padding 20 ]
   in
       [ tabsMenu |> el [ width fill ]
       , tabContent |> el [ scrollbarY, height (fill |> maximum 510), width fill ]
       ]
-      |> column [ spacing 25, width <| px inspectorSidebarWidth, height fill, alignTop, borderLeft 1, borderColorDivider, moveRight ((sheetWidth model) - inspectorSidebarWidth - 35 |> toFloat), Background.color white ]
+      |> column [ spacing 25, width <| px (inspectorSidebarWidth model), height fill, alignTop, borderLeft 1, borderColorDivider, moveRight ((sheetWidth model) - (inspectorSidebarWidth model) - 35 |> toFloat), Background.color white ]
 
 
 viewRecommendationCard : Model -> Oer -> Element Msg
@@ -394,7 +392,7 @@ recommendationCardHeight =
 
 recommendationCardWidth : Model -> Int
 recommendationCardWidth model =
-  inspectorSidebarWidth - 23
+  (inspectorSidebarWidth model) - 23
 
 
 viewFeedbackTab : Model -> Oer -> Element Msg
@@ -411,11 +409,11 @@ viewFeedbackTab model oer =
         , "Poor content"
         , "Poor image"
         ] ++ (if isVideoFile oer.url then [ "Poor audio" ] else []))
-        |> List.map (\option -> simpleButton [ paddingXY 9 5, Background.color feedbackOptionButtonColor, Font.size 14, whiteText ] option (Just <| SubmittedResourceFeedback oer.id (">>>"++option)))
+        |> List.map (\option -> simpleButton [ paddingXY 9 5, Background.color primaryGreen, buttonRounding, Font.size 14, whiteText ] option (Just <| SubmittedResourceFeedback oer.id (">>>"++option)))
         |> column [ spacing 10 ]
 
       textField =
-        Input.text [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5color ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your comments" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
+        Input.text [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5grey ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your comments" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
   in
       [ "How would you describe this material?" |> bodyWrap []
       , quickOptions

@@ -27,174 +27,49 @@ type IconPosition
   | IconRight
 
 
-materialDark : Color
-materialDark =
-  grey 11
+-- X5GON color palette
+
+midnightBlue : Color
+midnightBlue =
+  rgb255 0 13 50
 
 
-slightlyTransparentBlack : Color
-slightlyTransparentBlack =
-  rgba 0 0 0 0.7
+x5grey : Color
+x5grey =
+  rgb255 74 84 114
+
+
+electricBlue : Color
+electricBlue =
+  rgb255 0 156 204
+
+
+blueberryBlue : Color
+blueberryBlue =
+  rgb255 72 119 255
+
+
+primaryGreen : Color
+primaryGreen =
+  rgb255 0 173 87
+
+
+oxfordBlue : Color
+oxfordBlue =
+  rgb255 0 19 77
+
+
+superlightGrey : Color
+superlightGrey =
+  rgb255 242 243 244
 
 
 superLightBackground : Attribute Msg
 superLightBackground =
-  Background.color <| rgb255 242 242 242
+  Background.color superlightGrey
 
 
-greyDivider : Color
-greyDivider =
-  rgb 0.8 0.8 0.8
-
-
-materialDarkAlpha : Attribute Msg
-materialDarkAlpha =
-  alpha 0.87
-
-
-whiteText : Attribute Msg
-whiteText =
-  Font.color white
-
-
-greyText : Attribute Msg
-greyText =
-  Font.color <| grey 160
-
-
-feedbackOptionButtonColor : Color
-feedbackOptionButtonColor =
-  rgb255 80 170 120
-
-
-x5color : Color
-x5color =
-  rgb255 82 134 148
-
-
-x5colorSemiTransparent : Color
-x5colorSemiTransparent =
-  rgba255 82 134 148 0.3
-
-
-x5colorDark : Color
-x5colorDark =
-  rgb255 38 63 71
-
-
-pageHeaderHeight : Int
-pageHeaderHeight =
-  40
-
-
-paddingTop : Int -> Attribute Msg
-paddingTop px =
-  paddingEach { allSidesZero | top = px }
-
-
-paddingBottom : Int -> Attribute Msg
-paddingBottom px =
-  paddingEach { allSidesZero | bottom = px }
-
-
-paddingLeft : Int -> Attribute Msg
-paddingLeft px =
-  paddingEach { allSidesZero | left = px }
-
-
-paddingRight : Int -> Attribute Msg
-paddingRight px =
-  paddingEach { allSidesZero | right = px }
-
-
-bigButtonPadding : Attribute Msg
-bigButtonPadding =
-  paddingXY 13 10
-
-
-borderTop : Int -> Attribute Msg
-borderTop px =
-  Border.widthEach { allSidesZero | top = px }
-
-
-borderBottom : Int -> Attribute Msg
-borderBottom px =
-  Border.widthEach { allSidesZero | bottom = px }
-
-
-borderLeft : Int -> Attribute Msg
-borderLeft px =
-  Border.widthEach { allSidesZero | left = px }
-
-
-borderColorDivider : Attribute Msg
-borderColorDivider =
-  Border.color greyDivider
-
-
-allSidesZero : { bottom : number, left : number1, right : number2, top : number3 }
-allSidesZero =
-  { top = 0
-  , right = 0
-  , bottom = 0
-  , left = 0
-  }
-
-
-captionTextAttrs : List (Attribute Msg)
-captionTextAttrs =
-  [ Font.size 12, Font.color materialDark ]
-
-
-bodyTextAttrs : List (Attribute Msg)
-bodyTextAttrs =
-  [ Font.size 14, Font.color materialDark ]
-
-
-captionNowrap : List (Attribute Msg) -> String -> Element Msg
-captionNowrap attrs str =
-  text str |> el (captionTextAttrs ++ attrs)
-
-
-captionWrap : List (Attribute Msg) -> String -> Element Msg
-captionWrap attrs str =
-  [ text str ] |> paragraph (captionTextAttrs ++ attrs)
-
-
-bodyWrap : List (Attribute Msg) -> String -> Element Msg
-bodyWrap attrs str =
-  [ text str ] |> paragraph (bodyTextAttrs ++ attrs)
-
-
-bodyNoWrap : List (Attribute Msg) -> String -> Element Msg
-bodyNoWrap attrs str =
-  text str |> el (bodyTextAttrs ++ attrs)
-
-
-subSubheaderNoWrap : List (Attribute Msg) -> String -> Element Msg
-subSubheaderNoWrap attrs str =
-  text str |> el ([ Font.size 16, Font.color materialDark ] ++ attrs)
-
-
-subSubheaderWrap : List (Attribute Msg) -> String -> Element Msg
-subSubheaderWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 16, Font.color materialDark ] ++ attrs)
-
-
-subheaderWrap : List (Attribute Msg) -> String -> Element Msg
-subheaderWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 21, Font.color materialDark ] ++ attrs)
-
-
-headlineWrap : List (Attribute Msg) -> String -> Element Msg
-headlineWrap attrs str =
-  [ text str ] |> paragraph ([ Font.size 24, Font.color materialDark ] ++ attrs)
-
-
-italicText : String -> Element Msg
-italicText =
-  bodyWrap [ Font.italic ]
-
+-- additional UI colors
 
 white : Color
 white =
@@ -203,7 +78,7 @@ white =
 
 yellow : Color
 yellow =
-  rgba255 255 240 0 0.9
+  rgba255 255 235 0 0.97
 
 
 red : Color
@@ -211,29 +86,9 @@ red =
   rgba255 240 30 0 1
 
 
-orange : Color
-orange =
-  rgb255 255 120 0
-
-
 magenta : Color
 magenta =
   rgb255 250 0 230
-
-
-darkPurple : Color
-darkPurple =
-  rgb255 150 0 130
-
-
-blue : Color
-blue =
-  rgb255 0 190 250
-
-
-linkBlue : Color
-linkBlue =
-  rgb255 0 115 230
 
 
 grey80 : Color
@@ -271,6 +126,159 @@ grey value =
   rgb255 value value value
 
 
+slightlyTransparentBlack : Color
+slightlyTransparentBlack =
+  rgba 0 0 0 0.7
+
+
+greyDivider : Color
+greyDivider =
+  rgb 0.8 0.8 0.8
+
+
+materialDarkAlpha : Attribute Msg
+materialDarkAlpha =
+  alpha 0.87
+
+
+whiteText : Attribute Msg
+whiteText =
+  Font.color white
+
+
+greyText : Attribute Msg
+greyText =
+  Font.color <| x5grey
+
+
+pageHeaderHeight : Int
+pageHeaderHeight =
+  40
+
+
+paddingTop : Int -> Attribute Msg
+paddingTop px =
+  paddingEach { allSidesZero | top = px }
+
+
+paddingBottom : Int -> Attribute Msg
+paddingBottom px =
+  paddingEach { allSidesZero | bottom = px }
+
+
+paddingLeft : Int -> Attribute Msg
+paddingLeft px =
+  paddingEach { allSidesZero | left = px }
+
+
+paddingRight : Int -> Attribute Msg
+paddingRight px =
+  paddingEach { allSidesZero | right = px }
+
+
+buttonRounding : Attribute Msg
+buttonRounding =
+  Border.rounded 4
+
+
+bigButtonPadding : Attribute Msg
+bigButtonPadding =
+  paddingXY 13 10
+
+
+borderTop : Int -> Attribute Msg
+borderTop px =
+  Border.widthEach { allSidesZero | top = px }
+
+
+borderBottom : Int -> Attribute Msg
+borderBottom px =
+  Border.widthEach { allSidesZero | bottom = px }
+
+
+borderLeft : Int -> Attribute Msg
+borderLeft px =
+  Border.widthEach { allSidesZero | left = px }
+
+
+borderColorDivider : Attribute Msg
+borderColorDivider =
+  Border.color greyDivider
+
+
+allSidesZero : { bottom : number, left : number1, right : number2, top : number3 }
+allSidesZero =
+  { top = 0
+  , right = 0
+  , bottom = 0
+  , left = 0
+  }
+
+
+smallShadow : Attribute Msg
+smallShadow =
+  Border.shadow { offset = ( 0, 2 ) , size = 1 , blur = 3 , color = superlightGrey }
+
+
+captionTextAttrs : List (Attribute Msg)
+captionTextAttrs =
+  [ Font.size 12, Font.color midnightBlue ]
+
+
+bodyTextAttrs : List (Attribute Msg)
+bodyTextAttrs =
+  [ Font.size 14, Font.color midnightBlue ]
+
+
+bigHeadingTextAttrs =
+  [ Font.family [ Font.typeface "IBM Plex Serif" , Font.serif ] ]
+
+
+captionNowrap : List (Attribute Msg) -> String -> Element Msg
+captionNowrap attrs str =
+  text str |> el (captionTextAttrs ++ attrs)
+
+
+captionWrap : List (Attribute Msg) -> String -> Element Msg
+captionWrap attrs str =
+  [ text str ] |> paragraph (captionTextAttrs ++ attrs)
+
+
+bodyWrap : List (Attribute Msg) -> String -> Element Msg
+bodyWrap attrs str =
+  [ text str ] |> paragraph (bodyTextAttrs ++ attrs)
+
+
+bodyNoWrap : List (Attribute Msg) -> String -> Element Msg
+bodyNoWrap attrs str =
+  text str |> el (bodyTextAttrs ++ attrs)
+
+
+subSubheaderNoWrap : List (Attribute Msg) -> String -> Element Msg
+subSubheaderNoWrap attrs str =
+  text str |> el ([ Font.size 16, Font.color midnightBlue ] ++ attrs)
+
+
+subSubheaderWrap : List (Attribute Msg) -> String -> Element Msg
+subSubheaderWrap attrs str =
+  [ text str ] |> paragraph ([ Font.size 16, Font.color midnightBlue ] ++ attrs)
+
+
+subheaderWrap : List (Attribute Msg) -> String -> Element Msg
+subheaderWrap attrs str =
+  [ text str ] |> paragraph ([ Font.size 21, Font.color midnightBlue ] ++ attrs)
+
+
+headlineWrap : List (Attribute Msg) -> String -> Element Msg
+headlineWrap attrs str =
+  [ text str ] |> paragraph ([ Font.size 24, Font.color midnightBlue ] ++ attrs)
+
+
+italicText : String -> Element Msg
+italicText =
+  bodyWrap [ Font.italic ]
+
+
 htmlClass : String -> Attribute Msg
 htmlClass name =
   Html.Attributes.class name |> htmlAttribute
@@ -301,7 +309,7 @@ pageBodyBackground model =
   if isLabStudy1 model then
     Background.color <| grey 224
   else
-    Background.image <| imgPath "bg.jpg"
+    Background.color <| grey 224
 
 
 imgPath : String -> String
@@ -327,10 +335,15 @@ onEnter msg =
       |> htmlAttribute
 
 
--- NB: stopPropagation should be avoided, see https://css-tricks.com/dangers-stopping-event-propagation/
 onClickStopPropagation : msg -> Attribute msg
 onClickStopPropagation message =
   Html.Events.custom "click" (Json.Decode.succeed { message = message, stopPropagation = True, preventDefault = True })
+  |> htmlAttribute
+
+
+onMousedownStopPropagation : msg -> Attribute msg
+onMousedownStopPropagation message =
+  Html.Events.custom "mousedown" (Json.Decode.succeed { message = message, stopPropagation = True, preventDefault = True })
   |> htmlAttribute
 
 
@@ -368,6 +381,10 @@ navigationDrawerWidth =
   230
 
 
+dropdownTriangle =
+  "▾" |> captionNowrap [ Font.color grey80 ]
+
+
 actionButtonWithIcon : List (Attribute Msg) -> List (Attribute Msg) -> IconPosition -> Float -> String -> String -> Maybe Msg -> Element Msg
 actionButtonWithIcon textAttrs buttonAttrs iconPosition iconAlpha svgIconStub str onPress =
   let
@@ -385,7 +402,7 @@ actionButtonWithIcon textAttrs buttonAttrs iconPosition iconAlpha svgIconStub st
           IconRight ->
             [ title, icon ]
   in
-      button ([ htmlClass "PreventClosingInspectorOnClick" ] ++ buttonAttrs) { onPress = onPress, label = label |> row [ width fill, spacing 3, Border.rounded 4 ]}
+      button ([ htmlClass "PreventClosingInspectorOnClick", buttonRounding ] ++ buttonAttrs) { onPress = onPress, label = label |> row [ width fill, spacing 3, buttonRounding ]}
 
 
 actionButtonWithoutIcon : List (Attribute Msg) -> List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
@@ -417,7 +434,7 @@ confirmButton : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
 confirmButton attrs str onPress =
   let
       label =
-        str |> bodyNoWrap [ Background.color x5color, bigButtonPadding, whiteText ]
+        str |> bodyNoWrap [ Background.color primaryGreen, bigButtonPadding, whiteText ]
   in
       button attrs { onPress = onPress, label = label }
 
@@ -448,8 +465,11 @@ materialScrimAlpha =
   0.32
 
 
-inspectorSidebarWidth =
-  230
+inspectorSidebarWidth model =
+  if isLabStudy1 model then
+    0
+  else
+    230
 
 
 playerWidth : Model -> Int
@@ -469,7 +489,7 @@ playerWidth model =
 
             Just videoPlayer ->
               (model.windowHeight - pageHeaderHeight - 380 |> toFloat) * videoPlayer.aspectRatio
-              |> min (model.windowWidth - navigationDrawerWidth - inspectorSidebarWidth - 40 |> toFloat)
+              |> min (model.windowWidth - navigationDrawerWidth - (inspectorSidebarWidth model) - 40 |> toFloat)
               |> min 720
               |> floor
 
@@ -538,16 +558,6 @@ truncateSentence characterLimit sentence =
         (firstWords (sentence |> String.split " ")) ++ "…"
 
 
-openInspectorOnPress : Model -> Oer -> Maybe Msg
-openInspectorOnPress model oer =
-  case model.inspectorState of
-    Nothing ->
-      Just (InspectOer oer 0 False)
-
-    _ ->
-      Nothing
-
-
 imageHeight : Int
 imageHeight =
   175
@@ -580,18 +590,17 @@ pointerEventsNone =
 
 inlineLinkAttrs : List (Attribute Msg)
 inlineLinkAttrs =
-  [ paddingXY 5 0, Font.color linkBlue ]
+  [ paddingXY 5 0, Font.color blueberryBlue ]
 
 
 guestCallToSignup : String -> Element Msg
 guestCallToSignup incentive =
-  [ "You are currently not logged in. "++incentive++", please" |> text
+  [ "You are not logged in. "++incentive++", make sure to" |> text
   , "log in" |> text |> linkTo inlineLinkAttrs loginPath
   , "or" |> text
-  , "create an account" |> text |> linkTo inlineLinkAttrs signupPath
-  , "." |> text
+  , "sign up" |> text |> linkTo inlineLinkAttrs signupPath
   ]
-  |> paragraph [ Font.size 14, Font.color materialDark ]
+  |> paragraph [ width fill, Font.size 14, Font.color midnightBlue ]
 
 
 closeIcon : Element Msg
@@ -642,3 +651,8 @@ explanationLinkForTranslation =
   { label = "Translation / Transcription"
   , url = "https://platform.x5gon.org/products/translate"
   }
+
+
+barIdInInspector : String
+barIdInInspector =
+  "inspector"

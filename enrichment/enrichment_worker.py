@@ -12,7 +12,7 @@ from wikichunkifiers.lib.util import EnrichmentError
 
 import wikipedia
 
-API_ROOT = os.environ["FLASK_API_ROOT"]
+API_ROOT = "http://x5learn.org/api/v1/"
 
 
 # API_ROOT = 'http://127.0.0.1:5000/api/v1/'
@@ -123,6 +123,7 @@ def extract_concept_clusters(chunks, mentions):
     titles = [x[0] for x in sorted(occurrences.items(), key=lambda k_v: k_v[1], reverse=True)[:5]]
     print('Titles:', titles)
     clusters = []
+
     for title in titles:
         try:
             links = wikipedia.page(title).links
@@ -132,6 +133,7 @@ def extract_concept_clusters(chunks, mentions):
         links = [link for link in links if link in titles]
         cluster = [title] + links
         clusters.append(cluster)
+
     print('Raw:', clusters)
     clusters = merge_clusters(clusters)
     print('Merged:', clusters)

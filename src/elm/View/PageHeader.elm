@@ -59,14 +59,28 @@ viewPageHeader model =
             case session.loginState of
               LoggedInUser userProfile ->
                 [ viewExplainerToggle model
+                , viewLinkToAboutPage
                 , viewUserMenu model userProfile
                 ]
 
               GuestUser ->
-                [ viewExplainerToggle model
-                , link [ alignRight, paddingXY 15 10 ] { url = loginPath, label = "Log in" |> bodyNoWrap [] }
-                , link [ alignRight, paddingXY 15 10 ] { url = signupPath, label = "Sign up" |> bodyNoWrap [] }
-                ]
+                let
+                    loginHintPopup =
+                      case model.popup of
+                        Just LoginHintPopup ->
+                          [ guestCallToSignup "To create your ideal personal learning pathway" ]
+                          |> menuColumn [ padding 15, moveDown 10, width <| px 176 ]
+                          |> below
+                          |> List.singleton
+
+                        _ ->
+                          []
+                in
+                    [ viewExplainerToggle model
+                    , viewLinkToAboutPage
+                    , link [ alignRight, paddingXY 15 10 ] { url = loginPath, label = "Log in" |> bodyNoWrap [] } |> el loginHintPopup
+                    , link [ alignRight, paddingXY 15 10 ] { url = signupPath, label = "Sign up" |> bodyNoWrap [] }
+                    ]
   in
       [ link [] { url = "/", label = image [ height (px 26) ] { src = imgPath "x5learn_logo.png", description = "X5Learn logo" } } ] ++ loginLogoutSignup
       |> row attrs
@@ -80,11 +94,8 @@ viewUserMenu model userProfile =
       icon =
         avatarImage
 
-      triangle =
-        "▾" |> captionNowrap [ Font.color grey80 ]
-
       label =
-        [ icon, triangle ]
+        [ icon, dropdownTriangle ]
         |> row [ width fill, paddingXY 12 3, spacing 5 ]
 
       navButton url buttonText =
@@ -105,7 +116,7 @@ viewUserMenu model userProfile =
                   ]
           in
               menuItems
-              |> menuColumn [ Background.color white, moveRight 67, moveDown 38 ]
+              |> menuColumn [ moveRight 67, moveDown 38 ]
               |> onLeft
               |> List.singleton
         else
@@ -124,9 +135,27 @@ viewExplainerToggle model =
   let
       enabled =
         model.isExplainerEnabled
+
+      popup =
+        case model.popup of
+          Just ExplainerMetaInformationPopup ->
+            [ "This mode allows you to see which AI components are involved in specific parts of the user interface. Use the 'explain' buttons for links to further information." |> bodyWrap [] ]
+            |> menuColumn [ padding 15, moveDown 10 ]
+            |> below
+            |> List.singleton
+
+          _ ->
+            []
   in
       [ "Transparent AI" |> bodyNoWrap ([ width fill ] ++ (if enabled then [ Font.color magenta ] else []))
       , viewToggleIndicator enabled (if enabled then "MagentaBackground" else "") |> el [ paddingRight 10 ]
       ]
-      |> row [ spacing 10, onClick ToggleExplainer, htmlClass "CursorPointer" ]
+      |> row ([ spacing 10, onClick ToggleExplainer, htmlClass "CursorPointer PreventClosingThePopupOnClick" ] ++ popup)
       |> el [ alignRight ]
+
+
+{-| Render the link to the /about page
+-}
+viewLinkToAboutPage : Element Msg
+viewLinkToAboutPage =
+  link [ alignRight, paddingXY 15 10 ] { url = aboutPath, label = "About" |> bodyNoWrap [] }

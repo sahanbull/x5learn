@@ -25,7 +25,6 @@ port inspectorAnimationStop : (Int -> msg) -> Sub msg
 port closePopup : (Int -> msg) -> Sub msg
 port closeInspector : (Int -> msg) -> Sub msg
 port popupTriggerPosition : (Point -> msg) -> Sub msg
-port clickedOnDocument : (Int -> msg) -> Sub msg
 port mouseOverChunkTrigger : (Float -> msg) -> Sub msg
 port mouseMovedOnTopicLane : (Float -> msg) -> Sub msg
 port timelineMouseEvent : (EventNameAndPosition -> msg) -> Sub msg

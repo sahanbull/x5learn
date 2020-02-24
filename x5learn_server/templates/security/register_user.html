@@ -12,19 +12,8 @@
       {% if register_user_form.password_confirm %}
         {{ render_field_with_errors(register_user_form.password_confirm, placeholder='Password') }}
       {% endif %}
-  </div>
-  <div class="centerblock no-pad">
-    <div class="document-container">
-      {% include "snippets/privacy_policy.html" %}
-    </div>
-    <p>{{ register_user_form.privacy_policy }} <small>I agree to the above Cookie & Privacy Policy.</small></p>
-    <br>
-    <div class="document-container">
-      {% include "snippets/terms_of_use.html" %}
-    </div>
-    <p>{{ register_user_form.terms_and_conditions }}  <small>I agree to the above Terms of Use.</small></p>
-  </div>
-  <div class="centerblock">
+      <p>{{ register_user_form.privacy_policy }} <small>I agree to the <a href="/privacy_policy" target="_blank">Cookie & Privacy Policy</a>.</small></p>
+      <p>{{ register_user_form.terms_and_conditions }}  <small>I agree to the  <a href="/terms_of_use" target="_blank">Terms of Use</a>.</small></p>
       {{ render_field(register_user_form.submit) }}
     </form>
     <p class="centernote">Already a member? <a href="/login">Log in.</a></p>

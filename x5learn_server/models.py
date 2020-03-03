@@ -319,19 +319,24 @@ class Repository:
 
         """
 
+        query_object = self._db_session.query(item)
+
+        if (user_login_id):
+            query_object = query_object.filter_by(
+                user_login_id=user_login_id)
+
         if filters:
-            for key, value in filters.iteritems():
-                self._db_session.filter_by(key=value)
+            for key, value in filters.items():
+                query_object = query_object.filter(getattr(item, key) == value)
 
         if sort:
-            for key, value in sort.iteritems():
+            for key, value in sort.items():
                 if value == "asc":
-                    self._db_session.order_by(key.asc)
+                    query_object.order_by((getattr(item, key)).asc())
                 else:
-                    self._db_session.order_by(key.desc)
+                    query_object.order_by((getattr(item, key)).desc())
 
-        result = self._db_session.query(item)
-        return result
+        return query_object.all()
 
     def add(self, item):
         """add an a record of type item to the db.

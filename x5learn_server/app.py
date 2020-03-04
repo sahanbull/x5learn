@@ -879,7 +879,7 @@ class UserHistoryApi(Resource):
 
         # Creating a actions repository for unique data fetch
         actions_repository = ActionsRepository()
-        result_list = actions_repository.get_actions(current_user.get_id(), 1, 'desc')
+        result_list = actions_repository.get_actions(current_user.get_id(), 1, 'desc', 0, 20)
         
         # Extracting oer ids
         oers = list()

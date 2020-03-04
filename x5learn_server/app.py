@@ -868,6 +868,35 @@ class UserApi(Resource):
             return {'result': 'User deleted'}, 200
 
 
+@ns_user.route('/history')
+class UserHistoryApi(Resource):
+    '''Api to fetch user history'''
+
+    def get(self):
+        '''Get user history'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        # Creating a actions repository for unique data fetch
+        actions_repository = ActionsRepository()
+        result_list = actions_repository.get_actions(current_user.get_id(), 1, 'desc', 0, 20)
+        
+        # Extracting oer ids
+        oers = list()
+        if result_list is not None:
+            for i in result_list:
+                temp_action = i.Action.serialize
+                oer_details = repository.get_by_id(Oer, temp_action['params'].get('oerId', 0))
+
+                oers.append({
+                    'oer_id': temp_action['params'].get('oerId', 0),
+                    'last_accessed': temp_action['created_at'],
+                    'title': oer_details.data.get('title', ' - ')
+                })
+
+        return {'oers': oers}, 200
+
+
 # Defining user resource for API access
 ns_definition = api.namespace('api/v1/definition', description='Definitions')
 

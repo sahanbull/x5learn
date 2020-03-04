@@ -885,7 +885,14 @@ class UserHistoryApi(Resource):
         oers = list()
         if result_list is not None:
             for i in result_list:
-                oers.append(i.Action.params.get('oerId', 0))
+                temp_action = i.Action.serialize
+                oer_details = repository.get_by_id(Oer, temp_action['params'].get('oerId', 0))
+
+                oers.append({
+                    'oer_id': temp_action['params'].get('oerId', 0),
+                    'last_accessed': temp_action['created_at'],
+                    'title': oer_details.data.get('title', ' - ')
+                })
 
         return {'oers': oers}, 200
 

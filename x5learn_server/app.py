@@ -751,8 +751,11 @@ class APIInfo(Resource):
 ns_action = api.namespace('api/v1/action', description='Actions')
 
 m_action = api.model('Action', {
-    'action_type_id': fields.Integer(required=True, description='The action type id for the action'),
-    'params': fields.String(required=True, description='A json object with params related to the action')
+    'action_type_id': fields.Integer(required=False, description='The action type id for the action'),
+    'params': fields.String(required=False, description='A json object with params related to the action'),
+    'is_bundled': fields.Boolean(default=False, required=True, description='Boolean flag to differentiate between a single entry or a bundle entry'),
+    'action_type_ids': fields.List(fields.Integer, required=False, description='A list of action type ids'),
+    'params_list': fields.List(fields.String, required=False, description='Params list for corresponding action type ids')
 })
 
 
@@ -819,19 +822,31 @@ class ActionList(Resource):
 
             return serializable_list
 
-    @ns_action.doc('log_action')
-    @ns_action.expect(m_action, validate=True)
+    @ns_action.doc('log_action', validate=True)
+    @ns_action.expect(m_action)
     def post(self):
         '''Log action to database'''
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
-        elif not api.payload['action_type_id']:
-            return {'result': 'Action type id is required'}, 400
+        
+        if api.payload['is_bundled']:
+            if len(api.payload['action_type_ids']) != len(api.payload['params_list']):
+                return {'result': 'One or more arguments were found missing.'}, 400
+            count = 0
+            for idx, val in enumerate(api.payload['action_type_ids']):
+                action = Action(val, json.loads(
+                    api.payload['params_list'][idx]), current_user.get_id())
+                repository.add(action)
+                count = count + 1
+            return {'result': 'Actions logged. No of Actions - {}'.format(count)}, 201
         else:
-            action = Action(api.payload['action_type_id'], json.loads(
-                api.payload['params']), current_user.get_id())
-            repository.add(action)
-            return {'result': 'Action logged'}, 201
+            if not api.payload['action_type_id']:
+                return {'result': 'Action type id is required'}, 400
+            else:
+                action = Action(api.payload['action_type_id'], json.loads(
+                    api.payload['params']), current_user.get_id())
+                repository.add(action)
+                return {'result': 'Action logged'}, 201
 
 
 # Defining user resource for API access

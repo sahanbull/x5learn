@@ -25,7 +25,7 @@ _ = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
 from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, \
     EntityDefinition, ResourceFeedback, Action, ActionType, Repository, \
-    ActionsRepository, UserRepository, DefinitionsRepository, Course, UiLogBatch, Note
+    ActionsRepository, UserRepository, DefinitionsRepository, Course, UiLogBatch, Note, Playlist, Playlist_Item, Temp_Playlist
 
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
 from x5learn_server.lab_study import frozen_search_results_for_lab_study, is_special_search_key_for_lab_study
@@ -1124,6 +1124,270 @@ class Notes(Resource):
         setattr(note, 'is_deactivated', True)
         db_session.commit()
         return {'result': 'Note deleted'}, 201
+
+
+# Defining playlist resource for API access
+ns_playlist = api.namespace('api/v1/playlist', description='Playlist')
+
+m_playlist = api.model('Playlist', {
+    'title': fields.String(required=True, max_length=255, description='The title of the playlist'),
+    'description': fields.String(required=True, description='An extensive description describing the contents of the playlist'),
+    'author': fields.String(required=True, max_length=255, description='The author of the playlist. (Not necessarily the logged in user)'),
+    'parent': fields.Integer(required=False, description='The id of the parent playlist which the current playlist was based on if any'),
+    'license': fields.Integer(default=1, required=True, description='The id of the license information for the current playlist'),
+    'is_visible': fields.Boolean(default=True, required=True, description='Boolean flag to identify if the playlist is visible to the public'),
+    'playlist_items': fields.List(fields.Integer, required=True, description='A list of oer ids to be included in the playlist'),
+    'playlist_items_order': fields.List(fields.Integer, required=True, description='The order of each corresponding playlist item parameterized as "playlist_items"'),
+    'is_temp': fields.Boolean(default=False, required=True, description="Boolean flag to identify if the playlist is temporary or published")
+})
+
+@ns_playlist.route('/')
+class Playlists(Resource):
+    '''Create, fetch and delete playlists'''
+    @ns_playlist.doc('list_playlists', params={ 'author': 'Filter by author',
+                                                'license': 'Filter by license',
+                                                'sort': 'Sort results (Default: desc)',
+                                                'offset': 'Offset results',
+                                                'limit': 'Limit results'})
+    def get(self):
+        '''Fetches zero or more playlists created by logged in user from database based on params'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+        else:
+            # Declaring and processing params available for request
+            parser = reqparse.RequestParser()
+            parser.add_argument('author')
+            parser.add_argument('license', type=int)
+            parser.add_argument('sort', default='desc', choices=('asc', 'desc'), help='Bad choice')
+            parser.add_argument('offset', type=int)
+            parser.add_argument('limit', type=int)
+            args = parser.parse_args()
+
+            # Building and executing query object
+            query_object = db_session.query(Playlist)
+
+            if (args['author']):
+                query_object = query_object.filter(Playlist.author == args['author'])
+
+            if (args['license']):
+                query_object = query_object.filter(Playlist.license == args['license'])
+
+            query_object = query_object.filter(Playlist.creator == current_user.get_id())
+
+            if (args['sort'] == 'desc'):
+                query_object = query_object.order_by(Playlist.created_at.desc())
+            else:
+                query_object = query_object.order_by(Playlist.created_at.asc())
+
+            if (args['offset']):
+                query_object = query_object.offset(args['offset'])
+
+            if (args['limit']):
+                query_object = query_object.limit(args['limit'])
+
+            result_list = query_object.all()
+
+            # Converting result list to JSON friendly format
+            serializable_list = list()
+            if (result_list):
+                serializable_list = [i.serialize for i in result_list]
+
+            return serializable_list
+    
+    @ns_playlist.doc('create_playlist')
+    @ns_playlist.expect(m_playlist, validate=True)
+    def post(self):
+        '''Creates a new playlist as temporary or published'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        if api.payload['is_temp'] == None or not api.payload['title']:
+            return {'result': 'Playlist save type and title is required'}, 400
+
+        if len(api.payload['playlist_items']) != len(api.payload['playlist_items_order']):
+                return {'result': 'One or more arguments for playlist items were found missing.'}, 400
+
+        if api.payload['is_temp'] == False:
+            playlist = Playlist(api.payload['title'], api.payload['description'], api.payload['author'], "", current_user.get_id(), api.payload['parent'], api.payload['is_visible'])
+            playlist = repository.add(playlist)
+
+            count = 0
+            for idx, val in enumerate(api.payload['playlist_items']):
+                playlist_item = Playlist_Item(playlist.id, val, api.payload['playlist_items_order'][idx])
+                playlist_item = repository.add(playlist_item)
+                count = count + 1
+
+            return {'result': 'Playlist with {} items created and published'.format(count)}, 201
+
+        else:
+            temp_playlist = Temp_Playlist(api.payload['title'], current_user.get_id(), json.dumps(api.payload))
+            temp_playlist = repository.add(temp_playlist)
+
+            return {'result': 'Playlist with {} items created'.format(count)}, 201
+
+
+    @ns_playlist.doc('delete_playlist', params={'id' : 'Delete published playlist by id',
+                                                'title': 'Delete temporary playlist by title'})
+    def delete(self):
+        '''Delete playlist'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        if api.payload['id'] != None:
+            playlist = repository.get_by_id(Playlist, api.payload['id'], current_user.get_id())
+            if playlist != None:
+                playlist_items = repository.get(Playlist_Item, None, {'playlist_id': playlist.id})
+                for item in playlist_items:
+                    repository.delete(item)
+
+            repository.delete(playlist)
+            return {'result': 'Playlist - {} was successfully deleted'.format(playlist.title)}, 201
+
+        if api.payload['title'] != None:
+            temp_playlist = repository.get(Temp_Playlist, None, {'title': api.payload['title'], 'creator': current_user.get_id()})
+            if temp_playlist != None:
+                repository.delete(temp_playlist)
+
+            return {'result': 'Playlist - {} was successfully deleted'.format(temp_playlist.title)}, 201
+
+
+@ns_playlist.route('/<int:id>')
+@ns_playlist.response(404, 'Playlist not found')
+@ns_playlist.param('id', 'The playlist identifier')
+class Playlist_Single(Resource):
+    @ns_playlist.doc('get_playlist')
+    def get(self, id):
+        '''Fetch requested playlist from database'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        playlist = repository.get_by_id(Playlist, id)
+
+        if playlist is None:
+            return {'result': 'Playlist not found'}, 400
+
+        playlist_items = repository.get(Playlist_Item, None, {'playlist_id' : playlist.id, 'creator' : current_user.get_id()})
+        return { 'playlist' : playlist.serialize , 'playlist_items': playlist_items}, 200
+
+    @ns_playlist.doc('update_playlist')
+    @ns_playlist.expect(m_playlist, validate=True)
+    def put(self, id):
+        '''Update selected playlist'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        if len(api.payload['playlist_items']) != len(api.payload['playlist_items_order']):
+                return {'result': 'One or more arguments for playlist items were found missing.'}, 400
+
+        playlist = repository.get_by_id(Playlist, id, current_user.get_id())
+        playlist_items = repository.get(Playlist, None, {'playlist_id': id})
+        
+        if playlist is None:
+            return {'result': 'Playlist not found'}, 400
+
+        setattr(playlist, 'title', api.payload['title'])
+        setattr(playlist, 'description', api.payload['description'])
+        setattr(playlist, 'author', api.payload['author'])
+        setattr(playlist, 'license', api.payload['license'])
+        setattr(playlist, 'parent', api.payload['parent'])
+        setattr(playlist, 'is_visible', api.payload['is_visible'])
+        repository.update()
+
+        for item in playlist_items:
+            repository.delete(item)
+
+        count = 0
+        for idx, val in enumerate(api.payload['playlist_items']):
+            playlist_item = Playlist_Item(playlist.id, val, api.payload['playlist_items_order'][idx])
+            playlist_item = repository.add(playlist_item)
+            count = count + 1
+
+        return {'result': 'Playlist with {} items updated and published'.format(count)}, 201
+
+    @ns_playlist.doc('delete_playlist')
+    def delete(self, id):
+        '''Delete playlist'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        playlist = repository.get_by_id(Playlist, id)
+
+        if playlist is None:
+            return {'result': 'Playlist not found'}, 401
+
+        playlist_items = repository.get(Playlist_Item, None, {'playlist_id': playlist.id})
+        for item in playlist_items:
+            repository.delete(item)
+
+        repository.delete(playlist)
+        return {'result': 'Playlist - {} was successfully deleted'.format(playlist.title)}, 201
+
+
+@ns_playlist.route('/<string:title>')
+@ns_playlist.response(404, 'Temporary playlist not found')
+@ns_playlist.param('title', 'The temporary playlist identifier')
+class Temp_Playlist_Single(Resource):
+    @ns_playlist.doc('get_temp_playlist')
+    def get(self, title):
+        '''Fetch requested temporary playlist from database'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        query_object = db_session.query(Temp_Playlist)
+        query_object = query_object.filter(Temp_Playlist.title == title)
+        query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+        temp_playlist = query_object.one_or_none()
+
+        if temp_playlist is None:
+            return {'result': 'Temporary playlist not found'}, 400
+
+        playlist_data = json.loads(temp_playlist['data'])
+        playlist = Playlist(playlist_data['title'], playlist_data.get('description', ''), playlist_data.get('author', ''), None, playlist_data.get('creator', None), playlist_data.get('parent', None), playlist_data.get('is_visible', True), playlist_data.get('license', ''))
+
+        playlist_items = []
+        for idx, val in enumerate(playlist_data.get('playlist_items', [])):
+            playlist_items.append(Playlist_Item(None, val, playlist_data.get('playlist_items', [])[idx]))
+
+        return { 'playlist' : playlist , 'playlist_items': playlist_items}, 200
+
+    @ns_playlist.doc('update_temp_playlist')
+    @ns_playlist.expect(m_playlist, validate=True)
+    def put(self, title):
+        '''Update temporary playlist from database'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        query_object = db_session.query(Temp_Playlist)
+        query_object = query_object.filter(Temp_Playlist.title == title)
+        query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+        temp_playlist = query_object.one_or_none()
+
+        if temp_playlist is None:
+            return {'result': 'Temporary playlist not found'}, 400
+
+        setattr(temp_playlist, 'title', api.payload['title'])
+        setattr(temp_playlist, 'data', json.dumps(api.payload))
+        repository.update()
+
+        return {'result': 'Temporary playlist successfully updated'}, 201
+
+    @ns_playlist.doc('delete_temporary_playlist')
+    def delete(self, id):
+        '''Delete temporary playlist'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        query_object = db_session.query(Temp_Playlist)
+        query_object = query_object.filter(Temp_Playlist.title == title)
+        query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+        temp_playlist = query_object.one_or_none()
+
+        if temp_playlist is None:
+            return {'result': 'Temporary playlist not found'}, 400
+
+        repository.delete(temp_playlist)
+        return {'result': 'Temporary playlist successfully deleted'}, 201
+
 
 def initiate_action_types_table():
     # TODO Define a comprehensive set of actions and keep it in sync with the frontend

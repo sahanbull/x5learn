@@ -50,6 +50,7 @@ class User(Base):
     id = Column(Integer(), primary_key=True)
     frontend_state = Column(JSON())
     user_login_id = Column(Integer, ForeignKey('user_login.id'))
+    is_content_creator = Column(Boolean())
 
 
 class Oer(Base):
@@ -274,6 +275,7 @@ class UiLogBatch(Base):
         print()
         return events
 
+
 class Note(Base):
     __tablename__ = 'note'
     __table_args__ = {'extend_existing': True}
@@ -304,6 +306,91 @@ class Note(Base):
             'user_login_id': self.user_login_id,
             'is_deactivated': self.is_deactivated
         }
+
+
+class License(Base):
+    __tablename__ = 'x5_oer_repo.license'
+    __table_args__ = {'extend_existing': True}
+    id = Column(Integer(), primary_key=True)
+    description = Column(Text())
+    url = Column(String(255))
+
+    def __init__(self, description, url):
+        self.description = description
+        self.url = url
+
+
+class Playlist(Base):
+    __tablename__ = 'x5_oer_repo.playlist'
+    __table_args__ = {'extend_existing': True}
+    id = Column(Integer(), primary_key=True)
+    title = Column(String(255))
+    description = Column(Text())
+    author = Column(String(255))
+    blueprint_url = Column(String(255))
+    creator = Column(Integer, ForeignKey('user_login.id'))
+    created_at = Column(DateTime(), default=datetime.datetime.utcnow)
+    parent = Column(Integer, ForeignKey('x5_oer_repo.playlist.id'), nullable=True)
+    is_visible = Column(Boolean())
+    license = Column(Integer, ForeignKey('x5_oer_repo.license.id'))
+    last_updated_at = Column(DateTime())
+
+    def __init__(self, title, description, author, blueprint_url, creator, parent, is_visible, license):
+        self.title = title
+        self.description = description
+        self.author = author
+        self.blueprint_url = blueprint_url
+        self.creator = creator
+        self.parent = parent
+        self.is_visible = is_visible
+        self.license = license
+        self.last_updated_at = datetime.datetime.utcnow()
+
+
+    @property
+    def serialize(self):
+        """Return object data in easily serializable format"""
+        return {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'author': self.author,
+            'blueprint_url': self.blueprint_url,
+            'parent': self.parent,
+            'created_at': dump_datetime(self.created_at),
+            'last_updated_at': dump_datetime(self.last_updated_at),
+            'creator': self.creator,
+            'is_visible': self.is_visible,
+            'license': self.license
+        }
+
+
+class Playlist_Item(Base):
+    __tablename__ = 'x5_oer_repo.playlist_item'
+    __table_args__ = {'extend_existing': True}
+    id = Column(Integer(), primary_key=True)
+    playlist_id = Column(Integer, ForeignKey('x5_oer_repo.playlist.id'))
+    oer_id = Column(Integer, ForeignKey('oer.id'))
+    order = Column(Integer())
+
+    def __init__(self, playlist_id, oer_id, order):
+        self.playlist_id = playlist_id
+        self.oer_id = oer_id
+        self.order = order
+
+
+class Temp_Playlist(Base):
+    __tablename__ = 'x5_oer_repo.temp_playlist'
+    __table_args__ = {'extend_existing': True}
+    title = Column(String(255), primary_key=True)
+    creator = Column(Integer, ForeignKey('user_login.id'), primary_key=True) 
+    data = Column(JSON())
+
+    def __init__(self, title, creator, data):
+        self.title = title
+        self.creator = creator
+        self.data = data
+
 
 # Repository pattern implemented for CRUD
 class Repository:

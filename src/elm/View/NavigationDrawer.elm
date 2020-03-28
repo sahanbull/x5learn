@@ -5,7 +5,7 @@ import Set
 import Json.Decode as Decode
 
 import Element exposing (..)
-import Element.Input as Input exposing (button)
+import Element.Input as Input exposing (button, text)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
@@ -45,16 +45,46 @@ withNavigationDrawer model (pageContent, inspector) =
         if isLabStudy1 model then
           [ viewContentFlowToggle model
           , taskButtons model
-          , viewCourse model
+          , viewCourse model,
+          playlistActionButtons
           ]
           |> column [ spacing 40, width fill ]
         else
-          [ viewCourse model
+          [ viewCourse model,
+          playlistActionButtons
           ]
           |> column [ width fill, spacing 8 ]
 
+      selectPlaylistButton = 
+          let
+            option playlist =
+              actionButtonWithoutIcon [] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] playlist.title (Just <| SelectedPlaylist Nothing)
+
+            options : List (Attribute Msg)
+            options =
+              case model.popup of
+                Just PlaylistPopup ->
+                  [ option (Playlist "playlist 1" [])
+                  ]
+                  |> menuColumn [ width fill]
+                  |> below
+                  |> List.singleton
+
+                _ ->
+                  []
+
+            attrs =
+              [ width fill, alignLeft, htmlClass "PreventClosingThePopupOnClick", buttonRounding ] ++ options
+          in
+            actionButtonWithoutIcon [ width fill, centerX, paddingXY 12 10 ] [ width fill, buttonRounding, Border.width 1, Border.color greyDivider ] "Select Playlist ▾"  (Just OpenedSelectPlaylistMenu)
+            |> el attrs
+
+
+
+
       drawer =
         [ if isLabStudy1 model then none else model.searchInputTyping |> viewSearchWidget model fill "Search" |> explainify model explanationForSearchField
+        , selectPlaylistButton
         , navButtons
         ]
         |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 12, spacing 30, whiteBackground ]
@@ -69,6 +99,12 @@ withNavigationDrawer model (pageContent, inspector) =
   in
       (page, inspector ++ [ drawer ])
 
+playlistActionButtons : Element Msg
+playlistActionButtons =
+  [  button [ Font.center, width fill,  Background.color primaryGreen, bigButtonPadding, whiteText ] { label = Element.text "Save", onPress = (Just <| SelectedPlaylist Nothing)}
+  ,  link [ Font.center, width fill, Background.color red, bigButtonPadding, whiteText ] { url = "/publish_playlist", label = Element.text "Publish" }
+  ]
+  |> row [ spacing 10,  width (fillPortion 2)]
 
 taskButtons : Model -> Element Msg
 taskButtons model =

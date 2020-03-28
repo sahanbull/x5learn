@@ -23,7 +23,7 @@ import ActionApi exposing (..)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg ({nav, userProfileForm} as model) =
+update msg ({nav, userProfileForm, playlistPublishForm} as model) =
   -- let
   --     actionlog =
   --       msg |> Debug.log "action"
@@ -55,6 +55,8 @@ update msg ({nav, userProfileForm} as model) =
           (subpage, (newModel, cmd)) =
             if url.path |> String.startsWith profilePath then
               (Profile, (model, Cmd.none))
+            else if url.path |> String.startsWith publishPlaylistPath then
+              (PublishPlaylist, (model, Cmd.none))
             else if url.path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
             else -- default to home page
@@ -514,6 +516,9 @@ update msg ({nav, userProfileForm} as model) =
           |> logEventForLabStudy "SelectedOverviewType" [ selectedMode ]
           |> saveAction 10 [ ("selectedMode", Encode.string selectedMode) ]
 
+    SelectedPlaylist playlist ->
+      ({ model | playlist = playlist }, Cmd.none)
+
     MouseEnterMentionInBubbblogramOverview oerId entityId mention ->
       ({ model | selectedMention = Just (oerId, mention), hoveringEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
 
@@ -704,6 +709,22 @@ update msg ({nav, userProfileForm} as model) =
       (model |> removeRangeFromCourse oerId range |> closePopup, Cmd.none)
       |> logEventForLabStudy "PressedRemoveRangeButton" [ oerId |> String.fromInt, range |> rangeToString ]
 
+    OpenedSelectPlaylistMenu ->
+      ( { model | popup = Just PlaylistPopup }, setBrowserFocus "")
+      |> logEventForLabStudy "OpenedPlaylistMenu" []
+
+    EditPlaylist field value ->
+      let
+          newForm =
+            { playlistPublishForm | playlist = playlistPublishForm.playlist |> updatePlaylistField field value, published = False }
+      in
+          ( { model | playlistPublishForm = newForm }, Cmd.none )
+          |> logEventForLabStudy "EditPlaylist" []
+
+    SubmittedPublishPlaylist ->
+      ( { model | playlistPublishFormSubmitted = True }, Cmd.none)
+      |> logEventForLabStudy "SubmittedPublishPlaylist" []
+
 
 insertSearchResults : List OerId -> Model -> Model
 insertSearchResults oerIds model =
@@ -809,6 +830,18 @@ updateUserProfileField field value userProfile =
 
     LastName ->
       { userProfile | lastName = value }
+
+updatePlaylistField : PlaylistField -> String -> Playlist -> Playlist
+updatePlaylistField field value playlist =
+  case field of
+    Title ->
+      { playlist | title = value }
+
+    Author ->
+      playlist
+
+    License ->
+      playlist
 
 
 cacheOersFromList : List Oer -> Model -> Model
@@ -930,7 +963,8 @@ popupToStrings maybePopup =
         PopupAfterClickedOnContentFlowBar oer position isCard maybeRange ->
           [ "PopupAfterClickedOnContentFlowBar", position |> String.fromFloat, if isCard then "card" else "inspector", if maybeRange==Nothing then "Clicked on empty space" else "Clicked on range" ]
 
-
+        PlaylistPopup ->
+          [ "PlaylistPopup" ]
 executeSearchAfterUrlChanged : Model -> Url -> (Model, Cmd Msg)
 executeSearchAfterUrlChanged model url =
   let

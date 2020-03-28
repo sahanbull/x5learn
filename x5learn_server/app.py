@@ -182,6 +182,11 @@ def resource(oer_id):
 def profile():
     return render_template('home.html')
 
+@app.route("/publish_playlist")
+@login_required
+def playlist():
+    return render_template('home.html')
+
 
 @app.route("/api/v1/session/", methods=['GET'])
 def api_session():

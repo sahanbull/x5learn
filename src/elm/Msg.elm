@@ -88,11 +88,20 @@ type Msg
   | ToggleDataCollectionConsent Bool
   | ClickedOnContentFlowBar Oer Float Bool
   | PressedRemoveRangeButton OerId Range
+  | OpenedSelectPlaylistMenu
+  | SelectedPlaylist (Maybe Playlist)
+  | SubmittedPublishPlaylist
+  | EditPlaylist PlaylistField String
 
 
 type UserProfileField
   = FirstName
   | LastName
+
+type PlaylistField
+  = Title
+  | Author
+  | License
 
 
 {-| Subscribe to: incoming data from ports, time, and resizing the browser window.

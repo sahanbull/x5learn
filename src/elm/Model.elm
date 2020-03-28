@@ -104,6 +104,9 @@ type alias Model =
   , timeWhenSessionLoaded : Posix -- wait a few seconds before logging UI events
   -- deactivated code
   , isExplainerEnabled : Bool
+  , playlist : Maybe Playlist
+  , playlistPublishForm : PublishPlaylistForm -- records with playlist and is published boolean flag
+  , playlistPublishFormSubmitted : Bool -- show a loading spinner while playlist is published
   }
 
 
@@ -254,6 +257,7 @@ type Subpage
   = Home
   | Profile
   | Search
+  | PublishPlaylist
 
 
 {-| Search for OERs
@@ -354,6 +358,7 @@ type Popup
   | ExplainerMetaInformationPopup -- Showing information about the Explainer feature itself
   | LoginHintPopup -- Nagging guest users to log or sign up
   | PopupAfterClickedOnContentFlowBar Oer Float Bool (Maybe Range) -- Offer a set of actions when the user clicks on the ContentFlowBar
+  | PlaylistPopup -- Allowing the user to toggle between playlists
 
 
 {-| Cascading menu containing wikipedia topics
@@ -442,6 +447,13 @@ type alias CourseItem =
 type CourseOptimization
   = Loading -- Waiting for response from the server
   | UndoAvailable Course -- Response received. Previous state saved in order to allow the user to reject the suggestion.
+
+{-| Allowing the user to publish a playlist
+-}
+type alias PublishPlaylistForm =
+  { playlist : Playlist
+  , published : Bool
+  }
 
 {-| Playlist is a historical name for: a list of OERs with a title.
     The name Playlist doesn't fit as well as it used to in earlier versions.
@@ -563,6 +575,9 @@ initialModel nav flags =
   , timeWhenSessionLoaded = initialTime
   , currentTaskName = Nothing
   , isExplainerEnabled = False
+  , playlist = Nothing
+  , playlistPublishForm = PublishPlaylistForm (Playlist "" []) False
+  , playlistPublishFormSubmitted = False
   }
 
 
@@ -915,6 +930,9 @@ signupPath =
 
 logoutPath =
   "/logout"
+
+publishPlaylistPath =
+  "/publish_playlist"
 
 
 {-| Takes a getter function (such as .price) and a collection (such as cars)

@@ -1328,6 +1328,11 @@ class Playlists(Resource):
                                              api.payload['playlist_items_order'])
 
             # need to delete the temp version
+
+            # add an entry to the OER table by getting the created material id
+            # material_url = _get_material_url(playlist_id)
+
+
         # temporary save
         else:
             result = _add_temporary_playlist(api.payload['title'],

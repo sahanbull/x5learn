@@ -57,6 +57,10 @@ withNavigationDrawer model (pageContent, inspector) =
 
       selectPlaylistButton = 
           let
+
+            newOption =
+              actionButtonWithoutIcon [] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ]  "Create New Playlist" (Just <| CreateNewPlaylist True)
+
             option playlist =
               actionButtonWithoutIcon [] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] playlist.title (Just <| SelectedPlaylist Nothing)
 
@@ -64,7 +68,7 @@ withNavigationDrawer model (pageContent, inspector) =
             options =
               case model.popup of
                 Just PlaylistPopup ->
-                  [ option (Playlist "playlist 1" [])
+                  [ newOption
                   ]
                   |> menuColumn [ width fill]
                   |> below

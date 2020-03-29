@@ -19,6 +19,8 @@ import View.Card exposing (..)
 
 import Msg exposing (..)
 
+import Time exposing (millisToPosix)
+
 import Json.Decode as Decode
 
 
@@ -52,6 +54,6 @@ viewBody model searchState =
       if isLabStudy1 model && model.currentTaskName==Nothing then
         "Please wait for the researcher's instructions." |> viewCenterMessage
       else
-        Playlist "" oerIds
+        Playlist "" Nothing Nothing Nothing Nothing (Time.millisToPosix 0) Nothing True Nothing  (Time.millisToPosix 0) oerIds
         |> viewOerGrid model
         |> el [ width fill, height fill, paddingBottom 100 ]

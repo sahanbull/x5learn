@@ -26,12 +26,21 @@ viewPublishPlaylistPage model {playlist, published} =
 
       titleField =
         textInput Title "Title" playlist.title
+      descriptionField =
+        case playlist.description of
+          Nothing ->
+            textInput Description "Description" ""
 
+          Just val ->
+            textInput Description "Description" val
+                
       authorField =
-        textInput Author "Author" ""
+        case playlist.author of
+          Nothing ->
+            textInput Author "Author" ""
 
-      licenseField =
-        textInput License "License" ""
+          Just val ->
+            textInput Author "Author" val
 
       publishButton =
         if model.playlistPublishFormSubmitted then
@@ -49,20 +58,11 @@ viewPublishPlaylistPage model {playlist, published} =
       page =
         [ " Publish Playlist" |> captionNowrap [ centerX, Font.size 16 ]
         , [ titleField ] |> wrappedRow []
+        , [ descriptionField ] |> wrappedRow []
         , [ authorField ] |> wrappedRow []
-        , [ licenseField ] |> wrappedRow []
         , [ publishButton, cancelButton ] |> wrappedRow [ spacing 20, height <| px 40 ]
         ]
         |> column [ spacing 30, padding 5 ]
         |> milkyWhiteCenteredContainer
   in
       (page, [])
-
-
-viewDataCollectionConsentToggle : Bool -> Element Msg
-viewDataCollectionConsentToggle enabled =
-  [ "Allow X5GON to collect data about my activity on this site for research" |> bodyWrap [ width fill ]
-  , viewToggleIndicator enabled (if enabled then "PrimaryGreenBackground" else "") |> el [ paddingRight 10 ]
-  ]
-  |> row [ spacing 10, onClick (ToggleDataCollectionConsent enabled), htmlClass "CursorPointer" ]
-  |> el [ alignRight ]

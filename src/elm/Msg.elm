@@ -90,6 +90,7 @@ type Msg
   | PressedRemoveRangeButton OerId Range
   | OpenedSelectPlaylistMenu
   | SelectedPlaylist (Maybe Playlist)
+  | CreateNewPlaylist Bool
   | SubmittedPublishPlaylist
   | EditPlaylist PlaylistField String
 
@@ -102,6 +103,7 @@ type PlaylistField
   = Title
   | Author
   | License
+  | Description
 
 
 {-| Subscribe to: incoming data from ports, time, and resizing the browser window.

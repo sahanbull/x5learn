@@ -519,6 +519,9 @@ update msg ({nav, userProfileForm, playlistPublishForm} as model) =
     SelectedPlaylist playlist ->
       ({ model | playlist = playlist }, Cmd.none)
 
+    CreateNewPlaylist enabled ->
+      ({ model | createNewPlaylist = enabled }, Cmd.none)
+
     MouseEnterMentionInBubbblogramOverview oerId entityId mention ->
       ({ model | selectedMention = Just (oerId, mention), hoveringEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "")
 
@@ -714,12 +717,12 @@ update msg ({nav, userProfileForm, playlistPublishForm} as model) =
       |> logEventForLabStudy "OpenedPlaylistMenu" []
 
     EditPlaylist field value ->
-      let
-          newForm =
-            { playlistPublishForm | playlist = playlistPublishForm.playlist |> updatePlaylistField field value, published = False }
-      in
-          ( { model | playlistPublishForm = newForm }, Cmd.none )
-          |> logEventForLabStudy "EditPlaylist" []
+          let
+              newForm =
+                { playlistPublishForm | playlist = playlistPublishForm.playlist |> updatePlaylistField field value, published = False }
+          in
+              ( { model | playlistPublishForm = newForm }, Cmd.none )
+              |> logEventForLabStudy "EditPlaylist" []
 
     SubmittedPublishPlaylist ->
       ( { model | playlistPublishFormSubmitted = True }, Cmd.none)
@@ -837,8 +840,11 @@ updatePlaylistField field value playlist =
     Title ->
       { playlist | title = value }
 
+    Description ->
+      { playlist | description = Just value }
+
     Author ->
-      playlist
+      { playlist | author = Just value }
 
     License ->
       playlist

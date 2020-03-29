@@ -16,6 +16,8 @@ import View.Card exposing (..)
 
 import Msg exposing (..)
 
+import Time exposing (millisToPosix)
+
 import Json.Decode as Decode
 
 
@@ -53,7 +55,7 @@ viewFeaturedOers model =
       viewLoadingSpinner
 
     Just oers ->
-      Playlist "Featured Content" oers
+      Playlist "Featured Content" Nothing Nothing Nothing Nothing (Time.millisToPosix 0) Nothing True Nothing  (Time.millisToPosix 0) oers
       |> viewOerGrid model
 
 

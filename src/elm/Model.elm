@@ -107,6 +107,7 @@ type alias Model =
   , playlist : Maybe Playlist
   , playlistPublishForm : PublishPlaylistForm -- records with playlist and is published boolean flag
   , playlistPublishFormSubmitted : Bool -- show a loading spinner while playlist is published
+  , createNewPlaylist : Bool -- flag to identify if create new playlist is triggered
   }
 
 
@@ -457,12 +458,36 @@ type alias PublishPlaylistForm =
 
 {-| Playlist is a historical name for: a list of OERs with a title.
     The name Playlist doesn't fit as well as it used to in earlier versions.
+    Playlist extneded to hold more information like description and author.
     Not to be confused with Course.
     TODO reactor to rename this type
 -}
 type alias Playlist =
   { title : String
+  , description : Maybe String
+  , author : Maybe String
+  , blueprint_url : Maybe String
+  , creator : Maybe Int
+  , created_at : Posix
+  , parent : Maybe ParentPlaylist
+  , is_visible : Bool
+  , license : Maybe LicenseType
+  , last_updated_at : Posix
   , oerIds : List OerId
+  }
+
+{-| Type of playlist to hold reference to parent playlist
+-}
+type ParentPlaylist = 
+  ParentPlaylist (Playlist)
+
+{-| License are attached to playlist types. 
+    Has a link to license information page
+-}
+type alias LicenseType = 
+  { id : Int
+  , description : String
+  , url : String
   }
 
 
@@ -576,10 +601,14 @@ initialModel nav flags =
   , currentTaskName = Nothing
   , isExplainerEnabled = False
   , playlist = Nothing
-  , playlistPublishForm = PublishPlaylistForm (Playlist "" []) False
+  , playlistPublishForm = freshPlaylistPublishForm initialPlaylist
   , playlistPublishFormSubmitted = False
+  , createNewPlaylist = False
   }
 
+initialPlaylist : Playlist
+initialPlaylist =
+  Playlist "New Playlist" Nothing Nothing Nothing Nothing (Time.millisToPosix 0) Nothing True Nothing  (Time.millisToPosix 0) []
 
 initialUserProfile : String -> UserProfile
 initialUserProfile email =
@@ -773,6 +802,10 @@ loggedInUserProfile {session} =
 freshUserProfileForm : UserProfile -> UserProfileForm
 freshUserProfileForm userProfile =
   { userProfile = userProfile, saved = False }
+
+freshPlaylistPublishForm : Playlist -> PublishPlaylistForm
+freshPlaylistPublishForm playlist = 
+  { playlist = playlist, published = False }
 
 
 {-| Get all available chunks for a particular OER

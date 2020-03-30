@@ -1271,7 +1271,7 @@ def _send_confirmation_email_for_published_playlist(user, title, url):
     if user.email:
         try:
             msg = Message("{} Playlist Published".format(title), sender=MAIL_SENDER, recipients=[user.email])
-            msg.body = "Your playlist {} has been succuessfully published <a href='{}' target='_blank'>here</a>.".format(title, oer_url)
+            msg.body = "Your playlist {} has been succuessfully published <a href='{}' target='_blank'>here</a>.".format(title, url)
             msg.html = render_template('/security/email/base_message.html', user=user, app_name=MAIL_SENDER,
                                         message=msg.body)
             mail.send(msg)

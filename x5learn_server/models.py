@@ -327,7 +327,7 @@ class Playlist(Base):
     title = Column(String(255))
     description = Column(Text())
     author = Column(String(255))
-    blueprint_url = Column(String(255))
+    blueprint = Column(JSON())
     creator = Column(Integer, ForeignKey('user_login.id'))
     created_at = Column(DateTime(), default=datetime.datetime.utcnow)
     parent = Column(Integer, ForeignKey('x5_oer_repo.playlist.id'), nullable=True)
@@ -335,11 +335,11 @@ class Playlist(Base):
     license = Column(Integer, ForeignKey('x5_oer_repo.license.id'))
     last_updated_at = Column(DateTime())
 
-    def __init__(self, title, description, author, blueprint_url, creator, parent, is_visible, license):
+    def __init__(self, title, description, author, blueprint, creator, parent, is_visible, license):
         self.title = title
         self.description = description
         self.author = author
-        self.blueprint_url = blueprint_url
+        self.blueprint = blueprint
         self.creator = creator
         self.parent = parent
         self.is_visible = is_visible
@@ -355,7 +355,7 @@ class Playlist(Base):
             'title': self.title,
             'description': self.description,
             'author': self.author,
-            'blueprint_url': self.blueprint_url,
+            'blueprint': self.blueprint,
             'parent': self.parent,
             'created_at': dump_datetime(self.created_at),
             'last_updated_at': dump_datetime(self.last_updated_at),

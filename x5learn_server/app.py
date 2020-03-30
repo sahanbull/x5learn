@@ -82,6 +82,7 @@ MAX_SEARCH_RESULTS = 18  # number divisible by 2 and 3 to fit nicely into grid
 USE_RECOMMENDATIONS_FROM_LAM = True  # if true, uses the new solution see #290
 SUPPORTED_VIDEO_FORMATS = ['video', 'mp4', 'mov', 'webm', 'ogg']
 SUPPORTED_FILE_FORMATS = SUPPORTED_VIDEO_FORMATS + ['pdf']
+X5LEARN_PROVIDER_NAME = "X5Learn"
 
 # defaults license
 _DEFAULT_LICENSE = 1
@@ -281,6 +282,7 @@ def api_search():
 
         # get the list of items
         results = get_items_in_playlist(playlist_id)
+
     try:
         # if the text is a number, retrieve the oer with that oer_id
         oer_id = int(text)
@@ -1231,7 +1233,7 @@ def _add_published_playlist(title, desc, author, license, creator, parent, is_vi
 def _add_temporary_playlist(title, license, creator, parent):
     # if parent is not null, get items
     if parent is not None:
-        parent_items = repository.get(Playlist_Item, None, { 'playlist_id' : parent })
+        parent_items = repository.get(Playlist_Item, None, {'playlist_id': parent})
         items = [o['oer_id'] for o in parent_items]
     else:
         items = []
@@ -1250,14 +1252,14 @@ def _add_temporary_playlist(title, license, creator, parent):
 
 
 def _create_oer_record_for_playlist(playlist):
-    oer_url = '{}/search?q={}{}'.format(SERVER_NAME, PLAYLIST_PREFIX, playlist['id'])
+    oer_url = '{}/search?q={}{}'.format(SERVER_NAME, PLAYLIST_PREFIX, playlist.id)
     oer_data = {
         'url': oer_url,
-        'material_id': playlist['id'],
-        'title': playlist['title'],
-        'provider': 'x5learn',
-        'description': playlist['description'],
-        'date': playlist['created_at'].strftime("%Y-%m-%d"),
+        'material_id': playlist.id,
+        'title': playlist.title,
+        'provider': X5LEARN_PROVIDER_NAME,
+        'description': playlist.description,
+        'date': playlist.created_at.strftime("%Y-%m-%d"),
         'duration': '',
         'images': [],
         'mediatype': 'playlist',
@@ -1271,9 +1273,10 @@ def _send_confirmation_email_for_published_playlist(user, title, url):
     if user.email:
         try:
             msg = Message("{} Playlist Published".format(title), sender=MAIL_SENDER, recipients=[user.email])
-            msg.body = "Your playlist {} has been succuessfully published <a href='{}' target='_blank'>here</a>.".format(title, url)
+            msg.body = "Your playlist titled '{0}' has been succuessfully published in X5Learn platform. You can now view and share the playlist by following this weblink: <a href='{1}' target='_blank'>{1}</a>.".format(
+                title, url)
             msg.html = render_template('/security/email/base_message.html', user=user, app_name=MAIL_SENDER,
-                                        message=msg.body)
+                                       message=msg.body)
             mail.send(msg)
         except Exception:
             return {'result': 'Mail server not configured'}, 400
@@ -1333,7 +1336,6 @@ class Playlists(Resource):
 
             return serializable_list
 
-
     @ns_playlist.doc('create_playlist')
     @ns_playlist.expect(m_playlist, validate=True)
     def post(self):
@@ -1347,25 +1349,25 @@ class Playlists(Resource):
         # -- publish a playlist --
         if api.payload['is_temp'] == False:
             playlist = _add_published_playlist(api.payload['title'],
-                                             api.payload['description'],
-                                             api.payload['author'],
-                                             _DEFAULT_LICENSE,
-                                             current_user.get_id(),
-                                             api.payload['parent'],
-                                             api.payload['is_visible'],
-                                             api.payload['playlist_items'])
-
-            # Deleting temp version of playlist after creating a temp_playlist repo
-            temp_playlist_repo = TempPlaylistRepository()
-            temp_playlist_repo.delete_by_title(api.payload['title'], current_user.get_id())
+                                               api.payload['description'],
+                                               api.payload['author'],
+                                               _DEFAULT_LICENSE,
+                                               current_user.get_id(),
+                                               api.payload['parent'],
+                                               api.payload['is_visible'],
+                                               api.payload['playlist_items'])
 
             # adding an entry to the OER table by getting the created material id
             oer = _create_oer_record_for_playlist(playlist)
             repository.add(oer)
 
+            # Deleting temp version of playlist after creating a temp_playlist repo
+            temp_playlist_repo = TempPlaylistRepository()
+            temp_playlist_repo.delete_by_title(api.payload['title'], current_user.get_id())
+
             # sending confirmation email to the creator with playslist metadata and url for playlist
             user = repository.get_by_id(UserLogin, current_user.get_id())
-            _send_confirmation_email_for_published_playlist(user, playlist['title'], oer['url'])
+            _send_confirmation_email_for_published_playlist(user, playlist.title, oer.url)
 
         # -- create a temporary playlist --
         else:

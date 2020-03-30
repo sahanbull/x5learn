@@ -579,6 +579,7 @@ def filter_x5gon_search_results(materials):
     # (un)comment the lines below to enable/disable filters as desired
 
     # include videos only
+    # TODO: remove the only video constrain but also make sure the pdf filters are back online
     materials = [m for m in materials if is_video(m['url'])]
 
     # exclude youtube videos
@@ -588,6 +589,7 @@ def filter_x5gon_search_results(materials):
     # materials = [m for m in materials if m['url'].endswith(
     #     '.pdf') or is_video(m['url'])]
 
+    # TODO: --- pdf filters found below ---
     # crudely filter out materials from MIT OCW that are assignments or date back to the 90s or early 2000s
     # materials = [m for m in materials if '/assignments/' not in m['url']
     #              and '199' not in m['url'] and '200' not in m['url']]
@@ -1191,8 +1193,8 @@ m_playlist = api.model('Playlist', {
 })
 
 
-def _get_blueprint(title, desc, author, license, creator, items):
-    license_obj = repository.get_by_id(License, license, creator)
+def _get_blueprint(title, desc, author, license, items):
+    license_obj = repository.get_by_id(License, license)
     base_mapping = {
         "title": title,
         "description": desc,
@@ -1203,20 +1205,20 @@ def _get_blueprint(title, desc, author, license, creator, items):
 
     # get materials, expects a list of OER ids from X5Learn platform
     for idx, item in enumerate(items):
-        temp_item = repository.get_by_id(Oer, item, creator)
+        temp_item = repository.get_by_id(Oer, item)
         base_mapping["materials"][idx] = {
             "x5learn_id": temp_item.id,
             "url": temp_item.url,
             "metadata": json.loads(temp_item.data)
         }
 
+    return base_mapping
+
 
 def _add_published_playlist(title, desc, author, license, creator, parent, is_vis, items):
-    # TODO: This function assumes that the items are sorted from the earliest to latest in the playlist
-
-    blueprint = _get_blueprint(title, desc, author, license, creator, items)
-    # title, description, author, blueprint_url, creator, parent, is_visible, license
-    playlist = Playlist(title, desc, author, blueprint, creator, parent, is_vis, license)
+    blueprint = _get_blueprint(title, desc, author, license, items)
+    # title, description, author, blueprint, creator, parent, is_visible, license
+    playlist = Playlist(title, desc, author, json.dumps(blueprint), creator, parent, is_vis, license)
     playlist = repository.add(playlist)
 
     count = 0
@@ -1231,7 +1233,7 @@ def _add_published_playlist(title, desc, author, license, creator, parent, is_vi
 def _add_temporary_playlist(title, license, creator, parent):
     # if parent is not null, get items
     if parent is not None:
-        # get playlist items
+        # TODO: get playlist items
         items = []
     else:
         items = []
@@ -1316,6 +1318,7 @@ class Playlists(Resource):
         if len(api.payload['playlist_items']) != len(api.payload['playlist_items_order']):
             return {'result': 'One or more arguments for playlist items were found missing.'}, 400
 
+        # -- publish a playlist --
         if api.payload['is_temp'] == False:
             result = _add_published_playlist(api.payload['title'],
                                              api.payload['description'],
@@ -1324,16 +1327,17 @@ class Playlists(Resource):
                                              current_user.get_id(),
                                              api.payload['parent'],
                                              api.payload['is_visible'],
-                                             api.payload['playlist_items'],
-                                             api.payload['playlist_items_order'])
+                                             api.payload['playlist_items'])
 
-            # need to delete the temp version
+            # TODO: need to delete the temp version
 
-            # add an entry to the OER table by getting the created material id
+            # TODO: add an entry to the OER table by getting the created material id
+
+            # TODO: send confirmation email to the creator with playslist metadata and url for playlist
             # material_url = _get_material_url(playlist_id)
 
 
-        # temporary save
+        # -- create a temporary playlist --
         else:
             result = _add_temporary_playlist(api.payload['title'],
                                              _DEFAULT_LICENSE,

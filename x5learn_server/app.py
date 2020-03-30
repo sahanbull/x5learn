@@ -263,8 +263,8 @@ def get_items_in_playlist(playlist_id):
     Returns:
         [Oer]: list of OER materials in the sequence they appear in the playlist
     """
-    # TODO: this function has to be implemented !!!
-    return []
+    playlist_items = repository.get(Playlist_Item, None, {'playlist_id': playlist_id})
+    return [repository.get_by_id(Oer, item.oer_id) for item in playlist_items]
 
 
 @app.route("/api/v1/search/", methods=['GET'])
@@ -282,15 +282,16 @@ def api_search():
 
         # get the list of items
         results = get_items_in_playlist(playlist_id)
-
-    try:
-        # if the text is a number, retrieve the oer with that oer_id
-        oer_id = int(text)
-        oer = Oer.query.get(oer_id)
-        results = [] if oer is None else [oer]
-    except ValueError:
-        results = search_results_from_x5gon_api(text)
-    return jsonify([oer.data_and_id() for oer in results])
+        return jsonify([oer.data_and_id() for oer in results])
+    else:
+        try:
+            # if the text is a number, retrieve the oer with that oer_id
+            oer_id = int(text)
+            oer = Oer.query.get(oer_id)
+            results = [] if oer is None else [oer]
+        except ValueError:
+            results = search_results_from_x5gon_api(text)
+        return jsonify([oer.data_and_id() for oer in results])
 
 
 @app.route("/api/v1/oers/", methods=['POST'])
@@ -1189,7 +1190,8 @@ m_playlist = api.model('Playlist', {
     'playlist_items': fields.List(fields.Integer, required=True,
                                   description='A list of oer ids to be included in the playlist'),
     'is_temp': fields.Boolean(default=False, required=True,
-                              description="Boolean flag to identify if the playlist is temporary or published")
+                              description="Boolean flag to identify if the playlist is temporary or published"),
+    'temp_title': fields.String(required=False, max_length=255, description='Original title of the playlist in case title is changed at publish')
 })
 
 
@@ -1346,6 +1348,9 @@ class Playlists(Resource):
         if api.payload['is_temp'] == None or not api.payload['title']:
             return {'result': 'Playlist save type and title is required'}, 400
 
+        if api.payload['is_temp'] == False and not api.payload['temp_title']:
+            return {'result': 'Temp title is required when publishing a playlist'}, 400
+
         # -- publish a playlist --
         if api.payload['is_temp'] == False:
             playlist = _add_published_playlist(api.payload['title'],
@@ -1363,7 +1368,7 @@ class Playlists(Resource):
 
             # Deleting temp version of playlist after creating a temp_playlist repo
             temp_playlist_repo = TempPlaylistRepository()
-            temp_playlist_repo.delete_by_title(api.payload['title'], current_user.get_id())
+            temp_playlist_repo.delete_by_title(api.payload['temp_title'], current_user.get_id())
 
             # sending confirmation email to the creator with playslist metadata and url for playlist
             user = repository.get_by_id(UserLogin, current_user.get_id())

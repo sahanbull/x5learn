@@ -26,7 +26,7 @@ from x5learn_server.db.database import db_session
 from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, \
     EntityDefinition, ResourceFeedback, Action, ActionType, Repository, \
     ActionsRepository, UserRepository, DefinitionsRepository, Course, UiLogBatch, Note, Playlist, Playlist_Item, \
-    Temp_Playlist, License
+    Temp_Playlist, License, TempPlaylistRepository
 
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
 from x5learn_server.lab_study import frozen_search_results_for_lab_study, is_special_search_key_for_lab_study
@@ -1186,8 +1186,6 @@ m_playlist = api.model('Playlist', {
                                  description='Boolean flag to identify if the playlist is visible to the public'),
     'playlist_items': fields.List(fields.Integer, required=True,
                                   description='A list of oer ids to be included in the playlist'),
-    'playlist_items_order': fields.List(fields.Integer, required=True,
-                                        description='The order of each corresponding playlist item parameterized as "playlist_items"'),
     'is_temp': fields.Boolean(default=False, required=True,
                               description="Boolean flag to identify if the playlist is temporary or published")
 })
@@ -1227,14 +1225,14 @@ def _add_published_playlist(title, desc, author, license, creator, parent, is_vi
         playlist_item = repository.add(playlist_item)
         count = count + 1
 
-    return {'result': 'Playlist with {} items created and published'.format(count)}
+    return playlist
 
 
 def _add_temporary_playlist(title, license, creator, parent):
     # if parent is not null, get items
     if parent is not None:
-        # TODO: get playlist items
-        items = []
+        parent_items = repository.get(Playlist_Item, None, { 'playlist_id' : parent })
+        items = [o['oer_id'] for o in parent_items]
     else:
         items = []
 
@@ -1249,6 +1247,36 @@ def _add_temporary_playlist(title, license, creator, parent):
     temp_playlist = repository.add(temp_playlist)
 
     return {'result': 'Temporary playlist with {} items created'.format(count)}
+
+
+def _create_oer_record_for_playlist(playlist):
+    oer_url = '{}/search?q={}{}'.format(SERVER_NAME, PLAYLIST_PREFIX, playlist['id'])
+    oer_data = {
+        'url': oer_url,
+        'material_id': playlist['id'],
+        'title': playlist['title'],
+        'provider': 'x5learn',
+        'description': playlist['description'],
+        'date': playlist['created_at'].strftime("%Y-%m-%d"),
+        'duration': '',
+        'images': [],
+        'mediatype': 'playlist',
+        'translations': []
+    }
+
+    return Oer(oer_url, oer_data, 'playlist')
+
+
+def _send_confirmation_email_for_published_playlist(user, title, url):
+    if user.email:
+        try:
+            msg = Message("{} Playlist Published".format(title), sender=MAIL_SENDER, recipients=[user.email])
+            msg.body = "Your playlist {} has been succuessfully published <a href='{}' target='_blank'>here</a>.".format(title, oer_url)
+            msg.html = render_template('/security/email/base_message.html', user=user, app_name=MAIL_SENDER,
+                                        message=msg.body)
+            mail.send(msg)
+        except Exception:
+            return {'result': 'Mail server not configured'}, 400
 
 
 @ns_playlist.route('/')
@@ -1305,6 +1333,7 @@ class Playlists(Resource):
 
             return serializable_list
 
+
     @ns_playlist.doc('create_playlist')
     @ns_playlist.expect(m_playlist, validate=True)
     def post(self):
@@ -1315,12 +1344,9 @@ class Playlists(Resource):
         if api.payload['is_temp'] == None or not api.payload['title']:
             return {'result': 'Playlist save type and title is required'}, 400
 
-        if len(api.payload['playlist_items']) != len(api.payload['playlist_items_order']):
-            return {'result': 'One or more arguments for playlist items were found missing.'}, 400
-
         # -- publish a playlist --
         if api.payload['is_temp'] == False:
-            result = _add_published_playlist(api.payload['title'],
+            playlist = _add_published_playlist(api.payload['title'],
                                              api.payload['description'],
                                              api.payload['author'],
                                              _DEFAULT_LICENSE,
@@ -1329,13 +1355,17 @@ class Playlists(Resource):
                                              api.payload['is_visible'],
                                              api.payload['playlist_items'])
 
-            # TODO: need to delete the temp version
+            # Deleting temp version of playlist after creating a temp_playlist repo
+            temp_playlist_repo = TempPlaylistRepository()
+            temp_playlist_repo.delete_by_title(api.payload['title'], current_user.get_id())
 
-            # TODO: add an entry to the OER table by getting the created material id
+            # adding an entry to the OER table by getting the created material id
+            oer = _create_oer_record_for_playlist(playlist)
+            repository.add(oer)
 
-            # TODO: send confirmation email to the creator with playslist metadata and url for playlist
-            # material_url = _get_material_url(playlist_id)
-
+            # sending confirmation email to the creator with playslist metadata and url for playlist
+            user = repository.get_by_id(UserLogin, current_user.get_id())
+            _send_confirmation_email_for_published_playlist(user, playlist['title'], oer['url'])
 
         # -- create a temporary playlist --
         else:

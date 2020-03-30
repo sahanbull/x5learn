@@ -59,10 +59,12 @@ class Oer(Base):
     id = Column(Integer(), primary_key=True)
     url = Column(Text(), nullable=False)
     data = Column(JSON())
+    data_type = Column(String(20), nullable=True)
 
-    def __init__(self, url, data):
+    def __init__(self, url, data, data_type=None):
         self.url = url
         self.data = data
+        self.data_type = data_type
 
     def data_and_id(self):
         # Ensure that image and date fields have the correct types.
@@ -575,3 +577,60 @@ class DefinitionsRepository(Repository):
         """
 
         return self._db_session.query(EntityDefinition).filter(EntityDefinition.title.in_(titles)).all()
+
+
+class TempPlaylistRepository(Repository):
+
+    def get_by_title(self, title, user_login_id):
+        """gets a temporary playlist by title rather than id
+
+        Args:
+            title (str): given title for temporary playlist
+            user_login_id (int): user login id to auth delete action (Required)
+
+        Returns:
+            (object) : Tempy_Playlist
+
+        """
+
+        query_object = self._db_session.query(Temp_Playlist)
+
+        if (title is None):
+            return None
+
+        if (user_login_id is None):
+            return None
+
+        query_object = query_object.filter_by(creator=user_login_id)
+        return query_object.filter_by(title=title).one_or_none()
+
+    
+    def delete_by_title(self, title, user_login_id):
+        """delete a temporary playlist by title rather than id
+
+        Args:
+            title (str): given title for temporary playlist
+            user_login_id (int): user login id to auth delete action (Required)
+
+        Returns:
+            (Bool) : if deleted or failed
+
+        """
+
+        query_object = self._db_session.query(Temp_Playlist)
+
+        if (title is None):
+            return False
+
+        if (user_login_id is None):
+            return False
+
+        query_object = query_object.filter_by(creator=user_login_id)
+        temp_playlist = query_object.filter_by(title=title).one_or_none()
+
+        if (not temp_playlist):
+            return False
+
+        self._db_session.delete(temp_playlist)
+        self._db_session.commit()
+        return True

@@ -3,7 +3,7 @@ from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
 import json
-import os # apologies
+import os  # apologies
 import requests
 import http.client
 import urllib
@@ -77,10 +77,10 @@ app.config['MAIL_DEFAULT_SENDER'] = MAIL_SENDER
 mail.init_app(app)
 
 CURRENT_ENRICHMENT_VERSION = 1
-MAX_SEARCH_RESULTS = 18 # number divisible by 2 and 3 to fit nicely into grid
-USE_RECOMMENDATIONS_FROM_LAM = True # if true, uses the new solution see #290
+MAX_SEARCH_RESULTS = 18  # number divisible by 2 and 3 to fit nicely into grid
+USE_RECOMMENDATIONS_FROM_LAM = True  # if true, uses the new solution see #290
 SUPPORTED_VIDEO_FORMATS = ['video', 'mp4', 'mov', 'webm', 'ogg']
-SUPPORTED_FILE_FORMATS = SUPPORTED_VIDEO_FORMATS + [ 'pdf' ]
+SUPPORTED_FILE_FORMATS = SUPPORTED_VIDEO_FORMATS + ['pdf']
 
 # Number of seconds between actions that report the ongoing video play position.
 # Keep this constant in sync with videoPlayReportingInterval on the frontend!
@@ -194,7 +194,8 @@ def api_session():
 def get_logged_in_user_profile_and_state():
     profile = current_user.user_profile if current_user.user_profile is not None else {
         'email': current_user.email}
-    logged_in_user = {'userProfile': profile, 'isContentFlowEnabled': is_contentflow_enabled(), 'overviewTypeId': get_overview_type_setting()}
+    logged_in_user = {'userProfile': profile, 'isContentFlowEnabled': is_contentflow_enabled(),
+                      'overviewTypeId': get_overview_type_setting()}
     return jsonify({'loggedInUser': logged_in_user})
 
 
@@ -231,9 +232,9 @@ def get_overview_type_setting():
 def api_recommendations():
     oer_id = int(request.args['oerId'])
     if USE_RECOMMENDATIONS_FROM_LAM:
-        oers = recommendations_from_lam_api(oer_id) # new
+        oers = recommendations_from_lam_api(oer_id)  # new
     else:
-        oers = recommendations_from_wikichunk_enrichments(oer_id) # old
+        oers = recommendations_from_wikichunk_enrichments(oer_id)  # old
     for oer in oers:
         print(oer.id, oer.data['material_id'])
     # TODO: save as new action 'ContentRecommendations'
@@ -250,11 +251,13 @@ def api_search():
 
     """
     text = request.args['text'].lower().strip()
+    if text == "":  # if empty string, no results
+        return jsonify([])
     try:
         # if the text is a number, retrieve the oer with that oer_id
         oer_id = int(text)
         oer = Oer.query.get(oer_id)
-        results = [] if oer is None else [ oer ]
+        results = [] if oer is None else [oer]
     except ValueError:
         results = search_results_from_x5gon_api(text)
     return jsonify([oer.data_and_id() for oer in results])
@@ -296,7 +299,7 @@ def api_load_course():
         course = Course(user_login_id, {'items': []})
     else:
         # remove OERs that don't exist anymore
-        course.data['items'] = [ item for item in course.data['items'] if Oer.query.get(item['oerId']) is not None ]
+        course.data['items'] = [item for item in course.data['items'] if Oer.query.get(item['oerId']) is not None]
     return jsonify(course.data)
 
 
@@ -325,7 +328,8 @@ def video_usage_ranges_from_positions(positions):
     ranges = []
     positions = sorted(positions)
     for index, position in enumerate(positions):
-        if index>0 and position >= ranges[-1]['start'] and position < ranges[-1]['start'] + ranges[-1]['length'] + VIDEO_PLAY_REPORTING_INTERVAL:
+        if index > 0 and position >= ranges[-1]['start'] and position < ranges[-1]['start'] + ranges[-1][
+            'length'] + VIDEO_PLAY_REPORTING_INTERVAL:
             # extend the last range
             ranges[-1]['length'] = position - ranges[-1]['start'] + VIDEO_PLAY_REPORTING_INTERVAL
         else:
@@ -440,7 +444,9 @@ def do_ingest_oer(material_id):
     conn.request('GET', '/api/v1/oer_materials/' + str(material_id))
     response = conn.getresponse()
     if response.status != 200:
-        return jsonify({'error': 'Oer with material_id {} FAILED with status code {}. Reason: {}'.format(material_id, response.status, response.reason)})
+        return jsonify({'error': 'Oer with material_id {} FAILED with status code {}. Reason: {}'.format(material_id,
+                                                                                                         response.status,
+                                                                                                         response.reason)})
     body = response.read().decode("utf-8")
     material = json.loads(body)['oer_materials']
     url = material['url']
@@ -448,7 +454,8 @@ def do_ingest_oer(material_id):
     db_session.add(oer)
     db_session.commit()
     push_enrichment_task(url, 1)
-    return jsonify({'ok': 'Oer with material_id {} CREATED. Enrichment task started. URL = {}'.format(material_id, url)})
+    return jsonify(
+        {'ok': 'Oer with material_id {} CREATED. Enrichment task started. URL = {}'.format(material_id, url)})
 
 
 @app.route("/api/v1/entity_definitions/", methods=['GET'])
@@ -510,7 +517,8 @@ def retrieve_oer_or_create_from_x5gon_material(material):
         db_session.add(oer)
         db_session.commit()
     # Fix a problem with videolectures lacking duration info
-    if oer.data['mediatype'] in SUPPORTED_VIDEO_FORMATS and oer.data['duration']=='' and ('durationInSeconds' not in oer.data):
+    if oer.data['mediatype'] in SUPPORTED_VIDEO_FORMATS and oer.data['duration'] == '' and (
+            'durationInSeconds' not in oer.data):
         oer = inject_duration(oer)
     # Fix provider dict replaced with a string as expected by Elm
     if isinstance(oer.data['provider'], dict):
@@ -526,11 +534,12 @@ def retrieve_oer_or_create_from_x5gon_material(material):
 
 
 def inject_duration(oer):
-    seconds = os.popen('ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 '+oer.url).read().strip()
+    seconds = os.popen(
+        'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 ' + oer.url).read().strip()
     seconds = int(float(seconds))
-    duration = str(int(seconds/60)) +':' + str(seconds%60).zfill(2)
+    duration = str(int(seconds / 60)) + ':' + str(seconds % 60).zfill(2)
     print('inject_duration: ', duration)
-    new_data = json.loads(json.dumps(oer.data)) # https://stackoverflow.com/a/53977819/2237986
+    new_data = json.loads(json.dumps(oer.data))  # https://stackoverflow.com/a/53977819/2237986
     new_data['durationInSeconds'] = seconds
     new_data['duration'] = duration
     oer.data = new_data
@@ -596,7 +605,7 @@ def convert_x5_material_to_oer_data(material):
     data['title'] = material['title'] or '(Title unavailable)'
 
     provider = material['provider'] or ''
-    if 'provider_name' in provider: # sometimes provider comes as a dict
+    if 'provider_name' in provider:  # sometimes provider comes as a dict
         provider = provider['provider_name']
     data['provider'] = provider
 
@@ -619,7 +628,8 @@ def convert_x5_material_to_oer_data(material):
 
 def fetch_captions_from_x5gon_api(material):
     oer_translations_endpoint = "/oer_materials/{}/contents?extension=webvtt"
-    contents = requests.get("https://platform.x5gon.org/api/v1" + oer_translations_endpoint.format(material['material_id'])).json()
+    contents = requests.get(
+        "https://platform.x5gon.org/api/v1" + oer_translations_endpoint.format(material['material_id'])).json()
 
     material['translations'] = {}
     for content in contents['oer_contents']:
@@ -753,9 +763,11 @@ ns_action = api.namespace('api/v1/action', description='Actions')
 m_action = api.model('Action', {
     'action_type_id': fields.Integer(required=False, description='The action type id for the action'),
     'params': fields.String(required=False, description='A json object with params related to the action'),
-    'is_bundled': fields.Boolean(default=False, required=True, description='Boolean flag to differentiate between a single entry or a bundle entry'),
+    'is_bundled': fields.Boolean(default=False, required=True,
+                                 description='Boolean flag to differentiate between a single entry or a bundle entry'),
     'action_type_ids': fields.List(fields.Integer, required=False, description='A list of action type ids'),
-    'params_list': fields.List(fields.String, required=False, description='Params list for corresponding action type ids')
+    'params_list': fields.List(fields.String, required=False,
+                               description='Params list for corresponding action type ids')
 })
 
 
@@ -828,7 +840,7 @@ class ActionList(Resource):
         '''Log action to database'''
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
-        
+
         if api.payload['is_bundled']:
             if len(api.payload['action_type_ids']) != len(api.payload['params_list']):
                 return {'result': 'One or more arguments were found missing.'}, 400
@@ -895,7 +907,7 @@ class UserHistoryApi(Resource):
         # Creating a actions repository for unique data fetch
         actions_repository = ActionsRepository()
         result_list = actions_repository.get_actions(current_user.get_id(), 1, 'desc', 0, 20)
-        
+
         # Extracting oer ids
         oers = list()
         if result_list is not None:
@@ -998,6 +1010,7 @@ m_note = api.model('Note', {
 @ns_notes.route('/')
 class NotesList(Resource):
     '''Shows a list of all notes, and lets you POST to add new notes'''
+
     @ns_notes.doc('list_notes', params={'oer_id': 'Filter by material id',
                                         'sort': 'Sort results (Default: desc)',
                                         'offset': 'Offset results',
@@ -1064,6 +1077,7 @@ class NotesList(Resource):
 @ns_notes.param('id', 'The note identifier')
 class Notes(Resource):
     '''Show a single note item and lets you update or delete them'''
+
     @ns_notes.doc('get_note')
     def get(self, id):
         '''Fetch requested note from database'''
@@ -1097,14 +1111,13 @@ class Notes(Resource):
         query_object = query_object.filter(Note.user_login_id == current_user.get_id())
         query_object = query_object.filter(Note.is_deactivated == False)
         note = query_object.one_or_none()
-        
+
         if not note:
             return {}, 400
 
         setattr(note, 'text', args['text'])
         db_session.commit()
         return {'result': 'Note updated'}, 201
-
 
     @ns_notes.doc('delete_note')
     def delete(self, id):
@@ -1117,13 +1130,14 @@ class Notes(Resource):
         query_object = query_object.filter(Note.user_login_id == current_user.get_id())
         query_object = query_object.filter(Note.is_deactivated == False)
         note = query_object.one_or_none()
-        
+
         if not note:
             return {}, 400
 
         setattr(note, 'is_deactivated', True)
         db_session.commit()
         return {'result': 'Note deleted'}, 201
+
 
 def initiate_action_types_table():
     # TODO Define a comprehensive set of actions and keep it in sync with the frontend
@@ -1213,7 +1227,6 @@ def find_enrichment_by_oer_id(oer_id):
     return WikichunkEnrichment.query.filter_by(url=oer.url).first()
 
 
-
 # old solution - wouldn't scale well to millions of oers - see issue #290
 def recommendations_from_wikichunk_enrichments(oer_id):
     main_topics = find_enrichment_by_oer_id(oer_id).main_topics()
@@ -1257,8 +1270,8 @@ def recommendations_from_lam_api(oer_id):
     # TODO: get the API improved so that we can filter as part of the request
     data = {'resource_id': material_id, 'n_neighbors': 20, 'remove_duplicates': 1, 'model_type': 'wikifier'}
     response = requests.post(LAM_API_URL + RECOMMENDER_ENDPOINT,
-                         headers= HEADERS,
-                         data=json.dumps(data))
+                             headers=HEADERS,
+                             data=json.dumps(data))
     response_json = response.json()
     try:
         materials = response_json['output']['rec_materials']
@@ -1273,7 +1286,7 @@ def recommendations_from_lam_api(oer_id):
     for material in materials:
         # print(material['material_id'], material['weight'], material['type'])
         # stop once we have enough items
-        if len(oers)>4:
+        if len(oers) > 4:
             break
         # include only supported media formats
         if material['type'] not in SUPPORTED_FILE_FORMATS:

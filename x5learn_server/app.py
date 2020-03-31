@@ -277,7 +277,9 @@ def api_search():
 
     """
     text = request.args['text'].lower().strip()
-    if text.startswith(PLAYLIST_PREFIX):  # if its a playlist
+    if text == "":  # if empty string, no results
+        return jsonify([])
+    elif text.startswith(PLAYLIST_PREFIX):  # if its a playlist
         playlist_id = int(text[3:])
 
         # get the list of items

@@ -804,7 +804,7 @@ ns_action = api.namespace('api/v1/action', description='Actions')
 m_action = api.model('Action', {
     'action_type_id': fields.Integer(required=False, description='The action type id for the action'),
     'params': fields.String(required=False, description='A json object with params related to the action'),
-    'is_bundled': fields.Boolean(default=False, required=True,
+    'is_bundled': fields.Boolean(default=False, required=False,
                                  description='Boolean flag to differentiate between a single entry or a bundle entry'),
     'action_type_ids': fields.List(fields.Integer, required=False, description='A list of action type ids'),
     'params_list': fields.List(fields.String, required=False,
@@ -882,7 +882,7 @@ class ActionList(Resource):
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
 
-        if api.payload['is_bundled']:
+        if api.payload.get('is_bundled', False):
             if len(api.payload['action_type_ids']) != len(api.payload['params_list']):
                 return {'result': 'One or more arguments were found missing.'}, 400
             count = 0

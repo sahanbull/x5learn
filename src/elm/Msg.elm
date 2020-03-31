@@ -97,6 +97,8 @@ type Msg
   | EditPlaylist PlaylistField String
   | SubmittedCreatePlaylist
   | EditNewPlaylist PlaylistField String
+  | SelectedAddToPlaylist (Maybe Playlist)
+  | OpenedAddToPlaylistMenu
 
 
 type UserProfileField

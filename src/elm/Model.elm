@@ -364,6 +364,7 @@ type Popup
   | LoginHintPopup -- Nagging guest users to log or sign up
   | PopupAfterClickedOnContentFlowBar Oer Float Bool (Maybe Range) -- Offer a set of actions when the user clicks on the ContentFlowBar
   | PlaylistPopup -- Allowing the user to toggle between playlists
+  | AddToPlaylistPopup -- Allowing the user to add an oer to the playlist
 
 
 {-| Cascading menu containing wikipedia topics

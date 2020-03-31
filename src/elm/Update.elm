@@ -758,6 +758,12 @@ update msg ({nav, userProfileForm, playlistPublishForm, playlistCreateForm} as m
               ( { model | playlistCreateForm = newForm }, Cmd.none )
               |> logEventForLabStudy "EditNewPlaylist" []
 
+    OpenedAddToPlaylistMenu ->
+      ( { model | popup = Just AddToPlaylistPopup }, setBrowserFocus "")
+      |> logEventForLabStudy "OpenedAddToPlaylistMenu" []
+
+    SelectedAddToPlaylist playlist ->
+      ({ model | playlist = playlist }, Cmd.none)
 
 
 insertSearchResults : List OerId -> Model -> Model
@@ -1002,6 +1008,9 @@ popupToStrings maybePopup =
 
         PlaylistPopup ->
           [ "PlaylistPopup" ]
+
+        AddToPlaylistPopup ->
+          [ "AddToPlaylistPopup" ]
 executeSearchAfterUrlChanged : Model -> Url -> (Model, Cmd Msg)
 executeSearchAfterUrlChanged model url =
   let

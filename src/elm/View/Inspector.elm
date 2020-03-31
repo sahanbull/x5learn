@@ -242,11 +242,34 @@ viewContentFlowBarWrapper model inspectorState oer =
         else
           []
 
+      addToPlaylistButton = 
+          let
+            option playlist =
+              actionButtonWithoutIcon [] [ width fill, bigButtonPadding, htmlClass "HoverGreyBackground" ] playlist.title (Just <| SelectedAddToPlaylist Nothing)
+
+            options : List (Attribute Msg)
+            options =
+              case model.popup of
+                Just AddToPlaylistPopup ->
+                  List.map  (\x -> option x) (Maybe.withDefault [] model.userPlaylists)
+                  |> menuColumn [ width fill ]
+                  |> below
+                  |> List.singleton
+
+                _ ->
+                  []
+
+            attrs =
+              [ alignLeft, htmlClass "PreventClosingThePopupOnClick", buttonRounding ] ++ options
+          in
+            actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" "Add To Playlist ▾"  (Just OpenedAddToPlaylistMenu)
+            |> el attrs
+
       components =
         if isLabStudy1 model then
           courseSettings
         else
-          [ viewDescription inspectorState oer ] ++ courseSettings
+          [ viewDescription inspectorState oer ] ++ [ addToPlaylistButton ]
 
       containerHeight =
         if isLabStudy1 model then

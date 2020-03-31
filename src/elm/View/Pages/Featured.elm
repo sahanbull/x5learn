@@ -55,7 +55,7 @@ viewFeaturedOers model =
       viewLoadingSpinner
 
     Just oers ->
-      Playlist "Featured Content" Nothing Nothing Nothing Nothing (Time.millisToPosix 0) Nothing True Nothing  (Time.millisToPosix 0) oers
+      Playlist Nothing "Featured Content" Nothing Nothing Nothing Nothing True Nothing oers
       |> viewOerGrid model
 
 

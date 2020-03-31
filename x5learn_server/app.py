@@ -196,6 +196,12 @@ def playlist():
     return render_template('home.html')
 
 
+@app.route("/create_playlist")
+@login_required
+def new_playlist():
+    return render_template('home.html')
+
+
 @app.route("/api/v1/session/", methods=['GET'])
 def api_session():
     if current_user.is_authenticated:
@@ -1179,17 +1185,17 @@ ns_playlist = api.namespace('api/v1/playlist', description='Playlist')
 
 m_playlist = api.model('Playlist', {
     'title': fields.String(required=True, max_length=255, description='The title of the playlist'),
-    'description': fields.String(required=True,
+    'description': fields.String(required=False,
                                  description='An extensive description describing the contents of the playlist'),
-    'author': fields.String(required=True, max_length=255,
+    'author': fields.String(required=False, max_length=255,
                             description='The author of the playlist. (Not necessarily the logged in user)'),
     'parent': fields.Integer(required=False,
                              description='The id of the parent playlist which the current playlist was based on if any'),
-    'license': fields.Integer(default=1, required=True,
+    'license': fields.Integer(default=1, required=False,
                               description='The id of the license information for the current playlist'),
-    'is_visible': fields.Boolean(default=True, required=True,
+    'is_visible': fields.Boolean(default=True, required=False,
                                  description='Boolean flag to identify if the playlist is visible to the public'),
-    'playlist_items': fields.List(fields.Integer, required=True,
+    'playlist_items': fields.List(fields.Integer, required=False,
                                   description='A list of oer ids to be included in the playlist'),
     'is_temp': fields.Boolean(default=False, required=True,
                               description="Boolean flag to identify if the playlist is temporary or published"),
@@ -1286,11 +1292,18 @@ def _send_confirmation_email_for_published_playlist(user, title, url):
             return {'result': 'Mail server not configured'}, 400
 
 
+def _convert_temp_playlist_to_playlist(temp_playlist):
+    temp_data = json.loads(temp_playlist.data)
+    playlist = Playlist(temp_playlist.title, "", "", None, temp_playlist.creator, temp_data.get('parent', None), True, temp_data.get('license', _DEFAULT_LICENSE))
+    return playlist.serialize
+
+
 @ns_playlist.route('/')
 class Playlists(Resource):
     '''Create, fetch and delete playlists'''
 
-    @ns_playlist.doc('list_playlists', params={'author': 'Filter by author',
+    @ns_playlist.doc('list_playlists', params={'mode': 'Filter by playlist type',
+                                               'author': 'Filter by author',
                                                'license': 'Filter by license',
                                                'sort': 'Sort results (Default: desc)',
                                                'offset': 'Offset results',
@@ -1302,6 +1315,7 @@ class Playlists(Resource):
         else:
             # Declaring and processing params available for request
             parser = reqparse.RequestParser()
+            parser.add_argument('mode')
             parser.add_argument('author')
             parser.add_argument('license', type=int)
             parser.add_argument('sort', default='desc', choices=('asc', 'desc'), help='Bad choice')
@@ -1309,36 +1323,47 @@ class Playlists(Resource):
             parser.add_argument('limit', type=int)
             args = parser.parse_args()
 
-            # Building and executing query object
-            query_object = db_session.query(Playlist)
+            if args['mode'] is not None and args['mode'] == "temp_playlists_only":
+                # Building and executing query object for Temp Playlists
+                query_object = db_session.query(Temp_Playlist)
+                query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+                result_list = query_object.all()
 
-            if (args['author']):
-                query_object = query_object.filter(Playlist.author == args['author'])
+                playlists = [_convert_temp_playlist_to_playlist(i) for i in result_list]
+                return playlists
 
-            if (args['license']):
-                query_object = query_object.filter(Playlist.license == args['license'])
-
-            query_object = query_object.filter(Playlist.creator == current_user.get_id())
-
-            if (args['sort'] == 'desc'):
-                query_object = query_object.order_by(Playlist.created_at.desc())
             else:
-                query_object = query_object.order_by(Playlist.created_at.asc())
+                # Building and executing query object for Playlists
+                query_object = db_session.query(Playlist)
 
-            if (args['offset']):
-                query_object = query_object.offset(args['offset'])
+                if (args['author']):
+                    query_object = query_object.filter(Playlist.author == args['author'])
 
-            if (args['limit']):
-                query_object = query_object.limit(args['limit'])
+                if (args['license']):
+                    query_object = query_object.filter(Playlist.license == args['license'])
 
-            result_list = query_object.all()
+                query_object = query_object.filter(Playlist.creator == current_user.get_id())
 
-            # Converting result list to JSON friendly format
-            serializable_list = list()
-            if (result_list):
-                serializable_list = [i.serialize for i in result_list]
+                if (args['sort'] == 'desc'):
+                    query_object = query_object.order_by(Playlist.created_at.desc())
+                else:
+                    query_object = query_object.order_by(Playlist.created_at.asc())
 
-            return serializable_list
+                if (args['offset']):
+                    query_object = query_object.offset(args['offset'])
+
+                if (args['limit']):
+                    query_object = query_object.limit(args['limit'])
+
+                result_list = query_object.all()
+
+                # Converting result list to JSON friendly format
+                serializable_list = list()
+                if (result_list):
+                    serializable_list = [i.serialize for i in result_list]
+
+                return serializable_list
+
 
     @ns_playlist.doc('create_playlist')
     @ns_playlist.expect(m_playlist, validate=True)
@@ -1383,7 +1408,7 @@ class Playlists(Resource):
                                              current_user.get_id(),
                                              api.payload['parent'])
 
-        return result, 201
+        return {'result': 'Playlist successfully created.'}, 201
 
 
 @ns_playlist.doc('delete_playlist', params={'id': 'Delete published playlist by id',

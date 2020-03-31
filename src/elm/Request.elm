@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -169,6 +169,25 @@ requestCourseOptimization course =
         }
 
 
+{-| Fetch user playlist data
+-}
+requestLoadUserPlaylists : Cmd Msg
+requestLoadUserPlaylists =
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "playlist/" ] [ Url.Builder.string "mode" "temp_playlists_only" ]
+    , expect = Http.expectJson RequestLoadUserPlaylists (list playlistDecoder)
+    }
+
+{-| Persist the newly created playlist
+-}
+requestCreatePlaylist : Playlist -> Cmd Msg
+requestCreatePlaylist playlist =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "playlist/" ] []
+    , body = Http.jsonBody <| playlistEncoder playlist
+    , expect = Http.expectString RequestCreatePlaylist
+    }
+
 {-| JSON decoders and encoders for custom types are defined below.
 -}
 userProfileEncoder : UserProfile -> Encode.Value
@@ -189,7 +208,7 @@ courseItemEncoder item =
     , ("comment", Encode.string item.comment)
     ]
 
-
+  
 rangeEncoder : Range -> Encode.Value
 rangeEncoder range =
   Encode.object
@@ -335,3 +354,24 @@ entityDecoder =
     (field "id" string)
     (field "title" string)
     (field "url" string)
+
+playlistDecoder : Decoder Playlist
+playlistDecoder = 
+  Decode.succeed (\a b c d e f g h -> Playlist a b c d e f g h [])
+  |> andMap (Decode.maybe (Decode.field "id" Decode.int))
+  |> andMap (field "title" string)
+  |> andMap (Decode.maybe (Decode.field "description" Decode.string))
+  |> andMap (Decode.maybe (Decode.field "author" Decode.string))
+  |> andMap (Decode.maybe (Decode.field "creator" Decode.int))
+  |> andMap (Decode.maybe (Decode.field "parent" Decode.int))
+  |> andMap (Decode.field "is_visible" Decode.bool)
+  |> andMap (Decode.maybe (Decode.field "license" Decode.int))
+
+
+playlistEncoder : Playlist -> Encode.Value
+playlistEncoder playlist =
+  Encode.object
+    [ ("title", Encode.string playlist.title)
+    , ("parent", Encode.int (Maybe.withDefault 0 playlist.parent))
+    , ("is_temp", Encode.bool True)
+    ]

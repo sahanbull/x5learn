@@ -23,7 +23,7 @@ import ActionApi exposing (..)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
-update msg ({nav, userProfileForm, playlistPublishForm} as model) =
+update msg ({nav, userProfileForm, playlistPublishForm, playlistCreateForm} as model) =
   -- let
   --     actionlog =
   --       msg |> Debug.log "action"
@@ -34,7 +34,7 @@ update msg ({nav, userProfileForm, playlistPublishForm} as model) =
           (newModel, cmd) =
             model |> update (UrlChanged url)
       in
-          (newModel, [ cmd, requestSession, requestLoadCourse, askPageScrollState True ] |> Cmd.batch )
+          (newModel, [ cmd, requestSession, requestLoadCourse, requestLoadUserPlaylists, askPageScrollState True ] |> Cmd.batch )
 
     LinkClicked urlRequest ->
       case urlRequest of
@@ -57,6 +57,8 @@ update msg ({nav, userProfileForm, playlistPublishForm} as model) =
               (Profile, (model, Cmd.none))
             else if url.path |> String.startsWith publishPlaylistPath then
               (PublishPlaylist, (model, Cmd.none))
+            else if url.path |> String.startsWith createPlaylistPath then
+              (CreatePlaylist, (model, Cmd.none))
             else if url.path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
             else -- default to home page
@@ -364,6 +366,22 @@ update msg ({nav, userProfileForm, playlistPublishForm} as model) =
 
     RequestCourseOptimization (Err err) ->
       ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
+
+    RequestLoadUserPlaylists (Ok playlists) ->
+      let
+          newModel =
+            { model | userPlaylists = Just playlists }
+      in
+          (newModel, Cmd.none)
+
+    RequestLoadUserPlaylists (Err err) ->
+      ( { model | snackbar = createSnackbar model "Error loading user playlists" }, Cmd.none )
+
+    RequestCreatePlaylist (Ok _) ->
+      ({ model | playlistCreateForm = { playlistCreateForm | saved = True }, playlistCreateFormSubmitted = False}, Navigation.load "/")
+
+    RequestCreatePlaylist (Err err) ->
+      ( { model | snackbar = createSnackbar model "Some changes were not saved", playlistCreateFormSubmitted = False }, Cmd.none )
 
     SetHover maybeOerId ->
       let
@@ -727,6 +745,19 @@ update msg ({nav, userProfileForm, playlistPublishForm} as model) =
     SubmittedPublishPlaylist ->
       ( { model | playlistPublishFormSubmitted = True }, Cmd.none)
       |> logEventForLabStudy "SubmittedPublishPlaylist" []
+
+    SubmittedCreatePlaylist ->
+      ( { model | playlistCreateFormSubmitted = True }, requestCreatePlaylist model.playlistCreateForm.playlist)
+      |> logEventForLabStudy "SubmittedCreatePlaylist" []
+
+    EditNewPlaylist field value ->
+          let
+              newForm =
+                { playlistCreateForm | playlist = playlistCreateForm.playlist |> updatePlaylistField field value, saved = False }
+          in
+              ( { model | playlistCreateForm = newForm }, Cmd.none )
+              |> logEventForLabStudy "EditNewPlaylist" []
+
 
 
 insertSearchResults : List OerId -> Model -> Model

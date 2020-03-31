@@ -43,6 +43,8 @@ type Msg
   | RequestSaveCourse (Result Http.Error String)
   | RequestSaveLoggedEvents (Result Http.Error String)
   | RequestCourseOptimization (Result Http.Error (List OerId))
+  | RequestLoadUserPlaylists (Result Http.Error (List Playlist))
+  | RequestCreatePlaylist (Result Http.Error String)
   | SetHover (Maybe OerId)
   | SetPopup Popup
   | ClosePopup
@@ -93,6 +95,8 @@ type Msg
   | CreateNewPlaylist Bool
   | SubmittedPublishPlaylist
   | EditPlaylist PlaylistField String
+  | SubmittedCreatePlaylist
+  | EditNewPlaylist PlaylistField String
 
 
 type UserProfileField

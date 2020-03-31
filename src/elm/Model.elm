@@ -108,6 +108,9 @@ type alias Model =
   , playlistPublishForm : PublishPlaylistForm -- records with playlist and is published boolean flag
   , playlistPublishFormSubmitted : Bool -- show a loading spinner while playlist is published
   , createNewPlaylist : Bool -- flag to identify if create new playlist is triggered
+  , userPlaylists : Maybe (List Playlist) -- holds a list of user playlists fetched at page load
+  , playlistCreateForm : CreatePlaylistForm -- record with playlist and is saved boolean flag
+  , playlistCreateFormSubmitted : Bool -- show a loading spinner while playlist is created
   }
 
 
@@ -259,6 +262,7 @@ type Subpage
   | Profile
   | Search
   | PublishPlaylist
+  | CreatePlaylist
 
 
 {-| Search for OERs
@@ -456,6 +460,13 @@ type alias PublishPlaylistForm =
   , published : Bool
   }
 
+{-| Allowing the user to create a playlist
+-}
+type alias CreatePlaylistForm =
+  { playlist : Playlist
+  , saved : Bool
+  }
+
 {-| Playlist is a historical name for: a list of OERs with a title.
     The name Playlist doesn't fit as well as it used to in earlier versions.
     Playlist extneded to hold more information like description and author.
@@ -463,16 +474,14 @@ type alias PublishPlaylistForm =
     TODO reactor to rename this type
 -}
 type alias Playlist =
-  { title : String
+  { id : Maybe Int
+  , title : String
   , description : Maybe String
   , author : Maybe String
-  , blueprint_url : Maybe String
   , creator : Maybe Int
-  , created_at : Posix
-  , parent : Maybe ParentPlaylist
+  , parent : Maybe Int
   , is_visible : Bool
-  , license : Maybe LicenseType
-  , last_updated_at : Posix
+  , license : Maybe Int
   , oerIds : List OerId
   }
 
@@ -604,11 +613,14 @@ initialModel nav flags =
   , playlistPublishForm = freshPlaylistPublishForm initialPlaylist
   , playlistPublishFormSubmitted = False
   , createNewPlaylist = False
+  , userPlaylists = Nothing
+  , playlistCreateForm = freshPlaylistCreateForm initialPlaylist
+  , playlistCreateFormSubmitted = False
   }
 
 initialPlaylist : Playlist
 initialPlaylist =
-  Playlist "New Playlist" Nothing Nothing Nothing Nothing (Time.millisToPosix 0) Nothing True Nothing  (Time.millisToPosix 0) []
+  Playlist Nothing "New Playlist" Nothing Nothing Nothing Nothing True Nothing []
 
 initialUserProfile : String -> UserProfile
 initialUserProfile email =
@@ -807,6 +819,10 @@ freshPlaylistPublishForm : Playlist -> PublishPlaylistForm
 freshPlaylistPublishForm playlist = 
   { playlist = playlist, published = False }
 
+freshPlaylistCreateForm : Playlist -> CreatePlaylistForm
+freshPlaylistCreateForm playlist = 
+  { playlist = playlist, saved = False }
+
 
 {-| Get all available chunks for a particular OER
 -}
@@ -966,6 +982,9 @@ logoutPath =
 
 publishPlaylistPath =
   "/publish_playlist"
+
+createPlaylistPath =
+  "/create_playlist"
 
 
 {-| Takes a getter function (such as .price) and a collection (such as cars)

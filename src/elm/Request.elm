@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist, requestAddToPlaylist)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -186,6 +186,16 @@ requestCreatePlaylist playlist =
     { url = Url.Builder.absolute [ apiRoot, "playlist/" ] []
     , body = Http.jsonBody <| playlistEncoder playlist
     , expect = Http.expectString RequestCreatePlaylist
+    }
+
+{-| Persist oer in playlist
+-}
+requestAddToPlaylist : Playlist -> Oer -> Cmd Msg
+requestAddToPlaylist playlist oer =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "playlist/" ++ playlist.title ] []
+    , body = Http.jsonBody <| Encode.object [ ("oer_id", Encode.int oer.id ) ]
+    , expect = Http.expectString RequestAddToPlaylist
     }
 
 {-| JSON decoders and encoders for custom types are defined below.

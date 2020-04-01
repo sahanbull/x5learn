@@ -45,6 +45,7 @@ type Msg
   | RequestCourseOptimization (Result Http.Error (List OerId))
   | RequestLoadUserPlaylists (Result Http.Error (List Playlist))
   | RequestCreatePlaylist (Result Http.Error String)
+  | RequestAddToPlaylist (Result Http.Error String)
   | SetHover (Maybe OerId)
   | SetPopup Popup
   | ClosePopup
@@ -97,7 +98,7 @@ type Msg
   | EditPlaylist PlaylistField String
   | SubmittedCreatePlaylist
   | EditNewPlaylist PlaylistField String
-  | SelectedAddToPlaylist (Maybe Playlist)
+  | SelectedAddToPlaylist Playlist Oer
   | OpenedAddToPlaylistMenu
 
 

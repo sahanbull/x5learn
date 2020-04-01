@@ -245,7 +245,7 @@ viewContentFlowBarWrapper model inspectorState oer =
       addToPlaylistButton = 
           let
             option playlist =
-              actionButtonWithoutIcon [] [ width fill, bigButtonPadding, htmlClass "HoverGreyBackground" ] playlist.title (Just <| SelectedAddToPlaylist Nothing)
+              actionButtonWithoutIcon [] [ width fill, bigButtonPadding, htmlClass "HoverGreyBackground" ] playlist.title (Just <| SelectedAddToPlaylist playlist oer)
 
             options : List (Attribute Msg)
             options =

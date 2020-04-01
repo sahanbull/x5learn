@@ -383,6 +383,12 @@ update msg ({nav, userProfileForm, playlistPublishForm, playlistCreateForm} as m
     RequestCreatePlaylist (Err err) ->
       ( { model | snackbar = createSnackbar model "Some changes were not saved", playlistCreateFormSubmitted = False }, Cmd.none )
 
+    RequestAddToPlaylist (Ok _) ->
+      ({ model | snackbar = createSnackbar model "Oer successfully added to playlist"}, Cmd.none)
+
+    RequestAddToPlaylist (Err err) ->
+      ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+
     SetHover maybeOerId ->
       let
           (timelineHoverState, hoveringEntityId) =
@@ -762,9 +768,8 @@ update msg ({nav, userProfileForm, playlistPublishForm, playlistCreateForm} as m
       ( { model | popup = Just AddToPlaylistPopup }, setBrowserFocus "")
       |> logEventForLabStudy "OpenedAddToPlaylistMenu" []
 
-    SelectedAddToPlaylist playlist ->
-      ({ model | playlist = playlist }, Cmd.none)
-
+    SelectedAddToPlaylist playlist oer ->
+      ( model |> closePopup , requestAddToPlaylist playlist oer )
 
 insertSearchResults : List OerId -> Model -> Model
 insertSearchResults oerIds model =

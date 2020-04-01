@@ -1297,6 +1297,22 @@ def _convert_temp_playlist_to_playlist(temp_playlist):
     playlist = Playlist(temp_playlist.title, "", "", None, temp_playlist.creator, temp_data.get('parent', None), True, temp_data.get('license', _DEFAULT_LICENSE))
     return playlist.serialize
 
+def _add_oer_to_playlist(title, oer_id):
+    query_object = db_session.query(Temp_Playlist)
+    query_object = query_object.filter(Temp_Playlist.title == title)
+    query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+    temp_playlist = query_object.one_or_none()
+
+    if temp_playlist is not None:
+        temp_data = json.loads(temp_playlist.data)
+        temp_data.setdefault("playlist_items", []).append(oer_id)
+        temp_playlist.data = json.dumps(temp_data)
+        repository.update()
+    else:
+        return False
+
+    return True
+
 
 @ns_playlist.route('/')
 class Playlists(Resource):
@@ -1514,6 +1530,28 @@ class Playlist_Single(Resource):
 @ns_playlist.response(404, 'Temporary playlist not found')
 @ns_playlist.param('title', 'The temporary playlist identifier')
 class Temp_Playlist_Single(Resource):
+
+    @ns_playlist.doc('add_to_playlist')
+    def post(self, title):
+        '''Add oer to temporary playlist'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        if api.payload['oer_id'] == None:
+            return {'result': 'Oer id is required'}, 400
+
+        try:
+            result = _add_oer_to_playlist(title, api.payload['oer_id'])
+
+            if result:
+                return {'result': 'Oer successfully added to playlist'}, 200
+            else:
+                return {'result': 'Playlist not found'}, 400
+
+        except Exception as err:            
+            return {'result': 'An error occurred. Error - ' + str(err) }, 400
+
+
     @ns_playlist.doc('get_temp_playlist')
     def get(self, title):
         '''Fetch requested temporary playlist from database'''

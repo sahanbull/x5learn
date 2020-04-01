@@ -46,23 +46,37 @@ withNavigationDrawer model (pageContent, inspector) =
           [ viewContentFlowToggle model
           , taskButtons model
           , viewCourse model,
-          playlistActionButtons
+          playlistActionButtons model
           ]
           |> column [ spacing 40, width fill ]
         else
-          [ viewCourse model,
-          playlistActionButtons
-          ]
-          |> column [ width fill, spacing 8 ]
+          case model.playlist of
+              Nothing ->
+                [ viewCourse model]
+                |> column [ width fill, spacing 8 ]
+          
+              Just playist ->
+                [ viewCourse model
+                , playlistActionButtons model
+                ]
+                |> column [ width fill, spacing 8 ]
+
 
       selectPlaylistButton = 
           let
-
+            buttonText = 
+              case model.playlist of
+                Nothing ->
+                  "Select Playlist ▾"
+            
+                Just playlist ->
+                  playlist.title ++ " ▾"
+              
             newOption =
               link [ borderBottom 1, Border.color greyDivider, Font.size 14, bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] { url = "/create_playlist", label = italicText "Create New Playlist" }
 
             option playlist =
-              actionButtonWithoutIcon [] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] playlist.title (Just <| SelectedPlaylist Nothing)
+              actionButtonWithoutIcon [] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] playlist.title (Just <| SelectedPlaylist playlist)
 
             options : List (Attribute Msg)
             options =
@@ -79,10 +93,8 @@ withNavigationDrawer model (pageContent, inspector) =
             attrs =
               [ width fill, alignLeft, htmlClass "PreventClosingThePopupOnClick", buttonRounding ] ++ options
           in
-            actionButtonWithoutIcon [ width fill, centerX, paddingXY 12 10 ] [ width fill, buttonRounding, Border.width 1, Border.color greyDivider ] "Select Playlist ▾"  (Just OpenedSelectPlaylistMenu)
+            actionButtonWithoutIcon [ width fill, centerX, paddingXY 12 10 ] [ width fill, buttonRounding, Border.width 1, Border.color greyDivider ] buttonText (Just OpenedSelectPlaylistMenu)
             |> el attrs
-
-
 
 
       drawer =
@@ -102,12 +114,30 @@ withNavigationDrawer model (pageContent, inspector) =
   in
       (page, inspector ++ [ drawer ])
 
-playlistActionButtons : Element Msg
-playlistActionButtons =
-  [  button [ Font.center, width fill,  Background.color primaryGreen, bigButtonPadding, whiteText ] { label = Element.text "Save", onPress = (Just <| SelectedPlaylist Nothing)}
-  ,  link [ Font.center, width fill, Background.color red, bigButtonPadding, whiteText ] { url = "/publish_playlist", label = Element.text "Publish" }
-  ]
-  |> row [ spacing 10,  width (fillPortion 2)]
+playlistActionButtons : Model -> Element Msg
+playlistActionButtons model =
+  case model.playlist of
+      Nothing ->
+          none
+  
+      Just playlist ->
+        let
+          firstRow = 
+            [ button [ Font.center, width fill,  Background.color primaryGreen, bigButtonPadding, whiteText ] { label = Element.text "Save", onPress = Nothing }
+            , button [ Font.center, width fill,  Background.color red, bigButtonPadding, whiteText ] { label = Element.text "Delete", onPress = Nothing }
+            ]
+            |> row [ spacing 10,  width (fillPortion 2)]
+
+          secondRow =
+            [ link [ Font.center, width fill, Background.color electricBlue, bigButtonPadding, whiteText ] { url = "/publish_playlist", label = Element.text "Publish" }]
+            |> row [ spacing 10, paddingTop 10, width fill ]
+        in
+        [  firstRow
+        , secondRow ]
+        |> column [ paddingTop 20, width fill ]
+          
+  
+  
 
 taskButtons : Model -> Element Msg
 taskButtons model =

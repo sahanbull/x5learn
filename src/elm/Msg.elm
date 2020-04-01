@@ -92,7 +92,7 @@ type Msg
   | ClickedOnContentFlowBar Oer Float Bool
   | PressedRemoveRangeButton OerId Range
   | OpenedSelectPlaylistMenu
-  | SelectedPlaylist (Maybe Playlist)
+  | SelectedPlaylist Playlist
   | CreateNewPlaylist Bool
   | SubmittedPublishPlaylist
   | EditPlaylist PlaylistField String

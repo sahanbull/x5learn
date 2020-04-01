@@ -22,18 +22,25 @@ import Msg exposing (..)
 viewCourse : Model -> Element Msg
 viewCourse model =
   if model.course.items==[] then
-    none
+      none
   else
-    let
-        items =
-          model.course.items
-          |> List.indexedMap (viewCourseItem model)
-          |> column [ spacing 20, paddingTop 20, width fill ]
-    in
-        [ items
-        , viewCoursePathFinderContainer model
-        ]
-        |> column [ spacing 50, width fill ]
+    case model.playlist of
+        Nothing ->
+            none
+    
+        Just playlist ->
+          let
+              items =
+                model.course.items
+                |> List.indexedMap (viewCourseItem model)
+                |> column [ spacing 20, paddingTop 20, width fill ]
+          in
+              [ items
+              --, viewCoursePathFinderContainer model
+              ]
+              |> column [ spacing 50, width fill ]
+            
+    
 
 
 {-| Render a single course item
@@ -42,7 +49,7 @@ viewCourseItem : Model -> Int -> CourseItem -> Element Msg
 viewCourseItem model index item =
   case model.cachedOers |> Dict.get item.oerId of
     Nothing ->
-      none -- impossible
+        none -- impossible
 
     Just oer ->
       let
@@ -88,7 +95,7 @@ viewCourseItem model index item =
             |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
       in
           miniCard
-          |> el [ width fill, htmlClass "PreventClosingInspectorOnClick", onClickStopPropagation <| ClickedOnCourseItem oer ]
+          |> el [ width fill, htmlClass "PreventClosingInspectorOnClick" ]
 
 
 {-| Render the coursePathFinder

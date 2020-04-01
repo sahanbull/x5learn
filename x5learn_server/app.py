@@ -1295,7 +1295,9 @@ def _send_confirmation_email_for_published_playlist(user, title, url):
 def _convert_temp_playlist_to_playlist(temp_playlist):
     temp_data = json.loads(temp_playlist.data)
     playlist = Playlist(temp_playlist.title, "", "", None, temp_playlist.creator, temp_data.get('parent', None), True, temp_data.get('license', _DEFAULT_LICENSE))
-    return playlist.serialize
+    temp_playlist = playlist.serialize
+    temp_playlist['oerIds'] = temp_data['playlist_items']
+    return temp_playlist
 
 def _add_oer_to_playlist(title, oer_id):
     query_object = db_session.query(Temp_Playlist)

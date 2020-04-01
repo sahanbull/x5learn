@@ -367,7 +367,7 @@ entityDecoder =
 
 playlistDecoder : Decoder Playlist
 playlistDecoder = 
-  Decode.succeed (\a b c d e f g h -> Playlist a b c d e f g h [])
+  Decode.succeed Playlist
   |> andMap (Decode.maybe (Decode.field "id" Decode.int))
   |> andMap (field "title" string)
   |> andMap (Decode.maybe (Decode.field "description" Decode.string))
@@ -376,6 +376,7 @@ playlistDecoder =
   |> andMap (Decode.maybe (Decode.field "parent" Decode.int))
   |> andMap (Decode.field "is_visible" Decode.bool)
   |> andMap (Decode.maybe (Decode.field "license" Decode.int))
+  |> andMap (field "oerIds" (list Decode.int))
 
 
 playlistEncoder : Playlist -> Encode.Value

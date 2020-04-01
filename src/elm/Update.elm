@@ -58,7 +58,7 @@ update msg ({nav, userProfileForm, playlistPublishForm, playlistCreateForm} as m
             else if url.path |> String.startsWith publishPlaylistPath then
               (PublishPlaylist, (model, Cmd.none))
             else if url.path |> String.startsWith createPlaylistPath then
-              (CreatePlaylist, (model, Cmd.none))
+              (CreatePlaylist, ( { model | playlist = Nothing }, Cmd.none))
             else if url.path |> String.startsWith searchPath then
               (Search, executeSearchAfterUrlChanged model url)
             else -- default to home page
@@ -368,11 +368,16 @@ update msg ({nav, userProfileForm, playlistPublishForm, playlistCreateForm} as m
       ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
 
     RequestLoadUserPlaylists (Ok playlists) ->
-      let
-          newModel =
-            { model | userPlaylists = Just playlists }
-      in
-          (newModel, Cmd.none)
+      case model.playlist of
+          Nothing ->
+           ({ model | userPlaylists = Just playlists }, Cmd.none)
+      
+          Just playlist ->
+            let
+                oerIds = List.map (\x -> x) playlist.oerIds
+
+            in
+              ({ model | userPlaylists = Just playlists }, requestOersByIds model oerIds)
 
     RequestLoadUserPlaylists (Err err) ->
       ( { model | snackbar = createSnackbar model "Error loading user playlists" }, Cmd.none )
@@ -384,7 +389,7 @@ update msg ({nav, userProfileForm, playlistPublishForm, playlistCreateForm} as m
       ( { model | snackbar = createSnackbar model "Some changes were not saved", playlistCreateFormSubmitted = False }, Cmd.none )
 
     RequestAddToPlaylist (Ok _) ->
-      ({ model | snackbar = createSnackbar model "Oer successfully added to playlist"}, Cmd.none)
+      ({ model | snackbar = createSnackbar model "Oer successfully added to playlist"}, requestLoadUserPlaylists)
 
     RequestAddToPlaylist (Err err) ->
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
@@ -541,7 +546,13 @@ update msg ({nav, userProfileForm, playlistPublishForm, playlistCreateForm} as m
           |> saveAction 10 [ ("selectedMode", Encode.string selectedMode) ]
 
     SelectedPlaylist playlist ->
-      ({ model | playlist = playlist }, Cmd.none)
+      let
+        oerIds = List.map (\x -> x) playlist.oerIds
+        courseItems = List.map (\x -> CourseItem x [] "") playlist.oerIds
+        course = Course courseItems
+
+      in
+      ({ model | playlist = Just playlist, course = course } |> closePopup, requestOersByIds model oerIds)
 
     CreateNewPlaylist enabled ->
       ({ model | createNewPlaylist = enabled }, Cmd.none)
@@ -769,7 +780,7 @@ update msg ({nav, userProfileForm, playlistPublishForm, playlistCreateForm} as m
       |> logEventForLabStudy "OpenedAddToPlaylistMenu" []
 
     SelectedAddToPlaylist playlist oer ->
-      ( model |> closePopup , requestAddToPlaylist playlist oer )
+      ( model |> closePopup, requestAddToPlaylist playlist oer )
 
 insertSearchResults : List OerId -> Model -> Model
 insertSearchResults oerIds model =

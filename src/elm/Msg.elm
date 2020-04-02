@@ -47,6 +47,7 @@ type Msg
   | RequestCreatePlaylist (Result Http.Error String)
   | RequestAddToPlaylist (Result Http.Error String)
   | RequestSavePlaylist (Result Http.Error String)
+  | RequestDeletePlaylist (Result Http.Error String)
   | SetHover (Maybe OerId)
   | SetPopup Popup
   | ClosePopup
@@ -102,6 +103,7 @@ type Msg
   | SelectedAddToPlaylist Playlist Oer
   | OpenedAddToPlaylistMenu
   | SavePlaylist Playlist Course
+  | DeletePlaylist Playlist
 
 
 type UserProfileField

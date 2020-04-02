@@ -1429,30 +1429,30 @@ class Playlists(Resource):
         return {'result': 'Playlist successfully created.'}, 201
 
 
-@ns_playlist.doc('delete_playlist', params={'id': 'Delete published playlist by id',
-                                            'title': 'Delete temporary playlist by title'})
-def delete(self):
-    '''Delete playlist'''
-    if not current_user.is_authenticated:
-        return {'result': 'User not logged in'}, 401
+    @ns_playlist.doc('delete_playlist', params={'id': 'Delete published playlist by id',
+                                                'title': 'Delete temporary playlist by title'})
+    def delete(self):
+        '''Delete playlist'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
 
-    if api.payload['id'] != None:
-        playlist = repository.get_by_id(Playlist, api.payload['id'], current_user.get_id())
-        if playlist != None:
-            playlist_items = repository.get(Playlist_Item, None, {'playlist_id': playlist.id})
-            for item in playlist_items:
-                repository.delete(item)
+        if api.payload['id'] != None:
+            playlist = repository.get_by_id(Playlist, api.payload['id'], current_user.get_id())
+            if playlist != None:
+                playlist_items = repository.get(Playlist_Item, None, {'playlist_id': playlist.id})
+                for item in playlist_items:
+                    repository.delete(item)
 
-        repository.delete(playlist)
-        return {'result': 'Playlist - {} was successfully deleted'.format(playlist.title)}, 201
+            repository.delete(playlist)
+            return {'result': 'Playlist - {} was successfully deleted'.format(playlist.title)}, 201
 
-    if api.payload['title'] != None:
-        temp_playlist = repository.get(Temp_Playlist, None,
-                                       {'title': api.payload['title'], 'creator': current_user.get_id()})
-        if temp_playlist != None:
-            repository.delete(temp_playlist)
+        if api.payload['title'] != None:
+            temp_playlist = repository.get(Temp_Playlist, None,
+                                        {'title': api.payload['title'], 'creator': current_user.get_id()})
+            if temp_playlist != None:
+                repository.delete(temp_playlist)
 
-        return {'result': 'Playlist - {} was successfully deleted'.format(temp_playlist.title)}, 201
+            return {'result': 'Playlist - {} was successfully deleted'.format(temp_playlist.title)}, 201
 
 
 @ns_playlist.route('/<int:id>')
@@ -1602,7 +1602,7 @@ class Temp_Playlist_Single(Resource):
         return {'result': 'Temporary playlist successfully updated'}, 201
 
     @ns_playlist.doc('delete_temporary_playlist')
-    def delete(self, id):
+    def delete(self, title):
         '''Delete temporary playlist'''
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401

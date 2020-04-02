@@ -402,6 +402,12 @@ update msg ({nav, userProfileForm, playlistPublishForm, playlistCreateForm} as m
     RequestSavePlaylist (Err err) ->
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
+    RequestDeletePlaylist (Ok _) ->
+      ( { model | playlist = Nothing, snackbar = createSnackbar model ("Temporary playlist successfully deleted")}, requestLoadUserPlaylists)
+
+    RequestDeletePlaylist (Err err) ->
+      ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+
     SetHover maybeOerId ->
       let
           (timelineHoverState, hoveringEntityId) =
@@ -795,6 +801,9 @@ update msg ({nav, userProfileForm, playlistPublishForm, playlistCreateForm} as m
         updatedPlaylist = Playlist playlist.id playlist.title playlist.description playlist.author playlist.creator playlist.parent playlist.is_visible playlist.license (List.map (\x -> x.oerId) course.items)
       in
         ( model, requestSavePlaylist updatedPlaylist)
+
+    DeletePlaylist playlist ->
+      ( model, requestDeletePlaylist playlist)
 
 
 insertSearchResults : List OerId -> Model -> Model

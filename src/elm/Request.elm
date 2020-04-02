@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist, requestAddToPlaylist, requestSavePlaylist)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist, requestAddToPlaylist, requestSavePlaylist, requestDeletePlaylist)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -213,6 +213,17 @@ requestSavePlaylist playlist =
     , expect = Http.expectString RequestSavePlaylist
     }
 
+requestDeletePlaylist : Playlist -> Cmd Msg
+requestDeletePlaylist playlist =
+  Http.request
+    { method = "DELETE"
+    , timeout = Nothing
+    , tracker = Nothing
+    , headers = []
+    , url = Url.Builder.absolute [ apiRoot, "playlist/" ++ playlist.title ] []
+    , body = Http.jsonBody <| playlistEncoder playlist
+    , expect = Http.expectString RequestDeletePlaylist
+    }
 
 {-| JSON decoders and encoders for custom types are defined below.
 -}

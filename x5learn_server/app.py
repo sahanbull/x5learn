@@ -1539,7 +1539,7 @@ class Temp_Playlist_Single(Resource):
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
 
-        if api.payload['oer_id'] == None:
+        if api.payload['oer_id'] is not None:
             return {'result': 'Oer id is required'}, 400
 
         try:

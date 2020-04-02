@@ -123,7 +123,7 @@ playlistActionButtons model =
       Just playlist ->
         let
           firstRow = 
-            [ button [ Font.center, width fill,  Background.color primaryGreen, bigButtonPadding, whiteText ] { label = Element.text "Save", onPress = Nothing }
+            [ button [ Font.center, width fill,  Background.color primaryGreen, bigButtonPadding, whiteText ] { label = Element.text "Save", onPress = Just <| SavePlaylist playlist model.course}
             , button [ Font.center, width fill,  Background.color red, bigButtonPadding, whiteText ] { label = Element.text "Delete", onPress = Nothing }
             ]
             |> row [ spacing 10,  width (fillPortion 2)]

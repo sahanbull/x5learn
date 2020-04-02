@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist, requestAddToPlaylist)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist, requestAddToPlaylist, requestSavePlaylist)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -198,6 +198,22 @@ requestAddToPlaylist playlist oer =
     , expect = Http.expectString RequestAddToPlaylist
     }
 
+
+{-| Persist playlist in database
+-}
+requestSavePlaylist : Playlist -> Cmd Msg
+requestSavePlaylist playlist =
+  Http.request
+    { method = "PUT"
+    , timeout = Nothing
+    , tracker = Nothing
+    , headers = []
+    , url = Url.Builder.absolute [ apiRoot, "playlist/" ++ playlist.title ] []
+    , body = Http.jsonBody <| playlistEncoder playlist
+    , expect = Http.expectString RequestSavePlaylist
+    }
+
+
 {-| JSON decoders and encoders for custom types are defined below.
 -}
 userProfileEncoder : UserProfile -> Encode.Value
@@ -382,7 +398,14 @@ playlistDecoder =
 playlistEncoder : Playlist -> Encode.Value
 playlistEncoder playlist =
   Encode.object
-    [ ("title", Encode.string playlist.title)
+    [ ("id", Encode.int (Maybe.withDefault 0 playlist.id))
+    , ("title", Encode.string playlist.title)
+    , ("description", Encode.string (Maybe.withDefault "" playlist.description))
+    , ("author", Encode.string (Maybe.withDefault "" playlist.author))
+    , ("creator", Encode.int (Maybe.withDefault 0 playlist.creator))
     , ("parent", Encode.int (Maybe.withDefault 0 playlist.parent))
+    , ("is_visible", Encode.bool True)
+    , ("license", Encode.int (Maybe.withDefault 1 playlist.license))
     , ("is_temp", Encode.bool True)
+    , ("playlist_items", Encode.list Encode.int playlist.oerIds)
     ]

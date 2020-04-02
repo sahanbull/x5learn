@@ -238,3 +238,8 @@ a {
   background: rgb(153,159,178);
   background: radial-gradient(circle, rgba(153,159,178,1) 0%, rgba(219,221,228,1) 95%);
 }
+
+.PlaylistItemsContainer {
+  overflow-y: auto;
+  height: 70vh;
+}

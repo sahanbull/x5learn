@@ -374,24 +374,32 @@ update msg ({nav, userProfileForm, playlistPublishForm, playlistCreateForm} as m
       
           Just playlist ->
             let
-                oerIds = List.map (\x -> x) playlist.oerIds
-
+              updatedPlaylist = filterPlaylistByText playlists playlist
+              oerIds = List.map (\x -> x) updatedPlaylist.oerIds
+              courseItems = List.map (\x -> CourseItem x [] "") updatedPlaylist.oerIds
+              course = Course courseItems
             in
-              ({ model | userPlaylists = Just playlists }, requestOersByIds model oerIds)
+              ({ model | userPlaylists = Just playlists, course = course }, requestOersByIds model oerIds)
 
     RequestLoadUserPlaylists (Err err) ->
       ( { model | snackbar = createSnackbar model "Error loading user playlists" }, Cmd.none )
 
     RequestCreatePlaylist (Ok _) ->
-      ({ model | playlistCreateForm = { playlistCreateForm | saved = True }, playlistCreateFormSubmitted = False}, Navigation.load "/")
+      ( { model | playlistCreateForm = { playlistCreateForm | saved = True }, playlistCreateFormSubmitted = False}, Navigation.load "/")
 
     RequestCreatePlaylist (Err err) ->
       ( { model | snackbar = createSnackbar model "Some changes were not saved", playlistCreateFormSubmitted = False }, Cmd.none )
 
     RequestAddToPlaylist (Ok _) ->
-      ({ model | snackbar = createSnackbar model "Oer successfully added to playlist"}, requestLoadUserPlaylists)
+      ( { model | snackbar = createSnackbar model "Oer successfully added to playlist"}, requestLoadUserPlaylists)
 
     RequestAddToPlaylist (Err err) ->
+      ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+
+    RequestSavePlaylist (Ok _) ->
+      ( { model | snackbar = createSnackbar model ("Temporary playlist successfully saved")}, Cmd.none)
+
+    RequestSavePlaylist (Err err) ->
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
     SetHover maybeOerId ->
@@ -781,6 +789,13 @@ update msg ({nav, userProfileForm, playlistPublishForm, playlistCreateForm} as m
 
     SelectedAddToPlaylist playlist oer ->
       ( model |> closePopup, requestAddToPlaylist playlist oer )
+
+    SavePlaylist playlist course ->
+      let 
+        updatedPlaylist = Playlist playlist.id playlist.title playlist.description playlist.author playlist.creator playlist.parent playlist.is_visible playlist.license (List.map (\x -> x.oerId) course.items)
+      in
+        ( model, requestSavePlaylist updatedPlaylist)
+
 
 insertSearchResults : List OerId -> Model -> Model
 insertSearchResults oerIds model =
@@ -1429,3 +1444,16 @@ handleTimelineMouseEvent model oer eventName position =
 noCmd : Model -> (Model, Cmd Msg)
 noCmd model =
   (model, Cmd.none)
+  
+filterPlaylistByText : List Playlist -> Playlist -> Playlist
+filterPlaylistByText playlists playlist =
+  let
+    matches = List.filter (\x -> x.title == playlist.title) playlists
+  in
+    case List.head matches of
+        Nothing ->
+            Playlist Nothing "" Nothing Nothing Nothing Nothing True Nothing []
+    
+        Just firstMatch ->
+            firstMatch
+    

@@ -113,7 +113,6 @@ type alias Model =
   , playlistCreateFormSubmitted : Bool -- show a loading spinner while playlist is created
   }
 
-
 {-| We get the first sentence from the Wikipedia article
 -}
 type EntityDefinition
@@ -490,6 +489,9 @@ type alias Playlist =
 -}
 type ParentPlaylist = 
   ParentPlaylist (Playlist)
+
+type Playlists =
+  Playlists (List Playlist)
 
 {-| License are attached to playlist types. 
     Has a link to license information page

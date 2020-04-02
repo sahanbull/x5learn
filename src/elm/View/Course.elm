@@ -38,7 +38,7 @@ viewCourse model =
               [ items
               --, viewCoursePathFinderContainer model
               ]
-              |> column [ spacing 50, width fill ]
+              |> column [ spacing 50, width fill, htmlClass "PlaylistItemsContainer" ]
             
     
 

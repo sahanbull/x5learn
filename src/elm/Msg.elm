@@ -48,6 +48,8 @@ type Msg
   | RequestAddToPlaylist (Result Http.Error String)
   | RequestSavePlaylist (Result Http.Error String)
   | RequestDeletePlaylist (Result Http.Error String)
+  | RequestLoadLicenseTypes (Result Http.Error (List LicenseType))
+  | RequestPublishPlaylist (Result Http.Error String)
   | SetHover (Maybe OerId)
   | SetPopup Popup
   | ClosePopup
@@ -104,6 +106,8 @@ type Msg
   | OpenedAddToPlaylistMenu
   | SavePlaylist Playlist Course
   | DeletePlaylist Playlist
+  | SelectedLicense LicenseType
+  | OpenedSelectLicenseMenu
 
 
 type UserProfileField
@@ -113,7 +117,6 @@ type UserProfileField
 type PlaylistField
   = Title
   | Author
-  | License
   | Description
 
 

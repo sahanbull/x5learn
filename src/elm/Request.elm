@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist, requestAddToPlaylist, requestSavePlaylist, requestDeletePlaylist)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist, requestAddToPlaylist, requestSavePlaylist, requestDeletePlaylist, requestLoadLicenseTypes, requestPublishPlaylist)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -225,6 +225,23 @@ requestDeletePlaylist playlist =
     , expect = Http.expectString RequestDeletePlaylist
     }
 
+requestLoadLicenseTypes : Cmd Msg
+requestLoadLicenseTypes = 
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "license/" ] []
+    , expect = Http.expectJson RequestLoadLicenseTypes (list licenseTypeDecoder)
+    }
+
+{-| publish a temporary playlist
+-}
+requestPublishPlaylist : PublishPlaylistForm -> Cmd Msg
+requestPublishPlaylist publishPlaylistForm = 
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "playlist/" ] []
+    , body = Http.jsonBody <| publishPlaylistEncoder publishPlaylistForm
+    , expect = Http.expectString RequestPublishPlaylist
+    }
+
 {-| JSON decoders and encoders for custom types are defined below.
 -}
 userProfileEncoder : UserProfile -> Encode.Value
@@ -419,4 +436,27 @@ playlistEncoder playlist =
     , ("license", Encode.int (Maybe.withDefault 1 playlist.license))
     , ("is_temp", Encode.bool True)
     , ("playlist_items", Encode.list Encode.int playlist.oerIds)
+    ]
+
+licenseTypeDecoder : Decoder LicenseType
+licenseTypeDecoder = 
+  map3 LicenseType
+    (field "id" int)
+    (field "description" string)
+    (field "url" (maybe string))
+
+publishPlaylistEncoder : PublishPlaylistForm -> Encode.Value
+publishPlaylistEncoder publishPlaylistForm =
+  Encode.object
+    [ ("id", Encode.int (Maybe.withDefault 0 publishPlaylistForm.playlist.id))
+    , ("title", Encode.string publishPlaylistForm.playlist.title)
+    , ("description", Encode.string (Maybe.withDefault "" publishPlaylistForm.playlist.description))
+    , ("author", Encode.string (Maybe.withDefault "" publishPlaylistForm.playlist.author))
+    , ("creator", Encode.int (Maybe.withDefault 0 publishPlaylistForm.playlist.creator))
+    , ("parent", Encode.int (Maybe.withDefault 0 publishPlaylistForm.playlist.parent))
+    , ("is_visible", Encode.bool True)
+    , ("license", Encode.int (Maybe.withDefault 1 publishPlaylistForm.playlist.license))
+    , ("is_temp", Encode.bool False)
+    , ("playlist_items", Encode.list Encode.int publishPlaylistForm.playlist.oerIds)
+    , ("temp_title", Encode.string publishPlaylistForm.originalTitle)
     ]

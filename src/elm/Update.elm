@@ -56,7 +56,15 @@ update msg ({nav, userProfileForm, playlistPublishForm, playlistCreateForm} as m
             if url.path |> String.startsWith profilePath then
               (Profile, (model, Cmd.none))
             else if url.path |> String.startsWith publishPlaylistPath then
-              (PublishPlaylist, (model, Cmd.none))
+              case model.playlist of
+                  Nothing ->
+                    (Home, (model, (if model.featuredOers==Nothing then requestFeaturedOers else Cmd.none)))
+              
+                  Just playlist ->
+                    let
+                      newPlaylistPublishForm = PublishPlaylistForm playlist False playlist.title Nothing
+                    in
+                      (PublishPlaylist, ( { model | playlistPublishForm = newPlaylistPublishForm }, requestLoadLicenseTypes))
             else if url.path |> String.startsWith createPlaylistPath then
               (CreatePlaylist, ( { model | playlist = Nothing }, Cmd.none))
             else if url.path |> String.startsWith searchPath then
@@ -397,16 +405,32 @@ update msg ({nav, userProfileForm, playlistPublishForm, playlistCreateForm} as m
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
     RequestSavePlaylist (Ok _) ->
-      ( { model | snackbar = createSnackbar model ("Temporary playlist successfully saved")}, Cmd.none)
+      ( { model | snackbar = createSnackbar model "Temporary playlist successfully saved"}, Cmd.none)
 
     RequestSavePlaylist (Err err) ->
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
     RequestDeletePlaylist (Ok _) ->
-      ( { model | playlist = Nothing, snackbar = createSnackbar model ("Temporary playlist successfully deleted")}, requestLoadUserPlaylists)
+      ( { model | playlist = Nothing, snackbar = createSnackbar model "Temporary playlist successfully deleted"}, requestLoadUserPlaylists)
 
     RequestDeletePlaylist (Err err) ->
       ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+
+    RequestLoadLicenseTypes (Ok licenseTypes) ->
+      ( { model | licenseTypes = licenseTypes}, Cmd.none)
+
+    RequestLoadLicenseTypes (Err err) ->
+      ( { model | snackbar = createSnackbar model "Error loading user license types" }, Cmd.none )
+
+    RequestPublishPlaylist (Ok id) ->
+      let
+        url = "/search?q=pl:" ++ id
+        updatedPublishPlaylistForm = { playlistPublishForm | blueprintUrl = Just url }
+      in
+      ( { model | snackbar = createSnackbar model "Playlist successfully published", playlistPublishForm = updatedPublishPlaylistForm, playlist = Nothing }, requestLoadUserPlaylists )
+
+    RequestPublishPlaylist (Err err) ->
+      ( { model | snackbar = createSnackbar model "Error publishing playlist" }, Cmd.none )
 
     SetHover maybeOerId ->
       let
@@ -774,7 +798,7 @@ update msg ({nav, userProfileForm, playlistPublishForm, playlistCreateForm} as m
               |> logEventForLabStudy "EditPlaylist" []
 
     SubmittedPublishPlaylist ->
-      ( { model | playlistPublishFormSubmitted = True }, Cmd.none)
+      ( { model | playlistPublishFormSubmitted = True }, requestPublishPlaylist model.playlistPublishForm)
       |> logEventForLabStudy "SubmittedPublishPlaylist" []
 
     SubmittedCreatePlaylist ->
@@ -805,6 +829,15 @@ update msg ({nav, userProfileForm, playlistPublishForm, playlistCreateForm} as m
     DeletePlaylist playlist ->
       ( model, requestDeletePlaylist playlist)
 
+    SelectedLicense license ->
+      let
+          updatedPlaylist 
+            = { playlistPublishForm | playlist = playlistPublishForm.playlist |>  updatePlaylistLicense license.id }
+      in
+      ( { model | playlistPublishForm = updatedPlaylist } |> closePopup, Cmd.none )
+
+    OpenedSelectLicenseMenu ->
+      ( { model | popup = Just SelectLicensePopup }, setBrowserFocus "")
 
 insertSearchResults : List OerId -> Model -> Model
 insertSearchResults oerIds model =
@@ -911,6 +944,12 @@ updateUserProfileField field value userProfile =
     LastName ->
       { userProfile | lastName = value }
 
+updatePlaylistLicense : Int -> Playlist -> Playlist
+updatePlaylistLicense id playlist =
+  { playlist | license = Just id }
+          
+  
+
 updatePlaylistField : PlaylistField -> String -> Playlist -> Playlist
 updatePlaylistField field value playlist =
   case field of
@@ -922,9 +961,6 @@ updatePlaylistField field value playlist =
 
     Author ->
       { playlist | author = Just value }
-
-    License ->
-      playlist
 
 
 cacheOersFromList : List Oer -> Model -> Model
@@ -1051,6 +1087,11 @@ popupToStrings maybePopup =
 
         AddToPlaylistPopup ->
           [ "AddToPlaylistPopup" ]
+
+        SelectLicensePopup ->
+          [ "SelectLicensePopup" ]
+
+
 executeSearchAfterUrlChanged : Model -> Url -> (Model, Cmd Msg)
 executeSearchAfterUrlChanged model url =
   let

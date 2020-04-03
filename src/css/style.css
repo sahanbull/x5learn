@@ -243,3 +243,17 @@ a {
   overflow-y: auto;
   height: 70vh;
 }
+
+.formButton {
+  background: white;
+  border-color: rgba(186,189,182,1);
+  height: 40px;
+}
+
+.marginTop {
+  margin-top: 5px !important;
+}
+
+.blockContent {
+  display: block !important;
+}

@@ -321,6 +321,15 @@ class License(Base):
         self.description = description
         self.url = url
 
+    @property
+    def serialize(self):
+        """Return object data in easily serializable format"""
+        return {
+            'id': self.id,
+            'description': self.description,
+            'url': self.url
+        }
+
 
 class Playlist(Base):
     __tablename__ = 'x5_oer_repo.playlist'

@@ -111,6 +111,7 @@ type alias Model =
   , userPlaylists : Maybe (List Playlist) -- holds a list of user playlists fetched at page load
   , playlistCreateForm : CreatePlaylistForm -- record with playlist and is saved boolean flag
   , playlistCreateFormSubmitted : Bool -- show a loading spinner while playlist is created
+  , licenseTypes : List LicenseType
   }
 
 {-| We get the first sentence from the Wikipedia article
@@ -364,6 +365,7 @@ type Popup
   | PopupAfterClickedOnContentFlowBar Oer Float Bool (Maybe Range) -- Offer a set of actions when the user clicks on the ContentFlowBar
   | PlaylistPopup -- Allowing the user to toggle between playlists
   | AddToPlaylistPopup -- Allowing the user to add an oer to the playlist
+  | SelectLicensePopup -- Allowing the user to select a license when publishing
 
 
 {-| Cascading menu containing wikipedia topics
@@ -458,6 +460,8 @@ type CourseOptimization
 type alias PublishPlaylistForm =
   { playlist : Playlist
   , published : Bool
+  , originalTitle : String
+  , blueprintUrl : Maybe String
   }
 
 {-| Allowing the user to create a playlist
@@ -499,7 +503,7 @@ type Playlists =
 type alias LicenseType = 
   { id : Int
   , description : String
-  , url : String
+  , url : Maybe String
   }
 
 
@@ -619,7 +623,12 @@ initialModel nav flags =
   , userPlaylists = Nothing
   , playlistCreateForm = freshPlaylistCreateForm initialPlaylist
   , playlistCreateFormSubmitted = False
+  , licenseTypes = initialLicenseType
   }
+
+initialLicenseType : List LicenseType
+initialLicenseType = 
+  [LicenseType 0 "x5learn" (Just "")]
 
 initialPlaylist : Playlist
 initialPlaylist =
@@ -820,7 +829,7 @@ freshUserProfileForm userProfile =
 
 freshPlaylistPublishForm : Playlist -> PublishPlaylistForm
 freshPlaylistPublishForm playlist = 
-  { playlist = playlist, published = False }
+  { playlist = playlist, published = False, originalTitle = "", blueprintUrl = Nothing }
 
 freshPlaylistCreateForm : Playlist -> CreatePlaylistForm
 freshPlaylistCreateForm playlist = 

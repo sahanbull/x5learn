@@ -1219,7 +1219,7 @@ def _get_blueprint(title, desc, author, license, items):
         base_mapping["materials"][idx] = {
             "x5learn_id": temp_item.id,
             "url": temp_item.url,
-            "metadata": json.loads(temp_item.data)
+            "metadata": temp_item.data
         }
 
     return base_mapping
@@ -1228,6 +1228,7 @@ def _get_blueprint(title, desc, author, license, items):
 def _add_published_playlist(title, desc, author, license, creator, parent, is_vis, items):
     blueprint = _get_blueprint(title, desc, author, license, items)
     # title, description, author, blueprint, creator, parent, is_visible, license
+    parent = parent == 0 and parent or None
     playlist = Playlist(title, desc, author, json.dumps(blueprint), creator, parent, is_vis, license)
     playlist = repository.add(playlist)
 
@@ -1283,10 +1284,8 @@ def _send_confirmation_email_for_published_playlist(user, title, url):
     if user.email:
         try:
             msg = Message("{} Playlist Published".format(title), sender=MAIL_SENDER, recipients=[user.email])
-            msg.body = "Your playlist titled '{0}' has been succuessfully published in X5Learn platform. You can now view and share the playlist by following this weblink: <a href='{1}' target='_blank'>{1}</a>.".format(
-                title, url)
-            msg.html = render_template('/security/email/base_message.html', user=user, app_name=MAIL_SENDER,
-                                       message=msg.body)
+            msg.html = render_template('/security/email/published_playlist_message.html', user=user, app_name=MAIL_SENDER,
+                                       title=title, url=url)
             mail.send(msg)
         except Exception:
             return {'result': 'Mail server not configured'}, 400
@@ -1398,6 +1397,7 @@ class Playlists(Resource):
 
         # -- publish a playlist --
         if api.payload['is_temp'] == False:
+            playlist = None
             playlist = _add_published_playlist(api.payload['title'],
                                                api.payload['description'],
                                                api.payload['author'],
@@ -1419,6 +1419,8 @@ class Playlists(Resource):
             user = repository.get_by_id(UserLogin, current_user.get_id())
             _send_confirmation_email_for_published_playlist(user, playlist.title, oer.url)
 
+            return playlist.id
+
         # -- create a temporary playlist --
         else:
             result = _add_temporary_playlist(api.payload['title'],
@@ -1426,7 +1428,7 @@ class Playlists(Resource):
                                              current_user.get_id(),
                                              api.payload['parent'])
 
-        return {'result': 'Playlist successfully created.'}, 201
+            return {'result': 'Playlist successfully created.'}, 201
 
 
     @ns_playlist.doc('delete_playlist', params={'id': 'Delete published playlist by id',
@@ -1539,7 +1541,7 @@ class Temp_Playlist_Single(Resource):
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
 
-        if api.payload['oer_id'] is not None:
+        if api.payload['oer_id'] is None:
             return {'result': 'Oer id is required'}, 400
 
         try:
@@ -1618,6 +1620,23 @@ class Temp_Playlist_Single(Resource):
         repository.delete(temp_playlist)
         return {'result': 'Temporary playlist successfully deleted'}, 201
 
+# Defining license resource for API access ==================================
+ns_license = api.namespace('api/v1/license', description='license')
+
+@ns_license.route('/')
+class LicenseTypes(Resource):
+    '''Fetch licenses to be attached to playlists and other'''
+
+    def get(self):
+        '''Fetches zero or more licenses created by logged in user from database based on params'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+        else:
+            # Building and executing query object for fetching licenses
+            result_list = repository.get(License, None)
+            licenses = [i.serialize for i in result_list]
+            return licenses
+            
 
 def initiate_action_types_table():
     # TODO Define a comprehensive set of actions and keep it in sync with the frontend

@@ -1857,4 +1857,4 @@ def find_oer_by_material_id(material_id):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=6660)
+    app.run()

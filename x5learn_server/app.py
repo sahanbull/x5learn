@@ -203,7 +203,9 @@ def new_playlist():
 
 @app.route("/playlist/download/<playlist_id>")
 def playlist_download(playlist_id):
-    return render_template('download.html')
+    playlist = repository.get_by_id(Playlist, playlist_id)
+    playlist_blueprint = json.dumps(playlist.blueprint)
+    return render_template('download.html', playlist_name = playlist.title, playlist_blueprint = playlist_blueprint)
 
 @app.route("/api/v1/session/", methods=['GET'])
 def api_session():
@@ -1206,33 +1208,47 @@ m_playlist = api.model('Playlist', {
 })
 
 
-def _get_blueprint(title, desc, author, license, items):
+def _get_blueprint(playlist, license, items):
+    url = _create_playlist_url(playlist['id'])
     license_obj = repository.get_by_id(License, license)
-    base_mapping = {
-        "title": title,
-        "description": desc,
-        "author": author,
-        "license": license_obj.description,
-        "materials": {}
+    base_mapping = dict()
+    base_mapping["playlist_general_infos"] = {
+        "pst_name": playlist['title'],
+        "pst_id": playlist['id'],
+        "pst_url": url,
+        "pst_creation_date": playlist['created_at'],
+        "pst_author": playlist['author'],
+        "pst_license": license_obj.description,
+        "pst_thumbnail_url": "",
+        "pst_description": playlist['description']
     }
 
+
     # get materials, expects a list of OER ids from X5Learn platform
+    base_mapping["playlist_items"] = list()
     for idx, item in enumerate(items):
         temp_item = repository.get_by_id(Oer, item)
-        base_mapping["materials"][idx] = {
-            "x5learn_id": temp_item.id,
+        oer_data = temp_item.data
+        base_mapping["playlist_items"].append({
+            "material_id": temp_item.id,
             "url": temp_item.url,
-            "metadata": temp_item.data
-        }
+            "provider": oer_data['provider'],
+            "description": oer_data['description'],
+            "date": oer_data['date'],
+            "duration": oer_data['duration'],
+            "images": oer_data['images'],
+            "mediatype": oer_data['mediatype'],
+            "thumnail_url": "",
+            "order": idx
+        })
 
     return base_mapping
 
 
 def _add_published_playlist(title, desc, author, license, creator, parent, is_vis, items):
-    blueprint = _get_blueprint(title, desc, author, license, items)
     # title, description, author, blueprint, creator, parent, is_visible, license
     parent = parent == 0 and parent or None
-    playlist = Playlist(title, desc, author, json.dumps(blueprint), creator, parent, is_vis, license)
+    playlist = Playlist(title, desc, author, None, creator, parent, is_vis, license)
     playlist = repository.add(playlist)
 
     count = 0
@@ -1240,6 +1256,11 @@ def _add_published_playlist(title, desc, author, license, creator, parent, is_vi
         playlist_item = Playlist_Item(playlist.id, val, idx)
         playlist_item = repository.add(playlist_item)
         count = count + 1
+
+    blueprint = _get_blueprint(playlist.serialize, license, items)
+
+    playlist.blueprint = json.dumps(blueprint)
+    repository.update()
 
     return playlist
 

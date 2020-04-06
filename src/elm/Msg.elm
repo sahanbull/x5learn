@@ -50,6 +50,7 @@ type Msg
   | RequestDeletePlaylist (Result Http.Error String)
   | RequestLoadLicenseTypes (Result Http.Error (List LicenseType))
   | RequestPublishPlaylist (Result Http.Error String)
+  | RequestFetchPublishedPlaylist (Result Http.Error Playlist)
   | SetHover (Maybe OerId)
   | SetPopup Popup
   | ClosePopup
@@ -97,7 +98,6 @@ type Msg
   | PressedRemoveRangeButton OerId Range
   | OpenedSelectPlaylistMenu
   | SelectedPlaylist Playlist
-  | CreateNewPlaylist Bool
   | SubmittedPublishPlaylist
   | EditPlaylist PlaylistField String
   | SubmittedCreatePlaylist
@@ -108,7 +108,8 @@ type Msg
   | DeletePlaylist Playlist
   | SelectedLicense LicenseType
   | OpenedSelectLicenseMenu
-
+  | SetPlaylistState (Maybe PlaylistState)
+  | CancelCreatePlaylist
 
 type UserProfileField
   = FirstName

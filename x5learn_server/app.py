@@ -201,6 +201,9 @@ def playlist():
 def new_playlist():
     return render_template('home.html')
 
+@app.route("/playlist/download/<playlist_id>")
+def playlist_download(playlist_id):
+    return render_template('download.html')
 
 @app.route("/api/v1/session/", methods=['GET'])
 def api_session():
@@ -1245,7 +1248,7 @@ def _add_temporary_playlist(title, license, creator, parent):
     # if parent is not null, get items
     if parent is not None:
         parent_items = repository.get(Playlist_Item, None, {'playlist_id': parent})
-        items = [o['oer_id'] for o in parent_items]
+        items = [o.oer_id for o in parent_items]
     else:
         items = []
 
@@ -1262,8 +1265,12 @@ def _add_temporary_playlist(title, license, creator, parent):
     return {'result': 'Temporary playlist with {} items created'.format(count)}
 
 
+def _create_playlist_url(playlist_id):
+    return '{}/search?q={}{}'.format(SERVER_NAME, PLAYLIST_PREFIX, playlist_id)
+
+
 def _create_oer_record_for_playlist(playlist):
-    oer_url = '{}/search?q={}{}'.format(SERVER_NAME, PLAYLIST_PREFIX, playlist.id)
+    oer_url = _create_playlist_url(playlist.id)
     oer_data = {
         'url': oer_url,
         'material_id': playlist.id,
@@ -1430,7 +1437,6 @@ class Playlists(Resource):
 
             return {'result': 'Playlist successfully created.'}, 201
 
-
     @ns_playlist.doc('delete_playlist', params={'id': 'Delete published playlist by id',
                                                 'title': 'Delete temporary playlist by title'})
     def delete(self):
@@ -1473,8 +1479,13 @@ class Playlist_Single(Resource):
             return {'result': 'Playlist not found'}, 400
 
         playlist_items = repository.get(Playlist_Item, None,
-                                        {'playlist_id': playlist.id, 'creator': current_user.get_id()})
-        return {'playlist': playlist.serialize, 'playlist_items': playlist_items}, 200
+                                        {'playlist_id': playlist.id})
+
+        seralized_playlist = playlist.serialize
+        seralized_playlist['oerIds'] = [i.oer_id for i in playlist_items]
+        seralized_playlist['url'] = _create_playlist_url(id)
+
+        return seralized_playlist, 200
 
     @ns_playlist.doc('update_playlist')
     @ns_playlist.expect(m_playlist, validate=True)
@@ -1619,6 +1630,25 @@ class Temp_Playlist_Single(Resource):
 
         repository.delete(temp_playlist)
         return {'result': 'Temporary playlist successfully deleted'}, 201
+
+
+@ns_playlist.route('blueprint/<int:id>')
+@ns_playlist.response(404, 'Playlist not found')
+@ns_playlist.param('id', 'The playlist identifier')
+class Playlist_Blueprint(Resource):
+    @ns_playlist.doc('get_playlist_blueprint')
+    def get(self, id):
+        '''Fetch requested playlist from database'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        playlist = repository.get_by_id(Playlist, id)
+
+        if playlist is None:
+            return {'result': 'Playlist not found'}, 400
+
+        return playlist.blueprint, 200
+
 
 # Defining license resource for API access ==================================
 ns_license = api.namespace('api/v1/license', description='license')

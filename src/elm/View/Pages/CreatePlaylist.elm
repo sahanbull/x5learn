@@ -35,17 +35,17 @@ viewCreatePlaylistPage model {playlist, saved} =
           if saved then
             "✓ Saved" |> bodyWrap [ greyText, width fill ]
           else
-            button [ paddingXY 16 8, width fill, Background.color primaryGreen, whiteText ] { onPress = Just SubmittedCreatePlaylist, label = "Save" |> text |> el [] }
+            button [ paddingXY 16 8, width fill, Background.color electricBlue, whiteText, Font.center ] { onPress = Just SubmittedCreatePlaylist, label = "Save" |> text }
 
       cancelButton = 
-        link [ Font.center, width fill, Background.color yellow, bigButtonPadding, whiteText ] { url = "/home", label = Element.text "Cancel" }
+        link [ Font.center, width fill, Background.color red, bigButtonPadding, whiteText, alignRight ] { url = "/home", label = Element.text "Cancel" }
 
       page =
         [ " Create Playlist" |> captionNowrap [ centerX, Font.size 16 ]
         , [ titleField ] |> wrappedRow []
-        , [ createButton, cancelButton ] |> wrappedRow [ spacing 20, height <| px 40 ]
+        , [ createButton, cancelButton ] |> wrappedRow [ width (fillPortion 2), spacing 20, height <| px 40 ]
         ]
         |> column [ spacing 30, padding 5 ]
         |> milkyWhiteCenteredContainer
-  in
-      (page, [])
+    in
+        (page, [])

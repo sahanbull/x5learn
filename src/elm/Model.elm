@@ -107,12 +107,22 @@ type alias Model =
   , playlist : Maybe Playlist
   , playlistPublishForm : PublishPlaylistForm -- records with playlist and is published boolean flag
   , playlistPublishFormSubmitted : Bool -- show a loading spinner while playlist is published
-  , createNewPlaylist : Bool -- flag to identify if create new playlist is triggered
   , userPlaylists : Maybe (List Playlist) -- holds a list of user playlists fetched at page load
   , playlistCreateForm : CreatePlaylistForm -- record with playlist and is saved boolean flag
   , playlistCreateFormSubmitted : Bool -- show a loading spinner while playlist is created
   , licenseTypes : List LicenseType
+  , searchIsPlaylist : Bool -- flag to identify if searching for a playlist
+  , publishedPlaylistId : Maybe String
+  , publishedPlaylist : Maybe Playlist
+  , playlistState : Maybe PlaylistState
   }
+
+{-| We get the first sentence from the Wikipedia article
+-}
+type PlaylistState
+  = PlaylistInfo
+  | PlaylistShare
+  | PlaylistClone
 
 {-| We get the first sentence from the Wikipedia article
 -}
@@ -469,6 +479,7 @@ type alias PublishPlaylistForm =
 type alias CreatePlaylistForm =
   { playlist : Playlist
   , saved : Bool
+  , isClone : Bool
   }
 
 {-| Playlist is a historical name for: a list of OERs with a title.
@@ -487,6 +498,7 @@ type alias Playlist =
   , is_visible : Bool
   , license : Maybe Int
   , oerIds : List OerId
+  , url : Maybe String
   }
 
 {-| Type of playlist to hold reference to parent playlist
@@ -619,11 +631,14 @@ initialModel nav flags =
   , playlist = Nothing
   , playlistPublishForm = freshPlaylistPublishForm initialPlaylist
   , playlistPublishFormSubmitted = False
-  , createNewPlaylist = False
   , userPlaylists = Nothing
   , playlistCreateForm = freshPlaylistCreateForm initialPlaylist
   , playlistCreateFormSubmitted = False
   , licenseTypes = initialLicenseType
+  , searchIsPlaylist = False
+  , publishedPlaylistId = Nothing
+  , publishedPlaylist = Nothing
+  , playlistState = Nothing
   }
 
 initialLicenseType : List LicenseType
@@ -632,7 +647,7 @@ initialLicenseType =
 
 initialPlaylist : Playlist
 initialPlaylist =
-  Playlist Nothing "New Playlist" Nothing Nothing Nothing Nothing True Nothing []
+  Playlist Nothing "New Playlist" Nothing Nothing Nothing Nothing True Nothing [] Nothing
 
 initialUserProfile : String -> UserProfile
 initialUserProfile email =
@@ -833,7 +848,7 @@ freshPlaylistPublishForm playlist =
 
 freshPlaylistCreateForm : Playlist -> CreatePlaylistForm
 freshPlaylistCreateForm playlist = 
-  { playlist = playlist, saved = False }
+  { playlist = playlist, saved = False, isClone = False }
 
 
 {-| Get all available chunks for a particular OER

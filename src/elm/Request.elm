@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist, requestAddToPlaylist, requestSavePlaylist, requestDeletePlaylist, requestLoadLicenseTypes, requestPublishPlaylist)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist, requestAddToPlaylist, requestSavePlaylist, requestDeletePlaylist, requestLoadLicenseTypes, requestPublishPlaylist, requestFetchPublishedPlaylist)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -242,6 +242,15 @@ requestPublishPlaylist publishPlaylistForm =
     , expect = Http.expectString RequestPublishPlaylist
     }
 
+{-| fetch a published playlist
+-}
+requestFetchPublishedPlaylist : String -> Cmd Msg
+requestFetchPublishedPlaylist playlistId =
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "playlist/" ++ playlistId ] []
+    , expect = Http.expectJson RequestFetchPublishedPlaylist playlistDecoder
+    }  
+
 {-| JSON decoders and encoders for custom types are defined below.
 -}
 userProfileEncoder : UserProfile -> Encode.Value
@@ -421,6 +430,7 @@ playlistDecoder =
   |> andMap (Decode.field "is_visible" Decode.bool)
   |> andMap (Decode.maybe (Decode.field "license" Decode.int))
   |> andMap (field "oerIds" (list Decode.int))
+  |> andMap (Decode.maybe (Decode.field "url" Decode.string))
 
 
 playlistEncoder : Playlist -> Encode.Value

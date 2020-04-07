@@ -90,6 +90,9 @@ magenta : Color
 magenta =
   rgb255 250 0 230
 
+warningOrange : Color
+warningOrange = 
+  rgb255 240 173 78 
 
 grey80 : Color
 grey80 =

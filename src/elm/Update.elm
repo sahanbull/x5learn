@@ -1,4 +1,4 @@
-module Update exposing (update)
+module Update exposing (update, countOfUserPlaylists)
 
 -- import Url.Parser
 -- import Url.Parser.Query
@@ -78,12 +78,23 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                                 ( PublishPlaylist, ( { model | playlistPublishForm = newPlaylistPublishForm }, Cmd.none ) )
 
                     else if url.path |> String.startsWith createPlaylistPath then
-                        let
-                            freshPlaylist = 
-                                Playlist Nothing "New Playlist" Nothing Nothing Nothing Nothing True Nothing [] Nothing
-                            updatedPlaylistCreateForm = { playlistCreateForm | playlist = freshPlaylist, saved = False, isClone = False }
-                        in
-                        ( CreatePlaylist, ( { model | playlist = Nothing, playlistCreateForm = updatedPlaylistCreateForm }, Cmd.none ) )
+                        if countOfUserPlaylists model.userPlaylists >= 5 then
+                            ( Home
+                            , ( { model | snackbar = createSnackbar model "You can only have a maxmium of 5 temporary playlists at a time" }
+                                , if model.featuredOers == Nothing then
+                                    requestFeaturedOers
+
+                                else
+                                    Cmd.none
+                                )
+                            )
+                        else
+                            let
+                                freshPlaylist = 
+                                    Playlist Nothing "New Playlist" Nothing Nothing Nothing Nothing True Nothing [] Nothing
+                                updatedPlaylistCreateForm = { playlistCreateForm | playlist = freshPlaylist, saved = False, isClone = False }
+                            in
+                            ( CreatePlaylist, ( { model | playlist = Nothing, playlistCreateForm = updatedPlaylistCreateForm }, Cmd.none ) )
 
                     else if url.path |> String.startsWith searchPath then
                         ( Search, executeSearchAfterUrlChanged model url )
@@ -91,7 +102,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                     else
                         -- default to home page
                         ( Home
-                        , ( model
+                        , ( { model | searchIsPlaylist = False }
                           , if model.featuredOers == Nothing then
                                 requestFeaturedOers
 
@@ -245,7 +256,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             ( { model | requestingOers = False, snackbar = createSnackbar model snackbarMessageReloadPage }, Cmd.none )
 
         RequestFeatured (Ok oers) ->
-            ( { model | featuredOers = oers |> List.map .id |> Just } |> cacheOersFromList oers, Cmd.none )
+            ( { model | searchIsPlaylist = False, featuredOers = oers |> List.map .id |> Just } |> cacheOersFromList oers, Cmd.none )
 
         RequestFeatured (Err err) ->
             ( { model | snackbar = createSnackbar model snackbarMessageReloadPage }, Cmd.none )
@@ -433,7 +444,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                         course =
                             Course courseItems
                     in
-                    ( { model | userPlaylists = Just playlists, course = course }, requestOersByIds model oerIds )
+                    ( { model | userPlaylists = Just playlists, course = course, playlist = Just updatedPlaylist }, requestOersByIds model oerIds )
 
         RequestLoadUserPlaylists (Err err) ->
             ( { model | snackbar = createSnackbar model "Error loading user playlists" }, Cmd.none )
@@ -881,8 +892,18 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 |> logEventForLabStudy "PressedRemoveRangeButton" [ oerId |> String.fromInt, range |> rangeToString ]
 
         OpenedSelectPlaylistMenu ->
-            ( { model | popup = Just PlaylistPopup }, setBrowserFocus "" )
-                |> logEventForLabStudy "OpenedPlaylistMenu" []
+            case model.popup of
+                Nothing ->
+                    ( { model | popup = Just PlaylistPopup }, setBrowserFocus "" )
+                        |> logEventForLabStudy "OpenedPlaylistMenu" []
+                
+                Just PlaylistPopup ->
+                    ( model |> closePopup, Cmd.none )
+                        |> logEventForLabStudy "OpenedPlaylistMenu" []
+
+                _ ->
+                    ( { model | popup = Just PlaylistPopup }, setBrowserFocus "" )
+                        |> logEventForLabStudy "OpenedPlaylistMenu" []
 
         EditPlaylist field value ->
             let
@@ -892,13 +913,18 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             ( { model | playlistPublishForm = newForm }, Cmd.none )
                 |> logEventForLabStudy "EditPlaylist" []
 
-        SubmittedPublishPlaylist ->
+        SubmittedPublishPlaylist ->            
             ( { model | playlistPublishFormSubmitted = True }, requestPublishPlaylist model.playlistPublishForm )
                 |> logEventForLabStudy "SubmittedPublishPlaylist" []
 
         SubmittedCreatePlaylist ->
-            ( { model | playlistCreateFormSubmitted = True }, requestCreatePlaylist model.playlistCreateForm.playlist )
-                |> logEventForLabStudy "SubmittedCreatePlaylist" []
+            case checkIfPlaylistNameIsUnique model.userPlaylists model.playlistCreateForm.playlist.title of
+                False ->
+                    ( { model | snackbar = createSnackbar model "Playlist name is not unique. Please choose a different name."}, Cmd.none)  
+            
+                True ->
+                    ( { model | playlistCreateFormSubmitted = True }, requestCreatePlaylist model.playlistCreateForm.playlist )
+                    |> logEventForLabStudy "SubmittedCreatePlaylist" []
 
         EditNewPlaylist field value ->
             let
@@ -1734,3 +1760,36 @@ extractPlaylistIdFromSearchString searchText =
     
         Just id ->
             List.head (List.reverse (searchText |> String.split ":"))
+
+
+countOfUserPlaylists : Maybe (List Playlist) -> Int
+countOfUserPlaylists playlists =
+    case playlists of
+        Nothing ->
+            0
+    
+        Just pl ->
+            List.length pl
+
+checkIfPlaylistNameIsUnique : Maybe (List Playlist) -> String -> Bool
+checkIfPlaylistNameIsUnique playlists newPlaylistTitle = 
+    case playlists of
+        Nothing ->
+            True
+    
+        Just pl ->
+            let
+                matches =
+                    List.head (List.filter (\x -> x.title == newPlaylistTitle) pl)
+            in
+                case matches of
+                    Nothing ->
+                        True
+
+                    Just _ ->
+                        False
+
+            
+    
+            
+    

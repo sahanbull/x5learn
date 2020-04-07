@@ -27,15 +27,18 @@ viewPublishPlaylistPage model {playlist, published, originalTitle, blueprintUrl}
         textInput field labelText valueText =
           Input.text [ width fill, onEnter SubmittedPublishPlaylist, Font.size 14 ] { onChange = EditPlaylist field, text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = labelText |> text |> Input.labelAbove [ Font.size 16 ] }
 
+        textMultiline field labelText valueText =
+          Input.multiline [ width fill, onEnter SubmittedPublishPlaylist, Font.size 14 ] { onChange = EditPlaylist field, text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = labelText |> text |> Input.labelAbove [ Font.size 16 ], spellcheck = False }
+
         titleField =
           textInput Title "Title" playlist.title
         descriptionField =
           case playlist.description of
             Nothing ->
-              textInput Description "Description" ""
+              textMultiline Description "Description" ""
 
             Just val ->
-              textInput Description "Description" val
+              textMultiline Description "Description" val
                   
         authorField =
           case playlist.author of

@@ -244,6 +244,15 @@ viewContentFlowBarWrapper model inspectorState oer =
 
       addToPlaylistButton = 
           let
+
+            filteredPlaylists = 
+              case model.userPlaylists of
+                Nothing ->
+                  []
+
+                Just playlists ->
+                  List.filter (\x -> checkIfOerDoesNotExistsInPlaylist x.oerIds oer.id) playlists
+
             option playlist =
               actionButtonWithoutIcon [] [ width fill, bigButtonPadding, htmlClass "HoverGreyBackground" ] playlist.title (Just <| SelectedAddToPlaylist playlist oer)
 
@@ -251,7 +260,7 @@ viewContentFlowBarWrapper model inspectorState oer =
             options =
               case model.popup of
                 Just AddToPlaylistPopup ->
-                  List.map  (\x -> option x) (Maybe.withDefault [] model.userPlaylists)
+                  List.map  (\x -> option x) filteredPlaylists
                   |> menuColumn [ width fill ]
                   |> below
                   |> List.singleton
@@ -468,3 +477,12 @@ explanationForRelatedTab =
   , flyoutDirection = Left
   , links = [ explanationLinkForItemRecommender ]
   }
+
+checkIfOerDoesNotExistsInPlaylist : List OerId -> Int -> Bool
+checkIfOerDoesNotExistsInPlaylist oers oerId =
+    case List.head (List.filter (\x -> x == oerId) oers) of
+      Nothing ->
+        True
+
+      Just _ ->
+        False

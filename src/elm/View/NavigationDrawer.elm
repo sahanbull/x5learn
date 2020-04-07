@@ -121,21 +121,30 @@ playlistActionButtons model =
           none
   
       Just playlist ->
-        let
-          firstRow = 
-            [ button [ Font.center, width fill,  Background.color primaryGreen, bigButtonPadding, whiteText ] { label = Element.text "Save", onPress = Just <| SavePlaylist playlist model.course}
-            , button [ Font.center, width fill,  Background.color red, bigButtonPadding, whiteText ] { label = Element.text "Delete", onPress = Just <| DeletePlaylist playlist }
-            ]
-            |> row [ spacing 10,  width (fillPortion 2)]
+        if List.length playlist.oerIds > 0 then
+          let
+            firstRow = 
+              [ button [ Font.center, width fill,  Background.color primaryGreen, bigButtonPadding, whiteText ] { label = Element.text "Save", onPress = Just <| SavePlaylist playlist model.course}
+              , button [ Font.center, width fill,  Background.color red, bigButtonPadding, whiteText ] { label = Element.text "Delete", onPress = Just <| DeletePlaylist playlist }
+              ]
+              |> row [ spacing 10,  width (fillPortion 2)]
 
-          secondRow =
-            [ link [ Font.center, width fill, Background.color electricBlue, bigButtonPadding, whiteText ] { url = "/publish_playlist", label = Element.text "Publish" }]
-            |> row [ spacing 10, paddingTop 10, width fill ]
-        in
-        [  firstRow
-        , secondRow ]
-        |> column [ paddingTop 20, width fill ]
-          
+            secondRow =
+              [ link [ Font.center, width fill, Background.color electricBlue, bigButtonPadding, whiteText ] { url = "/publish_playlist", label = Element.text "Publish" }]
+              |> row [ spacing 10, paddingTop 10, width fill ]
+          in
+          [  firstRow
+          , secondRow ]
+          |> column [ paddingTop 20, width fill ]
+        else
+          let
+            firstRow = 
+              [ button [ Font.center, width fill,  Background.color red, bigButtonPadding, whiteText ] { label = Element.text "Delete", onPress = Just <| DeletePlaylist playlist }
+              ]
+              |> row [ spacing 10,  width fill]
+          in
+          [  firstRow ]
+          |> column [ paddingTop 20, width fill ]
   
   
 

@@ -451,7 +451,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
         RequestSavePlaylist (Ok _) ->
-            ( { model | snackbar = createSnackbar model "Temporary playlist successfully saved" }, Cmd.none )
+            ( { model | snackbar = createSnackbar model "Temporary playlist successfully saved" }, requestLoadUserPlaylists )
 
         RequestSavePlaylist (Err err) ->
             ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )

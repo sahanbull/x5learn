@@ -241,7 +241,7 @@ a {
 
 .PlaylistItemsContainer {
   overflow-y: auto;
-  height: 70vh;
+  max-height: 40%;
 }
 
 .formButton {

@@ -262,7 +262,7 @@ viewContentFlowBarWrapper model inspectorState oer =
                 Just AddToPlaylistPopup ->
                   List.map  (\x -> option x) filteredPlaylists
                   |> menuColumn [ width fill ]
-                  |> below
+                  |> above
                   |> List.singleton
 
                 _ ->

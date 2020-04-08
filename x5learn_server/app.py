@@ -201,11 +201,13 @@ def playlist():
 def new_playlist():
     return render_template('home.html')
 
+
 @app.route("/playlist/download/<playlist_id>")
 def playlist_download(playlist_id):
     playlist = repository.get_by_id(Playlist, playlist_id)
     playlist_blueprint = json.dumps(playlist.blueprint)
-    return render_template('download.html', playlist_name = playlist.title, playlist_blueprint = playlist_blueprint)
+    return render_template('download.html', playlist_name=playlist.title, playlist_blueprint=playlist_blueprint)
+
 
 @app.route("/api/v1/session/", methods=['GET'])
 def api_session():
@@ -1204,7 +1206,8 @@ m_playlist = api.model('Playlist', {
                                   description='A list of oer ids to be included in the playlist'),
     'is_temp': fields.Boolean(default=False, required=True,
                               description="Boolean flag to identify if the playlist is temporary or published"),
-    'temp_title': fields.String(required=False, max_length=255, description='Original title of the playlist in case title is changed at publish')
+    'temp_title': fields.String(required=False, max_length=255,
+                                description='Original title of the playlist in case title is changed at publish')
 })
 
 
@@ -1223,7 +1226,6 @@ def _get_blueprint(playlist, license, items):
         "pst_description": playlist['description']
     }
 
-
     # get materials, expects a list of OER ids from X5Learn platform
     base_mapping["playlist_items"] = list()
     for idx, item in enumerate(items):
@@ -1231,6 +1233,7 @@ def _get_blueprint(playlist, license, items):
         oer_data = temp_item.data
         base_mapping["playlist_items"].append({
             "material_id": temp_item.id,
+            "x5gon_id": oer_data.get("material_id"),
             "url": temp_item.url,
             "provider": oer_data['provider'],
             "description": oer_data['description'],
@@ -1312,7 +1315,8 @@ def _send_confirmation_email_for_published_playlist(user, title, url):
     if user.email:
         try:
             msg = Message("{} Playlist Published".format(title), sender=MAIL_SENDER, recipients=[user.email])
-            msg.html = render_template('/security/email/published_playlist_message.html', user=user, app_name=MAIL_SENDER,
+            msg.html = render_template('/security/email/published_playlist_message.html', user=user,
+                                       app_name=MAIL_SENDER,
                                        title=title, url=url)
             mail.send(msg)
         except Exception:
@@ -1321,10 +1325,12 @@ def _send_confirmation_email_for_published_playlist(user, title, url):
 
 def _convert_temp_playlist_to_playlist(temp_playlist):
     temp_data = json.loads(temp_playlist.data)
-    playlist = Playlist(temp_playlist.title, "", "", None, temp_playlist.creator, temp_data.get('parent', None), True, temp_data.get('license', _DEFAULT_LICENSE))
+    playlist = Playlist(temp_playlist.title, "", "", None, temp_playlist.creator, temp_data.get('parent', None), True,
+                        temp_data.get('license', _DEFAULT_LICENSE))
     temp_playlist = playlist.serialize
     temp_playlist['oerIds'] = temp_data['playlist_items']
     return temp_playlist
+
 
 def _add_oer_to_playlist(title, oer_id):
     query_object = db_session.query(Temp_Playlist)
@@ -1409,7 +1415,6 @@ class Playlists(Resource):
 
                 return serializable_list
 
-
     @ns_playlist.doc('create_playlist')
     @ns_playlist.expect(m_playlist, validate=True)
     def post(self):
@@ -1477,7 +1482,7 @@ class Playlists(Resource):
 
         if api.payload['title'] != None:
             temp_playlist = repository.get(Temp_Playlist, None,
-                                        {'title': api.payload['title'], 'creator': current_user.get_id()})
+                                           {'title': api.payload['title'], 'creator': current_user.get_id()})
             if temp_playlist != None:
                 repository.delete(temp_playlist)
 
@@ -1584,9 +1589,8 @@ class Temp_Playlist_Single(Resource):
             else:
                 return {'result': 'Playlist not found'}, 400
 
-        except Exception as err:            
-            return {'result': 'An error occurred. Error - ' + str(err) }, 400
-
+        except Exception as err:
+            return {'result': 'An error occurred. Error - ' + str(err)}, 400
 
     @ns_playlist.doc('get_temp_playlist')
     def get(self, title):
@@ -1674,6 +1678,7 @@ class Playlist_Blueprint(Resource):
 # Defining license resource for API access ==================================
 ns_license = api.namespace('api/v1/license', description='license')
 
+
 @ns_license.route('/')
 class LicenseTypes(Resource):
     '''Fetch licenses to be attached to playlists and other'''
@@ -1687,7 +1692,7 @@ class LicenseTypes(Resource):
             result_list = repository.get(License, None)
             licenses = [i.serialize for i in result_list]
             return licenses
-            
+
 
 def initiate_action_types_table():
     # TODO Define a comprehensive set of actions and keep it in sync with the frontend

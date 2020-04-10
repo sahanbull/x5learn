@@ -593,24 +593,24 @@ def inject_duration(oer):
     return oer
 
 
+def _is_valid_file(filename):
+    # TODO: have a more efficient regex later
+    return bool('/assignments/' not in m['url'] and
+                '199' not in m['url'] and
+                '200' not in m['url'])
+
+
 def filter_x5gon_search_results(materials):
     # (un)comment the lines below to enable/disable filters as desired
-
-    # include videos only
-    # TODO: remove the only video constrain but also make sure the pdf filters are back online
-    materials = [m for m in materials if is_video(m['url'])]
 
     # exclude youtube videos
     materials = [m for m in materials if 'youtu' not in m['url']]
 
     # filter by file suffix
-    # materials = [m for m in materials if m['url'].endswith(
-    #     '.pdf') or is_video(m['url'])]
+    materials = [m for m in materials if m['url'].endswith('.pdf') or is_video(m['url'])]
 
-    # TODO: --- pdf filters found below ---
     # crudely filter out materials from MIT OCW that are assignments or date back to the 90s or early 2000s
-    # materials = [m for m in materials if '/assignments/' not in m['url']
-    #              and '199' not in m['url'] and '200' not in m['url']]
+    materials = [m for m in materials if _is_valid_file(m)]
 
     # Exclude non-english materials because they tend to come out poorly after wikification. X5GON search doesn't have a language parameter at the time of writing.
     # materials = [m for m in materials if m['language'] == 'en']

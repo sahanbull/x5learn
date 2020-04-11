@@ -133,12 +133,15 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 |> logEventForLabStudy "SearchFieldChanged" [ str ]
 
         TriggerSearch str isFromSearchField ->
-            let
-                searchUrl =
-                    Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" (String.trim str) ]
-            in
-            ( { model | inspectorState = Nothing } |> closePopup, Navigation.pushUrl nav.key searchUrl )
-                |> saveAction 13 [ ( "text", Encode.string str ), ( "isFromSearchField", Encode.bool isFromSearchField ) ]
+            if str == "" then
+                (model, Cmd.none)
+            else
+                let
+                    searchUrl =
+                        Url.Builder.relative [ searchPath ] [ Url.Builder.string "q" (String.trim str) ]
+                in
+                ( { model | inspectorState = Nothing } |> closePopup, Navigation.pushUrl nav.key searchUrl )
+                    |> saveAction 13 [ ( "text", Encode.string str ), ( "isFromSearchField", Encode.bool isFromSearchField ) ]
 
         BrowserResized x y ->
             ( { model | windowWidth = x, windowHeight = y } |> closePopup, askPageScrollState True )
@@ -450,19 +453,19 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             ( { model | snackbar = createSnackbar model "Error loading user playlists" }, Cmd.none )
 
         RequestCreatePlaylist (Ok _) ->
-            ( { model | playlistCreateForm = { playlistCreateForm | saved = True, isClone = False }, playlistCreateFormSubmitted = False }, Navigation.load "/" )
+            ( { model | playlistCreateForm = { playlistCreateForm | saved = True, isClone = False }, playlistCreateFormSubmitted = False }, Cmd.none )
 
         RequestCreatePlaylist (Err err) ->
             ( { model | snackbar = createSnackbar model "Some changes were not saved", playlistCreateFormSubmitted = False }, Cmd.none )
 
         RequestAddToPlaylist (Ok _) ->
-            ( { model | snackbar = createSnackbar model "Oer successfully added to playlist" }, requestLoadUserPlaylists )
+            ( { model | snackbar = createSnackbar model "Successfully added to playlist", hasUnsavedChangesToPlaylist = True }, requestLoadUserPlaylists )
 
         RequestAddToPlaylist (Err err) ->
             ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
         RequestSavePlaylist (Ok _) ->
-            ( { model | snackbar = createSnackbar model "Temporary playlist successfully saved" }, requestLoadUserPlaylists )
+            ( { model | snackbar = createSnackbar model "Temporary playlist successfully saved", hasUnsavedChangesToPlaylist = False }, requestLoadUserPlaylists )
 
         RequestSavePlaylist (Err err) ->
             ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
@@ -790,7 +793,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 newCourse =
                     { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId /= oerId) }
             in
-            ( { model | course = newCourse, courseOptimization = Nothing, inspectorState = Nothing }, Cmd.none )
+            ( { model | course = newCourse, courseOptimization = Nothing, inspectorState = Nothing, snackbar = createSnackbar model "Successfully removed from playlist", hasUnsavedChangesToPlaylist = True }, Cmd.none )
                 |> logEventForLabStudy "RemovedOerFromCourse" [ oerId |> String.fromInt, courseToString newCourse ]
                 |> saveCourseNow
 
@@ -892,18 +895,21 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 |> logEventForLabStudy "PressedRemoveRangeButton" [ oerId |> String.fromInt, range |> rangeToString ]
 
         OpenedSelectPlaylistMenu ->
-            case model.popup of
-                Nothing ->
-                    ( { model | popup = Just PlaylistPopup }, setBrowserFocus "" )
-                        |> logEventForLabStudy "OpenedPlaylistMenu" []
-                
-                Just PlaylistPopup ->
-                    ( model |> closePopup, Cmd.none )
-                        |> logEventForLabStudy "OpenedPlaylistMenu" []
+            if model.hasUnsavedChangesToPlaylist then
+                ( { model | warnUserOfUnsavedChangesToPlaylist = True }, Cmd.none)
+            else
+                case model.popup of
+                    Nothing ->
+                        ( { model | popup = Just PlaylistPopup }, setBrowserFocus "" )
+                            |> logEventForLabStudy "OpenedPlaylistMenu" []
+                    
+                    Just PlaylistPopup ->
+                        ( model |> closePopup, Cmd.none )
+                            |> logEventForLabStudy "OpenedPlaylistMenu" []
 
-                _ ->
-                    ( { model | popup = Just PlaylistPopup }, setBrowserFocus "" )
-                        |> logEventForLabStudy "OpenedPlaylistMenu" []
+                    _ ->
+                        ( { model | popup = Just PlaylistPopup }, setBrowserFocus "" )
+                            |> logEventForLabStudy "OpenedPlaylistMenu" []
 
         EditPlaylist field value ->
             let
@@ -983,6 +989,13 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
 
         CancelCreatePlaylist ->
             ( model , Navigation.load "/" )
+
+        ConfirmedUnsavedPlaylistPrompt flag ->
+            if flag then
+                ( { model | hasUnsavedChangesToPlaylist = False, warnUserOfUnsavedChangesToPlaylist = False }, Cmd.none )
+            else
+                ( { model | warnUserOfUnsavedChangesToPlaylist = False }, Cmd.none )
+
 
 insertSearchResults : List OerId -> Model -> Model
 insertSearchResults oerIds model =

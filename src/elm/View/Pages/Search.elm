@@ -160,39 +160,51 @@ viewPlaylistSharePage model =
 
 viewClonePlaylistPage : Model -> CreatePlaylistForm -> Element Msg
 viewClonePlaylistPage model {playlist, saved} =
-  let
-    textInput field labelText valueText =
-      Input.text [ width fill, onEnter SubmittedCreatePlaylist ] { onChange = EditNewPlaylist field, text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = labelText |> text |> Input.labelAbove [ Font.size 16 ] }
+  if saved == False then
+    let
+      textInput field labelText valueText =
+        Input.text [ width fill, onEnter SubmittedCreatePlaylist ] { onChange = EditNewPlaylist field, text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = labelText |> text |> Input.labelAbove [ Font.size 16 ] }
 
-    titleField =
-      textInput Title "Title" playlist.title
+      titleField =
+        textInput Title "Title" playlist.title
 
-    createButton =
-      if model.playlistCreateFormSubmitted then
-        viewLoadingSpinner
-        |> el [ width (px 77), height (px 37) ]
-      else
-        if saved then
-          "✓ Saved" |> bodyWrap [ greyText, width fill ]
+      createButton =
+        if model.playlistCreateFormSubmitted then
+          viewLoadingSpinner
+          |> el [ width (px 77), height (px 37) ]
         else
-          button [ paddingXY 16 8, width fill, Background.color electricBlue, whiteText, Font.center ] { onPress = Just SubmittedCreatePlaylist, label = "Save" |> text }
+          if saved then
+            "✓ Saved" |> bodyWrap [ greyText, width fill ]
+          else
+            button [ paddingXY 16 8, width fill, Background.color electricBlue, whiteText, Font.center ] { onPress = Just SubmittedCreatePlaylist, label = "Save" |> text }
 
-    cancelButton = 
-      button [ width fill, paddingXY 16 8, Font.center, Background.color red, whiteText ] { onPress = (Just (SetPlaylistState Nothing)), label = "Cancel" |> text }
+      cancelButton = 
+        button [ width fill, paddingXY 16 8, Font.center, Background.color red, whiteText ] { onPress = Just (SetPlaylistState Nothing), label = "Cancel" |> text }
 
-    playlistItems = 
-      List.map (\x -> viewPlaylistItem model x) playlist.oerIds
-    page =
-      [ " Clone Playlist" |> captionNowrap [ centerX, Font.size 16 ]
-      , [ titleField ] |> wrappedRow []
-      , [ text "Playlist Items" ] |> wrappedRow [ width fill, Font.size 16 ]
-      , playlistItems |> wrappedRow [ htmlClass "blockContent marginTop" ]
-      , [ createButton, cancelButton ] |> wrappedRow [ width (fillPortion 2), spacing 20, height <| px 40 ]
-      ]
-      |> column [ spacing 30, padding 5 ]
-      |> milkyWhiteCenteredContainer
-    in
-      page
+      playlistItems = 
+        List.map (\x -> viewPlaylistItem model x) playlist.oerIds
+      page =
+        [ " Clone Playlist" |> captionNowrap [ centerX, Font.size 16 ]
+        , [ titleField ] |> wrappedRow []
+        , [ text "Playlist Items" ] |> wrappedRow [ width fill, Font.size 16 ]
+        , playlistItems |> wrappedRow [ htmlClass "blockContent marginTop" ]
+        , [ createButton, cancelButton ] |> wrappedRow [ width (fillPortion 2), spacing 20, height <| px 40 ]
+        ]
+        |> column [ spacing 30, padding 5 ]
+        |> milkyWhiteCenteredContainer
+      in
+        page
+
+    else
+      let
+        page =
+          [ " Playlist Successfully Cloned!" |> captionNowrap [ centerX, Font.size 16 ]
+          , button [ width fill, paddingXY 16 8, Font.center, Background.color electricBlue, whiteText ] { onPress = Just (SetPlaylistState Nothing), label = "Go Back" |> text }
+          ]
+          |> column [ spacing 30, padding 5 ]
+          |> milkyWhiteCenteredContainer
+      in
+        page
 
 
 

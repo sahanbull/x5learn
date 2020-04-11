@@ -110,6 +110,8 @@ type alias Model =
   , userPlaylists : Maybe (List Playlist) -- holds a list of user playlists fetched at page load
   , playlistCreateForm : CreatePlaylistForm -- record with playlist and is saved boolean flag
   , playlistCreateFormSubmitted : Bool -- show a loading spinner while playlist is created
+  , hasUnsavedChangesToPlaylist : Bool -- flag to find if a playlist has unsaved changes and warn the user
+  , warnUserOfUnsavedChangesToPlaylist : Bool -- flag to find if warning message should be shown reminding user to save 
   , licenseTypes : List LicenseType
   , searchIsPlaylist : Bool -- flag to identify if searching for a playlist
   , publishedPlaylistId : Maybe String
@@ -639,6 +641,8 @@ initialModel nav flags =
   , publishedPlaylistId = Nothing
   , publishedPlaylist = Nothing
   , playlistState = Nothing
+  , hasUnsavedChangesToPlaylist = False
+  , warnUserOfUnsavedChangesToPlaylist = False
   }
 
 initialLicenseType : List LicenseType

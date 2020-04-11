@@ -110,6 +110,7 @@ type Msg
   | OpenedSelectLicenseMenu
   | SetPlaylistState (Maybe PlaylistState)
   | CancelCreatePlaylist
+  | ConfirmedUnsavedPlaylistPrompt Bool
 
 type UserProfileField
   = FirstName

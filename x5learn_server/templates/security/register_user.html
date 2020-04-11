@@ -9,6 +9,21 @@
       {{ register_user_form.hidden_tag() }}
       {{ render_field_with_errors(register_user_form.email, autofocus=true, placeholder='Email') }}
       {{ render_field_with_errors(register_user_form.password, placeholder='Password') }}
+      {% if register_user_form.password.errors %}
+      <ul>
+        <li>Passwords must contain:
+            <div style="margin-left: 15px">
+              <ul style="list-style:disc;">
+                <li>a minimum of 1 lower case letter [a-z]</li>
+                <li>a minimum of 1 upper case letter [A-Z]</li>
+                <li>a minimum of 1 numeric character [0-9]</li>
+                <li>a minimum of 1 special character [@#$%^&+=]</li>
+                <li>a minimum of 8 characters in length</li>
+              <ul>
+            </div>
+        </li>
+      </ul> 
+      {% endif %}
       {% if register_user_form.password_confirm %}
         {{ render_field_with_errors(register_user_form.password_confirm, placeholder='Password') }}
       {% endif %}

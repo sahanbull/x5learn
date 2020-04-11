@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, render_template, request, redirect
 from flask_mail import Mail, Message
-from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required
+from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required, \
+    forms, RegisterForm, ResetPasswordForm
 from flask_sqlalchemy import SQLAlchemy
 import json
 import os  # apologies
@@ -14,6 +15,7 @@ from sqlalchemy import or_, and_, cast, Integer
 from sqlalchemy.orm.attributes import flag_modified
 from flask_restplus import Api, Resource, fields, reqparse
 import wikipedia
+
 
 # instantiate the user management db classes
 # NOTE WHEN PEP8'ING MODULE IMPORTS WILL MOVE TO THE TOP AND CAUSE EXCEPTION
@@ -37,7 +39,7 @@ app = Flask(__name__)
 mail = Mail()
 
 app.config['SERVER_NAME'] = SERVER_NAME
-app.config['DEBUG'] = False
+app.config['DEBUG'] = False 
 app.config['SECRET_KEY'] = PASSWORD_SECRET
 app.config['SECURITY_PASSWORD_HASH'] = "bcrypt"
 app.config['SECURITY_PASSWORD_SALT'] = PASSWORD_SECRET
@@ -47,7 +49,8 @@ app.config['SECURITY_REGISTERABLE'] = True
 app.config['SECURITY_REGISTER_URL'] = '/signup'
 app.config['SECURITY_SEND_REGISTER_EMAIL'] = True
 app.config['SECURITY_CONFIRMABLE'] = True
-app.config['SECURITY_POST_REGISTER_VIEW'] = '/login'
+app.config['SECURITY_POST_REGISTER_VIEW'] = '/verify_email' 
+app.config['SECURITY_POST_CONFIRM_VIEW'] = '/confirmed_email'
 
 # user password configs
 app.config['SECURITY_CHANGEABLE'] = True
@@ -65,7 +68,22 @@ user_datastore = SQLAlchemySessionUserDatastore(db_session,
 app.config["SQLALCHEMY_DATABASE_URI"] = DB_ENGINE_URI
 db = SQLAlchemy(app)
 
-security = Security(app, user_datastore)
+
+# Setup password policy by extending flask security forms
+class ExtendedRegisterForm(RegisterForm):
+    password = forms.PasswordField('Password', \
+        [forms.validators.Regexp(regex='[A-Za-z0-9@#$%^&+=]{8,}', message="Invalid password")])
+    password_confirm = False
+
+
+class ExtendedResetPasswordForm(ResetPasswordForm):
+    password = forms.PasswordField('Password', \
+        [forms.validators.Regexp(regex='[A-Za-z0-9@#$%^&+=]{8,}', message="Invalid password")])
+
+
+security = Security(app, user_datastore, confirm_register_form=ExtendedRegisterForm, \
+    reset_password_form=ExtendedResetPasswordForm)
+
 
 # Setup Flask-Mail Server
 app.config['MAIL_SERVER'] = MAIL_SERVER
@@ -148,13 +166,22 @@ repository = Repository()
 #     #     db.session.commit()
 #     return render_template('home.html')
 
-
 @app.route("/")
 def home():
     if current_user.is_authenticated:
         return render_template('home.html')
     else:
         return render_template('about.html')
+
+
+@app.route("/verify_email")
+def verify_email():
+    return render_template('verify_email.html')
+
+
+@app.route("/confirmed_email")
+def confirmed_email():
+    return render_template('confirmed_email.html')
 
 
 @app.route("/about")
@@ -595,9 +622,9 @@ def inject_duration(oer):
 
 def _is_valid_file(filename):
     # TODO: have a more efficient regex later
-    return bool('/assignments/' not in m['url'] and
-                '199' not in m['url'] and
-                '200' not in m['url'])
+    return bool('/assignments/' not in filename['url'] and
+                '199' not in filename['url'] and
+                '200' not in filename['url'])
 
 
 def filter_x5gon_search_results(materials):

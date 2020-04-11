@@ -20,7 +20,8 @@ import Msg exposing (..)
 -}
 viewCreatePlaylistPage : Model -> CreatePlaylistForm -> PageWithInspector
 viewCreatePlaylistPage model {playlist, saved} =
-  let
+  if saved == False then
+    let
       textInput field labelText valueText =
         Input.text [ width fill, onEnter SubmittedCreatePlaylist ] { onChange = EditNewPlaylist field, text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = labelText |> text |> Input.labelAbove [ Font.size 16 ] }
 
@@ -47,5 +48,16 @@ viewCreatePlaylistPage model {playlist, saved} =
         ]
         |> column [ spacing 30, padding 5 ]
         |> milkyWhiteCenteredContainer
-    in
+      in
+        (page, [])
+
+    else
+      let
+        page =
+          [ " Playlist Successfully Created!" |> captionNowrap [ centerX, Font.size 16 ]
+          , link [ Font.size 16, Font.center, width fill, Background.color electricBlue, bigButtonPadding, whiteText ] { url = "/", label = Element.text "Go Back" }
+          ]
+          |> column [ spacing 30, padding 5 ]
+          |> milkyWhiteCenteredContainer
+      in
         (page, [])

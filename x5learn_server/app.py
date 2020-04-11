@@ -534,7 +534,7 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     metadata = json.loads(response)['metadata']
     materials = json.loads(response)['rec_materials']
     materials = filter_x5gon_search_results(materials)
-    # materials = remove_duplicates_from_x5gon_search_results(materials)
+    materials = remove_duplicates_from_x5gon_search_results(materials)
     for index, material in enumerate(materials):
         url = material['url']
         # Some urls that were longer than 255 caused errors.
@@ -595,9 +595,9 @@ def inject_duration(oer):
 
 def _is_valid_file(filename):
     # TODO: have a more efficient regex later
-    return bool('/assignments/' not in m['url'] and
-                '199' not in m['url'] and
-                '200' not in m['url'])
+    return bool('/assignments/' not in filename['url'] and
+                '199' not in filename['url'] and
+                '200' not in filename['url'])
 
 
 def filter_x5gon_search_results(materials):
@@ -617,32 +617,32 @@ def filter_x5gon_search_results(materials):
     return materials
 
 
-# def remove_duplicates_from_x5gon_search_results(materials):
-#     enrichments = {}
-#     urls = [m['url'] for m in materials]
-#     for enrichment in WikichunkEnrichment.query.filter(WikichunkEnrichment.url.in_(urls)).all():
-#         enrichments[enrichment.url] = enrichment
-#     included_materials = []
-#     included_enrichments = []
+def remove_duplicates_from_x5gon_search_results(materials):
+    enrichments = {}
+    urls = [m['url'] for m in materials]
+    for enrichment in WikichunkEnrichment.query.filter(WikichunkEnrichment.url.in_(urls)).all():
+        enrichments[enrichment.url] = enrichment
+    included_materials = []
+    included_enrichments = []
 
-#     def is_duplicate(material):
-#         url = material['url']
-#         # For materials that haven't been enriched yet, we can't tell whether they are identical.
-#         if url not in enrichments:
-#             return False
-#         enrichment = enrichments[url]
-#         for e in included_enrichments:
-#             if fuzz.ratio(e.entities_to_string(), enrichment.entities_to_string()) > 90:
-#                 return True
-#         return False
+    def is_duplicate(material):
+        url = material['url']
+        # For materials that haven't been enriched yet, we can't tell whether they are identical.
+        if url not in enrichments:
+            return False
+        enrichment = enrichments[url]
+        for e in included_enrichments:
+            if fuzz.ratio(e.entities_to_string(), enrichment.entities_to_string()) > 90:
+                return True
+        return False
 
-#     for m in materials:
-#         if not is_duplicate(m):
-#             included_materials.append(m)
-#             url = m['url']
-#             if url in enrichments:
-#                 included_enrichments.append(enrichments[url])
-#     return included_materials
+    for m in materials:
+        if not is_duplicate(m):
+            included_materials.append(m)
+            url = m['url']
+            if url in enrichments:
+                included_enrichments.append(enrichments[url])
+    return included_materials
 
 
 def convert_x5_material_to_oer_data(material):

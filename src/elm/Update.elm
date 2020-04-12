@@ -493,7 +493,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             ( { model | snackbar = createSnackbar model "Playlist successfully published", playlistPublishForm = updatedPublishPlaylistForm, playlist = Nothing }, requestLoadUserPlaylists )
 
         RequestPublishPlaylist (Err err) ->
-            ( { model | snackbar = createSnackbar model "Error publishing playlist" }, Cmd.none )
+            ( { model | snackbar = createSnackbar model "Error publishing playlist", playlistPublishFormSubmitted = False }, Cmd.none )
 
         RequestFetchPublishedPlaylist (Ok playlist) ->
             let
@@ -523,7 +523,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 newModel =
                     { model | popup = Just popup }
             in
-            ( newModel, Cmd.none )
+            ( newModel, setBrowserFocus "" )
                 |> logEventForLabStudy "SetPopup" (popupToStrings newModel.popup)
 
         ClosePopup ->
@@ -786,16 +786,44 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 |> saveCourseNow
 
         RemovedOerFromCourse oerId ->
-            let
-                oldCourse =
-                    model.course
+            case model.playlist of
+                Nothing ->
+                    let
+                        oldCourse =
+                            model.course
 
-                newCourse =
-                    { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId /= oerId) }
-            in
-            ( { model | course = newCourse, courseOptimization = Nothing, inspectorState = Nothing, snackbar = createSnackbar model "Successfully removed from playlist", hasUnsavedChangesToPlaylist = True }, Cmd.none )
-                |> logEventForLabStudy "RemovedOerFromCourse" [ oerId |> String.fromInt, courseToString newCourse ]
-                |> saveCourseNow
+                        newCourse =
+                            { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId /= oerId) }
+                    in
+                    ( { model | course = newCourse, courseOptimization = Nothing, inspectorState = Nothing, snackbar = createSnackbar model "Successfully removed from playlist", hasUnsavedChangesToPlaylist = True }, Cmd.none )
+                        |> logEventForLabStudy "RemovedOerFromCourse" [ oerId |> String.fromInt, courseToString newCourse ]
+                        |> saveCourseNow
+                
+                Just playlist ->
+                    let
+                        oldUserPlaylists = 
+                            model.userPlaylists
+
+                        oldplaylist = 
+                            playlist
+
+                        newplaylist = 
+                            { oldplaylist | oerIds = List.filter (\x -> x /= oerId) oldplaylist.oerIds }
+
+                        newUserPlaylists = 
+                            (List.filter (\x -> x.title /= newplaylist.title) (Maybe.withDefault [] oldUserPlaylists)) ++ [newplaylist]
+
+                        oldCourse =
+                            model.course
+
+                        newCourse =
+                            { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId /= oerId) }
+
+                    in
+                    ( { model | course = newCourse, playlist = Just newplaylist, userPlaylists = Just newUserPlaylists, courseOptimization = Nothing, inspectorState = Nothing, snackbar = createSnackbar model "Successfully removed from playlist", hasUnsavedChangesToPlaylist = True }, Cmd.none )
+                        |> logEventForLabStudy "RemovedOerFromCourse" [ oerId |> String.fromInt, courseToString newCourse ]
+                        |> saveCourseNow
+
 
         MovedCourseItemDown index ->
             let
@@ -919,9 +947,17 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             ( { model | playlistPublishForm = newForm }, Cmd.none )
                 |> logEventForLabStudy "EditPlaylist" []
 
-        SubmittedPublishPlaylist ->            
-            ( { model | playlistPublishFormSubmitted = True }, requestPublishPlaylist model.playlistPublishForm )
-                |> logEventForLabStudy "SubmittedPublishPlaylist" []
+        SubmittedPublishPlaylist ->
+            if model.hasUnsavedChangesToPlaylist then
+                ( { model | snackbar = createSnackbar model "You have unsaved changes to your playlist." }, Cmd.none )
+            else
+                if model.playlistPublishForm.playlist.title == "" || model.playlistPublishForm.playlist.author == Just "" then
+                    ( { model | snackbar = createSnackbar model "Title and Author is required to publish playlist." }, Cmd.none )
+                else if (List.length model.playlistPublishForm.playlist.oerIds) <= 1 then
+                    ( { model | snackbar = createSnackbar model "Playlist should contain more than one playlist item in order to be published." }, Cmd.none )
+                else
+                    ( { model | playlistPublishFormSubmitted = True }, requestPublishPlaylist model.playlistPublishForm )
+                    |> logEventForLabStudy "SubmittedPublishPlaylist" []
 
         SubmittedCreatePlaylist ->
             case checkIfPlaylistNameIsUnique model.userPlaylists model.playlistCreateForm.playlist.title of
@@ -995,6 +1031,12 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 ( { model | hasUnsavedChangesToPlaylist = False, warnUserOfUnsavedChangesToPlaylist = False }, Cmd.none )
             else
                 ( { model | warnUserOfUnsavedChangesToPlaylist = False }, Cmd.none )
+
+        CheckForUnsavedChangesBeforeLogout ->
+            if model.hasUnsavedChangesToPlaylist then
+                ( { model | warnUserOfUnsavedChangesToPlaylist = True, snackbar = createSnackbar model "You have unsaved changes to your playlist." }, Cmd.none )
+            else
+                (model, Navigation.load "/logout")
 
 
 insertSearchResults : List OerId -> Model -> Model

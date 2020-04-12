@@ -111,6 +111,7 @@ type Msg
   | SetPlaylistState (Maybe PlaylistState)
   | CancelCreatePlaylist
   | ConfirmedUnsavedPlaylistPrompt Bool
+  | CheckForUnsavedChangesBeforeLogout
 
 type UserProfileField
   = FirstName

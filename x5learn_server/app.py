@@ -522,6 +522,28 @@ def search_results_from_x5gon_api(text):
     return search_results_from_x5gon_api_pages(text, 1, [])
 
 
+def remove_duplicates_from_x5gon_search_results(materials):
+    """ a naive deduper that removed duplicate urls.
+
+    Args:
+        materials [Oer]: list of oers
+
+    Returns:
+        deduped_materials [Oer]: list of deduped materials
+    """
+
+    # keep a set of urls
+    urls = set()
+    deduped_materials = []
+    # for every item in the list
+    for m in materials:
+        if m['url'] not in urls:
+            deduped_materials.append(m)
+            urls.add(m['url'])
+
+    return deduped_materials
+
+
 # This function is called recursively
 # until the number of search results hits a certain minimum or stops increasing
 def search_results_from_x5gon_api_pages(text, page_number, oers):
@@ -534,7 +556,7 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     metadata = json.loads(response)['metadata']
     materials = json.loads(response)['rec_materials']
     materials = filter_x5gon_search_results(materials)
-    # materials = remove_duplicates_from_x5gon_search_results(materials)
+    materials = remove_duplicates_from_x5gon_search_results(materials)
     for index, material in enumerate(materials):
         url = material['url']
         # Some urls that were longer than 255 caused errors.

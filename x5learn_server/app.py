@@ -526,10 +526,10 @@ def remove_duplicates_from_x5gon_search_results(materials):
     """ a naive deduper that removed duplicate urls.
 
     Args:
-        materials [Oer]: list of oers
+        materials [Oer]: list of OERs
 
     Returns:
-        deduped_materials [Oer]: list of deduped materials
+        deduped_materials [Oer]: list of deduped OER materials
     """
 
     # keep a set of urls

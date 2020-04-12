@@ -1,7 +1,6 @@
 from flask import Flask, jsonify, render_template, request, redirect
 from flask_mail import Mail, Message
-from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required, \
-    forms, RegisterForm, ResetPasswordForm
+from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
 import json
 import os  # apologies
@@ -15,7 +14,6 @@ from sqlalchemy import or_, and_, cast, Integer
 from sqlalchemy.orm.attributes import flag_modified
 from flask_restplus import Api, Resource, fields, reqparse
 import wikipedia
-
 
 # instantiate the user management db classes
 # NOTE WHEN PEP8'ING MODULE IMPORTS WILL MOVE TO THE TOP AND CAUSE EXCEPTION
@@ -39,7 +37,7 @@ app = Flask(__name__)
 mail = Mail()
 
 app.config['SERVER_NAME'] = SERVER_NAME
-app.config['DEBUG'] = False 
+app.config['DEBUG'] = False
 app.config['SECRET_KEY'] = PASSWORD_SECRET
 app.config['SECURITY_PASSWORD_HASH'] = "bcrypt"
 app.config['SECURITY_PASSWORD_SALT'] = PASSWORD_SECRET
@@ -49,8 +47,7 @@ app.config['SECURITY_REGISTERABLE'] = True
 app.config['SECURITY_REGISTER_URL'] = '/signup'
 app.config['SECURITY_SEND_REGISTER_EMAIL'] = True
 app.config['SECURITY_CONFIRMABLE'] = True
-app.config['SECURITY_POST_REGISTER_VIEW'] = '/verify_email' 
-app.config['SECURITY_POST_CONFIRM_VIEW'] = '/confirmed_email'
+app.config['SECURITY_POST_REGISTER_VIEW'] = '/login'
 
 # user password configs
 app.config['SECURITY_CHANGEABLE'] = True
@@ -68,22 +65,7 @@ user_datastore = SQLAlchemySessionUserDatastore(db_session,
 app.config["SQLALCHEMY_DATABASE_URI"] = DB_ENGINE_URI
 db = SQLAlchemy(app)
 
-
-# Setup password policy by extending flask security forms
-class ExtendedRegisterForm(RegisterForm):
-    password = forms.PasswordField('Password', \
-        [forms.validators.Regexp(regex='[A-Za-z0-9@#$%^&+=]{8,}', message="Invalid password")])
-    password_confirm = False
-
-
-class ExtendedResetPasswordForm(ResetPasswordForm):
-    password = forms.PasswordField('Password', \
-        [forms.validators.Regexp(regex='[A-Za-z0-9@#$%^&+=]{8,}', message="Invalid password")])
-
-
-security = Security(app, user_datastore, confirm_register_form=ExtendedRegisterForm, \
-    reset_password_form=ExtendedResetPasswordForm)
-
+security = Security(app, user_datastore)
 
 # Setup Flask-Mail Server
 app.config['MAIL_SERVER'] = MAIL_SERVER
@@ -166,22 +148,13 @@ repository = Repository()
 #     #     db.session.commit()
 #     return render_template('home.html')
 
+
 @app.route("/")
 def home():
     if current_user.is_authenticated:
         return render_template('home.html')
     else:
         return render_template('about.html')
-
-
-@app.route("/verify_email")
-def verify_email():
-    return render_template('verify_email.html')
-
-
-@app.route("/confirmed_email")
-def confirmed_email():
-    return render_template('confirmed_email.html')
 
 
 @app.route("/about")
@@ -549,6 +522,28 @@ def search_results_from_x5gon_api(text):
     return search_results_from_x5gon_api_pages(text, 1, [])
 
 
+def remove_duplicates_from_x5gon_search_results(materials):
+    """ a naive deduper that removed duplicate urls.
+
+    Args:
+        materials [Oer]: list of OERs
+
+    Returns:
+        deduped_materials [Oer]: list of deduped OER materials
+    """
+
+    # keep a set of urls
+    urls = set()
+    deduped_materials = []
+    # for every item in the list
+    for m in materials:
+        if m['url'] not in urls:
+            deduped_materials.append(m)
+            urls.add(m['url'])
+
+    return deduped_materials
+
+
 # This function is called recursively
 # until the number of search results hits a certain minimum or stops increasing
 def search_results_from_x5gon_api_pages(text, page_number, oers):
@@ -561,7 +556,7 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     metadata = json.loads(response)['metadata']
     materials = json.loads(response)['rec_materials']
     materials = filter_x5gon_search_results(materials)
-    # materials = remove_duplicates_from_x5gon_search_results(materials)
+    materials = remove_duplicates_from_x5gon_search_results(materials)
     for index, material in enumerate(materials):
         url = material['url']
         # Some urls that were longer than 255 caused errors.
@@ -651,7 +646,7 @@ def filter_x5gon_search_results(materials):
 #         enrichments[enrichment.url] = enrichment
 #     included_materials = []
 #     included_enrichments = []
-
+#
 #     def is_duplicate(material):
 #         url = material['url']
 #         # For materials that haven't been enriched yet, we can't tell whether they are identical.
@@ -662,7 +657,7 @@ def filter_x5gon_search_results(materials):
 #             if fuzz.ratio(e.entities_to_string(), enrichment.entities_to_string()) > 90:
 #                 return True
 #         return False
-
+#
 #     for m in materials:
 #         if not is_duplicate(m):
 #             included_materials.append(m)

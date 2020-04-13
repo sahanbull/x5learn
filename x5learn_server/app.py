@@ -577,7 +577,7 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     # print('X5GON search page_number', page_number)
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request(
-        'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text=' + text + '&page=' + str(
+        'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=mp4,pdf&text=' + text + '&page=' + str(
             page_number))
     response = conn.getresponse().read().decode("utf-8")
     metadata = json.loads(response)['metadata']
@@ -1099,7 +1099,7 @@ class Definition(Resource):
 ns_notes = api.namespace('api/v1/note', description='Notes')
 
 m_note = api.model('Note', {
-    'oer_id': fields.String(required=True, max_length=255, description='The material id of the note associated with'),
+    'oer_id': fields.Integer(required=True, max_length=255, description='The material id of the note associated with'),
     'text': fields.String(required=True, description='The content of the note')
 })
 

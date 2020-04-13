@@ -51,6 +51,10 @@ type Msg
   | RequestLoadLicenseTypes (Result Http.Error (List LicenseType))
   | RequestPublishPlaylist (Result Http.Error String)
   | RequestFetchPublishedPlaylist (Result Http.Error Playlist)
+  | RequestSaveNote (Result Http.Error String)
+  | RequestFetchNotesForOer (Result Http.Error (List Note))
+  | RequestRemoveNote (Result Http.Error String)
+  | RequestUpdateNote (Result Http.Error String)
   | SetHover (Maybe OerId)
   | SetPopup Popup
   | ClosePopup
@@ -112,6 +116,10 @@ type Msg
   | CancelCreatePlaylist
   | ConfirmedUnsavedPlaylistPrompt Bool
   | CheckForUnsavedChangesBeforeLogout
+  | EditNoteForOer Note
+  | RemoveNoteForOer Int
+  | ChangedTextInNote String
+  | SubmittedNoteEdit
 
 type UserProfileField
   = FirstName

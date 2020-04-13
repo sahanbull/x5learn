@@ -171,7 +171,7 @@ def home():
     if current_user.is_authenticated:
         return render_template('home.html')
     else:
-        return render_template('about.html')
+        return render_template('about.html', is_user_logged_in=current_user.is_authenticated)
 
 
 @app.route("/verify_email")
@@ -186,7 +186,7 @@ def confirmed_email():
 
 @app.route("/about")
 def about():
-    return render_template('about.html')
+    return render_template('about.html', is_user_logged_in=current_user.is_authenticated)
 
 
 @app.route("/logout")

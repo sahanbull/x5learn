@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist, requestAddToPlaylist, requestSavePlaylist, requestDeletePlaylist, requestLoadLicenseTypes, requestPublishPlaylist, requestFetchPublishedPlaylist)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist, requestAddToPlaylist, requestSavePlaylist, requestDeletePlaylist, requestLoadLicenseTypes, requestPublishPlaylist, requestFetchPublishedPlaylist, requestSaveNote, requestFetchNotesForOer, requestRemoveNote, requestUpdateNote)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -251,6 +251,54 @@ requestFetchPublishedPlaylist playlistId =
     , expect = Http.expectJson RequestFetchPublishedPlaylist playlistDecoder
     }  
 
+
+{-| save a user note attached to a oer
+-}
+requestSaveNote : OerId -> String -> Cmd Msg
+requestSaveNote oerId text =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "note/" ] []
+    , body = Http.jsonBody <| Encode.object [ ("oer_id", Encode.int oerId), ("text", Encode.string text) ]
+    , expect = Http.expectString RequestSaveNote
+    }
+
+{-| fetch notes of a user given a oer id
+-}
+requestFetchNotesForOer : OerId -> Cmd Msg
+requestFetchNotesForOer oerId =
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "note/" ] [ Url.Builder.int "oer_id" oerId ]
+    , expect = Http.expectJson RequestFetchNotesForOer (list noteDecoder)
+    }  
+
+{-| delete a note attached to an oer
+-}
+requestRemoveNote : Int -> Cmd Msg
+requestRemoveNote noteId = 
+  Http.request
+    { method = "DELETE"
+    , timeout = Nothing
+    , tracker = Nothing
+    , headers = []
+    , url = Url.Builder.absolute [ apiRoot, "note/" ++ String.fromInt noteId ] []
+    , body = Http.jsonBody <| Encode.object []
+    , expect = Http.expectString RequestRemoveNote
+    }
+
+{-| update a note attached to an oer
+-}
+requestUpdateNote : Note -> Cmd Msg
+requestUpdateNote note = 
+  Http.request
+    { method = "PUT"
+    , timeout = Nothing
+    , tracker = Nothing
+    , headers = []
+    , url = Url.Builder.absolute [ apiRoot, "note/" ++ String.fromInt note.id ] [ Url.Builder.string "text" note.text ]
+    , body = Http.jsonBody <| Encode.object []
+    , expect = Http.expectString RequestUpdateNote
+    }
+
 {-| JSON decoders and encoders for custom types are defined below.
 -}
 userProfileEncoder : UserProfile -> Encode.Value
@@ -470,3 +518,9 @@ publishPlaylistEncoder publishPlaylistForm =
     , ("playlist_items", Encode.list Encode.int publishPlaylistForm.playlist.oerIds)
     , ("temp_title", Encode.string publishPlaylistForm.originalTitle)
     ]
+
+noteDecoder : Decoder Note
+noteDecoder = 
+  map2 Note
+    (field "id" int)
+    (field "text" string)

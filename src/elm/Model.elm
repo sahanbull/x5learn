@@ -117,6 +117,8 @@ type alias Model =
   , publishedPlaylistId : Maybe String
   , publishedPlaylist : Maybe Playlist
   , playlistState : Maybe PlaylistState
+  , userNotesForOer : List Note
+  , editUserNoteForOerInPlace : Maybe Note
   }
 
 {-| We get the first sentence from the Wikipedia article
@@ -520,6 +522,13 @@ type alias LicenseType =
   , url : Maybe String
   }
 
+{-| Notes alias to hold notes saved for Oers by user
+-}
+type alias Note = 
+  { id : Int
+  , text : String
+  }
+
 
 {-| Used to control the zoom animation when opening the inspector
 -}
@@ -643,6 +652,8 @@ initialModel nav flags =
   , playlistState = Nothing
   , hasUnsavedChangesToPlaylist = False
   , warnUserOfUnsavedChangesToPlaylist = False
+  , userNotesForOer = []
+  , editUserNoteForOerInPlace = Nothing
   }
 
 initialLicenseType : List LicenseType

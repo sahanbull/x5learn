@@ -505,6 +505,45 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
         RequestFetchPublishedPlaylist (Err err) ->
             ( { model | snackbar = createSnackbar model "Error fetching playlist" }, Cmd.none )
 
+        RequestSaveNote (Ok _) ->
+            case model.inspectorState of
+                Nothing ->
+                    ( model, Cmd.none)
+
+                Just state ->
+                    ( model , requestFetchNotesForOer state.oer.id)
+
+        RequestSaveNote (Err err) ->
+            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+
+        RequestFetchNotesForOer (Ok notes) ->
+            ( { model | userNotesForOer = notes }, Cmd.none)
+
+        RequestFetchNotesForOer (Err err) ->
+            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+
+        RequestRemoveNote (Ok _) ->
+            case model.inspectorState of
+                Nothing ->
+                    ( { model | snackbar = createSnackbar model "Note was successfully removed" } , Cmd.none)
+
+                Just state ->
+                    ( { model | snackbar = createSnackbar model "Note was successfully removed" } , requestFetchNotesForOer state.oer.id)
+
+        RequestRemoveNote (Err err) ->
+            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+
+        RequestUpdateNote (Ok _) ->
+            case model.inspectorState of
+                Nothing ->
+                    ( { model | snackbar = createSnackbar model "Note was successfully updated" } , Cmd.none)
+
+                Just state ->
+                    ( { model | snackbar = createSnackbar model "Note was successfully updated", editUserNoteForOerInPlace = Nothing } , requestFetchNotesForOer state.oer.id)
+
+        RequestUpdateNote (Err err) ->
+            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+
         SetHover maybeOerId ->
             let
                 ( timelineHoverState, hoveringEntityId ) =
@@ -563,8 +602,32 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
         ChangedTextInResourceFeedbackForm oerId str ->
             ( model |> setTextInResourceFeedbackForm oerId str, Cmd.none )
 
+        SubmittedNoteEdit ->
+            case model.editUserNoteForOerInPlace of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just note ->
+                    ( model, requestUpdateNote note )
+
+        ChangedTextInNote str ->
+            case model.editUserNoteForOerInPlace of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just editingNote ->
+                    let
+                        oldEditingNote =
+                            editingNote
+
+                        newEditingNote =
+                            ( { oldEditingNote | text = str } )
+
+                    in
+                        ( { model | editUserNoteForOerInPlace = Just newEditingNote }, Cmd.none)
+
         SubmittedResourceFeedback oerId text ->
-            ( { model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", Cmd.none )
+            ( { model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", requestSaveNote oerId text)
                 |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, text ]
                 |> saveAction 8 [ ( "OER id", Encode.int oerId ), ( "user feedback", Encode.string text ) ]
 
@@ -833,7 +896,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 newCourse =
                     { oldCourse | items = oldCourse.items |> swapListItemWithNext index }
             in
-            ( { model | course = newCourse, courseOptimization = Nothing }, Cmd.none )
+            ( { model | course = newCourse, courseOptimization = Nothing, hasUnsavedChangesToPlaylist = True }, Cmd.none )
                 |> logEventForLabStudy "MovedCourseItemDown" [ index |> String.fromInt, courseToString newCourse ]
                 |> saveCourseNow
 
@@ -1037,6 +1100,12 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 ( { model | warnUserOfUnsavedChangesToPlaylist = True, snackbar = createSnackbar model "You have unsaved changes to your playlist." }, Cmd.none )
             else
                 (model, Navigation.load "/logout")
+
+        EditNoteForOer note ->
+            ( { model | editUserNoteForOerInPlace = Just note }, Cmd.none )
+
+        RemoveNoteForOer noteId ->
+            ( model, requestRemoveNote noteId )
 
 
 insertSearchResults : List OerId -> Model -> Model
@@ -1696,7 +1765,7 @@ inspectOer model oer fragmentStart playWhenReady =
             }
     in
     ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert inspectorId, hoveringOerId = Nothing } |> closePopup
-    , openInspectorAnimation videoEmbedParams
+    , Cmd.batch [ requestFetchNotesForOer oer.id, openInspectorAnimation videoEmbedParams ] 
     )
 
 

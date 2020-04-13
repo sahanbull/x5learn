@@ -257,3 +257,12 @@ a {
 .blockContent {
   display: block !important;
 }
+
+.flexWrap {
+  flex-flow: wrap !important;
+}
+
+.flexWrap > div{
+  margin-right: 5px;
+  margin-bottom: 5px;
+}

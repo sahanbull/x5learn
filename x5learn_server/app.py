@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, render_template, request, redirect
 from flask_mail import Mail, Message
-from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required
+from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required, \
+    forms, RegisterForm, ResetPasswordForm
 from flask_sqlalchemy import SQLAlchemy
 import json
 import os  # apologies
@@ -47,7 +48,8 @@ app.config['SECURITY_REGISTERABLE'] = True
 app.config['SECURITY_REGISTER_URL'] = '/signup'
 app.config['SECURITY_SEND_REGISTER_EMAIL'] = True
 app.config['SECURITY_CONFIRMABLE'] = True
-app.config['SECURITY_POST_REGISTER_VIEW'] = '/login'
+app.config['SECURITY_POST_REGISTER_VIEW'] = '/verify_email' 
+app.config['SECURITY_POST_CONFIRM_VIEW'] = '/confirmed_email'
 
 # user password configs
 app.config['SECURITY_CHANGEABLE'] = True
@@ -65,7 +67,22 @@ user_datastore = SQLAlchemySessionUserDatastore(db_session,
 app.config["SQLALCHEMY_DATABASE_URI"] = DB_ENGINE_URI
 db = SQLAlchemy(app)
 
-security = Security(app, user_datastore)
+
+# Setup password policy by extending flask security forms
+class ExtendedRegisterForm(RegisterForm):
+    password = forms.PasswordField('Password', \
+        [forms.validators.Regexp(regex='[A-Za-z0-9@#$%^&+=]{8,}', message="Invalid password")])
+    password_confirm = False
+
+
+class ExtendedResetPasswordForm(ResetPasswordForm):
+    password = forms.PasswordField('Password', \
+        [forms.validators.Regexp(regex='[A-Za-z0-9@#$%^&+=]{8,}', message="Invalid password")])
+
+
+security = Security(app, user_datastore, confirm_register_form=ExtendedRegisterForm, \
+    reset_password_form=ExtendedResetPasswordForm)
+
 
 # Setup Flask-Mail Server
 app.config['MAIL_SERVER'] = MAIL_SERVER
@@ -155,6 +172,16 @@ def home():
         return render_template('home.html')
     else:
         return render_template('about.html')
+
+
+@app.route("/verify_email")
+def verify_email():
+    return render_template('verify_email.html')
+
+
+@app.route("/confirmed_email")
+def confirmed_email():
+    return render_template('confirmed_email.html')
 
 
 @app.route("/about")

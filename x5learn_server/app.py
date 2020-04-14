@@ -98,7 +98,9 @@ CURRENT_ENRICHMENT_VERSION = 1
 MAX_SEARCH_RESULTS = 18  # number divisible by 2 and 3 to fit nicely into grid
 USE_RECOMMENDATIONS_FROM_LAM = True  # if true, uses the new solution see #290
 SUPPORTED_VIDEO_FORMATS = ['video', 'mp4', 'mov', 'webm', 'ogg']
-SUPPORTED_FILE_FORMATS = SUPPORTED_VIDEO_FORMATS + ['pdf']
+SUPPORTED_TEXT_FORMATS = ['pdf']
+SUPPORTED_AUDIO_FORMATS = ['mp3']
+SUPPORTED_FILE_FORMATS = SUPPORTED_VIDEO_FORMATS + SUPPORTED_TEXT_FORMATS + SUPPORTED_AUDIO_FORMATS
 X5LEARN_PROVIDER_NAME = "X5Learn"
 
 # defaults license
@@ -577,7 +579,7 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     # print('X5GON search page_number', page_number)
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request(
-        'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=mp4,pdf&text=' + text + '&page=' + str(
+        'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=mp4,ogg,webm,video,mov,mp3,pdf&text=' + text + '&page=' + str(
             page_number))
     response = conn.getresponse().read().decode("utf-8")
     metadata = json.loads(response)['metadata']
@@ -718,7 +720,7 @@ def convert_x5_material_to_oer_data(material):
     data['duration'] = ''
     data['images'] = []
     data['mediatype'] = material['type']
-    data['translations'] = material['translations']
+    data['translations'] = material.get('translations', [])
 
     return data
 

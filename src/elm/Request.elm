@@ -267,7 +267,7 @@ requestSaveNote oerId text =
 requestFetchNotesForOer : OerId -> Cmd Msg
 requestFetchNotesForOer oerId =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "note/" ] [ Url.Builder.int "oer_id" oerId ]
+    { url = Url.Builder.absolute [ apiRoot, "note/" ] [ Url.Builder.int "oer_id" oerId, Url.Builder.string "sort" "asc" ]
     , expect = Http.expectJson RequestFetchNotesForOer (list noteDecoder)
     }  
 

@@ -63,13 +63,13 @@ viewCourseItem model index item =
             if index==0 || isLabStudy1 model then
               none
             else
-              button buttonAttrs { onPress = Just <| MovedCourseItemDown (index-1), label = "Move ↑" |> captionNowrap [ whiteText ] }
+              button (buttonAttrs ++ [onClickStopPropagation (MovedCourseItemDown (index-1))]) { onPress = Nothing, label = "Move ↑" |> captionNowrap [ whiteText ] }
 
           moveDownButton =
             if index==nCourseItems-1 || isLabStudy1 model then
               none
             else
-              button buttonAttrs { onPress = Just <| MovedCourseItemDown index, label = "Move ↓" |> captionNowrap [ whiteText ] }
+              button (buttonAttrs ++ [onClickStopPropagation (MovedCourseItemDown index)]) { onPress = Nothing, label = "Move ↓" |> captionNowrap [ whiteText ] }
 
           deleteButton =
             -- button [ alignRight ] { onPress = Just <| RemovedOerFromCourse oer.id, label = "Remove" |> captionNowrap [ greyText ] }
@@ -95,7 +95,7 @@ viewCourseItem model index item =
             |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
       in
           miniCard
-          |> el [ width fill, htmlClass "PreventClosingInspectorOnClick" ]
+          |> el [ width fill, htmlClass "PreventClosingInspectorOnClick", onClickStopPropagation <| ClickedOnCourseItem oer ]
 
 
 {-| Render the coursePathFinder

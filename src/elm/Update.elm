@@ -453,7 +453,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             ( { model | snackbar = createSnackbar model "Error loading user playlists" }, Cmd.none )
 
         RequestCreatePlaylist (Ok _) ->
-            ( { model | playlistCreateForm = { playlistCreateForm | saved = True, isClone = False }, playlistCreateFormSubmitted = False }, Cmd.none )
+            ( { model | playlistCreateForm = { playlistCreateForm | saved = True, isClone = False }, playlistCreateFormSubmitted = False }, requestLoadUserPlaylists )
 
         RequestCreatePlaylist (Err err) ->
             ( { model | snackbar = createSnackbar model "Some changes were not saved", playlistCreateFormSubmitted = False }, Cmd.none )

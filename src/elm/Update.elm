@@ -34,7 +34,10 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 ( newModel, cmd ) =
                     model |> update (UrlChanged url)
             in
-            ( newModel, [ cmd, requestSession, requestLoadCourse, requestLoadUserPlaylists, requestLoadLicenseTypes, askPageScrollState True ] |> Cmd.batch )
+            if isLoggedIn model then
+                ( newModel, [ cmd, requestSession, requestLoadCourse, requestLoadUserPlaylists, requestLoadLicenseTypes, askPageScrollState True ] |> Cmd.batch )
+            else 
+                ( newModel, [ cmd, requestSession, requestLoadCourse, askPageScrollState True ] |> Cmd.batch )
 
         LinkClicked urlRequest ->
             case urlRequest of
@@ -459,22 +462,22 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             ( { model | snackbar = createSnackbar model "Some changes were not saved", playlistCreateFormSubmitted = False }, Cmd.none )
 
         RequestAddToPlaylist (Ok _) ->
-            ( { model | snackbar = createSnackbar model "Successfully added to playlist", hasUnsavedChangesToPlaylist = True }, requestLoadUserPlaylists )
+            ( { model | snackbar = createSnackbar model "Successfully added to playlist" }, requestLoadUserPlaylists )
 
         RequestAddToPlaylist (Err err) ->
             ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
         RequestSavePlaylist (Ok _) ->
-            ( { model | snackbar = createSnackbar model "Temporary playlist successfully saved", hasUnsavedChangesToPlaylist = False }, requestLoadUserPlaylists )
+            ( { model | snackbar = createSnackbar model "Temporary playlist successfully saved" }, requestLoadUserPlaylists )
 
         RequestSavePlaylist (Err err) ->
             ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
         RequestDeletePlaylist (Ok _) ->
-            ( { model | playlist = Nothing, snackbar = createSnackbar model "Temporary playlist successfully deleted" }, requestLoadUserPlaylists )
+            ( { model | promptedDeletePlaylist = False, playlist = Nothing, snackbar = createSnackbar model "Temporary playlist successfully deleted" }, requestLoadUserPlaylists )
 
         RequestDeletePlaylist (Err err) ->
-            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+            ( { model | promptedDeletePlaylist = False, snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
         RequestLoadLicenseTypes (Ok licenseTypes) ->
             ( { model | licenseTypes = licenseTypes }, Cmd.none )
@@ -740,7 +743,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 course =
                     Course courseItems
             in
-            ( { model | playlist = Just playlist, course = course } |> closePopup, requestOersByIds model oerIds )
+            ( { model | playlist = Just playlist, course = course, courseOptimization = Nothing } |> closePopup, requestOersByIds model oerIds )
 
         MouseEnterMentionInBubbblogramOverview oerId entityId mention ->
             ( { model | selectedMention = Just ( oerId, mention ), hoveringEntityId = Just entityId } |> setBubblePopupToMention oerId entityId mention, setBrowserFocus "" )
@@ -858,7 +861,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                         newCourse =
                             { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId /= oerId) }
                     in
-                    ( { model | course = newCourse, courseOptimization = Nothing, inspectorState = Nothing, snackbar = createSnackbar model "Successfully removed from playlist", hasUnsavedChangesToPlaylist = True }, Cmd.none )
+                    ( { model | course = newCourse, courseOptimization = Nothing, inspectorState = Nothing, snackbar = createSnackbar model "Successfully removed from playlist" }, Cmd.none )
                         |> logEventForLabStudy "RemovedOerFromCourse" [ oerId |> String.fromInt, courseToString newCourse ]
                         |> saveCourseNow
                 
@@ -883,7 +886,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                             { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId /= oerId) }
 
                     in
-                    ( { model | course = newCourse, playlist = Just newplaylist, userPlaylists = Just newUserPlaylists, courseOptimization = Nothing, inspectorState = Nothing, snackbar = createSnackbar model "Successfully removed from playlist", hasUnsavedChangesToPlaylist = True }, Cmd.none )
+                    ( { model | course = newCourse, playlist = Just newplaylist, userPlaylists = Just newUserPlaylists, courseOptimization = Nothing, inspectorState = Nothing, snackbar = createSnackbar model "Successfully removed from playlist" }, requestSavePlaylist newplaylist )
                         |> logEventForLabStudy "RemovedOerFromCourse" [ oerId |> String.fromInt, courseToString newCourse ]
                         |> saveCourseNow
 
@@ -896,18 +899,46 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 newCourse =
                     { oldCourse | items = oldCourse.items |> swapListItemWithNext index }
             in
-            ( { model | course = newCourse, courseOptimization = Nothing, hasUnsavedChangesToPlaylist = True }, Cmd.none )
-                |> logEventForLabStudy "MovedCourseItemDown" [ index |> String.fromInt, courseToString newCourse ]
-                |> saveCourseNow
+                case model.playlist of
+                    Nothing ->
+                        ( { model | course = newCourse, courseOptimization = Nothing }, Cmd.none  )
+                            |> logEventForLabStudy "MovedCourseItemDown" [ index |> String.fromInt, courseToString newCourse ]
+                            |> saveCourseNow
+
+                    Just playlist ->
+                        let
+                            updatedPlaylist =
+                                Playlist playlist.id playlist.title playlist.description playlist.author playlist.creator playlist.parent playlist.is_visible playlist.license (List.map (\x -> x.oerId) newCourse.items) Nothing
+
+                        in
+                        ( { model | course = newCourse, courseOptimization = Nothing }, requestSavePlaylist updatedPlaylist )
+                            |> logEventForLabStudy "MovedCourseItemDown" [ index |> String.fromInt, courseToString newCourse ]
+                            |> saveCourseNow
 
         PressedOptimiseLearningPath ->
-            ( { model | courseOptimization = Just Loading }, [ setBrowserFocus "", requestCourseOptimization model.course ] |> Cmd.batch )
-                |> logEventForLabStudy "PressedOptimiseLearningPath" []
+            case model.playlist of
+                Nothing ->
+                    ( model, Cmd.none )
+            
+                Just playlist ->
+                    ( { model | courseOptimization = Just Loading }, [ setBrowserFocus "", requestCourseOptimization model.course playlist ] |> Cmd.batch )
+                        |> logEventForLabStudy "PressedOptimiseLearningPath" []
 
         PressedUndoCourse savedPreviousCourse ->
-            ( { model | course = savedPreviousCourse, courseOptimization = Nothing }, Cmd.none )
-                |> logEventForLabStudy "PressedUndoCourse" [ courseToString savedPreviousCourse ]
-                |> saveCourseNow
+            case model.playlist of
+                Nothing->
+                    ( { model | course = savedPreviousCourse, courseOptimization = Nothing }, Cmd.none )
+                        |> logEventForLabStudy "PressedUndoCourse" [ courseToString savedPreviousCourse ]
+                        |> saveCourseNow
+
+                Just playlist ->
+                    let
+                        updatedPlaylist =
+                            Playlist playlist.id playlist.title playlist.description playlist.author playlist.creator playlist.parent playlist.is_visible playlist.license (List.map (\x -> x.oerId) savedPreviousCourse.items) Nothing
+                    in
+                    ( { model | course = savedPreviousCourse, courseOptimization = Nothing }, requestSavePlaylist updatedPlaylist )
+                        |> logEventForLabStudy "PressedUndoCourse" [ courseToString savedPreviousCourse ]
+                        |> saveCourseNow
 
         ChangedCommentTextInCourseItem oerId str ->
             ( model |> setCommentTextInCourseItem oerId str, Cmd.none )
@@ -986,21 +1017,18 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 |> logEventForLabStudy "PressedRemoveRangeButton" [ oerId |> String.fromInt, range |> rangeToString ]
 
         OpenedSelectPlaylistMenu ->
-            if model.hasUnsavedChangesToPlaylist then
-                ( { model | warnUserOfUnsavedChangesToPlaylist = True }, Cmd.none)
-            else
-                case model.popup of
-                    Nothing ->
-                        ( { model | popup = Just PlaylistPopup }, setBrowserFocus "" )
-                            |> logEventForLabStudy "OpenedPlaylistMenu" []
-                    
-                    Just PlaylistPopup ->
-                        ( model |> closePopup, Cmd.none )
-                            |> logEventForLabStudy "OpenedPlaylistMenu" []
+            case model.popup of
+                Nothing ->
+                    ( { model | popup = Just PlaylistPopup }, setBrowserFocus "" )
+                        |> logEventForLabStudy "OpenedPlaylistMenu" []
+                
+                Just PlaylistPopup ->
+                    ( model |> closePopup, Cmd.none )
+                        |> logEventForLabStudy "OpenedPlaylistMenu" []
 
-                    _ ->
-                        ( { model | popup = Just PlaylistPopup }, setBrowserFocus "" )
-                            |> logEventForLabStudy "OpenedPlaylistMenu" []
+                _ ->
+                    ( { model | popup = Just PlaylistPopup }, setBrowserFocus "" )
+                        |> logEventForLabStudy "OpenedPlaylistMenu" []
 
         EditPlaylist field value ->
             let
@@ -1011,16 +1039,13 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 |> logEventForLabStudy "EditPlaylist" []
 
         SubmittedPublishPlaylist ->
-            if model.hasUnsavedChangesToPlaylist then
-                ( { model | snackbar = createSnackbar model "You have unsaved changes to your playlist." }, Cmd.none )
+            if model.playlistPublishForm.playlist.title == "" || model.playlistPublishForm.playlist.author == Just "" then
+                ( { model | snackbar = createSnackbar model "Title and Author is required to publish playlist." }, Cmd.none )
+            else if (List.length model.playlistPublishForm.playlist.oerIds) <= 1 then
+                ( { model | snackbar = createSnackbar model "Playlist should contain more than one playlist item in order to be published." }, Cmd.none )
             else
-                if model.playlistPublishForm.playlist.title == "" || model.playlistPublishForm.playlist.author == Just "" then
-                    ( { model | snackbar = createSnackbar model "Title and Author is required to publish playlist." }, Cmd.none )
-                else if (List.length model.playlistPublishForm.playlist.oerIds) <= 1 then
-                    ( { model | snackbar = createSnackbar model "Playlist should contain more than one playlist item in order to be published." }, Cmd.none )
-                else
-                    ( { model | playlistPublishFormSubmitted = True }, requestPublishPlaylist model.playlistPublishForm )
-                    |> logEventForLabStudy "SubmittedPublishPlaylist" []
+                ( { model | playlistPublishFormSubmitted = True }, requestPublishPlaylist model.playlistPublishForm )
+                |> logEventForLabStudy "SubmittedPublishPlaylist" []
 
         SubmittedCreatePlaylist ->
             case checkIfPlaylistNameIsUnique model.userPlaylists model.playlistCreateForm.playlist.title of
@@ -1071,6 +1096,24 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 Nothing ->
                     ({ model | playlistState = playlistState}, Cmd.none)
 
+                Just PlaylistClone ->
+                    if isLoggedIn model then
+                        case model.publishedPlaylistId of
+                            Nothing ->
+                                ({ model | playlistState = playlistState}, Cmd.none)
+                            Just id ->
+                                case model.publishedPlaylist of
+                                    Nothing ->
+                                        ({ model | playlistState = playlistState}, requestFetchPublishedPlaylist id )
+
+                                    Just publishedPlaylist ->
+                                        if id == (String.fromInt (Maybe.withDefault 0 publishedPlaylist.id)) then
+                                            ({ model | playlistState = playlistState}, Cmd.none)
+                                        else
+                                            ({ model | playlistState = playlistState}, requestFetchPublishedPlaylist id )
+                    else
+                        ( { model | snackbar = createSnackbar model "Please login to use this functionality"}, Cmd.none )
+
                 _ ->
                     case model.publishedPlaylistId of
                         Nothing ->
@@ -1089,23 +1132,14 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
         CancelCreatePlaylist ->
             ( model , Navigation.load "/" )
 
-        ConfirmedUnsavedPlaylistPrompt flag ->
-            if flag then
-                ( { model | hasUnsavedChangesToPlaylist = False, warnUserOfUnsavedChangesToPlaylist = False }, Cmd.none )
-            else
-                ( { model | warnUserOfUnsavedChangesToPlaylist = False }, Cmd.none )
-
-        CheckForUnsavedChangesBeforeLogout ->
-            if model.hasUnsavedChangesToPlaylist then
-                ( { model | warnUserOfUnsavedChangesToPlaylist = True, snackbar = createSnackbar model "You have unsaved changes to your playlist." }, Cmd.none )
-            else
-                (model, Navigation.load "/logout")
-
         EditNoteForOer note ->
             ( { model | editUserNoteForOerInPlace = Just note }, Cmd.none )
 
         RemoveNoteForOer noteId ->
             ( model, requestRemoveNote noteId )
+
+        PromptDeletePlaylist flag ->
+            ( { model | promptedDeletePlaylist = flag }, Cmd.none)
 
 
 insertSearchResults : List OerId -> Model -> Model

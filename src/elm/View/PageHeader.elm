@@ -101,9 +101,6 @@ viewUserMenu model userProfile =
       navButton url buttonText =
         link [ paddingXY 15 10, width fill ] { url = url, label = buttonText |> bodyNoWrap [] }
 
-      logOutButton =
-        button [ width fill, paddingXY 15 10] { onPress = Just <| CheckForUnsavedChangesBeforeLogout, label = "Log Out" |> bodyNoWrap [] }
-
       menu =
         if model.popup == Just UserMenu then
           let
@@ -115,7 +112,7 @@ viewUserMenu model userProfile =
                 else
                   [ link [] { url = "/profile", label = displayName userProfile |> captionNowrap [ padding 15 ] }
                   , navButton "/profile" "My profile"
-                  , logOutButton
+                  , navButton "/logout" "Log out"
                   ]
           in
               menuItems

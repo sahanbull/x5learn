@@ -114,12 +114,11 @@ type Msg
   | OpenedSelectLicenseMenu
   | SetPlaylistState (Maybe PlaylistState)
   | CancelCreatePlaylist
-  | ConfirmedUnsavedPlaylistPrompt Bool
-  | CheckForUnsavedChangesBeforeLogout
   | EditNoteForOer Note
   | RemoveNoteForOer Int
   | ChangedTextInNote String
   | SubmittedNoteEdit
+  | PromptDeletePlaylist Bool
 
 type UserProfileField
   = FirstName

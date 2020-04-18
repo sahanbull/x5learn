@@ -156,15 +156,15 @@ requestVideoUsages =
 
 {-| Fetch data regarding which parts of videos the user has watched
 -}
-requestCourseOptimization : Course -> Cmd Msg
-requestCourseOptimization course =
+requestCourseOptimization : Course -> Playlist -> Cmd Msg
+requestCourseOptimization course playlist =
   let
       oerIds =
         course.items |> List.map .oerId
   in
       Http.post
-        { url = Url.Builder.absolute [ apiRoot, "course_optimization/" ] []
-        , body = Http.jsonBody <| Encode.object [ ("oerIds", (Encode.list Encode.int) oerIds) ]
+        { url = Url.Builder.absolute [ apiRoot, "course_optimization/" ++ playlist.title ] [ ]
+        , body = Http.jsonBody <| Encode.object [ ("oerIds", Encode.list Encode.int oerIds) ]
         , expect = Http.expectJson RequestCourseOptimization (list int)
         }
 

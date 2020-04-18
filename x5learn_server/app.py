@@ -359,10 +359,11 @@ def api_video_usages():
     return jsonify(ranges_per_oer)
 
 
-@app.route("/api/v1/course_optimization/", methods=['POST'])
-def api_course_optimization():
+@app.route("/api/v1/course_optimization/<playlist_title>", methods=['POST'])
+def api_course_optimization(playlist_title):
     old_oer_ids = request.get_json()['oerIds']
     new_oer_ids = optimize_course(old_oer_ids)
+    _update_temporary_playlist_items(playlist_title, new_oer_ids)
     return jsonify(new_oer_ids)
 
 
@@ -1340,6 +1341,16 @@ def _add_temporary_playlist(title, license, creator, parent):
     return {'result': 'Temporary playlist with {} items created'.format(count)}
 
 
+def _update_temporary_playlist_items(title, oerIds):
+    existing_playlist = repository.get(Temp_Playlist, None, {'title' : title, 'creator' : current_user.get_id()})
+
+    if (existing_playlist is not None and existing_playlist[0] is not None):
+        data = json.loads(existing_playlist[0].data)
+        data["playlist_items"] = oerIds
+        existing_playlist[0].data = json.dumps(data)
+        repository.update()
+
+
 def _create_playlist_url(playlist_id):
     return '{}/search?q={}{}'.format(SERVER_NAME, PLAYLIST_PREFIX, playlist_id)
 
@@ -1547,8 +1558,10 @@ class Playlist_Single(Resource):
     @ns_playlist.doc('get_playlist')
     def get(self, id):
         '''Fetch requested playlist from database'''
-        if not current_user.is_authenticated:
-            return {'result': 'User not logged in'}, 401
+
+        # -- skipped to allow guest users --
+        # if not current_user.is_authenticated:
+        #    return {'result': 'User not logged in'}, 401
 
         playlist = repository.get_by_id(Playlist, id)
 

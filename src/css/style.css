@@ -266,3 +266,12 @@ a {
   margin-right: 5px;
   margin-bottom: 5px;
 }
+
+.textOverflowControl > div {
+  text-overflow: ellipsis !important;
+  overflow: hidden !important;
+}
+
+.dataList {
+  width: 40vw !important;
+}

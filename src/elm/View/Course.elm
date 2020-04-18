@@ -33,12 +33,12 @@ viewCourse model =
               items =
                 model.course.items
                 |> List.indexedMap (viewCourseItem model)
-                |> column [ spacing 20, paddingTop 20, width fill ]
+                |> column [ spacing 20, paddingTop 20, width fill, htmlClass "PlaylistItemsContainer" ]
           in
               [ items
-              --, viewCoursePathFinderContainer model
+              , viewCoursePathFinderContainer model
               ]
-              |> column [ spacing 50, width fill, htmlClass "PlaylistItemsContainer" ]
+              |> column [ spacing 30, width fill ]
             
     
 

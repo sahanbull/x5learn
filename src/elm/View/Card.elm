@@ -410,7 +410,10 @@ viewPlaylistButtons : Model -> Element Msg
 viewPlaylistButtons model =
   let
     downloadButton =
-      newTabLink [ bigButtonPadding, whiteText, Font.center, width fill, Font.size 14 ] { url = "/playlist/download/" ++ Maybe.withDefault "" model.publishedPlaylistId, label = Element.text "Download" }
+      if isLoggedIn model then
+        newTabLink [ bigButtonPadding, whiteText, Font.center, width fill, Font.size 14 ] { url = "/playlist/download/" ++ Maybe.withDefault "" model.publishedPlaylistId, label = Element.text "Download" }
+      else
+        actionButtonWithoutIcon [whiteText] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] "Download" (Just <| SetPlaylistState (Just PlaylistClone))
 
     cloneButton =
       actionButtonWithoutIcon [whiteText] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] "Clone" (Just <| SetPlaylistState (Just PlaylistClone))

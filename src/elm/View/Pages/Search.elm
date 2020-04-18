@@ -43,7 +43,7 @@ viewSearchPage model searchState =
 
     Just PlaylistInfo ->
       let
-       
+      
         inspector =
           viewInspector model
 
@@ -66,15 +66,15 @@ viewSearchPage model searchState =
 
     Just PlaylistClone ->
       let
-      
-        inspector =
-          viewInspector model
+          inspector =
+            viewInspector model
 
-        content =
-          viewClonePlaylistPage model model.playlistCreateForm
+          content =
+            viewClonePlaylistPage model model.playlistCreateForm
 
       in
-        (content, inspector)
+          (content, inspector)
+
 
 
 {-| Render the main part of the search pge
@@ -115,15 +115,16 @@ viewPlaylistInfoPage model =
 
         closeButton =
           button [ width fill, paddingXY 16 8, Font.center, Background.color electricBlue, whiteText ] { onPress = (Just (SetPlaylistState Nothing)), label = "Close" |> text }
+          
         content =
-          [ "Playlist Information" |> captionNowrap [ centerX, Font.size 16 ]
-          , [ text "Title : ", text publishedPlaylist.title  ] |> row [ Font.size 14 ]
-          , [ text "Description : ", text (Maybe.withDefault " - " publishedPlaylist.description)] |> row [ Font.size 14 ]
-          , [ text "Author : ", text (Maybe.withDefault " - " publishedPlaylist.author)] |> row [ Font.size 14 ]
-          , [ text "License : ", text licenseType ] |> row [ Font.size 14 ]
+          [ "Playlist Information" |> captionNowrap [ Font.center, centerX, Font.size 16 ]
+          , [ text "Title : ", text publishedPlaylist.title] |> wrappedRow [ Font.size 14]
+          , [ text "Description : ", text (Maybe.withDefault " - " publishedPlaylist.description)] |> wrappedRow [ Font.size 14 ]
+          , [ text "Author : ", text (Maybe.withDefault " - " publishedPlaylist.author)] |> wrappedRow [ Font.size 14 ]
+          , [ text "License : ", text licenseType] |> wrappedRow [ Font.size 14 ]
           , [closeButton] |> row [ width fill, Font.center ]
           ]
-          |> column [ spacing 30, padding 5 ]
+          |> column [ spacing 30, padding 5, width (px 400) ]
           |> milkyWhiteCenteredContainer
       in
         content

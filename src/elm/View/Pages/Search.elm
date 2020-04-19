@@ -92,7 +92,7 @@ viewBody model searchState =
       if isLabStudy1 model && model.currentTaskName==Nothing then
         "Please wait for the researcher's instructions." |> viewCenterMessage
       else
-        Playlist Nothing "" Nothing Nothing Nothing Nothing True Nothing oerIds Nothing
+        Playlist Nothing "" Nothing Nothing Nothing Nothing True Nothing oerIds Nothing []
         |> viewOerGrid model
         |> el [ width fill, height fill, paddingBottom 100 ]
 

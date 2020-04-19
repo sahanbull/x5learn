@@ -79,7 +79,10 @@ viewCourseItem model index item =
             |> captionNowrap [ greyText, alignRight, htmlClass "CursorPointer", onClickStopPropagation (RemovedOerFromCourse oer.id) ]
 
           topRow =
-            oer.title |> bodyWrap []
+            if getPlaylistTitle model oer.id == Nothing then
+              oer.title |> bodyWrap []
+            else
+              Maybe.withDefault oer.title (getPlaylistTitle model oer.id) |> bodyWrap []
 
           buttonRow =
             [ moveUpButton
@@ -95,7 +98,7 @@ viewCourseItem model index item =
             |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
       in
           miniCard
-          |> el [ width fill, htmlClass "PreventClosingInspectorOnClick", onClickStopPropagation <| ClickedOnCourseItem oer ]
+          |> el [ width fill, htmlClass "PreventClosingInspectorOnClick", onClickStopPropagation <| ClickedOnPlaylistItem oer ]
 
 
 {-| Render the coursePathFinder
@@ -136,3 +139,25 @@ viewCoursePathFinderWidget model =
         in
             content
             |> column [ spacing 15, padding 10, Background.color <| grey 50, Border.rounded 10 ]
+
+getPlaylistTitle : Model -> OerId -> Maybe String
+getPlaylistTitle model oerId =
+  case model.playlist of 
+    Nothing ->
+      Nothing
+
+    Just playlist ->
+      let
+
+        playlistItemData =
+          List.head ( List.filter (\x -> x.oerId == oerId ) playlist.playlistItemData)
+
+      in
+        case playlistItemData of
+            Nothing ->
+              Nothing
+                
+            Just itemData ->
+              Just itemData.title
+                
+        

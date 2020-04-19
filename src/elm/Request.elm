@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist, requestAddToPlaylist, requestSavePlaylist, requestDeletePlaylist, requestLoadLicenseTypes, requestPublishPlaylist, requestFetchPublishedPlaylist, requestSaveNote, requestFetchNotesForOer, requestRemoveNote, requestUpdateNote)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist, requestAddToPlaylist, requestSavePlaylist, requestDeletePlaylist, requestLoadLicenseTypes, requestPublishPlaylist, requestFetchPublishedPlaylist, requestSaveNote, requestFetchNotesForOer, requestRemoveNote, requestUpdateNote, requestUpdatePlaylistItem)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -299,6 +299,18 @@ requestUpdateNote note =
     , expect = Http.expectString RequestUpdateNote
     }
 
+requestUpdatePlaylistItem : String -> PlaylistItem -> Cmd Msg
+requestUpdatePlaylistItem playlistTitle playlistItem = 
+  Http.request
+    { method = "PUT"
+    , timeout = Nothing
+    , tracker = Nothing
+    , headers = []
+    , url = Url.Builder.absolute [ apiRoot, "playlist/" ++ playlistTitle ] []
+    , body = Http.jsonBody <| Encode.object [ ( "playlist_item_data", playlistItemEncoder playlistItem) ] 
+    , expect = Http.expectString RequestUpdatePlaylistItem
+    }
+
 {-| JSON decoders and encoders for custom types are defined below.
 -}
 userProfileEncoder : UserProfile -> Encode.Value
@@ -479,6 +491,7 @@ playlistDecoder =
   |> andMap (Decode.maybe (Decode.field "license" Decode.int))
   |> andMap (field "oerIds" (list Decode.int))
   |> andMap (Decode.maybe (Decode.field "url" Decode.string))
+  |> andMap (field "playlistItemData" (list playlistItemDecoder))
 
 
 playlistEncoder : Playlist -> Encode.Value
@@ -495,6 +508,21 @@ playlistEncoder playlist =
     , ("is_temp", Encode.bool True)
     , ("playlist_items", Encode.list Encode.int playlist.oerIds)
     ]
+
+playlistItemEncoder : PlaylistItem -> Encode.Value
+playlistItemEncoder playlistItem =
+  Encode.object
+    [ ("oerId", Encode.int playlistItem.oerId)
+    , ("title", Encode.string playlistItem.title)
+    , ("description", Encode.string playlistItem.description)
+    ]
+
+playlistItemDecoder : Decoder PlaylistItem
+playlistItemDecoder = 
+  map3 PlaylistItem
+    (field "oerId" int)
+    (field "title" string)
+    (field "description" string)
 
 licenseTypeDecoder : Decoder LicenseType
 licenseTypeDecoder = 

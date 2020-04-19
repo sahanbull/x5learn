@@ -39,12 +39,35 @@ viewTheInspector : Model -> InspectorState -> Element Msg
 viewTheInspector model inspectorState =
   let
       title =
-        case inspectorState.oer.title of
-          "" ->
-            "Title unavailable" |> subheaderWrap [ Font.italic ]
+        if model.openedOerFromPlaylist then
+          let
+            editButton =
+              if model.editingOerTitleInPlaylist then
+                button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditOerInPlaylist False "title", label = "Save Title" |> captionNowrap [ width fill, whiteText, Font.center ] }
+              else
+                button [ paddingXY 5 3, buttonRounding, Background.color electricBlue ] { onPress = Just <| EditOerInPlaylist True "title", label = "Edit Title" |> captionNowrap [ width fill, whiteText, Font.center ] }
 
-          titleText ->
-            titleText |> subheaderWrap []
+          in
+            if model.editingOerTitleInPlaylist then
+              let
+                textInput labelText valueText =
+                  Input.text [ width fill, Font.size 14, onEnter SubmittedPlaylistItemUpdate ] { onChange = UpdatePlaylistItem "title", text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = Input.labelHidden "Your feedback about this resource" }
+              in
+                textInput "Title" model.editingOerPlaylistItem.title
+            else
+              case model.editingOerPlaylistItem.title of
+                "" ->
+                  [ text "Title unavailable" |> el [ Font.size 21, Font.color midnightBlue, Font.italic ] , editButton ] |> row [ spacing 10, width fill ]
+
+                titleText ->
+                  [ text titleText |> el [ Font.size 21, Font.color midnightBlue ] , editButton ] |> row [ spacing 10, width fill ]
+        else
+          case inspectorState.oer.title of
+            "" ->
+              "Title unavailable" |> subheaderWrap [ Font.italic ]
+
+            titleText ->
+              titleText |> subheaderWrap []
 
       bodyAndSidebar =
         if isBrowserWindowTooSmall model then
@@ -128,30 +151,76 @@ viewInspectorBody model ({oer, fragmentStart} as inspectorState) =
       |> column [ width <| px <| playerWidth model, moveLeft (inspectorSidebarWidth model) ]
 
 
-viewDescription : InspectorState -> Oer -> Element Msg
-viewDescription inspectorState oer =
-  case oer.description of
-    "" ->
-      "No description available" |> italicText |> el [ paddingTop 30 ]
+viewDescription : InspectorState -> Oer -> Model -> Element Msg
+viewDescription inspectorState oer model =
+  if model.openedOerFromPlaylist then
+    let
+      editButton =
+        if model.editingOerDescriptionInPlaylist then
+          button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditOerInPlaylist False "description" , label = "Save Description" |> captionNowrap [ width fill, whiteText, Font.center ] }
+        else
+          button [ paddingXY 5 3, buttonRounding, Background.color electricBlue ] { onPress = Just <| EditOerInPlaylist True "description" , label = "Edit Description" |> captionNowrap [ width fill, whiteText, Font.center ] }
 
-    str ->
-      let
-          characterLimit =
-            300
-      in
-          if String.length str < characterLimit then
-            str
-            |> viewString False
-          else if inspectorState.userPressedReadMore then
-            str
-            |> viewString True
-          else
-            [ str
-              |> truncateSentence characterLimit
+    in
+      if model.editingOerDescriptionInPlaylist then
+        let
+          textMultiline labelText valueText =
+            Input.multiline [ width fill, Font.size 14, onEnter SubmittedPlaylistItemUpdate ] { onChange = UpdatePlaylistItem "description", text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = Input.labelHidden "Your feedback about this resource" , spellcheck = False }
+        in
+          textMultiline "Description" model.editingOerPlaylistItem.description
+      else
+        case model.editingOerPlaylistItem.description of
+          "" ->
+            [ "No description available" |> italicText |> el [ paddingTop 30 ], editButton]
+            |> row []
+
+          str ->
+            let
+                characterLimit =
+                  300
+            in
+                if String.length str < characterLimit then
+                  [ str
+                    |> viewString False
+                    , editButton
+                  ]
+                  |> column [ spacing 10 ]
+                else if inspectorState.userPressedReadMore then
+                  [ str
+                    |> viewString True
+                    , editButton
+                  ]
+                  |> column [ spacing 10 ]
+                else
+                  [ str
+                    |> truncateSentence characterLimit
+                    |> viewString False
+                    , [ viewReadMoreButton inspectorState, editButton ] |> row [ spacing 10 ]
+                  ] 
+                  |> column [ spacing 10 ]
+  else
+    case oer.description of
+      "" ->
+        "No description available" |> italicText |> el [ paddingTop 30 ]
+
+      str ->
+        let
+            characterLimit =
+              300
+        in
+            if String.length str < characterLimit then
+              str
               |> viewString False
-              , viewReadMoreButton inspectorState
-            ]
-            |> column [ spacing 10 ]
+            else if inspectorState.userPressedReadMore then
+              str
+              |> viewString True
+            else
+              [ str
+                |> truncateSentence characterLimit
+                |> viewString False
+                , viewReadMoreButton inspectorState
+              ]
+              |> column [ spacing 10 ]
 
 
 viewReadMoreButton : InspectorState -> Element Msg
@@ -278,7 +347,7 @@ viewContentFlowBarWrapper model inspectorState oer =
         if isLabStudy1 model then
           courseSettings
         else
-          [ viewDescription inspectorState oer ] ++ [ addToPlaylistButton ]
+          [ viewDescription inspectorState oer model ] ++ [ addToPlaylistButton ]
 
       containerHeight =
         if isLabStudy1 model then
@@ -550,3 +619,5 @@ viewNoteForOer model note =
             , buttonRow
             ]
             |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
+
+

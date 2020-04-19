@@ -306,7 +306,18 @@ def get_items_in_playlist(playlist_id):
         [Oer]: list of OER materials in the sequence they appear in the playlist
     """
     playlist_items = repository.get(Playlist_Item, None, {'playlist_id': playlist_id})
-    return [repository.get_by_id(Oer, item.oer_id) for item in playlist_items]
+    oer_list = list()
+    for item in playlist_items:
+        oer = repository.get_by_id(Oer, item.oer_id)
+
+        if oer is None:
+            continue
+
+        oer.data['title'] = item.data.get('title', oer.data['title'])
+        oer.data['description'] = item.data.get('description', oer.data['description'])
+        oer_list.append(oer)
+
+    return oer_list
 
 
 @app.route("/api/v1/search/", methods=['GET'])
@@ -1306,9 +1317,31 @@ def _add_published_playlist(title, desc, author, license, creator, parent, is_vi
     playlist = Playlist(title, desc, author, None, creator, parent, is_vis, license)
     playlist = repository.add(playlist)
 
+    # get playlist_item_data
+    query_object = db_session.query(Temp_Playlist)
+    query_object = query_object.filter(Temp_Playlist.title == title)
+    query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+    temp_playlist = query_object.one_or_none()
+
+    item_data = dict()
+    temp_playlist_data = json.loads(temp_playlist.data)
+    if "playlist_item_data" in temp_playlist_data:
+        item_data = temp_playlist_data["playlist_item_data"]
+
     count = 0
     for idx, val in enumerate(items):
-        playlist_item = Playlist_Item(playlist.id, val, idx)
+        playlist_item_data = dict()
+        if str(val) in item_data:
+            playlist_item_data = item_data[str(val)]
+        else:
+            oer = repository.get_by_id(Oer, val)
+            oer_data = oer.data
+            playlist_item_data = {
+                'title': oer_data.get("title", ""),
+                'description': oer_data.get("description", "")
+            }
+
+        playlist_item = Playlist_Item(playlist.id, val, idx, playlist_item_data)
         playlist_item = repository.add(playlist_item)
         count = count + 1
 
@@ -1391,6 +1424,18 @@ def _convert_temp_playlist_to_playlist(temp_playlist):
                         temp_data.get('license', _DEFAULT_LICENSE))
     temp_playlist = playlist.serialize
     temp_playlist['oerIds'] = temp_data['playlist_items']
+
+    # preparing playlist item data
+    playlist_item_data = list()
+    if 'playlist_item_data' in temp_data:
+        for key in temp_data['playlist_item_data']:
+            playlist_item_data.append({
+                'oerId' : int(key),
+                'title' : temp_data['playlist_item_data'][key]['title'],
+                'description': temp_data['playlist_item_data'][key]['description']
+            })
+
+    temp_playlist['playlistItemData'] = playlist_item_data
     return temp_playlist
 
 
@@ -1409,6 +1454,22 @@ def _add_oer_to_playlist(title, oer_id):
         return False
 
     return True
+
+# function to set playlist item meta data overriding oer data (title and description for now)
+def _set_playlist_item_data(playlist, playlist_item_data):
+    existing_data = json.loads(playlist.data)
+
+    if 'playlist_item_data' not in existing_data.keys():
+        existing_data['playlist_item_data'] = dict()
+
+    existing_data['playlist_item_data'][playlist_item_data['oerId']] = dict()
+    existing_data['playlist_item_data'][playlist_item_data['oerId']] = {
+        'title': playlist_item_data['title'],
+        'description': playlist_item_data['description']
+    }
+
+    playlist.data = json.dumps(existing_data)
+    return playlist
 
 
 @ns_playlist.route('/')
@@ -1683,7 +1744,7 @@ class Temp_Playlist_Single(Resource):
         return {'playlist': playlist, 'playlist_items': playlist_items}, 200
 
     @ns_playlist.doc('update_temp_playlist')
-    @ns_playlist.expect(m_playlist, validate=True)
+    @ns_playlist.expect(m_playlist)
     def put(self, title):
         '''Update temporary playlist from database'''
         if not current_user.is_authenticated:
@@ -1697,8 +1758,13 @@ class Temp_Playlist_Single(Resource):
         if temp_playlist is None:
             return {'result': 'Temporary playlist not found'}, 400
 
-        setattr(temp_playlist, 'title', api.payload['title'])
-        setattr(temp_playlist, 'data', json.dumps(api.payload))
+        # updating playlist item data only
+        if 'playlist_item_data' in api.payload.keys():
+            temp_playlist = _set_playlist_item_data(temp_playlist, api.payload['playlist_item_data'])
+        else:
+            setattr(temp_playlist, 'title', api.payload['title'])
+            setattr(temp_playlist, 'data', json.dumps(api.payload))
+
         repository.update()
 
         return {'result': 'Temporary playlist successfully updated'}, 201

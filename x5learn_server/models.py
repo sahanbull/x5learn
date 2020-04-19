@@ -383,11 +383,13 @@ class Playlist_Item(Base):
     playlist_id = Column(Integer, ForeignKey('x5_oer_repo.playlist.id'))
     oer_id = Column(Integer, ForeignKey('oer.id'))
     order = Column(Integer())
+    data = Column(JSON())
 
-    def __init__(self, playlist_id, oer_id, order):
+    def __init__(self, playlist_id, oer_id, order, data):
         self.playlist_id = playlist_id
         self.oer_id = oer_id
         self.order = order
+        self.data = data
 
 
 class Temp_Playlist(Base):

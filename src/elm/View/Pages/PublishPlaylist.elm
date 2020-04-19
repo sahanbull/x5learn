@@ -143,8 +143,40 @@ viewPlaylistItem model id =
         none
 
       Just oer ->
-        [ text (" - " ++ oer.title) ]
+        let
+
+          title = 
+            case getPlaylistTitle model oer.id of
+              Nothing ->
+                oer.title
+
+              Just playlistTitle ->
+                playlistTitle
+
+        in
+        [ text (" - " ++ title) ]
         |> column [ spacing 20, Font.size 14 ]
+
+
+getPlaylistTitle : Model -> OerId -> Maybe String
+getPlaylistTitle model oerId =
+  case model.playlist of 
+    Nothing ->
+      Nothing
+
+    Just playlist ->
+      let
+
+        playlistItemData =
+          List.head ( List.filter (\x -> x.oerId == oerId ) playlist.playlistItemData)
+
+      in
+        case playlistItemData of
+            Nothing ->
+              Nothing
+                
+            Just itemData ->
+              Just itemData.title
         
   
   

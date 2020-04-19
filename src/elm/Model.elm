@@ -118,6 +118,10 @@ type alias Model =
   , userNotesForOer : List Note
   , editUserNoteForOerInPlace : Maybe Note
   , promptedDeletePlaylist : Bool
+  , openedOerFromPlaylist : Bool
+  , editingOerTitleInPlaylist : Bool -- flag to identify if user is editing the title specific to a playlist
+  , editingOerDescriptionInPlaylist : Bool -- flag to identify if user is editing the description specific to a playlist
+  , editingOerPlaylistItem : PlaylistItem
   }
 
 {-| We get the first sentence from the Wikipedia article
@@ -502,7 +506,16 @@ type alias Playlist =
   , license : Maybe Int
   , oerIds : List OerId
   , url : Maybe String
+  , playlistItemData : List PlaylistItem
   }
+
+{-| Type to temporary store playlist item details when editing
+-}
+type alias PlaylistItem = 
+ { oerId : OerId
+ , title : String
+ , description : String
+ }
 
 {-| Type of playlist to hold reference to parent playlist
 -}
@@ -652,6 +665,10 @@ initialModel nav flags =
   , userNotesForOer = []
   , editUserNoteForOerInPlace = Nothing
   , promptedDeletePlaylist = False
+  , openedOerFromPlaylist = False
+  , editingOerTitleInPlaylist = False
+  , editingOerDescriptionInPlaylist = False
+  , editingOerPlaylistItem = initialPlaylistItem
   }
 
 initialLicenseType : List LicenseType
@@ -660,7 +677,7 @@ initialLicenseType =
 
 initialPlaylist : Playlist
 initialPlaylist =
-  Playlist Nothing "New Playlist" Nothing Nothing Nothing Nothing True Nothing [] Nothing
+  Playlist Nothing "New Playlist" Nothing Nothing Nothing Nothing True Nothing [] Nothing []
 
 initialUserProfile : String -> UserProfile
 initialUserProfile email =
@@ -676,6 +693,9 @@ initialCourse : Course
 initialCourse =
   Course []
 
+initialPlaylistItem : PlaylistItem
+initialPlaylistItem =
+  PlaylistItem 0 "" ""
 
 newSearch : String -> SearchState
 newSearch str =

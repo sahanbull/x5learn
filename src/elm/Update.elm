@@ -34,10 +34,8 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 ( newModel, cmd ) =
                     model |> update (UrlChanged url)
             in
-            if isLoggedIn model then
                 ( newModel, [ cmd, requestSession, requestLoadCourse, requestLoadUserPlaylists, requestLoadLicenseTypes, askPageScrollState True ] |> Cmd.batch )
-            else 
-                ( newModel, [ cmd, requestSession, requestLoadCourse, askPageScrollState True ] |> Cmd.batch )
+
 
         LinkClicked urlRequest ->
             case urlRequest of
@@ -94,7 +92,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                         else
                             let
                                 freshPlaylist = 
-                                    Playlist Nothing "New Playlist" Nothing Nothing Nothing Nothing True Nothing [] Nothing
+                                    Playlist Nothing "New Playlist" Nothing Nothing Nothing Nothing True Nothing [] Nothing []
                                 updatedPlaylistCreateForm = { playlistCreateForm | playlist = freshPlaylist, saved = False, isClone = False }
                             in
                             ( CreatePlaylist, ( { model | playlist = Nothing, playlistCreateForm = updatedPlaylistCreateForm }, Cmd.none ) )
@@ -150,7 +148,40 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             ( { model | windowWidth = x, windowHeight = y } |> closePopup, askPageScrollState True )
 
         InspectOer oer fragmentStart playWhenReady commentForLogging ->
-            inspectOer model oer fragmentStart playWhenReady
+            let
+                newModel = 
+                    if commentForLogging == "ClickedOnPlaylistItem" then
+                        case model.playlist of
+                            Nothing ->
+                                { model | openedOerFromPlaylist = False }
+
+                            Just playlist ->
+                                let
+                                    playlistTitle =
+                                        case getPlaylistTitle model oer.id of
+                                            Nothing ->
+                                                oer.title
+
+                                            Just title ->
+                                                title
+
+                                    playlistDescription =
+                                        case getPlaylistDescription model oer.id of
+                                            Nothing ->
+                                                oer.description
+
+                                            Just description ->
+                                                description
+
+                                    playlistItem =
+                                        PlaylistItem oer.id playlistTitle playlistDescription
+                                in
+                                    { model | openedOerFromPlaylist = True, editingOerPlaylistItem = playlistItem }
+                    else
+                        { model | openedOerFromPlaylist = False }
+
+            in
+            inspectOer newModel oer fragmentStart playWhenReady
                 |> saveAction 1 [ ( "oerId", Encode.int oer.id ) ]
                 |> logEventForLabStudy "InspectOer"
                     [ oer.id |> String.fromInt
@@ -547,6 +578,12 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
         RequestUpdateNote (Err err) ->
             ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
+        RequestUpdatePlaylistItem (Ok _) ->
+            ( { model | snackbar = createSnackbar model "Playlist item is successfully updated" }, requestLoadUserPlaylists )
+
+        RequestUpdatePlaylistItem (Err err) ->
+            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+
         SetHover maybeOerId ->
             let
                 ( timelineHoverState, hoveringEntityId ) =
@@ -908,7 +945,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                     Just playlist ->
                         let
                             updatedPlaylist =
-                                Playlist playlist.id playlist.title playlist.description playlist.author playlist.creator playlist.parent playlist.is_visible playlist.license (List.map (\x -> x.oerId) newCourse.items) Nothing
+                                Playlist playlist.id playlist.title playlist.description playlist.author playlist.creator playlist.parent playlist.is_visible playlist.license (List.map (\x -> x.oerId) newCourse.items) Nothing playlist.playlistItemData
 
                         in
                         ( { model | course = newCourse, courseOptimization = Nothing }, requestSavePlaylist updatedPlaylist )
@@ -934,7 +971,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 Just playlist ->
                     let
                         updatedPlaylist =
-                            Playlist playlist.id playlist.title playlist.description playlist.author playlist.creator playlist.parent playlist.is_visible playlist.license (List.map (\x -> x.oerId) savedPreviousCourse.items) Nothing
+                            Playlist playlist.id playlist.title playlist.description playlist.author playlist.creator playlist.parent playlist.is_visible playlist.license (List.map (\x -> x.oerId) savedPreviousCourse.items) Nothing playlist.playlistItemData
                     in
                     ( { model | course = savedPreviousCourse, courseOptimization = Nothing }, requestSavePlaylist updatedPlaylist )
                         |> logEventForLabStudy "PressedUndoCourse" [ courseToString savedPreviousCourse ]
@@ -1074,7 +1111,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
         SavePlaylist playlist course ->
             let
                 updatedPlaylist =
-                    Playlist playlist.id playlist.title playlist.description playlist.author playlist.creator playlist.parent playlist.is_visible playlist.license (List.map (\x -> x.oerId) course.items) Nothing
+                    Playlist playlist.id playlist.title playlist.description playlist.author playlist.creator playlist.parent playlist.is_visible playlist.license (List.map (\x -> x.oerId) course.items) Nothing playlist.playlistItemData
             in
             ( model, requestSavePlaylist updatedPlaylist )
 
@@ -1140,6 +1177,49 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
 
         PromptDeletePlaylist flag ->
             ( { model | promptedDeletePlaylist = flag }, Cmd.none)
+
+        ClickedOnPlaylistItem oer ->
+            model
+            |> update (InspectOer oer 0 False "ClickedOnPlaylistItem")
+            |> logEventForLabStudy "ClickedOnPlaylistItem" [ oer.id |> String.fromInt ]
+
+        EditOerInPlaylist flag editType ->
+            if editType == "title" then
+                ( { model | editingOerTitleInPlaylist = flag }, Cmd.none )
+            else
+                ( { model | editingOerDescriptionInPlaylist = flag }, Cmd.none )
+
+        UpdatePlaylistItem editType str ->
+            if editType == "title" then
+                let
+
+                    oldPlaylistItem =
+                        model.editingOerPlaylistItem
+
+                    newPlaylistItem =
+                        { oldPlaylistItem | title = str }
+
+                in
+                ( { model | editingOerPlaylistItem = newPlaylistItem }, Cmd.none )
+            else
+                let
+
+                    oldPlaylistItem =
+                        model.editingOerPlaylistItem
+
+                    newPlaylistItem =
+                        { oldPlaylistItem | description = str }
+
+                in
+                ( { model | editingOerPlaylistItem = newPlaylistItem }, Cmd.none )
+
+        SubmittedPlaylistItemUpdate ->
+            case model.playlist of
+                Nothing ->
+                 (model, Cmd.none)
+
+                Just playlist ->
+                    ( { model | editingOerTitleInPlaylist = False, editingOerDescriptionInPlaylist = False }, requestUpdatePlaylistItem playlist.title model.editingOerPlaylistItem )
 
 
 insertSearchResults : List OerId -> Model -> Model
@@ -1895,7 +1975,7 @@ filterPlaylistByText playlists playlist =
     in
     case List.head matches of
         Nothing ->
-            Playlist Nothing "" Nothing Nothing Nothing Nothing True Nothing [] Nothing
+            Playlist Nothing "" Nothing Nothing Nothing Nothing True Nothing [] Nothing []
 
         Just firstMatch ->
             firstMatch
@@ -1947,6 +2027,45 @@ checkIfPlaylistNameIsUnique playlists newPlaylistTitle =
                     Just _ ->
                         False
 
+getPlaylistTitle : Model -> OerId -> Maybe String
+getPlaylistTitle model oerId =
+  case model.playlist of 
+    Nothing ->
+      Nothing
+
+    Just playlist ->
+      let
+
+        playlistItemData =
+          List.head ( List.filter (\x -> x.oerId == oerId ) playlist.playlistItemData)
+
+      in
+        case playlistItemData of
+            Nothing ->
+              Nothing
+                
+            Just itemData ->
+              Just itemData.title
+
+getPlaylistDescription : Model -> OerId -> Maybe String
+getPlaylistDescription model oerId =
+  case model.playlist of 
+    Nothing ->
+      Nothing
+
+    Just playlist ->
+      let
+
+        playlistItemData =
+          List.head ( List.filter (\x -> x.oerId == oerId ) playlist.playlistItemData)
+
+      in
+        case playlistItemData of
+            Nothing ->
+              Nothing
+                
+            Just itemData ->
+              Just itemData.description
             
     
             

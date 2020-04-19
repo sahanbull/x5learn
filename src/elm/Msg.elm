@@ -55,6 +55,7 @@ type Msg
   | RequestFetchNotesForOer (Result Http.Error (List Note))
   | RequestRemoveNote (Result Http.Error String)
   | RequestUpdateNote (Result Http.Error String)
+  | RequestUpdatePlaylistItem (Result Http.Error String)
   | SetHover (Maybe OerId)
   | SetPopup Popup
   | ClosePopup
@@ -119,6 +120,10 @@ type Msg
   | ChangedTextInNote String
   | SubmittedNoteEdit
   | PromptDeletePlaylist Bool
+  | ClickedOnPlaylistItem Oer
+  | EditOerInPlaylist Bool String
+  | UpdatePlaylistItem String String
+  | SubmittedPlaylistItemUpdate
 
 type UserProfileField
   = FirstName

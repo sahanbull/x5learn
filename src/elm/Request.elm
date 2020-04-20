@@ -35,11 +35,11 @@ requestSession =
 
 {-| Fetch OER search results from the backend
 -}
-searchOers : String -> Cmd Msg
-searchOers searchText =
+searchOers : String -> Int -> Cmd Msg
+searchOers searchText page =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText ]
-    , expect = Http.expectJson RequestOerSearch (list oerDecoder)
+    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText, Url.Builder.int "page" page ]
+    , expect = Http.expectJson RequestOerSearch oerSearchResultDecoder
     }
 
 
@@ -553,3 +553,11 @@ noteDecoder =
   map2 Note
     (field "id" int)
     (field "text" string)
+
+
+oerSearchResultDecoder : Decoder OerSearchResult
+oerSearchResultDecoder = 
+  Decode.succeed OerSearchResult
+  |> andMap (field "oers" (list oerDecoder))
+  |> andMap (field "total_pages" int)
+  |> andMap (field "current_page" int)

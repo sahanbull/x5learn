@@ -122,6 +122,8 @@ type alias Model =
   , editingOerTitleInPlaylist : Bool -- flag to identify if user is editing the title specific to a playlist
   , editingOerDescriptionInPlaylist : Bool -- flag to identify if user is editing the description specific to a playlist
   , editingOerPlaylistItem : PlaylistItem
+  , searchTotalPages : Int -- to track number of pages available from a search result
+  , currentPageForSearch : Int -- to keep track of current page of search results shown
   }
 
 {-| We get the first sentence from the Wikipedia article
@@ -541,6 +543,12 @@ type alias Note =
   , text : String
   }
 
+type alias OerSearchResult =
+  { oers : (List Oer)
+  , totalPages : Int
+  , currentPage : Int
+  }
+
 
 {-| Used to control the zoom animation when opening the inspector
 -}
@@ -669,6 +677,8 @@ initialModel nav flags =
   , editingOerTitleInPlaylist = False
   , editingOerDescriptionInPlaylist = False
   , editingOerPlaylistItem = initialPlaylistItem
+  , searchTotalPages = 0
+  , currentPageForSearch = 1 
   }
 
 initialLicenseType : List LicenseType

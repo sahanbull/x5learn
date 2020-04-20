@@ -261,17 +261,17 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
         --         err |> Debug.log "Error in RequestUpdatePlayingVideo"
         --   in
         --   ( { model | snackbar = createSnackbar model snackbarMessageReloadPage}, Cmd.none )
-        RequestOerSearch (Ok oers) ->
+        RequestOerSearch (Ok oerSearchResult) ->
             let
                 ( newModel, cmd ) =
                     model
-                        |> insertSearchResults (oers |> List.map .id)
-                        |> cacheOersFromList oers
+                        |> insertSearchResults ( oerSearchResult.oers |> List.map .id)
+                        |> cacheOersFromList oerSearchResult.oers
                         |> inspectOerBasedOnUrlParameter
             in
-            ( newModel, [ cmd, setBrowserFocus "SearchField", getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch )
+            ( { newModel | searchTotalPages = oerSearchResult.totalPages }, [ cmd, setBrowserFocus "SearchField", getOerCardPlaceholderPositions True, askPageScrollState True ] |> Cmd.batch )
                 |> requestWikichunkEnrichmentsIfNeeded
-                |> logEventForLabStudy "RequestOerSearch" (oers |> List.map .id |> List.map String.fromInt)
+                |> logEventForLabStudy "RequestOerSearch" (oerSearchResult.oers |> List.map .id |> List.map String.fromInt)
 
         RequestOerSearch (Err err) ->
             -- let
@@ -1001,7 +1001,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 newModel =
                     { model | currentTaskName = Just taskName, searchInputTyping = searchText, searchState = Just <| newSearch searchText, snackbar = Nothing }
             in
-            ( newModel, [ setBrowserFocus "", searchOers searchText ] |> Cmd.batch )
+            ( newModel, [ setBrowserFocus "", searchOers searchText model.currentPageForSearch ] |> Cmd.batch )
                 |> logEventForLabStudy "StartTask" [ taskName ]
 
         CompleteTask ->
@@ -1220,6 +1220,14 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
 
                 Just playlist ->
                     ( { model | editingOerTitleInPlaylist = False, editingOerDescriptionInPlaylist = False }, requestUpdatePlaylistItem playlist.title model.editingOerPlaylistItem )
+
+        SetSearchCurrentPage pageNumber ->
+            case model.searchState of
+                Nothing ->
+                 ( model, Cmd.none )
+                
+                Just searchState ->
+                     ( { model | currentPageForSearch = pageNumber }, Navigation.load ("/search?q=" ++ searchState.lastSearchText ++ "&page=" ++ String.fromInt pageNumber) )
 
 
 insertSearchResults : List OerId -> Model -> Model
@@ -1517,6 +1525,23 @@ executeSearchAfterUrlChanged model url =
                 |> Url.percentDecode
                 |> Maybe.withDefault ""
 
+        pageNo = 
+            url.query
+                |> Maybe.withDefault ""
+                |> String.dropLeft 2
+                |> String.split "&"
+                |> List.reverse
+                |> List.head
+                |> Maybe.withDefault ""
+                |> String.split "="
+                |> List.reverse
+                |> List.head
+                |> Maybe.withDefault ""
+                |> String.toInt
+                |> Maybe.withDefault 1
+
+        _= Debug.log "pageNo" pageNo
+
         -- when searching by ID, don't change the value in the input field
         -- see issue #298
         searchInputTyping =
@@ -1537,9 +1562,9 @@ executeSearchAfterUrlChanged model url =
                 Nothing
 
         newModel =
-            { model | searchInputTyping = searchInputTyping, searchState = Just <| newSearch textParam, snackbar = Nothing, searchIsPlaylist = isPlaylist, publishedPlaylistId = playlistId, playlistState = Nothing }
+            { model | currentPageForSearch = pageNo, searchInputTyping = searchInputTyping, searchState = Just <| newSearch textParam, snackbar = Nothing, searchIsPlaylist = isPlaylist, publishedPlaylistId = playlistId, playlistState = Nothing }
     in
-    ( newModel |> closePopup, searchOers textParam )
+    ( newModel |> closePopup, searchOers textParam pageNo )
         |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam ]
 
 

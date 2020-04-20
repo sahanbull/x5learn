@@ -30,7 +30,7 @@ type Msg
   | InspectorAnimationStop Int
   | RequestSession (Result Http.Error Session)
   | RequestVideoUsages (Result Http.Error (Dict String (List Range)))
-  | RequestOerSearch (Result Http.Error (List Oer))
+  | RequestOerSearch (Result Http.Error OerSearchResult)
   | RequestOers (Result Http.Error (List Oer))
   | RequestFeatured (Result Http.Error (List Oer))
   | RequestWikichunkEnrichments (Result Http.Error (List WikichunkEnrichment))
@@ -124,6 +124,7 @@ type Msg
   | EditOerInPlaylist Bool String
   | UpdatePlaylistItem String String
   | SubmittedPlaylistItemUpdate
+  | SetSearchCurrentPage Int
 
 type UserProfileField
   = FirstName

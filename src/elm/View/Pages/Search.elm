@@ -92,9 +92,12 @@ viewBody model searchState =
       if isLabStudy1 model && model.currentTaskName==Nothing then
         "Please wait for the researcher's instructions." |> viewCenterMessage
       else
-        Playlist Nothing "" Nothing Nothing Nothing Nothing True Nothing oerIds Nothing []
-        |> viewOerGrid model
-        |> el [ width fill, height fill, paddingBottom 100 ]
+        let
+            playlist =
+              Playlist Nothing "" Nothing Nothing Nothing Nothing True Nothing oerIds Nothing []
+        in
+        [viewOerGrid model playlist] ++ [viewPagination model]
+        |> column [ width fill, height fill, paddingBottom 100 ]
 
 
 viewPlaylistInfoPage : Model -> Element Msg
@@ -230,4 +233,45 @@ viewPlaylistItem model id =
       Just oer ->
         [ text (" - " ++ oer.title) ]
         |> column [ spacing 20, Font.size 14 ]
+
+viewPagination : Model -> Element Msg
+viewPagination model =
+  if model.searchTotalPages <= 0 then
+    none
+  else
+    let
+
+      paginationButton number currentPage =
+        if number <= 0 || number > model.searchTotalPages then
+          none
+        else
+          if number == currentPage then
+            button [ Border.width 1, Border.color white, htmlClass "HoverGreyBackground", width fill, paddingXY 10 10, Font.center, whiteText, Background.color electricBlue ] { onPress = Just (SetSearchCurrentPage number), label = String.fromInt number |> text }
+          else
+            button [ Border.width 1, Border.color white, htmlClass "HoverGreyBackground", width fill, paddingXY 10 10, Font.center, whiteText ] { onPress = Just (SetSearchCurrentPage number), label = String.fromInt number |> text }  
+
+      pagesToDisplay currrentPage =
+        List.range (currrentPage - 2) (currrentPage + 5)
+      
+      previousButton =
+        if model.currentPageForSearch > 1 then
+          button [ Border.width 1, Border.color white, htmlClass "HoverGreyBackground", width fill, paddingXY 10 10, Font.center, whiteText ] { onPress = Just (SetSearchCurrentPage (model.currentPageForSearch - 1)), label = "< Previous" |> text }
+        else
+          none
+
+      nextButton =
+        if model.currentPageForSearch < model.searchTotalPages then
+          button [ Border.width 1, Border.color white, htmlClass "HoverGreyBackground", width fill, paddingXY 10 10, Font.center, whiteText ] { onPress = Just (SetSearchCurrentPage (model.currentPageForSearch + 1)), label = "Next >" |> text }
+        else
+          none
+
+      numberButtons =
+        List.map (\x -> paginationButton x model.currentPageForSearch) (pagesToDisplay model.currentPageForSearch)
+
+      buttonGroup =
+        [ previousButton ] ++ numberButtons ++ [ nextButton ]
+
+    in
+      buttonGroup
+      |> row [ centerX, Font.center ]
 

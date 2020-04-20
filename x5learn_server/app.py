@@ -330,6 +330,7 @@ def api_search():
 
     """
     text = request.args['text'].lower().strip()
+    page = int(request.args['page']) if request.args['page'] is not None else 1 
     if text == "":  # if empty string, no results
         return jsonify([])
     elif text.startswith(PLAYLIST_PREFIX):  # if its a playlist
@@ -337,16 +338,29 @@ def api_search():
 
         # get the list of items
         results = get_items_in_playlist(playlist_id)
-        return jsonify([oer.data_and_id() for oer in results])
+        oers = [oer.data_and_id() for oer in results]
+
+        return jsonify({
+            'oers': oers,
+            'total_pages': 1,
+            'current_page': 1
+        })
     else:
         try:
             # if the text is a number, retrieve the oer with that oer_id
             oer_id = int(text)
             oer = Oer.query.get(oer_id)
-            results = [] if oer is None else [oer]
+            results = [] if oer is None else ([oer], 1)
         except ValueError:
-            results = search_results_from_x5gon_api(text)
-        return jsonify([oer.data_and_id() for oer in results])
+            results = search_results_from_x5gon_api(text, page)
+
+        oers = [oer.data_and_id() for oer in results[0]]
+
+        return jsonify({
+            'oers': oers,
+            'total_pages': results[1],
+            'current_page': 1
+        })
 
 
 @app.route("/api/v1/oers/", methods=['POST'])
@@ -556,11 +570,11 @@ def api_entity_descriptions():
     return jsonify(definitions)
 
 
-def search_results_from_x5gon_api(text):
+def search_results_from_x5gon_api(text, page):
     text = urllib.parse.quote(text)
     if is_special_search_key_for_lab_study(text):
         return frozen_search_results_for_lab_study(text)
-    return search_results_from_x5gon_api_pages(text, 1, [])
+    return search_results_from_x5gon_api_pages(text, page, [])
 
 
 def remove_duplicates_from_x5gon_search_results(materials):
@@ -612,9 +626,9 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     oers = oers[:MAX_SEARCH_RESULTS]
     # exits the search if exceeds the last page returned from the api
     if page_number > metadata['total_pages']:
-        return oers
+        return oers, metadata['total_pages']
     if len(oers) >= MAX_SEARCH_RESULTS:
-        return oers
+        return oers, metadata['total_pages']
     return search_results_from_x5gon_api_pages(text, page_number + 1, oers)
 
 
@@ -1635,6 +1649,7 @@ class Playlist_Single(Resource):
         seralized_playlist = playlist.serialize
         seralized_playlist['oerIds'] = [i.oer_id for i in playlist_items]
         seralized_playlist['url'] = _create_playlist_url(id)
+        seralized_playlist['playlistItemData'] = []
 
         return seralized_playlist, 200
 

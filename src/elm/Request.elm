@@ -507,6 +507,7 @@ playlistEncoder playlist =
     , ("license", Encode.int (Maybe.withDefault 1 playlist.license))
     , ("is_temp", Encode.bool True)
     , ("playlist_items", Encode.list Encode.int playlist.oerIds)
+    , ("playlist_item_data", Encode.list playlistItemEncoder playlist.playlistItemData)
     ]
 
 playlistItemEncoder : PlaylistItem -> Encode.Value

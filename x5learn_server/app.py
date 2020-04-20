@@ -1759,10 +1759,22 @@ class Temp_Playlist_Single(Resource):
             return {'result': 'Temporary playlist not found'}, 400
 
         # updating playlist item data only
-        if 'playlist_item_data' in api.payload.keys():
+        if 'title' not in api.payload.keys():
             temp_playlist = _set_playlist_item_data(temp_playlist, api.payload['playlist_item_data'])
         else:
             setattr(temp_playlist, 'title', api.payload['title'])
+
+            # converting playlist item data to dictionary
+            if 'playlist_item_data' in api.payload:
+                temp_data = api.payload['playlist_item_data']
+                playlist_item_data = dict()
+                for val in temp_data:
+                    playlist_item_data[val['oerId']] = dict()
+                    playlist_item_data[val['oerId']]['title'] = val['title']
+                    playlist_item_data[val['oerId']]['description'] = val['description']
+
+                api.payload['playlist_item_data'] = playlist_item_data
+
             setattr(temp_playlist, 'data', json.dumps(api.payload))
 
         repository.update()

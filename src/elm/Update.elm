@@ -1539,9 +1539,7 @@ executeSearchAfterUrlChanged model url =
                 |> Maybe.withDefault ""
                 |> String.toInt
                 |> Maybe.withDefault 1
-
-        _= Debug.log "pageNo" pageNo
-
+                
         -- when searching by ID, don't change the value in the input field
         -- see issue #298
         searchInputTyping =

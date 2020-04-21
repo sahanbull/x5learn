@@ -1288,7 +1288,7 @@ m_playlist = api.model('Playlist', {
 })
 
 
-def _get_blueprint(playlist, license, items):
+def _get_blueprint(playlist, license, items, item_data):
     url = _create_playlist_url(playlist['id'])
     license_obj = repository.get_by_id(License, license)
     base_mapping = dict()
@@ -1312,8 +1312,9 @@ def _get_blueprint(playlist, license, items):
             "material_id": temp_item.id,
             "x5gon_id": oer_data.get("material_id"),
             "url": temp_item.url,
+            "title": item_data.get(str(item), {}).get('title', ''),
             "provider": oer_data['provider'],
-            "description": oer_data['description'],
+            "description": item_data.get(str(item), {}).get('description', ''),
             "date": oer_data['date'],
             "duration": oer_data['duration'],
             "images": oer_data['images'],
@@ -1339,27 +1340,16 @@ def _add_published_playlist(title, desc, author, license, creator, parent, is_vi
 
     item_data = dict()
     temp_playlist_data = json.loads(temp_playlist.data)
-    if "playlist_item_data" in temp_playlist_data:
-        item_data = temp_playlist_data["playlist_item_data"]
+    item_data = temp_playlist_data["playlist_item_data"]
 
     count = 0
     for idx, val in enumerate(items):
-        playlist_item_data = dict()
-        if str(val) in item_data:
-            playlist_item_data = item_data[str(val)]
-        else:
-            oer = repository.get_by_id(Oer, val)
-            oer_data = oer.data
-            playlist_item_data = {
-                'title': oer_data.get("title", ""),
-                'description': oer_data.get("description", "")
-            }
-
+        playlist_item_data = item_data[str(val)]
         playlist_item = Playlist_Item(playlist.id, val, idx, playlist_item_data)
         playlist_item = repository.add(playlist_item)
         count = count + 1
 
-    blueprint = _get_blueprint(playlist.serialize, license, items)
+    blueprint = _get_blueprint(playlist.serialize, license, items, item_data)
 
     playlist.blueprint = json.dumps(blueprint)
     repository.update()
@@ -1459,9 +1449,21 @@ def _add_oer_to_playlist(title, oer_id):
     query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
     temp_playlist = query_object.one_or_none()
 
+    # getting oer to set title and description
+    oer = repository.get_by_id(Oer, oer_id)
+
     if temp_playlist is not None:
         temp_data = json.loads(temp_playlist.data)
         temp_data.setdefault("playlist_items", []).append(oer_id)
+
+        if "playlist_item_data" not in temp_data:
+            temp_data["playlist_item_data"] = dict()
+
+        temp_data["playlist_item_data"][oer_id] = {
+            'title': oer.data.get('title', ''),
+            'description': oer.data.get('description', '')
+        }
+
         temp_playlist.data = json.dumps(temp_data)
         repository.update()
     else:

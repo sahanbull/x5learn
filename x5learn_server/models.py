@@ -405,6 +405,22 @@ class Temp_Playlist(Base):
         self.data = data
 
 
+class ThumbGenerationTask(Base):
+    __tablename__ = 'thumb_generation_task'
+    __table_args__ = {'extend_existing': True}
+    id = Column(Integer(), primary_key=True)
+    url = Column(String(255), unique=True, nullable=False)
+    priority = Column(Integer())
+    started = Column(DateTime())
+    error = Column(String(255))
+    data = Column(JSON())
+
+    def __init__(self, url, priority, data):
+        self.url = url
+        self.priority = priority
+        self.data = data
+
+
 # Repository pattern implemented for CRUD
 class Repository:
     """

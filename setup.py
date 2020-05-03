@@ -26,6 +26,8 @@ setup(
         'pytest-flask',
         'wikipedia',
         'bcrypt',
-        'PythonVideoConverter'
+        'PythonVideoConverter',
+        'wget',
+        'preview_generator'
     ]
 )

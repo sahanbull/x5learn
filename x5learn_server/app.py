@@ -27,9 +27,9 @@ from x5learn_server.db.database import db_session
 from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, \
     EntityDefinition, ResourceFeedback, Action, ActionType, Repository, \
     ActionsRepository, UserRepository, DefinitionsRepository, Course, UiLogBatch, Note, Playlist, Playlist_Item, \
-    Temp_Playlist, License, TempPlaylistRepository
+    Temp_Playlist, License, TempPlaylistRepository, ThumbGenerationTask
 
-from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
+from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment, push_thumbnail_generation_task
 from x5learn_server.lab_study import frozen_search_results_for_lab_study, is_special_search_key_for_lab_study
 from x5learn_server.course_optimization import optimize_course
 
@@ -570,6 +570,44 @@ def api_entity_descriptions():
     return jsonify(definitions)
 
 
+@app.route("/api/v1/most_urgent_unstarted_thumb_generation_task/", methods=['POST'])
+def most_urgent_unstarted_thumb_generation_task():
+    timeout = datetime.now() - timedelta(minutes=10)
+    task = ThumbGenerationTask.query.filter(and_(ThumbGenerationTask.error == None, or_(
+        ThumbGenerationTask.started == None, ThumbGenerationTask.started < timeout))).order_by(
+        ThumbGenerationTask.priority.desc()).first()
+    if task is None:
+        return jsonify({'info': 'No tasks available'})
+
+    task_data = task.data
+    if 'oer_id' not in task_data:
+        return jsonify({'info': 'oer id not found in task data'})
+
+    print('Starting thumb generation task with priority:', task.priority, 'url:', task.url)
+
+    task.started = datetime.now()
+    task.priority = 0
+    db_session.commit()
+
+    return jsonify({'url': task.url, 'oer_id': task_data['oer_id']})
+
+
+@app.route("/api/v1/ingest_thumb_generation_result/", methods=['POST'])
+def ingest_thumb_generation_result():
+    j = request.get_json(force=True)
+    error = j['error']
+    url = j['url']
+    print('ingest_thumb_generation', url)
+
+    task = ThumbGenerationTask.query.filter_by(url=url).first()
+    if error is not None:
+        task.error = error
+
+    db_session.commit()
+
+    return 'OK'
+
+
 def search_results_from_x5gon_api(text, page):
     text = urllib.parse.quote(text)
     if is_special_search_key_for_lab_study(text):
@@ -621,8 +659,13 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
             continue
         material = fetch_captions_from_x5gon_api(material)
         oer = retrieve_oer_or_create_from_x5gon_material(material)
-        push_enrichment_task(url, int(1000 / (index + 1)) + 1)
         oers.append(oer)
+
+        task_priority = int(1000 / (index + 1)) + 1
+        push_enrichment_task(url, task_priority)
+        if "thumbnail" not in oer.data:
+            push_thumbnail_generation_task(oer, task_priority)
+
     oers = oers[:MAX_SEARCH_RESULTS]
     # exits the search if exceeds the last page returned from the api
     if page_number > metadata['total_pages']:

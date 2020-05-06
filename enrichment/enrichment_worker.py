@@ -13,6 +13,7 @@ from wikichunkifiers.lib.util import EnrichmentError
 import wikipedia
 
 from preview_generator.manager import PreviewManager
+from wand.image import Image
 import wget
 
 API_ROOT = os.environ.get("FLASK_API_ROOT")
@@ -319,14 +320,32 @@ def create_directories():
 
 
 def create_thumbnail(manager, file_name, oer_id):
+
+    # create a thumb large enough to support cropping if needed
     path_to_preview = manager.get_jpeg_preview(
         TEMPPATH + file_name,
-        width=332
+        height=800
     )
 
-    # renaming file to match application fetch
-    thumb_file_name = "tn_" + str(oer_id) + "_" + "332x175.jpg"
-    os.rename(path_to_preview, THUMBPATH + thumb_file_name)
+    # fill thumbnail based on width and crop if required
+    with Image(filename=path_to_preview) as img:
+        img_width = img.width
+        img_height = img.height
+
+        asepect_ratio = img_height / img_width
+        height_based_on_aspect_ratio = round(332 * asepect_ratio)
+
+        img.resize(332, height_based_on_aspect_ratio)
+
+        #cropping image from top
+        img.crop(0, 0, width=332, height=175)
+
+        thumb_file_name = "tn_" + str(oer_id) + "_" + "332x175.jpg"
+        img.save(filename=THUMBPATH + thumb_file_name)
+
+
+    # removing temp files
+    os.remove(path_to_preview)
     os.remove(TEMPPATH + file_name)
 
 

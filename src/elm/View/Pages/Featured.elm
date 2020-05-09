@@ -20,6 +20,12 @@ import Time exposing (millisToPosix)
 
 import Json.Decode as Decode
 
+import I18Next exposing
+      ( t
+      , tr
+      , Delims(..)
+      )
+
 
 {-| Render landing page including featured OER content
 -}
@@ -68,8 +74,13 @@ userGreeting model =
         [ whiteText, Font.size 60, centerX, htmlClass "BigHeadingFont" ]
   in
   if isLoggedIn model then
-    [ "Welcome back" |> text |> el headingAttrs
-    ]
+    case model.translations of
+      Nothing ->
+        [ "Welcome Back 1" |> text |> el headingAttrs
+        ]
+      Just translations ->
+        [ (t translations (model.language ++ ".Welcome_back") ) |> text |> el headingAttrs
+        ]
   else
     [ "Welcome to X5Learn" |> text |> el headingAttrs
     , "Find your personal learning pathway" |> text |> el [ whiteText, Font.size 20, centerX ]

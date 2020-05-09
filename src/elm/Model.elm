@@ -16,6 +16,10 @@ import List.Extra
 
 import Animation exposing (..)
 
+import I18Next exposing (Translations, translationsDecoder)
+import Json.Encode
+import Json.Decode
+
 
 {-| The Model contains the ENTIRE state of the frontend at any point in time.
 
@@ -124,6 +128,8 @@ type alias Model =
   , editingOerPlaylistItem : PlaylistItem
   , searchTotalPages : Int -- to track number of pages available from a search result
   , currentPageForSearch : Int -- to keep track of current page of search results shown
+  , language : String
+  , translations : Maybe Translations
   }
 
 {-| We get the first sentence from the Wikipedia article
@@ -263,6 +269,8 @@ type alias Flags =
   , windowHeight : Int
   , minWindowWidth : Int
   , minWindowHeight : Int
+  , language : String
+  , translations : Json.Encode.Value
   }
 
 
@@ -679,6 +687,8 @@ initialModel nav flags =
   , editingOerPlaylistItem = initialPlaylistItem
   , searchTotalPages = 0
   , currentPageForSearch = 1 
+  , language = flags.language
+  , translations = initTranslations flags.translations
   }
 
 initialLicenseType : List LicenseType
@@ -688,6 +698,18 @@ initialLicenseType =
 initialPlaylist : Playlist
 initialPlaylist =
   Playlist Nothing "New Playlist" Nothing Nothing Nothing Nothing True Nothing [] Nothing []
+
+initTranslations : Json.Encode.Value -> Maybe Translations
+initTranslations translationString =
+  let
+    _= Debug.log "translation" translationString
+  in
+  case Json.Decode.decodeValue translationsDecoder translationString of
+    Ok translations ->
+      Just translations
+
+    Err err ->
+      Nothing
 
 initialUserProfile : String -> UserProfile
 initialUserProfile email =

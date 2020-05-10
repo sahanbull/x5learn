@@ -572,9 +572,8 @@ def api_entity_descriptions():
 
 @app.route("/api/v1/most_urgent_unstarted_thumb_generation_task/", methods=['POST'])
 def most_urgent_unstarted_thumb_generation_task():
-    timeout = datetime.now() - timedelta(minutes=10)
-    task = ThumbGenerationTask.query.filter(and_(ThumbGenerationTask.error == None, or_(
-        ThumbGenerationTask.started == None, ThumbGenerationTask.started < timeout))).order_by(
+    task = ThumbGenerationTask.query.filter(and_(ThumbGenerationTask.error == None, 
+        ThumbGenerationTask.started == None)).order_by(
         ThumbGenerationTask.priority.desc()).first()
     if task is None:
         return jsonify({'info': 'No tasks available'})
@@ -595,15 +594,26 @@ def most_urgent_unstarted_thumb_generation_task():
 @app.route("/api/v1/ingest_thumb_generation_result/", methods=['POST'])
 def ingest_thumb_generation_result():
     j = request.get_json(force=True)
-    error = j['error']
     url = j['url']
+    thumb_file_name = j['thumb_file_name']
+    error = j['error']
     print('ingest_thumb_generation', url)
 
-    task = ThumbGenerationTask.query.filter_by(url=url).first()
+    # recording thumb generation error if available
     if error is not None:
+        task = ThumbGenerationTask.query.filter_by(url=url).first()
         task.error = error
-
-    db_session.commit()
+        db_session.commit()
+    # updating generated thumb name in oer data
+    elif thumb_file_name is not None:
+        oer = Oer.query.filter_by(url=url).first()
+        new_data = json.loads(json.dumps(oer.data))
+        if  new_data['images'] is None:
+            new_data['images'] = []
+        if thumb_file_name not in new_data['images']:
+            new_data['images'].append(thumb_file_name)
+            oer.data = new_data
+            db_session.commit()
 
     return 'OK'
 
@@ -663,6 +673,7 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
 
         task_priority = int(1000 / (index + 1)) + 1
         push_enrichment_task(url, task_priority)
+        # if oer.data["images"] is None or len(oer.data["images"]) == 0:
         if "thumbnail" not in oer.data:
             push_thumbnail_generation_task(oer, task_priority)
 
@@ -696,6 +707,7 @@ def retrieve_oer_or_create_from_x5gon_material(material):
         new_data['provider'] = " - "
         oer.data = new_data
     push_enrichment_task_if_needed(url, 1)
+
     return oer
 
 

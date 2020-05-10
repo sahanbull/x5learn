@@ -85,7 +85,9 @@ def main(args):
                     manager = PreviewManager(THUMBPATH, create_folder=True)
 
                     if file_extension in SUPPORTED_FILE_FORMATS:
-                        create_thumbnail(manager, file_name, task['oer_id'])
+                        thumb_file_name = create_thumbnail(manager, file_name, task['oer_id'])
+                        post_back_thumb_generation_result(task['url'], thumb_file_name)
+
 
                 elif 'info' in task:
                     say(task['info'])
@@ -99,7 +101,7 @@ def main(args):
             except Exception as err:
                 error_string = str(err)
                 if task is not None and 'url' in task:
-                    post_back_thumb_generation_result(task['url'], error_string[:255])
+                    post_back_thumb_generation_result(task['url'], error=error_string[:255])
 
                 print("\nError : {0}".format(err))
                 say('Something went wrong. Waiting.')
@@ -348,9 +350,11 @@ def create_thumbnail(manager, file_name, oer_id):
     os.remove(path_to_preview)
     os.remove(TEMPPATH + file_name)
 
+    return thumb_file_name
 
-def post_back_thumb_generation_result(url, error):
-    payload = {'url': url, 'error': error}
+
+def post_back_thumb_generation_result(url, thumb_file_name, error=None):
+    payload = {'url': url, 'thumb_file_name' : thumb_file_name, 'error': error}
     r = requests.post(API_ROOT + "ingest_thumb_generation_result/", data=json.dumps(payload))
 
 

@@ -18,6 +18,7 @@ import View.Bubblogram exposing (..)
 import Msg exposing (..)
 import Animation exposing (..)
 
+import Url.Builder
 
 {-| Render a list of OERs as cards on a grid
 -}
@@ -311,7 +312,7 @@ viewCoverImage model oer thumbFromSpritesheet =
           |> upperImage []
 
         [ singleImage ] ->
-          singleImage
+          thumbUrlAlt singleImage
           |> upperImage []
 
         firstImage :: otherImages ->
@@ -322,11 +323,11 @@ viewCoverImage model oer thumbFromSpritesheet =
 
               currentImageUrl =
                 oer.images
-                |> selectByIndex imageIndex firstImage
+                |> selectByIndex imageIndex (thumbUrlAlt firstImage)
 
               nextImageUrl =
                 oer.images
-                |> selectByIndex (imageIndex+1) firstImage
+                |> selectByIndex (imageIndex+1) (thumbUrlAlt firstImage)
 
               imageCounter txt =
                 txt
@@ -371,6 +372,11 @@ spritesheetUrl oer =
 thumbUrl : Oer -> String
 thumbUrl oer =
   "http://145.14.12.115/files/thumbs/tn_"++(String.fromInt oer.id)++"_332x175.jpg"
+
+
+thumbUrlAlt : String -> String
+thumbUrlAlt filename = 
+  Url.Builder.relative [ "files/thumbs", filename ] []
 
 
 viewOverviewTypeMenu : Model -> Element Msg

@@ -104,8 +104,34 @@ type alias Model =
   , timeWhenSessionLoaded : Posix -- wait a few seconds before logging UI events
   -- deactivated code
   , isExplainerEnabled : Bool
+  , playlist : Maybe Playlist
+  , playlistPublishForm : PublishPlaylistForm -- records with playlist and is published boolean flag
+  , playlistPublishFormSubmitted : Bool -- show a loading spinner while playlist is published
+  , userPlaylists : Maybe (List Playlist) -- holds a list of user playlists fetched at page load
+  , playlistCreateForm : CreatePlaylistForm -- record with playlist and is saved boolean flag
+  , playlistCreateFormSubmitted : Bool -- show a loading spinner while playlist is created
+  , licenseTypes : List LicenseType
+  , searchIsPlaylist : Bool -- flag to identify if searching for a playlist
+  , publishedPlaylistId : Maybe String
+  , publishedPlaylist : Maybe Playlist
+  , playlistState : Maybe PlaylistState
+  , userNotesForOer : List Note
+  , editUserNoteForOerInPlace : Maybe Note
+  , promptedDeletePlaylist : Bool
+  , openedOerFromPlaylist : Bool
+  , editingOerTitleInPlaylist : Bool -- flag to identify if user is editing the title specific to a playlist
+  , editingOerDescriptionInPlaylist : Bool -- flag to identify if user is editing the description specific to a playlist
+  , editingOerPlaylistItem : PlaylistItem
+  , searchTotalPages : Int -- to track number of pages available from a search result
+  , currentPageForSearch : Int -- to keep track of current page of search results shown
   }
 
+{-| We get the first sentence from the Wikipedia article
+-}
+type PlaylistState
+  = PlaylistInfo
+  | PlaylistShare
+  | PlaylistClone
 
 {-| We get the first sentence from the Wikipedia article
 -}
@@ -254,6 +280,8 @@ type Subpage
   = Home
   | Profile
   | Search
+  | PublishPlaylist
+  | CreatePlaylist
 
 
 {-| Search for OERs
@@ -354,6 +382,9 @@ type Popup
   | ExplainerMetaInformationPopup -- Showing information about the Explainer feature itself
   | LoginHintPopup -- Nagging guest users to log or sign up
   | PopupAfterClickedOnContentFlowBar Oer Float Bool (Maybe Range) -- Offer a set of actions when the user clicks on the ContentFlowBar
+  | PlaylistPopup -- Allowing the user to toggle between playlists
+  | AddToPlaylistPopup -- Allowing the user to add an oer to the playlist
+  | SelectLicensePopup -- Allowing the user to select a license when publishing
 
 
 {-| Cascading menu containing wikipedia topics
@@ -443,14 +474,79 @@ type CourseOptimization
   = Loading -- Waiting for response from the server
   | UndoAvailable Course -- Response received. Previous state saved in order to allow the user to reject the suggestion.
 
+{-| Allowing the user to publish a playlist
+-}
+type alias PublishPlaylistForm =
+  { playlist : Playlist
+  , published : Bool
+  , originalTitle : String
+  , blueprintUrl : Maybe String
+  }
+
+{-| Allowing the user to create a playlist
+-}
+type alias CreatePlaylistForm =
+  { playlist : Playlist
+  , saved : Bool
+  , isClone : Bool
+  }
+
 {-| Playlist is a historical name for: a list of OERs with a title.
     The name Playlist doesn't fit as well as it used to in earlier versions.
+    Playlist extneded to hold more information like description and author.
     Not to be confused with Course.
     TODO reactor to rename this type
 -}
 type alias Playlist =
-  { title : String
+  { id : Maybe Int
+  , title : String
+  , description : Maybe String
+  , author : Maybe String
+  , creator : Maybe Int
+  , parent : Maybe Int
+  , is_visible : Bool
+  , license : Maybe Int
   , oerIds : List OerId
+  , url : Maybe String
+  , playlistItemData : List PlaylistItem
+  }
+
+{-| Type to temporary store playlist item details when editing
+-}
+type alias PlaylistItem = 
+ { oerId : OerId
+ , title : String
+ , description : String
+ }
+
+{-| Type of playlist to hold reference to parent playlist
+-}
+type ParentPlaylist = 
+  ParentPlaylist (Playlist)
+
+type Playlists =
+  Playlists (List Playlist)
+
+{-| License are attached to playlist types. 
+    Has a link to license information page
+-}
+type alias LicenseType = 
+  { id : Int
+  , description : String
+  , url : Maybe String
+  }
+
+{-| Notes alias to hold notes saved for Oers by user
+-}
+type alias Note = 
+  { id : Int
+  , text : String
+  }
+
+type alias OerSearchResult =
+  { oers : (List Oer)
+  , totalPages : Int
+  , currentPage : Int
   }
 
 
@@ -563,8 +659,35 @@ initialModel nav flags =
   , timeWhenSessionLoaded = initialTime
   , currentTaskName = Nothing
   , isExplainerEnabled = False
+  , playlist = Nothing
+  , playlistPublishForm = freshPlaylistPublishForm initialPlaylist
+  , playlistPublishFormSubmitted = False
+  , userPlaylists = Nothing
+  , playlistCreateForm = freshPlaylistCreateForm initialPlaylist
+  , playlistCreateFormSubmitted = False
+  , licenseTypes = initialLicenseType
+  , searchIsPlaylist = False
+  , publishedPlaylistId = Nothing
+  , publishedPlaylist = Nothing
+  , playlistState = Nothing
+  , userNotesForOer = []
+  , editUserNoteForOerInPlace = Nothing
+  , promptedDeletePlaylist = False
+  , openedOerFromPlaylist = False
+  , editingOerTitleInPlaylist = False
+  , editingOerDescriptionInPlaylist = False
+  , editingOerPlaylistItem = initialPlaylistItem
+  , searchTotalPages = 0
+  , currentPageForSearch = 1 
   }
 
+initialLicenseType : List LicenseType
+initialLicenseType = 
+  [LicenseType 0 "x5learn" (Just "")]
+
+initialPlaylist : Playlist
+initialPlaylist =
+  Playlist Nothing "New Playlist" Nothing Nothing Nothing Nothing True Nothing [] Nothing []
 
 initialUserProfile : String -> UserProfile
 initialUserProfile email =
@@ -580,6 +703,9 @@ initialCourse : Course
 initialCourse =
   Course []
 
+initialPlaylistItem : PlaylistItem
+initialPlaylistItem =
+  PlaylistItem 0 "" ""
 
 newSearch : String -> SearchState
 newSearch str =
@@ -759,6 +885,14 @@ freshUserProfileForm : UserProfile -> UserProfileForm
 freshUserProfileForm userProfile =
   { userProfile = userProfile, saved = False }
 
+freshPlaylistPublishForm : Playlist -> PublishPlaylistForm
+freshPlaylistPublishForm playlist = 
+  { playlist = playlist, published = False, originalTitle = "", blueprintUrl = Nothing }
+
+freshPlaylistCreateForm : Playlist -> CreatePlaylistForm
+freshPlaylistCreateForm playlist = 
+  { playlist = playlist, saved = False, isClone = False }
+
 
 {-| Get all available chunks for a particular OER
 -}
@@ -915,6 +1049,12 @@ signupPath =
 
 logoutPath =
   "/logout"
+
+publishPlaylistPath =
+  "/publish_playlist"
+
+createPlaylistPath =
+  "/create_playlist"
 
 
 {-| Takes a getter function (such as .price) and a collection (such as cars)

@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist, requestAddToPlaylist, requestSavePlaylist, requestDeletePlaylist, requestLoadLicenseTypes, requestPublishPlaylist, requestFetchPublishedPlaylist, requestSaveNote, requestFetchNotesForOer, requestRemoveNote, requestUpdateNote, requestUpdatePlaylistItem)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -35,11 +35,11 @@ requestSession =
 
 {-| Fetch OER search results from the backend
 -}
-searchOers : String -> Cmd Msg
-searchOers searchText =
+searchOers : String -> Int -> Cmd Msg
+searchOers searchText page =
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText ]
-    , expect = Http.expectJson RequestOerSearch (list oerDecoder)
+    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText, Url.Builder.int "page" page ]
+    , expect = Http.expectJson RequestOerSearch oerSearchResultDecoder
     }
 
 
@@ -156,18 +156,160 @@ requestVideoUsages =
 
 {-| Fetch data regarding which parts of videos the user has watched
 -}
-requestCourseOptimization : Course -> Cmd Msg
-requestCourseOptimization course =
+requestCourseOptimization : Course -> Playlist -> Cmd Msg
+requestCourseOptimization course playlist =
   let
       oerIds =
         course.items |> List.map .oerId
   in
       Http.post
-        { url = Url.Builder.absolute [ apiRoot, "course_optimization/" ] []
-        , body = Http.jsonBody <| Encode.object [ ("oerIds", (Encode.list Encode.int) oerIds) ]
+        { url = Url.Builder.absolute [ apiRoot, "course_optimization/" ++ playlist.title ] [ ]
+        , body = Http.jsonBody <| Encode.object [ ("oerIds", Encode.list Encode.int oerIds) ]
         , expect = Http.expectJson RequestCourseOptimization (list int)
         }
 
+
+{-| Fetch user playlist data
+-}
+requestLoadUserPlaylists : Cmd Msg
+requestLoadUserPlaylists =
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "playlist/" ] [ Url.Builder.string "mode" "temp_playlists_only" ]
+    , expect = Http.expectJson RequestLoadUserPlaylists (list playlistDecoder)
+    }
+
+{-| Persist the newly created playlist
+-}
+requestCreatePlaylist : Playlist -> Cmd Msg
+requestCreatePlaylist playlist =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "playlist/" ] []
+    , body = Http.jsonBody <| playlistEncoder playlist
+    , expect = Http.expectString RequestCreatePlaylist
+    }
+
+{-| Persist oer in playlist
+-}
+requestAddToPlaylist : Playlist -> Oer -> Cmd Msg
+requestAddToPlaylist playlist oer =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "playlist/" ++ playlist.title ] []
+    , body = Http.jsonBody <| Encode.object [ ("oer_id", Encode.int oer.id ) ]
+    , expect = Http.expectString RequestAddToPlaylist
+    }
+
+
+{-| Persist playlist in database
+-}
+requestSavePlaylist : Playlist -> Cmd Msg
+requestSavePlaylist playlist =
+  Http.request
+    { method = "PUT"
+    , timeout = Nothing
+    , tracker = Nothing
+    , headers = []
+    , url = Url.Builder.absolute [ apiRoot, "playlist/" ++ playlist.title ] []
+    , body = Http.jsonBody <| playlistEncoder playlist
+    , expect = Http.expectString RequestSavePlaylist
+    }
+
+requestDeletePlaylist : Playlist -> Cmd Msg
+requestDeletePlaylist playlist =
+  Http.request
+    { method = "DELETE"
+    , timeout = Nothing
+    , tracker = Nothing
+    , headers = []
+    , url = Url.Builder.absolute [ apiRoot, "playlist/" ++ playlist.title ] []
+    , body = Http.jsonBody <| playlistEncoder playlist
+    , expect = Http.expectString RequestDeletePlaylist
+    }
+
+requestLoadLicenseTypes : Cmd Msg
+requestLoadLicenseTypes = 
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "license/" ] []
+    , expect = Http.expectJson RequestLoadLicenseTypes (list licenseTypeDecoder)
+    }
+
+{-| publish a temporary playlist
+-}
+requestPublishPlaylist : PublishPlaylistForm -> Cmd Msg
+requestPublishPlaylist publishPlaylistForm = 
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "playlist/" ] []
+    , body = Http.jsonBody <| publishPlaylistEncoder publishPlaylistForm
+    , expect = Http.expectString RequestPublishPlaylist
+    }
+
+{-| fetch a published playlist
+-}
+requestFetchPublishedPlaylist : String -> Cmd Msg
+requestFetchPublishedPlaylist playlistId =
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "playlist/" ++ playlistId ] []
+    , expect = Http.expectJson RequestFetchPublishedPlaylist playlistDecoder
+    }  
+
+
+{-| save a user note attached to a oer
+-}
+requestSaveNote : OerId -> String -> Cmd Msg
+requestSaveNote oerId text =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "note/" ] []
+    , body = Http.jsonBody <| Encode.object [ ("oer_id", Encode.int oerId), ("text", Encode.string text) ]
+    , expect = Http.expectString RequestSaveNote
+    }
+
+{-| fetch notes of a user given a oer id
+-}
+requestFetchNotesForOer : OerId -> Cmd Msg
+requestFetchNotesForOer oerId =
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "note/" ] [ Url.Builder.int "oer_id" oerId, Url.Builder.string "sort" "asc" ]
+    , expect = Http.expectJson RequestFetchNotesForOer (list noteDecoder)
+    }  
+
+{-| delete a note attached to an oer
+-}
+requestRemoveNote : Int -> Cmd Msg
+requestRemoveNote noteId = 
+  Http.request
+    { method = "DELETE"
+    , timeout = Nothing
+    , tracker = Nothing
+    , headers = []
+    , url = Url.Builder.absolute [ apiRoot, "note/" ++ String.fromInt noteId ] []
+    , body = Http.jsonBody <| Encode.object []
+    , expect = Http.expectString RequestRemoveNote
+    }
+
+{-| update a note attached to an oer
+-}
+requestUpdateNote : Note -> Cmd Msg
+requestUpdateNote note = 
+  Http.request
+    { method = "PUT"
+    , timeout = Nothing
+    , tracker = Nothing
+    , headers = []
+    , url = Url.Builder.absolute [ apiRoot, "note/" ++ String.fromInt note.id ] [ Url.Builder.string "text" note.text ]
+    , body = Http.jsonBody <| Encode.object []
+    , expect = Http.expectString RequestUpdateNote
+    }
+
+requestUpdatePlaylistItem : String -> PlaylistItem -> Cmd Msg
+requestUpdatePlaylistItem playlistTitle playlistItem = 
+  Http.request
+    { method = "PUT"
+    , timeout = Nothing
+    , tracker = Nothing
+    , headers = []
+    , url = Url.Builder.absolute [ apiRoot, "playlist/" ++ playlistTitle ] []
+    , body = Http.jsonBody <| Encode.object [ ( "playlist_item_data", playlistItemEncoder playlistItem) ] 
+    , expect = Http.expectString RequestUpdatePlaylistItem
+    }
 
 {-| JSON decoders and encoders for custom types are defined below.
 -}
@@ -189,7 +331,7 @@ courseItemEncoder item =
     , ("comment", Encode.string item.comment)
     ]
 
-
+  
 rangeEncoder : Range -> Encode.Value
 rangeEncoder range =
   Encode.object
@@ -335,3 +477,87 @@ entityDecoder =
     (field "id" string)
     (field "title" string)
     (field "url" string)
+
+playlistDecoder : Decoder Playlist
+playlistDecoder = 
+  Decode.succeed Playlist
+  |> andMap (Decode.maybe (Decode.field "id" Decode.int))
+  |> andMap (field "title" string)
+  |> andMap (Decode.maybe (Decode.field "description" Decode.string))
+  |> andMap (Decode.maybe (Decode.field "author" Decode.string))
+  |> andMap (Decode.maybe (Decode.field "creator" Decode.int))
+  |> andMap (Decode.maybe (Decode.field "parent" Decode.int))
+  |> andMap (Decode.field "is_visible" Decode.bool)
+  |> andMap (Decode.maybe (Decode.field "license" Decode.int))
+  |> andMap (field "oerIds" (list Decode.int))
+  |> andMap (Decode.maybe (Decode.field "url" Decode.string))
+  |> andMap (field "playlistItemData" (list playlistItemDecoder))
+
+
+playlistEncoder : Playlist -> Encode.Value
+playlistEncoder playlist =
+  Encode.object
+    [ ("id", Encode.int (Maybe.withDefault 0 playlist.id))
+    , ("title", Encode.string playlist.title)
+    , ("description", Encode.string (Maybe.withDefault "" playlist.description))
+    , ("author", Encode.string (Maybe.withDefault "" playlist.author))
+    , ("creator", Encode.int (Maybe.withDefault 0 playlist.creator))
+    , ("parent", Encode.int (Maybe.withDefault 0 playlist.parent))
+    , ("is_visible", Encode.bool True)
+    , ("license", Encode.int (Maybe.withDefault 1 playlist.license))
+    , ("is_temp", Encode.bool True)
+    , ("playlist_items", Encode.list Encode.int playlist.oerIds)
+    , ("playlist_item_data", Encode.list playlistItemEncoder playlist.playlistItemData)
+    ]
+
+playlistItemEncoder : PlaylistItem -> Encode.Value
+playlistItemEncoder playlistItem =
+  Encode.object
+    [ ("oerId", Encode.int playlistItem.oerId)
+    , ("title", Encode.string playlistItem.title)
+    , ("description", Encode.string playlistItem.description)
+    ]
+
+playlistItemDecoder : Decoder PlaylistItem
+playlistItemDecoder = 
+  map3 PlaylistItem
+    (field "oerId" int)
+    (field "title" string)
+    (field "description" string)
+
+licenseTypeDecoder : Decoder LicenseType
+licenseTypeDecoder = 
+  map3 LicenseType
+    (field "id" int)
+    (field "description" string)
+    (field "url" (maybe string))
+
+publishPlaylistEncoder : PublishPlaylistForm -> Encode.Value
+publishPlaylistEncoder publishPlaylistForm =
+  Encode.object
+    [ ("id", Encode.int (Maybe.withDefault 0 publishPlaylistForm.playlist.id))
+    , ("title", Encode.string publishPlaylistForm.playlist.title)
+    , ("description", Encode.string (Maybe.withDefault "" publishPlaylistForm.playlist.description))
+    , ("author", Encode.string (Maybe.withDefault "" publishPlaylistForm.playlist.author))
+    , ("creator", Encode.int (Maybe.withDefault 0 publishPlaylistForm.playlist.creator))
+    , ("parent", Encode.int (Maybe.withDefault 0 publishPlaylistForm.playlist.parent))
+    , ("is_visible", Encode.bool True)
+    , ("license", Encode.int (Maybe.withDefault 1 publishPlaylistForm.playlist.license))
+    , ("is_temp", Encode.bool False)
+    , ("playlist_items", Encode.list Encode.int publishPlaylistForm.playlist.oerIds)
+    , ("temp_title", Encode.string publishPlaylistForm.originalTitle)
+    ]
+
+noteDecoder : Decoder Note
+noteDecoder = 
+  map2 Note
+    (field "id" int)
+    (field "text" string)
+
+
+oerSearchResultDecoder : Decoder OerSearchResult
+oerSearchResultDecoder = 
+  Decode.succeed OerSearchResult
+  |> andMap (field "oers" (list oerDecoder))
+  |> andMap (field "total_pages" int)
+  |> andMap (field "current_page" int)

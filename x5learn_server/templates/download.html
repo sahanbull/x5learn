@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <meta name="keywords" content="x5learn x5gon">
+    <meta name="description" content="X5Learn - Open Educational Resources">
+    <meta name="author" content="x5gon.org">
+    <title>X5Learn Playlist Download</title>
+    <link rel="stylesheet" href="/static/dist/css/app.min.css">
+    <link href="https://fonts.googleapis.com/css?family=IBM+Plex+Serif:200,300,400,700&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700&amp;display=swap" rel="stylesheet">
+    <link rel="icon" href="/static/dist/favicon.ico">
+  </head>
+
+  <body>
+
+    <h2 style="text-align: center;">Downloading Playlist...</h2>
+
+  </body>
+  <script type="text/javascript">
+    var jsonEscapedString="{{ playlist_blueprint }}";
+    var jsonBlocks = jsonEscapedString.split("&#34;");
+    jsonBlocks.pop();
+    jsonBlocks.shift();
+    var jsonString = jsonBlocks.join('"');
+    var json = JSON.parse(jsonString); 
+
+    function sendXHRRequest() {
+      var xhttp = new XMLHttpRequest();
+      xhttp.onload = function() {
+        if (this.readyState == 4 && this.status == 200) {
+          var downloadUrl = URL.createObjectURL(xhttp.response);
+          var a = document.createElement("a");
+          document.body.appendChild(a);
+          a.style = "display: none";
+          a.href = downloadUrl;
+          a.download = ("{{playlist_name}}-".split(" ").join("")).toLowerCase() + "playlist-"+ new Date().getTime().toString() +".mbz";
+          a.click();
+          console.log(xhttp.getAllResponseHeaders());
+        }
+      };
+
+      var theUrl = "http://wp3.x5gon.org/others/moodle/playlist2mbz";
+      xhttp.open("POST", theUrl);
+      xhttp.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+      xhttp.responseType = 'blob';
+      xhttp.send(JSON.stringify(json));
+    }
+
+    sendXHRRequest();
+
+  </script>
+</html>

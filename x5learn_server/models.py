@@ -50,6 +50,7 @@ class User(Base):
     id = Column(Integer(), primary_key=True)
     frontend_state = Column(JSON())
     user_login_id = Column(Integer, ForeignKey('user_login.id'))
+    is_content_creator = Column(Boolean())
 
 
 class Oer(Base):
@@ -58,10 +59,12 @@ class Oer(Base):
     id = Column(Integer(), primary_key=True)
     url = Column(Text(), nullable=False)
     data = Column(JSON())
+    data_type = Column(String(20), nullable=True)
 
-    def __init__(self, url, data):
+    def __init__(self, url, data, data_type=None):
         self.url = url
         self.data = data
+        self.data_type = data_type
 
     def data_and_id(self):
         # Ensure that image and date fields have the correct types.
@@ -274,6 +277,7 @@ class UiLogBatch(Base):
         print()
         return events
 
+
 class Note(Base):
     __tablename__ = 'note'
     __table_args__ = {'extend_existing': True}
@@ -304,6 +308,118 @@ class Note(Base):
             'user_login_id': self.user_login_id,
             'is_deactivated': self.is_deactivated
         }
+
+
+class License(Base):
+    __tablename__ = 'x5_oer_repo.license'
+    __table_args__ = {'extend_existing': True}
+    id = Column(Integer(), primary_key=True)
+    description = Column(Text())
+    url = Column(String(255))
+
+    def __init__(self, description, url):
+        self.description = description
+        self.url = url
+
+    @property
+    def serialize(self):
+        """Return object data in easily serializable format"""
+        return {
+            'id': self.id,
+            'description': self.description,
+            'url': self.url
+        }
+
+
+class Playlist(Base):
+    __tablename__ = 'x5_oer_repo.playlist'
+    __table_args__ = {'extend_existing': True}
+    id = Column(Integer(), primary_key=True)
+    title = Column(String(255))
+    description = Column(Text())
+    author = Column(String(255))
+    blueprint = Column(JSON())
+    creator = Column(Integer, ForeignKey('user_login.id'))
+    created_at = Column(DateTime(), default=datetime.datetime.utcnow)
+    parent = Column(Integer, ForeignKey('x5_oer_repo.playlist.id'), nullable=True)
+    is_visible = Column(Boolean())
+    license = Column(Integer, ForeignKey('x5_oer_repo.license.id'))
+    last_updated_at = Column(DateTime())
+
+    def __init__(self, title, description, author, blueprint, creator, parent, is_visible, license):
+        self.title = title
+        self.description = description
+        self.author = author
+        self.blueprint = blueprint
+        self.creator = creator
+        self.parent = parent
+        self.is_visible = is_visible
+        self.license = license
+        self.last_updated_at = datetime.datetime.utcnow()
+
+
+    @property
+    def serialize(self):
+        """Return object data in easily serializable format"""
+        return {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'author': self.author,
+            'blueprint': self.blueprint,
+            'parent': self.parent,
+            'created_at': dump_datetime(self.created_at),
+            'last_updated_at': dump_datetime(self.last_updated_at),
+            'creator': self.creator,
+            'is_visible': self.is_visible,
+            'license': self.license
+        }
+
+
+class Playlist_Item(Base):
+    __tablename__ = 'x5_oer_repo.playlist_item'
+    __table_args__ = {'extend_existing': True}
+    id = Column(Integer(), primary_key=True)
+    playlist_id = Column(Integer, ForeignKey('x5_oer_repo.playlist.id'))
+    oer_id = Column(Integer, ForeignKey('oer.id'))
+    order = Column(Integer())
+    data = Column(JSON())
+
+    def __init__(self, playlist_id, oer_id, order, data):
+        self.playlist_id = playlist_id
+        self.oer_id = oer_id
+        self.order = order
+        self.data = data
+
+
+class Temp_Playlist(Base):
+    __tablename__ = 'x5_oer_repo.temp_playlist'
+    __table_args__ = {'extend_existing': True}
+    title = Column(String(255), primary_key=True)
+    creator = Column(Integer, ForeignKey('user_login.id'), primary_key=True) 
+    data = Column(JSON())
+
+    def __init__(self, title, creator, data):
+        self.title = title
+        self.creator = creator
+        self.data = data
+
+
+class ThumbGenerationTask(Base):
+    __tablename__ = 'thumb_generation_task'
+    __table_args__ = {'extend_existing': True}
+    id = Column(Integer(), primary_key=True)
+    url = Column(String(255), unique=True, nullable=False)
+    priority = Column(Integer())
+    started = Column(DateTime())
+    error = Column(String(255))
+    data = Column(JSON())
+
+    def __init__(self, url, priority, data):
+        self.url = url
+        self.priority = priority
+        self.data = data
+
 
 # Repository pattern implemented for CRUD
 class Repository:
@@ -488,3 +604,60 @@ class DefinitionsRepository(Repository):
         """
 
         return self._db_session.query(EntityDefinition).filter(EntityDefinition.title.in_(titles)).all()
+
+
+class TempPlaylistRepository(Repository):
+
+    def get_by_title(self, title, user_login_id):
+        """gets a temporary playlist by title rather than id
+
+        Args:
+            title (str): given title for temporary playlist
+            user_login_id (int): user login id to auth delete action (Required)
+
+        Returns:
+            (object) : Tempy_Playlist
+
+        """
+
+        query_object = self._db_session.query(Temp_Playlist)
+
+        if (title is None):
+            return None
+
+        if (user_login_id is None):
+            return None
+
+        query_object = query_object.filter_by(creator=user_login_id)
+        return query_object.filter_by(title=title).one_or_none()
+
+    
+    def delete_by_title(self, title, user_login_id):
+        """delete a temporary playlist by title rather than id
+
+        Args:
+            title (str): given title for temporary playlist
+            user_login_id (int): user login id to auth delete action (Required)
+
+        Returns:
+            (Bool) : if deleted or failed
+
+        """
+
+        query_object = self._db_session.query(Temp_Playlist)
+
+        if (title is None):
+            return False
+
+        if (user_login_id is None):
+            return False
+
+        query_object = query_object.filter_by(creator=user_login_id)
+        temp_playlist = query_object.filter_by(title=title).one_or_none()
+
+        if (not temp_playlist):
+            return False
+
+        self._db_session.delete(temp_playlist)
+        self._db_session.commit()
+        return True

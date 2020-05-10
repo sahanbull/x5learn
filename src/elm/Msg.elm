@@ -30,7 +30,7 @@ type Msg
   | InspectorAnimationStop Int
   | RequestSession (Result Http.Error Session)
   | RequestVideoUsages (Result Http.Error (Dict String (List Range)))
-  | RequestOerSearch (Result Http.Error (List Oer))
+  | RequestOerSearch (Result Http.Error OerSearchResult)
   | RequestOers (Result Http.Error (List Oer))
   | RequestFeatured (Result Http.Error (List Oer))
   | RequestWikichunkEnrichments (Result Http.Error (List WikichunkEnrichment))
@@ -43,6 +43,19 @@ type Msg
   | RequestSaveCourse (Result Http.Error String)
   | RequestSaveLoggedEvents (Result Http.Error String)
   | RequestCourseOptimization (Result Http.Error (List OerId))
+  | RequestLoadUserPlaylists (Result Http.Error (List Playlist))
+  | RequestCreatePlaylist (Result Http.Error String)
+  | RequestAddToPlaylist (Result Http.Error String)
+  | RequestSavePlaylist (Result Http.Error String)
+  | RequestDeletePlaylist (Result Http.Error String)
+  | RequestLoadLicenseTypes (Result Http.Error (List LicenseType))
+  | RequestPublishPlaylist (Result Http.Error String)
+  | RequestFetchPublishedPlaylist (Result Http.Error Playlist)
+  | RequestSaveNote (Result Http.Error String)
+  | RequestFetchNotesForOer (Result Http.Error (List Note))
+  | RequestRemoveNote (Result Http.Error String)
+  | RequestUpdateNote (Result Http.Error String)
+  | RequestUpdatePlaylistItem (Result Http.Error String)
   | SetHover (Maybe OerId)
   | SetPopup Popup
   | ClosePopup
@@ -88,11 +101,39 @@ type Msg
   | ToggleDataCollectionConsent Bool
   | ClickedOnContentFlowBar Oer Float Bool
   | PressedRemoveRangeButton OerId Range
-
+  | OpenedSelectPlaylistMenu
+  | SelectedPlaylist Playlist
+  | SubmittedPublishPlaylist
+  | EditPlaylist PlaylistField String
+  | SubmittedCreatePlaylist
+  | EditNewPlaylist PlaylistField String
+  | SelectedAddToPlaylist Playlist Oer
+  | OpenedAddToPlaylistMenu
+  | SavePlaylist Playlist Course
+  | DeletePlaylist Playlist
+  | SelectedLicense LicenseType
+  | OpenedSelectLicenseMenu
+  | SetPlaylistState (Maybe PlaylistState)
+  | CancelCreatePlaylist
+  | EditNoteForOer Note
+  | RemoveNoteForOer Int
+  | ChangedTextInNote String
+  | SubmittedNoteEdit
+  | PromptDeletePlaylist Bool
+  | ClickedOnPlaylistItem Oer
+  | EditOerInPlaylist Bool String
+  | UpdatePlaylistItem String String
+  | SubmittedPlaylistItemUpdate
+  | SetSearchCurrentPage Int
 
 type UserProfileField
   = FirstName
   | LastName
+
+type PlaylistField
+  = Title
+  | Author
+  | Description
 
 
 {-| Subscribe to: incoming data from ports, time, and resizing the browser window.

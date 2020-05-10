@@ -12,46 +12,100 @@ from wikichunkifiers.lib.util import EnrichmentError
 
 import wikipedia
 
-API_ROOT = "http://x5learn.org/api/v1/"
+from preview_generator.manager import PreviewManager
+from wand.image import Image
+import wget
+
+API_ROOT = os.environ.get("FLASK_API_ROOT")
+
+THUMBPATH = os.environ.get("X5LEARN_THUMB_PATH")
+TEMPPATH = "/tmp/"
+SUPPORTED_FILE_FORMATS = ['mp4', 'mov', 'webm', 'ogv', "pdf"]
+THUMB_WIDTH = 332
+THUMB_HEIGHT = 175
 
 
 # API_ROOT = 'http://127.0.0.1:5000/api/v1/'
 
 
-def main():
-    """ Runs every 5 seconds to get the pending enrichment tasks and runs them to enrich them.
-    """
-    say('hello')
-    while (True):
-        try:
-            # get oer record of the most recent requested materials
-            r = requests.post(API_ROOT + "most_urgent_unstarted_enrichment_task/", data={})
-            # get json obj with (url, material data)
-            j = json.loads(r.text)
-            # if there is additional data in j
-            if 'data' in j:
-                oer_data = j['data']
-                url = oer_data['url']
-                enrichment_data, error = make_enrichment_data(oer_data)
-                post_back_wikichunks(url, enrichment_data, error if error is None else error[:255])
-                if error is None:
-                    print('NO ERRORS')
+def main(args):
+    if args["mode"] == "wiki":
+        """ Runs every 5 seconds to get the pending enrichment tasks and runs them to enrich them.
+        """
+        say('hello')
+        while (True):
+            try:
+                # get oer record of the most recent requested materials
+                r = requests.post(API_ROOT + "most_urgent_unstarted_enrichment_task/", data={})
+                # get json obj with (url, material data)
+                j = json.loads(r.text)
+                # if there is additional data in j
+                if 'data' in j:
+                    oer_data = j['data']
+                    url = oer_data['url']
+                    enrichment_data, error = make_enrichment_data(oer_data)
+                    post_back_wikichunks(url, enrichment_data, error if error is None else error[:255])
+                    if error is None:
+                        print('NO ERRORS')
+                    else:
+                        print('ERROR:', error)
+                elif 'info' in j:
+                    say(j['info'])
+                    sleep(2)
                 else:
-                    print('ERROR:', error)
-            elif 'info' in j:
-                say(j['info'])
-                sleep(2)
-            else:
-                say('Response is missing essential fields')
-                sleep(60)
-        except requests.exceptions.ConnectionError:
-            say('ConnectionError caught - waiting for main app to respond.')
-            sleep(5)
-        except Exception as err:
-            print("\nError : {0}".format(err))
-            say('Something went wrong. Waiting.')
-            sleep(5)
+                    say('Response is missing essential fields')
+                    sleep(60)
+            except requests.exceptions.ConnectionError:
+                say('ConnectionError caught - waiting for main app to respond.')
+                sleep(5)
+            except Exception as err:
+                print("\nError : {0}".format(err))
+                say('Something went wrong. Waiting.')
+                sleep(5)
+    elif args["mode"] == "thumb":
+        """ Runs every 5 seconds to get the pending thumbnail generation tasks and generates thumbnails.
+        """
+        say('hello')
+        while (True):
+            try:
+                # create directories
+                create_directories()
 
+                # get task of the most recent requested materials
+                task = get_thumb_generation_task()
+                if 'url' in task:
+                    
+                    # get file details
+                    file_name, file_extension = extract_file_name_and_type(task['url'])
+
+                    # download file in a temporary folder for thumb generation
+                    wget.download(task['url'], out=TEMPPATH)
+
+                    # init preview manager
+                    manager = PreviewManager(THUMBPATH, create_folder=True)
+
+                    if file_extension in SUPPORTED_FILE_FORMATS:
+                        create_thumbnail(manager, file_name, task['oer_id'])
+
+                elif 'info' in task:
+                    say(task['info'])
+                    sleep(60)
+                else:
+                    say('Response is missing essential fields')
+                    sleep(60)
+            except requests.exceptions.ConnectionError:
+                say('ConnectionError caught - waiting for main app to respond.')
+                sleep(5)
+            except Exception as err:
+                error_string = str(err)
+                if task is not None and 'url' in task:
+                    post_back_thumb_generation_result(task['url'], error_string[:255])
+
+                print("\nError : {0}".format(err))
+                say('Something went wrong. Waiting.')
+                sleep(5)    
+    else:
+        print("Invalid argument for mode")
 
 def say(text):
     print('X5Learn Enrichment Worker says:', text)
@@ -245,5 +299,66 @@ def unique_list_of_lists(k):  # https://stackoverflow.com/a/2213973/2237986
     return list(k for k, _ in itertools.groupby(k))
 
 
+def get_thumb_generation_task():
+    r = requests.post(API_ROOT + "most_urgent_unstarted_thumb_generation_task/", data={})
+    # get json obj with (url, material data)
+    return json.loads(r.text)
+
+
+def extract_file_name_and_type(url):
+    file_name = url[url.rfind("/")+1:]
+    file_extension = file_name[file_name.rfind(".")+1:]
+    return file_name, file_extension
+
+
+def create_directories():
+    if not os.path.exists(THUMBPATH):
+        os.mkdir(THUMBPATH)
+
+    if not os.path.exists(TEMPPATH):
+        os.mkdir(TEMPPATH)
+
+
+def create_thumbnail(manager, file_name, oer_id):
+
+    # create a thumb large enough to support cropping if needed
+    path_to_preview = manager.get_jpeg_preview(
+        TEMPPATH + file_name,
+        height=800
+    )
+
+    # fill thumbnail based on width and crop if required
+    with Image(filename=path_to_preview) as img:
+        img_width = img.width
+        img_height = img.height
+
+        asepect_ratio = img_height / img_width
+        height_based_on_aspect_ratio = round(332 * asepect_ratio)
+
+        img.resize(332, height_based_on_aspect_ratio)
+
+        #cropping image from top
+        img.crop(0, 0, width=332, height=175)
+
+        thumb_file_name = "tn_" + str(oer_id) + "_" + "332x175.jpg"
+        img.save(filename=THUMBPATH + thumb_file_name)
+
+
+    # removing temp files
+    os.remove(path_to_preview)
+    os.remove(TEMPPATH + file_name)
+
+
+def post_back_thumb_generation_result(url, error):
+    payload = {'url': url, 'error': error}
+    r = requests.post(API_ROOT + "ingest_thumb_generation_result/", data=json.dumps(payload))
+
+
 if __name__ == '__main__':
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Proceess text to extract the most important bits')
+    parser.add_argument('--mode', required=True, type=str, help='Mode should either be "wiki" or "thumb"')
+    args = vars(parser.parse_args())
+
+    main(args)

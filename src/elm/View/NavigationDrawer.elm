@@ -5,7 +5,7 @@ import Set
 import Json.Decode as Decode
 
 import Element exposing (..)
-import Element.Input as Input exposing (button)
+import Element.Input as Input exposing (button, text)
 import Element.Background as Background
 import Element.Border as Border
 import Element.Font as Font
@@ -45,21 +45,111 @@ withNavigationDrawer model (pageContent, inspector) =
         if isLabStudy1 model then
           [ viewContentFlowToggle model
           , taskButtons model
-          , viewCourse model
+          , viewCourse model,
+          playlistActionButtons model
           ]
           |> column [ spacing 40, width fill ]
         else
-          [ viewCourse model
-          ]
-          |> column [ width fill, spacing 8 ]
+          case model.playlist of
+              Nothing ->
+                [ viewCourse model]
+                |> column [ width fill, spacing 8 ]
+          
+              Just playist ->
+                [ viewCourse model
+                , playlistActionButtons model
+                ]
+                |> column [ width fill, spacing 8 ]
+
+      selectPlaylistButton = 
+        if isLoggedIn model then
+          let
+            buttonText = 
+              case model.playlist of
+                Nothing ->
+                  "Select Playlist ▾"
+            
+                Just playlist ->
+                  playlist.title ++ " ▾"
+              
+            newOption =
+              link [ borderBottom 1, Border.color greyDivider, Font.size 14, bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] { url = "/create_playlist", label = italicText "Create New Playlist" }
+
+            option playlist =
+              actionButtonWithoutIcon [] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] playlist.title (Just <| SelectedPlaylist playlist)
+
+            options : List (Attribute Msg)
+            options =
+              case model.popup of
+                Just PlaylistPopup ->
+                  [ newOption ] ++ List.map  (\x -> option x) (Maybe.withDefault [] model.userPlaylists)
+                  |> menuColumn [ width fill]
+                  |> below
+                  |> List.singleton
+
+                _ ->
+                  []
+
+            attrs =
+              [ width fill, alignLeft, htmlClass "PreventClosingThePopupOnClick", buttonRounding ] ++ options
+          in
+            actionButtonWithoutIcon [ width fill, centerX, paddingXY 12 10, htmlClass "textOverflowControl" ] [ width fill, buttonRounding, Border.width 1, Border.color greyDivider ] buttonText (Just OpenedSelectPlaylistMenu)
+            |> el attrs
+        else
+          guestCallToSignup "In order to create and share playlists"
+          |> el [ width fill, paddingXY 15 12, Background.color <| rgb 1 0.85 0.6 ]
+          |> el []
+
 
       drawer =
-        [ if isLabStudy1 model then none else model.searchInputTyping |> viewSearchWidget model fill "Search" |> explainify model explanationForSearchField
-        , navButtons
-        ]
-        |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 12, spacing 30, whiteBackground ]
-        |> el [ height fill, width (px navigationDrawerWidth), paddingTop pageHeaderHeight ]
-        |> inFront
+        if model.promptedDeletePlaylist == True then
+          let
+            topRow =
+              case model.playlist of
+                Nothing ->
+                  "Are you sure you want to delete the temporary playlist titled - Not Found ?" |> bodyWrap []
+
+                Just playlist ->
+                  "Are you sure you want to delete the temporary playlist titled - "++ playlist.title ++" ?" |> bodyWrap []
+
+            yesButton =
+              case model.playlist of
+                Nothing ->
+                  Element.text "Playlist not found"
+
+                Just playlist ->
+                  button [ width fill, paddingXY 5 3, buttonRounding, Background.color red ] { onPress = Just <| DeletePlaylist playlist, label = "Yes" |> captionNowrap [ width fill, whiteText, Font.center ] }
+
+            noButton =
+              button [ width fill, paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| PromptDeletePlaylist False, label = "No" |> captionNowrap [ width fill, whiteText, Font.center ] }
+
+            buttonRow =
+              [ yesButton
+              , noButton
+              ]
+              |> row [ width (fillPortion 2), spacing 10 ]
+
+            miniCard =
+              [ topRow
+              , buttonRow
+              ]
+              |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
+
+          in
+          [ if isLabStudy1 model then none else model.searchInputTyping |> viewSearchWidget model fill "Search" |> explainify model explanationForSearchField
+          , miniCard
+          ]
+          |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 12, spacing 30, whiteBackground ]
+          |> el [ height fill, width (px navigationDrawerWidth), paddingTop pageHeaderHeight ]
+          |> inFront
+        else
+          [ if isLabStudy1 model then none else model.searchInputTyping |> viewSearchWidget model fill "Search" |> explainify model explanationForSearchField
+          , selectPlaylistButton
+          , navButtons
+          ]
+          |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 12, spacing 30, whiteBackground ]
+          |> el [ height fill, width (px navigationDrawerWidth), paddingTop pageHeaderHeight ]
+          |> inFront
 
       page =
         [ none |> el [ width (px navigationDrawerWidth) ]
@@ -67,9 +157,37 @@ withNavigationDrawer model (pageContent, inspector) =
         ]
         |> row [ width fill, height fill ]
   in
-      (page, inspector ++ [ drawer ])
+    (page, inspector ++ [ drawer ])
 
+playlistActionButtons : Model -> Element Msg
+playlistActionButtons model =
+  case model.playlist of
+      Nothing ->
+          none
+  
+      Just playlist ->
+        if List.length playlist.oerIds > 0 then
+          let
+            firstRow = 
+              [ link [ whiteText, paddingXY 12 10, width fill, centerX,  Background.color primaryGreen, buttonRounding, Font.center ] { url = "/publish_playlist", label = Element.text "Publish" }
+              , button [ whiteText, paddingXY 12 10, width fill, centerX,  Background.color red, buttonRounding, Font.center ] { label = Element.text "Delete", onPress = Just <| PromptDeletePlaylist True }
+              ]
+              |> row [ spacing 10,  width (fillPortion 2)]
 
+          in
+            [  firstRow ]
+            |> column [ paddingTop 20, width fill ]
+        else
+          let
+            firstRow = 
+              [ button [ whiteText, paddingXY 12 10, width fill, centerX, Background.color red, buttonRounding ] { label = Element.text "Delete", onPress = Just <| PromptDeletePlaylist True }
+              ]
+              |> row [ spacing 10,  width fill]
+          in
+            [  firstRow ]
+            |> column [ paddingTop 20, width fill ]
+  
+  
 taskButtons : Model -> Element Msg
 taskButtons model =
   let

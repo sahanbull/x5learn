@@ -38,7 +38,7 @@ viewPageHeader model =
                 opacity =
                   if time < snackbarDuration - 1500 then 1 else 0
             in
-                [ text |> bodyWrap [ htmlClass "Snackbar", alpha opacity, pointerEventsNone, Background.color <| grey 50, paddingXY 25 15, centerX, Font.size 13, greyText, Border.rounded 4, Font.color <| greyMedium, centerX, moveDown <| toFloat <| model.windowHeight - pageHeaderHeight - 50 ] |> el [ paddingLeft <| navigationDrawerWidth, centerX ]  |> below ]
+                [ text |> bodyWrap [ htmlClass "Snackbar", alpha opacity, pointerEventsNone, Background.color oxfordBlue, paddingXY 25 15, centerX, Font.size 16, whiteText, Border.rounded 4, Font.color white, centerX, moveDown <| toFloat <| model.windowHeight - pageHeaderHeight - 50 ] |> el [ paddingLeft <| navigationDrawerWidth, centerX ]  |> below ]
 
       attrs =
         [ width fill
@@ -69,7 +69,7 @@ viewPageHeader model =
                       case model.popup of
                         Just LoginHintPopup ->
                           [ guestCallToSignup "To create your ideal personal learning pathway" ]
-                          |> menuColumn [ padding 15, moveDown 10, width <| px 176 ]
+                          |> menuColumn [ padding 15, moveDown 10, width <| px 176, Background.color warningOrange ]
                           |> below
                           |> List.singleton
 
@@ -147,7 +147,7 @@ viewExplainerToggle model =
           _ ->
             []
   in
-      [ "Transparent AI" |> bodyNoWrap ([ width fill ] ++ (if enabled then [ Font.color magenta ] else []))
+      [ "Unveil the AI" |> bodyNoWrap ([ width fill ] ++ (if enabled then [ Font.color magenta ] else []))
       , viewToggleIndicator enabled (if enabled then "MagentaBackground" else "") |> el [ paddingRight 10 ]
       ]
       |> row ([ spacing 10, onClick ToggleExplainer, htmlClass "CursorPointer PreventClosingThePopupOnClick" ] ++ popup)

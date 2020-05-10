@@ -2,7 +2,7 @@
 import sqlalchemy
 
 from x5learn_server.db.database import db_session
-from x5learn_server.models import Oer, WikichunkEnrichment, WikichunkEnrichmentTask
+from x5learn_server.models import Oer, WikichunkEnrichment, WikichunkEnrichmentTask, ThumbGenerationTask
 
 CURRENT_ENRICHMENT_VERSION = 1
 
@@ -47,3 +47,21 @@ def save_enrichment(url, data):
         enrichment.data = data
         enrichment.version = CURRENT_ENRICHMENT_VERSION
     db_session.commit()
+
+
+def push_thumbnail_generation_task(oer, priority):
+    try:
+        # check if the url is currently put in the task queue
+        task = ThumbGenerationTask.query.filter_by(url=oer.url).first()
+        # if not a task, create task in the task queue
+        if task is None:
+            task = ThumbGenerationTask(oer.url, priority, {'oer_id': oer.id})
+            db_session.add(task)
+        else:
+            # else increase priority
+            task.priority += priority
+
+        db_session.commit()
+    except sqlalchemy.orm.exc.StaleDataError:
+        print(
+            'sqlalchemy.orm.exc.StaleDataError caught and ignored.')

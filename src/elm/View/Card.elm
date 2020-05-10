@@ -74,8 +74,11 @@ viewOerGrid model playlist =
             overviewTypeMenu =
               if isLabStudy1 model then [] else [ viewOverviewTypeMenu model |> inFront ]
 
+            playlistButtons =
+              if model.searchIsPlaylist then [ viewPlaylistButtons model |> inFront ] else []
+
             rawAttributes =
-              [ height (rowHeight * nrows + 100 |> px), spacing 20, padding 20, width fill ] ++ cards ++ overviewTypeMenu
+              [ height (rowHeight * nrows + 100 |> px), spacing 20, padding 20, width fill ] ++ cards ++ overviewTypeMenu ++ playlistButtons
 
             attrs =
               if model.popup == Just OverviewTypePopup then
@@ -378,6 +381,9 @@ viewOverviewTypeMenu model =
 
       options : List (Attribute Msg)
       options =
+        let
+          menuDraw = if model.searchIsPlaylist then below else onLeft
+        in
         case model.popup of
           Just OverviewTypePopup ->
             [ option ThumbnailOverview
@@ -386,7 +392,7 @@ viewOverviewTypeMenu model =
             , option <| BubblogramOverview TopicSwimlanes
             ]
             |> menuColumn []
-            |> onLeft
+            |> menuDraw
             |> List.singleton
 
           _ ->
@@ -398,6 +404,35 @@ viewOverviewTypeMenu model =
       -- actionButtonWithIcon [ whiteText, paddingXY 12 10 ] [] IconLeft 0.9 "format_list_white" "View ▾" (Just OpenedOverviewTypeMenu)
       actionButtonWithoutIcon [ whiteText, paddingXY 12 10 ] [] "View ▾" (Just OpenedOverviewTypeMenu)
       |> el attrs
+
+
+viewPlaylistButtons : Model -> Element Msg
+viewPlaylistButtons model =
+  let
+    downloadButton =
+      if isLoggedIn model then
+        newTabLink [ bigButtonPadding, whiteText, Font.center, width fill, Font.size 14 ] { url = "/playlist/download/" ++ Maybe.withDefault "" model.publishedPlaylistId, label = Element.text "Download" }
+      else
+        actionButtonWithoutIcon [whiteText] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] "Download" (Just <| SetPlaylistState (Just PlaylistClone))
+
+    cloneButton =
+      actionButtonWithoutIcon [whiteText] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] "Clone" (Just <| SetPlaylistState (Just PlaylistClone))
+
+    shareButton =
+      actionButtonWithoutIcon [whiteText] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] "Share" (Just <| SetPlaylistState (Just PlaylistShare))
+
+    infoButton =
+      actionButtonWithoutIcon [whiteText] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] "Info" (Just <| SetPlaylistState (Just PlaylistInfo))
+
+    attrs =
+        [ alignRight, moveLeft 210, moveDown 30, spacing 6 ]
+  in
+    [ infoButton |> el [ Border.width 2, Border.color white, buttonRounding]
+    , shareButton |> el [ Border.width 2, Border.color white, buttonRounding]
+    , cloneButton |> el [ Border.width 2, Border.color white, buttonRounding]
+    , downloadButton |> el [ Border.width 2, Border.color white, buttonRounding]
+    ]
+    |> row attrs
 
 
 explanationForOerCard : Explanation

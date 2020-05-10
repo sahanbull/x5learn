@@ -238,3 +238,40 @@ a {
   background: rgb(153,159,178);
   background: radial-gradient(circle, rgba(153,159,178,1) 0%, rgba(219,221,228,1) 95%);
 }
+
+.PlaylistItemsContainer {
+  overflow-y: auto;
+  max-height: 50vh;
+}
+
+.formButton {
+  background: white;
+  border-color: rgba(186,189,182,1);
+  height: 40px;
+}
+
+.marginTop {
+  margin-top: 5px !important;
+}
+
+.blockContent {
+  display: block !important;
+}
+
+.flexWrap {
+  flex-flow: wrap !important;
+}
+
+.flexWrap > div{
+  margin-right: 5px;
+  margin-bottom: 5px;
+}
+
+.textOverflowControl > div {
+  text-overflow: ellipsis !important;
+  overflow: hidden !important;
+}
+
+.dataList {
+  width: 40vw !important;
+}

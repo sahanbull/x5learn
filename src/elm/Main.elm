@@ -16,6 +16,9 @@ import View.Pages.Featured exposing (viewFeaturedPage)
 import View.Pages.Maintenance exposing (viewMaintenancePage)
 import View.Pages.Search exposing (viewSearchPage)
 import View.Pages.Profile exposing (viewProfilePage)
+import View.Pages.PublishPlaylist exposing (viewPublishPlaylistPage)
+import View.Pages.CreatePlaylist exposing (viewCreatePlaylistPage)
+
 
 import Update exposing (..)
 import Request exposing (..)
@@ -100,6 +103,22 @@ view model =
 
                     Just searchState ->
                       viewSearchPage model searchState |> withNavigationDrawer model
+
+                PublishPlaylist ->
+                  case session.loginState of
+                    LoggedInUser userProfile ->
+                      viewPublishPlaylistPage model model.playlistPublishForm |> withNavigationDrawer model
+
+                    GuestUser ->
+                      featuredPage
+
+                CreatePlaylist ->
+                  case session.loginState of
+                    LoggedInUser userProfile ->
+                      viewCreatePlaylistPage model model.playlistCreateForm |> withNavigationDrawer model
+
+                    GuestUser ->
+                      featuredPage
 
       header : Attribute Msg
       header =

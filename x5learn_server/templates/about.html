@@ -19,29 +19,56 @@
      Here are the <a href="https://www.enable-javascript.com/">instructions how to enable JavaScript in your web browser</a>.
     </noscript>
 
-    <div class="bgimg">
-      <div class="topleft">
-        <a href="https://platform.x5gon.org">
-          <img src="/static/dist/img_svg/x5gon_logo_dark.svg" height="22" alt="logo">
-        </a>
+    {% if is_user_logged_in %}
+      <div class="alt-header">
+        <div class="topleft">
+          <a href="https://platform.x5gon.org">
+            <img src="/static/dist/img_svg/x5gon_logo_dark.svg" height="22" alt="logo">
+          </a>
+        </div>
+        <div class="AboutTopRightButtons">
+            <a href="/" class="button-green AboutLoginButton">Back to x5learn</a>
+        </div>
       </div>
-      <div class="middle">
-        <h1 class="AboutPageH1 text-white">X5Learn</h1>
-        <h2 class="AboutPageH2 text-white">Explore Open Educational Resources</h2>
+    {% else %}
+      <div class="bgimg">
+        <div class="topleft">
+          <a href="https://platform.x5gon.org">
+            <img src="/static/dist/img_svg/x5gon_logo_dark.svg" height="22" alt="logo">
+          </a>
+        </div>
+        <div class="middle">
+          <h1 class="AboutPageH1 text-white">X5Learn</h1>
+          <h2 class="AboutPageH2 text-white">Explore Open Educational Resources</h2>
+          <p>
+            <a href="/signup" class="button-green AboutFatSignupButton">SIGN UP FOR FREE</a>
+          </p>
+        </div>
+        <div class="AboutTopRightButtons">
+            <a href="/signup" class="button-green AboutSignupButton">Sign up</a>
+            <div class="AboutTopRightButtonsOr">or</div>
+            <a href="/login" class="button-green AboutLoginButton">Log in</a>
+        </div>
+      </div>
+    {% endif %}
+
+    <div class="AboutContent">
+      {% if is_user_logged_in %}
+        <h2 class="AboutPageH2">ABOUT US</h2>
+      {% endif %}
+      <h4 class="AboutPageH4">Cross-site and cross-lingual recommendations powered by AI. Increase user engagement, grow visibility and drive new audiences, for stronger content consumption and learning at the same time.</h4>
+      <p class="AboutParagraph">X5LEARN is part of the X5GON family of products. It helps OER publishers get the most from their content pages. The recommendation engine is designed to increase content engagement, quality assurance, audience engagement and footfall, directly improving site metrics. X5LEARN's core product is an AI engine connecting millions of pieces of OER content from different sites, cultures and in different languages in one interface based on relevance and personal learning needs. OER publishers use X5LEARN's tools to recirculate their content within other sites, and use it as the first AI powered open education learning environment.</p>
+      <br>
+      {% if is_user_logged_in %}
+        <p>
+          <a href="/" class="button-green AboutFatSignupButton">BACK TO X5LEARN</a>
+        </p>
+      {% else %}
         <p>
           <a href="/signup" class="button-green AboutFatSignupButton">SIGN UP FOR FREE</a>
         </p>
-      </div>
-      <div class="AboutTopRightButtons">
-          <a href="/signup" class="button-green AboutSignupButton">Sign up</a>
-          <div class="AboutTopRightButtonsOr">or</div>
-          <a href="/login" class="button-green AboutLoginButton">Log in</a>
-      </div>
-    </div>
-
-    <div class="AboutContent">
-      <h4 class="AboutPageH4">Cross-site and cross-lingual recommendations powered by AI. Increase user engagement, grow visibility and drive new audiences, for stronger content consumption and learning at the same time.</h4>
-      <p class="AboutParagraph">X5LEARN is part of the X5GON family of products. It helps OER publishers get the most from their content pages. The recommendation engine is designed to increase content engagement, quality assurance, audience engagement and footfall, directly improving site metrics. X5LEARN's core product is an AI engine connecting millions of pieces of OER content from different sites, cultures and in different languages in one interface based on relevance and personal learning needs. OER publishers use X5LEARN's tools to recirculate their content within other sites, and use it as the first AI powered open education learning environment.</p>
+      {% endif %}
+      <br>
     </div>
 
     <div class="AboutFooter">

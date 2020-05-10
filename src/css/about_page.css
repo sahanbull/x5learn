@@ -199,3 +199,13 @@ body, html {
 .AboutFooterText{
   color: white;
 }
+
+.alt-header {
+  position: relative;
+  /* Add a white text color to all elements inside the .bgimg container */
+  color: white;
+  /* Set the font-size to 25 pixels */
+  font-size: 25px;
+  height: 100px;
+  background: #141414;
+}

@@ -26,17 +26,17 @@ def optimize_course(oer_ids):
     }
 
     # endpoint
-    ENDPOINT = '/others/lamdsh/predictorder'
+    ENDPOINT = '/sequencing/sort'
 
     material_ids = convert_to_material_ids(oer_ids)
 
-    data = {'resource_ids': material_ids}
+    data = {'basket': material_ids}
     response = requests.post(API_URL + ENDPOINT,
                          headers= HEADERS,
                          data=json.dumps(data))
     response_json = response.json()
 
-    new_material_ids = response_json['output']
+    new_material_ids = response_json.get('output', {}).get('sequence', [])
     new_oer_ids = convert_to_oer_ids(new_material_ids)
     return new_oer_ids
 

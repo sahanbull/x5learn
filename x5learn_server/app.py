@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, render_template, request, redirect
 from flask_mail import Mail, Message
-from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required
+from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required, \
+    forms, RegisterForm, ResetPasswordForm
 from flask_sqlalchemy import SQLAlchemy
 import json
 import os  # apologies
@@ -25,9 +26,10 @@ _ = get_or_create_db(DB_ENGINE_URI)
 from x5learn_server.db.database import db_session
 from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, \
     EntityDefinition, ResourceFeedback, Action, ActionType, Repository, \
-    ActionsRepository, UserRepository, DefinitionsRepository, Course, UiLogBatch, Note
+    ActionsRepository, UserRepository, DefinitionsRepository, Course, UiLogBatch, Note, Playlist, Playlist_Item, \
+    Temp_Playlist, License, TempPlaylistRepository, ThumbGenerationTask
 
-from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment
+from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment, push_thumbnail_generation_task
 from x5learn_server.lab_study import frozen_search_results_for_lab_study, is_special_search_key_for_lab_study
 from x5learn_server.course_optimization import optimize_course
 
@@ -46,7 +48,8 @@ app.config['SECURITY_REGISTERABLE'] = True
 app.config['SECURITY_REGISTER_URL'] = '/signup'
 app.config['SECURITY_SEND_REGISTER_EMAIL'] = True
 app.config['SECURITY_CONFIRMABLE'] = True
-app.config['SECURITY_POST_REGISTER_VIEW'] = '/login'
+app.config['SECURITY_POST_REGISTER_VIEW'] = '/verify_email' 
+app.config['SECURITY_POST_CONFIRM_VIEW'] = '/confirmed_email'
 
 # user password configs
 app.config['SECURITY_CHANGEABLE'] = True
@@ -64,7 +67,22 @@ user_datastore = SQLAlchemySessionUserDatastore(db_session,
 app.config["SQLALCHEMY_DATABASE_URI"] = DB_ENGINE_URI
 db = SQLAlchemy(app)
 
-security = Security(app, user_datastore)
+
+# Setup password policy by extending flask security forms
+class ExtendedRegisterForm(RegisterForm):
+    password = forms.PasswordField('Password', \
+        [forms.validators.Regexp(regex='[A-Za-z0-9@#$%^&+=]{8,}', message="Invalid password")])
+    password_confirm = False
+
+
+class ExtendedResetPasswordForm(ResetPasswordForm):
+    password = forms.PasswordField('Password', \
+        [forms.validators.Regexp(regex='[A-Za-z0-9@#$%^&+=]{8,}', message="Invalid password")])
+
+
+security = Security(app, user_datastore, confirm_register_form=ExtendedRegisterForm, \
+    reset_password_form=ExtendedResetPasswordForm)
+
 
 # Setup Flask-Mail Server
 app.config['MAIL_SERVER'] = MAIL_SERVER
@@ -80,7 +98,15 @@ CURRENT_ENRICHMENT_VERSION = 1
 MAX_SEARCH_RESULTS = 18  # number divisible by 2 and 3 to fit nicely into grid
 USE_RECOMMENDATIONS_FROM_LAM = True  # if true, uses the new solution see #290
 SUPPORTED_VIDEO_FORMATS = ['video', 'mp4', 'mov', 'webm', 'ogg']
-SUPPORTED_FILE_FORMATS = SUPPORTED_VIDEO_FORMATS + ['pdf']
+SUPPORTED_TEXT_FORMATS = ['pdf']
+SUPPORTED_AUDIO_FORMATS = ['mp3']
+SUPPORTED_FILE_FORMATS = SUPPORTED_VIDEO_FORMATS + SUPPORTED_TEXT_FORMATS + SUPPORTED_AUDIO_FORMATS
+X5LEARN_PROVIDER_NAME = "X5Learn"
+
+# defaults license
+_DEFAULT_LICENSE = 1
+
+PLAYLIST_PREFIX = "pl:"
 
 # Number of seconds between actions that report the ongoing video play position.
 # Keep this constant in sync with videoPlayReportingInterval on the frontend!
@@ -147,12 +173,22 @@ def home():
     if current_user.is_authenticated:
         return render_template('home.html')
     else:
-        return render_template('about.html')
+        return render_template('about.html', is_user_logged_in=current_user.is_authenticated)
+
+
+@app.route("/verify_email")
+def verify_email():
+    return render_template('verify_email.html')
+
+
+@app.route("/confirmed_email")
+def confirmed_email():
+    return render_template('confirmed_email.html')
 
 
 @app.route("/about")
 def about():
-    return render_template('about.html')
+    return render_template('about.html', is_user_logged_in=current_user.is_authenticated)
 
 
 @app.route("/logout")
@@ -181,6 +217,25 @@ def resource(oer_id):
 @login_required
 def profile():
     return render_template('home.html')
+
+
+@app.route("/publish_playlist")
+@login_required
+def playlist():
+    return render_template('home.html')
+
+
+@app.route("/create_playlist")
+@login_required
+def new_playlist():
+    return render_template('home.html')
+
+
+@app.route("/playlist/download/<playlist_id>")
+def playlist_download(playlist_id):
+    playlist = repository.get_by_id(Playlist, playlist_id)
+    playlist_blueprint = json.dumps(playlist.blueprint)
+    return render_template('download.html', playlist_name=playlist.title, playlist_blueprint=playlist_blueprint)
 
 
 @app.route("/api/v1/session/", methods=['GET'])
@@ -241,6 +296,30 @@ def api_recommendations():
     return jsonify([oer.data_and_id() for oer in oers])
 
 
+def get_items_in_playlist(playlist_id):
+    """ this function gets the list of items in a playlist
+
+    Args:
+        playlist_id (int): playlist id
+
+    Returns:
+        [Oer]: list of OER materials in the sequence they appear in the playlist
+    """
+    playlist_items = repository.get(Playlist_Item, None, {'playlist_id': playlist_id})
+    oer_list = list()
+    for item in playlist_items:
+        oer = repository.get_by_id(Oer, item.oer_id)
+
+        if oer is None:
+            continue
+
+        oer.data['title'] = item.data.get('title', oer.data['title'])
+        oer.data['description'] = item.data.get('description', oer.data['description'])
+        oer_list.append(oer)
+
+    return oer_list
+
+
 @app.route("/api/v1/search/", methods=['GET'])
 def api_search():
     """
@@ -251,16 +330,37 @@ def api_search():
 
     """
     text = request.args['text'].lower().strip()
+    page = int(request.args['page']) if request.args['page'] is not None else 1 
     if text == "":  # if empty string, no results
         return jsonify([])
-    try:
-        # if the text is a number, retrieve the oer with that oer_id
-        oer_id = int(text)
-        oer = Oer.query.get(oer_id)
-        results = [] if oer is None else [oer]
-    except ValueError:
-        results = search_results_from_x5gon_api(text)
-    return jsonify([oer.data_and_id() for oer in results])
+    elif text.startswith(PLAYLIST_PREFIX):  # if its a playlist
+        playlist_id = int(text[3:])
+
+        # get the list of items
+        results = get_items_in_playlist(playlist_id)
+        oers = [oer.data_and_id() for oer in results]
+
+        return jsonify({
+            'oers': oers,
+            'total_pages': 1,
+            'current_page': 1
+        })
+    else:
+        try:
+            # if the text is a number, retrieve the oer with that oer_id
+            oer_id = int(text)
+            oer = Oer.query.get(oer_id)
+            results = [] if oer is None else ([oer], 1)
+        except ValueError:
+            results = search_results_from_x5gon_api(text, page)
+
+        oers = [oer.data_and_id() for oer in results[0]]
+
+        return jsonify({
+            'oers': oers,
+            'total_pages': results[1],
+            'current_page': 1
+        })
 
 
 @app.route("/api/v1/oers/", methods=['POST'])
@@ -284,10 +384,11 @@ def api_video_usages():
     return jsonify(ranges_per_oer)
 
 
-@app.route("/api/v1/course_optimization/", methods=['POST'])
-def api_course_optimization():
+@app.route("/api/v1/course_optimization/<playlist_title>", methods=['POST'])
+def api_course_optimization(playlist_title):
     old_oer_ids = request.get_json()['oerIds']
     new_oer_ids = optimize_course(old_oer_ids)
+    _update_temporary_playlist_items(playlist_title, new_oer_ids)
     return jsonify(new_oer_ids)
 
 
@@ -469,11 +570,71 @@ def api_entity_descriptions():
     return jsonify(definitions)
 
 
-def search_results_from_x5gon_api(text):
+@app.route("/api/v1/most_urgent_unstarted_thumb_generation_task/", methods=['POST'])
+def most_urgent_unstarted_thumb_generation_task():
+    timeout = datetime.now() - timedelta(minutes=10)
+    task = ThumbGenerationTask.query.filter(and_(ThumbGenerationTask.error == None, or_(
+        ThumbGenerationTask.started == None, ThumbGenerationTask.started < timeout))).order_by(
+        ThumbGenerationTask.priority.desc()).first()
+    if task is None:
+        return jsonify({'info': 'No tasks available'})
+
+    task_data = task.data
+    if 'oer_id' not in task_data:
+        return jsonify({'info': 'oer id not found in task data'})
+
+    print('Starting thumb generation task with priority:', task.priority, 'url:', task.url)
+
+    task.started = datetime.now()
+    task.priority = 0
+    db_session.commit()
+
+    return jsonify({'url': task.url, 'oer_id': task_data['oer_id']})
+
+
+@app.route("/api/v1/ingest_thumb_generation_result/", methods=['POST'])
+def ingest_thumb_generation_result():
+    j = request.get_json(force=True)
+    error = j['error']
+    url = j['url']
+    print('ingest_thumb_generation', url)
+
+    task = ThumbGenerationTask.query.filter_by(url=url).first()
+    if error is not None:
+        task.error = error
+
+    db_session.commit()
+
+    return 'OK'
+
+
+def search_results_from_x5gon_api(text, page):
     text = urllib.parse.quote(text)
     if is_special_search_key_for_lab_study(text):
         return frozen_search_results_for_lab_study(text)
-    return search_results_from_x5gon_api_pages(text, 1, [])
+    return search_results_from_x5gon_api_pages(text, page, [])
+
+
+def remove_duplicates_from_x5gon_search_results(materials):
+    """ a naive deduper that removed duplicate urls.
+
+    Args:
+        materials [Oer]: list of OERs
+
+    Returns:
+        deduped_materials [Oer]: list of deduped OER materials
+    """
+
+    # keep a set of urls
+    urls = set()
+    deduped_materials = []
+    # for every item in the list
+    for m in materials:
+        if m['url'] not in urls:
+            deduped_materials.append(m)
+            urls.add(m['url'])
+
+    return deduped_materials
 
 
 # This function is called recursively
@@ -482,13 +643,13 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     # print('X5GON search page_number', page_number)
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request(
-        'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=all&text=' + text + '&page=' + str(
+        'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=mp4,ogg,webm,video,mov,mp3,pdf&text=' + text + '&page=' + str(
             page_number))
     response = conn.getresponse().read().decode("utf-8")
     metadata = json.loads(response)['metadata']
     materials = json.loads(response)['rec_materials']
     materials = filter_x5gon_search_results(materials)
-    # materials = remove_duplicates_from_x5gon_search_results(materials)
+    materials = remove_duplicates_from_x5gon_search_results(materials)
     for index, material in enumerate(materials):
         url = material['url']
         # Some urls that were longer than 255 caused errors.
@@ -498,14 +659,19 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
             continue
         material = fetch_captions_from_x5gon_api(material)
         oer = retrieve_oer_or_create_from_x5gon_material(material)
-        push_enrichment_task(url, int(1000 / (index + 1)) + 1)
         oers.append(oer)
+
+        task_priority = int(1000 / (index + 1)) + 1
+        push_enrichment_task(url, task_priority)
+        if "thumbnail" not in oer.data:
+            push_thumbnail_generation_task(oer, task_priority)
+
     oers = oers[:MAX_SEARCH_RESULTS]
     # exits the search if exceeds the last page returned from the api
     if page_number > metadata['total_pages']:
-        return oers
+        return oers, metadata['total_pages']
     if len(oers) >= MAX_SEARCH_RESULTS:
-        return oers
+        return oers, metadata['total_pages']
     return search_results_from_x5gon_api_pages(text, page_number + 1, oers)
 
 
@@ -547,22 +713,24 @@ def inject_duration(oer):
     return oer
 
 
+def _is_valid_file(filename):
+    # TODO: have a more efficient regex later
+    return bool('/assignments/' not in filename['url'] and
+                '199' not in filename['url'] and
+                '200' not in filename['url'])
+
+
 def filter_x5gon_search_results(materials):
     # (un)comment the lines below to enable/disable filters as desired
-
-    # include videos only
-    materials = [m for m in materials if is_video(m['url'])]
 
     # exclude youtube videos
     materials = [m for m in materials if 'youtu' not in m['url']]
 
     # filter by file suffix
-    # materials = [m for m in materials if m['url'].endswith(
-    #     '.pdf') or is_video(m['url'])]
+    materials = [m for m in materials if m['url'].endswith('.pdf') or is_video(m['url'])]
 
     # crudely filter out materials from MIT OCW that are assignments or date back to the 90s or early 2000s
-    # materials = [m for m in materials if '/assignments/' not in m['url']
-    #              and '199' not in m['url'] and '200' not in m['url']]
+    materials = [m for m in materials if _is_valid_file(m)]
 
     # Exclude non-english materials because they tend to come out poorly after wikification. X5GON search doesn't have a language parameter at the time of writing.
     # materials = [m for m in materials if m['language'] == 'en']
@@ -576,7 +744,7 @@ def filter_x5gon_search_results(materials):
 #         enrichments[enrichment.url] = enrichment
 #     included_materials = []
 #     included_enrichments = []
-
+#
 #     def is_duplicate(material):
 #         url = material['url']
 #         # For materials that haven't been enriched yet, we can't tell whether they are identical.
@@ -587,7 +755,7 @@ def filter_x5gon_search_results(materials):
 #             if fuzz.ratio(e.entities_to_string(), enrichment.entities_to_string()) > 90:
 #                 return True
 #         return False
-
+#
 #     for m in materials:
 #         if not is_duplicate(m):
 #             included_materials.append(m)
@@ -621,7 +789,7 @@ def convert_x5_material_to_oer_data(material):
     data['duration'] = ''
     data['images'] = []
     data['mediatype'] = material['type']
-    data['translations'] = material['translations']
+    data['translations'] = material.get('translations', [])
 
     return data
 
@@ -763,7 +931,7 @@ ns_action = api.namespace('api/v1/action', description='Actions')
 m_action = api.model('Action', {
     'action_type_id': fields.Integer(required=False, description='The action type id for the action'),
     'params': fields.String(required=False, description='A json object with params related to the action'),
-    'is_bundled': fields.Boolean(default=False, required=True,
+    'is_bundled': fields.Boolean(default=False, required=False,
                                  description='Boolean flag to differentiate between a single entry or a bundle entry'),
     'action_type_ids': fields.List(fields.Integer, required=False, description='A list of action type ids'),
     'params_list': fields.List(fields.String, required=False,
@@ -841,7 +1009,7 @@ class ActionList(Resource):
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
 
-        if api.payload['is_bundled']:
+        if api.payload.get('is_bundled', False):
             if len(api.payload['action_type_ids']) != len(api.payload['params_list']):
                 return {'result': 'One or more arguments were found missing.'}, 400
             count = 0
@@ -1002,7 +1170,7 @@ class Definition(Resource):
 ns_notes = api.namespace('api/v1/note', description='Notes')
 
 m_note = api.model('Note', {
-    'oer_id': fields.String(required=True, max_length=255, description='The material id of the note associated with'),
+    'oer_id': fields.Integer(required=True, max_length=255, description='The material id of the note associated with'),
     'text': fields.String(required=True, description='The content of the note')
 })
 
@@ -1137,6 +1305,595 @@ class Notes(Resource):
         setattr(note, 'is_deactivated', True)
         db_session.commit()
         return {'result': 'Note deleted'}, 201
+
+
+# Defining playlist resource for API access ==================================
+ns_playlist = api.namespace('api/v1/playlist', description='Playlist')
+
+m_playlist = api.model('Playlist', {
+    'title': fields.String(required=True, max_length=255, description='The title of the playlist'),
+    'description': fields.String(required=False,
+                                 description='An extensive description describing the contents of the playlist'),
+    'author': fields.String(required=False, max_length=255,
+                            description='The author of the playlist. (Not necessarily the logged in user)'),
+    'parent': fields.Integer(required=False,
+                             description='The id of the parent playlist which the current playlist was based on if any'),
+    'license': fields.Integer(default=1, required=False,
+                              description='The id of the license information for the current playlist'),
+    'is_visible': fields.Boolean(default=True, required=False,
+                                 description='Boolean flag to identify if the playlist is visible to the public'),
+    'playlist_items': fields.List(fields.Integer, required=False,
+                                  description='A list of oer ids to be included in the playlist'),
+    'is_temp': fields.Boolean(default=False, required=True,
+                              description="Boolean flag to identify if the playlist is temporary or published"),
+    'temp_title': fields.String(required=False, max_length=255,
+                                description='Original title of the playlist in case title is changed at publish')
+})
+
+
+def _get_blueprint(playlist, license, items, item_data):
+    url = _create_playlist_url(playlist['id'])
+    license_obj = repository.get_by_id(License, license)
+    base_mapping = dict()
+    base_mapping["playlist_general_infos"] = {
+        "pst_name": playlist['title'],
+        "pst_id": playlist['id'],
+        "pst_url": url,
+        "pst_creation_date": playlist['created_at'],
+        "pst_author": playlist['author'],
+        "pst_license": license_obj.description,
+        "pst_thumbnail_url": "",
+        "pst_description": playlist['description']
+    }
+
+    # get materials, expects a list of OER ids from X5Learn platform
+    base_mapping["playlist_items"] = list()
+    for idx, item in enumerate(items):
+        temp_item = repository.get_by_id(Oer, item)
+        oer_data = temp_item.data
+        base_mapping["playlist_items"].append({
+            "material_id": temp_item.id,
+            "x5gon_id": oer_data.get("material_id"),
+            "url": temp_item.url,
+            "title": item_data.get(str(item), {}).get('title', ''),
+            "provider": oer_data['provider'],
+            "description": item_data.get(str(item), {}).get('description', ''),
+            "date": oer_data['date'],
+            "duration": oer_data['duration'],
+            "images": oer_data['images'],
+            "mediatype": oer_data['mediatype'],
+            "thumnail_url": "",
+            "order": idx
+        })
+
+    return base_mapping
+
+
+def _add_published_playlist(title, desc, author, license, creator, parent, is_vis, items):
+    # title, description, author, blueprint, creator, parent, is_visible, license
+    parent = parent == 0 and parent or None
+    playlist = Playlist(title, desc, author, None, creator, parent, is_vis, license)
+    playlist = repository.add(playlist)
+
+    # get playlist_item_data
+    query_object = db_session.query(Temp_Playlist)
+    query_object = query_object.filter(Temp_Playlist.title == title)
+    query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+    temp_playlist = query_object.one_or_none()
+
+    item_data = dict()
+    temp_playlist_data = json.loads(temp_playlist.data)
+    item_data = temp_playlist_data["playlist_item_data"]
+
+    count = 0
+    for idx, val in enumerate(items):
+        playlist_item_data = item_data[str(val)]
+        playlist_item = Playlist_Item(playlist.id, val, idx, playlist_item_data)
+        playlist_item = repository.add(playlist_item)
+        count = count + 1
+
+    blueprint = _get_blueprint(playlist.serialize, license, items, item_data)
+
+    playlist.blueprint = json.dumps(blueprint)
+    repository.update()
+
+    return playlist
+
+
+def _add_temporary_playlist(title, license, creator, parent):
+    # if parent is not null, get items
+    if parent is not None:
+        parent_items = repository.get(Playlist_Item, None, {'playlist_id': parent})
+        items = [o.oer_id for o in parent_items]
+    else:
+        items = []
+
+    count = len(items)
+    payload = {
+        "title": title,
+        "license": license,
+        "parent": parent,
+        "playlist_items": items
+    }
+    temp_playlist = Temp_Playlist(title, creator, json.dumps(payload))
+    temp_playlist = repository.add(temp_playlist)
+
+    return {'result': 'Temporary playlist with {} items created'.format(count)}
+
+
+def _update_temporary_playlist_items(title, oerIds):
+    existing_playlist = repository.get(Temp_Playlist, None, {'title' : title, 'creator' : current_user.get_id()})
+
+    if (existing_playlist is not None and existing_playlist[0] is not None):
+        data = json.loads(existing_playlist[0].data)
+        data["playlist_items"] = oerIds
+        existing_playlist[0].data = json.dumps(data)
+        repository.update()
+
+
+def _create_playlist_url(playlist_id):
+    return '{}/search?q={}{}'.format(SERVER_NAME, PLAYLIST_PREFIX, playlist_id)
+
+
+def _create_oer_record_for_playlist(playlist):
+    oer_url = _create_playlist_url(playlist.id)
+    oer_data = {
+        'url': oer_url,
+        'material_id': playlist.id,
+        'title': playlist.title,
+        'provider': X5LEARN_PROVIDER_NAME,
+        'description': playlist.description,
+        'date': playlist.created_at.strftime("%Y-%m-%d"),
+        'duration': '',
+        'images': [],
+        'mediatype': 'playlist',
+        'translations': []
+    }
+
+    return Oer(oer_url, oer_data, 'playlist')
+
+
+def _send_confirmation_email_for_published_playlist(user, title, url):
+    if user.email:
+        try:
+            msg = Message("{} Playlist Published".format(title), sender=MAIL_SENDER, recipients=[user.email])
+            msg.html = render_template('/security/email/published_playlist_message.html', user=user,
+                                       app_name=MAIL_SENDER,
+                                       title=title, url=url)
+            mail.send(msg)
+        except Exception:
+            return {'result': 'Mail server not configured'}, 400
+
+
+def _convert_temp_playlist_to_playlist(temp_playlist):
+    temp_data = json.loads(temp_playlist.data)
+    playlist = Playlist(temp_playlist.title, "", "", None, temp_playlist.creator, temp_data.get('parent', None), True,
+                        temp_data.get('license', _DEFAULT_LICENSE))
+    temp_playlist = playlist.serialize
+    temp_playlist['oerIds'] = temp_data['playlist_items']
+
+    # preparing playlist item data
+    playlist_item_data = list()
+    if 'playlist_item_data' in temp_data:
+        for key in temp_data['playlist_item_data']:
+            playlist_item_data.append({
+                'oerId' : int(key),
+                'title' : temp_data['playlist_item_data'][key]['title'],
+                'description': temp_data['playlist_item_data'][key]['description']
+            })
+
+    temp_playlist['playlistItemData'] = playlist_item_data
+    return temp_playlist
+
+
+def _add_oer_to_playlist(title, oer_id):
+    query_object = db_session.query(Temp_Playlist)
+    query_object = query_object.filter(Temp_Playlist.title == title)
+    query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+    temp_playlist = query_object.one_or_none()
+
+    # getting oer to set title and description
+    oer = repository.get_by_id(Oer, oer_id)
+
+    if temp_playlist is not None:
+        temp_data = json.loads(temp_playlist.data)
+        temp_data.setdefault("playlist_items", []).append(oer_id)
+
+        if "playlist_item_data" not in temp_data:
+            temp_data["playlist_item_data"] = dict()
+
+        temp_data["playlist_item_data"][oer_id] = {
+            'title': oer.data.get('title', ''),
+            'description': oer.data.get('description', '')
+        }
+
+        temp_playlist.data = json.dumps(temp_data)
+        repository.update()
+    else:
+        return False
+
+    return True
+
+# function to set playlist item meta data overriding oer data (title and description for now)
+def _set_playlist_item_data(playlist, playlist_item_data):
+    existing_data = json.loads(playlist.data)
+
+    if 'playlist_item_data' not in existing_data.keys():
+        existing_data['playlist_item_data'] = dict()
+
+    existing_data['playlist_item_data'][playlist_item_data['oerId']] = dict()
+    existing_data['playlist_item_data'][playlist_item_data['oerId']] = {
+        'title': playlist_item_data['title'],
+        'description': playlist_item_data['description']
+    }
+
+    playlist.data = json.dumps(existing_data)
+    return playlist
+
+
+@ns_playlist.route('/')
+class Playlists(Resource):
+    '''Create, fetch and delete playlists'''
+
+    @ns_playlist.doc('list_playlists', params={'mode': 'Filter by playlist type',
+                                               'author': 'Filter by author',
+                                               'license': 'Filter by license',
+                                               'sort': 'Sort results (Default: desc)',
+                                               'offset': 'Offset results',
+                                               'limit': 'Limit results'})
+    def get(self):
+        '''Fetches zero or more playlists created by logged in user from database based on params'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+        else:
+            # Declaring and processing params available for request
+            parser = reqparse.RequestParser()
+            parser.add_argument('mode')
+            parser.add_argument('author')
+            parser.add_argument('license', type=int)
+            parser.add_argument('sort', default='desc', choices=('asc', 'desc'), help='Bad choice')
+            parser.add_argument('offset', type=int)
+            parser.add_argument('limit', type=int)
+            args = parser.parse_args()
+
+            if args['mode'] is not None and args['mode'] == "temp_playlists_only":
+                # Building and executing query object for Temp Playlists
+                query_object = db_session.query(Temp_Playlist)
+                query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+                result_list = query_object.all()
+
+                playlists = [_convert_temp_playlist_to_playlist(i) for i in result_list]
+                return playlists
+
+            else:
+                # Building and executing query object for Playlists
+                query_object = db_session.query(Playlist)
+
+                if (args['author']):
+                    query_object = query_object.filter(Playlist.author == args['author'])
+
+                if (args['license']):
+                    query_object = query_object.filter(Playlist.license == args['license'])
+
+                query_object = query_object.filter(Playlist.creator == current_user.get_id())
+
+                if (args['sort'] == 'desc'):
+                    query_object = query_object.order_by(Playlist.created_at.desc())
+                else:
+                    query_object = query_object.order_by(Playlist.created_at.asc())
+
+                if (args['offset']):
+                    query_object = query_object.offset(args['offset'])
+
+                if (args['limit']):
+                    query_object = query_object.limit(args['limit'])
+
+                result_list = query_object.all()
+
+                # Converting result list to JSON friendly format
+                serializable_list = list()
+                if (result_list):
+                    serializable_list = [i.serialize for i in result_list]
+
+                return serializable_list
+
+    @ns_playlist.doc('create_playlist')
+    @ns_playlist.expect(m_playlist, validate=True)
+    def post(self):
+        '''Creates a new playlist as temporary or published'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        if api.payload['is_temp'] == None or not api.payload['title']:
+            return {'result': 'Playlist save type and title is required'}, 400
+
+        if api.payload['is_temp'] == False and not api.payload['temp_title']:
+            return {'result': 'Temp title is required when publishing a playlist'}, 400
+
+        # -- publish a playlist --
+        if api.payload['is_temp'] == False:
+            playlist = None
+            playlist = _add_published_playlist(api.payload['title'],
+                                               api.payload['description'],
+                                               api.payload['author'],
+                                               _DEFAULT_LICENSE,
+                                               current_user.get_id(),
+                                               api.payload['parent'],
+                                               api.payload['is_visible'],
+                                               api.payload['playlist_items'])
+
+            # adding an entry to the OER table by getting the created material id
+            oer = _create_oer_record_for_playlist(playlist)
+            repository.add(oer)
+
+            # Deleting temp version of playlist after creating a temp_playlist repo
+            temp_playlist_repo = TempPlaylistRepository()
+            temp_playlist_repo.delete_by_title(api.payload['temp_title'], current_user.get_id())
+
+            # sending confirmation email to the creator with playslist metadata and url for playlist
+            user = repository.get_by_id(UserLogin, current_user.get_id())
+            _send_confirmation_email_for_published_playlist(user, playlist.title, oer.url)
+
+            return playlist.id
+
+        # -- create a temporary playlist --
+        else:
+            result = _add_temporary_playlist(api.payload['title'],
+                                             _DEFAULT_LICENSE,
+                                             current_user.get_id(),
+                                             api.payload['parent'])
+
+            return {'result': 'Playlist successfully created.'}, 201
+
+    @ns_playlist.doc('delete_playlist', params={'id': 'Delete published playlist by id',
+                                                'title': 'Delete temporary playlist by title'})
+    def delete(self):
+        '''Delete playlist'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        if api.payload['id'] != None:
+            playlist = repository.get_by_id(Playlist, api.payload['id'], current_user.get_id())
+            if playlist != None:
+                playlist_items = repository.get(Playlist_Item, None, {'playlist_id': playlist.id})
+                for item in playlist_items:
+                    repository.delete(item)
+
+            repository.delete(playlist)
+            return {'result': 'Playlist - {} was successfully deleted'.format(playlist.title)}, 201
+
+        if api.payload['title'] != None:
+            temp_playlist = repository.get(Temp_Playlist, None,
+                                           {'title': api.payload['title'], 'creator': current_user.get_id()})
+            if temp_playlist != None:
+                repository.delete(temp_playlist)
+
+            return {'result': 'Playlist - {} was successfully deleted'.format(temp_playlist.title)}, 201
+
+
+@ns_playlist.route('/<int:id>')
+@ns_playlist.response(404, 'Playlist not found')
+@ns_playlist.param('id', 'The playlist identifier')
+class Playlist_Single(Resource):
+    @ns_playlist.doc('get_playlist')
+    def get(self, id):
+        '''Fetch requested playlist from database'''
+
+        # -- skipped to allow guest users --
+        # if not current_user.is_authenticated:
+        #    return {'result': 'User not logged in'}, 401
+
+        playlist = repository.get_by_id(Playlist, id)
+
+        if playlist is None:
+            return {'result': 'Playlist not found'}, 400
+
+        playlist_items = repository.get(Playlist_Item, None,
+                                        {'playlist_id': playlist.id})
+
+        seralized_playlist = playlist.serialize
+        seralized_playlist['oerIds'] = [i.oer_id for i in playlist_items]
+        seralized_playlist['url'] = _create_playlist_url(id)
+        seralized_playlist['playlistItemData'] = []
+
+        return seralized_playlist, 200
+
+    @ns_playlist.doc('update_playlist')
+    @ns_playlist.expect(m_playlist, validate=True)
+    def put(self, id):
+        '''Update selected playlist'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        if len(api.payload['playlist_items']) != len(api.payload['playlist_items_order']):
+            return {'result': 'One or more arguments for playlist items were found missing.'}, 400
+
+        playlist = repository.get_by_id(Playlist, id, current_user.get_id())
+        playlist_items = repository.get(Playlist, None, {'playlist_id': id})
+
+        if playlist is None:
+            return {'result': 'Playlist not found'}, 400
+
+        setattr(playlist, 'title', api.payload['title'])
+        setattr(playlist, 'description', api.payload['description'])
+        setattr(playlist, 'author', api.payload['author'])
+        setattr(playlist, 'license', api.payload['license'])
+        setattr(playlist, 'parent', api.payload['parent'])
+        setattr(playlist, 'is_visible', api.payload['is_visible'])
+        repository.update()
+
+        for item in playlist_items:
+            repository.delete(item)
+
+        count = 0
+        for idx, val in enumerate(api.payload['playlist_items']):
+            playlist_item = Playlist_Item(playlist.id, val, api.payload['playlist_items_order'][idx])
+            playlist_item = repository.add(playlist_item)
+            count = count + 1
+
+        return {'result': 'Playlist with {} items updated and published'.format(count)}, 201
+
+    @ns_playlist.doc('delete_playlist')
+    def delete(self, id):
+        '''Delete playlist'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        playlist = repository.get_by_id(Playlist, id)
+
+        if playlist is None:
+            return {'result': 'Playlist not found'}, 401
+
+        playlist_items = repository.get(Playlist_Item, None, {'playlist_id': playlist.id})
+        for item in playlist_items:
+            repository.delete(item)
+
+        repository.delete(playlist)
+        return {'result': 'Playlist - {} was successfully deleted'.format(playlist.title)}, 201
+
+
+@ns_playlist.route('/<string:title>')
+@ns_playlist.response(404, 'Temporary playlist not found')
+@ns_playlist.param('title', 'The temporary playlist identifier')
+class Temp_Playlist_Single(Resource):
+
+    @ns_playlist.doc('add_to_playlist')
+    def post(self, title):
+        '''Add oer to temporary playlist'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        if api.payload['oer_id'] is None:
+            return {'result': 'Oer id is required'}, 400
+
+        try:
+            result = _add_oer_to_playlist(title, api.payload['oer_id'])
+
+            if result:
+                return {'result': 'Oer successfully added to playlist'}, 200
+            else:
+                return {'result': 'Playlist not found'}, 400
+
+        except Exception as err:
+            return {'result': 'An error occurred. Error - ' + str(err)}, 400
+
+    @ns_playlist.doc('get_temp_playlist')
+    def get(self, title):
+        '''Fetch requested temporary playlist from database'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        query_object = db_session.query(Temp_Playlist)
+        query_object = query_object.filter(Temp_Playlist.title == title)
+        query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+        temp_playlist = query_object.one_or_none()
+
+        if temp_playlist is None:
+            return {'result': 'Temporary playlist not found'}, 400
+
+        playlist_data = json.loads(temp_playlist['data'])
+        playlist = Playlist(playlist_data['title'], playlist_data.get('description', ''),
+                            playlist_data.get('author', ''), None, playlist_data.get('creator', None),
+                            playlist_data.get('parent', None), playlist_data.get('is_visible', True),
+                            playlist_data.get('license', ''))
+
+        playlist_items = []
+        for idx, val in enumerate(playlist_data.get('playlist_items', [])):
+            playlist_items.append(Playlist_Item(None, val, playlist_data.get('playlist_items', [])[idx]))
+
+        return {'playlist': playlist, 'playlist_items': playlist_items}, 200
+
+    @ns_playlist.doc('update_temp_playlist')
+    @ns_playlist.expect(m_playlist)
+    def put(self, title):
+        '''Update temporary playlist from database'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        query_object = db_session.query(Temp_Playlist)
+        query_object = query_object.filter(Temp_Playlist.title == title)
+        query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+        temp_playlist = query_object.one_or_none()
+
+        if temp_playlist is None:
+            return {'result': 'Temporary playlist not found'}, 400
+
+        # updating playlist item data only
+        if 'title' not in api.payload.keys():
+            temp_playlist = _set_playlist_item_data(temp_playlist, api.payload['playlist_item_data'])
+        else:
+            setattr(temp_playlist, 'title', api.payload['title'])
+
+            # converting playlist item data to dictionary
+            if 'playlist_item_data' in api.payload:
+                temp_data = api.payload['playlist_item_data']
+                playlist_item_data = dict()
+                for val in temp_data:
+                    playlist_item_data[val['oerId']] = dict()
+                    playlist_item_data[val['oerId']]['title'] = val['title']
+                    playlist_item_data[val['oerId']]['description'] = val['description']
+
+                api.payload['playlist_item_data'] = playlist_item_data
+
+            setattr(temp_playlist, 'data', json.dumps(api.payload))
+
+        repository.update()
+
+        return {'result': 'Temporary playlist successfully updated'}, 201
+
+    @ns_playlist.doc('delete_temporary_playlist')
+    def delete(self, title):
+        '''Delete temporary playlist'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        query_object = db_session.query(Temp_Playlist)
+        query_object = query_object.filter(Temp_Playlist.title == title)
+        query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+        temp_playlist = query_object.one_or_none()
+
+        if temp_playlist is None:
+            return {'result': 'Temporary playlist not found'}, 400
+
+        repository.delete(temp_playlist)
+        return {'result': 'Temporary playlist successfully deleted'}, 201
+
+
+@ns_playlist.route('blueprint/<int:id>')
+@ns_playlist.response(404, 'Playlist not found')
+@ns_playlist.param('id', 'The playlist identifier')
+class Playlist_Blueprint(Resource):
+    @ns_playlist.doc('get_playlist_blueprint')
+    def get(self, id):
+        '''Fetch requested playlist from database'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        playlist = repository.get_by_id(Playlist, id)
+
+        if playlist is None:
+            return {'result': 'Playlist not found'}, 400
+
+        return playlist.blueprint, 200
+
+
+# Defining license resource for API access ==================================
+ns_license = api.namespace('api/v1/license', description='license')
+
+
+@ns_license.route('/')
+class LicenseTypes(Resource):
+    '''Fetch licenses to be attached to playlists and other'''
+
+    def get(self):
+        '''Fetches zero or more licenses created by logged in user from database based on params'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+        else:
+            # Building and executing query object for fetching licenses
+            result_list = repository.get(License, None)
+            licenses = [i.serialize for i in result_list]
+            return licenses
 
 
 def initiate_action_types_table():

@@ -22,18 +22,25 @@ import Msg exposing (..)
 viewCourse : Model -> Element Msg
 viewCourse model =
   if model.course.items==[] then
-    none
+      none
   else
-    let
-        items =
-          model.course.items
-          |> List.indexedMap (viewCourseItem model)
-          |> column [ spacing 20, paddingTop 20, width fill ]
-    in
-        [ items
-        , viewCoursePathFinderContainer model
-        ]
-        |> column [ spacing 50, width fill ]
+    case model.playlist of
+        Nothing ->
+            none
+    
+        Just playlist ->
+          let
+              items =
+                model.course.items
+                |> List.indexedMap (viewCourseItem model)
+                |> column [ spacing 20, paddingTop 20, width fill, htmlClass "PlaylistItemsContainer" ]
+          in
+              [ items
+              , viewCoursePathFinderContainer model
+              ]
+              |> column [ spacing 30, width fill ]
+            
+    
 
 
 {-| Render a single course item
@@ -42,7 +49,7 @@ viewCourseItem : Model -> Int -> CourseItem -> Element Msg
 viewCourseItem model index item =
   case model.cachedOers |> Dict.get item.oerId of
     Nothing ->
-      none -- impossible
+        none -- impossible
 
     Just oer ->
       let
@@ -56,13 +63,13 @@ viewCourseItem model index item =
             if index==0 || isLabStudy1 model then
               none
             else
-              button buttonAttrs { onPress = Just <| MovedCourseItemDown (index-1), label = "Move ↑" |> captionNowrap [ whiteText ] }
+              button (buttonAttrs ++ [onClickStopPropagation (MovedCourseItemDown (index-1))]) { onPress = Nothing, label = "Move ↑" |> captionNowrap [ whiteText ] }
 
           moveDownButton =
             if index==nCourseItems-1 || isLabStudy1 model then
               none
             else
-              button buttonAttrs { onPress = Just <| MovedCourseItemDown index, label = "Move ↓" |> captionNowrap [ whiteText ] }
+              button (buttonAttrs ++ [onClickStopPropagation (MovedCourseItemDown index)]) { onPress = Nothing, label = "Move ↓" |> captionNowrap [ whiteText ] }
 
           deleteButton =
             -- button [ alignRight ] { onPress = Just <| RemovedOerFromCourse oer.id, label = "Remove" |> captionNowrap [ greyText ] }
@@ -72,7 +79,10 @@ viewCourseItem model index item =
             |> captionNowrap [ greyText, alignRight, htmlClass "CursorPointer", onClickStopPropagation (RemovedOerFromCourse oer.id) ]
 
           topRow =
-            oer.title |> bodyWrap []
+            if getPlaylistTitle model oer.id == Nothing then
+              oer.title |> bodyWrap []
+            else
+              Maybe.withDefault oer.title (getPlaylistTitle model oer.id) |> bodyWrap []
 
           buttonRow =
             [ moveUpButton
@@ -88,7 +98,7 @@ viewCourseItem model index item =
             |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
       in
           miniCard
-          |> el [ width fill, htmlClass "PreventClosingInspectorOnClick", onClickStopPropagation <| ClickedOnCourseItem oer ]
+          |> el [ width fill, htmlClass "PreventClosingInspectorOnClick", onClickStopPropagation <| ClickedOnPlaylistItem oer ]
 
 
 {-| Render the coursePathFinder
@@ -129,3 +139,25 @@ viewCoursePathFinderWidget model =
         in
             content
             |> column [ spacing 15, padding 10, Background.color <| grey 50, Border.rounded 10 ]
+
+getPlaylistTitle : Model -> OerId -> Maybe String
+getPlaylistTitle model oerId =
+  case model.playlist of 
+    Nothing ->
+      Nothing
+
+    Just playlist ->
+      let
+
+        playlistItemData =
+          List.head ( List.filter (\x -> x.oerId == oerId ) playlist.playlistItemData)
+
+      in
+        case playlistItemData of
+            Nothing ->
+              Nothing
+                
+            Just itemData ->
+              Just itemData.title
+                
+        

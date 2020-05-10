@@ -39,12 +39,35 @@ viewTheInspector : Model -> InspectorState -> Element Msg
 viewTheInspector model inspectorState =
   let
       title =
-        case inspectorState.oer.title of
-          "" ->
-            "Title unavailable" |> subheaderWrap [ Font.italic ]
+        if model.openedOerFromPlaylist then
+          let
+            editButton =
+              if model.editingOerTitleInPlaylist then
+                button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditOerInPlaylist False "title", label = "Save Title" |> captionNowrap [ width fill, whiteText, Font.center ] }
+              else
+                button [ paddingXY 5 3, buttonRounding, Background.color electricBlue ] { onPress = Just <| EditOerInPlaylist True "title", label = "Edit Title" |> captionNowrap [ width fill, whiteText, Font.center ] }
 
-          titleText ->
-            titleText |> subheaderWrap []
+          in
+            if model.editingOerTitleInPlaylist then
+              let
+                textInput labelText valueText =
+                  Input.text [ width fill, Font.size 14, onEnter SubmittedPlaylistItemUpdate ] { onChange = UpdatePlaylistItem "title", text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = Input.labelHidden "Your feedback about this resource" }
+              in
+                textInput "Title" model.editingOerPlaylistItem.title
+            else
+              case model.editingOerPlaylistItem.title of
+                "" ->
+                  [ text "Title unavailable" |> el [ Font.size 21, Font.color midnightBlue, Font.italic ] , editButton ] |> row [ spacing 10, width fill ]
+
+                titleText ->
+                  [ text titleText |> el [ Font.size 21, Font.color midnightBlue ] , editButton ] |> row [ spacing 10, width fill ]
+        else
+          case inspectorState.oer.title of
+            "" ->
+              "Title unavailable" |> subheaderWrap [ Font.italic ]
+
+            titleText ->
+              titleText |> subheaderWrap []
 
       bodyAndSidebar =
         if isBrowserWindowTooSmall model then
@@ -128,30 +151,76 @@ viewInspectorBody model ({oer, fragmentStart} as inspectorState) =
       |> column [ width <| px <| playerWidth model, moveLeft (inspectorSidebarWidth model) ]
 
 
-viewDescription : InspectorState -> Oer -> Element Msg
-viewDescription inspectorState oer =
-  case oer.description of
-    "" ->
-      "No description available" |> italicText |> el [ paddingTop 30 ]
+viewDescription : InspectorState -> Oer -> Model -> Element Msg
+viewDescription inspectorState oer model =
+  if model.openedOerFromPlaylist then
+    let
+      editButton =
+        if model.editingOerDescriptionInPlaylist then
+          button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditOerInPlaylist False "description" , label = "Save Description" |> captionNowrap [ width fill, whiteText, Font.center ] }
+        else
+          button [ paddingXY 5 3, buttonRounding, Background.color electricBlue ] { onPress = Just <| EditOerInPlaylist True "description" , label = "Edit Description" |> captionNowrap [ width fill, whiteText, Font.center ] }
 
-    str ->
-      let
-          characterLimit =
-            300
-      in
-          if String.length str < characterLimit then
-            str
-            |> viewString False
-          else if inspectorState.userPressedReadMore then
-            str
-            |> viewString True
-          else
-            [ str
-              |> truncateSentence characterLimit
+    in
+      if model.editingOerDescriptionInPlaylist then
+        let
+          textMultiline labelText valueText =
+            Input.multiline [ width fill, Font.size 14, onEnter SubmittedPlaylistItemUpdate ] { onChange = UpdatePlaylistItem "description", text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = Input.labelHidden "Your feedback about this resource" , spellcheck = False }
+        in
+          textMultiline "Description" model.editingOerPlaylistItem.description
+      else
+        case model.editingOerPlaylistItem.description of
+          "" ->
+            [ "No description available" |> italicText |> el [ paddingTop 30 ], editButton]
+            |> row []
+
+          str ->
+            let
+                characterLimit =
+                  300
+            in
+                if String.length str < characterLimit then
+                  [ str
+                    |> viewString False
+                    , editButton
+                  ]
+                  |> column [ spacing 10 ]
+                else if inspectorState.userPressedReadMore then
+                  [ str
+                    |> viewString True
+                    , editButton
+                  ]
+                  |> column [ spacing 10 ]
+                else
+                  [ str
+                    |> truncateSentence characterLimit
+                    |> viewString False
+                    , [ viewReadMoreButton inspectorState, editButton ] |> row [ spacing 10 ]
+                  ] 
+                  |> column [ spacing 10 ]
+  else
+    case oer.description of
+      "" ->
+        "No description available" |> italicText |> el [ paddingTop 30 ]
+
+      str ->
+        let
+            characterLimit =
+              300
+        in
+            if String.length str < characterLimit then
+              str
               |> viewString False
-              , viewReadMoreButton inspectorState
-            ]
-            |> column [ spacing 10 ]
+            else if inspectorState.userPressedReadMore then
+              str
+              |> viewString True
+            else
+              [ str
+                |> truncateSentence characterLimit
+                |> viewString False
+                , viewReadMoreButton inspectorState
+              ]
+              |> column [ spacing 10 ]
 
 
 viewReadMoreButton : InspectorState -> Element Msg
@@ -242,11 +311,43 @@ viewContentFlowBarWrapper model inspectorState oer =
         else
           []
 
+      addToPlaylistButton = 
+          let
+
+            filteredPlaylists = 
+              case model.userPlaylists of
+                Nothing ->
+                  []
+
+                Just playlists ->
+                  List.filter (\x -> checkIfOerDoesNotExistsInPlaylist x.oerIds oer.id) playlists
+
+            option playlist =
+              actionButtonWithoutIcon [] [ width fill, bigButtonPadding, htmlClass "HoverGreyBackground" ] playlist.title (Just <| SelectedAddToPlaylist playlist oer)
+
+            options : List (Attribute Msg)
+            options =
+              case model.popup of
+                Just AddToPlaylistPopup ->
+                  List.map  (\x -> option x) filteredPlaylists
+                  |> menuColumn [ width fill ]
+                  |> above
+                  |> List.singleton
+
+                _ ->
+                  []
+
+            attrs =
+              [ alignLeft, htmlClass "PreventClosingThePopupOnClick", buttonRounding ] ++ options
+          in
+            actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" "Add To Playlist ▾"  (Just OpenedAddToPlaylistMenu)
+            |> el attrs
+
       components =
         if isLabStudy1 model then
           courseSettings
         else
-          [ viewDescription inspectorState oer ] ++ courseSettings
+          [ viewDescription inspectorState oer model ] ++ [ addToPlaylistButton ]
 
       containerHeight =
         if isLabStudy1 model then
@@ -301,7 +402,7 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
                 )
 
           FeedbackTab ->
-            ("Feedback"
+            ("Notes"
             , if (millisSince model model.timeOfLastFeedbackRecorded) < 2000 then viewFeedbackConfirmation else viewFeedbackTab model oer
             )
 
@@ -319,11 +420,11 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
             simpleButton [ Font.size 16, paddingXY 1 20, borderBottom 4, centerX, borderColor, textColor ] title (Just <| SelectInspectorSidebarTab tab oer.id)
 
       tabsMenu =
-        [ (FeedbackTab, "Feedback")
+        [ (FeedbackTab, "Notes")
         , (RecommendationsTab, "Related")
         ]
         |> List.map renderTab
-        |> row [ width fill, paddingXY 20 0, spacing 25, Background.color midnightBlue ]
+        |> row [ width fill, spacing 25, Background.color midnightBlue ]
 
       tabContent =
         if isLoggedIn model then
@@ -397,27 +498,32 @@ recommendationCardWidth model =
 
 viewFeedbackTab : Model -> Oer -> Element Msg
 viewFeedbackTab model oer =
-  let
-      formValue =
-        getResourceFeedbackFormValue model oer.id
+  let        
+    notes = 
+      List.map (\x -> viewNoteForOer model x) model.userNotesForOer
+      |> column [ spacing 5, width fill ]
 
-      quickOptions =
-        ([ "Inspiring"
-        , "Outstanding"
-        , "Outdated"
-        , "Language errors"
-        , "Poor content"
-        , "Poor image"
-        ] ++ (if isVideoFile oer.url then [ "Poor audio" ] else []))
-        |> List.map (\option -> simpleButton [ paddingXY 9 5, Background.color primaryGreen, buttonRounding, Font.size 14, whiteText ] option (Just <| SubmittedResourceFeedback oer.id (">>>"++option)))
-        |> column [ spacing 10 ]
+    formValue =
+      getResourceFeedbackFormValue model oer.id
 
-      textField =
-        Input.text [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5grey ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your comments" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
+    quickOptions =
+      ([ "Inspiring"
+      , "Outstanding"
+      , "Outdated"
+      , "Language errors"
+      , "Poor content"
+      , "Poor image"
+      ] ++ (if isVideoFile oer.url then [ "Poor audio" ] else []))
+      |> List.map (\option -> simpleButton [ paddingXY 4 4, Background.color primaryGreen, buttonRounding, Font.size 14, whiteText ] option (Just <| SubmittedResourceFeedback oer.id (">>>"++option)))
+      |> column [ width fill, htmlClass "flexWrap" ]
+
+    textField =
+      Input.text [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5grey ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your notes" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
   in
       [ "How would you describe this material?" |> bodyWrap []
       , quickOptions
-      , "Comments (optional)" |> bodyWrap []
+      , "Notes" |> bodyWrap []
+      , notes |> el [ width fill ]
       , textField
       ]
       |> column [ width fill, spacing 20 ]
@@ -425,8 +531,8 @@ viewFeedbackTab model oer =
 
 viewFeedbackConfirmation : Element Msg
 viewFeedbackConfirmation =
-  [ "Thanks 😊" |> headlineWrap [ Font.size 24 ]
-  , "✔ Your feedback has been recorded." |> bodyWrap []
+  [ "Note Saved" |> headlineWrap [ Font.size 24 ]
+  , "✔ Your note has been recorded." |> bodyWrap []
   ]
   |> column [ spacing 30, paddingTop 200 ]
 
@@ -445,3 +551,73 @@ explanationForRelatedTab =
   , flyoutDirection = Left
   , links = [ explanationLinkForItemRecommender ]
   }
+
+checkIfOerDoesNotExistsInPlaylist : List OerId -> Int -> Bool
+checkIfOerDoesNotExistsInPlaylist oers oerId =
+    case List.head (List.filter (\x -> x == oerId) oers) of
+      Nothing ->
+        True
+
+      Just _ ->
+        False
+
+
+viewNoteForOer : Model -> Note -> Element Msg
+viewNoteForOer model note = 
+  case model.editUserNoteForOerInPlace of
+    Nothing ->
+      let
+        topRow =
+            note.text |> bodyWrap []
+
+        editButton =
+          button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditNoteForOer note, label = "Edit" |> captionNowrap [ width fill, whiteText, Font.center ] }
+
+        removeButton =
+            button [ paddingXY 5 3, buttonRounding, Background.color red ] { onPress = Just <| RemoveNoteForOer note.id, label = "Remove" |> captionNowrap [ width fill, whiteText, Font.center ] }
+      
+        buttonRow =
+          [ editButton
+          , removeButton
+          ]
+          |> row [ width (fillPortion 2), spacing 10 ]
+
+      in
+        [ topRow
+        , buttonRow
+        ]
+        |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
+
+    Just editingNote ->
+      if editingNote.id == note.id then
+        let
+          topRow =
+              Input.text [  Font.size 14, width fill, onEnter <| SubmittedNoteEdit, Border.color x5grey ] { onChange = ChangedTextInNote, placeholder = Nothing,  text = editingNote.text, label = Input.labelHidden "Your feedback about this resource" }
+        in
+          [ topRow
+          ]
+          |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
+
+      else 
+        let
+          topRow =
+              note.text |> bodyWrap []
+
+          editButton =
+            button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditNoteForOer note, label = "Edit" |> captionNowrap [ width fill, whiteText, Font.center ] }
+
+          removeButton =
+              button [ paddingXY 5 3, buttonRounding, Background.color red ] { onPress = Just <| RemoveNoteForOer note.id, label = "Remove" |> captionNowrap [ width fill, whiteText, Font.center ] }
+        
+          buttonRow =
+            [ editButton
+            , removeButton
+            ]
+            |> row [ width (fillPortion 2), spacing 10 ]
+          in
+            [ topRow
+            , buttonRow
+            ]
+            |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
+
+

@@ -1,0 +1,11 @@
+{% extends "security/base.html" %}
+
+{% block content %}
+  <div class="centerblock">
+    {% include "security/_messages.html" %}
+    <h1>Verify Your Email</h1>
+    <p style="text-align: justify;">Please check your email for further instructions on verifying your account.  If you do not find the email in your inbox, please check your spam filter or bulk email folder.</p>
+    <br>
+    <p class="centernote">Already verified? <a href="/login">Log in.</a></p>
+  </div>
+{% endblock %}

@@ -365,12 +365,12 @@ spriteSheetNumberOfColumns =
 
 spritesheetUrl : Oer -> String
 spritesheetUrl oer =
-  "http://145.14.12.67/files/sprite_sheets/sprite_"++(String.fromInt oer.id)++"_10x10_332x175.jpg"
+  "http://145.14.12.115/files/sprite_sheets/sprite_"++(String.fromInt oer.id)++"_10x10_332x175.jpg"
 
 
 thumbUrl : Oer -> String
 thumbUrl oer =
-  "http://145.14.12.67/files/thumbs/tn_"++(String.fromInt oer.id)++"_332x175.jpg"
+  "http://145.14.12.115/files/thumbs/tn_"++(String.fromInt oer.id)++"_332x175.jpg"
 
 
 viewOverviewTypeMenu : Model -> Element Msg

@@ -9,14 +9,14 @@ DB_NAME = os.environ.get("X5LEARN_DB_NAME")
 THUMBPATH = os.environ.get("X5LEARN_THUMB_PATH")
 
 
-def main():
+def main(args):
     print("X5learn - back filling thumb paths to existing oer data...")
 
-    oers, connection = get_oer_db_object()
-    
+    oers, connection = get_oer_db_object(args["dbuser"], args["dbpass"], args["dbname"])
+
     count = 0
     # iterate file in thumb folder
-    for thumb in os.listdir(THUMBPATH):
+    for thumb in os.listdir(args["thumbpath"]):
 
         if thumb.startswith("tn_audio"):
             continue
@@ -29,7 +29,7 @@ def main():
 
         if oer_id == 0:
             continue
-        
+
         # fetch db record based on oer id
         query = db.select([oers.columns.data]).where(oers.columns.id == oer_id)
         oer_data = connection.execute(query).fetchone()[0]
@@ -49,12 +49,11 @@ def main():
         count += 1
 
     print("\nEnding script. No of records updated : ", count)
-        
 
 
-def get_oer_db_object():
+def get_oer_db_object(user, passwd, db_name):
     db_engine_uri = 'postgresql://{}:{}@localhost:5432/{}'.format(
-        DB_USER, DB_PASS, DB_NAME)
+        user, passwd, db_name)
     engine = db.create_engine(db_engine_uri)
     connection = engine.connect()
     metadata = db.MetaData()
@@ -80,9 +79,4 @@ if __name__ == '__main__':
     parser.add_argument('--thumbpath', required=True, type=str, help='full path to thumb folder')
     args = vars(parser.parse_args())
 
-    DB_USER = args["dbuser"]
-    DB_PASS = args["dbpass"]
-    DB_NAME = args["dbname"]
-    THUMBPATH = args["thumbpath"]
-
-    main()
+    main(args)

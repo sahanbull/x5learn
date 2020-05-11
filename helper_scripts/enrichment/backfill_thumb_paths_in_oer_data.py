@@ -2,9 +2,9 @@ import os
 import sqlalchemy as db
 import json
 
-DB_USER = os.environ["X5LEARN_DB_USERNAME"]
-DB_PASS = os.environ["X5LEARN_DB_PASSWORD"]
-DB_NAME = os.environ["X5LEARN_DB_NAME"]
+DB_USER = os.environ.get("X5LEARN_DB_USERNAME")
+DB_PASS = os.environ.get("X5LEARN_DB_PASSWORD")
+DB_NAME = os.environ.get("X5LEARN_DB_NAME")
 
 THUMBPATH = os.environ.get("X5LEARN_THUMB_PATH")
 
@@ -17,6 +17,9 @@ def main():
     count = 0
     # iterate file in thumb folder
     for thumb in os.listdir(THUMBPATH):
+
+        if thumb.startswith("tn_audio"):
+            continue
 
         if not thumb.endswith(".jpg"):
             continue
@@ -37,7 +40,7 @@ def main():
         if thumb in oer_data['images']:
             continue
 
-        print("\n updating oer id :", oer_id)
+        print("\n updating thumb path for oer id :", oer_id)
         # update db record
         oer_data['images'].append(thumb)
         query = db.update(oers).values(data=oer_data)
@@ -68,4 +71,18 @@ def extract_oer_id(thumb):
 
 
 if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Backfill oers with missing thumb paths')
+    parser.add_argument('--dbuser', required=True, type=str, help='username to connect to database')
+    parser.add_argument('--dbpass', required=True, type=str, help='password to connect to database')
+    parser.add_argument('--dbname', required=True, type=str, help='database name to connect to')
+    parser.add_argument('--thumbpath', required=True, type=str, help='full path to thumb folder')
+    args = vars(parser.parse_args())
+
+    DB_USER = args["dbuser"]
+    DB_PASS = args["dbpass"]
+    DB_NAME = args["dbname"]
+    THUMBPATH = args["thumbpath"]
+
     main()

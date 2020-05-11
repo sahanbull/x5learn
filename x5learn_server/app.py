@@ -658,8 +658,8 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     response = conn.getresponse().read().decode("utf-8")
     metadata = json.loads(response)['metadata']
     materials = json.loads(response)['rec_materials']
-    materials = filter_x5gon_search_results(materials)
-    materials = remove_duplicates_from_x5gon_search_results(materials)
+    # materials = filter_x5gon_search_results(materials)
+    # materials = remove_duplicates_from_x5gon_search_results(materials)
     for index, material in enumerate(materials):
         url = material['url']
         # Some urls that were longer than 255 caused errors.

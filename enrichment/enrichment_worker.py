@@ -361,7 +361,7 @@ def post_back_thumb_generation_result(url, thumb_file_name, error=None):
 if __name__ == '__main__':
     import argparse
 
-    parser = argparse.ArgumentParser(description='Proceess text to extract the most important bits')
+    parser = argparse.ArgumentParser(description='Enrich oers with wiki data or thumbnails')
     parser.add_argument('--mode', required=True, type=str, help='Mode should either be "wiki" or "thumb"')
     args = vars(parser.parse_args())
 

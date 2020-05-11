@@ -1,12 +1,5 @@
 import os
 import sqlalchemy as db
-import json
-
-DB_USER = os.environ.get("X5LEARN_DB_USERNAME")
-DB_PASS = os.environ.get("X5LEARN_DB_PASSWORD")
-DB_NAME = os.environ.get("X5LEARN_DB_NAME")
-
-THUMBPATH = os.environ.get("X5LEARN_THUMB_PATH")
 
 
 def main(args):

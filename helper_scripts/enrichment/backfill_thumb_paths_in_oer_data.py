@@ -57,7 +57,7 @@ def get_oer_db_object(user, passwd, db_name):
 
 def extract_oer_id(thumb):
     try:
-        return int(thumb[3:(thumb[3:].rfind("_") + 3)])
+        return int(thumb.split("_")[1])
     except ValueError:
         return 0
 

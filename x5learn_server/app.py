@@ -656,12 +656,12 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request(
         'GET',
-        '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=mp4,ogg,webm,mov,mp3,pdf&text=' + text + '&page=' + str(
+        '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=mp4,ogg,webm,video,mov,mp3,pdf&text=' + text + '&page=' + str(
             page_number))
     response = conn.getresponse().read().decode("utf-8")
     metadata = json.loads(response)['metadata']
     materials = json.loads(response)['rec_materials']
-    # materials = filter_x5gon_search_results(materials)
+    materials = filter_x5gon_search_results(materials)
     # materials = remove_duplicates_from_x5gon_search_results(materials)
     for index, material in enumerate(materials):
         url = material['url']
@@ -744,6 +744,7 @@ def filter_x5gon_search_results(materials):
     # filter by file suffix
     materials = [m for m in materials
                  if m['url'].endswith('.pdf')
+                 or m['url'].endswith('.mp3')
                  or is_video(m['url'])]
 
     # crudely filter out materials from MIT OCW that are assignments or date back to the 90s or early 2000s

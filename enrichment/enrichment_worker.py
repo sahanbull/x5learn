@@ -20,7 +20,7 @@ API_ROOT = os.environ.get("FLASK_API_ROOT")
 
 THUMBPATH = os.environ.get("X5LEARN_THUMB_PATH")
 TEMPPATH = "/tmp/"
-SUPPORTED_FILE_FORMATS = ['mp4', 'mov', 'webm', 'ogv', "pdf"]
+SUPPORTED_FILE_FORMATS = ['mp4', 'mov', 'webm', 'ogv', "pdf","mp3"]
 THUMB_WIDTH = 332
 THUMB_HEIGHT = 175
 
@@ -78,6 +78,11 @@ def main(args):
                     # get file details
                     file_name, file_extension = extract_file_name_and_type(task['url'])
 
+                    # if file is audio set back default audio thumb
+                    if file_extension == "mp3":
+                        post_back_thumb_generation_result(task['url'], "tn_audio_332x175.jpg")
+                        continue
+
                     # download file in a temporary folder for thumb generation
                     wget.download(task['url'], out=TEMPPATH)
 
@@ -101,7 +106,7 @@ def main(args):
             except Exception as err:
                 error_string = str(err)
                 if task is not None and 'url' in task:
-                    post_back_thumb_generation_result(task['url'], error=error_string[:255])
+                    post_back_thumb_generation_result(task['url'], None, error_string[:255])
 
                 print("\nError : {0}".format(err))
                 say('Something went wrong. Waiting.')

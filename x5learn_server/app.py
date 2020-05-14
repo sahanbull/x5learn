@@ -29,7 +29,8 @@ from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichmen
     ActionsRepository, UserRepository, DefinitionsRepository, Course, UiLogBatch, Note, Playlist, Playlist_Item, \
     Temp_Playlist, License, TempPlaylistRepository, ThumbGenerationTask
 
-from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment, push_thumbnail_generation_task
+from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment, \
+    push_thumbnail_generation_task
 from x5learn_server.lab_study import frozen_search_results_for_lab_study, is_special_search_key_for_lab_study
 from x5learn_server.course_optimization import optimize_course
 
@@ -48,7 +49,7 @@ app.config['SECURITY_REGISTERABLE'] = True
 app.config['SECURITY_REGISTER_URL'] = '/signup'
 app.config['SECURITY_SEND_REGISTER_EMAIL'] = True
 app.config['SECURITY_CONFIRMABLE'] = True
-app.config['SECURITY_POST_REGISTER_VIEW'] = '/verify_email' 
+app.config['SECURITY_POST_REGISTER_VIEW'] = '/verify_email'
 app.config['SECURITY_POST_CONFIRM_VIEW'] = '/confirmed_email'
 
 # user password configs
@@ -71,18 +72,19 @@ db = SQLAlchemy(app)
 # Setup password policy by extending flask security forms
 class ExtendedRegisterForm(RegisterForm):
     password = forms.PasswordField('Password', \
-        [forms.validators.Regexp(regex='[A-Za-z0-9@#$%^&+=]{8,}', message="Invalid password")])
+                                   [forms.validators.Regexp(regex='[A-Za-z0-9@#$%^&+=]{8,}',
+                                                            message="Invalid password")])
     password_confirm = False
 
 
 class ExtendedResetPasswordForm(ResetPasswordForm):
     password = forms.PasswordField('Password', \
-        [forms.validators.Regexp(regex='[A-Za-z0-9@#$%^&+=]{8,}', message="Invalid password")])
+                                   [forms.validators.Regexp(regex='[A-Za-z0-9@#$%^&+=]{8,}',
+                                                            message="Invalid password")])
 
 
 security = Security(app, user_datastore, confirm_register_form=ExtendedRegisterForm, \
-    reset_password_form=ExtendedResetPasswordForm)
-
+                    reset_password_form=ExtendedResetPasswordForm)
 
 # Setup Flask-Mail Server
 app.config['MAIL_SERVER'] = MAIL_SERVER
@@ -330,7 +332,7 @@ def api_search():
 
     """
     text = request.args['text'].lower().strip()
-    page = int(request.args['page']) if request.args['page'] is not None else 1 
+    page = int(request.args['page']) if request.args['page'] is not None else 1
     if text == "":  # if empty string, no results
         return jsonify([])
     elif text.startswith(PLAYLIST_PREFIX):  # if its a playlist
@@ -572,8 +574,8 @@ def api_entity_descriptions():
 
 @app.route("/api/v1/most_urgent_unstarted_thumb_generation_task/", methods=['POST'])
 def most_urgent_unstarted_thumb_generation_task():
-    task = ThumbGenerationTask.query.filter(and_(ThumbGenerationTask.error == None, 
-        ThumbGenerationTask.started == None)).order_by(
+    task = ThumbGenerationTask.query.filter(and_(ThumbGenerationTask.error == None,
+                                                 ThumbGenerationTask.started == None)).order_by(
         ThumbGenerationTask.priority.desc()).first()
     if task is None:
         return jsonify({'info': 'No tasks available'})
@@ -608,7 +610,7 @@ def ingest_thumb_generation_result():
     elif thumb_file_name is not None:
         oer = Oer.query.filter_by(url=url).first()
         new_data = json.loads(json.dumps(oer.data))
-        if  new_data['images'] is None:
+        if new_data['images'] is None:
             new_data['images'] = []
         if thumb_file_name not in new_data['images']:
             new_data['images'].append(thumb_file_name)
@@ -653,12 +655,13 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     # print('X5GON search page_number', page_number)
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request(
-        'GET', '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=mp4,ogg,webm,video,mov,mp3,pdf&text=' + text + '&page=' + str(
+        'GET',
+        '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=mp4,ogg,webm,video,mov,mp3,pdf&text=' + text + '&page=' + str(
             page_number))
     response = conn.getresponse().read().decode("utf-8")
     metadata = json.loads(response)['metadata']
     materials = json.loads(response)['rec_materials']
-    # materials = filter_x5gon_search_results(materials)
+    materials = filter_x5gon_search_results(materials)
     # materials = remove_duplicates_from_x5gon_search_results(materials)
     for index, material in enumerate(materials):
         url = material['url']
@@ -739,10 +742,13 @@ def filter_x5gon_search_results(materials):
     materials = [m for m in materials if 'youtu' not in m['url']]
 
     # filter by file suffix
-    materials = [m for m in materials if m['url'].endswith('.pdf') or is_video(m['url'])]
+    materials = [m for m in materials
+                 if m['url'].endswith('.pdf')
+                 or m['url'].endswith('.mp3')
+                 or is_video(m['url'])]
 
     # crudely filter out materials from MIT OCW that are assignments or date back to the 90s or early 2000s
-    materials = [m for m in materials if _is_valid_file(m)]
+    # materials = [m for m in materials if _is_valid_file(m)]
 
     # Exclude non-english materials because they tend to come out poorly after wikification. X5GON search doesn't have a language parameter at the time of writing.
     # materials = [m for m in materials if m['language'] == 'en']
@@ -1434,7 +1440,7 @@ def _add_temporary_playlist(title, license, creator, parent):
 
 
 def _update_temporary_playlist_items(title, oerIds):
-    existing_playlist = repository.get(Temp_Playlist, None, {'title' : title, 'creator' : current_user.get_id()})
+    existing_playlist = repository.get(Temp_Playlist, None, {'title': title, 'creator': current_user.get_id()})
 
     if (existing_playlist is not None and existing_playlist[0] is not None):
         data = json.loads(existing_playlist[0].data)
@@ -1489,8 +1495,8 @@ def _convert_temp_playlist_to_playlist(temp_playlist):
     if 'playlist_item_data' in temp_data:
         for key in temp_data['playlist_item_data']:
             playlist_item_data.append({
-                'oerId' : int(key),
-                'title' : temp_data['playlist_item_data'][key]['title'],
+                'oerId': int(key),
+                'title': temp_data['playlist_item_data'][key]['title'],
                 'description': temp_data['playlist_item_data'][key]['description']
             })
 
@@ -1525,6 +1531,7 @@ def _add_oer_to_playlist(title, oer_id):
         return False
 
     return True
+
 
 # function to set playlist item meta data overriding oer data (title and description for now)
 def _set_playlist_item_data(playlist, playlist_item_data):

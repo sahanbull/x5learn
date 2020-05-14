@@ -253,7 +253,8 @@ viewString isScrollbarEnabled str =
 
 viewLinkToFile : Oer -> Element Msg
 viewLinkToFile oer =
-  newTabLink [] { url = oer.url, label = oer.url |> bodyWrap [] }
+  newTabLink [ htmlClass "CursorPointer", alignRight ] { url = oer.url, label = "Expand Document" |> bodyWrap [ width fill, Font.color electricBlue ] }
+  |> el [ width fill ]
 
 
 sheetWidth model =
@@ -347,7 +348,10 @@ viewContentFlowBarWrapper model inspectorState oer =
         if isLabStudy1 model then
           courseSettings
         else
-          [ viewDescription inspectorState oer model ] ++ [ addToPlaylistButton ]
+          if isPdfFile oer.url then
+            [ viewLinkToFile oer ] ++ [ viewDescription inspectorState oer model ] ++ [ addToPlaylistButton ]
+          else
+            [ viewDescription inspectorState oer model ] ++ [ addToPlaylistButton ]
 
       containerHeight =
         if isLabStudy1 model then
@@ -375,7 +379,7 @@ viewContentFlowBarWrapper model inspectorState oer =
           []
   in
       components
-      |> column ([ width <| px <| playerWidth model, height <| px <| containerHeight, moveDown 1, paddingTop 25, spacing 4 ] ++ contentFlowBar)
+      |> column ([ width <| px <| playerWidth model, height <| px <| containerHeight, moveDown 1, spacing 4 ] ++ contentFlowBar)
 
 
 viewInspectorSidebar : Model -> InspectorState -> Element Msg

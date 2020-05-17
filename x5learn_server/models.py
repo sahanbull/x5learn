@@ -421,6 +421,19 @@ class ThumbGenerationTask(Base):
         self.data = data
 
 
+class Localization(Base):
+    __tablename__ = 'localization'
+    __table_args__ = {'extend_existing': True}
+    language = Column(String(2), primary_key=True)
+    page = Column(String(255), primary_key=True)
+    data = Column(JSON())
+
+    def __init__(self, language, page, data):
+        self.language = language
+        self.page = page
+        self.data = data
+
+
 # Repository pattern implemented for CRUD
 class Repository:
     """

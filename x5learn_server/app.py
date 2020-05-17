@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, request, redirect
+from flask import Flask, jsonify, render_template, request, redirect, flash
 from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required, \
     forms, RegisterForm, ResetPasswordForm
@@ -27,7 +27,7 @@ from x5learn_server.db.database import db_session
 from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, \
     EntityDefinition, ResourceFeedback, Action, ActionType, Repository, \
     ActionsRepository, UserRepository, DefinitionsRepository, Course, UiLogBatch, Note, Playlist, Playlist_Item, \
-    Temp_Playlist, License, TempPlaylistRepository, ThumbGenerationTask
+    Temp_Playlist, License, TempPlaylistRepository, ThumbGenerationTask, Localization
 
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment, \
     push_thumbnail_generation_task
@@ -2080,6 +2080,75 @@ def recommendations_from_lam_api(oer_id):
 
 def find_oer_by_material_id(material_id):
     return Oer.query.filter(Oer.data['material_id'].astext == str(material_id)).order_by(Oer.id.desc()).first()
+
+@app.route("/admin/localization", methods=['GET'])
+@login_required
+def localization():
+    
+    # fetching initial data
+    localizations = repository.get(Localization, user_login_id=None)
+
+    languages = list()
+    pages = list()
+
+    for localization in localizations:
+        if localization.language not in languages:
+            languages.append(localization.language)
+
+        if localization.page not in pages:
+            pages.append(localization.page)
+
+    # if get params exist load table data
+    data = None
+    lang = ""
+    page = ""
+    if 'page' in request.args and 'language' in request.args:
+        lang = request.args['language']
+        page = request.args['page']
+        row = repository.get(Localization, user_login_id=None, filters={"language":lang, "page":page}, sort={"language":"asc"})
+        
+        if row is not None:
+            data = row[0].data
+    
+
+    return render_template('admin/manage_localization.html', languages=languages, pages=pages, data=data, lang=lang, page=page)
+
+
+@app.route("/admin/localization", methods=['POST'])
+@login_required
+def post_localization():
+
+    # caputing post data
+    post_data = request.form
+
+    # persist changes to database
+    if 'page' in request.form and 'language' in request.form and 'replace' in request.form:
+        lang = request.form['language']
+        page = request.form['page']
+        replace = request.form.getlist('replace')
+
+        row = repository.get(Localization, user_login_id=None, filters={"language" : lang, "page" : page})
+
+        if row is None:
+            return redirect("/admin/localization")
+
+        new_data = json.loads(json.dumps(row[0].data))
+
+        count = 0
+        for key, values in new_data.items():
+
+            if replace[count] == "":
+                count += 1
+                continue
+
+            new_data[key] = replace[count]
+            count += 1
+        
+        row[0].data = new_data
+        repository.update()
+        flash('Changes successfully saved')
+
+    return redirect("/admin/localization")
 
 
 if __name__ == '__main__':

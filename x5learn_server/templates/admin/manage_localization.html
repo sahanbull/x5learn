@@ -1,0 +1,75 @@
+{% extends "security/base.html" %}
+
+{% block content %}
+  <div class="container">
+    {% include "security/_messages.html" %}
+    <h2 class="text-center">Manage Localization</h2>
+
+    <div class="row well">
+        <form method="get" action="localization">
+            <div class="inline">
+                <label class="control-label">Select Language</label>
+                <select class="form-control" name="language">
+                    {% for l in languages %}
+                    {% if l==lang %}
+                    <option selected="selected" value="{{ l }}">{{ l }}</option>
+                    {% else %}
+                    <option value="{{ l }}">{{ l }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+                <label class="control-label">Select Page</label>
+                <select class="form-control" name="page">
+                    {% for p in pages %}
+                    {% if p==page %}
+                    <option selected="selected" value="{{ p }}">{{ p }}</option>
+                    {% else %}
+                    <option value="{{ p }}">{{ p }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+                <button type="submit" class="primary">Go</button>
+            </div>
+        </form>
+    </div>
+    <br><br>
+
+    {% if data != None %}
+    <form method="post" action="localization">
+
+        <input type="hidden" name="language" value="{{ lang }}">
+        <input type="hidden" name="page" value="{{ page }}">
+
+        <div class="row">
+            <table class="table" cellpadding=10>
+                <thead>
+                    <tr>
+                        <th width="5%">#</th>
+                        <th width="15%">Key</th>
+                        <th width="35%">Default</th>
+                        <th width="35%">Replace</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for key, value in data.items() %}
+                    <tr>
+                        <td>{{ loop.index + 1 }}</td>
+                        <td>{{ key }}</td>
+                        <td>{{ value }}</td>
+                        <td><input class="table-input" name="replace" type="text"/></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <br>
+
+        <div class="row">
+            <button type="submit" class="primary big">Submit</button>
+        </div>
+    </form>
+    {% endif %}
+
+
+  </div>
+{% endblock %}

@@ -522,7 +522,7 @@ viewFeedbackTab model oer =
       |> column [ width fill, htmlClass "flexWrap" ]
 
     textField =
-      Input.text [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5grey ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your notes" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
+      Input.text [ Font.size 12, width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5grey ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your notes" |> text |> Input.placeholder [ Font.size 12 ]), label = Input.labelHidden "Your feedback about this resource" }
   in
       [ "How would you describe this material?" |> bodyWrap []
       , quickOptions

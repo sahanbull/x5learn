@@ -524,7 +524,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 updatedPublishPlaylistForm =
                     { playlistPublishForm | blueprintUrl = Just url }
             in
-            ( { model | snackbar = createSnackbar model "Playlist successfully published", playlistPublishForm = updatedPublishPlaylistForm, playlist = Nothing }, requestLoadUserPlaylists )
+            ( { model | snackbar = createSnackbar model "Playlist successfully published", playlistPublishFormSubmitted = False, playlistPublishForm = updatedPublishPlaylistForm, playlist = Nothing }, requestLoadUserPlaylists )
 
         RequestPublishPlaylist (Err err) ->
             ( { model | snackbar = createSnackbar model "Error publishing playlist", playlistPublishFormSubmitted = False }, Cmd.none )

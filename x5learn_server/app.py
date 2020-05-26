@@ -173,7 +173,9 @@ repository = Repository()
 @app.route("/")
 def home():
     if current_user.is_authenticated:
-        return render_template('home.html')
+        languages = get_available_languages()
+        localization_dict = get_localization_dict()
+        return render_template('home.html', localization_dict=localization_dict, languages=languages)
     else:
         return render_template('about.html', is_user_logged_in=current_user.is_authenticated)
 
@@ -202,35 +204,47 @@ def logout():
 
 @app.route("/featured")
 def featured():
-    return render_template('home.html')
+    languages = get_available_languages()
+    localization_dict = get_localization_dict()
+    return render_template('home.html', localization_dict=localization_dict, languages=languages)
 
 
 @app.route("/search")
 def search():
-    return render_template('home.html')
+    languages = get_available_languages()
+    localization_dict = get_localization_dict()
+    return render_template('home.html', localization_dict=localization_dict, languages=languages)
 
 
 @app.route("/resource/<oer_id>")
 def resource(oer_id):
-    return render_template('home.html')
+    languages = get_available_languages()
+    localization_dict = get_localization_dict()
+    return render_template('home.html', localization_dict=localization_dict, languages=languages)
 
 
 @app.route("/profile")
 @login_required
 def profile():
-    return render_template('home.html')
+    languages = get_available_languages()
+    localization_dict = get_localization_dict()
+    return render_template('home.html', localization_dict=localization_dict, languages=languages)
 
 
 @app.route("/publish_playlist")
 @login_required
 def playlist():
-    return render_template('home.html')
+    languages = get_available_languages()
+    localization_dict = get_localization_dict()
+    return render_template('home.html', localization_dict=localization_dict, languages=languages)
 
 
 @app.route("/create_playlist")
 @login_required
 def new_playlist():
-    return render_template('home.html')
+    languages = get_available_languages()
+    localization_dict = get_localization_dict()
+    return render_template('home.html', localization_dict=localization_dict, languages=languages)
 
 
 @app.route("/playlist/download/<playlist_id>")
@@ -2102,7 +2116,7 @@ def localization():
     data = None
     lang = ""
     page = ""
-    if 'page' in request.args and 'language' in request.args:
+    if 'page' in request.args and 'language' in request.args and request.args['language'] != "_add_new_language":
         lang = request.args['language']
         page = request.args['page']
         row = repository.get(Localization, user_login_id=None, filters={"language":lang, "page":page}, sort={"language":"asc"})
@@ -2110,7 +2124,6 @@ def localization():
         if row is not None:
             data = row[0].data
     
-
     return render_template('admin/manage_localization.html', languages=languages, pages=pages, data=data, lang=lang, page=page)
 
 
@@ -2149,6 +2162,137 @@ def post_localization():
         flash('Changes successfully saved')
 
     return redirect("/admin/localization")
+
+
+@app.route("/admin/add_new_language", methods=['POST'])
+@login_required
+def add_new_language():
+    # caputing post data
+    post_data = request.form
+
+    # persist changes to database
+    if 'language' in request.form:
+        lang = request.form['language']
+        row = repository.get(Localization, user_login_id=None, filters={"language" : lang})
+
+        if len(row) != 0:
+            flash('Language already exists.')
+            return redirect("/admin/localization")
+
+        # get localization template
+        try:
+            with open('config/localization_template.json') as f:
+                data = json.load(f)
+
+                for page in data:
+                    localization = Localization(lang, page, data[page])
+                    repository.add(localization)
+
+                flash("Localization successfully added")
+                return redirect("/admin/localization?language={}".format(lang))
+
+        except (FileNotFoundError, IOError):
+            flash('Localization template file not found.')
+            return redirect("/admin/localization")
+
+@app.route("/admin/update_keys", methods=['GET'])
+def update_localization_keys():
+
+    # get saved localizations
+    result = repository.get(Localization, user_login_id=None)
+
+    if len(result) == 0:
+        flash('Nothing to update.')
+        return redirect("/admin/localization")
+
+    # open localization template
+    try:
+        with open('config/localization_template.json') as f:
+            data = json.load(f)
+
+            # create a lookup to easily detect what pages or keys are missing
+            existing_langs = list()
+            existing_pages = dict()
+            existing_keys = dict()
+            for record in result:
+
+                if record.language not in existing_pages:
+                    existing_langs.append(record.language)
+                    existing_pages[record.language] = list()
+
+                existing_pages[record.language].append(record.page)
+
+                if (record.language + "_" + record.page) not in existing_keys:
+                    existing_keys[record.language + "_" + record.page] = list()
+
+                for value in record.data:
+                    existing_keys[record.language + "_" + record.page].append(value)
+
+            # iterate through pages and insert them
+            for lang in existing_langs:
+                for page in data:
+                    if page not in existing_pages[lang]:
+                        localization = Localization(lang, page, data[page])
+                        repository.add(localization)
+                    else:
+
+                        for value in data[page]:
+                            if value not in existing_keys[lang + "_" + page]:
+                                temp_data = json.loads(json.dumps(data[page]))
+                                temp_data[value] = data[page][value]
+                                record.data = temp_data
+                                repository.update()
+                            else:
+                                existing_keys[lang + "_" + page].pop(existing_keys[lang + "_" + page].index(value))
+
+                        # at the end of the loop if there are keys remaining they should be deleted
+                        if len(existing_keys[lang + "_" + page]) > 0:
+                            for value in existing_keys[lang + "_" + page]:
+                                temp_data = json.loads(json.dumps(data[page]))
+                                del temp_data[value]
+                                record.data = temp_data
+                                repository.update()
+
+                        existing_pages[lang].pop(existing_pages[lang].index(page))
+                
+                if len(existing_pages[lang]) > 0:
+                    for value in existing_pages[lang]:
+                        row = repository.get(Localization, user_login_id=None, filters={"language":lang, "page":value})
+
+                        if len(row) == 1 and row[0] is not None:
+                            repository.delete(row[0])
+            
+            flash("Localization keys successfully updated")
+            return redirect("/admin/localization")
+
+    except (FileNotFoundError, IOError):
+        flash('Localization template file not found.')
+        return redirect("/admin/localization")
+
+
+# function to fetch localization given a language
+def get_localization_dict(lang="en"):
+    result = repository.get(Localization, user_login_id=None, filters={"language" : lang})
+
+    localization = dict()
+    for record in result:
+        localization[record.page] = record.data
+
+    return localization
+
+
+# get available languages
+def get_available_languages():
+    result = repository.get(Localization, user_login_id=None)
+
+    languages = list()
+    for record in result:
+        if record.language in languages:
+            continue
+
+        languages.append(record.language)
+
+    return languages
 
 
 if __name__ == '__main__':

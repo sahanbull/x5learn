@@ -125,6 +125,8 @@ type Msg
   | UpdatePlaylistItem String String
   | SubmittedPlaylistItemUpdate
   | SetSearchCurrentPage Int
+  | ChangeLanguage String
+  | OpenedLanguageSelectorMenu
 
 type UserProfileField
   = FirstName

@@ -74,13 +74,8 @@ userGreeting model =
         [ whiteText, Font.size 60, centerX, htmlClass "BigHeadingFont" ]
   in
   if isLoggedIn model then
-    case model.translations of
-      Nothing ->
-        [ "Welcome Back 1" |> text |> el headingAttrs
-        ]
-      Just translations ->
-        [ (t translations (model.language ++ ".Welcome_back") ) |> text |> el headingAttrs
-        ]
+    [ (t model.translations ("front_page.lbl_welcome_message") ) |> text |> el headingAttrs
+    ]
   else
     [ "Welcome to X5Learn" |> text |> el headingAttrs
     , "Find your personal learning pathway" |> text |> el [ whiteText, Font.size 20, centerX ]

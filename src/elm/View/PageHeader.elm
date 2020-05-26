@@ -59,6 +59,7 @@ viewPageHeader model =
             case session.loginState of
               LoggedInUser userProfile ->
                 [ viewExplainerToggle model
+                , viewLanguageSelector model
                 , viewLinkToAboutPage
                 , viewUserMenu model userProfile
                 ]
@@ -77,6 +78,7 @@ viewPageHeader model =
                           []
                 in
                     [ viewExplainerToggle model
+                    , viewLanguageSelector model
                     , viewLinkToAboutPage
                     , link [ alignRight, paddingXY 15 10 ] { url = loginPath, label = "Log in" |> bodyNoWrap [] } |> el loginHintPopup
                     , link [ alignRight, paddingXY 15 10 ] { url = signupPath, label = "Sign up" |> bodyNoWrap [] }
@@ -93,7 +95,7 @@ viewUserMenu model userProfile =
   let
       icon =
         avatarImage
-
+      
       label =
         [ icon, dropdownTriangle ]
         |> row [ width fill, paddingXY 12 3, spacing 5 ]
@@ -159,3 +161,29 @@ viewExplainerToggle model =
 viewLinkToAboutPage : Element Msg
 viewLinkToAboutPage =
   link [ alignRight, paddingXY 15 10 ] { url = aboutPath, label = "About" |> bodyNoWrap [] }
+
+
+viewLanguageSelector : Model -> Element Msg
+viewLanguageSelector model = 
+  let
+
+    option lang =
+      actionButtonWithoutIcon [] [ width fill, height fill, paddingXY 8 8, htmlClass "HoverGreyBackground" ] (String.toUpper lang) (Just <| ChangeLanguage lang)
+
+    options : List (Attribute Msg)
+    options =
+      case model.popup of
+        Just LanguagePopup ->
+          List.map  (\x -> option x) (List.filter (\x -> x /= model.language) model.languages)
+          |> menuColumn [ width fill ]
+          |> below
+          |> List.singleton
+
+        _ ->
+          []
+
+    attrs =
+      [ alignLeft, htmlClass "PreventClosingThePopupOnClick", buttonRounding, height fill ] ++ options
+  in
+    actionButtonWithoutIcon [] [ height fill ] ((String.toUpper model.language) ++ " ▾")  (Just OpenedLanguageSelectorMenu)
+    |> el attrs

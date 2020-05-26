@@ -16,9 +16,9 @@ import List.Extra
 
 import Animation exposing (..)
 
-import I18Next exposing (Translations, translationsDecoder)
+import I18Next exposing (Translations, translationsDecoder, initialTranslations)
 import Json.Encode
-import Json.Decode
+import Json.Decode exposing (Decoder,Value,field,bool,int,float,string,list,dict,oneOf,maybe,null)
 
 
 {-| The Model contains the ENTIRE state of the frontend at any point in time.
@@ -129,7 +129,8 @@ type alias Model =
   , searchTotalPages : Int -- to track number of pages available from a search result
   , currentPageForSearch : Int -- to keep track of current page of search results shown
   , language : String
-  , translations : Maybe Translations
+  , translations : Translations
+  , languages : List String
   }
 
 {-| We get the first sentence from the Wikipedia article
@@ -271,6 +272,7 @@ type alias Flags =
   , minWindowHeight : Int
   , language : String
   , translations : Json.Encode.Value
+  , languages : Json.Encode.Value
   }
 
 
@@ -393,6 +395,7 @@ type Popup
   | PlaylistPopup -- Allowing the user to toggle between playlists
   | AddToPlaylistPopup -- Allowing the user to add an oer to the playlist
   | SelectLicensePopup -- Allowing the user to select a license when publishing
+  | LanguagePopup -- Allowing the user to select a langauge from language popup
 
 
 {-| Cascading menu containing wikipedia topics
@@ -689,6 +692,7 @@ initialModel nav flags =
   , currentPageForSearch = 1 
   , language = flags.language
   , translations = initTranslations flags.translations
+  , languages = initLanguages flags.languages
   }
 
 initialLicenseType : List LicenseType
@@ -699,17 +703,25 @@ initialPlaylist : Playlist
 initialPlaylist =
   Playlist Nothing "New Playlist" Nothing Nothing Nothing Nothing True Nothing [] Nothing []
 
-initTranslations : Json.Encode.Value -> Maybe Translations
-initTranslations translationString =
-  let
-    _= Debug.log "translation" translationString
-  in
-  case Json.Decode.decodeValue translationsDecoder translationString of
-    Ok translations ->
-      Just translations
+
+initLanguages : Json.Encode.Value -> List String
+initLanguages languagesJson = 
+  case Json.Decode.decodeValue (list string) languagesJson of
+    Ok languages ->
+      languages
 
     Err err ->
-      Nothing
+      [ "EN" ]
+
+
+initTranslations : Json.Encode.Value -> Translations
+initTranslations translationJson =
+  case Json.Decode.decodeValue translationsDecoder translationJson of
+    Ok translations ->
+      translations
+
+    Err err ->
+      initialTranslations
 
 initialUserProfile : String -> UserProfile
 initialUserProfile email =

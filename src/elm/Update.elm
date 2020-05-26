@@ -1229,6 +1229,12 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 Just searchState ->
                      ( { model | currentPageForSearch = pageNumber }, Navigation.load ("/search?q=" ++ searchState.lastSearchText ++ "&page=" ++ String.fromInt pageNumber) )
 
+        OpenedLanguageSelectorMenu ->
+            ( { model | popup = Just LanguagePopup }, setBrowserFocus "" )
+                |> logEventForLabStudy "OpenedLanguageSelectorMenu" []
+
+        ChangeLanguage lang ->
+            (model, Cmd.none)
 
 insertSearchResults : List OerId -> Model -> Model
 insertSearchResults oerIds model =
@@ -1509,6 +1515,9 @@ popupToStrings maybePopup =
 
                 SelectLicensePopup ->
                     [ "SelectLicensePopup" ]
+
+                LanguagePopup ->
+                    [ "LanguagePopup" ]
 
 
 executeSearchAfterUrlChanged : Model -> Url -> ( Model, Cmd Msg )

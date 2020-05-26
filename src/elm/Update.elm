@@ -654,10 +654,10 @@ update msg ({nav, userProfileForm} as model) =
       let
           searchText =
             case taskName of
-              "Task 1" ->
+              "Task: Climate Change" ->
                 "labstudytask1"
 
-              "Task 2" ->
+              "Task: Machine Learning" ->
                 "labstudytask2"
 
               _ ->

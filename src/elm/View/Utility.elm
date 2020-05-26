@@ -434,7 +434,7 @@ confirmButton : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
 confirmButton attrs str onPress =
   let
       label =
-        str |> bodyNoWrap [ Background.color primaryGreen, bigButtonPadding, whiteText ]
+        str |> bodyNoWrap [ Background.color primaryGreen, bigButtonPadding, whiteText, Font.size 13 ]
   in
       button attrs { onPress = onPress, label = label }
 
@@ -443,7 +443,7 @@ stopButton : List (Attribute Msg) -> String -> Maybe Msg -> Element Msg
 stopButton attrs str onPress =
   let
       label =
-        str |> bodyNoWrap [ Background.color red, bigButtonPadding, whiteText ]
+        str |> bodyNoWrap [ Background.color red, bigButtonPadding, whiteText, Font.size 13 ]
   in
       button attrs { onPress = onPress, label = label }
 

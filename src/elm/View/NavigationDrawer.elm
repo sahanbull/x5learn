@@ -44,7 +44,8 @@ withNavigationDrawer model (pageContent, inspector) =
       navButtons =
         if isLabStudy1 model then
           [ viewContentFlowToggle model
-          , taskButtons model 
+          , taskButtons model
+          , "Workspace:" |> bodyNoWrap [ Font.size 15 ] 
           , viewCourse model
           ]
           |> column [ spacing 40, width fill ]
@@ -76,20 +77,19 @@ taskButtons model =
       taskButton taskName =
         case model.currentTaskName of
           Nothing ->
-            confirmButton [] ("Start "++taskName) <| Just <| StartTask taskName
+            confirmButton [] ("Start " ++ taskName) <| Just <| StartTask taskName
 
           Just name ->
             if name==taskName then
-              [ stopButton [] ("Complete" ++ taskName) <| Just CompleteTask
+              [ stopButton [] ("Finish " ++ taskName) <| Just CompleteTask
               ]
               |> row [ spacing 20 ]
             else
               confirmButton [ alpha 0.3, greyText ] ("Start "++taskName) Nothing
   in
-      [ "Workspace" |> bodyNoWrap [ Font.size 15 ]
-      , taskButton "Practice"
-      , taskButton "Climate Change"
-      , taskButton "Machine Learning"
+      [ taskButton "Practice"
+      , taskButton "Task: Climate Change"
+      , taskButton "Task: Machine Learning"
       ]
       |> column [ spacing 10 ]
 

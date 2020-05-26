@@ -229,7 +229,7 @@ viewContentFlowBarWrapper model inspectorState oer =
               let
                   content =
                     if isLabStudy1 model then
-                      "You can add this video to your workspace by dragging a range on the timeline." |> captionNowrap [ paddingTop 8 ]
+                      "You can add this video to your workspace by dragging a range on content-flow bar." |> captionNowrap [ paddingTop 8 ]
                     else
                       actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer
               in
@@ -244,13 +244,13 @@ viewContentFlowBarWrapper model inspectorState oer =
 
       components =
         if isLabStudy1 model then
-          courseSettings
+          courseSettings ++ [ viewDescription inspectorState oer ] 
         else
           [ viewDescription inspectorState oer ] ++ courseSettings
 
       containerHeight =
         if isLabStudy1 model then
-          100
+          200
         else
           200
 

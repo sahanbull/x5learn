@@ -2240,17 +2240,22 @@ def update_localization_keys():
                             if value not in existing_keys[lang + "_" + page]:
                                 temp_data = json.loads(json.dumps(data[page]))
                                 temp_data[value] = data[page][value]
-                                record.data = temp_data
+
+                                update_record = repository.get(Localization, user_login_id=None, filters={"language" : lang, "page" : page})
+                                update_record[0].data = temp_data
                                 repository.update()
                             else:
                                 existing_keys[lang + "_" + page].pop(existing_keys[lang + "_" + page].index(value))
 
                         # at the end of the loop if there are keys remaining they should be deleted
                         if len(existing_keys[lang + "_" + page]) > 0:
-                            for value in existing_keys[lang + "_" + page]:
+                            for sec_value in existing_keys[lang + "_" + page]:
                                 temp_data = json.loads(json.dumps(data[page]))
-                                del temp_data[value]
-                                record.data = temp_data
+                                if sec_value in temp_data:
+                                    del temp_data[sec_value]
+
+                                update_record = repository.get(Localization, user_login_id=None, filters={"language" : lang, "page" : page})
+                                update_record[0].data = temp_data
                                 repository.update()
 
                         existing_pages[lang].pop(existing_pages[lang].index(page))

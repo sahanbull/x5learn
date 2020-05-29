@@ -38,7 +38,7 @@ def main(args):
                 # get oer record of the most recent requested materials
                 r = requests.post(API_ROOT + "most_urgent_unstarted_enrichment_task/", data={})
                 # get json obj with (url, material data)
-                j = json.loads(r.text.decode("utf-8"))
+                j = json.loads(r.text)
                 # if there is additional data in j
                 if 'data' in j:
                     oer_data = j['data']
@@ -309,7 +309,7 @@ def unique_list_of_lists(k):  # https://stackoverflow.com/a/2213973/2237986
 def get_thumb_generation_task():
     r = requests.post(API_ROOT + "most_urgent_unstarted_thumb_generation_task/", data={})
     # get json obj with (url, material data)
-    return json.loads(r.text.decode("utf-8"))
+    return json.loads(r.text)
 
 
 def extract_file_name_and_type(url):

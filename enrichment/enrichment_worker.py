@@ -20,7 +20,7 @@ API_ROOT = os.environ.get("FLASK_API_ROOT")
 
 THUMBPATH = os.environ.get("X5LEARN_THUMB_PATH")
 TEMPPATH = "/tmp/"
-SUPPORTED_FILE_FORMATS = ['mp4', 'mov', 'webm', 'ogv', "pdf","mp3"]
+SUPPORTED_FILE_FORMATS = ['mp4', 'mov', 'webm', 'ogv', "pdf", "mp3"]
 THUMB_WIDTH = 332
 THUMB_HEIGHT = 175
 
@@ -38,7 +38,7 @@ def main(args):
                 # get oer record of the most recent requested materials
                 r = requests.post(API_ROOT + "most_urgent_unstarted_enrichment_task/", data={})
                 # get json obj with (url, material data)
-                j = json.loads(r.text)
+                j = r.json()
                 # if there is additional data in j
                 if 'data' in j:
                     oer_data = j['data']
@@ -74,7 +74,7 @@ def main(args):
                 # get task of the most recent requested materials
                 task = get_thumb_generation_task()
                 if 'url' in task:
-                    
+
                     # get file details
                     file_name, file_extension = extract_file_name_and_type(task['url'])
 
@@ -110,9 +110,10 @@ def main(args):
 
                 print("\nError : {0}".format(err))
                 say('Something went wrong. Waiting.')
-                sleep(5)    
+                sleep(5)
     else:
         print("Invalid argument for mode")
+
 
 def say(text):
     print('X5Learn Enrichment Worker says:', text)
@@ -309,12 +310,12 @@ def unique_list_of_lists(k):  # https://stackoverflow.com/a/2213973/2237986
 def get_thumb_generation_task():
     r = requests.post(API_ROOT + "most_urgent_unstarted_thumb_generation_task/", data={})
     # get json obj with (url, material data)
-    return json.loads(r.text)
+    return r.json()
 
 
 def extract_file_name_and_type(url):
-    file_name = url[url.rfind("/")+1:]
-    file_extension = file_name[file_name.rfind(".")+1:]
+    file_name = url[url.rfind("/") + 1:]
+    file_extension = file_name[file_name.rfind(".") + 1:]
     return file_name, file_extension
 
 
@@ -327,7 +328,6 @@ def create_directories():
 
 
 def create_thumbnail(manager, file_name, oer_id):
-
     # create a thumb large enough to support cropping if needed
     path_to_preview = manager.get_jpeg_preview(
         TEMPPATH + file_name,
@@ -344,12 +344,11 @@ def create_thumbnail(manager, file_name, oer_id):
 
         img.resize(332, height_based_on_aspect_ratio)
 
-        #cropping image from top
+        # cropping image from top
         img.crop(0, 0, width=332, height=175)
 
         thumb_file_name = "tn_" + str(oer_id) + "_" + "332x175.jpg"
         img.save(filename=THUMBPATH + thumb_file_name)
-
 
     # removing temp files
     os.remove(path_to_preview)
@@ -359,7 +358,7 @@ def create_thumbnail(manager, file_name, oer_id):
 
 
 def post_back_thumb_generation_result(url, thumb_file_name, error=None):
-    payload = {'url': url, 'thumb_file_name' : thumb_file_name, 'error': error}
+    payload = {'url': url, 'thumb_file_name': thumb_file_name, 'error': error}
     r = requests.post(API_ROOT + "ingest_thumb_generation_result/", data=json.dumps(payload))
 
 

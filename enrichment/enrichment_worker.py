@@ -67,6 +67,7 @@ def main(args):
         """
         say('hello')
         while (True):
+            task = None
             try:
                 # create directories
                 create_directories()

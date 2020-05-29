@@ -34,6 +34,6 @@ saveAction : Int -> List (String, Encode.Value) -> Cmd Msg
 saveAction actionTypeId params =
   Http.post
     { url = Url.Builder.absolute [ apiRoot ] []
-    , body = Http.jsonBody <| object [ ("action_type_id", Encode.int actionTypeId), ("params", object params |> encode 0 |> Encode.string) ]
+    , body = Http.jsonBody <| object [ ("action_type_id", Encode.int actionTypeId), ("is_bundled", Encode.bool False), ("params", object params |> encode 0 |> Encode.string) ]
     , expect = Http.expectJson RequestSaveAction (field "result" string)
     }

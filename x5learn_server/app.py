@@ -574,9 +574,11 @@ def api_entity_descriptions():
 
 @app.route("/api/v1/most_urgent_unstarted_thumb_generation_task/", methods=['POST'])
 def most_urgent_unstarted_thumb_generation_task():
-    task = ThumbGenerationTask.query.filter(and_(ThumbGenerationTask.error == None,
-                                                 ThumbGenerationTask.started == None)).order_by(
-        ThumbGenerationTask.priority.desc()).first()
+    task = ThumbGenerationTask.query.filter(or_(and_(ThumbGenerationTask.error == None, ThumbGenerationTask.started == None), 
+                                            and_(ThumbGenerationTask.error != None, 
+                                            ThumbGenerationTask.data['retries'].astext.cast(Integer) < 5))).order_by(
+                                            ThumbGenerationTask.priority.desc()).first()
+
     if task is None:
         return jsonify({'info': 'No tasks available'})
 
@@ -588,6 +590,7 @@ def most_urgent_unstarted_thumb_generation_task():
 
     task.started = datetime.now()
     task.priority = 0
+    task.error = None
     db_session.commit()
 
     return jsonify({'url': task.url, 'oer_id': task_data['oer_id']})
@@ -605,7 +608,18 @@ def ingest_thumb_generation_result():
     if error is not None:
         task = ThumbGenerationTask.query.filter_by(url=url).first()
         task.error = error
+
+        new_data = json.loads(json.dumps(task.data))
+
+        if 'retries' not in new_data:
+            new_data['retries'] = 1
+        else:
+            new_data['retries'] += 1
+
+        task.data = new_data
+
         db_session.commit()
+ 
     # updating generated thumb name in oer data
     elif thumb_file_name is not None:
         oer = Oer.query.filter_by(url=url).first()

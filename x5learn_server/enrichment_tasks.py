@@ -55,7 +55,7 @@ def push_thumbnail_generation_task(oer, priority):
         task = ThumbGenerationTask.query.filter_by(url=oer.url).first()
         # if not a task, create task in the task queue
         if task is None:
-            task = ThumbGenerationTask(oer.url, priority, {'oer_id': oer.id})
+            task = ThumbGenerationTask(oer.url, priority, {'oer_id': oer.id, 'retries': 0})
             db_session.add(task)
         else:
             # else increase priority

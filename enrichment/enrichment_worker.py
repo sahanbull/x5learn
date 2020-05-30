@@ -15,6 +15,7 @@ import wikipedia
 from preview_generator.manager import PreviewManager
 from wand.image import Image
 import wget
+import urllib
 
 API_ROOT = os.environ.get("FLASK_API_ROOT")
 
@@ -85,7 +86,7 @@ def main(args):
                         continue
 
                     # download file in a temporary folder for thumb generation
-                    wget.download(task['url'], out=TEMPPATH)
+                    wget.download(urllib.parse.unquote(task['url']), out=TEMPPATH)
 
                     # init preview manager
                     manager = PreviewManager(THUMBPATH, create_folder=True)

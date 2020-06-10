@@ -574,10 +574,11 @@ type LoginState
   | LoggedInUser UserProfile
 
 
-{-| VideoEmbedParams is a helper type for embedding HTML5 videos.
+{-| VideoEmbedParams is a helper type for embedding YouTube or HTML5 videos.
 -}
 type alias VideoEmbedParams =
   { inspectorId : String
+  , videoId : String
   , videoStartPosition : Float
   , playWhenReady : Bool
   }
@@ -718,7 +719,7 @@ newInspectorState : Oer -> Float -> InspectorState
 newInspectorState oer fragmentStart =
   let
       videoPlayer =
-        if oer.mediatype=="video" then
+        if oer.mediatype=="video" && (hasYoutubeVideo oer.url |> not) then
           Just <|
             { isPlaying = False
             , currentTime = 0
@@ -731,9 +732,32 @@ newInspectorState oer fragmentStart =
       InspectorState oer fragmentStart videoPlayer FeedbackTab [] False
 
 
+hasYoutubeVideo : OerUrl -> Bool
+hasYoutubeVideo oerUrl =
+  case getYoutubeVideoId oerUrl of
+    Nothing ->
+      False
+
+    Just _ ->
+      True
+
 inspectorId : String
 inspectorId =
   "InspectorModal"
+
+
+getYoutubeVideoId : OerUrl -> Maybe String
+getYoutubeVideoId oerUrl =
+  if (oerUrl |> String.contains "://youtu") || (oerUrl |> String.contains "://www.youtu") then
+    oerUrl
+    |> String.split "="
+    |> List.drop 1
+    |> List.head
+    |> Maybe.withDefault ""
+    |> String.split "&"
+    |> List.head
+  else
+    Nothing
 
 
 {-| Number of milliseconds that have passed since a certain point in time

@@ -1785,6 +1785,21 @@ class Playlist_Single(Resource):
         return {'result': 'Playlist - {} was successfully deleted'.format(playlist.title)}, 201
 
 
+@ns_playlist.route('/<int:id>/json')
+@ns_playlist.response(404, 'Playlist not found')
+@ns_playlist.param('id', 'The playlist identifier')
+class Playlist_Json(Resource):
+    @ns_playlist.doc('get_playlist_blueprint')
+    def get(self, id):
+        '''Fetch playlist blueprint as json'''
+        playlist = repository.get_by_id(Playlist, id)
+
+        if playlist is None:
+            return {'result': 'Playlist not found'}, 400
+
+        return playlist.blueprint, 200
+
+
 @ns_playlist.route('/<string:title>')
 @ns_playlist.response(404, 'Temporary playlist not found')
 @ns_playlist.param('title', 'The temporary playlist identifier')
@@ -1890,24 +1905,6 @@ class Temp_Playlist_Single(Resource):
 
         repository.delete(temp_playlist)
         return {'result': 'Temporary playlist successfully deleted'}, 201
-
-
-@ns_playlist.route('blueprint/<int:id>')
-@ns_playlist.response(404, 'Playlist not found')
-@ns_playlist.param('id', 'The playlist identifier')
-class Playlist_Blueprint(Resource):
-    @ns_playlist.doc('get_playlist_blueprint')
-    def get(self, id):
-        '''Fetch requested playlist from database'''
-        if not current_user.is_authenticated:
-            return {'result': 'User not logged in'}, 401
-
-        playlist = repository.get_by_id(Playlist, id)
-
-        if playlist is None:
-            return {'result': 'Playlist not found'}, 400
-
-        return playlist.blueprint, 200
 
 
 # Defining license resource for API access ==================================

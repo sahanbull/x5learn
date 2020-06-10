@@ -1,0 +1,17 @@
+{
+    "about_us": {
+        "lbl_about_us": "About Us", 
+        "lbl_sign_up_now": "Sign Up Now", 
+        "msg_logged_out": "User has successfully logged out"
+    },
+    "front_page": {
+        "lbl_welcome_message": "Welcome Back!", 
+        "lbl_login": "Login", 
+        "lbl_logout": "Log Out", 
+        "lbl_user_profile": "User Profile", 
+        "lbl_about_us": "About Us!", 
+        "lbl_terms_and_conditions": "Terms and Conditions", 
+        "msg_logged_in": "User has successfully logged in", 
+        "msg_required_confirmation": "User profile requires email confirmation. Please check your email."
+    }
+}

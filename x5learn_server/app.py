@@ -1797,7 +1797,7 @@ class Playlist_Json(Resource):
         if playlist is None:
             return {'result': 'Playlist not found'}, 400
 
-        return playlist.blueprint, 200
+        return json.loads(playlist.blueprint), 200
 
 
 @ns_playlist.route('/<string:title>')

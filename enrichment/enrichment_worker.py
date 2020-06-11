@@ -121,7 +121,7 @@ def say(text):
     print('X5Learn Enrichment Worker says:', text)
 
 
-    def make_enrichment_data(oer_data):
+def make_enrichment_data(oer_data):
     """Generates wikifier enrichments for media. Gets the meta information and creates extracts chunks, mentions etc.
 
     Args:

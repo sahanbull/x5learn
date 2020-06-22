@@ -1003,6 +1003,9 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                         "Task 2" ->
                             "labstudytask2"
 
+                        "Youtube" ->
+                            "youtubestudy"
+
                         _ ->
                             "labstudypractice"
 

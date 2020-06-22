@@ -1097,7 +1097,7 @@ interp phase a b =
 
 
 {-| Check whether the current user is a participant in a scientific experiment.
-    By convention, lab study participants use researcher-created accounts that have short identifiers such as "p1", "p2"... instead of an email address.
+    By convention, lab study 1 participants use researcher-created accounts that have short identifiers such as "p1", "p2"... instead of an email address.
 -}
 isLabStudy1 : Model -> Bool
 isLabStudy1 model =
@@ -1106,7 +1106,20 @@ isLabStudy1 model =
       False
 
     Just {email} ->
-      email |> String.contains "@" |> not
+      (email |> String.contains "@" |> not) && String.startsWith "p" email
+
+
+{-| Check whether the current user is a participant in a scientific experiment.
+    By convention, lab study 2 participants use researcher-created accounts that have short identifiers such as "l1", "l2"... instead of an email address.
+-}
+isLabStudy2 : Model -> Bool
+isLabStudy2 model =
+  case loggedInUserProfile model of
+    Nothing ->
+      False
+
+    Just {email} ->
+      (email |> String.contains "@" |> not) && String.startsWith "l" email
 
 
 {-| Check whether a list contains both elements x and y

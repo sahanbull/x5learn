@@ -85,6 +85,14 @@ view model =
 
                       Just searchState ->
                         viewSearchPage model searchState |> withNavigationDrawer model
+
+                  else if isLabStudy2 model then
+                    case model.searchState of
+                      Nothing ->
+                        featuredPage
+
+                      Just searchState ->
+                        viewSearchPage model searchState |> withNavigationDrawer model
                   else
                     featuredPage
 

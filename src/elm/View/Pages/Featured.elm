@@ -32,6 +32,11 @@ viewFeaturedPage model =
           ]
           |> column [ centerX, centerY, spacing 30 ]
           |> el [ width fill, height <| fillPortion 3 ]
+        else if isLabStudy2 model then
+          [ "Welcome to Labstudy 2! Please follow the researcher's instructions" |> text |> el [ Font.size 20, centerX ]
+          ]
+          |> column [ centerX, centerY, spacing 30 ]
+          |> el [ width fill, height <| fillPortion 3 ]
         else
           userGreeting model
           |> column [ centerX, centerY, spacing 30 ]
@@ -39,7 +44,7 @@ viewFeaturedPage model =
 
       page =
         [ title
-        , if isLabStudy1 model then none else viewFeaturedOers model
+        , if isLabStudy1 model || isLabStudy2 model then none else viewFeaturedOers model
         ]
         |> column [ centerX, paddingXY 15 80, spacing 20, width fill, height fill ]
   in

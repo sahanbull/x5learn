@@ -82,9 +82,11 @@ def main(args):
 
                     # if youtube video skip ahead to image processing
                     if file_extension == "youtube":
-                        wget.download(urllib.parse.unquote(task['data']['yt_thumb']), out=TEMPPATH)
-                        thumb_file_name = crop_thumbnail(TEMPPATH + "hqdefault.jpg", task['data']['oer_id'])
+                        yt_thumb = TEMPPATH + "tmp_" + str(task['data']['oer_id']) + ".jpg"
+                        wget.download(urllib.parse.unquote(task['data']['yt_thumb']), out=yt_thumb)
+                        thumb_file_name = crop_thumbnail(yt_thumb, task['data']['oer_id'])
                         post_back_thumb_generation_result(task['url'], thumb_file_name)
+                        os.remove(yt_thumb)
                         continue
 
                     # if file is audio set back default audio thumb

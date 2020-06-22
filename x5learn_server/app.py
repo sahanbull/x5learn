@@ -352,6 +352,13 @@ def api_search():
             # if the text is a number, retrieve the oer with that oer_id
             oer_id = int(text)
             oer = Oer.query.get(oer_id)
+
+            # add oer to enrichment and check if thumbnail exists
+            task_priority = int(1000 / 1) + 1
+            push_enrichment_task(oer.url, task_priority)
+            if "thumbnail" not in oer.data:
+                push_thumbnail_generation_task(oer, task_priority)
+
             results = [] if oer is None else ([oer], 1)
         except ValueError:
             results = search_results_from_x5gon_api(text, page)
@@ -593,7 +600,7 @@ def most_urgent_unstarted_thumb_generation_task():
     task.error = None
     db_session.commit()
 
-    return jsonify({'url': task.url, 'oer_id': task_data['oer_id']})
+    return jsonify({'url': task.url, 'data': task_data})
 
 
 @app.route("/api/v1/ingest_thumb_generation_result/", methods=['POST'])

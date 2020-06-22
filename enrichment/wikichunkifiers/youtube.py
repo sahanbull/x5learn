@@ -8,10 +8,14 @@ def extract_chunks_from_youtube_video(url, data):
     print('\nin extract_chunks_from_youtube_video\n')
     transcript = data['transcript']
     duration = second_from_line(data['duration'])
-    if len(transcript) < 500:
-        raise EnrichmentError('transcript too short')
 
-    sections = sections_from_transcript(transcript, duration, 180)
+    if isinstance(transcript, list):
+        sections = sections_from_transcript_object(transcript, duration, 180)
+    else:
+        if len(transcript) < 500:
+            raise EnrichmentError('transcript too short')
+
+        sections = sections_from_transcript(transcript, duration, 180)
 
     chunks = []
     start = 0
@@ -37,6 +41,15 @@ class Section:
         self.length_seconds = length_seconds
         self.text = re.sub(r'[\n\r ]+', ' ', text).strip()
 
+    @property
+    def serialize(self):
+        """Return object data in easily serializable format"""
+        return {
+            'start': self.start_second,
+            'length': self.length_seconds,
+            'text': self.text
+        }
+
 
 def sections_from_transcript(transcript, duration, approximate_target_chunk_size_in_seconds):
     transcript = re.sub(r'[A-Z][A-Z]+','', transcript) # remove allcaps words
@@ -60,8 +73,33 @@ def sections_from_transcript(transcript, duration, approximate_target_chunk_size
     return sections
 
 
+# function to extract sections when transcript is from youtube scrapper
+def sections_from_transcript_object(transcript, duration, approximate_target_chunk_size_in_seconds):
+
+    number_of_sections = max(1, int(duration / approximate_target_chunk_size_in_seconds))
+    seconds_per_section = round(duration /number_of_sections - 0.01)
+    print('Wikifying transcript. Approximate duration (seconds):', round(duration), '\tNumber of chunks:', number_of_sections,'\tSeconds per chunk:', seconds_per_section)
+    start_second = 0
+    sections = []
+
+    for idx, value in enumerate(transcript):
+        second = int(round(value['start']))
+        if second >= start_second + seconds_per_section:
+            sections.append(Section(start_second, second-start_second, value['text']))
+            start_second = second
+
+    return sections
+
+    
 def second_from_line(line):
-    return int(line.split(':')[0])* 60 + int(line.split(':')[1])
+    try:
+        seconds = int(line.split(':')[0]) * 60 + int(line.split(':')[1])
+    except ValueError:
+        # to support duration format extracted from youtube scrapper
+        seconds = int(str(line.split('M')[0])[2:]) * 60 + int(line.split('M')[1].split('S')[0])
+
+    return seconds
+
 
 def is_time(line):
     return re.match(r'\d\d+:\d\d$', line)

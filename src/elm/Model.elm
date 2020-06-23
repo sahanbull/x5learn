@@ -574,10 +574,11 @@ type LoginState
   | LoggedInUser UserProfile
 
 
-{-| VideoEmbedParams is a helper type for embedding HTML5 videos.
+{-| VideoEmbedParams is a helper type for embedding YouTube or HTML5 videos.
 -}
 type alias VideoEmbedParams =
   { inspectorId : String
+  , videoId : String
   , videoStartPosition : Float
   , playWhenReady : Bool
   }
@@ -718,7 +719,7 @@ newInspectorState : Oer -> Float -> InspectorState
 newInspectorState oer fragmentStart =
   let
       videoPlayer =
-        if oer.mediatype=="video" then
+        if oer.mediatype=="video" && (hasYoutubeVideo oer.url |> not) then
           Just <|
             { isPlaying = False
             , currentTime = 0
@@ -731,9 +732,32 @@ newInspectorState oer fragmentStart =
       InspectorState oer fragmentStart videoPlayer FeedbackTab [] False
 
 
+hasYoutubeVideo : OerUrl -> Bool
+hasYoutubeVideo oerUrl =
+  case getYoutubeVideoId oerUrl of
+    Nothing ->
+      False
+
+    Just _ ->
+      True
+
 inspectorId : String
 inspectorId =
   "InspectorModal"
+
+
+getYoutubeVideoId : OerUrl -> Maybe String
+getYoutubeVideoId oerUrl =
+  if (oerUrl |> String.contains "://youtu") || (oerUrl |> String.contains "://www.youtu") then
+    oerUrl
+    |> String.split "="
+    |> List.drop 1
+    |> List.head
+    |> Maybe.withDefault ""
+    |> String.split "&"
+    |> List.head
+  else
+    Nothing
 
 
 {-| Number of milliseconds that have passed since a certain point in time
@@ -1073,7 +1097,7 @@ interp phase a b =
 
 
 {-| Check whether the current user is a participant in a scientific experiment.
-    By convention, lab study participants use researcher-created accounts that have short identifiers such as "p1", "p2"... instead of an email address.
+    By convention, lab study 1 participants use researcher-created accounts that have short identifiers such as "p1", "p2"... instead of an email address.
 -}
 isLabStudy1 : Model -> Bool
 isLabStudy1 model =
@@ -1082,7 +1106,20 @@ isLabStudy1 model =
       False
 
     Just {email} ->
-      email |> String.contains "@" |> not
+      (email |> String.contains "@" |> not) && String.startsWith "p" email
+
+
+{-| Check whether the current user is a participant in a scientific experiment.
+    By convention, lab study 2 participants use researcher-created accounts that have short identifiers such as "l1", "l2"... instead of an email address.
+-}
+isLabStudy2 : Model -> Bool
+isLabStudy2 model =
+  case loggedInUserProfile model of
+    Nothing ->
+      False
+
+    Just {email} ->
+      (email |> String.contains "@" |> not) && String.startsWith "l" email
 
 
 {-| Check whether a list contains both elements x and y

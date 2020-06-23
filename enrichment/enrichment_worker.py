@@ -6,6 +6,7 @@ from collections import defaultdict
 from langdetect import detect_langs
 
 from wikichunkifiers.pdf import extract_chunks_from_pdf
+from wikichunkifiers.youtube import extract_chunks_from_youtube_video
 from wikichunkifiers.generic import extract_chunks_from_generic_text
 from wikichunkifiers.video import extract_chunks_from_x5gon_video
 from wikichunkifiers.lib.util import EnrichmentError
@@ -66,7 +67,6 @@ def main(args):
     elif args["mode"] == "thumb":
         """ Runs every 5 seconds to get the pending thumbnail generation tasks and generates thumbnails.
         """
-        say('hello')
         while (True):
             task = None
             try:
@@ -80,6 +80,15 @@ def main(args):
                     # get file details
                     file_name, file_extension = extract_file_name_and_type(task['url'])
 
+                    # if youtube video skip ahead to image processing
+                    if file_extension == "youtube":
+                        yt_thumb = TEMPPATH + "tmp_" + str(task['data']['oer_id']) + ".jpg"
+                        wget.download(urllib.parse.unquote(task['data']['yt_thumb']), out=yt_thumb)
+                        thumb_file_name = crop_thumbnail(yt_thumb, task['data']['oer_id'])
+                        post_back_thumb_generation_result(task['url'], thumb_file_name)
+                        os.remove(yt_thumb)
+                        continue
+
                     # if file is audio set back default audio thumb
                     if file_extension == "mp3":
                         post_back_thumb_generation_result(task['url'], "tn_audio_332x175.jpg")
@@ -92,7 +101,7 @@ def main(args):
                     manager = PreviewManager(THUMBPATH, create_folder=True)
 
                     if file_extension in SUPPORTED_FILE_FORMATS:
-                        thumb_file_name = create_thumbnail(manager, file_name, task['oer_id'])
+                        thumb_file_name = create_thumbnail(manager, file_name, task['data']['oer_id'])
                         post_back_thumb_generation_result(task['url'], thumb_file_name)
 
 
@@ -163,6 +172,8 @@ def make_wikichunks(oer_data):
     # if the material is pdf:
     if url.lower().endswith('pdf'):
         return extract_chunks_from_pdf(url)
+    if 'youtu' in url and '/watch?v=' in url:
+        return extract_chunks_from_youtube_video(url, oer_data)
     if 'meetup.com/' in url:
         return extract_chunks_from_generic_text(url, oer_data)
     if url.lower().endswith('.mp4') and "material_id" in oer_data:  # if X5GON Video,
@@ -315,6 +326,10 @@ def get_thumb_generation_task():
 
 
 def extract_file_name_and_type(url):
+    # if youtube video skip checking for extension
+    if 'youtu' in url:
+        return '', 'youtube'
+    
     file_name = url[url.rfind("/")+1:]
     file_extension = file_name[file_name.rfind(".")+1:]
     return file_name, file_extension
@@ -328,15 +343,7 @@ def create_directories():
         os.mkdir(TEMPPATH)
 
 
-def create_thumbnail(manager, file_name, oer_id):
-
-    # create a thumb large enough to support cropping if needed
-    path_to_preview = manager.get_jpeg_preview(
-        TEMPPATH + file_name,
-        height=800
-    )
-
-    # fill thumbnail based on width and crop if required
+def crop_thumbnail(path_to_preview, oer_id):
     with Image(filename=path_to_preview) as img:
         img_width = img.width
         img_height = img.height
@@ -352,6 +359,19 @@ def create_thumbnail(manager, file_name, oer_id):
         thumb_file_name = "tn_" + str(oer_id) + "_" + "332x175.jpg"
         img.save(filename=THUMBPATH + thumb_file_name)
 
+    return thumb_file_name
+
+
+def create_thumbnail(manager, file_name, oer_id):
+
+    # create a thumb large enough to support cropping if needed
+    path_to_preview = manager.get_jpeg_preview(
+        TEMPPATH + file_name,
+        height=800
+    )
+
+    # fill thumbnail based on width and crop if required
+    thumb_file_name = crop_thumbnail(path_to_preview, oer_id)
 
     # removing temp files
     os.remove(path_to_preview)

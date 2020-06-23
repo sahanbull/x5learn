@@ -627,6 +627,10 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX, hoveringEntityId = Nothing } |> unselectMention, Cmd.none )
                 |> logEventForLabStudy "MouseOverChunkTrigger" [ mousePositionX |> String.fromFloat ]
 
+        --YoutubeSeekTo fragmentStart ->
+        --   ( model, youtubeSeekTo fragmentStart)
+        --   |> logEventForLabStudy "YoutubeSeekTo" [ fragmentStart |> String.fromFloat ]
+
         EditUserProfile field value ->
             let
                 newForm =
@@ -670,6 +674,10 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             ( { model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", requestSaveNote oerId text)
                 |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, text ]
                 |> saveAction 8 [ ( "OER id", Encode.int oerId ), ( "user feedback", Encode.string text ) ]
+
+        YoutubeVideoIsPlayingAtPosition position ->
+            (model, Cmd.none)
+            |> logEventForLabStudy "YoutubeVideoIsPlayingAtPosition" [ position |> String.fromFloat]
 
         BubblogramTopicMouseOver entityId oerId ->
             let
@@ -994,6 +1002,9 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
 
                         "Task 2" ->
                             "labstudytask2"
+
+                        "Youtube" ->
+                            "youtubestudy"
 
                         _ ->
                             "labstudypractice"
@@ -1897,13 +1908,13 @@ inspectOer model oer fragmentStart playWhenReady =
         videoEmbedParams : VideoEmbedParams
         videoEmbedParams =
             { inspectorId = inspectorId
+            , videoId = getYoutubeVideoId oer.url |> Maybe.withDefault ""
             , videoStartPosition = fragmentStart * oer.durationInSeconds
             , playWhenReady = playWhenReady
             }
     in
-    ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert inspectorId, hoveringOerId = Nothing } |> closePopup
-    , Cmd.batch [ requestFetchNotesForOer oer.id, openInspectorAnimation videoEmbedParams ] 
-    )
+        ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert inspectorId, hoveringOerId = Nothing } |> closePopup, Cmd.batch [ requestFetchNotesForOer oer.id, openInspectorAnimation videoEmbedParams, embedYoutubePlayerOnResourcePage videoEmbedParams] 
+        )
 
 
 showLoginHintIfNeeded : Model -> Model

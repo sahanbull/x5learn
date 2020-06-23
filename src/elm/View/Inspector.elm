@@ -136,14 +136,23 @@ viewTheInspector model inspectorState =
 viewInspectorBody : Model -> InspectorState -> Element Msg
 viewInspectorBody model ({oer, fragmentStart} as inspectorState) =
   let
-      player =
-        if isVideoFile oer.url then
-          viewHtml5VideoPlayer model oer
-          |> explainify model explanationForHtml5VideoPlayer
-        else if isPdfFile oer.url then
-          viewPdfViewer oer.url "45vh"
-        else
-          none
+    player =
+      case getYoutubeVideoId oer.url of
+        Nothing ->
+          if isVideoFile oer.url then
+            viewHtml5VideoPlayer model oer
+            |> explainify model explanationForHtml5VideoPlayer
+          else if isPdfFile oer.url then
+            viewPdfViewer oer.url "45vh"
+          else
+            none
+
+        Just youtubeId ->
+          let
+              startTime =
+                fragmentStart * oer.durationInSeconds |> floor
+          in
+              embedYoutubePlayer model youtubeId startTime
   in
       [ player
       , viewContentFlowBarWrapper model inspectorState oer
@@ -517,7 +526,7 @@ viewFeedbackTab model oer =
       , "Language errors"
       , "Poor content"
       , "Poor image"
-      ] ++ (if isVideoFile oer.url then [ "Poor audio" ] else []))
+      ] ++ (if isVideoFile oer.url || hasYoutubeVideo oer.url then [ "Poor audio" ] else []))
       |> List.map (\option -> simpleButton [ paddingXY 4 4, Background.color primaryGreen, buttonRounding, Font.size 14, whiteText ] option (Just <| SubmittedResourceFeedback oer.id (">>>"++option)))
       |> column [ width fill, htmlClass "flexWrap" ]
 

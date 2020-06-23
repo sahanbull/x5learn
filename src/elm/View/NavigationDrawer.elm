@@ -146,6 +146,25 @@ withNavigationDrawer model (pageContent, inspector) =
           |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 12, spacing 30, whiteBackground ]
           |> el [ height fill, width (px navigationDrawerWidth), paddingTop pageHeaderHeight ]
           |> inFront
+        else if isLabStudy2 model then
+          case model.playlist of
+            Nothing ->
+              [ navButtons 
+              , selectPlaylistButton
+              , viewCourse model
+              ]
+              |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 12, spacing 20, whiteBackground ]
+              |> el [ height fill, width (px navigationDrawerWidth), paddingTop pageHeaderHeight ]
+              |> inFront
+            Just playist ->
+              [ navButtons 
+              , selectPlaylistButton
+              , viewCourse model
+              , playlistActionButtons model
+              ]
+              |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 12, spacing 20, whiteBackground ]
+              |> el [ height fill, width (px navigationDrawerWidth), paddingTop pageHeaderHeight ]
+              |> inFront
         else
           [ if isLabStudy1 model || isLabStudy2 model then none else model.searchInputTyping |> viewSearchWidget model fill "Search" |> explainify model explanationForSearchField
           , selectPlaylistButton
@@ -216,7 +235,8 @@ taskButtons model =
       ]
       |> column [ spacing 10 ]
     else if isLabStudy2 model then
-      [ taskButton "Youtube"
+      [ taskButton "Practice"
+      , taskButton "Math"
       ]
       |> column [ spacing 10 ]
     else

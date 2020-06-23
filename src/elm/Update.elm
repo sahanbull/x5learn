@@ -1003,7 +1003,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                         "Task 2" ->
                             "labstudytask2"
 
-                        "Youtube" ->
+                        "Math" ->
                             "youtubestudy"
 
                         _ ->
@@ -1016,6 +1016,10 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 |> logEventForLabStudy "StartTask" [ taskName ]
 
         CompleteTask ->
+            if isLabStudy2 model then
+            ( { model | currentTaskName = Nothing }, setBrowserFocus "" )
+                |> logEventForLabStudy "CompleteTask" []
+            else 
             ( { model | currentTaskName = Nothing, course = initialCourse }, setBrowserFocus "" )
                 |> logEventForLabStudy "CompleteTask" []
 

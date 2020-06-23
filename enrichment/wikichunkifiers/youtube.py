@@ -54,7 +54,7 @@ class Section:
 def sections_from_transcript(transcript, duration, approximate_target_chunk_size_in_seconds):
     transcript = re.sub(r'[A-Z][A-Z]+','', transcript) # remove allcaps words
     lines = transcript.split('\n')
-    number_of_sections = max(1, int(duration / approximate_target_chunk_size_in_seconds))
+    number_of_sections = max(1, math.ceil(duration / approximate_target_chunk_size_in_seconds))
     seconds_per_section = round(duration /number_of_sections - 0.01)
     print('Wikifying transcript. Approximate duration (seconds):', round(duration), '\tNumber of chunks:', number_of_sections,'\tSeconds per chunk:', seconds_per_section)
     start_second = 0
@@ -75,8 +75,7 @@ def sections_from_transcript(transcript, duration, approximate_target_chunk_size
 
 # function to extract sections when transcript is from youtube scrapper
 def sections_from_transcript_object(transcript, duration, approximate_target_chunk_size_in_seconds):
-
-    number_of_sections = max(1, int(duration / approximate_target_chunk_size_in_seconds))
+    number_of_sections = max(1, math.ceil(duration / approximate_target_chunk_size_in_seconds))
     seconds_per_section = round(duration /number_of_sections - 0.01)
     print('Wikifying transcript. Approximate duration (seconds):', round(duration), '\tNumber of chunks:', number_of_sections,'\tSeconds per chunk:', seconds_per_section)
     start_second = 0
@@ -93,11 +92,29 @@ def sections_from_transcript_object(transcript, duration, approximate_target_chu
     
 def second_from_line(line):
     try:
-        seconds = int(line.split(':')[0]) * 60 + int(line.split(':')[1])
+        if line.count(":") == 2:
+            seconds = int(line.split(':')[0]) * 3600 + int(line.split(':')[1]) * 60 + int(line.split(':')[2])
+        else:
+            seconds = int(line.split(':')[0]) * 60 + int(line.split(':')[1])
     except ValueError:
         # to support duration format extracted from youtube scrapper
-        seconds = int(str(line.split('M')[0])[2:]) * 60 + int(line.split('M')[1].split('S')[0])
+        seconds = second_from_timestring(line)
 
+    return seconds
+
+
+def second_from_timestring(youtubetime):
+    seconds = 0
+    youtubetime = str(youtubetime)[2:]
+    if "H" in youtubetime:
+        seconds += int(str(youtubetime.split("H")[0])) * 3600
+        youtubetime = str(youtubetime.split("H")[1])
+    
+    if "M" in youtubetime:
+        seconds += int(str(youtubetime.split("M")[0])) * 60
+        youtubetime = str(youtubetime.split("M")[1])
+
+    seconds += int(str(youtubetime.split("S")[0]))
     return seconds
 
 

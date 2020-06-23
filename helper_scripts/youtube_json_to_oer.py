@@ -71,14 +71,34 @@ def get_oer_db_object(user, passwd, db_name):
 
 
 def time_from_youtube_timestring(youtubetime):
-    timestring = str(youtubetime.split("M")[0])[2:]
-    timestring += ":"
-    timestring += str(youtubetime.split("M")[1].split("S")[0])
+    timestring = ""
+    youtubetime = str(youtubetime)[2:]
+    if "H" in youtubetime:
+        timestring += str(youtubetime.split("H")[0]) + ":"
+        youtubetime = str(youtubetime.split("H")[1])
+    
+    if "M" in youtubetime:
+        timestring += str(youtubetime.split("M")[0]) + ":"
+        youtubetime = str(youtubetime.split("M")[1])
+    else:
+        timestring += "00:"
+
+    timestring += str(youtubetime.split("S")[0])
     return timestring
 
 
-def second_from_timestring(timestring):
-    seconds = int(str(timestring.split('M')[0])[2:]) * 60 + int(timestring.split('M')[1].split('S')[0])
+def second_from_timestring(youtubetime):
+    seconds = 0
+    youtubetime = str(youtubetime)[2:]
+    if "H" in youtubetime:
+        seconds += int(str(youtubetime.split("H")[0])) * 3600
+        youtubetime = str(youtubetime.split("H")[1])
+    
+    if "M" in youtubetime:
+        seconds += int(str(youtubetime.split("M")[0])) * 60
+        youtubetime = str(youtubetime.split("M")[1])
+
+    seconds += int(str(youtubetime.split("S")[0]))
     return seconds
 
 

@@ -44,8 +44,8 @@ def get_entities(text):
                                  'title': a['title'],
                                  'url': a['url'],
                                  })
-    if entities==[]:
-        raise EnrichmentError('No entities found in text fragment')
+    #if entities==[]:
+        #raise EnrichmentError('No entities found in text fragment')
     return entities
 
 

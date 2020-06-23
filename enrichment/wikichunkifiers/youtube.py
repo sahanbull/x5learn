@@ -93,11 +93,29 @@ def sections_from_transcript_object(transcript, duration, approximate_target_chu
     
 def second_from_line(line):
     try:
-        seconds = int(line.split(':')[0]) * 60 + int(line.split(':')[1])
+        if line.count(":") == 2:
+            seconds = int(line.split(':')[0]) * 3600 + int(line.split(':')[1]) * 60 + int(line.split(':')[2])
+        else:
+            seconds = int(line.split(':')[0]) * 60 + int(line.split(':')[1])
     except ValueError:
         # to support duration format extracted from youtube scrapper
-        seconds = int(str(line.split('M')[0])[2:]) * 60 + int(line.split('M')[1].split('S')[0])
+        seconds = second_from_timestring(line)
 
+    return seconds
+
+
+def second_from_timestring(youtubetime):
+    seconds = 0
+    youtubetime = str(youtubetime)[2:]
+    if "H" in youtubetime:
+        seconds += int(str(youtubetime.split("H")[0])) * 3600
+        youtubetime = str(youtubetime.split("H")[1])
+    
+    if "M" in youtubetime:
+        seconds += int(str(youtubetime.split("M")[0])) * 60
+        youtubetime = str(youtubetime.split("M")[1])
+
+    seconds += int(str(youtubetime.split("S")[0]))
     return seconds
 
 

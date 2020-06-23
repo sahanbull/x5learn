@@ -54,7 +54,7 @@ class Section:
 def sections_from_transcript(transcript, duration, approximate_target_chunk_size_in_seconds):
     transcript = re.sub(r'[A-Z][A-Z]+','', transcript) # remove allcaps words
     lines = transcript.split('\n')
-    number_of_sections = max(1, int(duration / approximate_target_chunk_size_in_seconds))
+    number_of_sections = max(1, math.ceil(duration / approximate_target_chunk_size_in_seconds))
     seconds_per_section = round(duration /number_of_sections - 0.01)
     print('Wikifying transcript. Approximate duration (seconds):', round(duration), '\tNumber of chunks:', number_of_sections,'\tSeconds per chunk:', seconds_per_section)
     start_second = 0
@@ -75,8 +75,7 @@ def sections_from_transcript(transcript, duration, approximate_target_chunk_size
 
 # function to extract sections when transcript is from youtube scrapper
 def sections_from_transcript_object(transcript, duration, approximate_target_chunk_size_in_seconds):
-
-    number_of_sections = max(1, int(duration / approximate_target_chunk_size_in_seconds))
+    number_of_sections = max(1, math.ceil(duration / approximate_target_chunk_size_in_seconds))
     seconds_per_section = round(duration /number_of_sections - 0.01)
     print('Wikifying transcript. Approximate duration (seconds):', round(duration), '\tNumber of chunks:', number_of_sections,'\tSeconds per chunk:', seconds_per_section)
     start_second = 0

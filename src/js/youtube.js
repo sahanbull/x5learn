@@ -54,7 +54,8 @@ function embedYoutubeVideo(videoEmbedParams){
     width: '720',
     videoId: videoEmbedParams.videoId,
     events: {
-      'onReady': videoEmbedParams.playWhenReady ? onReadySeekAndPlay : onReadySeek,
+      //'onReady': videoEmbedParams.playWhenReady ? onReadySeekAndPlay : onReadySeek,
+      'onReady': onReadySeekAndPlay,
       'onStateChange': onPlayerStateChange
     }
   });

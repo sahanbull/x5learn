@@ -350,8 +350,17 @@ viewContentFlowBarWrapper model inspectorState oer =
             attrs =
               [ alignLeft, htmlClass "PreventClosingThePopupOnClick", buttonRounding ] ++ options
           in
-            actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" "Add To Playlist ▾"  (Just OpenedAddToPlaylistMenu)
-            |> el attrs
+            case model.userPlaylists of
+              Nothing ->
+                actionButtonWithIcon [Font.color red] [] IconLeft 0.7 "bookmarklist_add" "You need to create a playlist first"  (Just OpenedAddToPlaylistMenu)
+                |> el attrs
+              Just playlist ->
+                if List.length playlist == 0 then
+                  actionButtonWithIcon [Font.color red] [] IconLeft 0.7 "bookmarklist_add" "You need to create a playlist first"  (Just OpenedAddToPlaylistMenu)
+                  |> el attrs
+                else
+                  actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" "Add To Playlist ▾"  (Just OpenedAddToPlaylistMenu)
+                  |> el attrs
 
       components =
         if isLabStudy1 model then

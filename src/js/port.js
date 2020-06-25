@@ -158,7 +158,6 @@ function getHtml5VideoPlayer(){
 
 function embedYoutubePlayerOnResourcePage(videoEmbedParams) {
     setTimeout(function(){
-      console.log('here is the id', videoEmbedParams.videoId);
       if(videoEmbedParams.videoId.length>0){
         embedYoutubeVideo(videoEmbedParams);
       }

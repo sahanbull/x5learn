@@ -1,5 +1,6 @@
 from x5learn_server.db.database import db_session
 from x5learn_server.models import Oer
+from x5learn_server.enrichment_tasks import push_enrichment_task
 
 
 frozen_search_results_for_lab_study_tasks = {'labstudypractice': 'http://hydro.ijs.si/v00c/c5/yvx7x6jwd7qc47ffb2f3ai3ifugsaaa4.mp4 http://hydro.ijs.si/v00c/e7/473jgitijoew72s3mtgmy5o7dhkumj24.mp4 http://hydro.ijs.si/v003/e0/4bfzctxbyzv2f2hjed2455yanmlnouef.mp4 http://hydro.ijs.si/v009/83/qnzdoujssp46oxquhe7tslkhxikvu5wx.mp4 http://hydro.ijs.si/v00a/63/mpklwd24fti34fzr3wtfqsrwri77fg2i.mp4 http://hydro.ijs.si/v007/34/gqbq6bnhtl6pwaljnek6sqqnyfcrnel5.mp4 http://hydro.ijs.si/v008/33/gnhrnv5qobskejatgldskttfsmngfllv.mp4 http://hydro.ijs.si/v00a/08/bag4cjsxvcbkr6p3bzwz3qwdlcv4qsgz.mp4 http://hydro.ijs.si/v007/a7/u6xkhhillx2hr66bc6mqu54u37aq5utm.mp4 http://hydro.ijs.si/v00a/91/sgcnz4wsbmueogxkztiahz2jekhi74w7.mp4 http://hydro.ijs.si/v007/5f/l5r55luzh64kb5syjbrpzmikykmnm3ji.mp4 http://hydro.ijs.si/v015/f9/7gh3dwpzrfpfvxnrl5fkaq4nedrqguh6.mp4 http://hydro.ijs.si/v00b/8c/rsctlkzcht24mvake5k3cyjkbtfvr22b.mp4 http://hydro.ijs.si/v007/96/szhjyzxwpjvy22qkjrm7noqltcjjln25.mp4',
@@ -14,6 +15,10 @@ def frozen_search_results_for_lab_study(task_name):
         urls = results.split(' ')
         # get oers from the db
         oers = [oer for oer in Oer.query.filter(Oer.url.in_(urls)).all()]
+        # push oers to thumbnail generation if not found
+        if len(oers) > 0:
+            for index, oer in enumerate(oers):
+                push_enrichment_task(oer.url, int(1000 / (index + 1)) + 1)
         # sort to restore the original order, see https://stackoverflow.com/a/29368913/2237986
         results = [next(o for o in oers if o.url==url) for url in urls]
         # cache the results for next time

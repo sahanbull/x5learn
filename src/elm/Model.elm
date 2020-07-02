@@ -260,6 +260,7 @@ type alias UserProfile =
   , firstName : String
   , lastName : String
   , isDataCollectionConsent : Bool
+  , lang : String
   }
 
 
@@ -725,8 +726,7 @@ initTranslations translationJson =
 
 initialUserProfile : String -> UserProfile
 initialUserProfile email =
-  UserProfile email "" "" False
-
+  UserProfile email "" "" False "en"
 
 initialTime : Posix
 initialTime =

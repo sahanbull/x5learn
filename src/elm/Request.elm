@@ -386,11 +386,12 @@ guestUserDecoder =
 userProfileDecoder : Decoder UserProfile
 userProfileDecoder =
   oneOf
-    [ map4 UserProfile
+    [ map5 UserProfile
         (field "email" string)
         (field "firstName" string)
         (field "lastName" string)
         (field "isDataCollectionConsent" bool)
+        (field "lang" string)
     , map initialUserProfile
         (field "email" string)
     ]

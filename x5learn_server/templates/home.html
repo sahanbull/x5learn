@@ -21,7 +21,7 @@
      instructions how to enable JavaScript in your web browser</a>.
     </noscript>
     <script>
-      var language = 'en';
+      var language = '{{ lang }}';
       var languages = JSON.parse('{{ languages | tojson | safe }}');
       var translations = JSON.parse('{{ localization_dict | tojson | safe}}');
 

@@ -174,8 +174,8 @@ repository = Repository()
 def home():
     if current_user.is_authenticated:
         languages = get_available_languages()
-        localization_dict = get_localization_dict()
-        return render_template('home.html', localization_dict=localization_dict, languages=languages)
+        localization_dict, lang = get_localization_dict()
+        return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
     else:
         return render_template('about.html', is_user_logged_in=current_user.is_authenticated)
 
@@ -265,6 +265,7 @@ def api_session():
 def get_logged_in_user_profile_and_state():
     profile = current_user.user_profile if current_user.user_profile is not None else {
         'email': current_user.email}
+
     logged_in_user = {'userProfile': profile, 'isContentFlowEnabled': is_contentflow_enabled(),
                       'overviewTypeId': get_overview_type_setting()}
     return jsonify({'loggedInUser': logged_in_user})
@@ -2275,15 +2276,44 @@ def update_localization_keys():
         return redirect("/admin/localization")
 
 
+# function to extract user perferred language saved in userprofile data
+def get_user_preferred_lang():
+    if not current_user.is_authenticated:
+        return "en"
+
+    if current_user.user_profile == None:
+        #save_user_preferred_lang("en")
+        return "en"
+
+    return current_user.user_profile['lang']
+
+
+def save_user_preferred_lang(lang):
+    if not current_user.is_authenticated:
+        return
+    
+    update_user_profile = json.loads(json.dumps(current_user.user_profile))
+
+    if update_user_profile == None:
+        update_user_profile = dict()
+
+    update_user_profile['lang'] = lang
+    current_user.user_profile = update_user_profile
+    db_session.commit()
+
+
 # function to fetch localization given a language
 def get_localization_dict(lang="en"):
+    if request.args.get('lang') != None:
+        lang = request.args.get('lang')
+
     result = repository.get(Localization, user_login_id=None, filters={"language" : lang})
 
     localization = dict()
     for record in result:
         localization[record.page] = record.data
 
-    return localization
+    return localization, lang
 
 
 # get available languages

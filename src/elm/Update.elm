@@ -1234,7 +1234,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 |> logEventForLabStudy "OpenedLanguageSelectorMenu" []
 
         ChangeLanguage lang ->
-            (model, Cmd.none)
+            ( { model | language = lang }, Navigation.load ("/?lang=" ++ lang))
 
 insertSearchResults : List OerId -> Model -> Model
 insertSearchResults oerIds model =

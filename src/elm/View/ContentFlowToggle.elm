@@ -17,7 +17,7 @@ import View.ToggleIndicator exposing (..)
 -}
 viewContentFlowToggle : Model -> Element Msg
 viewContentFlowToggle model =
-  [ "ContentFlow is "++(if isContentFlowEnabled model then "ON" else "OFF") |> bodyNoWrap [ width fill ]
+  [ "Flow is "++(if isContentFlowEnabled model then "ON" else "OFF") |> bodyNoWrap [ width fill ]
   , viewToggleIndicator (isContentFlowEnabled model) ""
   ]
   |> row [ width fill, spacing 10, onClick ToggleContentFlow ]

@@ -5,7 +5,7 @@ import shutil
 SPRITE_PATTERN = "sprite_"
 SPRITE_OUTPUT = "sprite_sheets"
 
-THUMB_PATTERN = "thumb_0"
+THUMB_PATTERN = "thumb_10"
 THUMB_OUTPUT = "thumbnails"
 
 

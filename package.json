@@ -15,7 +15,7 @@
     "build:css": "npm run build:css:concat && npm run build:css:minify",
     "build:js:elm": "/usr/local/bin/elm make --output x5learn_server/static/dist/js/elm.js src/elm/Main.elm",
     "build:js:elm-dev": "/usr/local/bin/elm make --output x5learn_server/static/dist/js/elm.js src/elm/Main.elm",
-    "build:js:concat": "mkdir -p x5learn_server/static/dist/js && concat -o x5learn_server/static/dist/js/app.js x5learn_server/static/dist/js/elm.js src/js/port.js src/js/youtube.js && rimraf x5learn_server/static/dist/js/elm.js",
+    "build:js:concat": "mkdir -p x5learn_server/static/dist/js && concat -o x5learn_server/static/dist/js/app.js x5learn_server/static/dist/js/elm.js src/js/port.js src/js/youtube.js src/js/mllp_streaming_asr.js && rimraf x5learn_server/static/dist/js/elm.js",
     "build:js:minify": "uglifyjs -mco x5learn_server/static/dist/js/app.min.js x5learn_server/static/dist/js/app.js && rimraf x5learn_server/static/dist/js/app.js",
     "build:js": "npm run build:js:elm && npm run build:js:concat && npm run build:js:minify",
     "build:js-dev": "npm run build:js:elm-dev && npm run build:js:concat && npm run build:js:minify",

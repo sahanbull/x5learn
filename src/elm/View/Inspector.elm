@@ -541,12 +541,17 @@ viewFeedbackTab model oer =
 
     textField =
       Input.text [ Font.size 12, width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5grey ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your notes" |> text |> Input.placeholder [ Font.size 12 ]), label = Input.labelHidden "Your feedback about this resource" }
+
+    recognitionButton =
+      simpleButton [ Font.size 12, Font.color electricBlue ] "Start Recognition" (Just <| StartSpeechRegonition )
+    
   in
       [ "How would you describe this material?" |> bodyWrap []
       , quickOptions
       , "Notes" |> bodyWrap []
       , notes |> el [ width fill ]
       , textField
+      , recognitionButton |> el [ alignRight ]
       ]
       |> column [ width fill, spacing 20 ]
 

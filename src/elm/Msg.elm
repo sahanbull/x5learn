@@ -127,6 +127,7 @@ type Msg
   | UpdatePlaylistItem String String
   | SubmittedPlaylistItemUpdate
   | SetSearchCurrentPage Int
+  | StartSpeechRegonition
 
 type UserProfileField
   = FirstName

@@ -14,6 +14,11 @@ var videoPlayPosition = 0;
 var videoPlayReportingInterval = 10;
 
 
+// MLLP library default system
+var mllpDefaultSystem;
+var mllpRecognitionResult = "";
+
+
 function positionAndSize(el) {
   var rect = el.getBoundingClientRect(), scrollLeft = window.pageXOffset || document.documentElement.scrollLeft, scrollTop = window.pageYOffset || document.documentElement.scrollTop;
   return { x: rect.left + scrollLeft, y: rect.top + scrollTop, sx: el.offsetWidth, sy: el.offsetHeight }
@@ -78,6 +83,11 @@ function setupPorts(app){
   setupEventHandlers();
 
   setupScrollDetector();
+
+  // setting up ports for mllp library
+  app.ports.initMLLP.subscribe(initMLLP);
+  app.ports.startRecognition.subscribe(startRecognition);
+  app.ports.stopRecognition.subscribe(stopRecognition);
 }
 
 
@@ -286,4 +296,58 @@ function tryPlaying(vid, position, attempts){
       tryPlaying(vid, position, attempts-1);
     }, 500);
   }
+}
+
+function initMLLP() {
+
+  window.addEventListener('mllp:connected', function(e) {
+    console.log('[mllp:connected] connection with Web Socket established, waiting for available languages (mllp:systems)...');
+  });
+
+  window.addEventListener('mllp:systems', function(e) {
+    console.log('[mllp:systems] available languages retrieved', e.detail);
+    availableSystems = e.detail;
+    mllpDefaultSystem = availableSystems[0]["id"];
+  });
+
+  window.addEventListener('mllp:ready', function(e) {
+    console.log('[mllp:ready] requested system is ready to start retrieving audio', e.detail);
+  });
+
+  window.addEventListener('mllp:partial', function(e) {
+    recognitionResults = e.detail;
+    mllpRecognitionResult = recognitionResults['fixed'];
+    console.log(mllpRecognitionResult);
+    deliverRecognitionResult(mllpRecognitionResult);
+  });
+
+  window.addEventListener('mllp:result', function(e) {
+    recognitionResults = e.detail;
+    mllpRecognitionResult = recognitionResults['fixed'];
+    console.log(mllpRecognitionResult);
+    deliverRecognitionResult(mllpRecognitionResult);
+  });
+
+  window.addEventListener('mllp:reset', function(e) {
+    mllpRecognitionResult = "";
+  });
+
+  window.addEventListener('mllp:error', function(e) {
+    console.log('[mllp:error] an error ocurred', e.detail);
+  });
+
+  window.MLLPStreamingASR.init();
+}
+
+function startRecognition() {
+  console.log(mllpDefaultSystem);
+  window.MLLPStreamingASR.startRecognition(mllpDefaultSystem);
+}
+
+function stopRecognition() {
+  window.MLLPStreamingASR.stopRecognition();
+}
+
+function deliverRecognitionResult(mllpRecognitionResult) {
+  app.ports.mllpResult.send(mllpRecognitionResult);
 }

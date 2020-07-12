@@ -124,7 +124,13 @@ type alias Model =
   , editingOerPlaylistItem : PlaylistItem
   , searchTotalPages : Int -- to track number of pages available from a search result
   , currentPageForSearch : Int -- to keep track of current page of search results shown
+  , mllpState : MLLPState -- keep track of mllp states for speech recognition
   }
+
+type MLLPState
+ = EnableMicrophone
+ | StartRecognition
+ | StopRecognition
 
 {-| We get the first sentence from the Wikipedia article
 -}
@@ -679,7 +685,8 @@ initialModel nav flags =
   , editingOerDescriptionInPlaylist = False
   , editingOerPlaylistItem = initialPlaylistItem
   , searchTotalPages = 0
-  , currentPageForSearch = 1 
+  , currentPageForSearch = 1
+  , mllpState = EnableMicrophone
   }
 
 initialLicenseType : List LicenseType

@@ -23,6 +23,7 @@ import View.PdfViewer exposing (..)
 import View.Explainer exposing (..)
 
 import Animation exposing (..)
+import Model exposing (MLLPState(..))
 
 
 viewInspector : Model -> List (Attribute Msg)
@@ -543,7 +544,14 @@ viewFeedbackTab model oer =
       Input.text [ Font.size 12, width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5grey ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your notes" |> text |> Input.placeholder [ Font.size 12 ]), label = Input.labelHidden "Your feedback about this resource" }
 
     recognitionButton =
-      simpleButton [ Font.size 12, Font.color electricBlue ] "Start Recognition" (Just <| StartSpeechRegonition )
+      case model.mllpState of
+        EnableMicrophone ->
+          simpleButton [ Font.size 12, Font.color electricBlue ] "Enable Microphone" (Just <| InitMLLP )
+        StartRecognition ->
+          simpleButton [ Font.size 12, Font.color red ] "Start Recognition" (Just <| StartSpeechRegonition )
+        StopRecognition ->
+          simpleButton [ Font.size 12, Font.color electricBlue ] "Stop Recognition" (Just <| StopSpeechRegonition )
+
     
   in
       [ "How would you describe this material?" |> bodyWrap []

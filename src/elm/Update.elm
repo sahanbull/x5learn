@@ -20,6 +20,7 @@ import Update.BubblePopup exposing (..)
 import Update.Bubblogram exposing (..)
 import Url exposing (Url)
 import Url.Builder
+import Model exposing (MLLPState(..))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -1244,8 +1245,25 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 Just searchState ->
                      ( { model | currentPageForSearch = pageNumber }, Navigation.load ("/search?q=" ++ searchState.lastSearchText ++ "&page=" ++ String.fromInt pageNumber) )
 
-        StartSpeechRegonition -> 
-            ( model, Cmd.none )
+        InitMLLP -> 
+            ( { model | mllpState = StartRecognition }, initMLLP True )
+
+        StartSpeechRegonition ->
+            ( { model | mllpState = StopRecognition } , startRecognition True )
+
+        StopSpeechRegonition ->
+            ( { model | mllpState = StartRecognition }, stopRecognition True )
+
+        MLLPResultReceived mllpResult ->
+            case model.inspectorState of
+                Nothing ->
+                    ( model, Cmd.none )
+                Just state ->
+                    let
+                        noteString = 
+                            (getResourceFeedbackFormValue model state.oer.id) ++ mllpResult
+                    in
+                    ( model |> setTextInResourceFeedbackForm state.oer.id noteString, Cmd.none )
 
 
 insertSearchResults : List OerId -> Model -> Model

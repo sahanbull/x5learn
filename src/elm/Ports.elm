@@ -19,6 +19,9 @@ port embedYoutubePlayerOnResourcePage : VideoEmbedParams -> Cmd msg
 port getOerCardPlaceholderPositions : Bool -> Cmd msg
 port askPageScrollState : Bool -> Cmd msg
 port startCurrentHtml5Video : Float -> Cmd msg
+port initMLLP : Bool -> Cmd msg
+port startRecognition : Bool -> Cmd msg
+port stopRecognition : Bool -> Cmd msg
 
 
 {-| Incoming ports are defined below
@@ -38,3 +41,4 @@ port html5VideoSeeked : (Float -> msg) -> Sub msg
 port html5VideoStillPlaying : (Float -> msg) -> Sub msg
 port pageScrolled : (PageScrollState -> msg) -> Sub msg
 port receiveCardPlaceholderPositions : ((List OerCardPlaceholderPosition) -> msg) -> Sub msg
+port mllpResult : (String -> msg) -> Sub msg

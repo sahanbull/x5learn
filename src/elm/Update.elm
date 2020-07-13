@@ -1269,14 +1269,10 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 Nothing ->
                     ( model, Cmd.none )
                 Just state ->
-                    let
-                        noteString = 
-                            if mllpResult == "" then
-                                (getResourceFeedbackFormValue model state.oer.id)
-                            else
-                                (getResourceFeedbackFormValue model state.oer.id) ++ " " ++ mllpResult
-                    in
-                    ( model |> setTextInResourceFeedbackForm state.oer.id noteString, Cmd.none )
+                    if model.mllpState == StopRecognition then
+                        ( model |> setTextInResourceFeedbackForm state.oer.id mllpResult, Cmd.none )
+                    else
+                        ( model, Cmd.none )
 
         MLLPSystemsReceived systems ->
             let

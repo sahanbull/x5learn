@@ -16,6 +16,7 @@ var videoPlayReportingInterval = 10;
 
 // MLLP library default system
 var mllpRecognitionResult = "";
+var mllpRecognitionTempResult = "";
 
 function positionAndSize(el) {
   var rect = el.getBoundingClientRect(), scrollLeft = window.pageXOffset || document.documentElement.scrollLeft, scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -316,9 +317,14 @@ function initMLLP() {
 
   window.addEventListener('mllp:partial', function(e) {
     recognitionResults = e.detail;
-    mllpRecognitionResult = recognitionResults['fixed'];
-    console.log(mllpRecognitionResult);
-    deliverRecognitionResult(mllpRecognitionResult);
+    if (mllpRecognitionResult != "" && mllpRecognitionResult[mllpRecognitionResult.length - 1] != " ")
+      mllpRecognitionResult += " ";
+
+    mllpRecognitionResult += recognitionResults['fixed'];
+
+    mllpRecognitionTempResult = recognitionResults['var'];
+
+    deliverRecognitionResult(mllpRecognitionResult + " " + mllpRecognitionTempResult);
   });
 
   window.addEventListener('mllp:result', function(e) {
@@ -342,10 +348,14 @@ function initMLLP() {
 function startRecognition(system) {
   console.log(system);
   window.MLLPStreamingASR.startRecognition(system);
+  mllpRecognitionResult = "";
 }
 
 function stopRecognition() {
   window.MLLPStreamingASR.stopRecognition();
+  mllpRecognitionResult = "";
+  console.log('final-result');
+  setTimeout( function() { deliverRecognitionResult(mllpRecognitionResult); }, 800);
 }
 
 function deliverMLLPAvailableSystems(availableSystems) {

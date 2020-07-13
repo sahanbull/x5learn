@@ -557,7 +557,7 @@ viewFeedbackTab model oer =
         buttonText = 
           case model.selectedMLLPSystem of
             Nothing ->
-              "System ▾"
+              "English ▾"
         
             Just system ->
               system.name ++ " ▾"
@@ -583,6 +583,11 @@ viewFeedbackTab model oer =
         actionButtonWithoutIcon [ Font.size 12, width fill, centerX, paddingXY 5 8] [ width fill, buttonRounding, Border.width 1, Border.color x5grey ] buttonText (Just OpenedMLLPSystemMenu)
         |> el attrs
 
+    mllpRow =
+      if List.length model.mllpSystems == 0 then
+        recognitionButton |> el [ alignRight ]
+      else
+        [ mllpSystemButton, recognitionButton ] |> row [ width (fillPortion 2), spacing 10 ]
     
   in
       [ "Feedback" |> bodyWrap []
@@ -591,7 +596,7 @@ viewFeedbackTab model oer =
       , "Notes" |> bodyWrap []
       , notes |> el [ width fill ]
       , textField
-      , [ mllpSystemButton, recognitionButton ] |> row [ width (fillPortion 2), spacing 10 ]
+      , mllpRow
       ]
       |> column [ width fill, spacing 20 ]
 

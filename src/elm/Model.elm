@@ -124,15 +124,31 @@ type alias Model =
   , editingOerPlaylistItem : PlaylistItem
   , searchTotalPages : Int -- to track number of pages available from a search result
   , currentPageForSearch : Int -- to keep track of current page of search results shown
-  , mllpState : MLLPState -- keep track of mllp states for speech recognition
+  , mllpState : MLLPState -- keep track of mllp states for speech recognition  
+  , mllpSystems : List MLLPSystem -- available mllp systems for selection when using speech recognition
+  , selectedMLLPSystem : Maybe MLLPSystem -- holds the selected MLLPSystem 
   }
 
+
+{-| MLLP Speech recognition states 
+-}
 type MLLPState
  = EnableMicrophone
  | StartRecognition
  | StopRecognition
 
-{-| We get the first sentence from the Wikipedia article
+
+{-| MLLP Speech recognition system (available languages) for speech recognition
+-}
+type alias MLLPSystem =
+  { id : String
+  , lang : String
+  , name : String 
+  , cmllr : Bool
+  }
+
+
+{-| Playlist states
 -}
 type PlaylistState
   = PlaylistInfo
@@ -391,6 +407,7 @@ type Popup
   | PlaylistPopup -- Allowing the user to toggle between playlists
   | AddToPlaylistPopup -- Allowing the user to add an oer to the playlist
   | SelectLicensePopup -- Allowing the user to select a license when publishing
+  | MLLPSystemPopup -- Allowing the user to select a system for mllp speech recognition
 
 
 {-| Cascading menu containing wikipedia topics
@@ -687,6 +704,8 @@ initialModel nav flags =
   , searchTotalPages = 0
   , currentPageForSearch = 1
   , mllpState = EnableMicrophone
+  , mllpSystems = []
+  , selectedMLLPSystem = Nothing
   }
 
 initialLicenseType : List LicenseType

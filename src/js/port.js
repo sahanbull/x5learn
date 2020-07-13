@@ -15,9 +15,7 @@ var videoPlayReportingInterval = 10;
 
 
 // MLLP library default system
-var mllpDefaultSystem;
 var mllpRecognitionResult = "";
-
 
 function positionAndSize(el) {
   var rect = el.getBoundingClientRect(), scrollLeft = window.pageXOffset || document.documentElement.scrollLeft, scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -86,7 +84,9 @@ function setupPorts(app){
 
   // setting up ports for mllp library
   app.ports.initMLLP.subscribe(initMLLP);
-  app.ports.startRecognition.subscribe(startRecognition);
+  app.ports.startRecognition.subscribe(function(system) {
+    startRecognition(system);
+  });
   app.ports.stopRecognition.subscribe(stopRecognition);
 }
 
@@ -307,7 +307,7 @@ function initMLLP() {
   window.addEventListener('mllp:systems', function(e) {
     console.log('[mllp:systems] available languages retrieved', e.detail);
     availableSystems = e.detail;
-    mllpDefaultSystem = availableSystems[0]["id"];
+    deliverMLLPAvailableSystems(availableSystems);
   });
 
   window.addEventListener('mllp:ready', function(e) {
@@ -339,13 +339,17 @@ function initMLLP() {
   window.MLLPStreamingASR.init();
 }
 
-function startRecognition() {
-  console.log(mllpDefaultSystem);
-  window.MLLPStreamingASR.startRecognition(mllpDefaultSystem);
+function startRecognition(system) {
+  console.log(system);
+  window.MLLPStreamingASR.startRecognition(system);
 }
 
 function stopRecognition() {
   window.MLLPStreamingASR.stopRecognition();
+}
+
+function deliverMLLPAvailableSystems(availableSystems) {
+  app.ports.receiveMLLPSystems.send(availableSystems);
 }
 
 function deliverRecognitionResult(mllpRecognitionResult) {

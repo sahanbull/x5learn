@@ -546,7 +546,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                     ( model, Cmd.none)
 
                 Just state ->
-                    ( model , requestFetchNotesForOer state.oer.id)
+                    ( model |> setTextInResourceFeedbackForm state.oer.id "", requestFetchNotesForOer state.oer.id)
 
         RequestSaveNote (Err err) ->
             ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
@@ -1249,10 +1249,20 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             ( { model | mllpState = StartRecognition }, initMLLP True )
 
         StartSpeechRegonition ->
-            ( { model | mllpState = StopRecognition } , startRecognition True )
+            case model.selectedMLLPSystem of
+                Nothing ->
+                    ( { model | snackbar = createSnackbar model "Please select a system before recording" }, Cmd.none )
 
-        StopSpeechRegonition ->
-            ( { model | mllpState = StartRecognition }, stopRecognition True )
+                Just system ->
+                    ( { model | mllpState = StopRecognition } , startRecognition system.id )
+
+        StopSpeechRegonition oerId text ->
+            if text == "" then
+                ( { model | mllpState = StartRecognition },  stopRecognition True )
+            else
+                ( { model | timeOfLastFeedbackRecorded = model.currentTime, mllpState = StartRecognition  },  [ stopRecognition True, requestSaveNote oerId text ] |> Cmd.batch  )
+                    |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, text ]
+                    |> saveAction 8 [ ( "OER id", Encode.int oerId ), ( "user feedback", Encode.string text ) ]
 
         MLLPResultReceived mllpResult ->
             case model.inspectorState of
@@ -1261,9 +1271,29 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 Just state ->
                     let
                         noteString = 
-                            (getResourceFeedbackFormValue model state.oer.id) ++ mllpResult
+                            if mllpResult == "" then
+                                (getResourceFeedbackFormValue model state.oer.id)
+                            else
+                                (getResourceFeedbackFormValue model state.oer.id) ++ " " ++ mllpResult
                     in
                     ( model |> setTextInResourceFeedbackForm state.oer.id noteString, Cmd.none )
+
+        MLLPSystemsReceived systems ->
+            let
+                initialSelectedMLLPSystem = 
+                    if List.length systems == 0 then
+                        Nothing
+                    else
+                        List.head systems
+            in
+                ( { model | mllpSystems = systems, selectedMLLPSystem = initialSelectedMLLPSystem }, Cmd.none )
+
+        OpenedMLLPSystemMenu ->
+            ( { model | popup = Just MLLPSystemPopup }, setBrowserFocus "" )
+                |> logEventForLabStudy "OpenedMLLPSystemMenu" []
+
+        SelectedMLLPSystem system ->
+            ( { model | selectedMLLPSystem = Just system } |> closePopup, Cmd.none )
 
 
 insertSearchResults : List OerId -> Model -> Model
@@ -1545,6 +1575,9 @@ popupToStrings maybePopup =
 
                 SelectLicensePopup ->
                     [ "SelectLicensePopup" ]
+
+                MLLPSystemPopup -> 
+                    [ "MLLPSystemPopup" ]
 
 
 executeSearchAfterUrlChanged : Model -> Url -> ( Model, Cmd Msg )

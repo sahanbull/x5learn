@@ -531,35 +531,67 @@ viewFeedbackTab model oer =
 
     quickOptions =
       ([ "Inspiring"
-      , "Outstanding"
+      --, "Outstanding"
       , "Outdated"
-      , "Language errors"
+      --, "Language errors"
       , "Poor content"
       , "Poor image"
       ] ++ (if isVideoFile oer.url || hasYoutubeVideo oer.url then [ "Poor audio" ] else []))
-      |> List.map (\option -> simpleButton [ paddingXY 4 4, Background.color primaryGreen, buttonRounding, Font.size 14, whiteText ] option (Just <| SubmittedResourceFeedback oer.id (">>>"++option)))
+      |> List.map (\option -> simpleButton [ paddingXY 4 4, Background.color primaryGreen, buttonRounding, Font.size 12, whiteText ] option (Just <| SubmittedResourceFeedback oer.id (">>>"++option)))
       |> column [ width fill, htmlClass "flexWrap" ]
 
     textField =
-      Input.text [ Font.size 12, width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5grey ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your notes" |> text |> Input.placeholder [ Font.size 12 ]), label = Input.labelHidden "Your feedback about this resource" }
+      Input.multiline [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Font.size 12, Border.color x5grey ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your notes" |> text |> Input.placeholder [ Font.size 12 ]), spellcheck = False, label = Input.labelHidden "Your feedback about this resource" }
 
     recognitionButton =
       case model.mllpState of
         EnableMicrophone ->
           simpleButton [ Font.size 12, Font.color electricBlue ] "Enable Microphone" (Just <| InitMLLP )
         StartRecognition ->
-          simpleButton [ Font.size 12, Font.color red ] "Start Recognition" (Just <| StartSpeechRegonition )
+          simpleButton [ Font.size 12, Font.color red ] "Start Recording" (Just <| StartSpeechRegonition )
         StopRecognition ->
-          simpleButton [ Font.size 12, Font.color electricBlue ] "Stop Recognition" (Just <| StopSpeechRegonition )
+          simpleButton [ Font.size 12, Font.color electricBlue ] "Stop Recording" (Just <| StopSpeechRegonition oer.id formValue)
+
+    mllpSystemButton = 
+      let
+        buttonText = 
+          case model.selectedMLLPSystem of
+            Nothing ->
+              "System ▾"
+        
+            Just system ->
+              system.name ++ " ▾"
+        
+        option system =
+          actionButtonWithoutIcon [ Font.size 12 ] [ width fill, paddingXY 5 8, htmlClass "HoverGreyBackground" ] system.name (Just <| SelectedMLLPSystem system)
+
+        options : List (Attribute Msg)
+        options =
+          case model.popup of
+            Just MLLPSystemPopup ->
+              List.map  (\x -> option x) model.mllpSystems
+              |> menuColumn [ width fill]
+              |> above
+              |> List.singleton
+
+            _ ->
+              []
+
+        attrs =
+          [ width fill, alignLeft, htmlClass "PreventClosingThePopupOnClick", buttonRounding ] ++ options
+      in
+        actionButtonWithoutIcon [ Font.size 12, width fill, centerX, paddingXY 5 8] [ width fill, buttonRounding, Border.width 1, Border.color x5grey ] buttonText (Just OpenedMLLPSystemMenu)
+        |> el attrs
 
     
   in
-      [ "How would you describe this material?" |> bodyWrap []
+      [ "Feedback" |> bodyWrap []
+      --, "How would you describe this material?" |> bodyWrap []
       , quickOptions
       , "Notes" |> bodyWrap []
       , notes |> el [ width fill ]
       , textField
-      , recognitionButton |> el [ alignRight ]
+      , [ mllpSystemButton, recognitionButton ] |> row [ width (fillPortion 2), spacing 10 ]
       ]
       |> column [ width fill, spacing 20 ]
 

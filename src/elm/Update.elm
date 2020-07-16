@@ -21,6 +21,7 @@ import Update.Bubblogram exposing (..)
 import Url exposing (Url)
 import Url.Builder
 import Model exposing (MLLPState(..))
+import Model exposing (InspectorSidebarTab(..))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -579,6 +580,45 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
         RequestUpdateNote (Err err) ->
             ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
 
+        RequestSaveReview (Ok _) ->
+            case model.inspectorState of
+                Nothing ->
+                    ( model, Cmd.none)
+
+                Just state ->
+                    ( model |> setTextInResourceFeedbackForm state.oer.id "", requestFetchReviewsForOer state.oer.id)
+
+        RequestSaveReview (Err err) ->
+            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+
+        RequestFetchReviewsForOer (Ok reviews) ->
+            ( { model | userReviewsForOer = reviews }, Cmd.none)
+
+        RequestFetchReviewsForOer (Err err) ->
+            ( { model | snackbar = createSnackbar model "A network related error occurred. Please try again" }, Cmd.none )
+
+        RequestRemoveReview (Ok _) ->
+            case model.inspectorState of
+                Nothing ->
+                    ( { model | snackbar = createSnackbar model "Review was successfully removed" } , Cmd.none)
+
+                Just state ->
+                    ( { model | snackbar = createSnackbar model "Review was successfully removed" } , requestFetchReviewsForOer state.oer.id)
+
+        RequestRemoveReview (Err err) ->
+            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+
+        RequestUpdateReview (Ok _) ->
+            case model.inspectorState of
+                Nothing ->
+                    ( { model | snackbar = createSnackbar model "Review was successfully updated" } , Cmd.none)
+
+                Just state ->
+                    ( { model | snackbar = createSnackbar model "Review was successfully updated", editUserReviewForOerInPlace = Nothing } , requestFetchReviewsForOer state.oer.id)
+
+        RequestUpdateReview (Err err) ->
+            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+
         RequestUpdatePlaylistItem (Ok _) ->
             ( { model | snackbar = createSnackbar model "Playlist item is successfully updated" }, requestLoadUserPlaylists )
 
@@ -671,9 +711,38 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                     in
                         ( { model | editUserNoteForOerInPlace = Just newEditingNote }, Cmd.none)
 
+        SubmittedReviewEdit ->
+            case model.editUserReviewForOerInPlace of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just review ->
+                    ( model, requestUpdateReview review )
+
+        ChangedTextInReview str ->
+            case model.editUserReviewForOerInPlace of
+                Nothing ->
+                    ( model, Cmd.none )
+
+                Just editingReview ->
+                    let
+                        oldEditingReview =
+                            editingReview
+
+                        newEditingReview =
+                            ( { oldEditingReview | text = str } )
+
+                    in
+                        ( { model | editUserReviewForOerInPlace = Just newEditingReview }, Cmd.none)
+
         SubmittedResourceFeedback oerId text ->
-            ( { model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", requestSaveNote oerId text)
+            ( { model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", requestSaveReview oerId text)
                 |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, text ]
+                |> saveAction 8 [ ( "OER id", Encode.int oerId ), ( "user feedback", Encode.string text ) ]
+
+        SubmittedNote oerId text ->
+            ( { model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", requestSaveNote oerId text)
+                |> logEventForLabStudy "SubmittedNote" [ oerId |> String.fromInt, text ]
                 |> saveAction 8 [ ( "OER id", Encode.int oerId ), ( "user feedback", Encode.string text ) ]
 
         YoutubeVideoIsPlayingAtPosition position ->
@@ -753,6 +822,9 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
 
                         RecommendationsTab ->
                             "RecommendationsTab"
+
+                        NotesTab ->
+                            "NotesTab"
             in
             ( { model | inspectorState = newInspectorState }, [ cmd, setBrowserFocus "feedbackTextInputField" ] |> Cmd.batch )
                 |> logEventForLabStudy "SelectInspectorSidebarTab" [ String.fromInt oerId, tabName ]
@@ -1188,8 +1260,14 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
         EditNoteForOer note ->
             ( { model | editUserNoteForOerInPlace = Just note }, Cmd.none )
 
+        EditReviewForOer review ->
+            ( { model | editUserReviewForOerInPlace = Just review }, Cmd.none)
+
         RemoveNoteForOer noteId ->
             ( model, requestRemoveNote noteId )
+
+        RemoveReviewForOer reviewId ->
+            ( model, requestRemoveReview reviewId)
 
         PromptDeletePlaylist flag ->
             ( { model | promptedDeletePlaylist = flag }, Cmd.none)
@@ -1256,12 +1334,12 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 Just system ->
                     ( { model | mllpState = StopRecognition } , startRecognition system.id )
 
-        StopSpeechRegonition oerId text ->
+        StopSpeechRegonition oerId text tab ->
             if text == "" then
                 ( { model | mllpState = StartRecognition },  stopRecognition True )
             else
-                ( { model | timeOfLastFeedbackRecorded = model.currentTime, mllpState = StartRecognition  },  [ stopRecognition True, requestSaveNote oerId text ] |> Cmd.batch  )
-                    |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, text ]
+                ( { model | timeOfLastFeedbackRecorded = model.currentTime, mllpState = StartRecognition  },  [ stopRecognition True, if tab == NotesTab then requestSaveNote oerId text else requestSaveReview oerId text ] |> Cmd.batch  )
+                    |> logEventForLabStudy "SubmittedNote" [ oerId |> String.fromInt, text ]
                     |> saveAction 8 [ ( "OER id", Encode.int oerId ), ( "user feedback", Encode.string text ) ]
 
         MLLPResultReceived mllpResult ->
@@ -1967,7 +2045,7 @@ inspectOer model oer fragmentStart playWhenReady =
             , playWhenReady = playWhenReady
             }
     in
-        ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert inspectorId, hoveringOerId = Nothing } |> closePopup, Cmd.batch [ requestFetchNotesForOer oer.id, openInspectorAnimation videoEmbedParams, embedYoutubePlayerOnResourcePage videoEmbedParams] 
+        ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert inspectorId, hoveringOerId = Nothing } |> closePopup, Cmd.batch [ requestFetchNotesForOer oer.id, requestFetchReviewsForOer oer.id,  openInspectorAnimation videoEmbedParams, embedYoutubePlayerOnResourcePage videoEmbedParams] 
         )
 
 

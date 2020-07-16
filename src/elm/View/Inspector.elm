@@ -24,6 +24,7 @@ import View.Explainer exposing (..)
 
 import Animation exposing (..)
 import Model exposing (MLLPState(..))
+import Model exposing (InspectorSidebarTab(..))
 
 
 viewInspector : Model -> List (Attribute Msg)
@@ -424,9 +425,14 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
                 , sidebarContent
                 )
 
-          FeedbackTab ->
+          NotesTab ->
             ("Notes"
-            , if (millisSince model model.timeOfLastFeedbackRecorded) < 2000 then viewFeedbackConfirmation else viewFeedbackTab model oer
+            , if (millisSince model model.timeOfLastFeedbackRecorded) < 2000 then viewFeedbackConfirmation inspectorSidebarTab else viewFeedbackTab model oer inspectorSidebarTab
+            )
+
+          FeedbackTab ->
+            ("Reviews"
+            , if (millisSince model model.timeOfLastFeedbackRecorded) < 2000 then viewFeedbackConfirmation inspectorSidebarTab else viewFeedbackTab model oer inspectorSidebarTab
             )
 
       renderTab (tab, title) =
@@ -440,10 +446,11 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
               else
                 (greyText, Border.color fullyTransparentColor)
         in
-            simpleButton [ Font.size 16, paddingXY 1 20, borderBottom 4, centerX, borderColor, textColor ] title (Just <| SelectInspectorSidebarTab tab oer.id)
+            simpleButton [ Font.size 14, paddingXY 1 20, borderBottom 4, centerX, borderColor, textColor ] title (Just <| SelectInspectorSidebarTab tab oer.id)
 
       tabsMenu =
-        [ (FeedbackTab, "Notes")
+        [ (NotesTab, "Notes")
+        , (FeedbackTab, "Review")
         , (RecommendationsTab, "Related")
         ]
         |> List.map renderTab
@@ -519,11 +526,15 @@ recommendationCardWidth model =
   (inspectorSidebarWidth model) - 23
 
 
-viewFeedbackTab : Model -> Oer -> Element Msg
-viewFeedbackTab model oer =
+viewFeedbackTab : Model -> Oer -> InspectorSidebarTab -> Element Msg
+viewFeedbackTab model oer tab =
   let        
     notes = 
-      List.map (\x -> viewNoteForOer model x) model.userNotesForOer
+      List.map (\x -> viewNoteForOer model x tab) model.userNotesForOer
+      |> column [ spacing 5, width fill ]
+
+    reviews = 
+      List.map (\x -> viewNoteForOer model x tab) model.userReviewsForOer
       |> column [ spacing 5, width fill ]
 
     formValue =
@@ -531,9 +542,9 @@ viewFeedbackTab model oer =
 
     quickOptions =
       ([ "Inspiring"
-      --, "Outstanding"
+      , "Outstanding"
       , "Outdated"
-      --, "Language errors"
+      , "Language errors"
       , "Poor content"
       , "Poor image"
       ] ++ (if isVideoFile oer.url || hasYoutubeVideo oer.url then [ "Poor audio" ] else []))
@@ -541,7 +552,10 @@ viewFeedbackTab model oer =
       |> column [ width fill, htmlClass "flexWrap" ]
 
     textField =
-      Input.multiline [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Font.size 12, Border.color x5grey ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your notes" |> text |> Input.placeholder [ Font.size 12 ]), spellcheck = False, label = Input.labelHidden "Your feedback about this resource" }
+      if tab == NotesTab then
+        Input.multiline [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedNote oer.id formValue), Font.size 12, Border.color x5grey ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your notes" |> text |> Input.placeholder [ Font.size 12 ]), spellcheck = False, label = Input.labelHidden "Your feedback about this resource" }
+      else
+        Input.multiline [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Font.size 12, Border.color x5grey ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your review" |> text |> Input.placeholder [ Font.size 12 ]), spellcheck = False, label = Input.labelHidden "Your feedback about this resource" }
 
     recognitionButton =
       case model.mllpState of
@@ -550,7 +564,7 @@ viewFeedbackTab model oer =
         StartRecognition ->
           simpleButton [ Font.size 12, Font.color red ] "Start Recording" (Just <| StartSpeechRegonition )
         StopRecognition ->
-          simpleButton [ Font.size 12, Font.color electricBlue ] "Stop Recording" (Just <| StopSpeechRegonition oer.id formValue)
+          simpleButton [ Font.size 12, Font.color electricBlue ] "Stop Recording" (Just <| StopSpeechRegonition oer.id formValue tab)
 
     mllpSystemButton = 
       let
@@ -590,23 +604,37 @@ viewFeedbackTab model oer =
         [ mllpSystemButton, recognitionButton ] |> row [ width (fillPortion 2), spacing 10 ]
     
   in
-      [ "Feedback" |> bodyWrap []
+    if tab == NotesTab then
+      [ "Notes" |> bodyWrap []
+      , notes |> el [ width fill ]
+      , textField
+      , mllpRow
+      ]
+      |> column [ width fill, spacing 20 ]
+    else
+      [ "Rating" |> bodyWrap []
       --, "How would you describe this material?" |> bodyWrap []
       , quickOptions
-      , "Notes" |> bodyWrap []
-      , notes |> el [ width fill ]
+      , "Comments" |> bodyWrap []
+      , reviews |> el [ width fill ]
       , textField
       , mllpRow
       ]
       |> column [ width fill, spacing 20 ]
 
 
-viewFeedbackConfirmation : Element Msg
-viewFeedbackConfirmation =
-  [ "Note Saved" |> headlineWrap [ Font.size 24 ]
-  , "✔ Your note has been recorded." |> bodyWrap []
-  ]
-  |> column [ spacing 30, paddingTop 200 ]
+viewFeedbackConfirmation : InspectorSidebarTab -> Element Msg
+viewFeedbackConfirmation tab =
+  if tab == NotesTab then
+    [ "Note Saved" |> headlineWrap [ Font.size 24 ]
+    , "✔ Your note has been recorded." |> bodyWrap []
+    ]
+    |> column [ spacing 30, paddingTop 200 ]
+  else 
+    [ "Review Saved" |> headlineWrap [ Font.size 24 ]
+    , "✔ Your review has been recorded." |> bodyWrap []
+    ]
+    |> column [ spacing 30, paddingTop 200 ]
 
 
 explanationForHtml5VideoPlayer : Explanation
@@ -634,49 +662,17 @@ checkIfOerDoesNotExistsInPlaylist oers oerId =
         False
 
 
-viewNoteForOer : Model -> Note -> Element Msg
-viewNoteForOer model note = 
-  case model.editUserNoteForOerInPlace of
-    Nothing ->
-      let
-        topRow =
-            note.text |> bodyWrap []
-
-        editButton =
-          button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditNoteForOer note, label = "Edit" |> captionNowrap [ width fill, whiteText, Font.center ] }
-
-        removeButton =
-            button [ paddingXY 5 3, buttonRounding, Background.color red ] { onPress = Just <| RemoveNoteForOer note.id, label = "Remove" |> captionNowrap [ width fill, whiteText, Font.center ] }
-      
-        buttonRow =
-          [ editButton
-          , removeButton
-          ]
-          |> row [ width (fillPortion 2), spacing 10 ]
-
-      in
-        [ topRow
-        , buttonRow
-        ]
-        |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
-
-    Just editingNote ->
-      if editingNote.id == note.id then
-        let
-          topRow =
-              Input.text [  Font.size 14, width fill, onEnter <| SubmittedNoteEdit, Border.color x5grey ] { onChange = ChangedTextInNote, placeholder = Nothing,  text = editingNote.text, label = Input.labelHidden "Your feedback about this resource" }
-        in
-          [ topRow
-          ]
-          |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
-
-      else 
+viewNoteForOer : Model -> Note -> InspectorSidebarTab -> Element Msg
+viewNoteForOer model note tab = 
+  if tab == NotesTab then
+    case model.editUserNoteForOerInPlace of
+      Nothing ->
         let
           topRow =
               note.text |> bodyWrap []
 
           editButton =
-            button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditNoteForOer note, label = "Edit" |> captionNowrap [ width fill, whiteText, Font.center ] }
+              button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditNoteForOer note, label = "Edit" |> captionNowrap [ width fill, whiteText, Font.center ] }
 
           removeButton =
               button [ paddingXY 5 3, buttonRounding, Background.color red ] { onPress = Just <| RemoveNoteForOer note.id, label = "Remove" |> captionNowrap [ width fill, whiteText, Font.center ] }
@@ -686,10 +682,99 @@ viewNoteForOer model note =
             , removeButton
             ]
             |> row [ width (fillPortion 2), spacing 10 ]
+
+        in
+          [ topRow
+          , buttonRow
+          ]
+          |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
+
+      Just editingNote ->
+        if editingNote.id == note.id then
+          let
+            topRow =
+                Input.text [  Font.size 14, width fill, onEnter <| SubmittedNoteEdit, Border.color x5grey ] { onChange = ChangedTextInNote, placeholder = Nothing,  text = editingNote.text, label = Input.labelHidden "Your feedback about this resource" }
           in
             [ topRow
-            , buttonRow
             ]
             |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
+
+        else 
+          let
+            topRow =
+                note.text |> bodyWrap []
+
+            editButton =
+              button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditNoteForOer note, label = "Edit" |> captionNowrap [ width fill, whiteText, Font.center ] }
+
+            removeButton =
+                button [ paddingXY 5 3, buttonRounding, Background.color red ] { onPress = Just <| RemoveNoteForOer note.id, label = "Remove" |> captionNowrap [ width fill, whiteText, Font.center ] }
+          
+            buttonRow =
+              [ editButton
+              , removeButton
+              ]
+              |> row [ width (fillPortion 2), spacing 10 ]
+            in
+              [ topRow
+              , buttonRow
+              ]
+              |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
+  else
+    case model.editUserReviewForOerInPlace of
+      Nothing ->
+        let
+          topRow =
+              note.text |> bodyWrap []
+
+          editButton =
+              button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditReviewForOer note, label = "Edit" |> captionNowrap [ width fill, whiteText, Font.center ] }
+
+          removeButton =
+              button [ paddingXY 5 3, buttonRounding, Background.color red ] { onPress = Just <| RemoveReviewForOer note.id, label = "Remove" |> captionNowrap [ width fill, whiteText, Font.center ] }
+        
+          buttonRow =
+            [ editButton
+            , removeButton
+            ]
+            |> row [ width (fillPortion 2), spacing 10 ]
+
+        in
+          [ topRow
+          , buttonRow
+          ]
+          |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
+
+      Just editingNote ->
+        if editingNote.id == note.id then
+          let
+            topRow =
+                Input.text [  Font.size 14, width fill, onEnter <| SubmittedReviewEdit, Border.color x5grey ] { onChange = ChangedTextInReview, placeholder = Nothing,  text = editingNote.text, label = Input.labelHidden "Your feedback about this resource" }
+          in
+            [ topRow
+            ]
+            |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
+
+        else 
+          let
+            topRow =
+                note.text |> bodyWrap []
+
+            editButton =
+              button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditReviewForOer note, label = "Edit" |> captionNowrap [ width fill, whiteText, Font.center ] }
+
+            removeButton =
+                button [ paddingXY 5 3, buttonRounding, Background.color red ] { onPress = Just <| RemoveReviewForOer note.id, label = "Remove" |> captionNowrap [ width fill, whiteText, Font.center ] }
+          
+            buttonRow =
+              [ editButton
+              , removeButton
+              ]
+              |> row [ width (fillPortion 2), spacing 10 ]
+            in
+              [ topRow
+              , buttonRow
+              ]
+              |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
 
 

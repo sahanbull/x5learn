@@ -27,7 +27,7 @@ from x5learn_server.db.database import db_session
 from x5learn_server.models import UserLogin, Role, User, Oer, WikichunkEnrichment, WikichunkEnrichmentTask, \
     EntityDefinition, ResourceFeedback, Action, ActionType, Repository, \
     ActionsRepository, UserRepository, DefinitionsRepository, Course, UiLogBatch, Note, Playlist, Playlist_Item, \
-    Temp_Playlist, License, TempPlaylistRepository, ThumbGenerationTask
+    Temp_Playlist, License, TempPlaylistRepository, ThumbGenerationTask, Review
 
 from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push_enrichment_task, save_enrichment, \
     push_thumbnail_generation_task
@@ -1931,6 +1931,148 @@ class LicenseTypes(Resource):
             result_list = repository.get(License, None)
             licenses = [i.serialize for i in result_list]
             return licenses
+
+
+# Defining reviews resource for API access
+ns_reviews = api.namespace('api/v1/review', description='Reviews')
+
+m_review = api.model('Review', {
+    'oer_id': fields.Integer(required=True, max_length=255, description='The material id of the review associated with'),
+    'text': fields.String(required=True, description='The content of the review')
+})
+
+
+@ns_reviews.route('/')
+class ReviewList(Resource):
+    '''Shows a list of all reviews, and lets you POST in order to add new reviews'''
+
+    @ns_reviews.doc('list_reviews', params={'oer_id': 'Filter by material id',
+                                        'sort': 'Sort results (Default: desc)',
+                                        'offset': 'Offset results',
+                                        'limit': 'Limit results'})
+                                        
+    def get(self):
+        '''Fetches multiple reviews from database based on params'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+        else:
+            # Declaring and processing params available for request
+            parser = reqparse.RequestParser()
+            parser.add_argument('oer_id', type=int)
+            parser.add_argument('sort', default='desc', choices=('asc', 'desc'), help='Bad choice')
+            parser.add_argument('offset', type=int)
+            parser.add_argument('limit', type=int)
+            args = parser.parse_args()
+
+            # Building and executing query object
+            query_object = db_session.query(Review)
+
+            if (args['oer_id']):
+                query_object = query_object.filter(Review.oer_id == args['oer_id'])
+
+            # query_object = query_object.filter(Review.user_login_id == current_user.get_id())
+            query_object = query_object.filter(Review.is_deactivated == False)
+
+            if (args['sort'] == 'desc'):
+                query_object = query_object.order_by(Review.created_at.desc())
+            else:
+                query_object = query_object.order_by(Review.created_at.asc())
+
+            if (args['offset']):
+                query_object = query_object.offset(args['offset'])
+
+            if (args['limit']):
+                query_object = query_object.limit(args['limit'])
+
+            result_list = query_object.all()
+
+            # Converting result list to JSON friendly format
+            serializable_list = list()
+            if (result_list):
+                serializable_list = [i.serialize for i in result_list]
+
+            return serializable_list
+
+    @ns_reviews.doc('create_review')
+    @ns_reviews.expect(m_review, validate=True)
+    def post(self):
+        '''Creates a new review'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+        elif not api.payload['text'] or not api.payload['oer_id']:
+            return {'result': 'Material id and text params cannot be empty'}, 400
+        else:
+            review = Review(api.payload['oer_id'], api.payload['text'], current_user.get_id(), False)
+            db_session.add(review)
+            db_session.commit()
+            return {'result': 'Review added'}, 201
+
+
+@ns_reviews.route('/<int:id>')
+@ns_reviews.response(404, 'Review not found')
+@ns_reviews.param('id', 'The review identifier')
+class Reviews(Resource):
+    '''Show a single review and lets you update or delete them'''
+
+    @ns_reviews.doc('get_review')
+    def get(self, id):
+        '''Fetch requested review from database'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        query_object = db_session.query(Review)
+        query_object = query_object.filter(Review.id == id)
+        query_object = query_object.filter(Review.user_login_id == current_user.get_id())
+        query_object = query_object.filter(Review.is_deactivated == False)
+        review = query_object.one_or_none()
+
+        if not review:
+            return {}, 400
+
+        return review.serialize, 200
+
+    @ns_reviews.doc('update_review', params={'text': 'Text to update'})
+    def put(self, id):
+        '''Update selected review'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        # Declaring and processing params available for request
+        parser = reqparse.RequestParser()
+        parser.add_argument('text', required=True)
+        args = parser.parse_args()
+
+        query_object = db_session.query(Review)
+        query_object = query_object.filter(Review.id == id)
+        query_object = query_object.filter(Review.user_login_id == current_user.get_id())
+        query_object = query_object.filter(Review.is_deactivated == False)
+        review = query_object.one_or_none()
+
+        if not review:
+            return {}, 400
+
+        setattr(review, 'text', args['text'])
+        db_session.commit()
+        return {'result': 'Review updated'}, 201
+
+    @ns_reviews.doc('delete_review')
+    def delete(self, id):
+        '''Delete selected review'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        query_object = db_session.query(Review)
+        query_object = query_object.filter(Review.id == id)
+        query_object = query_object.filter(Review.user_login_id == current_user.get_id())
+        query_object = query_object.filter(Review.is_deactivated == False)
+        review = query_object.one_or_none()
+
+        if not review:
+            return {}, 400
+
+        setattr(review, 'is_deactivated', True)
+        db_session.commit()
+        return {'result': 'Review deleted'}, 201
 
 
 def initiate_action_types_table():

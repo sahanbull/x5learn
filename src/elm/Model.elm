@@ -117,6 +117,7 @@ type alias Model =
   , playlistState : Maybe PlaylistState
   , userNotesForOer : List Note
   , editUserNoteForOerInPlace : Maybe Note
+  , editUserReviewForOerInPlace : Maybe Review
   , promptedDeletePlaylist : Bool
   , openedOerFromPlaylist : Bool
   , editingOerTitleInPlaylist : Bool -- flag to identify if user is editing the title specific to a playlist
@@ -127,6 +128,7 @@ type alias Model =
   , mllpState : MLLPState -- keep track of mllp states for speech recognition  
   , mllpSystems : List MLLPSystem -- available mllp systems for selection when using speech recognition
   , selectedMLLPSystem : Maybe MLLPSystem -- holds the selected MLLPSystem 
+  , userReviewsForOer : List Review
   }
 
 
@@ -166,6 +168,7 @@ type EntityDefinition
 type InspectorSidebarTab
   = RecommendationsTab
   | FeedbackTab
+  | NotesTab
 
 {-| Toggle between thumbnails and bubblograms
 -}
@@ -566,6 +569,13 @@ type alias Note =
   , text : String
   }
 
+{-| Reviews alias to hold reviews saved for Oers by user
+-}
+type alias Review = 
+  { id : Int
+  , text : String
+  }
+
 type alias OerSearchResult =
   { oers : (List Oer)
   , totalPages : Int
@@ -696,6 +706,7 @@ initialModel nav flags =
   , playlistState = Nothing
   , userNotesForOer = []
   , editUserNoteForOerInPlace = Nothing
+  , editUserReviewForOerInPlace = Nothing
   , promptedDeletePlaylist = False
   , openedOerFromPlaylist = False
   , editingOerTitleInPlaylist = False
@@ -706,6 +717,7 @@ initialModel nav flags =
   , mllpState = EnableMicrophone
   , mllpSystems = []
   , selectedMLLPSystem = Nothing
+  , userReviewsForOer = []
   }
 
 initialLicenseType : List LicenseType
@@ -755,7 +767,7 @@ newInspectorState oer fragmentStart =
         else
           Nothing
   in
-      InspectorState oer fragmentStart videoPlayer FeedbackTab [] False
+      InspectorState oer fragmentStart videoPlayer NotesTab [] False
 
 
 hasYoutubeVideo : OerUrl -> Bool

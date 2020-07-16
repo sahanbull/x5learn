@@ -330,7 +330,6 @@ function initMLLP() {
   window.addEventListener('mllp:result', function(e) {
     recognitionResults = e.detail;
     mllpRecognitionResult = recognitionResults['fixed'];
-    console.log(mllpRecognitionResult);
     deliverRecognitionResult(mllpRecognitionResult);
   });
 
@@ -346,7 +345,6 @@ function initMLLP() {
 }
 
 function startRecognition(system) {
-  console.log(system);
   window.MLLPStreamingASR.startRecognition(system);
   mllpRecognitionResult = "";
 }
@@ -354,7 +352,6 @@ function startRecognition(system) {
 function stopRecognition() {
   window.MLLPStreamingASR.stopRecognition();
   mllpRecognitionResult = "";
-  console.log('final-result');
   setTimeout( function() { deliverRecognitionResult(mllpRecognitionResult); }, 800);
 }
 

@@ -52,9 +52,13 @@ type Msg
   | RequestPublishPlaylist (Result Http.Error String)
   | RequestFetchPublishedPlaylist (Result Http.Error Playlist)
   | RequestSaveNote (Result Http.Error String)
+  | RequestSaveReview (Result Http.Error String)
   | RequestFetchNotesForOer (Result Http.Error (List Note))
+  | RequestFetchReviewsForOer (Result Http.Error (List Review))
   | RequestRemoveNote (Result Http.Error String)
+  | RequestRemoveReview (Result Http.Error String)
   | RequestUpdateNote (Result Http.Error String)
+  | RequestUpdateReview (Result Http.Error String)
   | RequestUpdatePlaylistItem (Result Http.Error String)
   | SetHover (Maybe OerId)
   | SetPopup Popup
@@ -67,6 +71,7 @@ type Msg
   | SubmittedUserProfile
   | ChangedTextInResourceFeedbackForm OerId String
   | SubmittedResourceFeedback OerId String
+  | SubmittedNote OerId String
   | YoutubeVideoIsPlayingAtPosition Float
   | BubblogramTopicMouseOver EntityId OerId
   | BubblogramTopicMouseOut
@@ -118,9 +123,13 @@ type Msg
   | SetPlaylistState (Maybe PlaylistState)
   | CancelCreatePlaylist
   | EditNoteForOer Note
+  | EditReviewForOer Review
   | RemoveNoteForOer Int
+  | RemoveReviewForOer Int
   | ChangedTextInNote String
+  | ChangedTextInReview String
   | SubmittedNoteEdit
+  | SubmittedReviewEdit
   | PromptDeletePlaylist Bool
   | ClickedOnPlaylistItem Oer
   | EditOerInPlaylist Bool String
@@ -129,7 +138,7 @@ type Msg
   | SetSearchCurrentPage Int
   | InitMLLP
   | StartSpeechRegonition
-  | StopSpeechRegonition OerId String
+  | StopSpeechRegonition OerId String InspectorSidebarTab
   | MLLPResultReceived String
   | MLLPSystemsReceived (List MLLPSystem)
   | SelectedMLLPSystem MLLPSystem

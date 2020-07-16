@@ -421,6 +421,38 @@ class ThumbGenerationTask(Base):
         self.data = data
 
 
+class Review(Base):
+    __tablename__ = 'review'
+    __table_args__ = {'extend_existing': True}
+    id = Column(Integer(), primary_key=True)
+    text = Column(Text())
+    created_at = Column(DateTime(), default=datetime.datetime.utcnow)
+    last_updated_at = Column(DateTime())
+    user_login_id = Column(Integer, ForeignKey('user_login.id'))
+    oer_id = Column(Integer, ForeignKey('oer.id'))
+    is_deactivated = Column(Boolean())
+
+    def __init__(self, oer_id, text, user_login_id, is_deactivated):
+        self.oer_id = oer_id
+        self.text = text
+        self.last_updated_at = datetime.datetime.utcnow()
+        self.user_login_id = user_login_id
+        self.is_deactivated = is_deactivated
+
+    @property
+    def serialize(self):
+        """Return object data in easily serializable format"""
+        return {
+            'id': self.id,
+            'oer_id': self.oer_id,
+            'text': self.text,
+            'created_at': dump_datetime(self.created_at),
+            'last_updated_at': dump_datetime(self.last_updated_at),
+            'user_login_id': self.user_login_id,
+            'is_deactivated': self.is_deactivated
+        }
+
+
 # Repository pattern implemented for CRUD
 class Repository:
     """

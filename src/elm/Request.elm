@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist, requestAddToPlaylist, requestSavePlaylist, requestDeletePlaylist, requestLoadLicenseTypes, requestPublishPlaylist, requestFetchPublishedPlaylist, requestSaveNote, requestFetchNotesForOer, requestRemoveNote, requestUpdateNote, requestUpdatePlaylistItem)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist, requestAddToPlaylist, requestSavePlaylist, requestDeletePlaylist, requestLoadLicenseTypes, requestPublishPlaylist, requestFetchPublishedPlaylist, requestSaveNote, requestSaveReview, requestFetchNotesForOer, requestFetchReviewsForOer, requestRemoveNote, requestRemoveReview,  requestUpdateNote, requestUpdateReview, requestUpdatePlaylistItem)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -262,6 +262,7 @@ requestSaveNote oerId text =
     , expect = Http.expectString RequestSaveNote
     }
 
+
 {-| fetch notes of a user given a oer id
 -}
 requestFetchNotesForOer : OerId -> Cmd Msg
@@ -298,6 +299,58 @@ requestUpdateNote note =
     , body = Http.jsonBody <| Encode.object []
     , expect = Http.expectString RequestUpdateNote
     }
+
+
+{-| save a user review for a oer
+-}
+requestSaveReview : OerId -> String -> Cmd Msg
+requestSaveReview oerId text =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "review/" ] []
+    , body = Http.jsonBody <| Encode.object [ ("oer_id", Encode.int oerId), ("text", Encode.string text) ]
+    , expect = Http.expectString RequestSaveReview
+    }
+
+
+{-| fetch reviews of an oer
+-}
+requestFetchReviewsForOer : OerId -> Cmd Msg
+requestFetchReviewsForOer oerId =
+  Http.get
+    { url = Url.Builder.absolute [ apiRoot, "review/" ] [ Url.Builder.int "oer_id" oerId, Url.Builder.string "sort" "asc" ]
+    , expect = Http.expectJson RequestFetchReviewsForOer (list noteDecoder)
+    }  
+
+
+{-| delete a review attached to an oer
+-}
+requestRemoveReview : Int -> Cmd Msg
+requestRemoveReview reviewId = 
+  Http.request
+    { method = "DELETE"
+    , timeout = Nothing
+    , tracker = Nothing
+    , headers = []
+    , url = Url.Builder.absolute [ apiRoot, "review/" ++ String.fromInt reviewId ] []
+    , body = Http.jsonBody <| Encode.object []
+    , expect = Http.expectString RequestRemoveReview
+    }
+
+
+{-| update a review of an oer
+-}
+requestUpdateReview : Review -> Cmd Msg
+requestUpdateReview review = 
+  Http.request
+    { method = "PUT"
+    , timeout = Nothing
+    , tracker = Nothing
+    , headers = []
+    , url = Url.Builder.absolute [ apiRoot, "review/" ++ String.fromInt review.id ] [ Url.Builder.string "text" review.text ]
+    , body = Http.jsonBody <| Encode.object []
+    , expect = Http.expectString RequestUpdateReview
+    }
+
 
 requestUpdatePlaylistItem : String -> PlaylistItem -> Cmd Msg
 requestUpdatePlaylistItem playlistTitle playlistItem = 

@@ -547,7 +547,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                     ( model, Cmd.none)
 
                 Just state ->
-                    ( model |> setTextInResourceFeedbackForm state.oer.id "", requestFetchNotesForOer state.oer.id)
+                    ( { model | currentVideoPlayTimeStart = "", currentVideoPlayTimeEnd = "" } |> setTextInResourceFeedbackForm state.oer.id "", requestFetchNotesForOer state.oer.id)
 
         RequestSaveNote (Err err) ->
             ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
@@ -586,7 +586,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                     ( model, Cmd.none)
 
                 Just state ->
-                    ( model |> setTextInResourceFeedbackForm state.oer.id "", requestFetchReviewsForOer state.oer.id)
+                    ( { model | currentVideoPlayTimeStart = "", currentVideoPlayTimeEnd = "" } |> setTextInResourceFeedbackForm state.oer.id "", requestFetchReviewsForOer state.oer.id)
 
         RequestSaveReview (Err err) ->
             ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
@@ -685,7 +685,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 |> logEventForLabStudy "SubmittedUserProfile" []
 
         ChangedTextInResourceFeedbackForm oerId str ->
-            ( model |> setTextInResourceFeedbackForm oerId str, Cmd.none )
+            ( model |> setTextInResourceFeedbackForm oerId str, getVideoCurrentPlayTime True )
 
         SubmittedNoteEdit ->
             case model.editUserNoteForOerInPlace of
@@ -698,7 +698,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
         ChangedTextInNote str ->
             case model.editUserNoteForOerInPlace of
                 Nothing ->
-                    ( model, Cmd.none )
+                    ( model, getVideoCurrentPlayTime True )
 
                 Just editingNote ->
                     let
@@ -709,7 +709,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                             ( { oldEditingNote | text = str } )
 
                     in
-                        ( { model | editUserNoteForOerInPlace = Just newEditingNote }, Cmd.none)
+                        ( { model | editUserNoteForOerInPlace = Just newEditingNote }, getVideoCurrentPlayTime True )
 
         SubmittedReviewEdit ->
             case model.editUserReviewForOerInPlace of
@@ -733,15 +733,15 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                             ( { oldEditingReview | text = str } )
 
                     in
-                        ( { model | editUserReviewForOerInPlace = Just newEditingReview }, Cmd.none)
+                        ( { model | editUserReviewForOerInPlace = Just newEditingReview }, getVideoCurrentPlayTime True )
 
         SubmittedResourceFeedback oerId text ->
-            ( { model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", requestSaveReview oerId text)
+            ( { model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", [ getVideoCurrentPlayTime True, requestSaveReview oerId (model.currentVideoPlayTimeStart ++ " - " ++ model.currentVideoPlayTimeEnd ++ " " ++ text) ] |> Cmd.batch)
                 |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, text ]
                 |> saveAction 8 [ ( "OER id", Encode.int oerId ), ( "user feedback", Encode.string text ) ]
 
         SubmittedNote oerId text ->
-            ( { model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", requestSaveNote oerId text)
+            ( { model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", [ getVideoCurrentPlayTime True, requestSaveNote oerId (model.currentVideoPlayTimeStart ++ " - " ++ model.currentVideoPlayTimeEnd ++ " " ++ text) ] |> Cmd.batch)
                 |> logEventForLabStudy "SubmittedNote" [ oerId |> String.fromInt, text ]
                 |> saveAction 8 [ ( "OER id", Encode.int oerId ), ( "user feedback", Encode.string text ) ]
 
@@ -1332,13 +1332,13 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                     ( { model | snackbar = createSnackbar model "Please select a system before recording" }, Cmd.none )
 
                 Just system ->
-                    ( { model | mllpState = StopRecognition } , startRecognition system.id )
+                    ( { model | mllpState = StopRecognition } , [ startRecognition system.id, getVideoCurrentPlayTime True ] |> Cmd.batch  )
 
         StopSpeechRegonition oerId text tab ->
             if text == "" then
                 ( { model | mllpState = StartRecognition },  stopRecognition True )
             else
-                ( { model | timeOfLastFeedbackRecorded = model.currentTime, mllpState = StartRecognition  },  [ stopRecognition True, if tab == NotesTab then requestSaveNote oerId text else requestSaveReview oerId text ] |> Cmd.batch  )
+                ( { model | timeOfLastFeedbackRecorded = model.currentTime, mllpState = StartRecognition  },  [ stopRecognition True, if tab == NotesTab then requestSaveNote oerId (model.currentVideoPlayTimeStart ++ " - " ++ model.currentVideoPlayTimeEnd ++ " " ++ text) else requestSaveReview oerId (model.currentVideoPlayTimeStart ++ " - " ++ model.currentVideoPlayTimeEnd ++ " " ++ text) ] |> Cmd.batch  )
                     |> logEventForLabStudy "SubmittedNote" [ oerId |> String.fromInt, text ]
                     |> saveAction 8 [ ( "OER id", Encode.int oerId ), ( "user feedback", Encode.string text ) ]
 
@@ -1348,7 +1348,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                     ( model, Cmd.none )
                 Just state ->
                     if model.mllpState == StopRecognition then
-                        ( model |> setTextInResourceFeedbackForm state.oer.id mllpResult, Cmd.none )
+                        ( model |> setTextInResourceFeedbackForm state.oer.id mllpResult, getVideoCurrentPlayTime True )
                     else
                         ( model, Cmd.none )
 
@@ -1368,6 +1368,17 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
 
         SelectedMLLPSystem system ->
             ( { model | selectedMLLPSystem = Just system } |> closePopup, Cmd.none )
+
+        VideoCurrentPlayTimeReceived time ->
+            if model.currentVideoPlayTimeStart == "" then
+                ( { model | currentVideoPlayTimeStart = time, currentVideoPlayTimeEnd = time }, Cmd.none )
+            else
+                ( { model | currentVideoPlayTimeEnd = time }, Cmd.none )
+
+        SetVideoCurrentPlayTime ->
+            ( model, getVideoCurrentPlayTime True )
+
+        
 
 
 insertSearchResults : List OerId -> Model -> Model

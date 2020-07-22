@@ -129,6 +129,8 @@ type alias Model =
   , mllpSystems : List MLLPSystem -- available mllp systems for selection when using speech recognition
   , selectedMLLPSystem : Maybe MLLPSystem -- holds the selected MLLPSystem 
   , userReviewsForOer : List Review
+  , currentVideoPlayTimeStart : String
+  , currentVideoPlayTimeEnd : String
   }
 
 
@@ -718,6 +720,8 @@ initialModel nav flags =
   , mllpSystems = []
   , selectedMLLPSystem = Nothing
   , userReviewsForOer = []
+  , currentVideoPlayTimeStart = ""
+  , currentVideoPlayTimeEnd = ""
   }
 
 initialLicenseType : List LicenseType

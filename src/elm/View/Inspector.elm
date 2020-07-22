@@ -552,10 +552,19 @@ viewFeedbackTab model oer tab =
       |> column [ width fill, htmlClass "flexWrap" ]
 
     textField =
-      if tab == NotesTab then
-        Input.multiline [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedNote oer.id formValue), Font.size 12, Border.color x5grey ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your notes" |> text |> Input.placeholder [ Font.size 12 ]), spellcheck = False, label = Input.labelHidden "Your feedback about this resource" }
-      else
-        Input.multiline [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Font.size 12, Border.color x5grey ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your review" |> text |> Input.placeholder [ Font.size 12 ]), spellcheck = False, label = Input.labelHidden "Your feedback about this resource" }
+      case model.mllpState of
+        StopRecognition ->
+          if formValue == "" then
+            "Start speaking. Your text will appear here" |> bodyWrap [ Font.color greyMedium, Font.size 12, Border.width 1, Border.color x5grey, width fill, height (fill |> minimum 70 ),  Border.rounded 4, paddingXY 8 8 ]
+          else
+            formValue |> bodyWrap [ Font.size 12, Border.width 1, Border.color x5grey, width fill, height (fill |> minimum 70 ), Border.rounded 4, paddingXY 10 10 ]
+
+
+        _ ->
+          if tab == NotesTab then
+            Input.multiline [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedNote oer.id formValue), Font.size 12, Border.color x5grey, onClick <| SetVideoCurrentPlayTime ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your notes" |> text |> Input.placeholder [ Font.size 12 ]), spellcheck = False, label = Input.labelHidden "Your feedback about this resource" }
+          else
+            Input.multiline [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Font.size 12, Border.color x5grey, onClick <| SetVideoCurrentPlayTime ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your review" |> text |> Input.placeholder [ Font.size 12 ]), spellcheck = False, label = Input.labelHidden "Your feedback about this resource" }
 
     recognitionButton =
       case model.mllpState of
@@ -669,7 +678,41 @@ viewNoteForOer model note tab =
       Nothing ->
         let
           topRow =
-              note.text |> bodyWrap []
+            let
+              explodedNote =
+                String.split "]" note.text
+
+              timestamp = 
+                if List.length explodedNote == 3 then
+                  case List.head explodedNote of
+                    Nothing ->
+                      ""
+
+                    Just timestampText ->
+                      case List.head (Maybe.withDefault [] (List.tail explodedNote)) of
+                        Nothing ->
+                          ""
+
+                        Just timestampEndText ->
+                          timestampText ++ "]" ++ timestampEndText ++ "]"
+                else
+                  ""
+
+              noteText = 
+                 if List.length explodedNote == 3 then
+                    case List.head ( List.reverse explodedNote) of
+                      Nothing ->
+                        ""
+                      Just tempNoteText ->
+                        tempNoteText
+                else
+                  note.text
+
+            in
+              [ timestamp |> bodyWrap []
+              , noteText |> bodyWrap [ paddingXY 0 10 ]
+              ]
+              |> column []
 
           editButton =
               button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditNoteForOer note, label = "Edit" |> captionNowrap [ width fill, whiteText, Font.center ] }

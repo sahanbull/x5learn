@@ -22,6 +22,7 @@ port startCurrentHtml5Video : Float -> Cmd msg
 port initMLLP : Bool -> Cmd msg
 port startRecognition : String -> Cmd msg
 port stopRecognition : Bool -> Cmd msg
+port getVideoCurrentPlayTime : Bool -> Cmd msg
 
 
 {-| Incoming ports are defined below
@@ -43,3 +44,4 @@ port pageScrolled : (PageScrollState -> msg) -> Sub msg
 port receiveCardPlaceholderPositions : ((List OerCardPlaceholderPosition) -> msg) -> Sub msg
 port mllpResult : (String -> msg) -> Sub msg
 port receiveMLLPSystems : ((List MLLPSystem) -> msg) -> Sub msg
+port videoCurrentPlayTime : (String -> msg) -> Sub msg

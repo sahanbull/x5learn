@@ -143,6 +143,8 @@ type Msg
   | MLLPSystemsReceived (List MLLPSystem)
   | SelectedMLLPSystem MLLPSystem
   | OpenedMLLPSystemMenu
+  | VideoCurrentPlayTimeReceived String
+  | SetVideoCurrentPlayTime
 
 type UserProfileField
   = FirstName
@@ -175,6 +177,7 @@ subscriptions model =
   , Ports.pageScrolled PageScrolled
   , Ports.mllpResult MLLPResultReceived
   , Ports.receiveMLLPSystems MLLPSystemsReceived
+  , Ports.videoCurrentPlayTime VideoCurrentPlayTimeReceived
   , Ports.receiveCardPlaceholderPositions OerCardPlaceholderPositionsReceived
   , Time.every (if model.currentTime==initialTime then 1 else if model.timelineHoverState==Nothing then 500 else 200) ClockTicked
   ] ++ (if anyBubblogramsAnimating model || isInspectorAnimating model then [ Browser.Events.onAnimationFrame AnimationTick ] else []))

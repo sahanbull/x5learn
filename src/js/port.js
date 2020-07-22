@@ -89,6 +89,9 @@ function setupPorts(app){
     startRecognition(system);
   });
   app.ports.stopRecognition.subscribe(stopRecognition);
+
+  // setting up ports to getting the current play time of the html5 video
+  app.ports.getVideoCurrentPlayTime.subscribe(getHTML5VideoCurrentPlayTime);
 }
 
 
@@ -361,4 +364,10 @@ function deliverMLLPAvailableSystems(availableSystems) {
 
 function deliverRecognitionResult(mllpRecognitionResult) {
   app.ports.mllpResult.send(mllpRecognitionResult);
+}
+
+// function to get current play time of html5 video
+function getHTML5VideoCurrentPlayTime() {
+  var time =  "[" + new Date(document.getElementById("Html5VideoPlayer").currentTime * 1000).toISOString().substr(11, 8).replace(":", "h ").replace(":", "m ") + "s]";
+  app.ports.videoCurrentPlayTime.send(time);
 }

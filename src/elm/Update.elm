@@ -736,12 +736,27 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                         ( { model | editUserReviewForOerInPlace = Just newEditingReview }, getVideoCurrentPlayTime True )
 
         SubmittedResourceFeedback oerId text ->
-            ( { model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", [ getVideoCurrentPlayTime True, requestSaveReview oerId (model.currentVideoPlayTimeStart ++ " - " ++ model.currentVideoPlayTimeEnd ++ " " ++ text) ] |> Cmd.batch)
+            let
+                nextMllpState =
+                    if model.hasMicrophoneAccess then
+                        StartRecognition
+                    else
+                        EnableMicrophone
+                
+            in
+            ( { model | timeOfLastFeedbackRecorded = model.currentTime, mllpState = nextMllpState } |> setTextInResourceFeedbackForm oerId "", [ getVideoCurrentPlayTime True, requestSaveReview oerId (model.currentVideoPlayTimeStart ++ " - " ++ model.currentVideoPlayTimeEnd ++ " " ++ text) ] |> Cmd.batch)
                 |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, text ]
                 |> saveAction 8 [ ( "OER id", Encode.int oerId ), ( "user feedback", Encode.string text ) ]
 
         SubmittedNote oerId text ->
-            ( { model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", [ getVideoCurrentPlayTime True, requestSaveNote oerId (model.currentVideoPlayTimeStart ++ " - " ++ model.currentVideoPlayTimeEnd ++ " " ++ text) ] |> Cmd.batch)
+            let
+                nextMllpState =
+                    if model.hasMicrophoneAccess then
+                        StartRecognition
+                    else
+                        EnableMicrophone
+            in
+            ( { model | timeOfLastFeedbackRecorded = model.currentTime, mllpState = nextMllpState } |> setTextInResourceFeedbackForm oerId "", [ getVideoCurrentPlayTime True, requestSaveNote oerId (model.currentVideoPlayTimeStart ++ " - " ++ model.currentVideoPlayTimeEnd ++ " " ++ text) ] |> Cmd.batch)
                 |> logEventForLabStudy "SubmittedNote" [ oerId |> String.fromInt, text ]
                 |> saveAction 8 [ ( "OER id", Encode.int oerId ), ( "user feedback", Encode.string text ) ]
 
@@ -1360,7 +1375,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                     else
                         List.head systems
             in
-                ( { model | mllpSystems = systems, selectedMLLPSystem = initialSelectedMLLPSystem }, Cmd.none )
+                ( { model | mllpSystems = systems, selectedMLLPSystem = initialSelectedMLLPSystem, hasMicrophoneAccess = True }, Cmd.none )
 
         OpenedMLLPSystemMenu ->
             ( { model | popup = Just MLLPSystemPopup }, setBrowserFocus "" )
@@ -1379,7 +1394,14 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             ( { model | mllpState = TextInput }, getVideoCurrentPlayTime True )
 
         ResetMLLPState -> 
-            ( { model | mllpState = EnableMicrophone }, Cmd.none )
+            let
+                nextMllpState =
+                    if model.hasMicrophoneAccess then
+                        StartRecognition
+                    else
+                        EnableMicrophone
+            in
+                ( { model | mllpState = nextMllpState }, Cmd.none )
 
         
 

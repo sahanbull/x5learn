@@ -131,6 +131,7 @@ type alias Model =
   , userReviewsForOer : List Review
   , currentVideoPlayTimeStart : String
   , currentVideoPlayTimeEnd : String
+  , hasMicrophoneAccess : Bool -- State to track if microphone access is given for mllp
   }
 
 
@@ -723,6 +724,7 @@ initialModel nav flags =
   , userReviewsForOer = []
   , currentVideoPlayTimeStart = ""
   , currentVideoPlayTimeEnd = ""
+  , hasMicrophoneAccess = False
   }
 
 initialLicenseType : List LicenseType

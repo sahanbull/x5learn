@@ -609,7 +609,7 @@ viewFeedbackTab model oer tab =
         |> el attrs
 
     mllpRow =
-      if List.length model.mllpSystems == 0 then
+      if List.length model.mllpSystems == 0 || model.mllpState == TextInput then
         recognitionButton |> el [ alignRight ]
       else
         [ mllpSystemButton, recognitionButton ] |> row [ width (fillPortion 2), spacing 10 ]

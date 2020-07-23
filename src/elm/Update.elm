@@ -1379,7 +1379,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             ( { model | mllpState = TextInput }, getVideoCurrentPlayTime True )
 
         ResetMLLPState -> 
-            ( { model | mllpState = EnableMicrophone }, initMLLP True )
+            ( { model | mllpState = EnableMicrophone }, Cmd.none )
 
         
 

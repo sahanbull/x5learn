@@ -140,6 +140,7 @@ type MLLPState
  = EnableMicrophone
  | StartRecognition
  | StopRecognition
+ | TextInput
 
 
 {-| MLLP Speech recognition system (available languages) for speech recognition

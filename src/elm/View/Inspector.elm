@@ -574,6 +574,8 @@ viewFeedbackTab model oer tab =
           simpleButton [ Font.size 12, Font.color red ] "Start Recording" (Just <| StartSpeechRegonition )
         StopRecognition ->
           simpleButton [ Font.size 12, Font.color electricBlue ] "Stop Recording" (Just <| StopSpeechRegonition oer.id formValue tab)
+        TextInput ->
+          simpleButton [ Font.size 12, Font.color electricBlue ] "Cancel" (Just <| ResetMLLPState)
 
     mllpSystemButton = 
       let

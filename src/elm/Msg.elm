@@ -145,6 +145,7 @@ type Msg
   | OpenedMLLPSystemMenu
   | VideoCurrentPlayTimeReceived String
   | SetVideoCurrentPlayTime
+  | ResetMLLPState
 
 type UserProfileField
   = FirstName

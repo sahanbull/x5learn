@@ -711,7 +711,7 @@ viewNoteForOer model note tab =
                   note.text
 
             in
-              [ timestamp |> bodyWrap []
+              [ timestamp |> bodyWrap [ Font.size 11 ]
               , noteText |> bodyWrap [ paddingXY 0 10 ]
               ]
               |> column []

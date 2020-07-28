@@ -1404,8 +1404,6 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 ( { model | mllpState = nextMllpState }, Cmd.none )
 
         
-
-
 insertSearchResults : List OerId -> Model -> Model
 insertSearchResults oerIds model =
     let

@@ -368,6 +368,16 @@ function deliverRecognitionResult(mllpRecognitionResult) {
 
 // function to get current play time of html5 video
 function getHTML5VideoCurrentPlayTime() {
-  var time =  "[" + new Date(document.getElementById("Html5VideoPlayer").currentTime * 1000).toISOString().substr(11, 8).replace(":", "h ").replace(":", "m ") + "s]";
+
+  var time = "[00h 00m 00s]";
+
+  if (document.getElementById("Html5VideoPlayer")) {
+    time =  "[" + new Date(document.getElementById("Html5VideoPlayer").currentTime * 1000).toISOString().substr(11, 8).replace(":", "h ").replace(":", "m ") + "s]";
+  }
+  else if(player && player.getCurrentTime()) {
+    time = "[" + new Date(player.getCurrentTime() * 1000).toISOString().substr(11, 8).replace(":", "h ").replace(":", "m ") + "s]";
+  }
+
+  console.log(time);
   app.ports.videoCurrentPlayTime.send(time);
 }

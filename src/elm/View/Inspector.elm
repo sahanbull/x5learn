@@ -4,6 +4,7 @@ import Set
 
 import Html
 import Html.Attributes as Attributes exposing (style)
+import Html.Events exposing (on, targetValue, onBlur)
 
 import Element exposing (..)
 import Element.Background as Background
@@ -51,7 +52,7 @@ viewTheInspector model inspectorState =
             if model.editingOerTitleInPlaylist then
               let
                 textInput labelText valueText =
-                  Input.text [ width fill, Font.size 14, onEnter SubmittedPlaylistItemUpdate ] { onChange = UpdatePlaylistItem "title", text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = Input.labelHidden "Your feedback about this resource" }
+                  Input.text [ width fill, Font.size 14, onEnter SubmittedPlaylistItemUpdate, htmlId "editingOerTitle" ] { onChange = UpdatePlaylistItem "title", text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = Input.labelHidden "Your feedback about this resource" }
               in
                 textInput "Title" model.editingOerPlaylistItem.title
             else
@@ -166,15 +167,15 @@ viewDescription inspectorState oer model =
     let
       editButton =
         if model.editingOerDescriptionInPlaylist then
-          button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditOerInPlaylist False "description" , label = "Save Description" |> captionNowrap [ width fill, whiteText, Font.center ] }
+          button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditOerInPlaylist False "description", label = "Save Description" |> captionNowrap [ width fill, whiteText, Font.center ] }
         else
-          button [ paddingXY 5 3, buttonRounding, Background.color electricBlue ] { onPress = Just <| EditOerInPlaylist True "description" , label = "Edit Description" |> captionNowrap [ width fill, whiteText, Font.center ] }
+          button [ paddingXY 5 3, buttonRounding, Background.color electricBlue ] { onPress = Just <| EditOerInPlaylist True "description", label = "Edit Description" |> captionNowrap [ width fill, whiteText, Font.center ] }
 
     in
       if model.editingOerDescriptionInPlaylist then
         let
           textMultiline labelText valueText =
-            Input.multiline [ width fill, Font.size 14, onEnter SubmittedPlaylistItemUpdate ] { onChange = UpdatePlaylistItem "description", text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = Input.labelHidden "Your feedback about this resource" , spellcheck = False }
+            Input.multiline [ width fill, Font.size 14, onEnter SubmittedPlaylistItemUpdate, htmlId "editingOerDescription" ] { onChange = UpdatePlaylistItem "description", text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = Input.labelHidden "Your feedback about this resource" , spellcheck = False }
         in
           textMultiline "Description" model.editingOerPlaylistItem.description
       else
@@ -348,7 +349,7 @@ viewContentFlowBarWrapper model inspectorState oer =
                   []
 
             attrs =
-              [ alignLeft, htmlClass "PreventClosingThePopupOnClick", buttonRounding ] ++ options
+              [ alignLeft, htmlClass "PreventClosingThePopupOnClick", buttonRounding, htmlId "addToPlaylistButton" ] ++ options
           in
             case model.userPlaylists of
               Nothing ->
@@ -367,9 +368,9 @@ viewContentFlowBarWrapper model inspectorState oer =
           courseSettings
         else
           if isPdfFile oer.url then
-            [ viewLinkToFile oer ] ++ [ viewDescription inspectorState oer model ] ++ [ addToPlaylistButton ]
+            [ viewLinkToFile oer ] ++ [ addToPlaylistButton ] ++ [ viewDescription inspectorState oer model ]
           else
-            [ viewDescription inspectorState oer model ] ++ [ addToPlaylistButton ]
+            [ addToPlaylistButton ] ++ [ viewDescription inspectorState oer model ]
 
       containerHeight =
         if isLabStudy1 model then

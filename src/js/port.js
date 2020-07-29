@@ -78,6 +78,9 @@ function setupPorts(app){
   setupEventHandlers();
 
   setupScrollDetector();
+
+  app.ports.registerInspectorPlaylistEvents.subscribe(registerInspectorPlaylistEvents);
+
 }
 
 
@@ -149,6 +152,7 @@ function startAnimationWhenInspectorIsReady(videoEmbedParams) {
     }, 110);
     return;
   }
+
 }
 
 
@@ -286,4 +290,23 @@ function tryPlaying(vid, position, attempts){
       tryPlaying(vid, position, attempts-1);
     }, 500);
   }
+}
+
+function registerInspectorPlaylistEvents() {
+  
+  setTimeout(function(){
+    if (document.getElementById("editingOerTitle")) {
+      document.getElementById("editingOerTitle").addEventListener("blur", function() {
+        app.ports.stopEditingPlaylist.send(1);
+      }, true);
+    }
+    
+    if (document.getElementById("editingOerDescription")) {
+      document.getElementById("editingOerDescription").addEventListener("blur", function() {
+        app.ports.stopEditingPlaylist.send(1);
+      }, true); 
+    }
+  }, 300);
+
+
 }

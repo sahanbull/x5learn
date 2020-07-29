@@ -127,6 +127,7 @@ type Msg
   | UpdatePlaylistItem String String
   | SubmittedPlaylistItemUpdate
   | SetSearchCurrentPage Int
+  | StopEditingPlaylist Int
 
 type UserProfileField
   = FirstName
@@ -153,6 +154,7 @@ subscriptions model =
   , Ports.timelineMouseEvent TimelineMouseEvent
   --, Ports.youtubeVideoIsPlayingAtPosition YoutubeVideoIsPlayingAtPosition
   , Ports.html5VideoStarted Html5VideoStarted
+  , Ports.stopEditingPlaylist StopEditingPlaylist
   , Ports.html5VideoPaused Html5VideoPaused
   , Ports.html5VideoSeeked Html5VideoSeeked
   , Ports.html5VideoStillPlaying Html5VideoStillPlaying

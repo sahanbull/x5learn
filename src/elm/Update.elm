@@ -620,7 +620,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                     ( model, Cmd.none )
 
                 Just _ ->
-                    ( { model | inspectorState = Nothing }, Cmd.none )
+                    ( { model | inspectorState = Nothing, editingOerTitleInPlaylist = False, editingOerDescriptionInPlaylist = False }, Cmd.none )
                         |> logEventForLabStudy "CloseInspector" []
 
         MouseOverChunkTrigger mousePositionX ->
@@ -1200,9 +1200,9 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
 
         EditOerInPlaylist flag editType ->
             if editType == "title" then
-                ( { model | editingOerTitleInPlaylist = flag }, Cmd.none )
+                ( { model | editingOerTitleInPlaylist = flag }, [ setBrowserFocus "editingOerTitle", registerInspectorPlaylistEvents True ] |> Cmd.batch )
             else
-                ( { model | editingOerDescriptionInPlaylist = flag }, Cmd.none )
+                ( { model | editingOerDescriptionInPlaylist = flag }, [ setBrowserFocus "editingOerDescription", registerInspectorPlaylistEvents True ] |> Cmd.batch )
 
         UpdatePlaylistItem editType str ->
             if editType == "title" then
@@ -1243,6 +1243,9 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 
                 Just searchState ->
                      ( { model | currentPageForSearch = pageNumber }, Navigation.load ("/search?q=" ++ searchState.lastSearchText ++ "&page=" ++ String.fromInt pageNumber) )
+
+        StopEditingPlaylist flag ->
+            ( { model | editingOerTitleInPlaylist = False, editingOerDescriptionInPlaylist = False }, Cmd.none )
 
 
 insertSearchResults : List OerId -> Model -> Model

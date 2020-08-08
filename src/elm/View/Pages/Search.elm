@@ -24,6 +24,8 @@ import Time exposing (millisToPosix)
 
 import Json.Decode as Decode
 
+import I18Next exposing ( t, Delims(..) )
+
 
 {-| Render the search page, mainly including the search results
     Note that the search field is part of the NavigationDrawer
@@ -86,7 +88,7 @@ viewBody model searchState =
       viewLoadingSpinner
 
     Just [] ->
-      "No results were found for \"" ++ searchState.lastSearchText ++ "\". Please try a different search term." |> viewCenterMessage
+      (t model.translations "generic.lbl_no_results_were_found_prefix") ++ " \"" ++ searchState.lastSearchText ++ "\"." ++ (t model.translations "generic.lbl_no_results_were_found_suffix") ++ "." |> viewCenterMessage
 
     Just oerIds ->
       if isLabStudy1 model && model.currentTaskName==Nothing then
@@ -120,11 +122,11 @@ viewPlaylistInfoPage model =
           button [ width fill, paddingXY 16 8, Font.center, Background.color electricBlue, whiteText ] { onPress = (Just (SetPlaylistState Nothing)), label = "Close" |> text }
           
         content =
-          [ "Playlist Information" |> captionNowrap [ Font.center, centerX, Font.size 16 ]
-          , [ text "Title : ", text publishedPlaylist.title] |> wrappedRow [ Font.size 14]
-          , [ text "Description : ", text (Maybe.withDefault " - " publishedPlaylist.description)] |> wrappedRow [ Font.size 14 ]
-          , [ text "Author : ", text (Maybe.withDefault " - " publishedPlaylist.author)] |> wrappedRow [ Font.size 14 ]
-          , [ text "License : ", text licenseType] |> wrappedRow [ Font.size 14 ]
+          [ (t model.translations "playlist.lbl_playlist_information") |> captionNowrap [ Font.center, centerX, Font.size 16 ]
+          , [ text ((t model.translations "playlist.lbl_playlist_title") ++ " : "), text publishedPlaylist.title] |> wrappedRow [ Font.size 14]
+          , [ text ((t model.translations "playlist.lbl_playlist_description") ++ " : "), text (Maybe.withDefault " - " publishedPlaylist.description)] |> wrappedRow [ Font.size 14 ]
+          , [ text ((t model.translations "playlist.lbl_playlist_author") ++ " : "), text (Maybe.withDefault " - " publishedPlaylist.author)] |> wrappedRow [ Font.size 14 ]
+          , [ text ((t model.translations "playlist.lbl_playlist_license") ++ " : "), text licenseType] |> wrappedRow [ Font.size 14 ]
           , [closeButton] |> row [ width fill, Font.center ]
           ]
           |> column [ spacing 30, padding 5, width (px 400) ]
@@ -142,18 +144,18 @@ viewPlaylistSharePage model =
     Just publishedPlaylist ->
       let
         closeButton =
-          button [ width fill, paddingXY 16 8, Font.center, Background.color electricBlue, whiteText ] { onPress = (Just (SetPlaylistState Nothing)), label = "Close" |> text }
+          button [ width fill, paddingXY 16 8, Font.center, Background.color electricBlue, whiteText ] { onPress = (Just (SetPlaylistState Nothing)), label = (t model.translations "playlist.btn_playlist_share_close") |> text }
 
         url =
           case publishedPlaylist.url of
             Nothing -> 
-              "URL not found"
+              (t model.translations "alerts.lbl_url_not_found")
 
             Just playlistUrl ->
               playlistUrl
 
         content =
-          [ "Share Playlist" |> captionNowrap [ centerX, Font.size 16 ]
+          [ (t model.translations "playlist.lbl_playlist_share") |> captionNowrap [ centerX, Font.size 16 ]
           , [ text url ] |> row [ Font.size 14 ]
           , closeButton
           ]
@@ -170,7 +172,7 @@ viewClonePlaylistPage model {playlist, saved} =
         Input.text [ width fill, onEnter SubmittedCreatePlaylist ] { onChange = EditNewPlaylist field, text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = labelText |> text |> Input.labelAbove [ Font.size 16 ] }
 
       titleField =
-        textInput Title "Title" playlist.title
+        textInput Title (t model.translations "playlist.lbl_playlist_title") playlist.title
 
       createButton =
         if model.playlistCreateFormSubmitted then
@@ -178,19 +180,19 @@ viewClonePlaylistPage model {playlist, saved} =
           |> el [ width (px 77), height (px 37) ]
         else
           if saved then
-            "✓ Saved" |> bodyWrap [ greyText, width fill ]
+            "✓ " ++ (t model.translations "playlist.lbl_playlist_saved") |> bodyWrap [ greyText, width fill ]
           else
-            button [ paddingXY 16 8, width fill, Background.color electricBlue, whiteText, Font.center ] { onPress = Just SubmittedCreatePlaylist, label = "Save" |> text }
+            button [ paddingXY 16 8, width fill, Background.color electricBlue, whiteText, Font.center ] { onPress = Just SubmittedCreatePlaylist, label = (t model.translations "playlist.btn_playlist_save") |> text }
 
       cancelButton = 
-        button [ width fill, paddingXY 16 8, Font.center, Background.color red, whiteText ] { onPress = Just (SetPlaylistState Nothing), label = "Cancel" |> text }
+        button [ width fill, paddingXY 16 8, Font.center, Background.color red, whiteText ] { onPress = Just (SetPlaylistState Nothing), label = (t model.translations "playlist.btn_cancel") |> text }
 
       playlistItems = 
         List.map (\x -> viewPlaylistItem model x) playlist.oerIds
       page =
-        [ " Clone Playlist" |> captionNowrap [ centerX, Font.size 16 ]
+        [ (t model.translations "playlist.lbl_playlist_clone") |> captionNowrap [ centerX, Font.size 16 ]
         , [ titleField ] |> wrappedRow []
-        , [ text "Playlist Items" ] |> wrappedRow [ width fill, Font.size 16 ]
+        , [ text (t model.translations "playlist.lbl_playlist_items") ] |> wrappedRow [ width fill, Font.size 16 ]
         , playlistItems |> wrappedRow [ htmlClass "blockContent marginTop" ]
         , [ createButton, cancelButton ] |> wrappedRow [ width (fillPortion 2), spacing 20, height <| px 40 ]
         ]
@@ -202,8 +204,8 @@ viewClonePlaylistPage model {playlist, saved} =
     else
       let
         page =
-          [ " Playlist Successfully Cloned!" |> captionNowrap [ centerX, Font.size 16 ]
-          , button [ width fill, paddingXY 16 8, Font.center, Background.color electricBlue, whiteText ] { onPress = Just (SetPlaylistState Nothing), label = "Go Back" |> text }
+          [ (t model.translations "playlist.lbl_playlist_created") |> captionNowrap [ centerX, Font.size 16 ]
+          , button [ width fill, paddingXY 16 8, Font.center, Background.color electricBlue, whiteText ] { onPress = Just (SetPlaylistState Nothing), label = (t model.translations "playlist.btn_go_back") |> text }
           ]
           |> column [ spacing 30, padding 5 ]
           |> milkyWhiteCenteredContainer
@@ -255,13 +257,13 @@ viewPagination model =
       
       previousButton =
         if model.currentPageForSearch > 1 then
-          button [ Border.width 1, Border.color white, htmlClass "HoverGreyBackground", width fill, paddingXY 10 10, Font.center, whiteText ] { onPress = Just (SetSearchCurrentPage (model.currentPageForSearch - 1)), label = "< Previous" |> text }
+          button [ Border.width 1, Border.color white, htmlClass "HoverGreyBackground", width fill, paddingXY 10 10, Font.center, whiteText ] { onPress = Just (SetSearchCurrentPage (model.currentPageForSearch - 1)), label = "< " ++ (t model.translations "playlist.btn_pagination_previous") |> text }
         else
           none
 
       nextButton =
         if model.currentPageForSearch < model.searchTotalPages then
-          button [ Border.width 1, Border.color white, htmlClass "HoverGreyBackground", width fill, paddingXY 10 10, Font.center, whiteText ] { onPress = Just (SetSearchCurrentPage (model.currentPageForSearch + 1)), label = "Next >" |> text }
+          button [ Border.width 1, Border.color white, htmlClass "HoverGreyBackground", width fill, paddingXY 10 10, Font.center, whiteText ] { onPress = Just (SetSearchCurrentPage (model.currentPageForSearch + 1)), label = (t model.translations "playlist.btn_pagination_next") ++ " >" |> text }
         else
           none
 

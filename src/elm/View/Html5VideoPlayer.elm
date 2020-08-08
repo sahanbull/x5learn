@@ -17,6 +17,8 @@ import Model exposing (..)
 import View.Utility exposing (..)
 import Msg exposing (..)
 
+import I18Next exposing ( t, Delims(..) )
+
 
 {-| Render a standard HTML5 video player element
     https://www.w3schools.com/html/html5_video.asp
@@ -26,7 +28,7 @@ viewHtml5VideoPlayer : Model -> Oer -> Element Msg
 viewHtml5VideoPlayer model oer =
   let
       fallbackMessage =
-        [ [ "Your browser does not support HTML5 video." |> Html.text ] |> Html.div []
+        [ [ t model.translations "alerts.lbl_browser_no_support_html5_video" |> Html.text ] |> Html.div []
         ]
         |> Html.div [ Attributes.class "Html5VideoPlayerMessage" ]
 

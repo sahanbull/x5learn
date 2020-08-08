@@ -24,6 +24,8 @@ import View.Explainer exposing (..)
 
 import Animation exposing (..)
 
+import I18Next exposing ( t, Delims(..) )
+
 
 viewInspector : Model -> List (Attribute Msg)
 viewInspector model =
@@ -43,37 +45,37 @@ viewTheInspector model inspectorState =
           let
             editButton =
               if model.editingOerTitleInPlaylist then
-                button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditOerInPlaylist False "title", label = "Save Title" |> captionNowrap [ width fill, whiteText, Font.center ] }
+                button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditOerInPlaylist False "title", label = (t model.translations "inspector.btn_save_title") |> captionNowrap [ width fill, whiteText, Font.center ] }
               else
-                button [ paddingXY 5 3, buttonRounding, Background.color electricBlue ] { onPress = Just <| EditOerInPlaylist True "title", label = "Edit Title" |> captionNowrap [ width fill, whiteText, Font.center ] }
+                button [ paddingXY 5 3, buttonRounding, Background.color electricBlue ] { onPress = Just <| EditOerInPlaylist True "title", label = (t model.translations "inspector.btn_edit_title") |> captionNowrap [ width fill, whiteText, Font.center ] }
 
           in
             if model.editingOerTitleInPlaylist then
               let
                 textInput labelText valueText =
-                  Input.text [ width fill, Font.size 14, onEnter SubmittedPlaylistItemUpdate ] { onChange = UpdatePlaylistItem "title", text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = Input.labelHidden "Your feedback about this resource" }
+                  Input.text [ width fill, Font.size 14, onEnter SubmittedPlaylistItemUpdate ] { onChange = UpdatePlaylistItem "title", text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = Input.labelHidden (t model.translations "inspector.lbl_feedback_about_resource") }
               in
-                textInput "Title" model.editingOerPlaylistItem.title
+                textInput (t model.translations "inspector.lbl_title") model.editingOerPlaylistItem.title
             else
               case model.editingOerPlaylistItem.title of
                 "" ->
-                  [ text "Title unavailable" |> el [ Font.size 21, Font.color midnightBlue, Font.italic ] , editButton ] |> row [ spacing 10, width fill ]
+                  [ text (t model.translations "inspector.lbl_title_unavailable") |> el [ Font.size 21, Font.color midnightBlue, Font.italic ] , editButton ] |> row [ spacing 10, width fill ]
 
                 titleText ->
                   [ text titleText |> el [ Font.size 21, Font.color midnightBlue ] , editButton ] |> row [ spacing 10, width fill ]
         else
           case inspectorState.oer.title of
             "" ->
-              "Title unavailable" |> subheaderWrap [ Font.italic ]
+              (t model.translations "inspector.lbl_title_unavailable") |> subheaderWrap [ Font.italic ]
 
             titleText ->
               titleText |> subheaderWrap []
 
       bodyAndSidebar =
         if isBrowserWindowTooSmall model then
-          "Sorry! This content requires a larger screen." |> bodyWrap [ paddingXY 0 40 ]
+          (t model.translations "inspector.lbl_require_larger_screen") |> bodyWrap [ paddingXY 0 40 ]
         else if inspectorState.oer.mediatype=="pdf" && model.windowWidth < 1005 then
-          "Sorry! This content requires a wider screen." |> bodyWrap [ paddingXY 0 40 ]
+          (t model.translations "inspector.lbl_require_larger_screen") |> bodyWrap [ paddingXY 0 40 ]
         else if isLabStudy1 model then
           viewInspectorBody model inspectorState
         else
@@ -157,21 +159,21 @@ viewDescription inspectorState oer model =
     let
       editButton =
         if model.editingOerDescriptionInPlaylist then
-          button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditOerInPlaylist False "description" , label = "Save Description" |> captionNowrap [ width fill, whiteText, Font.center ] }
+          button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditOerInPlaylist False "description" , label = (t model.translations "inspector.btn_save_description") |> captionNowrap [ width fill, whiteText, Font.center ] }
         else
-          button [ paddingXY 5 3, buttonRounding, Background.color electricBlue ] { onPress = Just <| EditOerInPlaylist True "description" , label = "Edit Description" |> captionNowrap [ width fill, whiteText, Font.center ] }
+          button [ paddingXY 5 3, buttonRounding, Background.color electricBlue ] { onPress = Just <| EditOerInPlaylist True "description" , label = (t model.translations "inspector.btn_edit_description") |> captionNowrap [ width fill, whiteText, Font.center ] }
 
     in
       if model.editingOerDescriptionInPlaylist then
         let
           textMultiline labelText valueText =
-            Input.multiline [ width fill, Font.size 14, onEnter SubmittedPlaylistItemUpdate ] { onChange = UpdatePlaylistItem "description", text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = Input.labelHidden "Your feedback about this resource" , spellcheck = False }
+            Input.multiline [ width fill, Font.size 14, onEnter SubmittedPlaylistItemUpdate ] { onChange = UpdatePlaylistItem "description", text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = Input.labelHidden (t model.translations "inspector.lbl_feedback_about_resource"), spellcheck = False }
         in
           textMultiline "Description" model.editingOerPlaylistItem.description
       else
         case model.editingOerPlaylistItem.description of
           "" ->
-            [ "No description available" |> italicText |> el [ paddingTop 30 ], editButton]
+            [ (t model.translations "inspector.lbl_description_unavailable") |> italicText |> el [ paddingTop 30 ], editButton]
             |> row []
 
           str ->
@@ -195,13 +197,13 @@ viewDescription inspectorState oer model =
                   [ str
                     |> truncateSentence characterLimit
                     |> viewString False
-                    , [ viewReadMoreButton inspectorState, editButton ] |> row [ spacing 10 ]
+                    , [ viewReadMoreButton model inspectorState, editButton ] |> row [ spacing 10 ]
                   ] 
                   |> column [ spacing 10 ]
   else
     case oer.description of
       "" ->
-        "No description available" |> italicText |> el [ paddingTop 30 ]
+        (t model.translations "inspector.lbl_description_unavailable") |> italicText |> el [ paddingTop 30 ]
 
       str ->
         let
@@ -218,17 +220,17 @@ viewDescription inspectorState oer model =
               [ str
                 |> truncateSentence characterLimit
                 |> viewString False
-                , viewReadMoreButton inspectorState
+                , viewReadMoreButton model inspectorState
               ]
               |> column [ spacing 10 ]
 
 
-viewReadMoreButton : InspectorState -> Element Msg
-viewReadMoreButton inspectorState =
+viewReadMoreButton : Model -> InspectorState -> Element Msg
+viewReadMoreButton model inspectorState =
   button
     []
     { onPress = Just <| PressedReadMore inspectorState
-    , label = "Read more" |> bodyNoWrap [ Font.color electricBlue ]
+    , label = (t model.translations "inspector.btn_read_more") |> bodyNoWrap [ Font.color electricBlue ]
     }
 
 
@@ -251,9 +253,9 @@ viewString isScrollbarEnabled str =
       |> column attrs
 
 
-viewLinkToFile : Oer -> Element Msg
-viewLinkToFile oer =
-  newTabLink [ htmlClass "CursorPointer", alignRight ] { url = oer.url, label = "Expand Document" |> bodyWrap [ width fill, Font.color electricBlue ] }
+viewLinkToFile : Model -> Oer -> Element Msg
+viewLinkToFile model oer =
+  newTabLink [ htmlClass "CursorPointer", alignRight ] { url = oer.url, label = (t model.translations "inspector.lbl_expand_document") |> bodyWrap [ width fill, Font.color electricBlue ] }
   |> el [ width fill ]
 
 
@@ -269,18 +271,18 @@ viewCourseSettings model oer {comment} =
         [ width fill, paddingTop 10 ] ++ (if isLabStudy1 model then [] else [ borderTop 1, Border.color greyDivider ])
 
       topRow =
-        [ "This video has been added to your workspace." |> bodyWrap [ width fill ]
+        [ (t model.translations "inspector.lbl_video_added_to_workspace") |> bodyWrap [ width fill ]
         , changesSaved
         , actionButtonWithIcon [] [] IconLeft 0.7 "delete" "Remove" <| Just <| RemovedOerFromCourse oer.id
         ]
         |> row topRowAttrs
 
       commentField =
-        Input.text [ width fill, htmlId "TextInputFieldForCommentOnCourseItem", onEnter <| SubmittedCourseItemComment, Border.color primaryGreen, Font.size 14, padding 3, moveDown 5 ] { onChange = ChangedCommentTextInCourseItem oer.id, text = comment, placeholder = Just ("Enter any comments about this item" |> text |> Input.placeholder [ Font.size 14, moveDown 6 ]), label = Input.labelHidden "Comment on course item" }
+        Input.text [ width fill, htmlId "TextInputFieldForCommentOnCourseItem", onEnter <| SubmittedCourseItemComment, Border.color primaryGreen, Font.size 14, padding 3, moveDown 5 ] { onChange = ChangedCommentTextInCourseItem oer.id, text = comment, placeholder = Just ((t model.translations "inspector.lbl_enter_comments") |> text |> Input.placeholder [ Font.size 14, moveDown 6 ]), label = Input.labelHidden "Comment on course item" }
 
       changesSaved =
         if model.courseChangesSaved then
-          "✓ Saved" |> captionNowrap [ alignRight, greyText, paddingRight 10 ]
+          "✓ " ++ (t model.translations "profile.lbl_saved") |> captionNowrap [ alignRight, greyText, paddingRight 10 ]
         else
           none
   in
@@ -299,9 +301,9 @@ viewContentFlowBarWrapper model inspectorState oer =
               let
                   content =
                     if isLabStudy1 model then
-                      "You can add this video to your workspace by dragging a range on the timeline." |> captionNowrap [ paddingTop 8 ]
+                      (t model.translations "inspector.lbl_drag_range_instruction") |> captionNowrap [ paddingTop 8 ]
                     else
-                      actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" "Add to workspace" <| Just <| AddedOerToCourse oer
+                      actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" (t model.translations "inspector.btn_add_to_workspace") <| Just <| AddedOerToCourse oer
               in
                   [ none |> el [ width fill ]
                   , content
@@ -341,7 +343,7 @@ viewContentFlowBarWrapper model inspectorState oer =
             attrs =
               [ alignLeft, htmlClass "PreventClosingThePopupOnClick", buttonRounding ] ++ options
           in
-            actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" "Add To Playlist ▾"  (Just OpenedAddToPlaylistMenu)
+            actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" ((t model.translations "inspector.btn_add_to_playlist") ++ " ▾")  (Just OpenedAddToPlaylistMenu)
             |> el attrs
 
       components =
@@ -349,7 +351,7 @@ viewContentFlowBarWrapper model inspectorState oer =
           courseSettings
         else
           if isPdfFile oer.url then
-            [ viewLinkToFile oer ] ++ [ viewDescription inspectorState oer model ] ++ [ addToPlaylistButton ]
+            [ viewLinkToFile model oer ] ++ [ viewDescription inspectorState oer model ] ++ [ addToPlaylistButton ]
           else
             [ viewDescription inspectorState oer model ] ++ [ addToPlaylistButton ]
 
@@ -407,7 +409,7 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
 
           FeedbackTab ->
             ("Notes"
-            , if (millisSince model model.timeOfLastFeedbackRecorded) < 2000 then viewFeedbackConfirmation else viewFeedbackTab model oer
+            , if (millisSince model model.timeOfLastFeedbackRecorded) < 2000 then viewFeedbackConfirmation model else viewFeedbackTab model oer
             )
 
       renderTab (tab, title) =
@@ -424,8 +426,8 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
             simpleButton [ Font.size 16, paddingXY 1 20, borderBottom 4, centerX, borderColor, textColor ] title (Just <| SelectInspectorSidebarTab tab oer.id)
 
       tabsMenu =
-        [ (FeedbackTab, "Notes")
-        , (RecommendationsTab, "Related")
+        [ (FeedbackTab, (t model.translations "inspector.lbl_notes"))
+        , (RecommendationsTab, (t model.translations "inspector.btn_related"))
         ]
         |> List.map renderTab
         |> row [ width fill, spacing 25, Background.color midnightBlue ]
@@ -438,7 +440,7 @@ viewInspectorSidebar model {oer, inspectorSidebarTab, resourceRecommendations} =
           ]
           |> column [ width fill, paddingXY 20 0, spacing 25 ]
         else
-          guestCallToSignup "In order to benefit from the full feature set, including personalised recommendations of learning materials"
+          guestCallToSignup model (t model.translations "alerts.lbl_guest_call_to_signup_get_recommendations")
           |> el [ width fill, paddingXY 15 12, Background.color <| rgb 1 0.85 0.6 ]
           |> el [ padding 20 ]
   in
@@ -511,32 +513,32 @@ viewFeedbackTab model oer =
       getResourceFeedbackFormValue model oer.id
 
     quickOptions =
-      ([ "Inspiring"
-      , "Outstanding"
-      , "Outdated"
-      , "Language errors"
-      , "Poor content"
-      , "Poor image"
-      ] ++ (if isVideoFile oer.url then [ "Poor audio" ] else []))
+      ([ (t model.translations "inspector.btn_material_rating_inspiring")
+      , (t model.translations "inspector.btn_material_rating_outstanding")
+      , (t model.translations "inspector.btn_material_rating_outdated")
+      , (t model.translations "inspector.btn_material_rating_language_errors")
+      , (t model.translations "inspector.btn_material_rating_poor_content")
+      , (t model.translations "inspector.btn_material_rating_poor_image")
+      ] ++ (if isVideoFile oer.url then [ (t model.translations "inspector.btn_material_rating_poor_audio") ] else []))
       |> List.map (\option -> simpleButton [ paddingXY 4 4, Background.color primaryGreen, buttonRounding, Font.size 14, whiteText ] option (Just <| SubmittedResourceFeedback oer.id (">>>"++option)))
       |> column [ width fill, htmlClass "flexWrap" ]
 
     textField =
       Input.text [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5grey ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your notes" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
   in
-      [ "How would you describe this material?" |> bodyWrap []
+      [ (t model.translations "inspector.lbl_material_rating_question") |> bodyWrap []
       , quickOptions
-      , "Notes" |> bodyWrap []
+      , (t model.translations "inspector.lbl_notes") |> bodyWrap []
       , notes |> el [ width fill ]
       , textField
       ]
       |> column [ width fill, spacing 20 ]
 
 
-viewFeedbackConfirmation : Element Msg
-viewFeedbackConfirmation =
-  [ "Note Saved" |> headlineWrap [ Font.size 24 ]
-  , "✔ Your note has been recorded." |> bodyWrap []
+viewFeedbackConfirmation : Model -> Element Msg
+viewFeedbackConfirmation model =
+  [ (t model.translations "alerts.lbl_add_note_success_title") |> headlineWrap [ Font.size 24 ]
+  , "✔ " ++ (t model.translations "alerts.lbl_add_note_success_message") |> bodyWrap []
   ]
   |> column [ spacing 30, paddingTop 200 ]
 
@@ -575,10 +577,10 @@ viewNoteForOer model note =
             note.text |> bodyWrap []
 
         editButton =
-          button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditNoteForOer note, label = "Edit" |> captionNowrap [ width fill, whiteText, Font.center ] }
+          button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditNoteForOer note, label = (t model.translations "inspector.btn_note_edit") |> captionNowrap [ width fill, whiteText, Font.center ] }
 
         removeButton =
-            button [ paddingXY 5 3, buttonRounding, Background.color red ] { onPress = Just <| RemoveNoteForOer note.id, label = "Remove" |> captionNowrap [ width fill, whiteText, Font.center ] }
+            button [ paddingXY 5 3, buttonRounding, Background.color red ] { onPress = Just <| RemoveNoteForOer note.id, label = (t model.translations "inspector.btn_note_remove") |> captionNowrap [ width fill, whiteText, Font.center ] }
       
         buttonRow =
           [ editButton
@@ -608,10 +610,10 @@ viewNoteForOer model note =
               note.text |> bodyWrap []
 
           editButton =
-            button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditNoteForOer note, label = "Edit" |> captionNowrap [ width fill, whiteText, Font.center ] }
+            button [ paddingXY 5 3, buttonRounding, Background.color primaryGreen ] { onPress = Just <| EditNoteForOer note, label = (t model.translations "inspector.btn_note_remove") |> captionNowrap [ width fill, whiteText, Font.center ] }
 
           removeButton =
-              button [ paddingXY 5 3, buttonRounding, Background.color red ] { onPress = Just <| RemoveNoteForOer note.id, label = "Remove" |> captionNowrap [ width fill, whiteText, Font.center ] }
+              button [ paddingXY 5 3, buttonRounding, Background.color red ] { onPress = Just <| RemoveNoteForOer note.id, label = (t model.translations "inspector.btn_note_remove") |> captionNowrap [ width fill, whiteText, Font.center ] }
         
           buttonRow =
             [ editButton

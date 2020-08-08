@@ -15,6 +15,7 @@ import View.ToggleIndicator exposing (..)
 
 import Msg exposing (..)
 
+import I18Next exposing ( t, Delims(..) )
 
 {-| Render the user profile page
 -}
@@ -26,7 +27,7 @@ viewCreatePlaylistPage model {playlist, saved} =
         Input.text [ width fill, onEnter SubmittedCreatePlaylist ] { onChange = EditNewPlaylist field, text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = labelText |> text |> Input.labelAbove [ Font.size 16 ] }
 
       titleField =
-        textInput Title "Title" playlist.title
+        textInput Title (t model.translations "playlist.lbl_playlist_title") playlist.title
 
       createButton =
         if model.playlistCreateFormSubmitted then
@@ -34,15 +35,15 @@ viewCreatePlaylistPage model {playlist, saved} =
           |> el [ width (px 77), height (px 37) ]
         else
           if saved then
-            "✓ Saved" |> bodyWrap [ greyText, width fill ]
+            "✓ " ++ (t model.translations "playlist.lbl_playlist_saved") |> bodyWrap [ greyText, width fill ]
           else
-            button [ paddingXY 16 8, width fill, Background.color electricBlue, whiteText, Font.center ] { onPress = Just SubmittedCreatePlaylist, label = "Save" |> text }
+            button [ paddingXY 16 8, width fill, Background.color electricBlue, whiteText, Font.center ] { onPress = Just SubmittedCreatePlaylist, label = (t model.translations "playlist.btn_playlist_save") |> text }
 
       cancelButton = 
-        link [ Font.center, width fill, Background.color red, bigButtonPadding, whiteText, alignRight ] { url = "/home", label = Element.text "Cancel" }
+        link [ Font.center, width fill, Background.color red, bigButtonPadding, whiteText, alignRight ] { url = "/home", label = Element.text (t model.translations "playlist.btn_playlist_cancel") }
 
       page =
-        [ " Create Playlist" |> captionNowrap [ centerX, Font.size 16 ]
+        [ (t model.translations "playlist.lbl_create_playlist") |> captionNowrap [ centerX, Font.size 16 ]
         , [ titleField ] |> wrappedRow []
         , [ createButton, cancelButton ] |> wrappedRow [ width (fillPortion 2), spacing 20, height <| px 40 ]
         ]
@@ -54,8 +55,8 @@ viewCreatePlaylistPage model {playlist, saved} =
     else
       let
         page =
-          [ " Playlist Successfully Created!" |> captionNowrap [ centerX, Font.size 16 ]
-          , link [ Font.size 16, Font.center, width fill, Background.color electricBlue, bigButtonPadding, whiteText ] { url = "/", label = Element.text "Go Back" }
+          [ (t model.translations "playlist.lbl_playlist_created") |> captionNowrap [ centerX, Font.size 16 ]
+          , link [ Font.size 16, Font.center, width fill, Background.color electricBlue, bigButtonPadding, whiteText ] { url = "/", label = Element.text (t model.translations "playlist.btn_go_back") }
           ]
           |> column [ spacing 30, padding 5 ]
           |> milkyWhiteCenteredContainer

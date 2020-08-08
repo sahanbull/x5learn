@@ -77,7 +77,7 @@ view model =
 
       (body, inspector) =
         if isSiteUnderMaintenance then
-          viewMaintenancePage
+          viewMaintenancePage model
         else
           case  model.session of
             Nothing ->

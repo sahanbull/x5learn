@@ -20,11 +20,7 @@ import Time exposing (millisToPosix)
 
 import Json.Decode as Decode
 
-import I18Next exposing
-      ( t
-      , tr
-      , Delims(..)
-      )
+import I18Next exposing ( t, Delims(..) )
 
 
 {-| Render landing page including featured OER content
@@ -61,7 +57,7 @@ viewFeaturedOers model =
       viewLoadingSpinner
 
     Just oers ->
-      Playlist Nothing "Featured Content" Nothing Nothing Nothing Nothing True Nothing oers Nothing []
+      Playlist Nothing (t model.translations "front_page.lbl_featured_content") Nothing Nothing Nothing Nothing True Nothing oers Nothing []
       |> viewOerGrid model
 
 
@@ -74,9 +70,9 @@ userGreeting model =
         [ whiteText, Font.size 60, centerX, htmlClass "BigHeadingFont" ]
   in
   if isLoggedIn model then
-    [ (t model.translations ("front_page.lbl_welcome_message") ) |> text |> el headingAttrs
+    [ t model.translations "front_page.lbl_welcome_back_message" |> text |> el headingAttrs
     ]
   else
-    [ "Welcome to X5Learn" |> text |> el headingAttrs
-    , "Find your personal learning pathway" |> text |> el [ whiteText, Font.size 20, centerX ]
+    [ t model.translations "front_page.lbl_welcome_message" |> text |> el headingAttrs
+    , t model.translations "front_page.lbl_call_to_action_message" |> text |> el [ whiteText, Font.size 20, centerX ]
     ]

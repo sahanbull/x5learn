@@ -16,6 +16,7 @@ import View.ToggleIndicator exposing (..)
 import Msg exposing (..)
 import Dict
 
+import I18Next exposing ( t, Delims(..) )
 
 {-| Render the user profile page
 -}
@@ -31,22 +32,22 @@ viewPublishPlaylistPage model {playlist, published, originalTitle, blueprintUrl}
           Input.multiline [ width fill, onEnter SubmittedPublishPlaylist, Font.size 14 ] { onChange = EditPlaylist field, text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = labelText |> text |> Input.labelAbove [ Font.size 16 ], spellcheck = False }
 
         titleField =
-          textInput Title "Title" playlist.title
+          textInput Title (t model.translations "playlist.lbl_playlist_title") playlist.title
         descriptionField =
           case playlist.description of
             Nothing ->
-              textMultiline Description "Description" ""
+              textMultiline Description (t model.translations "playlist.lbl_playlist_description") ""
 
             Just val ->
-              textMultiline Description "Description" val
+              textMultiline Description (t model.translations "playlist.lbl_playlist_description") val
                   
         authorField =
           case playlist.author of
             Nothing ->
-              textInput Author "Author" ""
+              textInput Author (t model.translations "playlist.lbl_playlist_author") ""
 
             Just val ->
-              textInput Author "Author" val
+              textInput Author (t model.translations "playlist.lbl_playlist_author") val
 
         publishButton =
           if model.playlistPublishFormSubmitted then
@@ -54,12 +55,12 @@ viewPublishPlaylistPage model {playlist, published, originalTitle, blueprintUrl}
             |> el [ width (px 77), height (px 37) ]
           else
             if published then
-              "✓ Published" |> bodyWrap [ greyText, width fill ]
+              "✓ " ++ (t model.translations "playlist.btn_published") |> bodyWrap [ greyText, width fill ]
             else
-              button [ paddingXY 16 8, Font.center, Background.color electricBlue, whiteText ] { onPress = Just SubmittedPublishPlaylist, label = "Submit" |> text |> el [] }
+              button [ paddingXY 16 8, Font.center, Background.color electricBlue, whiteText ] { onPress = Just SubmittedPublishPlaylist, label = (t model.translations "playlist.btn_submit") |> text |> el [] }
 
         cancelButton = 
-          link [ Font.center, Background.color red, bigButtonPadding, whiteText, alignRight ] { url = "/home", label = Element.text "Cancel" }
+          link [ Font.center, Background.color red, bigButtonPadding, whiteText, alignRight ] { url = "/home", label = Element.text (t model.translations "playlist.btn_playlist_cancel") }
 
         selectLicenseButton = 
             let
@@ -67,7 +68,7 @@ viewPublishPlaylistPage model {playlist, published, originalTitle, blueprintUrl}
               buttonText = 
                 case playlist.license of
                   Nothing ->
-                    "Select License ▾"
+                    (t model.translations "playlist.btn_select_license") ++ " ▾"
               
                   Just license ->
                     filterLicense model.licenseTypes license
@@ -98,13 +99,13 @@ viewPublishPlaylistPage model {playlist, published, originalTitle, blueprintUrl}
           List.map (\x -> viewPlaylistItem model x.oerId) model.course.items
 
         page =
-          [ " Publish Playlist" |> captionNowrap [ centerX, Font.size 16 ]
+          [ (t model.translations "playlist.lbl_publish_playlist") |> captionNowrap [ centerX, Font.size 16 ]
           , [ titleField ] |> wrappedRow [ width fill ]
           , [ descriptionField ] |> wrappedRow [ width fill ]
           , [ authorField ] |> wrappedRow [ width fill ]
-          , [ text "License" ] |> wrappedRow [Font.size 16, width fill]
+          , [ text (t model.translations "playlist.lbl_playlist_license") ] |> wrappedRow [Font.size 16, width fill]
           , [ selectLicenseButton ] |> wrappedRow [ width fill, htmlClass "marginTop" ]
-          , [ text "Playlist Items" ] |> wrappedRow [ width fill, Font.size 16 ]
+          , [ text (t model.translations "playlist.lbl_playlist_items") ] |> wrappedRow [ width fill, Font.size 16 ]
           , playlistItems |> wrappedRow [ htmlClass "blockContent marginTop" ]
           , [ publishButton, cancelButton ] |> wrappedRow [ width (fillPortion 2), spacing 20, height <| px 40 ]
           ]
@@ -116,8 +117,8 @@ viewPublishPlaylistPage model {playlist, published, originalTitle, blueprintUrl}
     Just url ->
       let
         page =
-          [ "Playlist Successfully Published!" |> captionNowrap [ centerX, Font.size 16 ]
-          , link [ Font.size 16, Font.center, width fill, Background.color electricBlue, bigButtonPadding, whiteText ] { url = url, label = Element.text "View Published Playlist" }
+          [ (t model.translations "alerts.lbl_publish_playlist_success") |> captionNowrap [ centerX, Font.size 16 ]
+          , link [ Font.size 16, Font.center, width fill, Background.color electricBlue, bigButtonPadding, whiteText ] { url = url, label = Element.text (t model.translations "playlist.btn_view_published_playlist") }
           ]
           |> column [ spacing 30, padding 5 ]
           |> milkyWhiteCenteredContainer

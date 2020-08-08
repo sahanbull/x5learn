@@ -15,7 +15,20 @@
         "btn_view_swimlanes": "Swimlanes",
         "btn_subtitles": "Subtitles",
         "btn_publish": "Publish",
-        "btn_save": "Save"
+        "btn_save": "Save",
+        "lbl_yes": "Yes",
+        "lbl_no": "No",
+        "btn_sign_up": "Sign up",
+        "lbl_definition_unavailable": "Definition unavailable",
+        "lbl_published_on": "Published on",
+        "btn_thumbnail_view": "View",
+        "lbl_no_data_available": "No data available",
+        "btn_cancel": "Cancel",
+        "lbl_content_flow": "ContentFlow is",
+        "btn_content_flow_on": "ON",
+        "btn_content_flow_off": "OFF",
+        "lbl_greeting": "Hey",
+        "lbl_website_maintenance_page": "This website is currently undergoing a major update during which the site will be offline. Please check back in a few days."
     },
     "alerts": {
         "lbl_error_loading": "There was a problem. Please reload the page",
@@ -43,10 +56,19 @@
         "lbl_validate_unique_playlist_warning": "Playlist name is not unique. Please choose a different name.",
         "lbl_prompt_login": "Please login to use this functionality",
         "lbl_guest_call_to_signup_prefix": "You are not logged in. Make sure to",
+        "lbl_guest_call_to_signup_suffix": "make sure to",
         "btn_guest_call_to_signup_login": "log in",
         "lbl_guest_call_to_signup_or": "or",
         "btn_guest_call_to_signup_signup": "sign up",
-        "lbl_guest_call_to_signup_create_playlists": "in order to create and share playlists"
+        "lbl_guest_call_to_signup_create_playlists": "In order to create and share playlists",
+        "lbl_guest_call_to_signup_create_learning_pathway": "To create your ideal personal learning pathway",
+        "lbl_guest_call_to_signup_get_recommendations": "In order to benefit from the full feature set, including personalised recommendations of learning materials",
+        "lbl_learning_path_already_optimized": "Your workspace is in a good sequence for learning, according to our algorithm. No changes needed.",
+        "lbl_learning_path_optimized" : "Our algorithm has changed the sequence of your items.",
+        "lbl_browser_no_support_html5_video" : "Your browser does not support HTML5 video.",
+        "lbl_no_results_were_found_prefix": "No results were found for",
+        "lbl_no_results_were_found_suffix": "Please try a different search term",
+        "lbl_url_not_found": "URL not found"
     },
     "inspector": {
         "lbl_no_description": "No description available", 
@@ -65,7 +87,23 @@
         "btn_material_rating_poor_image": "Poor image",
         "btn_material_rating_poor_audio": "Poor audio",
         "btn_content_flow_bar_search": "Search",
-        "btn_read_more": "Read more"
+        "btn_read_more": "Read more",
+        "btn_play_from_here": "Play from here",
+        "btn_remove_range": "Remove Range",
+        "btn_save_title": "Save Title",
+        "btn_edit_title": "Edit Title",
+        "lbl_feedback_about_resource": "Your feedback about this resource",
+        "lbl_title": "Title",
+        "lbl_title_unavailable": "Title unavailable",
+        "lbl_require_larger_screen": "Sorry! This content requires a larger screen.",
+        "btn_save_description": "Save Description",
+        "btn_edit_description": "Edit Description",
+        "lbl_description_unavailable": "No description available",
+        "lbl_expand_document": "Expand Document",
+        "lbl_video_added_to_workspace": "This video has been added to your workspace.",
+        "lbl_enter_comments": "Enter any comments about this item",
+        "lbl_drag_range_instruction": "You can add this video to your workspace by dragging a range on the timeline.",
+        "btn_add_to_workspace": "Add to workspace"
     },
     "browse": {
         "lbl_next": "Next",
@@ -85,8 +123,10 @@
         "lbl_back_to_x5learn": "Back to X5Learn"
     },
     "front_page": {
-        "lbl_welcome_message": "Welcome Back!", 
-        "lbl_featured_content": "Featured Content"
+        "lbl_welcome_message": "Welcome to X5Learn", 
+        "lbl_featured_content": "Featured Content",
+        "lbl_welcome_back_message": "Welcome Back!",
+        "lbl_call_to_action_message": "Find your personal learning pathway"
     },
     "playlist": {
         "lbl_create_playlist": "Create Playlist",
@@ -104,6 +144,8 @@
         "btn_submit": "Submit",
         "btn_cancel": "Cancel",
         "btn_delete": "Delete",
+        "btn_publish": "Publish",
+        "btn_published": "Published",
         "lbl_delete_prompt": "Are you sure you want to delete the temporary playlist titled",
         "btn_delete_yes": "Yes",
         "btn_delete_no": "No",
@@ -120,6 +162,11 @@
         "btn_playlist_info_close": "Close",
         "lbl_playlist_share": "Share Playlist",
         "btn_playlist_share_close": "Close",
-        "lbl_playlist_clone": " Clone Playlist"
+        "lbl_playlist_clone": " Clone Playlist",
+        "lbl_playlist_not_found": "Playlist not found",
+        "lbl_playlist_new": "New Playlist",
+        "btn_select_license": "Select License",
+        "btn_pagination_previous": "Previous",
+        "btn_pagination_next": "Next"
     }
 }

@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, render_template, request, redirect, flash
 from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required, \
-    forms, RegisterForm, ResetPasswordForm
+    forms, RegisterForm, ResetPasswordForm, roles_required
 from flask_sqlalchemy import SQLAlchemy
 import json
 import os  # apologies
@@ -50,7 +50,8 @@ app.config['SECURITY_REGISTER_URL'] = '/signup'
 app.config['SECURITY_SEND_REGISTER_EMAIL'] = True
 app.config['SECURITY_CONFIRMABLE'] = True
 app.config['SECURITY_POST_REGISTER_VIEW'] = '/verify_email'
-app.config['SECURITY_POST_CONFIRM_VIEW'] = '/confirmed_email'
+app.config['SECURITY_POST_CONFIRM_VIEW'] = '/confirmed_email' 
+app.config['SECURITY_UNAUTHORIZED_VIEW'] = '/unauthorized'
 
 # user password configs
 app.config['SECURITY_CHANGEABLE'] = True
@@ -122,6 +123,12 @@ def initiate_login_db():
     initiate_login_table_and_admin_profile(user_datastore)
     initiate_action_types_table()
     # cleanup_enrichment_errors()
+
+
+# setting unauthorized callback
+@app.route("/unauthorized")
+def unauthorized():
+    return render_template('security/unauthorized.html'), 401
 
 
 def cleanup_enrichment_errors():
@@ -2098,6 +2105,7 @@ def find_oer_by_material_id(material_id):
 
 @app.route("/admin/localization", methods=['GET'])
 @login_required
+@roles_required('admin')
 def localization():
     
     # fetching initial data

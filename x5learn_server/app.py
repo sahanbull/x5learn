@@ -374,6 +374,13 @@ def api_search():
             # if the text is a number, retrieve the oer with that oer_id
             oer_id = int(text)
             oer = Oer.query.get(oer_id)
+
+            # add oer to enrichment and check if thumbnail exists
+            task_priority = int(1000 / 1) + 1
+            push_enrichment_task(oer.url, task_priority)
+            if "thumbnail" not in oer.data:
+                push_thumbnail_generation_task(oer, task_priority)
+
             results = [] if oer is None else ([oer], 1)
         except ValueError:
             results = search_results_from_x5gon_api(text, page)
@@ -596,9 +603,11 @@ def api_entity_descriptions():
 
 @app.route("/api/v1/most_urgent_unstarted_thumb_generation_task/", methods=['POST'])
 def most_urgent_unstarted_thumb_generation_task():
-    task = ThumbGenerationTask.query.filter(and_(ThumbGenerationTask.error == None,
-                                                 ThumbGenerationTask.started == None)).order_by(
-        ThumbGenerationTask.priority.desc()).first()
+    task = ThumbGenerationTask.query.filter(or_(and_(ThumbGenerationTask.error == None, ThumbGenerationTask.started == None), 
+                                            and_(ThumbGenerationTask.error != None, 
+                                            ThumbGenerationTask.data['retries'].astext.cast(Integer) < 5))).order_by(
+                                            ThumbGenerationTask.priority.desc()).first()
+
     if task is None:
         return jsonify({'info': 'No tasks available'})
 
@@ -610,9 +619,10 @@ def most_urgent_unstarted_thumb_generation_task():
 
     task.started = datetime.now()
     task.priority = 0
+    task.error = None
     db_session.commit()
 
-    return jsonify({'url': task.url, 'oer_id': task_data['oer_id']})
+    return jsonify({'url': task.url, 'data': task_data})
 
 
 @app.route("/api/v1/ingest_thumb_generation_result/", methods=['POST'])
@@ -627,7 +637,18 @@ def ingest_thumb_generation_result():
     if error is not None:
         task = ThumbGenerationTask.query.filter_by(url=url).first()
         task.error = error
+
+        new_data = json.loads(json.dumps(task.data))
+
+        if 'retries' not in new_data:
+            new_data['retries'] = 1
+        else:
+            new_data['retries'] += 1
+
+        task.data = new_data
+
         db_session.commit()
+ 
     # updating generated thumb name in oer data
     elif thumb_file_name is not None:
         oer = Oer.query.filter_by(url=url).first()
@@ -761,7 +782,7 @@ def filter_x5gon_search_results(materials):
     # (un)comment the lines below to enable/disable filters as desired
 
     # exclude youtube videos
-    materials = [m for m in materials if 'youtu' not in m['url']]
+    # materials = [m for m in materials if 'youtu' not in m['url']]
 
     # filter by file suffix
     materials = [m for m in materials
@@ -1793,6 +1814,21 @@ class Playlist_Single(Resource):
         return {'result': 'Playlist - {} was successfully deleted'.format(playlist.title)}, 201
 
 
+@ns_playlist.route('/<int:id>/json')
+@ns_playlist.response(404, 'Playlist not found')
+@ns_playlist.param('id', 'The playlist identifier')
+class Playlist_Json(Resource):
+    @ns_playlist.doc('get_playlist_blueprint')
+    def get(self, id):
+        '''Fetch playlist blueprint as json'''
+        playlist = repository.get_by_id(Playlist, id)
+
+        if playlist is None:
+            return {'result': 'Playlist not found'}, 400
+
+        return json.loads(playlist.blueprint), 200
+
+
 @ns_playlist.route('/<string:title>')
 @ns_playlist.response(404, 'Temporary playlist not found')
 @ns_playlist.param('title', 'The temporary playlist identifier')
@@ -1898,24 +1934,6 @@ class Temp_Playlist_Single(Resource):
 
         repository.delete(temp_playlist)
         return {'result': 'Temporary playlist successfully deleted'}, 201
-
-
-@ns_playlist.route('blueprint/<int:id>')
-@ns_playlist.response(404, 'Playlist not found')
-@ns_playlist.param('id', 'The playlist identifier')
-class Playlist_Blueprint(Resource):
-    @ns_playlist.doc('get_playlist_blueprint')
-    def get(self, id):
-        '''Fetch requested playlist from database'''
-        if not current_user.is_authenticated:
-            return {'result': 'User not logged in'}, 401
-
-        playlist = repository.get_by_id(Playlist, id)
-
-        if playlist is None:
-            return {'result': 'Playlist not found'}, 400
-
-        return playlist.blueprint, 200
 
 
 # Defining license resource for API access ==================================

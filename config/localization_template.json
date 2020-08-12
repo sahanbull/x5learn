@@ -73,6 +73,7 @@
     "inspector": {
         "lbl_no_description": "No description available", 
         "btn_add_to_playlist": "Add to Playlist",
+        "lbl_require_to_create_playlist": "You need to create a playlist first",
         "lbl_notes": "Notes",
         "lbl_enter_your_notes": "Enter your notes",
         "btn_note_edit": "Edit",

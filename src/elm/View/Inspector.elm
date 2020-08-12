@@ -4,6 +4,7 @@ import Set
 
 import Html
 import Html.Attributes as Attributes exposing (style)
+import Html.Events exposing (on, targetValue, onBlur)
 
 import Element exposing (..)
 import Element.Background as Background
@@ -53,7 +54,7 @@ viewTheInspector model inspectorState =
             if model.editingOerTitleInPlaylist then
               let
                 textInput labelText valueText =
-                  Input.text [ width fill, Font.size 14, onEnter SubmittedPlaylistItemUpdate ] { onChange = UpdatePlaylistItem "title", text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = Input.labelHidden (t model.translations "inspector.lbl_feedback_about_resource") }
+                  Input.text [ width fill, Font.size 14, onEnter SubmittedPlaylistItemUpdate, htmlId "editingOerTitle" ] { onChange = UpdatePlaylistItem "title", text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = Input.labelHidden (t model.translations "inspector.lbl_feedback_about_resource") }
               in
                 textInput (t model.translations "inspector.lbl_title") model.editingOerPlaylistItem.title
             else
@@ -138,14 +139,23 @@ viewTheInspector model inspectorState =
 viewInspectorBody : Model -> InspectorState -> Element Msg
 viewInspectorBody model ({oer, fragmentStart} as inspectorState) =
   let
-      player =
-        if isVideoFile oer.url then
-          viewHtml5VideoPlayer model oer
-          |> explainify model explanationForHtml5VideoPlayer
-        else if isPdfFile oer.url then
-          viewPdfViewer oer.url "45vh"
-        else
-          none
+    player =
+      case getYoutubeVideoId oer.url of
+        Nothing ->
+          if isVideoFile oer.url then
+            viewHtml5VideoPlayer model oer
+            |> explainify model explanationForHtml5VideoPlayer
+          else if isPdfFile oer.url then
+            viewPdfViewer oer.url "45vh"
+          else
+            none
+
+        Just youtubeId ->
+          let
+              startTime =
+                fragmentStart * oer.durationInSeconds |> floor
+          in
+              embedYoutubePlayer model youtubeId startTime
   in
       [ player
       , viewContentFlowBarWrapper model inspectorState oer
@@ -167,7 +177,7 @@ viewDescription inspectorState oer model =
       if model.editingOerDescriptionInPlaylist then
         let
           textMultiline labelText valueText =
-            Input.multiline [ width fill, Font.size 14, onEnter SubmittedPlaylistItemUpdate ] { onChange = UpdatePlaylistItem "description", text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = Input.labelHidden (t model.translations "inspector.lbl_feedback_about_resource"), spellcheck = False }
+            Input.multiline [ width fill, Font.size 14, onEnter SubmittedPlaylistItemUpdate, htmlId "editingOerDescription" ] { onChange = UpdatePlaylistItem "description", text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = Input.labelHidden (t model.translations "inspector.lbl_feedback_about_resource"), spellcheck = False }
         in
           textMultiline "Description" model.editingOerPlaylistItem.description
       else
@@ -341,19 +351,28 @@ viewContentFlowBarWrapper model inspectorState oer =
                   []
 
             attrs =
-              [ alignLeft, htmlClass "PreventClosingThePopupOnClick", buttonRounding ] ++ options
+              [ alignLeft, htmlClass "PreventClosingThePopupOnClick", buttonRounding, htmlId "addToPlaylistButton" ] ++ options
           in
-            actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" ((t model.translations "inspector.btn_add_to_playlist") ++ " ▾")  (Just OpenedAddToPlaylistMenu)
-            |> el attrs
+            case model.userPlaylists of
+              Nothing ->
+                actionButtonWithIcon [Font.color red] [] IconLeft 0.7 "bookmarklist_add" (t model.translations "inspector.lbl_require_to_create_playlist")  (Just OpenedAddToPlaylistMenu)
+                |> el attrs
+              Just playlist ->
+                if List.length playlist == 0 then
+                  actionButtonWithIcon [Font.color red] [] IconLeft 0.7 "bookmarklist_add" (t model.translations "inspector.lbl_require_to_create_playlist")  (Just OpenedAddToPlaylistMenu)
+                  |> el attrs
+                else
+                  actionButtonWithIcon [] [] IconLeft 0.7 "bookmarklist_add" ((t model.translations "inspector.btn_add_to_playlist") ++ " ▾")  (Just OpenedAddToPlaylistMenu)
+                  |> el attrs
 
       components =
         if isLabStudy1 model then
           courseSettings
         else
           if isPdfFile oer.url then
-            [ viewLinkToFile model oer ] ++ [ viewDescription inspectorState oer model ] ++ [ addToPlaylistButton ]
+            [ viewLinkToFile model oer ] ++ [ addToPlaylistButton ] ++ [ viewDescription inspectorState oer model ]
           else
-            [ viewDescription inspectorState oer model ] ++ [ addToPlaylistButton ]
+            [ addToPlaylistButton ] ++ [ viewDescription inspectorState oer model ]
 
       containerHeight =
         if isLabStudy1 model then
@@ -519,12 +538,12 @@ viewFeedbackTab model oer =
       , (t model.translations "inspector.btn_material_rating_language_errors")
       , (t model.translations "inspector.btn_material_rating_poor_content")
       , (t model.translations "inspector.btn_material_rating_poor_image")
-      ] ++ (if isVideoFile oer.url then [ (t model.translations "inspector.btn_material_rating_poor_audio") ] else []))
+      ] ++ (if isVideoFile oer.url || hasYoutubeVideo oer.url then [ (t model.translations "inspector.btn_material_rating_poor_audio") ] else []))
       |> List.map (\option -> simpleButton [ paddingXY 4 4, Background.color primaryGreen, buttonRounding, Font.size 14, whiteText ] option (Just <| SubmittedResourceFeedback oer.id (">>>"++option)))
       |> column [ width fill, htmlClass "flexWrap" ]
 
     textField =
-      Input.text [ width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5grey ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your notes" |> text |> Input.placeholder [ Font.size 16 ]), label = Input.labelHidden "Your feedback about this resource" }
+      Input.text [ Font.size 12, width fill, htmlId "feedbackTextInputField", onEnter <| (SubmittedResourceFeedback oer.id formValue), Border.color x5grey ] { onChange = ChangedTextInResourceFeedbackForm oer.id, text = formValue, placeholder = Just ("Enter your notes" |> text |> Input.placeholder [ Font.size 12 ]), label = Input.labelHidden "Your feedback about this resource" }
   in
       [ (t model.translations "inspector.lbl_material_rating_question") |> bodyWrap []
       , quickOptions

@@ -525,7 +525,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 updatedPublishPlaylistForm =
                     { playlistPublishForm | blueprintUrl = Just url }
             in
-            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_publish_playlist_success"), playlistPublishForm = updatedPublishPlaylistForm, playlist = Nothing }, requestLoadUserPlaylists )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_publish_playlist_success"), playlistPublishFormSubmitted = False, playlistPublishForm = updatedPublishPlaylistForm, playlist = Nothing }, requestLoadUserPlaylists )
 
         RequestPublishPlaylist (Err err) ->
             ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_publish_playlist_error"), playlistPublishFormSubmitted = False }, Cmd.none )
@@ -621,12 +621,16 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                     ( model, Cmd.none )
 
                 Just _ ->
-                    ( { model | inspectorState = Nothing }, Cmd.none )
+                    ( { model | inspectorState = Nothing, editingOerTitleInPlaylist = False, editingOerDescriptionInPlaylist = False }, Cmd.none )
                         |> logEventForLabStudy "CloseInspector" []
 
         MouseOverChunkTrigger mousePositionX ->
             ( { model | mousePositionXwhenOnChunkTrigger = mousePositionX, hoveringEntityId = Nothing } |> unselectMention, Cmd.none )
                 |> logEventForLabStudy "MouseOverChunkTrigger" [ mousePositionX |> String.fromFloat ]
+
+        --YoutubeSeekTo fragmentStart ->
+        --   ( model, youtubeSeekTo fragmentStart)
+        --   |> logEventForLabStudy "YoutubeSeekTo" [ fragmentStart |> String.fromFloat ]
 
         EditUserProfile field value ->
             let
@@ -671,6 +675,10 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             ( { model | timeOfLastFeedbackRecorded = model.currentTime } |> setTextInResourceFeedbackForm oerId "", requestSaveNote oerId text)
                 |> logEventForLabStudy "SubmittedResourceFeedback" [ oerId |> String.fromInt, text ]
                 |> saveAction 8 [ ( "OER id", Encode.int oerId ), ( "user feedback", Encode.string text ) ]
+
+        YoutubeVideoIsPlayingAtPosition position ->
+            (model, Cmd.none)
+            |> logEventForLabStudy "YoutubeVideoIsPlayingAtPosition" [ position |> String.fromFloat]
 
         BubblogramTopicMouseOver entityId oerId ->
             let
@@ -996,6 +1004,9 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                         "Task 2" ->
                             "labstudytask2"
 
+                        "Math" ->
+                            "youtubestudy"
+
                         _ ->
                             "labstudypractice"
 
@@ -1006,6 +1017,10 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 |> logEventForLabStudy "StartTask" [ taskName ]
 
         CompleteTask ->
+            if isLabStudy2 model then
+            ( { model | currentTaskName = Nothing }, setBrowserFocus "" )
+                |> logEventForLabStudy "CompleteTask" []
+            else 
             ( { model | currentTaskName = Nothing, course = initialCourse }, setBrowserFocus "" )
                 |> logEventForLabStudy "CompleteTask" []
 
@@ -1186,9 +1201,9 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
 
         EditOerInPlaylist flag editType ->
             if editType == "title" then
-                ( { model | editingOerTitleInPlaylist = flag }, Cmd.none )
+                ( { model | editingOerTitleInPlaylist = flag }, [ setBrowserFocus "editingOerTitle", registerInspectorPlaylistEvents True ] |> Cmd.batch )
             else
-                ( { model | editingOerDescriptionInPlaylist = flag }, Cmd.none )
+                ( { model | editingOerDescriptionInPlaylist = flag }, [ setBrowserFocus "editingOerDescription", registerInspectorPlaylistEvents True ] |> Cmd.batch )
 
         UpdatePlaylistItem editType str ->
             if editType == "title" then
@@ -1236,6 +1251,10 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
 
         ChangeLanguage lang ->
             ( { model | language = lang }, Navigation.load ("/?lang=" ++ lang))
+            
+        StopEditingPlaylist flag ->
+            ( { model | editingOerTitleInPlaylist = False, editingOerDescriptionInPlaylist = False }, Cmd.none )
+
 
 insertSearchResults : List OerId -> Model -> Model
 insertSearchResults oerIds model =
@@ -1907,13 +1926,13 @@ inspectOer model oer fragmentStart playWhenReady =
         videoEmbedParams : VideoEmbedParams
         videoEmbedParams =
             { inspectorId = inspectorId
+            , videoId = getYoutubeVideoId oer.url |> Maybe.withDefault ""
             , videoStartPosition = fragmentStart * oer.durationInSeconds
             , playWhenReady = playWhenReady
             }
     in
-    ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert inspectorId, hoveringOerId = Nothing } |> closePopup
-    , Cmd.batch [ requestFetchNotesForOer oer.id, openInspectorAnimation videoEmbedParams ] 
-    )
+        ( { model | inspectorState = Just <| newInspectorState oer fragmentStart, animationsPending = model.animationsPending |> Set.insert inspectorId, hoveringOerId = Nothing } |> closePopup, Cmd.batch [ requestFetchNotesForOer oer.id, openInspectorAnimation videoEmbedParams, embedYoutubePlayerOnResourcePage videoEmbedParams] 
+        )
 
 
 showLoginHintIfNeeded : Model -> Model

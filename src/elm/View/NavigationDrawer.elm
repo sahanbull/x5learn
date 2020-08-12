@@ -51,6 +51,10 @@ withNavigationDrawer model (pageContent, inspector) =
           playlistActionButtons model
           ]
           |> column [ spacing 40, width fill ]
+        else if isLabStudy2 model then
+          [ taskButtons model
+          ]
+          |> column [ spacing 40, width fill ]
         else
           case model.playlist of
               Nothing ->
@@ -138,14 +142,33 @@ withNavigationDrawer model (pageContent, inspector) =
               |> column [ width fill, spacing 10, padding 10, buttonRounding, Border.width 1, Border.color greyDivider, smallShadow ]
 
           in
-          [ if isLabStudy1 model then none else model.searchInputTyping |> viewSearchWidget model fill (t model.translations "generic.lbl_search") |> explainify model explanationForSearchField
+          [ if isLabStudy1 model || isLabStudy2 model then none else model.searchInputTyping |> viewSearchWidget model fill (t model.translations "generic.lbl_search") |> explainify model explanationForSearchField
           , miniCard
           ]
           |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 12, spacing 30, whiteBackground ]
           |> el [ height fill, width (px navigationDrawerWidth), paddingTop pageHeaderHeight ]
           |> inFront
+        else if isLabStudy2 model then
+          case model.playlist of
+            Nothing ->
+              [ navButtons 
+              , selectPlaylistButton
+              , viewCourse model
+              ]
+              |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 12, spacing 20, whiteBackground ]
+              |> el [ height fill, width (px navigationDrawerWidth), paddingTop pageHeaderHeight ]
+              |> inFront
+            Just playist ->
+              [ navButtons 
+              , selectPlaylistButton
+              , viewCourse model
+              , playlistActionButtons model
+              ]
+              |> column [ height fill, width (px navigationDrawerWidth), paddingXY 12 12, spacing 20, whiteBackground ]
+              |> el [ height fill, width (px navigationDrawerWidth), paddingTop pageHeaderHeight ]
+              |> inFront
         else
-          [ if isLabStudy1 model then none else model.searchInputTyping |> viewSearchWidget model fill (t model.translations "generic.lbl_search") |> explainify model explanationForSearchField
+          [ if (isLabStudy1 model || isLabStudy2 model) then none else model.searchInputTyping |> viewSearchWidget model fill (t model.translations "generic.lbl_search") |> explainify model explanationForSearchField
           , selectPlaylistButton
           , navButtons
           ]
@@ -207,9 +230,19 @@ taskButtons model =
             else
               confirmButton [ alpha 0.3, greyText ] ("Start "++taskName) Nothing
   in
+    if isLabStudy1 model then
       [ taskButton "Practice"
       , taskButton "Task 1"
       , taskButton "Task 2"
+      ]
+      |> column [ spacing 10 ]
+    else if isLabStudy2 model then
+      [ taskButton "Practice"
+      , taskButton "Math"
+      ]
+      |> column [ spacing 10 ]
+    else
+      [ Element.text "No Tasks Available"
       ]
       |> column [ spacing 10 ]
 

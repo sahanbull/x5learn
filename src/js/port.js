@@ -28,6 +28,7 @@ function position(el) {
 
 function setupPorts(app){
   app.ports.openInspectorAnimation.subscribe(startAnimationWhenInspectorIsReady);
+  app.ports.embedYoutubePlayerOnResourcePage.subscribe(embedYoutubePlayerOnResourcePage);
 
   app.ports.setBrowserFocus.subscribe(function(elementId) {
     document.activeElement.blur();
@@ -41,6 +42,17 @@ function setupPorts(app){
       }, 30);
     }
   });
+
+  // app.ports.youtubeSeekTo.subscribe(function(fragmentStart) {
+  //   player.seekTo(fragmentStart * player.getDuration());
+  //   player.playVideo();
+  // });
+
+  // app.ports.youtubeDestroyPlayer.subscribe(function(dummy) {
+  //   if(typeof player !== 'undefined' && player.getIframe()!==null){
+  //     player.destroy();
+  //   }
+  // });
 
   app.ports.getOerCardPlaceholderPositions.subscribe(function(dummy) {
     setTimeout(function(){
@@ -66,6 +78,9 @@ function setupPorts(app){
   setupEventHandlers();
 
   setupScrollDetector();
+
+  app.ports.registerInspectorPlaylistEvents.subscribe(registerInspectorPlaylistEvents);
+
 }
 
 
@@ -97,46 +112,60 @@ function startAnimationWhenInspectorIsReady(videoEmbedParams) {
     app.ports.inspectorAnimationStart.send({frameCount: 0, start: positionAndSize(card), end: positionAndSize(inspector)});
     setTimeout(function(){
       app.ports.inspectorAnimationStop.send(12345);
-      var vid = getHtml5VideoPlayer();
-      if(vid){
-        if(videoEmbedParams.playWhenReady){
-          playWhenPossible(vid, videoEmbedParams.videoStartPosition);
-        }
-
-        vid.onplay = function() {
-          isVideoPlaying = true;
-          videoPlayPosition = vid.currentTime;
-          app.ports.html5VideoStarted.send(videoPlayPosition);
-          videoEventThrottlePosition = videoPlayPosition;
-        };
-        vid.onpause = function() {
-          isVideoPlaying = false;
-          videoPlayPosition = vid.currentTime;
-          app.ports.html5VideoPaused.send(videoPlayPosition);
-        };
-        vid.ontimeupdate = function() {
-          videoPlayPosition = vid.currentTime;
-          if(isVideoPlaying){
-            if(videoPlayPosition > videoEventThrottlePosition + videoPlayReportingInterval){
-              app.ports.html5VideoStillPlaying.send(videoPlayPosition);
-              videoEventThrottlePosition = videoPlayPosition;
-            }
-          }else{
-            app.ports.html5VideoSeeked.send(videoPlayPosition);
-            videoEventThrottlePosition = 0;
-          }
-        };
+      if(videoEmbedParams.videoId.length>0){
+        embedYoutubeVideo(videoEmbedParams);
       }else{
-        // video not found
+        var vid = getHtml5VideoPlayer();
+        if(vid){
+          if(videoEmbedParams.playWhenReady){
+            playWhenPossible(vid, videoEmbedParams.videoStartPosition);
+          }
+
+          vid.onplay = function() {
+            isVideoPlaying = true;
+            videoPlayPosition = vid.currentTime;
+            app.ports.html5VideoStarted.send(videoPlayPosition);
+            videoEventThrottlePosition = videoPlayPosition;
+          };
+
+          vid.onpause = function() {
+            isVideoPlaying = false;
+            videoPlayPosition = vid.currentTime;
+            app.ports.html5VideoPaused.send(videoPlayPosition);
+          };
+
+          vid.ontimeupdate = function() {
+            videoPlayPosition = vid.currentTime;
+            if(isVideoPlaying){
+              if(videoPlayPosition > videoEventThrottlePosition + videoPlayReportingInterval){
+                app.ports.html5VideoStillPlaying.send(videoPlayPosition);
+                videoEventThrottlePosition = videoPlayPosition;
+              }
+            }else{
+              app.ports.html5VideoSeeked.send(videoPlayPosition);
+              videoEventThrottlePosition = 0;
+            }
+          };
+
+        }
       }
     }, 110);
     return;
   }
+
 }
 
 
 function getHtml5VideoPlayer(){
   return document.getElementById("Html5VideoPlayer");
+}
+
+function embedYoutubePlayerOnResourcePage(videoEmbedParams) {
+    setTimeout(function(){
+      if(videoEmbedParams.videoId.length>0){
+        embedYoutubeVideo(videoEmbedParams);
+      }
+    }, 200);
 }
 
 /* setupEventHandlers
@@ -261,4 +290,23 @@ function tryPlaying(vid, position, attempts){
       tryPlaying(vid, position, attempts-1);
     }, 500);
   }
+}
+
+function registerInspectorPlaylistEvents() {
+  
+  setTimeout(function(){
+    if (document.getElementById("editingOerTitle")) {
+      document.getElementById("editingOerTitle").addEventListener("blur", function() {
+        app.ports.stopEditingPlaylist.send(1);
+      }, true);
+    }
+    
+    if (document.getElementById("editingOerDescription")) {
+      document.getElementById("editingOerDescription").addEventListener("blur", function() {
+        app.ports.stopEditingPlaylist.send(1);
+      }, true); 
+    }
+  }, 300);
+
+
 }

@@ -62,10 +62,12 @@ type Msg
   | CloseInspector
   | TriggerSearch String Bool
   | MouseOverChunkTrigger Float
+  --| YoutubeSeekTo Float
   | EditUserProfile UserProfileField String
   | SubmittedUserProfile
   | ChangedTextInResourceFeedbackForm OerId String
   | SubmittedResourceFeedback OerId String
+  | YoutubeVideoIsPlayingAtPosition Float
   | BubblogramTopicMouseOver EntityId OerId
   | BubblogramTopicMouseOut
   | BubblogramTopicLabelMouseOver EntityId OerId
@@ -127,6 +129,7 @@ type Msg
   | SetSearchCurrentPage Int
   | ChangeLanguage String
   | OpenedLanguageSelectorMenu
+  | StopEditingPlaylist Int
 
 type UserProfileField
   = FirstName
@@ -151,7 +154,9 @@ subscriptions model =
   , Ports.mouseOverChunkTrigger MouseOverChunkTrigger
   , Ports.mouseMovedOnTopicLane MouseMovedOnTopicLane
   , Ports.timelineMouseEvent TimelineMouseEvent
+  --, Ports.youtubeVideoIsPlayingAtPosition YoutubeVideoIsPlayingAtPosition
   , Ports.html5VideoStarted Html5VideoStarted
+  , Ports.stopEditingPlaylist StopEditingPlaylist
   , Ports.html5VideoPaused Html5VideoPaused
   , Ports.html5VideoSeeked Html5VideoSeeked
   , Ports.html5VideoStillPlaying Html5VideoStillPlaying

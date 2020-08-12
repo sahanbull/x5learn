@@ -252,7 +252,7 @@ viewCarousel : Model -> Oer -> Element Msg
 viewCarousel model oer =
   let
       thumbFromSpritesheet =
-        if oer.mediatype/="video" then
+        if oer.mediatype/="video" || hasYoutubeVideo oer.url then
           []
         else
           let

@@ -21,6 +21,7 @@ import Update.Bubblogram exposing (..)
 import Url exposing (Url)
 import Url.Builder
 
+import I18Next exposing ( t, Delims(..) )
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as model) =
@@ -81,7 +82,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                     else if url.path |> String.startsWith createPlaylistPath then
                         if countOfUserPlaylists model.userPlaylists >= 5 then
                             ( Home
-                            , ( { model | snackbar = createSnackbar model "You can only have a maxmium of 5 temporary playlists at a time" }
+                            , ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_playlist_maximum_limit_warning") }
                                 , if model.featuredOers == Nothing then
                                     requestFeaturedOers
 
@@ -92,7 +93,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                         else
                             let
                                 freshPlaylist = 
-                                    Playlist Nothing "New Playlist" Nothing Nothing Nothing Nothing True Nothing [] Nothing []
+                                    Playlist Nothing (t model.translations "playlist.lbl_playlist_new") Nothing Nothing Nothing Nothing True Nothing [] Nothing []
                                 updatedPlaylistCreateForm = { playlistCreateForm | playlist = freshPlaylist, saved = False, isClone = False }
                             in
                             ( CreatePlaylist, ( { model | playlist = Nothing, playlistCreateForm = updatedPlaylistCreateForm }, Cmd.none ) )
@@ -360,7 +361,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             --     dummy =
             --       err |> Debug.log "Error in RequestSaveUserProfile"
             -- in
-            ( { model | snackbar = createSnackbar model "Some changes were not saved", userProfileFormSubmitted = False }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_changes_not_saved_warning"), userProfileFormSubmitted = False }, Cmd.none )
 
         RequestLabStudyLogEvent (Ok _) ->
             ( model, Cmd.none )
@@ -370,15 +371,15 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             --     dummy =
             --       err |> Debug.log "Error in RequestLabStudyLogEvent"
             -- in
-            -- ( { model | snackbar = createSnackbar model "Some logs were not saved" }, Cmd.none )
-            ( { model | snackbar = createSnackbar model "Some logs were not saved" }, Cmd.none )
+            -- ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_logs_not_saved_warning") }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_changes_not_saved_warning") }, Cmd.none )
 
         RequestSaveAction (Ok _) ->
             ( model, Cmd.none )
 
         RequestSaveAction (Err err) ->
-            -- ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
-            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+            -- ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_changes_not_saved_warning") }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_changes_not_saved_warning") }, Cmd.none )
 
         RequestLoadCourse (Ok course) ->
             let
@@ -392,19 +393,19 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             ( newModel, requestOersByIds newModel oerIds )
 
         RequestLoadCourse (Err err) ->
-            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_changes_not_saved_warning") }, Cmd.none )
 
         RequestSaveCourse (Ok _) ->
             ( { model | courseChangesSaved = model.courseNeedsSaving, courseNeedsSaving = False }, Cmd.none )
 
         RequestSaveCourse (Err err) ->
-            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_changes_not_saved_warning") }, Cmd.none )
 
         RequestSaveLoggedEvents (Ok _) ->
             ( model, Cmd.none )
 
         RequestSaveLoggedEvents (Err err) ->
-            ( { model | snackbar = createSnackbar model "Some logs were not saved" }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_logs_not_saved_warning") }, Cmd.none )
 
         RequestResourceRecommendations (Ok oersUnfiltered) ->
             let
@@ -484,37 +485,37 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                     ( { model | userPlaylists = Just playlists, course = course, playlist = Just updatedPlaylist }, requestOersByIds model oerIds )
 
         RequestLoadUserPlaylists (Err err) ->
-            ( { model | snackbar = createSnackbar model "Error loading user playlists" }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_publish_playlist_error") }, Cmd.none )
 
         RequestCreatePlaylist (Ok _) ->
             ( { model | playlistCreateForm = { playlistCreateForm | saved = True, isClone = False }, playlistCreateFormSubmitted = False }, requestLoadUserPlaylists )
 
         RequestCreatePlaylist (Err err) ->
-            ( { model | snackbar = createSnackbar model "Some changes were not saved", playlistCreateFormSubmitted = False }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_changes_not_saved_warning"), playlistCreateFormSubmitted = False }, Cmd.none )
 
         RequestAddToPlaylist (Ok _) ->
-            ( { model | snackbar = createSnackbar model "Successfully added to playlist" }, requestLoadUserPlaylists )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_add_to_playlist_success") }, requestLoadUserPlaylists )
 
         RequestAddToPlaylist (Err err) ->
-            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_changes_not_saved_warning") }, Cmd.none )
 
         RequestSavePlaylist (Ok _) ->
-            ( { model | snackbar = createSnackbar model "Temporary playlist successfully saved" }, requestLoadUserPlaylists )
+            ( { model | snackbar = createSnackbar model  (t model.translations "alerts.lbl_temp_playlist_save_success")  }, requestLoadUserPlaylists )
 
         RequestSavePlaylist (Err err) ->
-            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_changes_not_saved_warning") }, Cmd.none )
 
         RequestDeletePlaylist (Ok _) ->
-            ( { model | promptedDeletePlaylist = False, playlist = Nothing, snackbar = createSnackbar model "Temporary playlist successfully deleted" }, requestLoadUserPlaylists )
+            ( { model | promptedDeletePlaylist = False, playlist = Nothing, snackbar = createSnackbar model (t model.translations "alerts.lbl_temp_playlist_delete_success") }, requestLoadUserPlaylists )
 
         RequestDeletePlaylist (Err err) ->
-            ( { model | promptedDeletePlaylist = False, snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+            ( { model | promptedDeletePlaylist = False, snackbar = createSnackbar model (t model.translations "alerts.lbl_changes_not_saved_warning") }, Cmd.none )
 
         RequestLoadLicenseTypes (Ok licenseTypes) ->
             ( { model | licenseTypes = licenseTypes }, Cmd.none )
 
         RequestLoadLicenseTypes (Err err) ->
-            ( { model | snackbar = createSnackbar model "Error loading user license types" }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_license_types_load_error") }, Cmd.none )
 
         RequestPublishPlaylist (Ok id) ->
             let
@@ -524,10 +525,10 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 updatedPublishPlaylistForm =
                     { playlistPublishForm | blueprintUrl = Just url }
             in
-            ( { model | snackbar = createSnackbar model "Playlist successfully published", playlistPublishFormSubmitted = False, playlistPublishForm = updatedPublishPlaylistForm, playlist = Nothing }, requestLoadUserPlaylists )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_publish_playlist_success"), playlistPublishFormSubmitted = False, playlistPublishForm = updatedPublishPlaylistForm, playlist = Nothing }, requestLoadUserPlaylists )
 
         RequestPublishPlaylist (Err err) ->
-            ( { model | snackbar = createSnackbar model "Error publishing playlist", playlistPublishFormSubmitted = False }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_publish_playlist_error"), playlistPublishFormSubmitted = False }, Cmd.none )
 
         RequestFetchPublishedPlaylist (Ok playlist) ->
             let
@@ -537,7 +538,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 ( { model | publishedPlaylist = Just playlist, playlistCreateForm = updatedPlaylistCreateForm }, Cmd.none )
 
         RequestFetchPublishedPlaylist (Err err) ->
-            ( { model | snackbar = createSnackbar model "Error fetching playlist" }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_playlist_fetch_error") }, Cmd.none )
 
         RequestSaveNote (Ok _) ->
             case model.inspectorState of
@@ -548,41 +549,41 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                     ( model , requestFetchNotesForOer state.oer.id)
 
         RequestSaveNote (Err err) ->
-            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_changes_not_saved_warning") }, Cmd.none )
 
         RequestFetchNotesForOer (Ok notes) ->
             ( { model | userNotesForOer = notes }, Cmd.none)
 
         RequestFetchNotesForOer (Err err) ->
-            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_changes_not_saved_warning") }, Cmd.none )
 
         RequestRemoveNote (Ok _) ->
             case model.inspectorState of
                 Nothing ->
-                    ( { model | snackbar = createSnackbar model "Note was successfully removed" } , Cmd.none)
+                    ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_note_delete_success") } , Cmd.none)
 
                 Just state ->
-                    ( { model | snackbar = createSnackbar model "Note was successfully removed" } , requestFetchNotesForOer state.oer.id)
+                    ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_note_delete_success") } , requestFetchNotesForOer state.oer.id)
 
         RequestRemoveNote (Err err) ->
-            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_changes_not_saved_warning") }, Cmd.none )
 
         RequestUpdateNote (Ok _) ->
             case model.inspectorState of
                 Nothing ->
-                    ( { model | snackbar = createSnackbar model "Note was successfully updated" } , Cmd.none)
+                    ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_note_update_success") } , Cmd.none)
 
                 Just state ->
-                    ( { model | snackbar = createSnackbar model "Note was successfully updated", editUserNoteForOerInPlace = Nothing } , requestFetchNotesForOer state.oer.id)
+                    ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_note_update_success"), editUserNoteForOerInPlace = Nothing } , requestFetchNotesForOer state.oer.id)
 
         RequestUpdateNote (Err err) ->
-            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_changes_not_saved_warning") }, Cmd.none )
 
         RequestUpdatePlaylistItem (Ok _) ->
-            ( { model | snackbar = createSnackbar model "Playlist item is successfully updated" }, requestLoadUserPlaylists )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_playlist_item_update_success") }, requestLoadUserPlaylists )
 
         RequestUpdatePlaylistItem (Err err) ->
-            ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_changes_not_saved_warning") }, Cmd.none )
 
         SetHover maybeOerId ->
             let
@@ -906,7 +907,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                         newCourse =
                             { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId /= oerId) }
                     in
-                    ( { model | course = newCourse, courseOptimization = Nothing, inspectorState = Nothing, snackbar = createSnackbar model "Successfully removed from playlist" }, Cmd.none )
+                    ( { model | course = newCourse, courseOptimization = Nothing, inspectorState = Nothing, snackbar = createSnackbar model (t model.translations "alerts.lbl_remove_playlist_item_success") }, Cmd.none )
                         |> logEventForLabStudy "RemovedOerFromCourse" [ oerId |> String.fromInt, courseToString newCourse ]
                         |> saveCourseNow
                 
@@ -931,7 +932,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                             { oldCourse | items = oldCourse.items |> List.filter (\item -> item.oerId /= oerId) }
 
                     in
-                    ( { model | course = newCourse, playlist = Just newplaylist, userPlaylists = Just newUserPlaylists, courseOptimization = Nothing, inspectorState = Nothing, snackbar = createSnackbar model "Successfully removed from playlist" }, requestSavePlaylist newplaylist )
+                    ( { model | course = newCourse, playlist = Just newplaylist, userPlaylists = Just newUserPlaylists, courseOptimization = Nothing, inspectorState = Nothing, snackbar = createSnackbar model (t model.translations "alerts.lbl_remove_playlist_item_success") }, requestSavePlaylist newplaylist )
                         |> logEventForLabStudy "RemovedOerFromCourse" [ oerId |> String.fromInt, courseToString newCourse ]
                         |> saveCourseNow
 
@@ -1092,9 +1093,9 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
 
         SubmittedPublishPlaylist ->
             if model.playlistPublishForm.playlist.title == "" || model.playlistPublishForm.playlist.author == Just "" then
-                ( { model | snackbar = createSnackbar model "Title and Author is required to publish playlist." }, Cmd.none )
+                ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_validate_publish_playlist_warning") }, Cmd.none )
             else if (List.length model.playlistPublishForm.playlist.oerIds) <= 1 then
-                ( { model | snackbar = createSnackbar model "Playlist should contain more than one playlist item in order to be published." }, Cmd.none )
+                ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_validate_publish_playlist_min_items_warning") }, Cmd.none )
             else
                 ( { model | playlistPublishFormSubmitted = True }, requestPublishPlaylist model.playlistPublishForm )
                 |> logEventForLabStudy "SubmittedPublishPlaylist" []
@@ -1102,7 +1103,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
         SubmittedCreatePlaylist ->
             case checkIfPlaylistNameIsUnique model.userPlaylists model.playlistCreateForm.playlist.title of
                 False ->
-                    ( { model | snackbar = createSnackbar model "Playlist name is not unique. Please choose a different name."}, Cmd.none)  
+                    ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_validate_unique_playlist_warning") }, Cmd.none)  
             
                 True ->
                     ( { model | playlistCreateFormSubmitted = True }, requestCreatePlaylist model.playlistCreateForm.playlist )
@@ -1164,7 +1165,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                                         else
                                             ({ model | playlistState = playlistState}, requestFetchPublishedPlaylist id )
                     else
-                        ( { model | snackbar = createSnackbar model "Please login to use this functionality"}, Cmd.none )
+                        ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_prompt_login") }, Cmd.none )
 
                 _ ->
                     case model.publishedPlaylistId of
@@ -1244,6 +1245,13 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 Just searchState ->
                      ( { model | currentPageForSearch = pageNumber }, Navigation.load ("/search?q=" ++ searchState.lastSearchText ++ "&page=" ++ String.fromInt pageNumber) )
 
+        OpenedLanguageSelectorMenu ->
+            ( { model | popup = Just LanguagePopup }, setBrowserFocus "" )
+                |> logEventForLabStudy "OpenedLanguageSelectorMenu" []
+
+        ChangeLanguage lang ->
+            ( { model | language = lang }, Navigation.load ("/?lang=" ++ lang))
+            
         StopEditingPlaylist flag ->
             ( { model | editingOerTitleInPlaylist = False, editingOerDescriptionInPlaylist = False }, Cmd.none )
 
@@ -1527,6 +1535,9 @@ popupToStrings maybePopup =
 
                 SelectLicensePopup ->
                     [ "SelectLicensePopup" ]
+
+                LanguagePopup ->
+                    [ "LanguagePopup" ]
 
 
 executeSearchAfterUrlChanged : Model -> Url -> ( Model, Cmd Msg )

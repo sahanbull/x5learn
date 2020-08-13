@@ -63,6 +63,93 @@
         padding: 24px 0;
         color: #999;
       }
+
+      .text-center {
+        text-align: center;
+      }
+
+      .row {
+        width: 100%;
+      }
+
+      .container {
+        width: 800px;
+        max-width: 90%;
+        margin: auto;
+        padding-top: 30px;
+      }
+
+      .well {
+        border: 1px solid #c9c9c9;
+        background: #e2e2e2;
+        height: 100%;
+        display: inline-block;
+        width: 100%;
+      }
+
+      .inline {
+        padding: 20px;
+      }
+
+      .inline label{
+        width: 150px;
+        height: 20px;
+        text-align: right;
+        clear: right;
+        float: left;
+        margin-right:15px;
+        padding-bottom: 0;
+      }
+
+      .inline input,select{
+        width: 150px;
+        float: left;
+        height: 20px;
+      }
+
+      .inline button {
+        height: 20px;
+        margin-left: 15px;
+        width: 50px;
+      }
+
+      button.primary {
+        border: 1px solid white;
+        background: #00ad57;
+        color:white;
+        cursor: pointer;
+        text-transform: uppercase;
+      }
+
+      button.big {
+        font-size: 16px;
+        width: 100%;
+        height: 40px;
+      }
+
+      .table-input {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 20px;
+        padding: 2px !important;
+        font-size: 12px;
+        border: 1px solid black;
+        border-radius: 0 !important;
+      }
+
+      .table {
+        width: 100%;
+        max-width: 100%;
+        border-collapse: collapse;
+        border-spacing: 0;
+        border: 1px solid #ddd;
+        font-size: 14px;
+      }
+
+      .table > tbody > tr > td, .table > tbody > tr > th, .table > tfoot > tr > td, .table > tfoot > tr > th, .table > thead > tr > td, .table > thead > tr > th {
+        border: 1px solid #ddd;
+      }
+
     </style>
     <title>{% block title %}{{ title|default }}{% endblock title %}</title>
 

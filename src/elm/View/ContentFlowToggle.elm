@@ -12,12 +12,14 @@ import Msg exposing (..)
 import View.Utility exposing (..)
 import View.ToggleIndicator exposing (..)
 
+import I18Next exposing ( t, Delims(..) )
+
 
 {-| Render the widget for the user to switch ContentFlow on and off
 -}
 viewContentFlowToggle : Model -> Element Msg
 viewContentFlowToggle model =
-  [ "ContentFlow is "++(if isContentFlowEnabled model then "ON" else "OFF") |> bodyNoWrap [ width fill ]
+  [ (t model.translations "generic.lbl_content_flow") ++(if isContentFlowEnabled model then (t model.translations "generic.btn_content_flow_on") else (t model.translations "generic.btn_content_flow_off")) |> bodyNoWrap [ width fill ]
   , viewToggleIndicator (isContentFlowEnabled model) ""
   ]
   |> row [ width fill, spacing 10, onClick ToggleContentFlow ]

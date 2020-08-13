@@ -15,6 +15,8 @@ import View.Utility exposing (..)
 import Msg exposing (..)
 import Animation exposing (..)
 
+import I18Next exposing ( t, Delims(..) )
+
 
 {-| Render the ContentFlowBar, with or without ContentFlow enabled.
     Note that the ContentFlowBar can appear on an OER card or in other places, such as the inspector.
@@ -237,7 +239,7 @@ viewChunkPopup model chunkPopup =
   let
       entitiesSection =
         if chunkPopup.chunk.entities |> List.isEmpty then
-          [ "No data available" |> text ]
+          [ (t model.translations "generic.lbl_no_data_available") |> text ]
         else
           chunkPopup.chunk.entities
           |> List.map (viewEntityButton model chunkPopup)
@@ -326,7 +328,7 @@ viewDefinition : Model -> EntityId -> Element Msg
 viewDefinition model entityId =
   let
       unavailable =
-        "✗ Definition unavailable" |> bodyWrap [ padding 10 ]
+        "✗ " ++ (t model.translations "generic.lbl_definition_unavailable") |> bodyWrap [ padding 10 ]
   in
       case model.entityDefinitions |> Dict.get entityId of
         Nothing -> -- shouldn't happen
@@ -370,10 +372,10 @@ viewPostClickFlyoutPopup model oer barWidth =
           playButton =
             if isVideoFile oer.url then
               if isCard then
-                [ actionButtonWithoutIconStopPropagation buttonAttrs "▶ Play from here" (InspectOer oer position True "InspectOer PopupAfterClickedOnContentFlowBar Play from here")
+                [ actionButtonWithoutIconStopPropagation buttonAttrs ("▶ " ++ (t model.translations "generic.btn_play_from_here")) (InspectOer oer position True "InspectOer PopupAfterClickedOnContentFlowBar Play from here")
                 ]
               else
-                [ actionButtonWithoutIconStopPropagation buttonAttrs "▶ Play from here" (StartCurrentHtml5Video (position * oer.durationInSeconds))
+                [ actionButtonWithoutIconStopPropagation buttonAttrs ("▶ " ++ (t model.translations "generic.btn_play_from_here")) (StartCurrentHtml5Video (position * oer.durationInSeconds))
                 ]
             else
               []
@@ -384,11 +386,11 @@ viewPostClickFlyoutPopup model oer barWidth =
                 []
 
               Just range ->
-                [ actionButtonWithoutIconStopPropagation buttonAttrs "❌ Remove Range" (PressedRemoveRangeButton oer.id range)
+                [ actionButtonWithoutIconStopPropagation buttonAttrs ("❌ " ++ (t model.translations "generic.btn_remove_range")) (PressedRemoveRangeButton oer.id range)
                 ]
 
           cancelButton =
-            [ actionButtonWithoutIconStopPropagation buttonAttrs "Cancel" ClosePopup
+            [ actionButtonWithoutIconStopPropagation buttonAttrs (t model.translations "generic.btn_cancel") ClosePopup
             ]
 
           buttons =

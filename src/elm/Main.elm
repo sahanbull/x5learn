@@ -23,6 +23,14 @@ import View.Pages.CreatePlaylist exposing (viewCreatePlaylistPage)
 import Update exposing (..)
 import Request exposing (..)
 
+import I18Next exposing
+  ( t
+  , tr
+  , Translations
+  , Delims(..)
+  , translationsDecoder
+  )
+
 
 {-| This module comprises the core of the Elm application.
     It contains the essential "main" function and some of its key arguments,
@@ -69,7 +77,7 @@ view model =
 
       (body, inspector) =
         if isSiteUnderMaintenance then
-          viewMaintenancePage
+          viewMaintenancePage model
         else
           case  model.session of
             Nothing ->

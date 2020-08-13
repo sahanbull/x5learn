@@ -14,7 +14,6 @@ import Model exposing (..)
 import View.Utility exposing (..)
 import Msg exposing (..)
 
-
 viewSearchWidget : Model -> Length -> String -> String -> Element Msg
 viewSearchWidget model widthAttr placeholder searchInputTyping =
   let

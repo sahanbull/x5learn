@@ -14,6 +14,8 @@ import Element.Events as Events exposing (onClick, onMouseEnter, onMouseLeave)
 import Model exposing (..)
 import View.Utility exposing (..)
 
+import I18Next exposing ( t, Delims(..) )
+
 import Msg exposing (..)
 
 
@@ -63,19 +65,19 @@ viewCourseItem model index item =
             if index==0 || isLabStudy1 model then
               none
             else
-              button (buttonAttrs ++ [onClickStopPropagation (MovedCourseItemDown (index-1))]) { onPress = Nothing, label = "Move ↑" |> captionNowrap [ whiteText ] }
+              button (buttonAttrs ++ [onClickStopPropagation (MovedCourseItemDown (index-1))]) { onPress = Nothing, label = (t model.translations "playlist.btn_move_material") ++ " ↑" |> captionNowrap [ whiteText ] }
 
           moveDownButton =
             if index==nCourseItems-1 || isLabStudy1 model then
               none
             else
-              button (buttonAttrs ++ [onClickStopPropagation (MovedCourseItemDown index)]) { onPress = Nothing, label = "Move ↓" |> captionNowrap [ whiteText ] }
+              button (buttonAttrs ++ [onClickStopPropagation (MovedCourseItemDown index)]) { onPress = Nothing, label = (t model.translations "playlist.btn_move_material") ++ " ↓" |> captionNowrap [ whiteText ] }
 
           deleteButton =
             -- button [ alignRight ] { onPress = Just <| RemovedOerFromCourse oer.id, label = "Remove" |> captionNowrap [ greyText ] }
             -- We could use a button here but we don't want the click event to bubble up to the miniCard.
             -- One quick way to prevent this is to use stopPropagation instead of elm-ui's button element
-            "Remove"
+            (t model.translations "playlist.btn_remove_material")
             |> captionNowrap [ greyText, alignRight, htmlClass "CursorPointer", onClickStopPropagation (RemovedOerFromCourse oer.id) ]
 
           topRow =
@@ -121,7 +123,7 @@ viewCoursePathFinderWidget model =
   else
     case model.courseOptimization of
       Nothing ->
-        actionButtonWithIcon [ whiteText, paddingXY 12 10, width fill, centerX ] [ Background.color electricBlue, width fill, buttonRounding ] IconLeft 1 "directions_walk_white" "Optimise learning path" (Just PressedOptimiseLearningPath)
+        actionButtonWithIcon [ whiteText, paddingXY 12 10, width fill, centerX ] [ Background.color electricBlue, width fill, buttonRounding ] IconLeft 1 "directions_walk_white" (t model.translations "playlist.btn_optimize_learning_path") (Just PressedOptimiseLearningPath)
 
       Just Loading ->
         viewLoadingSpinner
@@ -130,11 +132,11 @@ viewCoursePathFinderWidget model =
         let
             content =
               if savedPreviousCourse == model.course then
-                [ "Your workspace is in a good sequence for learning, according to our algorithm. No changes needed." |> captionWrap [ whiteText ]
+                [ t model.translations "alerts.lbl_learning_path_already_optimized" |> captionWrap [ whiteText ]
                 ]
               else
-                [ "Our algorithm has changed the sequence of your items." |> captionWrap [ whiteText ]
-                , simpleButton [ Font.size 12, Font.color electricBlue ] "Undo" (Just <| PressedUndoCourse savedPreviousCourse)
+                [ t model.translations "alerts.lbl_learning_path_optimized" |> captionWrap [ whiteText ]
+                , simpleButton [ Font.size 12, Font.color electricBlue ] (t model.translations "playlist.btn_undo_optimize_learning_path") (Just <| PressedUndoCourse savedPreviousCourse)
                 ]
         in
             content

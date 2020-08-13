@@ -1,0 +1,22 @@
+{% extends "security/base.html" %}
+
+{% block content %}
+  <div class="centerblock">
+    <span style="text-align: center;">
+        {% include "security/_messages.html" %}
+    </span>
+    <p class="centernote">You will be redirected in <span id="timer">5 seconds</span></p>
+    <p class="centernote"><a href="/">Click here to access the dashboard now</a></p>
+  </div>
+
+  <script type="text/javascript">
+        var timer = 5;
+        setInterval(function() {
+            timer -= 1;
+            document.getElementById("timer").innerHTML = timer + " seconds"; 
+
+            if (timer == 0)
+                window.location = "/";
+        }, 1000);
+    </script>
+{% endblock %}

@@ -20,6 +20,8 @@ import Model exposing (..)
 import Msg exposing (..)
 import Animation exposing (..)
 
+import I18Next exposing ( t, Delims(..) )
+
 type alias PageWithInspector = (Element Msg, List (Attribute Msg))
 
 type IconPosition
@@ -600,12 +602,12 @@ inlineLinkAttrs =
   [ paddingXY 5 0, Font.color blueberryBlue ]
 
 
-guestCallToSignup : String -> Element Msg
-guestCallToSignup incentive =
-  [ "You are not logged in. "++incentive++", make sure to" |> text
-  , "log in" |> text |> linkTo inlineLinkAttrs loginPath
-  , "or" |> text
-  , "sign up" |> text |> linkTo inlineLinkAttrs signupPath
+guestCallToSignup : Model -> String -> Element Msg
+guestCallToSignup model incentive =
+  [ (t model.translations "alerts.lbl_guest_call_to_signup_prefix")++ " " ++ incentive++", "++(t model.translations "alerts.lbl_guest_call_to_signup_suffix") |> text
+  , (t model.translations "alerts.btn_guest_call_to_signup_login") |> text |> linkTo inlineLinkAttrs loginPath
+  , (t model.translations "alerts.lbl_guest_call_to_signup_or") |> text
+  , (t model.translations "alerts.btn_guest_call_to_signup_signup") |> text |> linkTo inlineLinkAttrs signupPath
   ]
   |> paragraph [ width fill, Font.size 14, Font.color midnightBlue ]
 

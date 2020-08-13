@@ -18,6 +18,8 @@ import View.Bubblogram exposing (..)
 import Msg exposing (..)
 import Animation exposing (..)
 
+import I18Next exposing ( t, Delims(..) )
+
 import Url.Builder
 
 {-| Render a list of OERs as cards on a grid
@@ -164,7 +166,7 @@ viewVisibleOerCard model position barId enableShadow oer =
                 oer.translations
                 |> Dict.keys
           in
-              "Subtitles: " ++ (languages |> String.join " ")
+              (t model.translations "generic.btn_subtitles") ++ " : " ++ (languages |> String.join " ")
               |> captionNowrap [ paddingXY 3 2, Background.color slightlyTransparentBlack, greyText ]
               |> inFront
               |> List.singleton
@@ -408,7 +410,7 @@ viewOverviewTypeMenu model =
         [ alignRight, moveLeft 130, moveDown 30, Border.width 2, Border.color white, htmlClass "PreventClosingThePopupOnClick", buttonRounding ] ++ options
   in
       -- actionButtonWithIcon [ whiteText, paddingXY 12 10 ] [] IconLeft 0.9 "format_list_white" "View ▾" (Just OpenedOverviewTypeMenu)
-      actionButtonWithoutIcon [ whiteText, paddingXY 12 10 ] [] "View ▾" (Just OpenedOverviewTypeMenu)
+      actionButtonWithoutIcon [ whiteText, paddingXY 12 10 ] [] ((t model.translations "generic.btn_thumbnail_view") ++ " ▾") (Just OpenedOverviewTypeMenu)
       |> el attrs
 
 
@@ -417,18 +419,18 @@ viewPlaylistButtons model =
   let
     downloadButton =
       if isLoggedIn model then
-        newTabLink [ bigButtonPadding, whiteText, Font.center, width fill, Font.size 14 ] { url = "/playlist/download/" ++ Maybe.withDefault "" model.publishedPlaylistId, label = Element.text "Download" }
+        newTabLink [ bigButtonPadding, whiteText, Font.center, width fill, Font.size 14 ] { url = "/playlist/download/" ++ Maybe.withDefault "" model.publishedPlaylistId, label = Element.text (t model.translations "playlist.btn_playist_download") }
       else
-        actionButtonWithoutIcon [whiteText] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] "Download" (Just <| SetPlaylistState (Just PlaylistClone))
+        actionButtonWithoutIcon [whiteText] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] (t model.translations "playlist.btn_playist_download") (Just <| SetPlaylistState (Just PlaylistClone))
 
     cloneButton =
-      actionButtonWithoutIcon [whiteText] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] "Clone" (Just <| SetPlaylistState (Just PlaylistClone))
+      actionButtonWithoutIcon [whiteText] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] (t model.translations "playlist.btn_playist_clone") (Just <| SetPlaylistState (Just PlaylistClone))
 
     shareButton =
-      actionButtonWithoutIcon [whiteText] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] "Share" (Just <| SetPlaylistState (Just PlaylistShare))
+      actionButtonWithoutIcon [whiteText] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] (t model.translations "playlist.btn_playist_share") (Just <| SetPlaylistState (Just PlaylistShare))
 
     infoButton =
-      actionButtonWithoutIcon [whiteText] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] "Info" (Just <| SetPlaylistState (Just PlaylistInfo))
+      actionButtonWithoutIcon [whiteText] [ bigButtonPadding, width fill, htmlClass "HoverGreyBackground" ] (t model.translations "playlist.btn_playist_info") (Just <| SetPlaylistState (Just PlaylistInfo))
 
     attrs =
         [ alignRight, moveLeft 210, moveDown 30, spacing 6 ]

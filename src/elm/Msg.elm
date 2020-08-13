@@ -127,6 +127,8 @@ type Msg
   | UpdatePlaylistItem String String
   | SubmittedPlaylistItemUpdate
   | SetSearchCurrentPage Int
+  | ChangeLanguage String
+  | OpenedLanguageSelectorMenu
   | StopEditingPlaylist Int
 
 type UserProfileField

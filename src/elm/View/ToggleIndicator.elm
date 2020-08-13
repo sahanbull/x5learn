@@ -11,7 +11,6 @@ import Model exposing (..)
 import Msg exposing (..)
 import View.Utility exposing (..)
 
-
 {-| Render a label for the user see whether a toggle is switched  on or off
 -}
 viewToggleIndicator : Bool -> String -> Element Msg

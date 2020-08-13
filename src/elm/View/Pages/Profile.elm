@@ -15,6 +15,7 @@ import View.ToggleIndicator exposing (..)
 
 import Msg exposing (..)
 
+import I18Next exposing ( t, Delims(..) )
 
 {-| Render the user profile page
 -}
@@ -25,10 +26,10 @@ viewProfilePage model savedUserProfile {userProfile, saved} =
         Input.text [ width fill, onEnter SubmittedUserProfile ] { onChange = EditUserProfile field, text = valueText, placeholder = Just (labelText|> text |> Input.placeholder []), label = labelText |> text |> Input.labelAbove [ Font.size 16 ] }
 
       firstNameField =
-        textInput FirstName "First Name" userProfile.firstName
+        textInput FirstName (t model.translations "profile.lbl_first_name") userProfile.firstName
 
       lastNameField =
-        textInput LastName "Last Name" userProfile.lastName
+        textInput LastName (t model.translations "profile.lbl_last_name") userProfile.lastName
 
       saveButton =
         if model.userProfileFormSubmitted then
@@ -36,15 +37,15 @@ viewProfilePage model savedUserProfile {userProfile, saved} =
           |> el [ width (px 77), height (px 37) ]
         else
           if saved then
-            "✓ Saved" |> bodyWrap [ greyText, width fill ]
+            "✓ " ++ (t model.translations "profile.lbl_saved")  |> bodyWrap [ greyText, width fill ]
           else
-            button [ paddingXY 16 8, width fill, Background.color primaryGreen, whiteText ] { onPress = Just SubmittedUserProfile, label = "Save" |> text |> el [] }
+            button [ paddingXY 16 8, width fill, Background.color primaryGreen, whiteText ] { onPress = Just SubmittedUserProfile, label = (t model.translations "profile.btn_save") |> text |> el [] }
 
       page =
         [ image [ alpha 0.5, centerX, width <| px 75 ] { src = svgPath "user_default_avatar", description = "user menu" }
-        , "Email: " ++ userProfile.email |> captionNowrap [ centerX ]
+        , (t model.translations "profile.lbl_email") ++ ": " ++ userProfile.email |> captionNowrap [ centerX ]
         , [ firstNameField, lastNameField ] |> wrappedRow [ spacing 20 ]
-        , viewDataCollectionConsentToggle userProfile.isDataCollectionConsent
+        , viewDataCollectionConsentToggle model userProfile.isDataCollectionConsent
         , [ saveButton ] |> wrappedRow [ spacing 20, height <| px 40 ]
         ]
         |> column [ spacing 30, padding 5 ]
@@ -53,9 +54,9 @@ viewProfilePage model savedUserProfile {userProfile, saved} =
       (page, [])
 
 
-viewDataCollectionConsentToggle : Bool -> Element Msg
-viewDataCollectionConsentToggle enabled =
-  [ "Allow X5GON to collect data about my activity on this site for research" |> bodyWrap [ width fill ]
+viewDataCollectionConsentToggle : Model -> Bool -> Element Msg
+viewDataCollectionConsentToggle model enabled =
+  [ (t model.translations "profile.lbl_allow_data_collection_consent") |> bodyWrap [ width fill ]
   , viewToggleIndicator enabled (if enabled then "PrimaryGreenBackground" else "") |> el [ paddingRight 10 ]
   ]
   |> row [ spacing 10, onClick (ToggleDataCollectionConsent enabled), htmlClass "CursorPointer" ]

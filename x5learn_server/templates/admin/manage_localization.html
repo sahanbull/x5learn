@@ -1,0 +1,112 @@
+{% extends "security/base.html" %}
+
+{% block content %}
+  <div class="container">
+    {% include "security/_messages.html" %}
+    <h2 class="text-center">Manage Localization</h2>
+    <h5 class="text-center">(<a href="update_keys" class="primary">Update Keys</a>)</h5>
+
+    <div id="fetch_localization_section" class="row well">
+        <form method="get" action="localization">
+            <div class="inline">
+                <label class="control-label">Select Language</label>
+                <select class="form-control" name="language" onChange="displayAddNewLanguageSection(event);">
+                    {% for l in languages %}
+                    {% if l==lang %}
+                    <option selected="selected" value="{{ l }}">{{ l }}</option>
+                    {% else %}
+                    <option value="{{ l }}">{{ l }}</option>
+                    {% endif %}
+                    {% endfor %}
+                    <option value="_add_new_language" style="font-style: italic;"><i>Add New Language</i></option>
+                </select>
+                <label class="control-label">Select Page</label>
+                <select class="form-control" name="page">
+                    {% for p in pages %}
+                    {% if p==page %}
+                    <option selected="selected" value="{{ p }}">{{ p }}</option>
+                    {% else %}
+                    <option value="{{ p }}">{{ p }}</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+                <button type="submit" class="primary">Go</button>
+            </div>
+        </form>
+    </div>
+    <br><br>
+
+    <div id="add_new_language_section" class="row well" style="display:none">
+        <form method="post" action="add_new_language">
+            <div class="inline">
+                <label class="control-label">Language Prefix</label>
+                <input type="text" class="table-input" name="language" style="width:200px !important">
+                <button type="submit" class="primary" style="width: 150px; height: 25px;">Add Language</button>
+                <button type="button" onClick="resetForm();" class="primary" style="width: 100px; height: 25px;">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    {% if data != None %}
+    <form method="post" action="localization" id="localization_table_section">
+
+        <input type="hidden" name="language" value="{{ lang }}">
+        <input type="hidden" name="page" value="{{ page }}">
+
+        <div class="row">
+            <table class="table" cellpadding=10>
+                <thead>
+                    <tr>
+                        <th width="5%">#</th>
+                        <th width="15%">Key</th>
+                        <th width="35%">Default</th>
+                        <th width="35%">Replace</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for key, value in data.items() %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ key }}</td>
+                        <td>{{ value }}</td>
+                        <td><input class="table-input" name="replace" type="text"/></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <br>
+
+        <div class="row">
+            <button type="submit" class="primary big">Submit</button>
+        </div>
+    </form>
+    {% endif %}
+
+
+  </div>
+
+<script type="text/javascript">
+
+    function displayAddNewLanguageSection(event) {
+        if (event.target.value != "_add_new_language")
+            return;
+
+        var x = document.getElementById("add_new_language_section");
+        x.style.display = "block";
+
+        x = document.getElementById("fetch_localization_section");
+        x.style.display = "none";
+
+        x = document.getElementById("localization_table_section");
+        x.style.display = "none";
+    }
+
+    function resetForm() {
+        location.reload();
+    }
+    
+</script>
+
+{% endblock %}
+

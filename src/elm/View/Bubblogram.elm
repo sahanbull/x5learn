@@ -24,6 +24,8 @@ import Model exposing (..)
 import View.Utility exposing (..)
 import View.ContentFlowBar exposing (..)
 
+import I18Next exposing ( t, tr, Delims(..) )
+
 import Msg exposing (..)
 
 
@@ -287,7 +289,7 @@ viewPopup model bubblogramType {oerId, entityId, content} bubble =
           DefinitionInBubblePopup ->
             let
                 unavailable =
-                  ("✗ Definition unavailable" |> bodyWrap [], 0)
+                  ("✗ " ++ (t model.translations "generic.lbl_definition_unavailable") |> bodyWrap [], 0)
 
                 element =
                   case model.entityDefinitions |> Dict.get entityId of

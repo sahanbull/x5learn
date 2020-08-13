@@ -21,9 +21,13 @@
      instructions how to enable JavaScript in your web browser</a>.
     </noscript>
     <script>
+      var language = '{{ lang }}';
+      var languages = JSON.parse('{{ languages | tojson | safe }}');
+      var translations = JSON.parse('{{ localization_dict | tojson | safe}}');
+
       const minWindowWidth=800;
       const minWindowHeight=600;
-      var flags = {windowWidth: window.innerWidth, windowHeight: window.innerHeight, minWindowWidth: minWindowWidth, minWindowHeight: minWindowHeight};
+      var flags = {windowWidth: window.innerWidth, windowHeight: window.innerHeight, minWindowWidth: minWindowWidth, minWindowHeight: minWindowHeight, language: language, translations: translations, languages: languages};
       var app = Elm.Main.init({flags: flags});
       setupPorts(app);
 

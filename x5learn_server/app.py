@@ -2234,7 +2234,7 @@ def update_localization_keys():
 
     # open localization template
     try:
-        with open('config/localization_template.json') as f:
+        with open(r'config/localization_template.json') as f:
             data = json.load(f)
 
             # create a lookup to easily detect what pages or keys are missing
@@ -2297,8 +2297,8 @@ def update_localization_keys():
             flash("Localization keys successfully updated")
             return redirect("/admin/localization")
 
-    except (FileNotFoundError, IOError):
-        flash('Localization template file not found.')
+    except Exception as e:
+        flash('Localization template file not found. Error - ' + str(e))
         return redirect("/admin/localization")
 
 

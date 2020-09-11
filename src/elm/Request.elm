@@ -35,10 +35,17 @@ requestSession =
 
 {-| Fetch OER search results from the backend
 -}
-searchOers : String -> Int -> Cmd Msg
-searchOers searchText page =
+searchOers : String -> Int -> String -> String -> Cmd Msg
+searchOers searchText page materialType materialLanguage =
+  let
+    searchType =
+      if materialType == "All Media" then
+        "all"
+      else
+        String.toLower materialType
+  in
   Http.get
-    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText, Url.Builder.int "page" page ]
+    { url = Url.Builder.absolute [ apiRoot, "search/" ] [ Url.Builder.string "text" searchText, Url.Builder.int "page" page, Url.Builder.string "type" searchType, Url.Builder.string "language" materialLanguage ]
     , expect = Http.expectJson RequestOerSearch oerSearchResultDecoder
     }
 

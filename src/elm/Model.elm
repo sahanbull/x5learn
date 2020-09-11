@@ -131,6 +131,8 @@ type alias Model =
   , language : String
   , translations : Translations
   , languages : List String
+  , materialType : String -- holds material type that will be searched using the search widget. Default is 'All'
+  , materialLanguage : String -- holds the language of the material that will be searched using the search widget. Default is 'en'
   }
 
 {-| We get the first sentence from the Wikipedia article
@@ -215,7 +217,6 @@ type alias OerId = Int
 type alias EntityId = String
 
 type alias EntityTitle = String
-
 
 {-| Knowing what part of the page the user is seeing
 -}
@@ -397,6 +398,8 @@ type Popup
   | AddToPlaylistPopup -- Allowing the user to add an oer to the playlist
   | SelectLicensePopup -- Allowing the user to select a license when publishing
   | LanguagePopup -- Allowing the user to select a langauge from language popup
+  | SearchMaterialTypePopup -- Allowing the user to select the material type that should be searched
+  | SearchMaterialLanguagePopup -- Allowing the user to select the language of the material to be searched
 
 
 {-| Cascading menu containing wikipedia topics
@@ -695,6 +698,8 @@ initialModel nav flags =
   , language = flags.language
   , translations = initTranslations flags.translations
   , languages = initLanguages flags.languages
+  , materialType = "All Media"
+  , materialLanguage = "en"
   }
 
 initialLicenseType : List LicenseType

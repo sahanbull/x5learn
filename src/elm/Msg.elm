@@ -130,6 +130,10 @@ type Msg
   | ChangeLanguage String
   | OpenedLanguageSelectorMenu
   | StopEditingPlaylist Int
+  | OpenedSelectSearchMaterialType
+  | SelectedMaterialTypeForSearch String 
+  | OpenedSelectSearchMaterialLanguage
+  | SelectedMaterialLanguageForSearch String
 
 type UserProfileField
   = FirstName

@@ -1013,7 +1013,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                 newModel =
                     { model | currentTaskName = Just taskName, searchInputTyping = searchText, searchState = Just <| newSearch searchText, snackbar = Nothing }
             in
-            ( newModel, [ setBrowserFocus "", searchOers searchText model.currentPageForSearch ] |> Cmd.batch )
+            ( newModel, [ setBrowserFocus "", searchOers searchText model.currentPageForSearch model.materialType model.materialLanguage ] |> Cmd.batch )
                 |> logEventForLabStudy "StartTask" [ taskName ]
 
         CompleteTask ->
@@ -1254,6 +1254,42 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             
         StopEditingPlaylist flag ->
             ( { model | editingOerTitleInPlaylist = False, editingOerDescriptionInPlaylist = False }, Cmd.none )
+
+        OpenedSelectSearchMaterialType ->
+            case model.popup of
+                Nothing ->
+                    ( { model | popup = Just SearchMaterialTypePopup }, setBrowserFocus "" )
+                        |> logEventForLabStudy "OpenedSearchMaterialTypePopup" []
+                
+                Just SearchMaterialTypePopup ->
+                    ( model |> closePopup, Cmd.none )
+                        |> logEventForLabStudy "OpenedSearchMaterialTypePopup" []
+
+                _ ->
+                    ( { model | popup = Just SearchMaterialTypePopup }, setBrowserFocus "" )
+                        |> logEventForLabStudy "OpenedSearchMaterialTypePopup" []
+                
+
+        SelectedMaterialTypeForSearch materialType ->
+            ( { model | materialType = materialType } |> closePopup, Cmd.none )
+
+        OpenedSelectSearchMaterialLanguage ->
+            case model.popup of
+                Nothing ->
+                    ( { model | popup = Just SearchMaterialLanguagePopup }, setBrowserFocus "" )
+                        |> logEventForLabStudy "OpenedSearchMaterialLanguagePopup" []
+                
+                Just SearchMaterialLanguagePopup ->
+                    ( model |> closePopup, Cmd.none )
+                        |> logEventForLabStudy "OpenedSearchMaterialLanguagePopup" []
+
+                _ ->
+                    ( { model | popup = Just SearchMaterialLanguagePopup }, setBrowserFocus "" )
+                        |> logEventForLabStudy "OpenedSearchMaterialTypePopup" []
+                
+
+        SelectedMaterialLanguageForSearch materialLanguage ->
+            ( { model | materialLanguage = materialLanguage } |> closePopup, Cmd.none )
 
 
 insertSearchResults : List OerId -> Model -> Model
@@ -1539,6 +1575,12 @@ popupToStrings maybePopup =
                 LanguagePopup ->
                     [ "LanguagePopup" ]
 
+                SearchMaterialTypePopup ->
+                    [ "SearchMaterialTypePopup" ]
+
+                SearchMaterialLanguagePopup ->
+                    [ "SearchMaterialLanguagePopup" ]
+
 
 executeSearchAfterUrlChanged : Model -> Url -> ( Model, Cmd Msg )
 executeSearchAfterUrlChanged model url =
@@ -1591,7 +1633,7 @@ executeSearchAfterUrlChanged model url =
         newModel =
             { model | currentPageForSearch = pageNo, searchInputTyping = searchInputTyping, searchState = Just <| newSearch textParam, snackbar = Nothing, searchIsPlaylist = isPlaylist, publishedPlaylistId = playlistId, playlistState = Nothing }
     in
-    ( newModel |> closePopup, searchOers textParam pageNo )
+    ( newModel |> closePopup, searchOers textParam pageNo model.materialType model.materialLanguage )
         |> logEventForLabStudy "executeSearchAfterUrlChanged" [ textParam ]
 
 

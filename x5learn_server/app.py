@@ -355,6 +355,9 @@ def api_search():
     """
     text = request.args['text'].lower().strip()
     page = int(request.args['page']) if request.args['page'] is not None else 1
+    material_type = str(request.args['type']).lower() if request.args['type'] is not None else "all"
+    lang = str(request.args['language']).lower() if request.args['language'] is not None else "en"
+
     if text == "":  # if empty string, no results
         return jsonify([])
     elif text.startswith(PLAYLIST_PREFIX):  # if its a playlist
@@ -383,7 +386,7 @@ def api_search():
 
             results = [] if oer is None else ([oer], 1)
         except ValueError:
-            results = search_results_from_x5gon_api(text, page)
+            results = search_results_from_x5gon_api(text, page, material_type, lang)
 
         oers = [oer.data_and_id() for oer in results[0]]
 
@@ -663,11 +666,11 @@ def ingest_thumb_generation_result():
     return 'OK'
 
 
-def search_results_from_x5gon_api(text, page):
+def search_results_from_x5gon_api(text, page, material_type, lang):
     text = urllib.parse.quote(text)
     if is_special_search_key_for_lab_study(text):
         return frozen_search_results_for_lab_study(text)
-    return search_results_from_x5gon_api_pages(text, page, [])
+    return search_results_from_x5gon_api_pages(text, page, [], material_type, lang)
 
 
 def remove_duplicates_from_x5gon_search_results(materials):
@@ -694,12 +697,12 @@ def remove_duplicates_from_x5gon_search_results(materials):
 
 # This function is called recursively
 # until the number of search results hits a certain minimum or stops increasing
-def search_results_from_x5gon_api_pages(text, page_number, oers):
+def search_results_from_x5gon_api_pages(text, page_number, oers, material_type, lang):
     # print('X5GON search page_number', page_number)
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request(
         'GET',
-        '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=mp4,ogg,webm,video,mov,mp3,pdf&text=' + text + '&page=' + str(
+        '/api/v2/search/?url=https://platform.x5gon.org/materialUrl&types='+ material_type +'&languages='+ lang +'&text=' + text + '&page=' + str(
             page_number))
     response = conn.getresponse().read().decode("utf-8")
     metadata = json.loads(response)['metadata']
@@ -729,7 +732,7 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
         return oers, metadata['total_pages']
     if len(oers) >= MAX_SEARCH_RESULTS:
         return oers, metadata['total_pages']
-    return search_results_from_x5gon_api_pages(text, page_number + 1, oers)
+    return search_results_from_x5gon_api_pages(text, page_number + 1, oers, material_type, lang)
 
 
 def retrieve_oer_or_create_from_x5gon_material(material):

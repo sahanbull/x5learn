@@ -115,6 +115,9 @@ PLAYLIST_PREFIX = "pl:"
 # Keep this constant in sync with videoPlayReportingInterval on the frontend!
 VIDEO_PLAY_REPORTING_INTERVAL = 10
 
+# Path to localization template used to update localization keys
+LOCALIZATION_TEMPLATE = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'config/localization_template.json'))
+
 
 # create database when starting the app
 @app.before_first_request
@@ -2194,6 +2197,7 @@ def post_localization():
 @app.route("/admin/add_new_language", methods=['POST'])
 @login_required
 def add_new_language():
+
     # caputing post data
     post_data = request.form
 
@@ -2208,7 +2212,7 @@ def add_new_language():
 
         # get localization template
         try:
-            with open('config/localization_template.json') as f:
+            with open(LOCALIZATION_TEMPLATE) as f:
                 data = json.load(f)
 
                 for page in data:
@@ -2234,7 +2238,7 @@ def update_localization_keys():
 
     # open localization template
     try:
-        with open(r'config/localization_template.json') as f:
+        with open(LOCALIZATION_TEMPLATE) as f:
             data = json.load(f)
 
             # create a lookup to easily detect what pages or keys are missing

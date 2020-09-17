@@ -248,6 +248,20 @@ def api_session():
     return jsonify({'guestUser': 'OK'})
 
 
+@app.route("/download_notes/<oer_id>")
+def download_notes(oer_id):
+    
+    query_object = db_session.query(Note)
+    query_object = query_object.filter(Note.oer_id == oer_id)
+    query_object = query_object.filter(Note.is_deactivated == False)
+    query_object = query_object.order_by(Note.created_at.asc())
+    result_list = query_object.all()
+    
+    playlist = repository.get_by_id(Playlist, playlist_id)
+    playlist_blueprint = json.dumps(playlist.blueprint)
+    return render_template('download.html', playlist_name=playlist.title, playlist_blueprint=playlist_blueprint)
+
+
 def get_logged_in_user_profile_and_state():
     profile = current_user.user_profile if current_user.user_profile is not None else {
         'email': current_user.email}

@@ -1403,6 +1403,8 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             in
                 ( { model | mllpState = nextMllpState }, Cmd.none )
 
+        DownloadNotes oerid ->
+            ( model, Navigation.load ("/download_notes/" ++ (String.fromInt oerid)) )
         
 insertSearchResults : List OerId -> Model -> Model
 insertSearchResults oerIds model =

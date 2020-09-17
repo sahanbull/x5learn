@@ -577,6 +577,9 @@ viewFeedbackTab model oer tab =
         TextInput ->
           simpleButton [ Font.size 12, Font.color electricBlue ] "Cancel" (Just <| ResetMLLPState)
 
+    downloadNotesButton =
+        simpleButton [ Font.size 12, Font.color electricBlue ] "Download Notes" (Just <| DownloadNotes oer.id)
+
     mllpSystemButton = 
       let
         buttonText = 
@@ -620,6 +623,7 @@ viewFeedbackTab model oer tab =
       , notes |> el [ width fill ]
       , textField
       , mllpRow
+      , downloadNotesButton |> el [ alignRight ]
       ]
       |> column [ width fill, spacing 20 ]
     else

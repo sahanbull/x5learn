@@ -146,6 +146,7 @@ type Msg
   | VideoCurrentPlayTimeReceived String
   | SetVideoCurrentPlayTime
   | ResetMLLPState
+  | DownloadNotes OerId
 
 type UserProfileField
   = FirstName

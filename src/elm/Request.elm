@@ -1,4 +1,4 @@
-module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist, requestAddToPlaylist, requestSavePlaylist, requestDeletePlaylist, requestLoadLicenseTypes, requestPublishPlaylist, requestFetchPublishedPlaylist, requestSaveNote, requestSaveReview, requestFetchNotesForOer, requestFetchReviewsForOer, requestRemoveNote, requestRemoveReview,  requestUpdateNote, requestUpdateReview, requestUpdatePlaylistItem)
+module Request exposing (requestSession, searchOers, requestFeaturedOers, requestWikichunkEnrichments, requestEntityDefinitions, requestSaveUserProfile, requestOers, requestVideoUsages, requestLoadCourse, requestSaveCourse, requestSaveLoggedEvents, requestResourceRecommendations, requestCourseOptimization, requestLoadUserPlaylists, requestCreatePlaylist, requestAddToPlaylist, requestSavePlaylist, requestDeletePlaylist, requestLoadLicenseTypes, requestPublishPlaylist, requestFetchPublishedPlaylist, requestSaveNote, requestSaveReview, requestFetchNotesForOer, requestFetchReviewsForOer, requestRemoveNote, requestRemoveReview,  requestUpdateNote, requestUpdateReview, requestUpdatePlaylistItem, requestDownloadNotes)
 
 import Set exposing (Set)
 import Dict exposing (Dict)
@@ -298,6 +298,17 @@ requestUpdateNote note =
     , url = Url.Builder.absolute [ apiRoot, "note/" ++ String.fromInt note.id ] [ Url.Builder.string "text" note.text ]
     , body = Http.jsonBody <| Encode.object []
     , expect = Http.expectString RequestUpdateNote
+    }
+
+
+{-| download notes as text
+-}
+requestDownloadNotes : OerId -> Cmd Msg
+requestDownloadNotes oerId =
+  Http.post
+    { url = Url.Builder.absolute [ apiRoot, "download_notes/"  ++ (String.fromInt oerId) ] []
+    , body = Http.multipartBody <| []
+    , expect = Http.expectBytesResponse RequestDownloadNotes (resolve Ok)
     }
 
 
@@ -614,3 +625,21 @@ oerSearchResultDecoder =
   |> andMap (field "oers" (list oerDecoder))
   |> andMap (field "total_pages" int)
   |> andMap (field "current_page" int)
+
+resolve : (body -> Result String a) -> Http.Response body -> Result Http.Error a
+resolve toResult response =
+    case response of
+        Http.BadUrl_ url ->
+            Err (Http.BadUrl url)
+
+        Http.Timeout_ ->
+            Err Http.Timeout
+
+        Http.NetworkError_ ->
+            Err Http.NetworkError
+
+        Http.BadStatus_ metadata _ ->
+            Err (Http.BadStatus metadata.statusCode)
+
+        Http.GoodStatus_ _ body ->
+            Result.mapError Http.BadBody (toResult body)

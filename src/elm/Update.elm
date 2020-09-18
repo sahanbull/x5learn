@@ -22,6 +22,7 @@ import Url exposing (Url)
 import Url.Builder
 import Model exposing (MLLPState(..))
 import Model exposing (InspectorSidebarTab(..))
+import File.Download as Download
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -624,6 +625,12 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
 
         RequestUpdatePlaylistItem (Err err) ->
             ( { model | snackbar = createSnackbar model "Some changes were not saved" }, Cmd.none )
+
+        RequestDownloadNotes (Ok response) ->
+            ( { model | snackbar = createSnackbar model "Downloading notes" }, Download.bytes "notes.txt" "text/plain" response )
+
+        RequestDownloadNotes (Err err) ->
+            ( { model | snackbar = createSnackbar model "Note download failed. Try again later" }, Cmd.none )
 
         SetHover maybeOerId ->
             let
@@ -1403,6 +1410,8 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
             in
                 ( { model | mllpState = nextMllpState }, Cmd.none )
 
+        DownloadNotes oerid ->
+            ( model, requestDownloadNotes oerid )
         
 insertSearchResults : List OerId -> Model -> Model
 insertSearchResults oerIds model =

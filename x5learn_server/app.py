@@ -215,46 +215,46 @@ def logout():
 @app.route("/featured")
 def featured():
     languages = get_available_languages()
-    localization_dict = get_localization_dict()
-    return render_template('home.html', localization_dict=localization_dict, languages=languages)
+    localization_dict, lang = get_localization_dict()
+    return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
 
 
 @app.route("/search")
 def search():
     languages = get_available_languages()
-    localization_dict = get_localization_dict()
-    return render_template('home.html', localization_dict=localization_dict, languages=languages)
+    localization_dict, lang = get_localization_dict()
+    return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
 
 
 @app.route("/resource/<oer_id>")
 def resource(oer_id):
     languages = get_available_languages()
-    localization_dict = get_localization_dict()
-    return render_template('home.html', localization_dict=localization_dict, languages=languages)
+    localization_dict, lang = get_localization_dict()
+    return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
 
 
 @app.route("/profile")
 @login_required
 def profile():
     languages = get_available_languages()
-    localization_dict = get_localization_dict()
-    return render_template('home.html', localization_dict=localization_dict, languages=languages)
+    localization_dict, lang = get_localization_dict()
+    return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
 
 
 @app.route("/publish_playlist")
 @login_required
 def playlist():
     languages = get_available_languages()
-    localization_dict = get_localization_dict()
-    return render_template('home.html', localization_dict=localization_dict, languages=languages)
+    localization_dict, lang = get_localization_dict()
+    return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
 
 
 @app.route("/create_playlist")
 @login_required
 def new_playlist():
     languages = get_available_languages()
-    localization_dict = get_localization_dict()
-    return render_template('home.html', localization_dict=localization_dict, languages=languages)
+    localization_dict, lang = get_localization_dict()
+    return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
 
 
 @app.route("/playlist/download/<playlist_id>")

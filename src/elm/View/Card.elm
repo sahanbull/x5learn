@@ -251,26 +251,38 @@ viewVisibleOerCard model position barId enableShadow oer =
 viewCarousel : Model -> Oer -> Element Msg
 viewCarousel model oer =
   let
-      thumbFromSpritesheet =
-        if oer.mediatype/="video" || hasYoutubeVideo oer.url then
-          []
-        else
-          let
-              defaultThumb =
-                none
-                |> el [ width <| px cardWidth, height <| px imageHeight, htmlStyle "background" ("url('"++ (thumbUrl oer) ++"')") ]
-                |> inFront
-                |> List.singleton
-          in
-              if isHovering model oer then
-                case model.timelineHoverState of
-                  Nothing ->
-                    defaultThumb
 
-                  Just {position} ->
-                    [ viewScrubImage model oer position |> inFront ]
-              else
-                defaultThumb
+    thumbPath = 
+      case oer.images of
+        [] ->
+          "none"
+
+        [ singleImage ] ->
+          thumbUrlAlt singleImage
+
+        firstImage :: otherImages ->
+          thumbUrlAlt firstImage
+            
+    thumbFromSpritesheet =
+      if oer.mediatype/="video" || hasYoutubeVideo oer.url then
+        []
+      else
+        let
+            defaultThumb =
+              none
+              |> el [ width <| px cardWidth, height <| px imageHeight, htmlStyle "background" ("url('"++ thumbPath ++"')") ]
+              |> inFront
+              |> List.singleton
+        in
+            if isHovering model oer then
+              case model.timelineHoverState of
+                Nothing ->
+                  defaultThumb
+
+                Just {position} ->
+                  [ viewScrubImage model oer position |> inFront ]
+            else
+              defaultThumb
   in
       viewCoverImage model oer thumbFromSpritesheet
 

@@ -18,11 +18,11 @@
             "elm/url": "1.0.0",
             "elm-community/json-extra": "4.0.0",
             "elm-community/list-extra": "8.1.0",
-            "mdgriffith/elm-ui": "1.1.0"
+            "mdgriffith/elm-ui": "1.1.0",
+            "elm/file": "1.0.1",
+            "elm/bytes": "1.0.7"
         },
         "indirect": {
-            "elm/bytes": "1.0.7",
-            "elm/file": "1.0.1",
             "elm/parser": "1.1.0",
             "elm/virtual-dom": "1.0.2",
             "rtfeldman/elm-iso8601-date-strings": "1.1.2"

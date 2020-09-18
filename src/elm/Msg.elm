@@ -12,6 +12,7 @@ import Set
 import Animation exposing (..)
 import Model exposing (..)
 import Ports
+import Bytes exposing (Bytes)
 
 {-| The Msg type specifies all the actions that can occur in the app.
 -}
@@ -60,6 +61,7 @@ type Msg
   | RequestUpdateNote (Result Http.Error String)
   | RequestUpdateReview (Result Http.Error String)
   | RequestUpdatePlaylistItem (Result Http.Error String)
+  | RequestDownloadNotes (Result Http.Error Bytes)
   | SetHover (Maybe OerId)
   | SetPopup Popup
   | ClosePopup

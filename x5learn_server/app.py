@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, request, redirect
+from flask import Flask, jsonify, render_template, request, redirect, send_file
 from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required, \
     forms, RegisterForm, ResetPasswordForm
@@ -248,18 +248,37 @@ def api_session():
     return jsonify({'guestUser': 'OK'})
 
 
-@app.route("/download_notes/<oer_id>")
+@app.route("/api/v1/download_notes/<oer_id>", methods=['POST'])
 def download_notes(oer_id):
+
+    # fetch oer information
+    oer = repository.get_by_id(Oer, oer_id)
+
+    if oer is None:
+        return {'result': 'Invalid Oer'}, 400
     
+    # fetch notes for given oer id
     query_object = db_session.query(Note)
     query_object = query_object.filter(Note.oer_id == oer_id)
     query_object = query_object.filter(Note.is_deactivated == False)
     query_object = query_object.order_by(Note.created_at.asc())
-    result_list = query_object.all()
-    
-    playlist = repository.get_by_id(Playlist, playlist_id)
-    playlist_blueprint = json.dumps(playlist.blueprint)
-    return render_template('download.html', playlist_name=playlist.title, playlist_blueprint=playlist_blueprint)
+    notes_list = query_object.all()
+
+    # create text file for writing
+    text_file = "/tmp/notes-{}.txt".format(oer_id)
+    f = open(text_file, "w+")
+    f.truncate(0)
+    f.write("Notes for OER - {} \n\n".format(oer.url))
+
+    for note in notes_list:
+        f.write(str(note.created_at) + "\n")
+        f.write(note.text + "\n\n")
+
+    f.close()
+    return send_file(text_file,
+                     mimetype='text/plain',
+                     attachment_filename= "notes-{}.txt".format(oer_id),
+                     as_attachment=True)
 
 
 def get_logged_in_user_profile_and_state():

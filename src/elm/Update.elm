@@ -1243,7 +1243,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                  ( model, Cmd.none )
                 
                 Just searchState ->
-                     ( { model | currentPageForSearch = pageNumber }, Navigation.load ("/search?q=" ++ searchState.lastSearchText ++ "&page=" ++ String.fromInt pageNumber) )
+                     ( { model | currentPageForSearch = pageNumber }, Navigation.load ("/search?q=" ++ searchState.lastSearchText ++ "&page=" ++ String.fromInt pageNumber ++ "&lang=" ++ model.language) )
 
         OpenedLanguageSelectorMenu ->
             ( { model | popup = Just LanguagePopup }, setBrowserFocus "" )

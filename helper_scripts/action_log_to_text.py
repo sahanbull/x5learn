@@ -12,7 +12,7 @@ def main(args):
     users = db_objects[1]
     connection = db_objects[2]
 
-    query = db.select([users.c.id, users.c.email]).where(users.c.email.like("p%"))
+    query = db.select([users.c.id, users.c.email]).where(users.c.email.like("p%")).order_by(users.c.id)
     user_data = connection.execute(query).fetchall()
 
     # list to hold session logs
@@ -29,8 +29,8 @@ def main(args):
     for id in user_dict.keys():
         if user_dict[id] == "p0":
             continue
-        
-        query = db.select([actions.columns.created_at, actions.columns.events, actions.columns.user_login_id]).where(actions.columns.user_login_id == id)
+
+        query = db.select([actions.columns.created_at, actions.columns.events, actions.columns.user_login_id]).where(actions.columns.user_login_id == id).order_by(actions.columns.client_time)
         action_data = connection.execute(query).fetchall()
 
         # open text file for writing user wise
@@ -60,6 +60,9 @@ def main(args):
 
                 write_string = ""
                 if event['eventType'] == "StartTask":
+
+                    if "".join(event['args']) != 'Task:ClimateChange' and "".join(event['args']) != 'Task:MachineLearning':
+                        continue
 
                     # if task has not been logged completed force event based on last action
                     if last_session > 0:

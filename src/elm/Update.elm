@@ -1007,6 +1007,9 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                         "Math" ->
                             "youtubestudy"
 
+                        "Interaction" -> 
+                            "youtubestudy2"
+
                         _ ->
                             "labstudypractice"
 

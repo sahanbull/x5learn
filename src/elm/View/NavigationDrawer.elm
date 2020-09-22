@@ -239,6 +239,7 @@ taskButtons model =
     else if isLabStudy2 model then
       [ taskButton "Practice"
       , taskButton "Math"
+      , taskButton "Interaction"
       ]
       |> column [ spacing 10 ]
     else

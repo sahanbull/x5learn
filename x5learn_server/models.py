@@ -37,6 +37,7 @@ class UserLogin(Base, UserMixin):
     login_count = Column(Integer)
     active = Column(Boolean())
     confirmed_at = Column(DateTime())
+    api_key = Column(String(255))
     roles = relationship('Role', secondary='roles_users',
                          backref=backref('user_login', lazy='dynamic'))
     user_profile = Column(JSON())

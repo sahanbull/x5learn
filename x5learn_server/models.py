@@ -4,7 +4,7 @@ from flask_security import UserMixin, RoleMixin
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy import Boolean, DateTime, Column, Integer, \
     Text, String, ForeignKey, BigInteger, Float
-from sqlalchemy.dialects.postgresql import JSON
+from sqlalchemy.dialects.postgresql import JSON, BYTEA
 import datetime
 
 
@@ -37,6 +37,7 @@ class UserLogin(Base, UserMixin):
     login_count = Column(Integer)
     active = Column(Boolean())
     confirmed_at = Column(DateTime())
+    api_key = Column(BYTEA())
     roles = relationship('Role', secondary='roles_users',
                          backref=backref('user_login', lazy='dynamic'))
     user_profile = Column(JSON())

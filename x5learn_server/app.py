@@ -15,6 +15,7 @@ from sqlalchemy import or_, and_, cast, Integer
 from sqlalchemy.orm.attributes import flag_modified
 from flask_restplus import Api, Resource, fields, reqparse
 import wikipedia
+import base64
 
 # instantiate the user management db classes
 # NOTE WHEN PEP8'ING MODULE IMPORTS WILL MOVE TO THE TOP AND CAUSE EXCEPTION
@@ -132,6 +133,33 @@ def initiate_login_db():
 @app.route("/unauthorized")
 def unauthorized():
     return render_template('security/unauthorized.html'), 401
+
+@app.login_manager.request_loader
+def load_user_from_request(request):
+
+    # first, try to login using the api_key url arg
+    api_key = request.args.get('api_key')
+    if api_key:
+        user = UserLogin.query.filter(UserLogin.api_key==api_key).first()
+        if user:
+            user.id = int(user.id)
+            return user
+
+    # next, try to login using Basic Auth
+    api_key = request.headers.get('Authorization')
+    if api_key:
+        api_key = api_key.replace('Basic ', '', 1)
+        try:
+            api_key = base64.b64decode(api_key)
+        except TypeError:
+            pass
+        user = UserLogin.query.filter(UserLogin.api_key==api_key).first()
+        if user:
+            user.id = int(user.id)
+            return user
+
+    # finally, return None if both methods did not login the user
+    return None
 
 
 def cleanup_enrichment_errors():

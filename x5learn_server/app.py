@@ -142,6 +142,7 @@ def load_user_from_request(request):
     if api_key:
         user = UserLogin.query.filter(UserLogin.api_key==api_key).first()
         if user:
+            user.id = int(user.id)
             return user
 
     # next, try to login using Basic Auth
@@ -154,6 +155,7 @@ def load_user_from_request(request):
             pass
         user = UserLogin.query.filter(UserLogin.api_key==api_key).first()
         if user:
+            user.id = int(user.id)
             return user
 
     # finally, return None if both methods did not login the user
@@ -309,14 +311,14 @@ def get_logged_in_user_profile_and_state():
 
 # Look at actions to determine whether ContentFlow is enabled or disabled
 def is_contentflow_enabled():
-    action = Action.query.filter(Action.user_login_id == int(current_user.get_id()),
+    action = Action.query.filter(Action.user_login_id == current_user.get_id(),
                                  Action.action_type_id.in_([7])).order_by(Action.id.desc()).first()
     return True if action is None else action.params['enable']
 
 
 # Look at actions to determine the OverviewType setting
 def get_overview_type_setting():
-    action = Action.query.filter(Action.user_login_id == int(current_user.get_id()),
+    action = Action.query.filter(Action.user_login_id == current_user.get_id(),
                                  Action.action_type_id.in_([10])).order_by(Action.id.desc()).first()
     return 'thumbnail' if action is None else action.params['selectedMode']
 
@@ -431,7 +433,7 @@ def api_oers():
 
 @app.route("/api/v1/video_usages/", methods=['GET'])
 def api_video_usages():
-    actions = Action.query.filter(Action.user_login_id == int(current_user.get_id()),
+    actions = Action.query.filter(Action.user_login_id == current_user.get_id(),
                                   Action.action_type_id.in_([4, 5, 6, 9])).order_by(Action.id).all()
     positions_per_oer = defaultdict(list)
     for action in actions:
@@ -454,7 +456,7 @@ def api_course_optimization(playlist_title):
 
 @app.route("/api/v1/load_course/", methods=['POST'])
 def api_load_course():
-    course = Course.query.filter(Course.user_login_id == int(current_user.get_id())).order_by(Course.id.desc()).first()
+    course = Course.query.filter(Course.user_login_id == current_user.get_id()).order_by(Course.id.desc()).first()
     if course is None:
         user_login_id = current_user.get_id()  # Assuming that guests cannot use this feature
         course = Course(user_login_id, {'items': []})
@@ -1292,7 +1294,7 @@ class NotesList(Resource):
             if (args['oer_id']):
                 query_object = query_object.filter(Note.oer_id == args['oer_id'])
 
-            query_object = query_object.filter(Note.user_login_id == int(current_user.get_id()))
+            query_object = query_object.filter(Note.user_login_id == current_user.get_id())
             query_object = query_object.filter(Note.is_deactivated == False)
 
             if (args['sort'] == 'desc'):
@@ -1344,7 +1346,7 @@ class Notes(Resource):
 
         query_object = db_session.query(Note)
         query_object = query_object.filter(Note.id == id)
-        query_object = query_object.filter(Note.user_login_id == int(current_user.get_id()))
+        query_object = query_object.filter(Note.user_login_id == current_user.get_id())
         query_object = query_object.filter(Note.is_deactivated == False)
         note = query_object.one_or_none()
 
@@ -1366,7 +1368,7 @@ class Notes(Resource):
 
         query_object = db_session.query(Note)
         query_object = query_object.filter(Note.id == id)
-        query_object = query_object.filter(Note.user_login_id == int(current_user.get_id()))
+        query_object = query_object.filter(Note.user_login_id == current_user.get_id())
         query_object = query_object.filter(Note.is_deactivated == False)
         note = query_object.one_or_none()
 
@@ -1385,7 +1387,7 @@ class Notes(Resource):
 
         query_object = db_session.query(Note)
         query_object = query_object.filter(Note.id == id)
-        query_object = query_object.filter(Note.user_login_id == int(current_user.get_id()))
+        query_object = query_object.filter(Note.user_login_id == current_user.get_id())
         query_object = query_object.filter(Note.is_deactivated == False)
         note = query_object.one_or_none()
 
@@ -1468,7 +1470,7 @@ def _add_published_playlist(title, desc, author, license, creator, parent, is_vi
     # get playlist_item_data
     query_object = db_session.query(Temp_Playlist)
     query_object = query_object.filter(Temp_Playlist.title == title)
-    query_object = query_object.filter(Temp_Playlist.creator == int(current_user.get_id()))
+    query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
     temp_playlist = query_object.one_or_none()
 
     item_data = dict()
@@ -1579,7 +1581,7 @@ def _convert_temp_playlist_to_playlist(temp_playlist):
 def _add_oer_to_playlist(title, oer_id):
     query_object = db_session.query(Temp_Playlist)
     query_object = query_object.filter(Temp_Playlist.title == title)
-    query_object = query_object.filter(Temp_Playlist.creator == int(current_user.get_id()))
+    query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
     temp_playlist = query_object.one_or_none()
 
     # getting oer to set title and description
@@ -1650,7 +1652,7 @@ class Playlists(Resource):
             if args['mode'] is not None and args['mode'] == "temp_playlists_only":
                 # Building and executing query object for Temp Playlists
                 query_object = db_session.query(Temp_Playlist)
-                query_object = query_object.filter(Temp_Playlist.creator == int(current_user.get_id()))
+                query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
                 result_list = query_object.all()
 
                 playlists = [_convert_temp_playlist_to_playlist(i) for i in result_list]
@@ -1666,7 +1668,7 @@ class Playlists(Resource):
                 if (args['license']):
                     query_object = query_object.filter(Playlist.license == args['license'])
 
-                query_object = query_object.filter(Playlist.creator == int(current_user.get_id()))
+                query_object = query_object.filter(Playlist.creator == current_user.get_id())
 
                 if (args['sort'] == 'desc'):
                     query_object = query_object.order_by(Playlist.created_at.desc())
@@ -1891,7 +1893,7 @@ class Temp_Playlist_Single(Resource):
 
         query_object = db_session.query(Temp_Playlist)
         query_object = query_object.filter(Temp_Playlist.title == title)
-        query_object = query_object.filter(Temp_Playlist.creator == int(current_user.get_id()))
+        query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
         temp_playlist = query_object.one_or_none()
 
         if temp_playlist is None:
@@ -1918,7 +1920,7 @@ class Temp_Playlist_Single(Resource):
 
         query_object = db_session.query(Temp_Playlist)
         query_object = query_object.filter(Temp_Playlist.title == title)
-        query_object = query_object.filter(Temp_Playlist.creator == int(current_user.get_id()))
+        query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
         temp_playlist = query_object.one_or_none()
 
         if temp_playlist is None:
@@ -1955,7 +1957,7 @@ class Temp_Playlist_Single(Resource):
 
         query_object = db_session.query(Temp_Playlist)
         query_object = query_object.filter(Temp_Playlist.title == title)
-        query_object = query_object.filter(Temp_Playlist.creator == int(current_user.get_id()))
+        query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
         temp_playlist = query_object.one_or_none()
 
         if temp_playlist is None:

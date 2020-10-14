@@ -32,55 +32,68 @@ def main(args):
         action_type_dict[action_type.id] = action_type.description
 
     count = 0
-    # fetching data user wise
-    for id in user_dict.keys():
 
+    # open text file for writing user wise
+    write_path = args['savepath'] if args['savepath'] is not None else "/tmp/"
+    f = open(write_path + "ui-logs.jsonl", "a")
+    f.truncate(0)
 
-        # open text file for writing user wise
-        write_path = args['savepath'] if args['savepath'] is not None else "/tmp/"
-        f = open(write_path + "ui-logs.jsonl", "a")
-        f.truncate(0)
+    query = db.select([actions.columns.created_at, actions.columns.events, actions.columns.user_login_id]).order_by(actions.columns.client_time)
+    action_data = connection.execute(query).fetchall()
 
-        query = db.select([actions.columns.created_at, actions.columns.events, actions.columns.user_login_id]).where(actions.columns.user_login_id == id).order_by(actions.columns.client_time)
-        action_data = connection.execute(query).fetchall()
+    for action in action_data:
 
-        for action in action_data:
+        for event in action.events:
 
-            for event in action.events:
-
-                write_object = dict()
-                write_object['time'] = datetime.utcfromtimestamp(int(event['clientTime'][:10])).strftime("%Y-%m-%d %H:%M:%S")
-                write_object['user'] = user_dict[id]
-                write_object['action'] = event['eventType']
-                write_object['args'] = event['args']
-
-                if write_object is not None:
-                    f.write(json.dumps(write_object) + "\n")
-
-                count += 1
-
-        f.close()
-
-        write_path = args['savepath'] if args['savepath'] is not None else "/tmp/"
-        f = open(write_path + "action-logs.jsonl", "a")
-        f.truncate(0)
-
-        query = db.select([predefined_actions.columns.created_at, predefined_actions.columns.action_type_id, predefined_actions.columns.user_login_id, predefined_actions.columns.params]).where(predefined_actions.columns.user_login_id == id).order_by(predefined_actions.columns.created_at)
-        predefined_action_data = connection.execute(query).fetchall()
-
-        for action in predefined_action_data:
             write_object = dict()
-            write_object['time'] = action.created_at.strftime("%Y-%m-%d %H:%M:%S")
-            write_object['user'] = user_dict[action.user_login_id]
-            write_object['action'] = action_type_dict[action.action_type_id]
-            write_object['args'] = action.params
+
+            try:
+                temp_time = datetime.utcfromtimestamp(int(event['clientTime'][:10])).strftime("%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                temp_time = " - "
+
+            try:
+                temp_user = user_dict[action.user_login_id]
+            except KeyError:
+                temp_user = " - "
+            
+            write_object['time'] = temp_time
+            write_object['user'] = temp_user
+            write_object['action'] = event['eventType']
+            write_object['args'] = event['args']
 
             if write_object is not None:
                 f.write(json.dumps(write_object) + "\n")
 
             count += 1
 
-        f.close()
+    f.close()
+
+    f = open(write_path + "action-logs.jsonl", "a")
+    f.truncate(0)
+
+    query = db.select([predefined_actions.columns.created_at, predefined_actions.columns.action_type_id, predefined_actions.columns.user_login_id, predefined_actions.columns.params]).order_by(predefined_actions.columns.created_at)
+    predefined_action_data = connection.execute(query).fetchall()
+
+    for action in predefined_action_data:
+        write_object = dict()
+
+        try:
+            temp_user = user_dict[action.user_login_id]
+        except KeyError:
+            temp_user = " - "
+
+        write_object['time'] = action.created_at.strftime("%Y-%m-%d %H:%M:%S")
+        write_object['user'] = temp_user
+        write_object['action'] = action_type_dict[action.action_type_id]
+        write_object['args'] = action.params
+
+        if write_object is not None:
+            f.write(json.dumps(write_object) + "\n")
+
+        count += 1
+
+    f.close()
 
     print("Ending script. No of events processed : ", count)
 

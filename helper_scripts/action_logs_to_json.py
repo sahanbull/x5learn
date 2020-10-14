@@ -96,29 +96,7 @@ def main(args):
     f.close()
 
     print("Ending script. No of events processed : ", count)
-
-
-def find_initial_content_flow_state(action_data):
-    initial_state = None
-    for action in action_data:
-        if initial_state is not None:
-            break
-
-        for event in action.events:
-            if initial_state is not None:
-                break
-
-            if event['eventType'] == "ToggleContentFlow":
-                initial_state = 'enabled' if event['args'][0] == "disabled" else 'disabled'
     
-    return initial_state if initial_state is not None else "disabled"
-    
-
-def seconds_to_time_string(seconds):
-    return seconds
-    seconds = int(float(seconds))
-    duration = str(int(seconds / 60)) + ':' + str(seconds % 60).zfill(2)
-    return duration
 
 def get_db_objects(user, passwd, db_name):
     db_engine_uri = 'postgresql://{}:{}@localhost:5432/{}'.format(

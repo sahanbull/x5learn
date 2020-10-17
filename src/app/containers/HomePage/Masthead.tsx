@@ -10,9 +10,7 @@ export function Masthead() {
     <Wrapper>
       <Logos />
       <Title>X5Learn AI based learning</Title>
-      <Lead>
-        
-      </Lead>
+      <Lead></Lead>
     </Wrapper>
   );
 }

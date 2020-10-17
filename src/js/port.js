@@ -13,30 +13,38 @@ var videoPlayPosition = 0;
 // and VIDEO_PLAY_REPORTING_INTERVAL in python
 var videoPlayReportingInterval = 10;
 
-
 function positionAndSize(el) {
-  var rect = el.getBoundingClientRect(), scrollLeft = window.pageXOffset || document.documentElement.scrollLeft, scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-  return { x: rect.left + scrollLeft, y: rect.top + scrollTop, sx: el.offsetWidth, sy: el.offsetHeight }
+  var rect = el.getBoundingClientRect(),
+    scrollLeft = window.pageXOffset || document.documentElement.scrollLeft,
+    scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+  return {
+    x: rect.left + scrollLeft,
+    y: rect.top + scrollTop,
+    sx: el.offsetWidth,
+    sy: el.offsetHeight,
+  };
 }
-
 
 function position(el) {
   ps = positionAndSize(el);
-  return { x: ps.x, y: ps.y }
+  return { x: ps.x, y: ps.y };
 }
 
+function setupPorts(app) {
+  app.ports.openInspectorAnimation.subscribe(
+    startAnimationWhenInspectorIsReady,
+  );
+  app.ports.embedYoutubePlayerOnResourcePage.subscribe(
+    embedYoutubePlayerOnResourcePage,
+  );
 
-function setupPorts(app){
-  app.ports.openInspectorAnimation.subscribe(startAnimationWhenInspectorIsReady);
-  app.ports.embedYoutubePlayerOnResourcePage.subscribe(embedYoutubePlayerOnResourcePage);
-
-  app.ports.setBrowserFocus.subscribe(function(elementId) {
+  app.ports.setBrowserFocus.subscribe(function (elementId) {
     document.activeElement.blur();
-    if(elementId != ""){
-      setTimeout(function(){
-        try{
+    if (elementId != '') {
+      setTimeout(function () {
+        try {
           document.getElementById(elementId).focus();
-        } catch(err){
+        } catch (err) {
           // ignore
         }
       }, 30);
@@ -54,23 +62,23 @@ function setupPorts(app){
   //   }
   // });
 
-  app.ports.getOerCardPlaceholderPositions.subscribe(function(dummy) {
-    setTimeout(function(){
+  app.ports.getOerCardPlaceholderPositions.subscribe(function (dummy) {
+    setTimeout(function () {
       var placeholders = document.getElementsByClassName('OerCardPlaceholder');
       positions = [].slice.call(placeholders).map(getCardPlaceholderPosition);
       app.ports.receiveCardPlaceholderPositions.send(positions);
     }, 100);
   });
 
-  app.ports.askPageScrollState.subscribe(function(dummy) {
-    setTimeout(function(){
+  app.ports.askPageScrollState.subscribe(function (dummy) {
+    setTimeout(function () {
       sendPageScrollState(true);
     }, 100);
   });
 
-  app.ports.startCurrentHtml5Video.subscribe(function(position) {
+  app.ports.startCurrentHtml5Video.subscribe(function (position) {
     var vid = getHtml5VideoPlayer();
-    if(vid){
+    if (vid) {
       playWhenPossible(vid, position);
     }
   });
@@ -79,93 +87,100 @@ function setupPorts(app){
 
   setupScrollDetector();
 
-  app.ports.registerInspectorPlaylistEvents.subscribe(registerInspectorPlaylistEvents);
-
+  app.ports.registerInspectorPlaylistEvents.subscribe(
+    registerInspectorPlaylistEvents,
+  );
 }
 
-
-function sendPageScrollState(requestedByElm){
+function sendPageScrollState(requestedByElm) {
   var el = document.getElementById('MainPageContent');
-  if(el){
+  if (el) {
     var offset = el.pageYOffset !== undefined ? el.pageYOffset : el.scrollTop;
-    if(requestedByElm || offset!=lastPageScrollOffset){
+    if (requestedByElm || offset != lastPageScrollOffset) {
       var contentHeight = el.childNodes[0].clientHeight;
-      var pageScrollState = {scrollTop: el.scrollTop, viewHeight: el.clientHeight, contentHeight: contentHeight, requestedByElm: requestedByElm};
+      var pageScrollState = {
+        scrollTop: el.scrollTop,
+        viewHeight: el.clientHeight,
+        contentHeight: contentHeight,
+        requestedByElm: requestedByElm,
+      };
       app.ports.pageScrolled.send(pageScrollState);
       lastPageScrollOffset = offset;
     }
   }
 }
 
-
 function startAnimationWhenInspectorIsReady(videoEmbedParams) {
   var inspectorId = videoEmbedParams.inspectorId;
-  if(window.document.getElementById(inspectorId)==null) {
-    setTimeout(function() {
+  if (window.document.getElementById(inspectorId) == null) {
+    setTimeout(function () {
       startAnimationWhenInspectorIsReady(videoEmbedParams);
     }, 15);
-  }
-  else{
+  } else {
     var card = document.activeElement;
     var inspector = document.getElementById(inspectorId);
     card.blur(); // remove the blue outline
-    app.ports.inspectorAnimationStart.send({frameCount: 0, start: positionAndSize(card), end: positionAndSize(inspector)});
-    setTimeout(function(){
+    app.ports.inspectorAnimationStart.send({
+      frameCount: 0,
+      start: positionAndSize(card),
+      end: positionAndSize(inspector),
+    });
+    setTimeout(function () {
       app.ports.inspectorAnimationStop.send(12345);
-      if(videoEmbedParams.videoId.length>0){
+      if (videoEmbedParams.videoId.length > 0) {
         embedYoutubeVideo(videoEmbedParams);
-      }else{
+      } else {
         var vid = getHtml5VideoPlayer();
-        if(vid){
-          if(videoEmbedParams.playWhenReady){
+        if (vid) {
+          if (videoEmbedParams.playWhenReady) {
             playWhenPossible(vid, videoEmbedParams.videoStartPosition);
           }
 
-          vid.onplay = function() {
+          vid.onplay = function () {
             isVideoPlaying = true;
             videoPlayPosition = vid.currentTime;
             app.ports.html5VideoStarted.send(videoPlayPosition);
             videoEventThrottlePosition = videoPlayPosition;
           };
 
-          vid.onpause = function() {
+          vid.onpause = function () {
             isVideoPlaying = false;
             videoPlayPosition = vid.currentTime;
             app.ports.html5VideoPaused.send(videoPlayPosition);
           };
 
-          vid.ontimeupdate = function() {
+          vid.ontimeupdate = function () {
             videoPlayPosition = vid.currentTime;
-            if(isVideoPlaying){
-              if(videoPlayPosition > videoEventThrottlePosition + videoPlayReportingInterval){
+            if (isVideoPlaying) {
+              if (
+                videoPlayPosition >
+                videoEventThrottlePosition + videoPlayReportingInterval
+              ) {
                 app.ports.html5VideoStillPlaying.send(videoPlayPosition);
                 videoEventThrottlePosition = videoPlayPosition;
               }
-            }else{
+            } else {
               app.ports.html5VideoSeeked.send(videoPlayPosition);
               videoEventThrottlePosition = 0;
             }
           };
-
         }
       }
     }, 110);
     return;
   }
-
 }
 
-
-function getHtml5VideoPlayer(){
-  return document.getElementById("Html5VideoPlayer");
+function getHtml5VideoPlayer() {
+  return document.getElementById('Html5VideoPlayer');
 }
 
 function embedYoutubePlayerOnResourcePage(videoEmbedParams) {
-    setTimeout(function(){
-      if(videoEmbedParams.videoId.length>0){
-        embedYoutubeVideo(videoEmbedParams);
-      }
-    }, 200);
+  setTimeout(function () {
+    if (videoEmbedParams.videoId.length > 0) {
+      embedYoutubeVideo(videoEmbedParams);
+    }
+  }, 200);
 }
 
 /* setupEventHandlers
@@ -174,44 +189,51 @@ function embedYoutubePlayerOnResourcePage(videoEmbedParams) {
  * because the Elm createth and taketh them away dynamically.
  * We can use classes and e.target.closest(...) to check where an event fired from.
  */
-function setupEventHandlers(){
-  document.addEventListener("click", function(e){
-    if(!e.target.closest('.PreventClosingInspectorOnClick')){
+function setupEventHandlers() {
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest('.PreventClosingInspectorOnClick')) {
       app.ports.closeInspector.send(12345);
     }
-    if(!e.target.closest('.PreventClosingThePopupOnClick')){
+    if (!e.target.closest('.PreventClosingThePopupOnClick')) {
       app.ports.closePopup.send(12345);
       e.stopPropagation();
     }
   });
 
-  document.addEventListener("mouseover", function(event){
+  document.addEventListener('mouseover', function (event) {
     var element = event.target;
-    if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" ChunkTrigger ") > -1 ){
+    if (
+      (' ' + element.className + ' ')
+        .replace(/[\n\t]/g, ' ')
+        .indexOf(' ChunkTrigger ') > -1
+    ) {
       app.ports.mouseOverChunkTrigger.send(event.pageX);
-      return
+      return;
     }
   });
 
-  [ 'mousedown', 'mouseup', 'mousemove' ].forEach(registerTimelineMouseEvent);
+  ['mousedown', 'mouseup', 'mousemove'].forEach(registerTimelineMouseEvent);
 }
 
-
-function setupScrollDetector(){
-  window.setInterval(function(){
+function setupScrollDetector() {
+  window.setInterval(function () {
     sendPageScrollState(false);
   }, 100);
 }
 
-
-function getCardPlaceholderPosition(ph){
+function getCardPlaceholderPosition(ph) {
   var rect = ph.getBoundingClientRect();
-  var scrollY = document.getElementById('OerCardsContainer').getBoundingClientRect().top;
-  return { x: rect.left, y: rect.top - scrollY, oerId: parseInt(ph.getAttribute("data-oerid")) };
+  var scrollY = document
+    .getElementById('OerCardsContainer')
+    .getBoundingClientRect().top;
+  return {
+    x: rect.left,
+    y: rect.top - scrollY,
+    oerId: parseInt(ph.getAttribute('data-oerid')),
+  };
 }
 
-
-function getEventPosition(event){
+function getEventPosition(event) {
   // some boilerplate for browser compatibility
   // https://stackoverflow.com/questions/7790725/javascript-track-mouse-position
   var eventDoc, doc, body;
@@ -224,32 +246,46 @@ function getEventPosition(event){
     doc = eventDoc.documentElement;
     body = eventDoc.body;
 
-    event.pageX = event.clientX +
-      (doc && doc.scrollLeft || body && body.scrollLeft || 0) -
-      (doc && doc.clientLeft || body && body.clientLeft || 0);
-    event.pageY = event.clientY +
-      (doc && doc.scrollTop  || body && body.scrollTop  || 0) -
-      (doc && doc.clientTop  || body && body.clientTop  || 0 );
+    event.pageX =
+      event.clientX +
+      ((doc && doc.scrollLeft) || (body && body.scrollLeft) || 0) -
+      ((doc && doc.clientLeft) || (body && body.clientLeft) || 0);
+    event.pageY =
+      event.clientY +
+      ((doc && doc.scrollTop) || (body && body.scrollTop) || 0) -
+      ((doc && doc.clientTop) || (body && body.clientTop) || 0);
   }
-  return {x: event.pageX, y: event.pageY}
+  return { x: event.pageX, y: event.pageY };
 }
 
-
-function registerTimelineMouseEvent(eventName){
-  document.addEventListener(eventName, function(event){
+function registerTimelineMouseEvent(eventName) {
+  document.addEventListener(eventName, function (event) {
     var element = event.target;
     // When ContentFlow is enabled, the event is caught by ChunkTrigger
-    if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" ChunkTrigger ") > -1 ){
-      var contentFlowBar = element.closest('.ContentFlowBar')
+    if (
+      (' ' + element.className + ' ')
+        .replace(/[\n\t]/g, ' ')
+        .indexOf(' ChunkTrigger ') > -1
+    ) {
+      var contentFlowBar = element.closest('.ContentFlowBar');
       reportTimelineMouseEvent(contentFlowBar, eventName, event);
       return;
     }
     // When ContentFlow is disabled, the event is caught by ContentFlowBar
-    if((" " + element.className + " ").replace(/[\n\t]/g, " ").indexOf(" ContentFlowBar ") > -1 ){
+    if (
+      (' ' + element.className + ' ')
+        .replace(/[\n\t]/g, ' ')
+        .indexOf(' ContentFlowBar ') > -1
+    ) {
       reportTimelineMouseEvent(element, eventName, event);
       return;
     }
-    if(eventName=='mousemove' && (" " + element.getAttribute("class") + " ").replace(/[\n\t]/g, " ").indexOf(" TopicLane ") > -1 ){
+    if (
+      eventName == 'mousemove' &&
+      (' ' + element.getAttribute('class') + ' ')
+        .replace(/[\n\t]/g, ' ')
+        .indexOf(' TopicLane ') > -1
+    ) {
       var rect = element.getBoundingClientRect();
       var posX = window.scrollX + rect.left;
       var positionInResource = (event.pageX - posX) / rect.width;
@@ -259,12 +295,11 @@ function registerTimelineMouseEvent(eventName){
   });
 }
 
-
-function reportTimelineMouseEvent(element, eventName, event){
-  if(eventName=='mousemove'){
+function reportTimelineMouseEvent(element, eventName, event) {
+  if (eventName == 'mousemove') {
     var now = new Date().getTime();
     // no need to report more than a handful mousemove events per second. be nice to the network.
-    if(now-timeOfLastMouseMove < 150){
+    if (now - timeOfLastMouseMove < 150) {
       return;
     }
     timeOfLastMouseMove = now;
@@ -272,41 +307,48 @@ function reportTimelineMouseEvent(element, eventName, event){
   var rect = element.getBoundingClientRect();
   var posX = window.scrollX + rect.left;
   var position = (event.pageX - posX) / rect.width;
-  app.ports.timelineMouseEvent.send({eventName: eventName, position: position});
+  app.ports.timelineMouseEvent.send({
+    eventName: eventName,
+    position: position,
+  });
 }
 
-
-function playWhenPossible(vid, position){
+function playWhenPossible(vid, position) {
   vid.currentTime = position;
   tryPlaying(vid, position, 50);
 }
 
-
-function tryPlaying(vid, position, attempts){
-  if(vid.readyState>=2){//HAVE_CURRENT_DATA
+function tryPlaying(vid, position, attempts) {
+  if (vid.readyState >= 2) {
+    //HAVE_CURRENT_DATA
     vid.play();
-  }else if(attempts>0){
-    setTimeout(function(){
-      tryPlaying(vid, position, attempts-1);
+  } else if (attempts > 0) {
+    setTimeout(function () {
+      tryPlaying(vid, position, attempts - 1);
     }, 500);
   }
 }
 
 function registerInspectorPlaylistEvents() {
-  
-  setTimeout(function(){
-    if (document.getElementById("editingOerTitle")) {
-      document.getElementById("editingOerTitle").addEventListener("blur", function() {
-        app.ports.stopEditingPlaylist.send(1);
-      }, true);
+  setTimeout(function () {
+    if (document.getElementById('editingOerTitle')) {
+      document.getElementById('editingOerTitle').addEventListener(
+        'blur',
+        function () {
+          app.ports.stopEditingPlaylist.send(1);
+        },
+        true,
+      );
     }
-    
-    if (document.getElementById("editingOerDescription")) {
-      document.getElementById("editingOerDescription").addEventListener("blur", function() {
-        app.ports.stopEditingPlaylist.send(1);
-      }, true); 
+
+    if (document.getElementById('editingOerDescription')) {
+      document.getElementById('editingOerDescription').addEventListener(
+        'blur',
+        function () {
+          app.ports.stopEditingPlaylist.send(1);
+        },
+        true,
+      );
     }
   }, 300);
-
-
 }

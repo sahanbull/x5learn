@@ -10,7 +10,7 @@ export function Logos() {
       {/* <CRALogo className="logo" />
       <PlusSign className="sign" />
       <RPLogo className="logo" /> */}
-      <img src="logo512.png"/>
+      <img src="logo512.png" />
     </Wrapper>
   );
 }

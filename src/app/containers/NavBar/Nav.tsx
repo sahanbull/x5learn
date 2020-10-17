@@ -4,11 +4,7 @@ import { ReactComponent as DocumentationIcon } from './assets/documentation-icon
 import { ReactComponent as GithubIcon } from './assets/github-icon.svg';
 
 export function Nav() {
-  return (
-    <Wrapper>
-
-    </Wrapper>
-  );
+  return <Wrapper></Wrapper>;
 }
 
 const Wrapper = styled.nav`

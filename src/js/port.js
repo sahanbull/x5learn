@@ -28,14 +28,14 @@ function positionAndSize(el) {
 function position(el) {
   ps = positionAndSize(el);
   return { x: ps.x, y: ps.y };
-}
+}  
 
 function setupPorts(app) {
   app.ports.openInspectorAnimation.subscribe(
-    startAnimationWhenInspectorIsReady,
+    startAnimationWhenInspectorIsReady
   );
   app.ports.embedYoutubePlayerOnResourcePage.subscribe(
-    embedYoutubePlayerOnResourcePage,
+    embedYoutubePlayerOnResourcePage
   );
 
   app.ports.setBrowserFocus.subscribe(function (elementId) {
@@ -88,7 +88,7 @@ function setupPorts(app) {
   setupScrollDetector();
 
   app.ports.registerInspectorPlaylistEvents.subscribe(
-    registerInspectorPlaylistEvents,
+    registerInspectorPlaylistEvents
   );
 }
 
@@ -309,7 +309,7 @@ function reportTimelineMouseEvent(element, eventName, event) {
   var position = (event.pageX - posX) / rect.width;
   app.ports.timelineMouseEvent.send({
     eventName: eventName,
-    position: position,
+    position: position
   });
 }
 
@@ -337,7 +337,7 @@ function registerInspectorPlaylistEvents() {
         function () {
           app.ports.stopEditingPlaylist.send(1);
         },
-        true,
+        true
       );
     }
 
@@ -347,7 +347,7 @@ function registerInspectorPlaylistEvents() {
         function () {
           app.ports.stopEditingPlaylist.send(1);
         },
-        true,
+        true
       );
     }
   }, 300);

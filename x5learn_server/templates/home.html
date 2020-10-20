@@ -30,6 +30,7 @@
       var flags = {windowWidth: window.innerWidth, windowHeight: window.innerHeight, minWindowWidth: minWindowWidth, minWindowHeight: minWindowHeight, language: language, translations: translations, languages: languages};
       var app = Elm.Main.init({flags: flags});
       setupPorts(app);
+      console.log("Test React")
 
       if(screen.width<minWindowWidth || screen.height<minWindowHeight){
         alert('We recommend using this website on a larger screen (at least '+minWindowWidth+'x'+minWindowHeight+' pixels). Otherwise, some functions may not work as expected.');

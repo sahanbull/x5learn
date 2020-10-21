@@ -17,7 +17,7 @@ def convert_to_oer_ids(material_ids):
 
 def optimize_course(oer_ids):
     # API base url
-    API_URL = "http://wp3dev.x5gon.org"
+    API_URL = "https://wp3dev.x5gon.org"
 
     # setup appropriate headers
     HEADERS = {

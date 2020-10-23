@@ -24,6 +24,8 @@
     "start": "react-scripts start",
     "build:cra": "react-scripts build",
     "test::cra": "react-scripts test",
+    "start:craco": "craco start",
+    "build:craco": "craco build",
     "// ---TEMPLATE---": "Scripts will be also in the template",
     "start:prod": "npm run build && serve -s build",
     "test:generators": "ts-node --project=./internals/ts-node.tsconfig.json ./internals/testing/test-generators.ts",
@@ -90,6 +92,7 @@
     }
   },
   "dependencies": {
+    "@craco/craco": "5.7.0",
     "@reduxjs/toolkit": "1.4.0",
     "fontfaceobserver": "2.1.0",
     "i18next": "19.8.2",

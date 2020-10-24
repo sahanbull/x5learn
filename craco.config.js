@@ -23,7 +23,7 @@ module.exports = {
       //     'public/home.html',
       //   );
       if (env === 'production') {
-        webpackConfig.plugins[1].options.filename = 'templates/home.html';
+        webpackConfig.plugins[0].options.filename = 'templates/home.html';
       }
 
       //Css

@@ -5,7 +5,7 @@ PYTHON_PATH="/home/ucl/anaconda3/envs/x5learn/bin/"
 $PYTHON_PATH/pip install -e .
 
 yarn setup
-#npm run build
+npm run build
 
 yarn build:craco
 yarn deploy:craco
@@ -13,3 +13,5 @@ yarn deploy:craco
 mkdir -p x5learn_server/static/dist
 cp -r uncompressed/* x5learn_server/static/dist
 cp -r assets/img x5learn_server/static/dist/img
+
+sudo supervisorctl reload x5learn

@@ -26,7 +26,7 @@
     "test::cra": "react-scripts test",
     "start:craco": "craco start",
     "build:craco": "craco build",
-    "deploy:craco": "echo \"Copying buildfiles to x5lern_server/\" && rimraf x5learn_server/static/** && cp -rv build/* x5learn_server/",
+    "deploy:craco": "echo \"Copying buildfiles to x5lern_server/\" && rimraf x5learn_server/static/js/** && rimraf x5learn_server/static/css/** && cp -rv build/* x5learn_server/",
     "// ---TEMPLATE---": "Scripts will be also in the template",
     "start:prod": "npm run build && serve -s build",
     "test:generators": "ts-node --project=./internals/ts-node.tsconfig.json ./internals/testing/test-generators.ts",

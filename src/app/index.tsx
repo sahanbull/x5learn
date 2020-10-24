@@ -15,6 +15,7 @@ import { GlobalStyle } from '../styles/global-styles';
 import { HomePage } from './containers/HomePage/Loadable';
 import { NotFoundPage } from './containers/NotFoundPage/Loadable';
 
+import 'antd/dist/antd.less';
 export function App() {
   return (
     <BrowserRouter>

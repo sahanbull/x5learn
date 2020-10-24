@@ -7,8 +7,10 @@ const {
   POSTCSS_MODES,
 } = require('@craco/craco');
 const path = require('path');
+const CracoAntDesignPlugin = require('craco-antd');
 
 module.exports = {
+  plugins: [{ plugin: CracoAntDesignPlugin }],
   webpack: {
     alias: {},
     plugins: [],
@@ -20,7 +22,9 @@ module.exports = {
       //   webpackConfig.plugins[0].options.template = path.resolve(
       //     'public/home.html',
       //   );
-      webpackConfig.plugins[0].options.filename = 'templates/home.html';
+      if (env === 'production') {
+        webpackConfig.plugins[1].options.filename = 'templates/home.html';
+      }
 
       //Css
       webpackConfig.plugins[5].options.chunkFilename =
@@ -32,7 +36,6 @@ module.exports = {
       webpackConfig.output.chunkFilename =
         '' + webpackConfig.output.chunkFilename;
       webpackConfig.output.filename = '' + webpackConfig.output.filename;
-      debugger;
       return webpackConfig;
     },
   },

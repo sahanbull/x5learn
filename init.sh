@@ -10,6 +10,6 @@ yarn setup
 yarn build:craco
 yarn deploy:craco
 
-
+mkdir -p x5learn_server/static/dist
 cp -r uncompressed/* x5learn_server/static/dist
 cp -r assets/img x5learn_server/static/dist/img

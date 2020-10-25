@@ -4,7 +4,6 @@ import { NavBar } from '../NavBar';
 import { Masthead } from './Masthead';
 import { Features } from './Features';
 import { PageWrapper } from 'app/components/PageWrapper';
-import { AppLayout } from '../Layout/AppLayout';
 
 export function HomePage() {
   return (
@@ -18,7 +17,6 @@ export function HomePage() {
         <Masthead />
         {/* <Features /> */}
       </PageWrapper>
-      <AppLayout>Hello</AppLayout>
     </>
   );
 }

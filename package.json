@@ -93,6 +93,7 @@
     }
   },
   "dependencies": {
+    "@ant-design/icons": "4.2.2",
     "@craco/craco": "5.7.0",
     "@reduxjs/toolkit": "1.4.0",
     "antd": "4.7.3",

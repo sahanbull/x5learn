@@ -27,6 +27,31 @@ export function App() {
       </Helmet>
       <Switch>
         <Route exact path={process.env.PUBLIC_URL + '/'} component={HomePage} />
+        <Route
+          exact
+          path={process.env.PUBLIC_URL + '/content'}
+          component={HomePage}
+        />
+        <Route
+          exact
+          path={process.env.PUBLIC_URL + '/search'}
+          component={HomePage}
+        />
+        <Route
+          exact
+          path={process.env.PUBLIC_URL + '/playlists'}
+          component={HomePage}
+        />
+        <Route
+          exact
+          path={process.env.PUBLIC_URL + '/playlists/:id'}
+          component={HomePage}
+        />
+        <Route
+          exact
+          path={process.env.PUBLIC_URL + '/content/:id'}
+          component={HomePage}
+        />
         <Route component={NotFoundPage} />
       </Switch>
       <GlobalStyle />

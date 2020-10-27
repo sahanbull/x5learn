@@ -13,11 +13,6 @@ export function HomePage() {
         <title>Home Page</title>
         <meta name="description" content="X5 Learn AI based learning" />
       </Helmet>
-      <NavBar />
-      <PageWrapper>
-        <Masthead />
-        {/* <Features /> */}
-      </PageWrapper>
       <AppLayout>Hello</AppLayout>
     </>
   );

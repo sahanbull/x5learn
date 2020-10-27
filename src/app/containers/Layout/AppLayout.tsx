@@ -1,16 +1,18 @@
 import React from 'react';
-import { Layout, Menu, Breadcrumb } from 'antd';
+import { Layout, Menu, Breadcrumb, Row, Col, Divider } from 'antd';
 import {
   UserOutlined,
   LaptopOutlined,
   NotificationOutlined,
 } from '@ant-design/icons';
+
 import { AppHeader } from '../Header/AppHeader';
+import { AppFooter } from '../Footer/AppFooter';
 
 import { AppSideBar } from '../SideBar/AppSideBar';
 import { AppBreadcrumb } from '../Breadcrumb/AppBreadcrumb';
 const { SubMenu } = Menu;
-const { Header, Content, Sider } = Layout;
+const { Header, Content, Sider, Footer } = Layout;
 
 export function AppLayout(props) {
   return (
@@ -32,6 +34,7 @@ export function AppLayout(props) {
           </Content>
         </Layout>
       </Layout>
+      <AppFooter></AppFooter>
     </Layout>
   );
 }

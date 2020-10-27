@@ -29,7 +29,12 @@ export function App() {
         <Route exact path={process.env.PUBLIC_URL + '/'} component={HomePage} />
         <Route
           exact
-          path={process.env.PUBLIC_URL + '/content'}
+          path={process.env.PUBLIC_URL + '/playlists'}
+          component={HomePage}
+        />
+        <Route
+          exact
+          path={process.env.PUBLIC_URL + '/resources'}
           component={HomePage}
         />
         <Route
@@ -39,17 +44,12 @@ export function App() {
         />
         <Route
           exact
-          path={process.env.PUBLIC_URL + '/playlists'}
-          component={HomePage}
-        />
-        <Route
-          exact
           path={process.env.PUBLIC_URL + '/playlists/:id'}
           component={HomePage}
         />
         <Route
           exact
-          path={process.env.PUBLIC_URL + '/content/:id'}
+          path={process.env.PUBLIC_URL + '/resources/:id'}
           component={HomePage}
         />
         <Route component={NotFoundPage} />

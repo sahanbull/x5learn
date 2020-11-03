@@ -27,6 +27,7 @@ const { Header, Content, Sider } = Layout;
 const StyledHeader = styled(Header)`
   box-shadow: 0 2px 8px 0 rgba(0, 19, 77, 0.16);
   z-index: 50;
+  padding: 0 32px;
   /* display: flex;
   align-items: center; */
 `;

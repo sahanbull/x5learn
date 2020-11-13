@@ -17,6 +17,7 @@ import View.Explainer exposing (..)
 import View.SearchWidget exposing (..)
 import View.ContentFlowToggle exposing (..)
 import View.Course exposing (..)
+import Html.Attributes
 
 import I18Next exposing ( t, Delims(..) )
 
@@ -193,8 +194,11 @@ playlistActionButtons model =
       Just playlist ->
         if List.length playlist.oerIds > 0 then
           let
+            publishPlaylistTooltip = 
+              htmlTitleAttribute (t model.translations "playlist.lbl_publish_tooltip")
+
             firstRow = 
-              [ link [ whiteText, paddingXY 12 10, width fill, centerX,  Background.color primaryGreen, buttonRounding, Font.center ] { url = "/publish_playlist", label = Element.text (t model.translations "playlist.btn_publish") }
+              [ link [ whiteText, paddingXY 12 10, width fill, centerX,  Background.color primaryGreen, buttonRounding, Font.center, publishPlaylistTooltip ] { url = "/publish_playlist", label = Element.text (t model.translations "playlist.btn_publish") }
               , button [ whiteText, paddingXY 12 10, width fill, centerX,  Background.color red, buttonRounding, Font.center ] { label = Element.text (t model.translations "playlist.btn_delete"), onPress = Just <| PromptDeletePlaylist True }
               ]
               |> row [ spacing 10,  width (fillPortion 2)]

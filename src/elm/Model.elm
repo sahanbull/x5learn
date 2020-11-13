@@ -1303,7 +1303,7 @@ getResourceFeedbackFormValue model oerId =
 -}
 snackbarDuration : Int
 snackbarDuration =
-    3000
+    5000
 
 
 {-| Return the N-th element from a list (if available).

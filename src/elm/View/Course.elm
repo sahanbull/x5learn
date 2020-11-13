@@ -78,7 +78,7 @@ viewCourseItem model index item =
             -- We could use a button here but we don't want the click event to bubble up to the miniCard.
             -- One quick way to prevent this is to use stopPropagation instead of elm-ui's button element
             (t model.translations "playlist.btn_remove_material")
-            |> captionNowrap [ greyText, alignRight, htmlClass "CursorPointer", onClickStopPropagation (RemovedOerFromCourse oer.id) ]
+            |> captionNowrap [ paddingXY 5 3, buttonRounding, Background.color red, whiteText, alignRight, htmlClass "CursorPointer", onClickStopPropagation (RemovedOerFromCourse oer.id) ]
 
           topRow =
             if getPlaylistTitle model oer.id == Nothing then

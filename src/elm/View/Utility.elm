@@ -304,6 +304,11 @@ htmlDataAttribute str =
   Html.Attributes.attribute "data-oerid" str |> htmlAttribute
 
 
+htmlTitleAttribute : String -> Attribute Msg
+htmlTitleAttribute str =
+  Html.Attributes.attribute "title" str |> htmlAttribute
+
+
 whiteBackground : Attribute Msg
 whiteBackground =
   Background.color white

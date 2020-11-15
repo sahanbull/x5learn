@@ -28,7 +28,6 @@ setup(
         'bcrypt',
         'PythonVideoConverter',
         'wget',
-        'preview_generator',
-        'flask-cors'
+        'preview_generator'
     ]
 )

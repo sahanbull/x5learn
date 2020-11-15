@@ -37,7 +37,6 @@ from x5learn_server.course_optimization import optimize_course
 
 # Create app
 app = Flask(__name__)
-CORS(app)
 mail = Mail()
 
 app.config['SERVER_NAME'] = SERVER_NAME

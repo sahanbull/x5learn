@@ -1,0 +1,2140 @@
+[
+    {
+        "id": 9884,
+        "action_type_id": 4,
+        "params": {
+            "oerId": 31,
+            "positionInSeconds": 0
+        },
+        "created_at": "2020-09-18T08:10:59+00:00",
+        "user_login_id": 153,
+        "action_type": "Video played"
+    },
+    {
+        "id": 9883,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 31
+        },
+        "created_at": "2020-09-18T08:10:57+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9882,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 32
+        },
+        "created_at": "2020-09-18T07:59:39+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9881,
+        "action_type_id": 14,
+        "params": {
+            "path": "/",
+            "query": ""
+        },
+        "created_at": "2020-09-18T07:59:38+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 9880,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 96519
+        },
+        "created_at": "2020-09-18T07:59:04+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9879,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 18388
+        },
+        "created_at": "2020-09-18T07:59:02+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9878,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 63613
+        },
+        "created_at": "2020-09-18T07:59:01+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9877,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 96732
+        },
+        "created_at": "2020-09-18T07:59:00+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9876,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 86939
+        },
+        "created_at": "2020-09-18T07:58:58+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9875,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 95598
+        },
+        "created_at": "2020-09-18T07:58:57+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9874,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 66314
+        },
+        "created_at": "2020-09-18T07:58:56+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9873,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 31
+        },
+        "created_at": "2020-09-18T07:58:54+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9872,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 73182
+        },
+        "created_at": "2020-09-18T07:58:53+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9871,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 18312
+        },
+        "created_at": "2020-09-18T07:58:51+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9870,
+        "action_type_id": 13,
+        "params": {
+            "text": "brain",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-09-18T07:58:44+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 9869,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=brain"
+        },
+        "created_at": "2020-09-18T07:58:44+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 9865,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 32
+        },
+        "created_at": "2020-09-18T07:58:13+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9864,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 2505
+        },
+        "created_at": "2020-09-18T07:58:09+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9863,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 31
+        },
+        "created_at": "2020-09-18T07:57:49+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9862,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 32
+        },
+        "created_at": "2020-09-18T07:57:47+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9861,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 31
+        },
+        "created_at": "2020-09-17T11:32:50+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9674,
+        "action_type_id": 5,
+        "params": {
+            "oerId": 32,
+            "positionInSeconds": 0.185416
+        },
+        "created_at": "2020-09-12T09:16:01+00:00",
+        "user_login_id": 153,
+        "action_type": "Video paused"
+    },
+    {
+        "id": 9673,
+        "action_type_id": 4,
+        "params": {
+            "oerId": 32,
+            "positionInSeconds": 0
+        },
+        "created_at": "2020-09-12T09:15:58+00:00",
+        "user_login_id": 153,
+        "action_type": "Video played"
+    },
+    {
+        "id": 9672,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 32
+        },
+        "created_at": "2020-09-12T09:15:57+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9671,
+        "action_type_id": 6,
+        "params": {
+            "oerId": 31,
+            "positionInSeconds": 560.006
+        },
+        "created_at": "2020-09-12T09:15:52+00:00",
+        "user_login_id": 153,
+        "action_type": "Video seeked"
+    },
+    {
+        "id": 9670,
+        "action_type_id": 5,
+        "params": {
+            "oerId": 31,
+            "positionInSeconds": 560.006
+        },
+        "created_at": "2020-09-12T09:15:50+00:00",
+        "user_login_id": 153,
+        "action_type": "Video paused"
+    },
+    {
+        "id": 9669,
+        "action_type_id": 4,
+        "params": {
+            "oerId": 31,
+            "positionInSeconds": 560.006
+        },
+        "created_at": "2020-09-12T09:15:49+00:00",
+        "user_login_id": 153,
+        "action_type": "Video played"
+    },
+    {
+        "id": 9668,
+        "action_type_id": 9,
+        "params": {
+            "oerId": 31,
+            "positionInSeconds": 550.568
+        },
+        "created_at": "2020-09-12T09:15:49+00:00",
+        "user_login_id": 153,
+        "action_type": "Video still playing"
+    },
+    {
+        "id": 9667,
+        "action_type_id": 5,
+        "params": {
+            "oerId": 31,
+            "positionInSeconds": 550.568
+        },
+        "created_at": "2020-09-12T09:15:49+00:00",
+        "user_login_id": 153,
+        "action_type": "Video paused"
+    },
+    {
+        "id": 9666,
+        "action_type_id": 4,
+        "params": {
+            "oerId": 31,
+            "positionInSeconds": 0
+        },
+        "created_at": "2020-09-12T09:15:47+00:00",
+        "user_login_id": 153,
+        "action_type": "Video played"
+    },
+    {
+        "id": 9665,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 31
+        },
+        "created_at": "2020-09-12T09:15:43+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 9322,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 31
+        },
+        "created_at": "2020-07-28T20:37:27+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 8832,
+        "action_type_id": 8,
+        "params": {
+            "OER id": 31,
+            "user feedback": " hello there"
+        },
+        "created_at": "2020-07-17T12:55:32+00:00",
+        "user_login_id": 153,
+        "action_type": "Feedback on OER content"
+    },
+    {
+        "id": 8831,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 31
+        },
+        "created_at": "2020-07-17T12:54:54+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 8824,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 31
+        },
+        "created_at": "2020-07-17T12:47:53+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 8823,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 31
+        },
+        "created_at": "2020-07-17T12:47:40+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 8822,
+        "action_type_id": 10,
+        "params": {
+            "selectedMode": "thumbnail"
+        },
+        "created_at": "2020-07-17T12:47:38+00:00",
+        "user_login_id": 153,
+        "action_type": "Video still playing"
+    },
+    {
+        "id": 6864,
+        "action_type_id": 5,
+        "params": {
+            "oerId": 31,
+            "positionInSeconds": 3372.4164
+        },
+        "created_at": "2020-06-16T13:29:12+00:00",
+        "user_login_id": 153,
+        "action_type": "Video paused"
+    },
+    {
+        "id": 6863,
+        "action_type_id": 4,
+        "params": {
+            "oerId": 31,
+            "positionInSeconds": 3372.4164
+        },
+        "created_at": "2020-06-16T13:29:11+00:00",
+        "user_login_id": 153,
+        "action_type": "Video played"
+    },
+    {
+        "id": 6862,
+        "action_type_id": 6,
+        "params": {
+            "oerId": 31,
+            "positionInSeconds": 3372.4164
+        },
+        "created_at": "2020-06-16T13:29:11+00:00",
+        "user_login_id": 153,
+        "action_type": "Video seeked"
+    },
+    {
+        "id": 6861,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 31
+        },
+        "created_at": "2020-06-16T13:29:08+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6860,
+        "action_type_id": 10,
+        "params": {
+            "selectedMode": "bubbles"
+        },
+        "created_at": "2020-06-16T13:29:01+00:00",
+        "user_login_id": 153,
+        "action_type": "Video still playing"
+    },
+    {
+        "id": 6859,
+        "action_type_id": 10,
+        "params": {
+            "selectedMode": "topicnames"
+        },
+        "created_at": "2020-06-16T13:28:56+00:00",
+        "user_login_id": 153,
+        "action_type": "Video still playing"
+    },
+    {
+        "id": 6858,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 31
+        },
+        "created_at": "2020-06-16T13:28:12+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6302,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=p0"
+        },
+        "created_at": "2020-05-29T09:38:14+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6301,
+        "action_type_id": 13,
+        "params": {
+            "text": "p0",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-29T09:38:14+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 6094,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=pl:24"
+        },
+        "created_at": "2020-05-19T08:09:13+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6093,
+        "action_type_id": 14,
+        "params": {
+            "path": "/publish_playlist",
+            "query": ""
+        },
+        "created_at": "2020-05-19T08:09:00+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6092,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=pl:23"
+        },
+        "created_at": "2020-05-19T08:08:51+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6091,
+        "action_type_id": 14,
+        "params": {
+            "path": "/publish_playlist",
+            "query": ""
+        },
+        "created_at": "2020-05-19T08:08:38+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6090,
+        "action_type_id": 14,
+        "params": {
+            "path": "/publish_playlist",
+            "query": ""
+        },
+        "created_at": "2020-05-19T08:08:24+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6089,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 39619
+        },
+        "created_at": "2020-05-19T08:08:15+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6088,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 75945
+        },
+        "created_at": "2020-05-19T08:08:10+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6087,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 71403
+        },
+        "created_at": "2020-05-19T08:08:07+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6086,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 20
+        },
+        "created_at": "2020-05-19T08:08:03+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6085,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 39619
+        },
+        "created_at": "2020-05-19T08:07:54+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6084,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 69390
+        },
+        "created_at": "2020-05-19T08:07:51+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6083,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 39022
+        },
+        "created_at": "2020-05-19T08:07:42+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6082,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 36802
+        },
+        "created_at": "2020-05-19T08:07:35+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6081,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 36541
+        },
+        "created_at": "2020-05-19T08:07:26+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6080,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 39259
+        },
+        "created_at": "2020-05-19T08:07:20+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6079,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=brain"
+        },
+        "created_at": "2020-05-19T08:07:16+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6078,
+        "action_type_id": 13,
+        "params": {
+            "text": "brain",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-19T08:07:16+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 6077,
+        "action_type_id": 14,
+        "params": {
+            "path": "/create_playlist",
+            "query": ""
+        },
+        "created_at": "2020-05-19T08:07:10+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6076,
+        "action_type_id": 14,
+        "params": {
+            "path": "/",
+            "query": ""
+        },
+        "created_at": "2020-05-19T08:07:08+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6075,
+        "action_type_id": 14,
+        "params": {
+            "path": "/create_playlist",
+            "query": ""
+        },
+        "created_at": "2020-05-19T08:07:03+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6074,
+        "action_type_id": 14,
+        "params": {
+            "path": "/",
+            "query": ""
+        },
+        "created_at": "2020-05-19T08:07:01+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6073,
+        "action_type_id": 14,
+        "params": {
+            "path": "/create_playlist",
+            "query": ""
+        },
+        "created_at": "2020-05-19T08:06:56+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6072,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 37594
+        },
+        "created_at": "2020-05-19T07:37:21+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6071,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 39643
+        },
+        "created_at": "2020-05-19T07:37:20+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6070,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 41083
+        },
+        "created_at": "2020-05-19T07:37:18+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6069,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 49120
+        },
+        "created_at": "2020-05-19T07:31:32+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6068,
+        "action_type_id": 8,
+        "params": {
+            "OER id": 42406,
+            "user feedback": "These are my notes"
+        },
+        "created_at": "2020-05-19T07:29:17+00:00",
+        "user_login_id": 153,
+        "action_type": "Feedback on OER content"
+    },
+    {
+        "id": 6067,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 42406
+        },
+        "created_at": "2020-05-19T07:29:03+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6066,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=pl:21"
+        },
+        "created_at": "2020-05-19T07:24:58+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6065,
+        "action_type_id": 14,
+        "params": {
+            "path": "/publish_playlist",
+            "query": ""
+        },
+        "created_at": "2020-05-19T07:24:46+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6064,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 25061
+        },
+        "created_at": "2020-05-19T07:24:32+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6063,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 57181
+        },
+        "created_at": "2020-05-19T07:24:09+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6062,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 69550
+        },
+        "created_at": "2020-05-19T07:23:55+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6061,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 49120
+        },
+        "created_at": "2020-05-19T07:23:23+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6060,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 48305
+        },
+        "created_at": "2020-05-19T07:23:18+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6059,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 42406
+        },
+        "created_at": "2020-05-19T07:23:15+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6058,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=biology"
+        },
+        "created_at": "2020-05-19T07:23:10+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6057,
+        "action_type_id": 13,
+        "params": {
+            "text": "biology",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-19T07:23:10+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 6056,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 25061
+        },
+        "created_at": "2020-05-19T07:23:02+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6055,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 57181
+        },
+        "created_at": "2020-05-19T07:22:58+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6054,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 69550
+        },
+        "created_at": "2020-05-19T07:22:54+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6053,
+        "action_type_id": 13,
+        "params": {
+            "text": "human",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-19T07:22:48+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 6052,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=human"
+        },
+        "created_at": "2020-05-19T07:22:48+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6051,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 49120
+        },
+        "created_at": "2020-05-19T07:22:41+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6050,
+        "action_type_id": 13,
+        "params": {
+            "text": "AI",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-19T07:22:37+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 6049,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=AI"
+        },
+        "created_at": "2020-05-19T07:22:37+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6048,
+        "action_type_id": 14,
+        "params": {
+            "path": "/",
+            "query": ""
+        },
+        "created_at": "2020-05-19T07:22:33+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6047,
+        "action_type_id": 14,
+        "params": {
+            "path": "/create_playlist",
+            "query": ""
+        },
+        "created_at": "2020-05-19T07:22:21+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6046,
+        "action_type_id": 14,
+        "params": {
+            "path": "/",
+            "query": ""
+        },
+        "created_at": "2020-05-19T07:22:13+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6045,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=pl:20"
+        },
+        "created_at": "2020-05-19T07:22:08+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6044,
+        "action_type_id": 14,
+        "params": {
+            "path": "/publish_playlist",
+            "query": ""
+        },
+        "created_at": "2020-05-19T07:21:56+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6043,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 17384
+        },
+        "created_at": "2020-05-19T07:21:38+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6042,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 30113
+        },
+        "created_at": "2020-05-19T07:21:29+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6041,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 39583
+        },
+        "created_at": "2020-05-19T07:21:21+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6040,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 17384
+        },
+        "created_at": "2020-05-19T07:21:09+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6039,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 12520
+        },
+        "created_at": "2020-05-19T07:21:05+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6038,
+        "action_type_id": 13,
+        "params": {
+            "text": "brain",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-19T07:20:26+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 6037,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=brain"
+        },
+        "created_at": "2020-05-19T07:20:26+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6034,
+        "action_type_id": 14,
+        "params": {
+            "path": "/",
+            "query": ""
+        },
+        "created_at": "2020-05-19T07:19:21+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6032,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 41083
+        },
+        "created_at": "2020-05-19T07:19:16+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6030,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 39643
+        },
+        "created_at": "2020-05-19T07:19:13+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6028,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 37594
+        },
+        "created_at": "2020-05-19T07:19:11+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6027,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=pl%3A19"
+        },
+        "created_at": "2020-05-19T07:19:04+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6026,
+        "action_type_id": 13,
+        "params": {
+            "text": "pl:19",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-19T07:19:04+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 6025,
+        "action_type_id": 13,
+        "params": {
+            "text": "pl:18",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-19T07:19:02+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 6024,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=pl%3A18"
+        },
+        "created_at": "2020-05-19T07:19:02+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6022,
+        "action_type_id": 13,
+        "params": {
+            "text": "pl:19",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-19T07:18:49+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 6021,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=pl%3A19"
+        },
+        "created_at": "2020-05-19T07:18:49+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6019,
+        "action_type_id": 14,
+        "params": {
+            "path": "/",
+            "query": ""
+        },
+        "created_at": "2020-05-19T07:18:33+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6018,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=brain"
+        },
+        "created_at": "2020-05-19T07:18:31+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6017,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 57826
+        },
+        "created_at": "2020-05-19T07:18:18+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6015,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 40441
+        },
+        "created_at": "2020-05-19T07:18:13+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6014,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 58002
+        },
+        "created_at": "2020-05-19T07:18:00+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6012,
+        "action_type_id": 13,
+        "params": {
+            "text": "pl:14",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-19T07:17:55+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 6011,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=pl%3A14"
+        },
+        "created_at": "2020-05-19T07:17:55+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6010,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=brain"
+        },
+        "created_at": "2020-05-19T07:17:14+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6009,
+        "action_type_id": 13,
+        "params": {
+            "text": "brain",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-19T07:17:14+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 6008,
+        "action_type_id": 14,
+        "params": {
+            "path": "/",
+            "query": ""
+        },
+        "created_at": "2020-05-19T07:16:58+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6007,
+        "action_type_id": 14,
+        "params": {
+            "path": "/create_playlist",
+            "query": ""
+        },
+        "created_at": "2020-05-19T07:16:49+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6006,
+        "action_type_id": 14,
+        "params": {
+            "path": "/publish_playlist",
+            "query": ""
+        },
+        "created_at": "2020-05-19T07:16:23+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 6005,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 41083
+        },
+        "created_at": "2020-05-19T07:16:20+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6004,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 39643
+        },
+        "created_at": "2020-05-19T07:16:19+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 6003,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 37594
+        },
+        "created_at": "2020-05-19T07:16:16+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5997,
+        "action_type_id": 14,
+        "params": {
+            "path": "/publish_playlist",
+            "query": ""
+        },
+        "created_at": "2020-05-19T06:58:15+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 5994,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 41083
+        },
+        "created_at": "2020-05-19T06:57:57+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5992,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 39643
+        },
+        "created_at": "2020-05-19T06:57:36+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5990,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 37594
+        },
+        "created_at": "2020-05-19T06:57:17+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5989,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 41083
+        },
+        "created_at": "2020-05-19T06:57:12+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5988,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 39643
+        },
+        "created_at": "2020-05-19T06:57:08+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5986,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 37594
+        },
+        "created_at": "2020-05-19T06:57:03+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5985,
+        "action_type_id": 13,
+        "params": {
+            "text": "brain",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-19T06:56:59+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 5984,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=brain"
+        },
+        "created_at": "2020-05-19T06:56:59+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 5982,
+        "action_type_id": 14,
+        "params": {
+            "path": "/",
+            "query": ""
+        },
+        "created_at": "2020-05-19T06:56:53+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 5979,
+        "action_type_id": 14,
+        "params": {
+            "path": "/create_playlist",
+            "query": ""
+        },
+        "created_at": "2020-05-19T06:56:47+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 5978,
+        "action_type_id": 13,
+        "params": {
+            "text": "brain",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-19T06:56:44+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 5977,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=brain"
+        },
+        "created_at": "2020-05-19T06:56:44+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 5821,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 36986
+        },
+        "created_at": "2020-05-14T11:01:21+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5820,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 38843
+        },
+        "created_at": "2020-05-14T11:01:19+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5819,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 16512
+        },
+        "created_at": "2020-05-14T11:01:14+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5818,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 18312
+        },
+        "created_at": "2020-05-14T11:01:11+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5811,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 36986
+        },
+        "created_at": "2020-05-14T10:17:27+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5810,
+        "action_type_id": 13,
+        "params": {
+            "text": "brain",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-14T10:17:23+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 5809,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=brain"
+        },
+        "created_at": "2020-05-14T10:17:23+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 5808,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 31
+        },
+        "created_at": "2020-05-14T10:17:18+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5799,
+        "action_type_id": 5,
+        "params": {
+            "oerId": 31,
+            "positionInSeconds": 1.084562
+        },
+        "created_at": "2020-05-14T10:05:34+00:00",
+        "user_login_id": 153,
+        "action_type": "Video paused"
+    },
+    {
+        "id": 5798,
+        "action_type_id": 4,
+        "params": {
+            "oerId": 31,
+            "positionInSeconds": 0
+        },
+        "created_at": "2020-05-14T10:05:32+00:00",
+        "user_login_id": 153,
+        "action_type": "Video played"
+    },
+    {
+        "id": 5797,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 31
+        },
+        "created_at": "2020-05-14T10:05:30+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5714,
+        "action_type_id": 13,
+        "params": {
+            "text": "Artificial Inteligence",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-13T09:21:50+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 5713,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=Artificial%20Inteligence"
+        },
+        "created_at": "2020-05-13T09:21:50+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 5711,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=Artifical%20Inteligence"
+        },
+        "created_at": "2020-05-13T09:21:38+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 5710,
+        "action_type_id": 13,
+        "params": {
+            "text": "Artifical Inteligence",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-13T09:21:38+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 5564,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 96220
+        },
+        "created_at": "2020-05-11T18:17:23+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5563,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 63613
+        },
+        "created_at": "2020-05-11T18:16:34+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5562,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 39813
+        },
+        "created_at": "2020-05-11T18:14:03+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5561,
+        "action_type_id": 11,
+        "params": {
+            "enable": false
+        },
+        "created_at": "2020-05-11T18:08:57+00:00",
+        "user_login_id": 153,
+        "action_type": "ToggleExplainer"
+    },
+    {
+        "id": 5560,
+        "action_type_id": 12,
+        "params": {
+            "componentId": "oerCard"
+        },
+        "created_at": "2020-05-11T18:08:51+00:00",
+        "user_login_id": 153,
+        "action_type": "ToggleExplainer"
+    },
+    {
+        "id": 5559,
+        "action_type_id": 12,
+        "params": {
+            "componentId": "oerCard"
+        },
+        "created_at": "2020-05-11T18:08:47+00:00",
+        "user_login_id": 153,
+        "action_type": "ToggleExplainer"
+    },
+    {
+        "id": 5558,
+        "action_type_id": 12,
+        "params": {
+            "componentId": "oerCard"
+        },
+        "created_at": "2020-05-11T18:08:43+00:00",
+        "user_login_id": 153,
+        "action_type": "ToggleExplainer"
+    },
+    {
+        "id": 5557,
+        "action_type_id": 11,
+        "params": {
+            "enable": true
+        },
+        "created_at": "2020-05-11T18:08:42+00:00",
+        "user_login_id": 153,
+        "action_type": "ToggleExplainer"
+    },
+    {
+        "id": 5556,
+        "action_type_id": 11,
+        "params": {
+            "enable": false
+        },
+        "created_at": "2020-05-11T18:08:41+00:00",
+        "user_login_id": 153,
+        "action_type": "ToggleExplainer"
+    },
+    {
+        "id": 5555,
+        "action_type_id": 12,
+        "params": {
+            "componentId": "searchField"
+        },
+        "created_at": "2020-05-11T18:08:37+00:00",
+        "user_login_id": 153,
+        "action_type": "ToggleExplainer"
+    },
+    {
+        "id": 5554,
+        "action_type_id": 12,
+        "params": {
+            "componentId": "oerCard"
+        },
+        "created_at": "2020-05-11T18:08:33+00:00",
+        "user_login_id": 153,
+        "action_type": "ToggleExplainer"
+    },
+    {
+        "id": 5553,
+        "action_type_id": 11,
+        "params": {
+            "enable": true
+        },
+        "created_at": "2020-05-11T18:08:30+00:00",
+        "user_login_id": 153,
+        "action_type": "ToggleExplainer"
+    },
+    {
+        "id": 5552,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=brain"
+        },
+        "created_at": "2020-05-11T18:08:22+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 5551,
+        "action_type_id": 13,
+        "params": {
+            "text": "brain",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-11T18:08:22+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 5550,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 8074
+        },
+        "created_at": "2020-05-11T18:07:04+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5549,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=8074&i=8074"
+        },
+        "created_at": "2020-05-11T18:07:04+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 5548,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 36541
+        },
+        "created_at": "2020-05-11T18:06:20+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 5547,
+        "action_type_id": 10,
+        "params": {
+            "selectedMode": "thumbnail"
+        },
+        "created_at": "2020-05-11T18:04:18+00:00",
+        "user_login_id": 153,
+        "action_type": "Video still playing"
+    },
+    {
+        "id": 5546,
+        "action_type_id": 10,
+        "params": {
+            "selectedMode": "topicnames"
+        },
+        "created_at": "2020-05-11T18:04:08+00:00",
+        "user_login_id": 153,
+        "action_type": "Video still playing"
+    },
+    {
+        "id": 5545,
+        "action_type_id": 10,
+        "params": {
+            "selectedMode": "swimlanes"
+        },
+        "created_at": "2020-05-11T18:04:00+00:00",
+        "user_login_id": 153,
+        "action_type": "Video still playing"
+    },
+    {
+        "id": 5544,
+        "action_type_id": 10,
+        "params": {
+            "selectedMode": "bubbles"
+        },
+        "created_at": "2020-05-11T18:03:48+00:00",
+        "user_login_id": 153,
+        "action_type": "Video still playing"
+    },
+    {
+        "id": 5527,
+        "action_type_id": 13,
+        "params": {
+            "text": "brain",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-11T17:31:01+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 5528,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=brain"
+        },
+        "created_at": "2020-05-11T17:31:01+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 5518,
+        "action_type_id": 13,
+        "params": {
+            "text": "brain",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-11T16:16:33+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 5517,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=brain"
+        },
+        "created_at": "2020-05-11T16:16:33+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 5498,
+        "action_type_id": 13,
+        "params": {
+            "text": "brain",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-05-10T18:34:09+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 5497,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=brain"
+        },
+        "created_at": "2020-05-10T18:34:09+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 4196,
+        "action_type_id": 14,
+        "params": {
+            "path": "/",
+            "query": ""
+        },
+        "created_at": "2020-04-17T05:09:58+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 4195,
+        "action_type_id": 14,
+        "params": {
+            "path": "/create_playlist",
+            "query": ""
+        },
+        "created_at": "2020-04-17T05:09:46+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 3995,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 32
+        },
+        "created_at": "2020-04-15T07:21:44+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 3994,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 31
+        },
+        "created_at": "2020-04-15T07:21:37+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 3993,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 31
+        },
+        "created_at": "2020-04-15T07:21:14+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 3911,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 8235
+        },
+        "created_at": "2020-04-14T05:45:51+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 3910,
+        "action_type_id": 13,
+        "params": {
+            "text": "algorithm",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-04-14T05:45:17+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 3909,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=algorithm"
+        },
+        "created_at": "2020-04-14T05:45:17+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 3908,
+        "action_type_id": 13,
+        "params": {
+            "text": "brain",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-04-14T05:45:00+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 3907,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=brain"
+        },
+        "created_at": "2020-04-14T05:45:00+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 3906,
+        "action_type_id": 13,
+        "params": {
+            "text": "braub",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-04-14T05:44:54+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 3905,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=braub"
+        },
+        "created_at": "2020-04-14T05:44:54+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 3904,
+        "action_type_id": 13,
+        "params": {
+            "text": "concurrent",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-04-14T05:43:52+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 3903,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=concurrent"
+        },
+        "created_at": "2020-04-14T05:43:52+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    },
+    {
+        "id": 3898,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 64197
+        },
+        "created_at": "2020-04-14T05:43:33+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 3897,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 77297
+        },
+        "created_at": "2020-04-14T05:43:30+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 3896,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 4930
+        },
+        "created_at": "2020-04-14T05:43:29+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 3895,
+        "action_type_id": 1,
+        "params": {
+            "oerId": 95477
+        },
+        "created_at": "2020-04-14T05:43:27+00:00",
+        "user_login_id": 153,
+        "action_type": "OER card opened"
+    },
+    {
+        "id": 3893,
+        "action_type_id": 13,
+        "params": {
+            "text": "scikit",
+            "isFromSearchField": true
+        },
+        "created_at": "2020-04-14T05:43:23+00:00",
+        "user_login_id": 153,
+        "action_type": "OpenExplanationPopup"
+    },
+    {
+        "id": 3892,
+        "action_type_id": 14,
+        "params": {
+            "path": "/search",
+            "query": "q=scikit"
+        },
+        "created_at": "2020-04-14T05:43:23+00:00",
+        "user_login_id": 153,
+        "action_type": "UrlChanged"
+    }
+]

@@ -28,26 +28,35 @@ async function fetchAPI(
 }
 
 export async function fetchLoggedInUserDetail() {
-  return fetchAPI(`/session`);
+  //   return fetchAPI(`/session`);
+  return require('./mock/loggedInUserDetail.json');
 }
 export async function fetchAction() {
-  return fetchAPI(`/action`);
+  // return fetchAPI(`/action`);
+  return require('./mock/loggedInUserDetail.json');
 }
 export async function fetchPlaylistDetail(playlistID) {
-  return fetchAPI(`/playlist/${playlistID}`);
+    // return fetchAPI(`/playlist/${playlistID}`);
+    return require('./mock/playlist-24.json');
 }
 export async function fetchPlaylists(limit, offset) {
-  return fetchAPI(`/playlist`);
+    // return fetchAPI(`/playlist`);
+    return require('./mock/playlist-24.json');
 }
 export async function fetchFeaturedOERs() {
-  return fetchAPI(`/featured`);
+  //   return fetchAPI(`/featured`);
+  const data = await require('./mock/featuredList.json');
+  return data;
 }
 export async function fetchWikiEnrichments(idArray) {
-  var body = JSON.stringify({ ids: idArray });
-  return fetchAPI(`/wikichunk_enrichments`, body, { method: 'POST' });
+    // var body = JSON.stringify({ ids: idArray });
+    // return fetchAPI(`/wikichunk_enrichments`, body, { method: 'POST' });
+    const data = await require('./mock/wiki-enrichment.json');
+    
 }
 export async function fetchOERs(idArray) {
-  var body = JSON.stringify({ ids: idArray });
-
-  return fetchAPI(`/oers`, body, { method: 'POST' });
+    // var body = JSON.stringify({ ids: idArray });
+    
+    // return fetchAPI(`/oers`, body, { method: 'POST' });
+    const data = await require('./mock/featuredList.json');
 }

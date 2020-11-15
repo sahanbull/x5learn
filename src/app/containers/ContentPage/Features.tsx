@@ -1,8 +1,8 @@
 import React from 'react';
 import styled from 'styled-components/macro';
-import { Title } from 'app/containers/HomePage/components/Title';
+import { Title } from './components/Title';
 import { Lead } from './components/Lead';
-import { SubTitle } from 'app/containers/HomePage/components/SubTitle';
+import { SubTitle } from './components/SubTitle';
 import { P } from './components/P';
 import { A } from 'app/components/A';
 import { GithubRepoForm } from 'app/containers/GithubRepoForm';

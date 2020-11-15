@@ -21,7 +21,7 @@ export function AppLayout(props) {
       <Layout>
         <AppSideBar />
         <Layout style={{ padding: '0 24px 24px' }}>
-          <AppBreadcrumb />
+          {/* <AppBreadcrumb /> */}
           <Content
             className="site-layout-background"
             style={{

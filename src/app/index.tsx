@@ -12,7 +12,7 @@ import { Switch, Route, BrowserRouter } from 'react-router-dom';
 
 import { GlobalStyle } from '../styles/global-styles';
 
-import { HomePage } from './containers/HomePage/Loadable';
+import { HomePage } from './pages/HomePage/Loadable';
 import { NotFoundPage } from './containers/NotFoundPage/Loadable';
 
 export function App() {
@@ -26,6 +26,11 @@ export function App() {
       </Helmet>
       <Switch>
         <Route exact path={process.env.PUBLIC_URL + '/'} component={HomePage} />
+        <Route
+          exact
+          path={process.env.PUBLIC_URL + '/homepage'}
+          component={HomePage}
+        />
         <Route
           exact
           path={process.env.PUBLIC_URL + '/playlists'}

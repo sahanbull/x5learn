@@ -14,6 +14,7 @@ from dateutil import parser
 from sqlalchemy import or_, and_, cast, Integer
 from sqlalchemy.orm.attributes import flag_modified
 from flask_restplus import Api, Resource, fields, reqparse
+from flask_cors import CORS
 import wikipedia
 import base64
 
@@ -37,6 +38,7 @@ from x5learn_server.course_optimization import optimize_course
 
 # Create app
 app = Flask(__name__)
+CORS(app)
 mail = Mail()
 
 app.config['SERVER_NAME'] = SERVER_NAME

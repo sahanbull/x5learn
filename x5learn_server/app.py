@@ -14,7 +14,7 @@ from dateutil import parser
 from sqlalchemy import or_, and_, cast, Integer
 from sqlalchemy.orm.attributes import flag_modified
 from flask_restplus import Api, Resource, fields, reqparse
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 import wikipedia
 import base64
 
@@ -39,6 +39,10 @@ from x5learn_server.course_optimization import optimize_course
 # Create app
 app = Flask(__name__)
 CORS(app)
+
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
+
 mail = Mail()
 
 app.config['SERVER_NAME'] = SERVER_NAME
@@ -241,28 +245,28 @@ def logout():
     logout_user()
     return redirect("/")
 
-
+@cross_origin()
 @app.route("/featured")
 def featured():
     languages = get_available_languages()
     localization_dict, lang = get_localization_dict()
     return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
 
-
+@cross_origin()
 @app.route("/search")
 def search():
     languages = get_available_languages()
     localization_dict, lang = get_localization_dict()
     return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
 
-
+@cross_origin()
 @app.route("/resource/<oer_id>")
 def resource(oer_id):
     languages = get_available_languages()
     localization_dict, lang = get_localization_dict()
     return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
 
-
+@cross_origin()
 @app.route("/profile")
 @login_required
 def profile():
@@ -270,7 +274,7 @@ def profile():
     localization_dict, lang = get_localization_dict()
     return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
 
-
+@cross_origin()
 @app.route("/publish_playlist")
 @login_required
 def playlist():
@@ -278,7 +282,7 @@ def playlist():
     localization_dict, lang = get_localization_dict()
     return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
 
-
+@cross_origin()
 @app.route("/create_playlist")
 @login_required
 def new_playlist():
@@ -286,14 +290,14 @@ def new_playlist():
     localization_dict, lang = get_localization_dict()
     return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
 
-
+@cross_origin()
 @app.route("/playlist/download/<playlist_id>")
 def playlist_download(playlist_id):
     playlist = repository.get_by_id(Playlist, playlist_id)
     playlist_blueprint = json.dumps(playlist.blueprint)
     return render_template('download.html', playlist_name=playlist.title, playlist_blueprint=playlist_blueprint)
 
-
+@cross_origin()
 @app.route("/api/v1/session/", methods=['GET'])
 def api_session():
     if current_user.is_authenticated:
@@ -339,7 +343,7 @@ def get_overview_type_setting():
 #         db_session.commit()
 #     return user
 
-
+@cross_origin()
 @app.route("/api/v1/recommendations/", methods=['GET'])
 def api_recommendations():
     oer_id = int(request.args['oerId'])
@@ -376,7 +380,7 @@ def get_items_in_playlist(playlist_id):
 
     return oer_list
 
-
+@cross_origin()
 @app.route("/api/v1/search/", methods=['GET'])
 def api_search():
     """
@@ -427,12 +431,14 @@ def api_search():
         })
 
 
+@cross_origin()
 @app.route("/api/v1/oers/", methods=['POST'])
 def api_oers():
     oers = [find_oer_by_id(oer_id) for oer_id in request.get_json()['ids']]
     return jsonify(oers)
 
 
+@cross_origin()
 @app.route("/api/v1/video_usages/", methods=['GET'])
 def api_video_usages():
     actions = Action.query.filter(Action.user_login_id == current_user.get_id(),
@@ -448,6 +454,7 @@ def api_video_usages():
     return jsonify(ranges_per_oer)
 
 
+@cross_origin()
 @app.route("/api/v1/course_optimization/<playlist_title>", methods=['POST'])
 def api_course_optimization(playlist_title):
     old_oer_ids = request.get_json()['oerIds']
@@ -456,6 +463,7 @@ def api_course_optimization(playlist_title):
     return jsonify(new_oer_ids)
 
 
+@cross_origin()
 @app.route("/api/v1/load_course/", methods=['POST'])
 def api_load_course():
     course = Course.query.filter(Course.user_login_id == current_user.get_id()).order_by(Course.id.desc()).first()
@@ -468,6 +476,7 @@ def api_load_course():
     return jsonify(course.data)
 
 
+@cross_origin()
 @app.route("/api/v1/save_course/", methods=['POST'])
 def api_save_course():
     items = request.get_json()['items']
@@ -478,6 +487,7 @@ def api_save_course():
     return 'OK'
 
 
+@cross_origin()
 @app.route("/api/v1/save_ui_logged_events_batch/", methods=['POST'])
 def api_save_ui_logged_events_batch():
     client_time = request.get_json()['clientTime']
@@ -503,6 +513,7 @@ def video_usage_ranges_from_positions(positions):
     return ranges
 
 
+@cross_origin()
 @app.route("/api/v1/featured/", methods=['GET'])
 def api_featured():
     urls = ['http://hydro.ijs.si/v015/f9/7gh3dwpzrfpfvxnrl5fkaq4nedrqguh6.mp4',
@@ -512,6 +523,7 @@ def api_featured():
     return jsonify(oers)
 
 
+@cross_origin()
 @app.route("/api/v1/resource_feedback/", methods=['POST'])  # to be replaced by Actions API
 def api_resource_feedback():
     oer_id = request.get_json()['oerId']
@@ -523,6 +535,7 @@ def api_resource_feedback():
     return 'OK'
 
 
+@cross_origin()
 @app.route("/api/v1/save_user_profile/", methods=['POST'])
 def api_save_user_profile():
     if current_user.is_authenticated:
@@ -533,6 +546,7 @@ def api_save_user_profile():
         return 'Error', 403
 
 
+@cross_origin()
 @app.route("/api/v1/wikichunk_enrichments/", methods=['POST'])
 def api_wikichunk_enrichments():
     enrichments = []
@@ -547,6 +561,7 @@ def api_wikichunk_enrichments():
     return jsonify(enrichments)
 
 
+@cross_origin()
 @app.route("/api/v1/most_urgent_unstarted_enrichment_task/", methods=['POST'])
 def most_urgent_unstarted_enrichment_task():
     timeout = datetime.now() - timedelta(minutes=10)
@@ -568,6 +583,7 @@ def most_urgent_unstarted_enrichment_task():
     return jsonify({'data': oer.data})
 
 
+@cross_origin()
 @app.route("/api/v1/ingest_wikichunk_enrichment/", methods=['POST'])
 def ingest_wikichunk_enrichment():
     j = request.get_json(force=True)
@@ -593,6 +609,7 @@ def ingest_wikichunk_enrichment():
     return 'OK'
 
 
+@cross_origin()
 @app.route("/api/v1/ingest_oer/", methods=['POST'])
 def ingest_oer():
     j = request.get_json(force=True)
@@ -623,6 +640,7 @@ def do_ingest_oer(material_id):
         {'ok': 'Oer with material_id {} CREATED. Enrichment task started. URL = {}'.format(material_id, url)})
 
 
+@cross_origin()
 @app.route("/api/v1/entity_definitions/", methods=['GET'])
 def api_entity_descriptions():
     entity_ids = request.args['ids'].split(',')
@@ -634,6 +652,7 @@ def api_entity_descriptions():
     return jsonify(definitions)
 
 
+@cross_origin()
 @app.route("/api/v1/most_urgent_unstarted_thumb_generation_task/", methods=['POST'])
 def most_urgent_unstarted_thumb_generation_task():
     task = ThumbGenerationTask.query.filter(or_(and_(ThumbGenerationTask.error == None, ThumbGenerationTask.started == None), 
@@ -658,6 +677,7 @@ def most_urgent_unstarted_thumb_generation_task():
     return jsonify({'url': task.url, 'data': task_data})
 
 
+@cross_origin()
 @app.route("/api/v1/ingest_thumb_generation_result/", methods=['POST'])
 def ingest_thumb_generation_result():
     j = request.get_json(force=True)

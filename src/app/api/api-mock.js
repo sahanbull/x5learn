@@ -36,12 +36,12 @@ export async function fetchAction() {
   return require('./mock/loggedInUserDetail.json');
 }
 export async function fetchPlaylistDetail(playlistID) {
-    // return fetchAPI(`/playlist/${playlistID}`);
-    return require('./mock/playlist-24.json');
+  // return fetchAPI(`/playlist/${playlistID}`);
+  return require('./mock/playlist-24.json');
 }
 export async function fetchPlaylists(limit, offset) {
-    // return fetchAPI(`/playlist`);
-    return require('./mock/playlist-24.json');
+  // return fetchAPI(`/playlist`);
+  return require('./mock/playlist-24.json');
 }
 export async function fetchFeaturedOERs() {
   //   return fetchAPI(`/featured`);
@@ -49,14 +49,13 @@ export async function fetchFeaturedOERs() {
   return data;
 }
 export async function fetchWikiEnrichments(idArray) {
-    // var body = JSON.stringify({ ids: idArray });
-    // return fetchAPI(`/wikichunk_enrichments`, body, { method: 'POST' });
-    const data = await require('./mock/wiki-enrichment.json');
-    
+  // var body = JSON.stringify({ ids: idArray });
+  // return fetchAPI(`/wikichunk_enrichments`, body, { method: 'POST' });
+  return require('./mock/wiki-enrichment.json');
 }
 export async function fetchOERs(idArray) {
-    // var body = JSON.stringify({ ids: idArray });
-    
-    // return fetchAPI(`/oers`, body, { method: 'POST' });
-    const data = await require('./mock/featuredList.json');
+  // var body = JSON.stringify({ ids: idArray });
+
+  // return fetchAPI(`/oers`, body, { method: 'POST' });
+  return require('./mock/featuredList.json');
 }

@@ -41,7 +41,8 @@ app = Flask(__name__)
 CORS(app)
 
 cors = CORS(app)
-app.config['CORS_ALLOW_HEADERS'] = '*' 
+app.config['CORS_ALLOW_HEADERS'] = '*'
+app.config['CORS_EXPOSE_HEADERS'] = '*' 
 
 mail = Mail()
 

@@ -1,1 +1,41 @@
-[{"date":"","description":"","duration":"83:34","durationInSeconds":5014,"id":31,"images":["tn_31_332x175.jpg"],"material_id":"73078","mediatype":"video","provider":"Videolectures.NET","title":"Deep learning in the brain","url":"http://hydro.ijs.si/v015/f9/7gh3dwpzrfpfvxnrl5fkaq4nedrqguh6.mp4"},{"date":"","description":"In this presentation, I will rehearse the free-energy formulation of action and perception, with a special focus on the representation of uncertainty: The free-energy principle is based upon the notion that both action and perception are trying to minimize the surprise (prediction error) associated with sensory input. In this scheme, perception is the process of optimizing sensory predictions by adjusting internal brain states and connections; while action is regarded as an adaptive sampling of sensory input to ensure it conforms to perceptual predictions (this is known as active inference). Both action and perception rest on an optimum representation of uncertainty, which corresponds to the precision of prediction error. Neurobiologically, this may be encoded by the postsynaptic gain of prediction error units. I hope to illustrate the plausibility of this framework using simple simulations of cued, sequential, movements. Crucially, the predictions driving movements are based upon a hierarchical generative model that infers the context in which movements are made. This means that we can temporarily confuse agents by changing the context (order) in which cues are presented. These simulations provide a (Bayes-optimal) simulation of contextual uncertainty and set-switching that can be characterized in terms of behaviour and electrophysiological responses. Interestingly, one can lesion the encoding of precision (postsynaptic gain) to produce pathological behaviours that are reminiscent of those seen in Parkinson's disease. I will use this as a toy example of how information theoretic approaches to uncertainty may help understand action selection and set-switching.","duration":"63:51","durationInSeconds":3831,"id":32,"images":["tn_32_332x175.jpg"],"material_id":"7051","mediatype":"video","provider":"Videolectures.NET","title":"Active Inference and Uncertainty","url":"http://hydro.ijs.si/v00b/8c/rsctlkzcht24mvake5k3cyjkbtfvr22b.mp4"},{"date":"2007-11-16","description":"","duration":"10:59","durationInSeconds":659,"id":2505,"images":["tn_2505_332x175.jpg"],"material_id":2481,"mediatype":"video","provider":"Videolectures.NET","title":"Act on CO2","url":"http://hydro.ijs.si/v001/46/i3fx77camctxek5oqnpt7hjfflfpezor.mp4"}]
+[
+  {
+    "date": "",
+    "description": "",
+    "duration": "83:34",
+    "durationInSeconds": 5014,
+    "id": 31,
+    "images": ["tn_31_332x175.jpg"],
+    "material_id": "73078",
+    "mediatype": "video",
+    "provider": "Videolectures.NET",
+    "title": "Deep learning in the brain",
+    "url": "http://hydro.ijs.si/v015/f9/7gh3dwpzrfpfvxnrl5fkaq4nedrqguh6.mp4"
+  },
+  {
+    "date": "",
+    "description": "In this presentation, I will rehearse the free-energy formulation of action and perception, with a special focus on the representation of uncertainty: The free-energy principle is based upon the notion that both action and perception are trying to minimize the surprise (prediction error) associated with sensory input. In this scheme, perception is the process of optimizing sensory predictions by adjusting internal brain states and connections; while action is regarded as an adaptive sampling of sensory input to ensure it conforms to perceptual predictions (this is known as active inference). Both action and perception rest on an optimum representation of uncertainty, which corresponds to the precision of prediction error. Neurobiologically, this may be encoded by the postsynaptic gain of prediction error units. I hope to illustrate the plausibility of this framework using simple simulations of cued, sequential, movements. Crucially, the predictions driving movements are based upon a hierarchical generative model that infers the context in which movements are made. This means that we can temporarily confuse agents by changing the context (order) in which cues are presented. These simulations provide a (Bayes-optimal) simulation of contextual uncertainty and set-switching that can be characterized in terms of behaviour and electrophysiological responses. Interestingly, one can lesion the encoding of precision (postsynaptic gain) to produce pathological behaviours that are reminiscent of those seen in Parkinson's disease. I will use this as a toy example of how information theoretic approaches to uncertainty may help understand action selection and set-switching.",
+    "duration": "63:51",
+    "durationInSeconds": 3831,
+    "id": 32,
+    "images": ["tn_32_332x175.jpg"],
+    "material_id": "7051",
+    "mediatype": "video",
+    "provider": "Videolectures.NET",
+    "title": "Active Inference and Uncertainty",
+    "url": "http://hydro.ijs.si/v00b/8c/rsctlkzcht24mvake5k3cyjkbtfvr22b.mp4"
+  },
+  {
+    "date": "2007-11-16",
+    "description": "",
+    "duration": "10:59",
+    "durationInSeconds": 659,
+    "id": 2505,
+    "images": ["tn_2505_332x175.jpg"],
+    "material_id": 2481,
+    "mediatype": "video",
+    "provider": "Videolectures.NET",
+    "title": "Act on CO2",
+    "url": "http://hydro.ijs.si/v001/46/i3fx77camctxek5oqnpt7hjfflfpezor.mp4"
+  }
+]

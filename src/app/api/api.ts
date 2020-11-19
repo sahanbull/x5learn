@@ -1,10 +1,14 @@
+const queryString = require('query-string');
+
 const BASE_URL = process.env.REACT_APP_BASE_URL;
 const AUTH_KEY: string = process.env.REACT_APP_AUTH_KEY || '';
 
-var headers = {
-  Authorization: AUTH_KEY,
-  'Content-Type': 'application/json',
-};
+
+var headers = new Headers();
+headers.append("Authorization", AUTH_KEY);
+headers.append("Content-Type", 'application/json');
+// headers.append("X-My-Custom-Header", 'value-v');
+
 
 async function fetchAPI(
   endpoint,
@@ -49,14 +53,16 @@ export async function fetchPlaylistDetail(playlistID) {
   return fetchAPI(`/playlist/${playlistID}`);
   // return require('./mock/playlist-24.json');
 }
-export async function fetchPlaylists(limit, offset) {
-  return fetchAPI(`/playlist`);
+export async function fetchPlaylists(limit?, offset?) {
+  const qs = queryString.stringify({limit, offset})
+  debugger
+  return fetchAPI(`/playlist?${qs}`);
   // return require('./mock/playlist-24.json');
 }
 export async function fetchFeaturedOERs() {
-  return fetchAPI(`/featured`);
-  // const data = await require('./mock/featuredList.json');
-  // return data;
+  // return fetchAPI(`/featured`);
+  const data = await require('./mock/featuredList.json');
+  return data;
 }
 export async function fetchWikiEnrichments(idArray) {
   var body = JSON.stringify({ ids: idArray });

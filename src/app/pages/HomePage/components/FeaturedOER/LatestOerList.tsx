@@ -12,7 +12,6 @@ export function LatestOerList() {
   return (
     <div>
       <Title level={4}>{t('oer.latest', 'Latest OER Materials')}</Title>
-
       <OerCardList />
     </div>
   );

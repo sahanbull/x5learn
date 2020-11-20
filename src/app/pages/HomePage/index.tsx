@@ -9,11 +9,11 @@ import { fetchFeaturedOer, sliceKey, reducer } from './ducks/featuredOerSlice';
 
 export function HomePage() {
   useInjectReducer({ key: sliceKey, reducer: reducer });
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
 
   const oerCallBack = useCallback(async () => {
-    const data = await dispatch(fetchFeaturedOer())
-    
+    const data = await dispatch(fetchFeaturedOer());
+
     // const playlists = await fetchPlaylists(3);
     debugger;
   }, []);

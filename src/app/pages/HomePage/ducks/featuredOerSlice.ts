@@ -4,8 +4,7 @@ import { fetchFeaturedOERs } from 'app/api/api-mock';
 
 // The initial state of the GithubRepoForm container
 export const initialState: any = {
-  username: 'react-boilerplate',
-  data: [],
+  data: null,
   loading: false,
   error: null,
 };
@@ -23,9 +22,17 @@ const featuredOerSlice = createSlice({
   initialState,
   reducers:{},
   extraReducers: {
+    [fetchFeaturedOer.pending.toString()]: (state: any, action) => {
+      state.data = null;
+      state.loading = true;
+    },
     [fetchFeaturedOer.fulfilled.toString()]: (state: any, action) => {
+      state.loading = false;
       state.data = action.payload;
-      debugger
+    },
+    [fetchFeaturedOer.rejected.toString()]: (state: any, action) => {
+      state.loading = false;
+      state.error = action.error;
     },
   },
 });

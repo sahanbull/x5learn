@@ -31,17 +31,19 @@ export function OerCardList(props: {
     );
   }
 
+  if (!data || data?.length === 0) {
+    return <Empty description="No Data" />;
+  }
+
   return (
     <Row gutter={16}>
-      <Col span={8}>
-        <OerCard />
-      </Col>
-      <Col span={8}>
-        <OerCard />
-      </Col>
-      <Col span={8}>
-        <OerCard />
-      </Col>
+      {data?.map(item => {
+        return (
+          <Col key={item.id} span={8}>
+            <OerCard card={item}/>
+          </Col>
+        );
+      })}
     </Row>
   );
 }

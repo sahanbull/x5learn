@@ -27,7 +27,7 @@ export function OerCardList(props: {
 
   if (error) {
     return (
-      <Empty description="An error has occoured" image={<WarningOutlined />} />
+      <Empty description="An error has occurred" image={<WarningOutlined />} />
     );
   }
 

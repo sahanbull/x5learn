@@ -43,6 +43,7 @@ CORS(app)
 cors = CORS(app)
 app.config['CORS_ALLOW_HEADERS'] = '*'
 app.config['CORS_EXPOSE_HEADERS'] = '*' 
+app.config['CORS_SUPPORTS_CREDENTIALS'] = True
 
 mail = Mail()
 

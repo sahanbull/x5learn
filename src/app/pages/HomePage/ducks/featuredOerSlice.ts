@@ -1,6 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { createSlice } from 'utils/@reduxjs/toolkit';
-import { fetchFeaturedOERs } from 'app/api/api-mock';
+import { fetchFeaturedOERs } from 'app/api/api';
 
 // The initial state of the GithubRepoForm container
 export const initialState: any = {

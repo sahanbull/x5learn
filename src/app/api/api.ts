@@ -7,7 +7,8 @@ const AUTH_KEY: string = process.env.REACT_APP_AUTH_KEY || '';
 var headers = new Headers();
 headers.append("Authorization", AUTH_KEY);
 headers.append("Content-Type", 'application/json');
-// headers.append("X-My-Custom-Header", 'value-v');
+headers.append("Access-Control-Request-Headers", '*');
+headers.append("Access-Control-Request-Method", 'POST, GET, OPTIONS, DELETE');
 
 
 async function fetchAPI(
@@ -60,9 +61,10 @@ export async function fetchPlaylists(limit?, offset?) {
   // return require('./mock/playlist-24.json');
 }
 export async function fetchFeaturedOERs() {
-  // return fetchAPI(`/featured`);
-  const data = await require('./mock/featuredList.json');
-  return data;
+  debugger
+  return fetchAPI(`/featured`);
+  // const data = await require('./mock/featuredList.json');
+  // return data;
 }
 export async function fetchWikiEnrichments(idArray) {
   var body = JSON.stringify({ ids: idArray });

@@ -8,18 +8,12 @@ import { useDispatch } from 'react-redux';
 import { fetchFeaturedOer, sliceKey, reducer } from './ducks/featuredOerSlice';
 
 export function HomePage() {
-  useInjectReducer({ key: sliceKey, reducer: reducer });
+  // useInjectReducer({ key: sliceKey, reducer: reducer });
   const dispatch = useDispatch();
 
-  const oerCallBack = useCallback(async () => {
-    const data = await dispatch(fetchFeaturedOer());
-
-    // const playlists = await fetchPlaylists(3);
-    debugger;
-  }, []);
   useEffect(() => {
-    oerCallBack();
-  }, [oerCallBack]);
+    dispatch(fetchFeaturedOer());
+  }, [dispatch]);
   return (
     <>
       <Helmet>

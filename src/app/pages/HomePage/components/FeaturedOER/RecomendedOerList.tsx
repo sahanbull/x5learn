@@ -13,7 +13,7 @@ export function RecomendedOerList() {
   const { t } = useTranslation();
 
   const loading = useSelector(state => {
-    return state[sliceKey].isLoading;
+    return state[sliceKey].loading;
   });
   const error = useSelector(state => {
     return state[sliceKey].error;

@@ -5,7 +5,7 @@ import { fetchFeaturedOERs } from 'app/api/api';
 // The initial state of the GithubRepoForm container
 export const initialState: any = {
   data: null,
-  loading: false,
+  loading: true,
   error: null,
 };
 

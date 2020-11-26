@@ -2,6 +2,7 @@ import React, { ReactComponentElement, ReactElement } from 'react';
 import { Card, Skeleton, Typography } from 'antd';
 import Avatar from 'antd/lib/avatar/avatar';
 import Meta from 'antd/lib/card/Meta';
+import styled from 'styled-components';
 
 const { Text } = Typography;
 
@@ -63,6 +64,23 @@ const VideoIconSVG = () => (
   </svg>
 );
 
+const Duration = styled.span`
+  padding: 0px 6px 2px 6px;
+  border-radius: 4px;
+  background-color: #000d32;
+  font-size: 12px;
+  font-weight: 600;
+  font-stretch: normal;
+  font-style: normal;
+  line-height: 1.33;
+  letter-spacing: 0.3px;
+  text-align: center;
+  color: #ffffff;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+`;
+
 export function OerCard(props: { loading?: boolean; card?: OerDao }) {
   const { loading, card } = props;
   if (loading) {
@@ -116,6 +134,7 @@ export function OerCard(props: { loading?: boolean; card?: OerDao }) {
           </>
         }
       />
+      <Duration>{card?.duration}</Duration>
     </Card>
   );
 }

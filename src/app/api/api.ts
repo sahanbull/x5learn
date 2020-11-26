@@ -7,8 +7,8 @@ const AUTH_KEY: string = process.env.REACT_APP_AUTH_KEY || '';
 var headers = new Headers();
 headers.append("Authorization", AUTH_KEY);
 headers.append("Content-Type", 'application/json');
-headers.append("Access-Control-Request-Headers", '*');
-headers.append("Access-Control-Request-Method", 'POST, GET, OPTIONS, DELETE');
+// headers.append("Access-Control-Request-Headers", '*');
+// headers.append("Access-Control-Request-Method", 'POST, GET, OPTIONS, DELETE');
 
 
 async function fetchAPI(
@@ -29,7 +29,6 @@ async function fetchAPI(
   if (method === 'POST') {
     requestOptions.data = data;
   }
-  debugger;
   return fetch(`${BASE_URL}${endpoint}`, requestOptions)
     .then(response => response.json())
     .then(result => {
@@ -54,14 +53,18 @@ export async function fetchPlaylistDetail(playlistID) {
   return fetchAPI(`/playlist/${playlistID}/`);
   // return require('./mock/playlist-24.json');
 }
+export async function fetchMyPlaylistsMenu(limit?, offset?) {
+  // const qs = queryString.stringify({limit, offset})
+  // debugger
+  // return fetchAPI(`/playlist/?${qs}`);
+  return require('./mock/playlists-menu.json');
+}
 export async function fetchPlaylists(limit?, offset?) {
   const qs = queryString.stringify({limit, offset})
-  debugger
   return fetchAPI(`/playlist/?${qs}`);
   // return require('./mock/playlist-24.json');
 }
 export async function fetchFeaturedOERs() {
-  debugger
   return fetchAPI(`/featured/`);
   // const data = await require('./mock/featuredList.json');
   // return data;

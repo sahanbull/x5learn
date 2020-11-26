@@ -11,6 +11,7 @@ import { ThemeState } from 'styles/theme/types';
 export interface RootState {
   theme?: ThemeState;
   githubRepoForm?: GithubRepoFormState;
-  featuredOer?:any
+  featuredOer?:any,
+  myPlaylistsMemu?:any
   // [INSERT NEW REDUCER KEY ABOVE] < Needed for generating containers seamlessly
 }

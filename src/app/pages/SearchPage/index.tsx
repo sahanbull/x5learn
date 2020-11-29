@@ -5,7 +5,7 @@ import { Masthead } from './Masthead';
 import { Features } from './Features';
 import { PageWrapper } from 'app/components/PageWrapper';
 
-export function HomePage() {
+export function SearchPage() {
   return (
     <>
       <Helmet>

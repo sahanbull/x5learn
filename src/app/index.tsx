@@ -13,6 +13,7 @@ import { Switch, Route, BrowserRouter } from 'react-router-dom';
 import { GlobalStyle } from '../styles/global-styles';
 
 import { HomePage } from './pages/HomePage/Loadable';
+import { SearchPage } from './pages/SearchPage/Loadable';
 import { NotFoundPage } from './containers/NotFoundPage/Loadable';
 
 export function App() {
@@ -44,7 +45,7 @@ export function App() {
         <Route
           exact
           path={process.env.PUBLIC_URL + '/search'}
-          component={HomePage}
+          component={SearchPage}
         />
         <Route
           exact

@@ -77,3 +77,9 @@ export async function fetchWikiEnrichments(idArray) {
 export async function fetchOERs(idArray) {
   // return require('./mock/featuredList.json');
 }
+export async function searchOERs(searchTerm) {
+  return fetchAPI(`/search/?text=${searchTerm}&page=1`);
+  //https://x5learn.org/api/v1/search/?text=se&page=1
+
+  // return require('./mock/search-se.json');
+}

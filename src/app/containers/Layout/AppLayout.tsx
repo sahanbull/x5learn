@@ -6,15 +6,24 @@ import {
   NotificationOutlined,
 } from '@ant-design/icons';
 
+import {
+  fetchMyPlaylistsMenuThunk,
+  sliceKey as playlistMenuSliceKey,
+  reducer as playlistMenuReducer,
+} from './ducks/myPlaylistsMenuSlice';
+
 import { AppHeader } from '../Header/AppHeader';
 import { AppFooter } from '../Footer/AppFooter';
 
 import { AppSideBar } from '../SideBar/AppSideBar';
 import { AppBreadcrumb } from '../Breadcrumb/AppBreadcrumb';
+import { useInjectReducer } from 'redux-injectors';
 const { SubMenu } = Menu;
 const { Header, Content, Sider, Footer } = Layout;
 
 export function AppLayout(props) {
+  useInjectReducer({ key: playlistMenuSliceKey, reducer: playlistMenuReducer });
+  
   return (
     <Layout>
       <AppHeader></AppHeader>

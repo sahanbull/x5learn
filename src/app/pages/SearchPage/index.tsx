@@ -8,7 +8,11 @@ import { useInjectReducer } from 'redux-injectors';
 import { useDispatch } from 'react-redux';
 import { SearchOerList } from './components/SearchOerList';
 import { AppLayout } from 'app/containers/Layout/AppLayout';
-import {fetchSearchOerThunk, sliceKey as searchOerSliceKey, reducer as oerSearchReducer } from 'app/pages/SearchPage/ducks/searchOerSlice'
+import {
+  fetchSearchOerThunk,
+  sliceKey as searchOerSliceKey,
+  reducer as oerSearchReducer,
+} from './ducks/searchOerSlice';
 import { useParams } from 'react-router-dom';
  
 export function SearchPage() {
@@ -17,9 +21,10 @@ export function SearchPage() {
   const router = useParams()
 
   useEffect(() => {
+    // router
     const searchParams = {
       searchTerm:"query to search",
-      page:1
+      page: 1
     }
     dispatch(fetchSearchOerThunk(searchParams))
   }, [dispatch]);
@@ -30,7 +35,7 @@ export function SearchPage() {
         <meta name="description" content="X5 Learn AI based learning" />
       </Helmet>
       <AppLayout>
-        <SearchOerList />
+        {/* <SearchOerList /> */}
       </AppLayout>
     </>
   );

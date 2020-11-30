@@ -19,19 +19,34 @@ import {
 import styled from 'styled-components';
 import './HeaderSearchBar.less';
 import Column from 'antd/lib/table/Column';
+import { useHistory, useLocation, useParams } from 'react-router-dom';
+import { ROUTES } from 'routes/routes';
+import queryString from 'query-string';
 
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
 const { Search } = Input;
 
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
+
 export function HeaderSearchBar(props) {
+  let history = useHistory();
+  let query = useQuery();
+
   return (
     <Row align="middle" justify="space-between">
       <Col flex="auto">
         <Search
+          onSearch={inputText => {
+            const qs = queryString.stringify({ q: inputText });
+            history.push(`${ROUTES.SEARCH}?${qs}`);
+          }}
           style={{ display: 'block' }}
           placeholder="Search"
           allowClear
+          defaultValue={query.get('q')?.toString()}
           // enterButton="Search"
           size="large"
         />

@@ -21,7 +21,7 @@ import './AppSideBar.less';
 import { ReactComponent as PlayListSVG } from 'app/containers/ContentPage/assets/playlist.svg';
 import { X5MenuTitle } from './X5MenuTitle';
 import { useSelector } from 'react-redux';
-import { sliceKey } from 'app/pages/HomePage/ducks/myPlaylistsMenuSlice';
+import { sliceKey } from 'app/containers/Layout/ducks/myPlaylistsMenuSlice';
 import { Link } from 'react-router-dom';
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;

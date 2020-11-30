@@ -1,4 +1,4 @@
-const queryString = require('query-string');
+import queryString from 'query-string';
 
 const BASE_URL = process.env.REACT_APP_BASE_URL;
 const AUTH_KEY: string = process.env.REACT_APP_AUTH_KEY || '';

@@ -15,6 +15,7 @@ import { GlobalStyle } from '../styles/global-styles';
 import { HomePage } from './pages/HomePage/Loadable';
 import { SearchPage } from './pages/SearchPage/Loadable';
 import { NotFoundPage } from './containers/NotFoundPage/Loadable';
+import { ROUTES } from 'routes/routes';
 
 export function App() {
   return (
@@ -26,37 +27,13 @@ export function App() {
         <meta name="description" content="A React Boilerplate application" />
       </Helmet>
       <Switch>
-        <Route exact path={process.env.PUBLIC_URL + '/'} component={HomePage} />
-        <Route
-          exact
-          path={process.env.PUBLIC_URL + '/homepage'}
-          component={HomePage}
-        />
-        <Route
-          exact
-          path={process.env.PUBLIC_URL + '/playlists'}
-          component={HomePage}
-        />
-        <Route
-          exact
-          path={process.env.PUBLIC_URL + '/resources'}
-          component={HomePage}
-        />
-        <Route
-          exact
-          path={process.env.PUBLIC_URL + '/search'}
-          component={SearchPage}
-        />
-        <Route
-          exact
-          path={process.env.PUBLIC_URL + '/playlists/:id'}
-          component={HomePage}
-        />
-        <Route
-          exact
-          path={process.env.PUBLIC_URL + '/resources/:id'}
-          component={HomePage}
-        />
+        <Route exact path={'/'} component={HomePage} />
+        <Route exact path={ROUTES.HOMEPAGE} component={HomePage} />
+        <Route exact path={ROUTES.HOMEPAGE} component={HomePage} />
+        <Route exact path={ROUTES.RESOURCES} component={HomePage} />
+        <Route exact path={ROUTES.SEARCH} component={SearchPage} />
+        <Route exact path={ROUTES.PLAYLISTS + '/:id'} component={HomePage} />
+        <Route exact path={ROUTES.RESOURCES + '/:id'} component={HomePage} />
         <Route component={NotFoundPage} />
       </Switch>
       <GlobalStyle />

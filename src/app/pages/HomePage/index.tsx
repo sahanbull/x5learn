@@ -6,19 +6,15 @@ import { RecomendedOerList } from './components/FeaturedOER/RecomendedOerList';
 import { useInjectReducer } from 'redux-injectors';
 import { useDispatch } from 'react-redux';
 import { fetchFeaturedOer, sliceKey, reducer } from './ducks/featuredOerSlice';
-import {
-  fetchSearchOerThunk,
-  sliceKey as searchOerSliceKey,
-  reducer as searchOerReducer,
-} from '../SearchPage/ducks/searchOerSlice';
+
+
 
 export function HomePage() {
-  useInjectReducer({ key: searchOerSliceKey, reducer: searchOerReducer });
+  useInjectReducer({ key: sliceKey, reducer: reducer });
   const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(fetchFeaturedOer());
-    // dispatch(fetchMyPlaylistsMenuThunk());
   }, [dispatch]);
   return (
     <>

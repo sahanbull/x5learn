@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Layout,
   Menu,
@@ -23,12 +23,20 @@ import { ReactComponent as PlayListSVG } from 'app/containers/ContentPage/assets
 import { ReactComponent as ProfileSVG } from 'app/containers/ContentPage/assets/profile.svg';
 
 import { MyPlaylistMenuItems } from './MyPlaylistMenuItems';
+import { useDispatch } from 'react-redux';
+import { fetchMyPlaylistsMenuThunk } from '../Layout/ducks/myPlaylistsMenuSlice';
 
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
 const { Text } = Typography;
 
 export function AppSideBar(props) {
+  const dispatch = useDispatch()
+
+  useEffect(() => {
+    dispatch(fetchMyPlaylistsMenuThunk());
+  }, [dispatch]);
+
   const rootSubmenuKeys = ['sub1', 'sub2', 'sub4'];
   const [openKeys, setOpenKeys] = useState(['sub1']);
 

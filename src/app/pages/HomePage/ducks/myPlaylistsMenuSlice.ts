@@ -10,7 +10,7 @@ export const initialState: any = {
 };
 
 export const fetchMyPlaylistsMenuThunk = createAsyncThunk(
-  'playlists/fetchMyPlaylistsMemu',
+  'playlists/fetchMyPlaylistsMenu',
   async () => {
     const data = await fetchMyPlaylistsMenu(5);
     return data;
@@ -18,7 +18,7 @@ export const fetchMyPlaylistsMenuThunk = createAsyncThunk(
 );
 
 const myPlaylistsMenuSlice = createSlice({
-  name: 'myPlaylistsMemu',
+  name: 'myPlaylistsMenu',
   initialState,
   reducers:{},
   extraReducers: {

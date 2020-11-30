@@ -12,6 +12,7 @@ export interface RootState {
   theme?: ThemeState;
   githubRepoForm?: GithubRepoFormState;
   featuredOer?:any,
-  myPlaylistsMemu?:any
+  myPlaylistsMenu?:any,
+  searchOer?:any
   // [INSERT NEW REDUCER KEY ABOVE] < Needed for generating containers seamlessly
 }

@@ -7,19 +7,18 @@ import { useInjectReducer } from 'redux-injectors';
 import { useDispatch } from 'react-redux';
 import { fetchFeaturedOer, sliceKey, reducer } from './ducks/featuredOerSlice';
 import {
-  fetchMyPlaylistsMenuThunk,
-  sliceKey as playlistMenuSliceKey,
-  reducer as playlistMenuReducer,
-} from './ducks/myPlaylistsMenuSlice';
+  fetchSearchOerThunk,
+  sliceKey as searchOerSliceKey,
+  reducer as searchOerReducer,
+} from '../SearchPage/ducks/searchOerSlice';
 
 export function HomePage() {
-  useInjectReducer({ key: sliceKey, reducer: reducer });
-  useInjectReducer({ key: playlistMenuSliceKey, reducer: playlistMenuReducer });
+  useInjectReducer({ key: searchOerSliceKey, reducer: searchOerReducer });
   const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(fetchFeaturedOer());
-    dispatch(fetchMyPlaylistsMenuThunk());
+    // dispatch(fetchMyPlaylistsMenuThunk());
   }, [dispatch]);
   return (
     <>

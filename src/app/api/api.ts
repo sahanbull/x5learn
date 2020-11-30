@@ -3,13 +3,11 @@ const queryString = require('query-string');
 const BASE_URL = process.env.REACT_APP_BASE_URL;
 const AUTH_KEY: string = process.env.REACT_APP_AUTH_KEY || '';
 
-
 var headers = new Headers();
-headers.append("Authorization", AUTH_KEY);
-headers.append("Content-Type", 'application/json');
+headers.append('Authorization', AUTH_KEY);
+headers.append('Content-Type', 'application/json');
 // headers.append("Access-Control-Request-Headers", '*');
 // headers.append("Access-Control-Request-Method", 'POST, GET, OPTIONS, DELETE');
-
 
 async function fetchAPI(
   endpoint,
@@ -60,7 +58,7 @@ export async function fetchMyPlaylistsMenu(limit?, offset?) {
   return require('./mock/playlists-menu.json');
 }
 export async function fetchPlaylists(limit?, offset?) {
-  const qs = queryString.stringify({limit, offset})
+  const qs = queryString.stringify({ limit, offset });
   return fetchAPI(`/playlist/?${qs}`);
   // return require('./mock/playlist-24.json');
 }
@@ -77,8 +75,9 @@ export async function fetchWikiEnrichments(idArray) {
 export async function fetchOERs(idArray) {
   // return require('./mock/featuredList.json');
 }
-export async function searchOERs(searchTerm) {
-  return fetchAPI(`/search/?text=${searchTerm}&page=1`);
+export async function fetchSearchOERs({ searchTerm, page }) {
+  const qs = queryString.stringify({ text: searchTerm, page });
+  return fetchAPI(`/search/?${qs}`);
   //https://x5learn.org/api/v1/search/?text=se&page=1
 
   // return require('./mock/search-se.json');

@@ -83,7 +83,7 @@ export function SearchPage() {
         )}
         <SearchOerList />
         {searchResult && (
-          <Pagination defaultCurrent={current_page} total={total_pages} />
+          <Pagination defaultCurrent={+page} total={total_pages} />
         )}
       </AppLayout>
     </>

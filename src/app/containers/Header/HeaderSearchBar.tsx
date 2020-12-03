@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   Layout,
   Menu,
@@ -35,14 +35,19 @@ export function HeaderSearchBar(props) {
   let history = useHistory();
   let query = useQuery();
 
+  const searchHandler = useCallback(
+    inputText => {
+      const qs = queryString.stringify({ q: inputText });
+      history.push(`${ROUTES.SEARCH}?${qs}`);
+    },
+    [history],
+  );
+
   return (
     <Row align="middle" justify="space-between">
       <Col flex="auto">
         <Search
-          onSearch={inputText => {
-            const qs = queryString.stringify({ q: inputText });
-            history.push(`${ROUTES.SEARCH}?${qs}`);
-          }}
+          onSearch={searchHandler}
           style={{ display: 'block' }}
           placeholder="Search"
           allowClear

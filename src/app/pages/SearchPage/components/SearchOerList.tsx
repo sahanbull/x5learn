@@ -18,14 +18,20 @@ export function SearchOerList() {
   const error = useSelector(state => {
     return state[sliceKey].error;
   });
-  const featuredData = useSelector(state => {
+  const searchResult: {
+    current_page: number;
+    oers: Array<object>;
+    total_pages: number;
+  } = useSelector(state => {
     return state[sliceKey].data;
   });
 
+  const { current_page, oers, total_pages } = searchResult || {};
+
   return (
     <div>
-      <Title level={4}>{t('oer.recommended', 'Recommended for You')}</Title>
-      <OerCardList loading={loading} error={error} data={featuredData} />
+      <Title level={4}>{t('oer.search_result', 'Search Result')}</Title>
+      <OerCardList loading={loading} error={error} data={oers} />
     </div>
   );
 }

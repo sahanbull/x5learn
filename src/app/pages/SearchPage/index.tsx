@@ -5,29 +5,58 @@ import { Masthead } from './Masthead';
 import { Features } from './Features';
 import { PageWrapper } from 'app/components/PageWrapper';
 import { useInjectReducer } from 'redux-injectors';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { SearchOerList } from './components/SearchOerList';
 import { AppLayout } from 'app/containers/Layout/AppLayout';
+import { Pagination, Spin } from 'antd';
 import {
   fetchSearchOerThunk,
   sliceKey as searchOerSliceKey,
   reducer as oerSearchReducer,
 } from './ducks/searchOerSlice';
-import { useParams } from 'react-router-dom';
- 
+import { useLocation, useParams } from 'react-router-dom';
+import { WarningOutlined } from '@ant-design/icons';
+import { Typography } from 'antd';
+
+const { Title } = Typography;
+
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
+
 export function SearchPage() {
   useInjectReducer({ key: searchOerSliceKey, reducer: oerSearchReducer });
   const dispatch = useDispatch();
-  const router = useParams()
+  const router = useParams();
+  const query = useQuery();
 
+  const isSearching = useSelector(state => {
+    return state[searchOerSliceKey].loading;
+  });
+  const isError = useSelector(state => {
+    return state[searchOerSliceKey].error;
+  });
+  const searchResult: {
+    current_page: number;
+    oers: Array<object>;
+    total_pages: number;
+  } = useSelector(state => {
+    return state[searchOerSliceKey].data;
+  });
+
+  const { current_page, oers, total_pages } = searchResult || {};
+
+  const searchTerm: string = query.get('q')?.toString() || '';
+  const page = query.get('page')?.toString() || '1';
+
+  debugger;
   useEffect(() => {
-    // router
     const searchParams = {
-      searchTerm:"query to search",
-      page: 1
-    }
-    dispatch(fetchSearchOerThunk(searchParams))
-  }, [dispatch]);
+      searchTerm,
+      page,
+    };
+    dispatch(fetchSearchOerThunk(searchParams));
+  }, [dispatch, page, searchTerm]);
   return (
     <>
       <Helmet>
@@ -35,7 +64,27 @@ export function SearchPage() {
         <meta name="description" content="X5 Learn AI based learning" />
       </Helmet>
       <AppLayout>
-        {/* <SearchOerList /> */}
+        {!searchTerm && <>No Search Term Found</>}
+        {isSearching && (
+          <>
+            <Spin spinning={isSearching} delay={500}></Spin>
+            Searching for {searchTerm}
+          </>
+        )}
+        {isError && (
+          <>
+            <WarningOutlined /> Something went wrong searching for {searchTerm}{' '}
+          </>
+        )}
+        {searchResult && (
+          <Title level={2} type="secondary">
+            {total_pages * oers.length} Open Educational Resources Found
+          </Title>
+        )}
+        <SearchOerList />
+        {searchResult && (
+          <Pagination defaultCurrent={current_page} total={total_pages} />
+        )}
       </AppLayout>
     </>
   );

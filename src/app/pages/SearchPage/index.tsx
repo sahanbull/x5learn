@@ -14,9 +14,10 @@ import {
   sliceKey as searchOerSliceKey,
   reducer as oerSearchReducer,
 } from './ducks/searchOerSlice';
-import { useLocation, useParams } from 'react-router-dom';
+import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { WarningOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
+import { ROUTES } from 'routes/routes';
 
 const { Title } = Typography;
 
@@ -27,7 +28,7 @@ function useQuery() {
 export function SearchPage() {
   useInjectReducer({ key: searchOerSliceKey, reducer: oerSearchReducer });
   const dispatch = useDispatch();
-  const router = useParams();
+  const history = useHistory();
   const query = useQuery();
 
   const isSearching = useSelector(state => {
@@ -83,7 +84,14 @@ export function SearchPage() {
         )}
         <SearchOerList />
         {searchResult && (
-          <Pagination defaultCurrent={+page} total={total_pages} />
+          <Pagination defaultCurrent={+page} total={total_pages} 
+            showSizeChanger={false}
+          onChange={(page)=>{
+            query.set('page',`${page}`)
+            debugger
+            history.push(`${ROUTES.SEARCH}?${query.toString()}`)
+
+          }}/>
         )}
       </AppLayout>
     </>

@@ -30,7 +30,7 @@ export function PlaylistsPage() {
               <Text> OER Materials</Text> {` / `}
               <Text strong>Updated: </Text>
               <Text>May 9, 2019</Text>
-              <br/>
+              <br />
               <Button
                 type="primary"
                 shape="round"
@@ -42,22 +42,32 @@ export function PlaylistsPage() {
             </Card>
           </Col>
           <Col span={8}>
-            <Card 
-              style={{backgroundColor: '#00ad57', color:`#ffffff`}}
-              headStyle={{ border: 'none', color:`#ffffff` }}
-              title={`Progress`} 
-              extra={<a href="#">More</a>}>
-                <Text style={{color:`#ffffff`}}> You currently <strong>completed 55%</strong> of your learning path.</Text> 
-                <br/>
-                <Progress percent={55} strokeColor={`#008c41`} showInfo={false} />
-                <Text style={{color:`#ffffff`}}> Our algorithm has changed the sequence of your items to help you learn better!</Text> 
-                <br/>
-                <Button style={{color:`#ffffff`}} type="link">Undo</Button>
+            <Card
+              style={{ backgroundColor: '#00ad57', color: `#ffffff` }}
+              headStyle={{ border: 'none', color: `#ffffff` }}
+              title={`Progress`}
+              extra={<a href="#">More</a>}
+            >
+              <Text style={{ color: `#ffffff` }}>
+                {' '}
+                You currently <strong>completed 55%</strong> of your learning
+                path.
+              </Text>
+              <br />
+              <Progress percent={55} strokeColor={`#008c41`} showInfo={false} />
+              <Text style={{ color: `#ffffff` }}>
+                {' '}
+                Our algorithm has changed the sequence of your items to help you
+                learn better!
+              </Text>
+              <br />
+              <Button style={{ color: `#ffffff` }} type="link">
+                Undo
+              </Button>
             </Card>
           </Col>
-
         </Row>
-          <OerCardList data={[]}/>
+        <OerCardList data={[]} />
       </AppLayout>
     </>
   );

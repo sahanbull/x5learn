@@ -1,6 +1,6 @@
 export const ROUTES = {
   HOMEPAGE: '/homepage',
-  PLAYLISTS: '/playlists',
-  RESOURCES: '/resources',
+  PLAYLISTS: '/playlist',
+  RESOURCES: '/resource',
   SEARCH: '/search',
 };

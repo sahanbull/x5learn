@@ -25,10 +25,12 @@ const searchOerSlice = createSlice({
     [fetchSearchOerThunk.pending.toString()]: (state: any, action) => {
       state.data = null;
       state.loading = true;
+      state.error = undefined;
     },
     [fetchSearchOerThunk.fulfilled.toString()]: (state: any, action) => {
       state.loading = false;
       state.data = action.payload;
+      state.error = undefined;
     },
     [fetchSearchOerThunk.rejected.toString()]: (state: any, action) => {
       state.loading = false;

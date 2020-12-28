@@ -13,6 +13,7 @@ import { Switch, Route, BrowserRouter } from 'react-router-dom';
 import { GlobalStyle } from '../styles/global-styles';
 
 import { HomePage } from './pages/HomePage/Loadable';
+import { PlaylistsPage } from './pages/PlaylistsPage/Loadable';
 import { SearchPage } from './pages/SearchPage/Loadable';
 import { NotFoundPage } from './containers/NotFoundPage/Loadable';
 import { ROUTES } from 'routes/routes';
@@ -32,7 +33,7 @@ export function App() {
         <Route exact path={ROUTES.HOMEPAGE} component={HomePage} />
         <Route exact path={ROUTES.RESOURCES} component={HomePage} />
         <Route exact path={ROUTES.SEARCH} component={SearchPage} />
-        <Route exact path={ROUTES.PLAYLISTS + '/:id'} component={HomePage} />
+        <Route exact path={ROUTES.PLAYLISTS + '/:id'} component={PlaylistsPage} />
         <Route exact path={ROUTES.RESOURCES + '/:id'} component={HomePage} />
         <Route component={NotFoundPage} />
       </Switch>

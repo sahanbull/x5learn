@@ -36,7 +36,7 @@ export function OerCardList(props: {
   }
 
   return (
-    <Row gutter={16}>
+    <Row gutter={[16, 16]}>
       {data?.map(item => {
         return (
           <Col key={item.id} span={8}>

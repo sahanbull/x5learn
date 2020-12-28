@@ -50,7 +50,6 @@ export function SearchPage() {
   const searchTerm: string = query.get('q')?.toString() || '';
   const page = query.get('page')?.toString() || '1';
 
-  debugger;
   useEffect(() => {
     const searchParams = {
       searchTerm,

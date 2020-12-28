@@ -83,9 +83,10 @@ const Duration = styled.span`
 
 export function OerCard(props: { loading?: boolean; card?: OerDao }) {
   const { loading, card } = props;
+  const cardStyle = { borderRadius: 8, overflow: 'hidden' };
   if (loading) {
     return (
-      <Card>
+      <Card style={cardStyle}>
         <Skeleton active></Skeleton>
       </Card>
     );
@@ -109,6 +110,7 @@ export function OerCard(props: { loading?: boolean; card?: OerDao }) {
     <Card
       hoverable
       bordered={false}
+      style={cardStyle}
       cover={<img alt="example" src={`${imageBaseURL}/${card?.images[0]}`} />}
     >
       <Meta

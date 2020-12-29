@@ -47,7 +47,7 @@ export async function fetchAction() {
   return fetchAPI(`/action/`);
   // return require('./mock/loggedInUserDetail.json');
 }
-export async function fetchPlaylistDetail(playlistID) {
+export async function fetchPlaylistDetails(playlistID) {
   return fetchAPI(`/playlist/${playlistID}/`);
   // return require('./mock/playlist-24.json');
 }

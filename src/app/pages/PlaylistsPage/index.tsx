@@ -1,12 +1,23 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Row, Col, Card, Typography, Button, Progress } from 'antd';
 import { AppLayout } from 'app/containers/Layout/AppLayout';
 import { UploadOutlined } from '@ant-design/icons';
 import { OerCardList } from '../HomePage/components/FeaturedOER/OerCardList';
+import { useInjectReducer } from 'redux-injectors';
+import { useDispatch } from 'react-redux';
+import { fetchPlaylistDetailsThunk, sliceKey, reducer } from './ducks/fetchPlaylistDetailsThunk';
+
 const { Title, Text } = Typography;
 
 export function PlaylistsPage() {
+  useInjectReducer({ key: sliceKey, reducer: reducer });
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    dispatch(fetchPlaylistDetailsThunk(21));
+  }, [dispatch]);
+
   return (
     <>
       <Helmet>

@@ -13,6 +13,7 @@ export interface RootState {
   githubRepoForm?: GithubRepoFormState;
   featuredOer?:any,
   myPlaylistsMenu?:any,
-  searchOer?:any
+  searchOer?:any,
+  playlistDetail?:any
   // [INSERT NEW REDUCER KEY ABOVE] < Needed for generating containers seamlessly
 }

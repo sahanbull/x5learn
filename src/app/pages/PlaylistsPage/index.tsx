@@ -6,7 +6,11 @@ import { UploadOutlined } from '@ant-design/icons';
 import { OerCardList } from '../HomePage/components/FeaturedOER/OerCardList';
 import { useInjectReducer } from 'redux-injectors';
 import { useDispatch } from 'react-redux';
-import { fetchPlaylistDetailsThunk, sliceKey, reducer } from './ducks/fetchPlaylistDetailsThunk';
+import {
+  fetchPlaylistDetailsThunk,
+  sliceKey,
+  reducer,
+} from './ducks/fetchPlaylistDetailsThunk';
 
 const { Title, Text } = Typography;
 
@@ -15,7 +19,7 @@ export function PlaylistsPage() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchPlaylistDetailsThunk(21));
+    dispatch(fetchPlaylistDetailsThunk());
   }, [dispatch]);
 
   return (

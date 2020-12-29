@@ -18,11 +18,17 @@ import { AppFooter } from '../Footer/AppFooter';
 import { AppSideBar } from '../SideBar/AppSideBar';
 import { AppBreadcrumb } from '../Breadcrumb/AppBreadcrumb';
 import { useInjectReducer } from 'redux-injectors';
+import {
+  fetchOERsByIDsThunk,
+  sliceKey as oerSliceKey,
+  reducer as oerReducer,
+} from './ducks/allOERSlice';
 const { SubMenu } = Menu;
 const { Header, Content, Sider, Footer } = Layout;
 
 export function AppLayout(props) {
   useInjectReducer({ key: playlistMenuSliceKey, reducer: playlistMenuReducer });
+  useInjectReducer({ key: oerSliceKey, reducer: oerReducer });
 
   return (
     <Layout>

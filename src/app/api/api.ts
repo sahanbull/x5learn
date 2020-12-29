@@ -21,11 +21,11 @@ async function fetchAPI(
   const requestOptions = {
     method,
     headers,
-    data,
+    body: data,
   };
 
   if (method === 'POST') {
-    requestOptions.data = data;
+    requestOptions.body = data;
   }
   return fetch(`${BASE_URL}${endpoint}`, requestOptions)
     .then(response => response.json())
@@ -48,7 +48,7 @@ export async function fetchAction() {
   // return require('./mock/loggedInUserDetail.json');
 }
 export async function fetchPlaylistDetails(playlistID) {
-  return fetchAPI(`/playlist/${playlistID}/`);
+  return fetchAPI(`/playlist/${playlistID}`);
   // return require('./mock/playlist-24.json');
 }
 export async function fetchMyPlaylistsMenu(limit?, offset?) {
@@ -73,6 +73,13 @@ export async function fetchWikiEnrichments(idArray) {
   // return require('./mock/wiki-enrichment.json');
 }
 export async function fetchOERs(idArray) {
+  if (idArray.length === 0) {
+    return [];
+  }
+  return fetchAPI(`/oers/`, JSON.stringify({ ids: idArray }), {
+    method: 'POST',
+  });
+
   // return require('./mock/featuredList.json');
 }
 export async function fetchSearchOERs({ searchTerm, page }) {

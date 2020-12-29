@@ -6,7 +6,7 @@ import { WarningOutlined } from '@ant-design/icons';
 export function OerCardList(props: {
   loading?: boolean;
   error?: any | null;
-  data?: any[];
+  data?: any[] | null;
 }) {
   const { loading, error, data } = props;
   if (loading) {

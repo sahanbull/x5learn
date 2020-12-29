@@ -35,6 +35,7 @@ const fetchPlaylistDetailSlice = createSlice({
     [fetchPlaylistDetailsThunk.rejected.toString()]: (state: any, action) => {
       state.loading = false;
       state.error = action.error;
+      state.data = null;
     },
   },
 });

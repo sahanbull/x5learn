@@ -19,7 +19,7 @@ export function PlaylistsPage() {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchPlaylistDetailsThunk());
+    dispatch(fetchPlaylistDetailsThunk(21));
   }, [dispatch]);
 
   return (

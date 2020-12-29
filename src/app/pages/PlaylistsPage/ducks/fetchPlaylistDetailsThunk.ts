@@ -9,7 +9,7 @@ export const initialState: any = {
   error: null,
 };
 
-export const fetchPlaylistDetailsThunk = createAsyncThunk(
+export const fetchPlaylistDetailsThunk = createAsyncThunk<any, string | number>(
   'oers/fetchPlaylistDetails',
   async (playlistId, thunkAPI) => {
     const data = await fetchPlaylistDetails(playlistId);

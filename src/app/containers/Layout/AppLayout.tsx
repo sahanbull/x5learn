@@ -23,7 +23,7 @@ const { Header, Content, Sider, Footer } = Layout;
 
 export function AppLayout(props) {
   useInjectReducer({ key: playlistMenuSliceKey, reducer: playlistMenuReducer });
-  
+
   return (
     <Layout>
       <AppHeader></AppHeader>

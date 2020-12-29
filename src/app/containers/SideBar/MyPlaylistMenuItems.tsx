@@ -89,9 +89,15 @@ export function MyPlaylistMenuItems(props) {
         <>
           {menuPlaylist.map(playlistItem => {
             const { id, title } = playlistItem;
-            return <Menu.Item key={id}><Link to={`/playlist/${id}`}>{title}</Link></Menu.Item>;
+            return (
+              <Menu.Item key={id}>
+                <Link to={`/playlist/${id}`}>{title}</Link>
+              </Menu.Item>
+            );
           })}
-          <Menu.Item key="show-all"><Link to={`/playlist`}>See All</Link></Menu.Item>
+          <Menu.Item key="show-all">
+            <Link to={`/playlist`}>See All</Link>
+          </Menu.Item>
         </>
       )}
     </SubMenu>

@@ -7,8 +7,6 @@ import { useInjectReducer } from 'redux-injectors';
 import { useDispatch } from 'react-redux';
 import { fetchFeaturedOer, sliceKey, reducer } from './ducks/featuredOerSlice';
 
-
-
 export function HomePage() {
   useInjectReducer({ key: sliceKey, reducer: reducer });
   const dispatch = useDispatch();

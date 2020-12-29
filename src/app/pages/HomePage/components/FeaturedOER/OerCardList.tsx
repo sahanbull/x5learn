@@ -40,7 +40,7 @@ export function OerCardList(props: {
       {data?.map(item => {
         return (
           <Col key={item.id} span={8}>
-            <OerCard card={item}/>
+            <OerCard card={item} />
           </Col>
         );
       })}

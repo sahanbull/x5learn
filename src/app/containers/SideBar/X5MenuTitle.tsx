@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Row, Col } from 'antd';
 export function X5MenuTitle(props) {

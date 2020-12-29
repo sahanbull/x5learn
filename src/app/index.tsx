@@ -33,7 +33,11 @@ export function App() {
         <Route exact path={ROUTES.HOMEPAGE} component={HomePage} />
         <Route exact path={ROUTES.RESOURCES} component={HomePage} />
         <Route exact path={ROUTES.SEARCH} component={SearchPage} />
-        <Route exact path={ROUTES.PLAYLISTS + '/:id'} component={PlaylistsPage} />
+        <Route
+          exact
+          path={ROUTES.PLAYLISTS + '/:id'}
+          component={PlaylistsPage}
+        />
         <Route exact path={ROUTES.RESOURCES + '/:id'} component={HomePage} />
         <Route component={NotFoundPage} />
       </Switch>

@@ -20,7 +20,7 @@ export const fetchMyPlaylistsMenuThunk = createAsyncThunk(
 const myPlaylistsMenuSlice = createSlice({
   name: 'myPlaylistsMenu',
   initialState,
-  reducers:{},
+  reducers: {},
   extraReducers: {
     [fetchMyPlaylistsMenuThunk.pending.toString()]: (state: any, action) => {
       state.data = null;

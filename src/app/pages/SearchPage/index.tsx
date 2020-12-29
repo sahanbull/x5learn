@@ -83,14 +83,16 @@ export function SearchPage() {
         )}
         <SearchOerList />
         {searchResult && (
-          <Pagination defaultCurrent={+page} total={total_pages} 
+          <Pagination
+            defaultCurrent={+page}
+            total={total_pages}
             showSizeChanger={false}
-          onChange={(page)=>{
-            query.set('page',`${page}`)
-            debugger
-            history.push(`${ROUTES.SEARCH}?${query.toString()}`)
-
-          }}/>
+            onChange={page => {
+              query.set('page', `${page}`);
+              debugger;
+              history.push(`${ROUTES.SEARCH}?${query.toString()}`);
+            }}
+          />
         )}
       </AppLayout>
     </>

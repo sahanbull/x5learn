@@ -20,7 +20,7 @@ export const fetchFeaturedOer = createAsyncThunk(
 const featuredOerSlice = createSlice({
   name: 'featuredOer',
   initialState,
-  reducers:{},
+  reducers: {},
   extraReducers: {
     [fetchFeaturedOer.pending.toString()]: (state: any, action) => {
       state.data = null;

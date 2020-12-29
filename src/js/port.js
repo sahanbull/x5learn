@@ -1,3 +1,4 @@
+/* eslint-disable */
 // Helpers and interop between Elm and JavaScript
 
 var timeOfLastMouseMove = new Date().getTime();

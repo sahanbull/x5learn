@@ -31,7 +31,7 @@ const { Header, Content, Sider } = Layout;
 const { Text } = Typography;
 
 export function AppSideBar(props) {
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
 
   useEffect(() => {
     dispatch(fetchMyPlaylistsMenuThunk());

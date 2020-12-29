@@ -1,3 +1,4 @@
+/* eslint-disable */
 loadYoutubeApiAsynchronously();
 
 var player;

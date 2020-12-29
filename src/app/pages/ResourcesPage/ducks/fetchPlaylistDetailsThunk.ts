@@ -1,7 +1,6 @@
-import { createAsyncThunk, isRejectedWithValue } from '@reduxjs/toolkit';
+import { createAsyncThunk } from '@reduxjs/toolkit';
 import { createSlice } from 'utils/@reduxjs/toolkit';
 import { fetchPlaylistDetails } from 'app/api/api';
-import { cat } from 'shelljs';
 
 // The initial state of the GithubRepoForm container
 export const initialState: any = {
@@ -13,12 +12,8 @@ export const initialState: any = {
 export const fetchPlaylistDetailsThunk = createAsyncThunk<any, string | number>(
   'oers/fetchPlaylistDetails',
   async (playlistId, thunkAPI) => {
-    try {
-      const data = await fetchPlaylistDetails(playlistId);
-      return data;
-    } catch (e) {
-      return thunkAPI.rejectWithValue(e);
-    }
+    const data = await fetchPlaylistDetails(playlistId);
+    return data;
   },
 );
 
@@ -38,9 +33,8 @@ const fetchPlaylistDetailSlice = createSlice({
       state.error = undefined;
     },
     [fetchPlaylistDetailsThunk.rejected.toString()]: (state: any, action) => {
-      const msg = action?.payload?.message;
       state.loading = false;
-      state.error = { msg, error: action.error };
+      state.error = action.error;
       state.data = null;
     },
   },

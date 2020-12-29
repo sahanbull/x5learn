@@ -1,8 +1,10 @@
-import React, { ReactComponentElement, ReactElement } from 'react';
+import React, { ReactComponentElement, ReactElement, useCallback } from 'react';
 import { Card, Skeleton, Typography } from 'antd';
 import Avatar from 'antd/lib/avatar/avatar';
 import Meta from 'antd/lib/card/Meta';
 import styled from 'styled-components';
+import { Link, useHistory, useLocation, useParams } from 'react-router-dom';
+import { ROUTES } from 'routes/routes';
 
 const { Text } = Typography;
 
@@ -81,9 +83,20 @@ const Duration = styled.span`
   right: 8px;
 `;
 
-export function OerCard(props: { loading?: boolean; card?: OerDao }) {
-  const { loading, card } = props;
+export function OerCard(props: {
+  loading?: boolean;
+  card?: OerDao;
+  playlistID?: any;
+}) {
+  const { loading, card, playlistID } = props;
   const cardStyle = { borderRadius: 8, overflow: 'hidden' };
+  const history = useHistory();
+
+  let pathToNavigateTo = `${ROUTES.RESOURCES}/${card?.id}`;
+  if (playlistID) {
+    pathToNavigateTo += `?playlist=${playlistID}`;
+  }
+
   if (loading) {
     return (
       <Card style={cardStyle}>
@@ -107,36 +120,38 @@ export function OerCard(props: { loading?: boolean; card?: OerDao }) {
   }
 
   return (
-    <Card
-      hoverable
-      bordered={false}
-      style={cardStyle}
-      cover={<img alt="example" src={`${imageBaseURL}/${card?.images[0]}`} />}
-    >
-      <Meta
-        avatar={
-          <Avatar
-            shape="circle"
-            size={32}
-            icon={icon}
-            style={{ borderRadius: '50%', backgroundColor: '#f7f8f9' }}
-          />
-        }
-        title={card?.title}
-        description={
-          <>
-            <Text strong>By: </Text>
-            {card?.provider}
-            <br />
-            <Text strong>Type: </Text>
-            {card?.mediatype}
-            <br />
-            <Text strong>Date: </Text>
-            {card?.date}
-          </>
-        }
-      />
-      <Duration>{card?.duration}</Duration>
-    </Card>
+    <Link to={pathToNavigateTo}>
+      <Card
+        hoverable
+        bordered={false}
+        style={cardStyle}
+        cover={<img alt="example" src={`${imageBaseURL}/${card?.images[0]}`} />}
+      >
+        <Meta
+          avatar={
+            <Avatar
+              shape="circle"
+              size={32}
+              icon={icon}
+              style={{ borderRadius: '50%', backgroundColor: '#f7f8f9' }}
+            />
+          }
+          title={card?.title}
+          description={
+            <>
+              <Text strong>By: </Text>
+              {card?.provider}
+              <br />
+              <Text strong>Type: </Text>
+              {card?.mediatype}
+              <br />
+              <Text strong>Date: </Text>
+              {card?.date}
+            </>
+          }
+        />
+        <Duration>{card?.duration}</Duration>
+      </Card>
+    </Link>
   );
 }

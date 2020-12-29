@@ -64,6 +64,8 @@ export function PlaylistsPage(props) {
       </Helmet>
       <AppLayout>
         {loading && <Spin spinning={loading} delay={200}></Spin>}
+        {error && <div>Something went wrong</div>}
+        {error && error.msg && error.msg.result}
         {data && (
           <>
             <Row gutter={[16, 16]}>
@@ -124,7 +126,7 @@ export function PlaylistsPage(props) {
                 </Card>
               </Col>
             </Row>
-            <OerCardList {...oerData} />
+            <OerCardList {...oerData} playlistID={playlistID} />
           </>
         )}
       </AppLayout>

@@ -27,16 +27,21 @@ async function fetchAPI(
   if (method === 'POST') {
     requestOptions.body = data;
   }
-  return fetch(`${BASE_URL}${endpoint}`, requestOptions)
-    .then(response => response.json())
-    .then(result => {
-      console.log(result);
-      return result;
-    })
-    .catch(error => {
-      console.log('error', error);
-      throw error;
-    });
+
+  const response = await fetch(`${BASE_URL}${endpoint}`, requestOptions);
+  const jsonResponse = await response.json();
+  if (!response.ok) {
+    const err = new Error('' + response.status);
+    err.message = {
+      status: response.status,
+      statusText: jsonResponse,
+      ...jsonResponse,
+    };
+    console.log('error', err);
+    throw err;
+  }
+  console.log(jsonResponse);
+  return jsonResponse;
 }
 
 export async function fetchLoggedInUserDetail() {

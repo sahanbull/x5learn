@@ -7,6 +7,7 @@ export function OerCardList(props: {
   loading?: boolean;
   error?: any | null;
   data?: any[] | null;
+  playlistID?: any;
 }) {
   const { loading, error, data } = props;
   if (loading) {
@@ -40,7 +41,7 @@ export function OerCardList(props: {
       {data?.map(item => {
         return (
           <Col key={item.id} span={8}>
-            <OerCard card={item} />
+            <OerCard card={item} playlistID={props.playlistID} />
           </Col>
         );
       })}

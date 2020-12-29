@@ -14,6 +14,7 @@ import { GlobalStyle } from '../styles/global-styles';
 
 import { HomePage } from './pages/HomePage/Loadable';
 import { PlaylistsPage } from './pages/PlaylistsPage/Loadable';
+import { ResourcesPage } from './pages/ResourcesPage/Loadable';
 import { SearchPage } from './pages/SearchPage/Loadable';
 import { NotFoundPage } from './containers/NotFoundPage/Loadable';
 import { ROUTES } from 'routes/routes';
@@ -38,7 +39,11 @@ export function App() {
           path={ROUTES.PLAYLISTS + '/:id'}
           component={PlaylistsPage}
         />
-        <Route exact path={ROUTES.RESOURCES + '/:id'} component={HomePage} />
+        <Route
+          exact
+          path={ROUTES.RESOURCES + '/:id'}
+          component={ResourcesPage}
+        />
         <Route component={NotFoundPage} />
       </Switch>
       <GlobalStyle />

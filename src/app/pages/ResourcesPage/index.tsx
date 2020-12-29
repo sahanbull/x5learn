@@ -16,13 +16,27 @@ import { Action, AsyncThunkAction, unwrapResult } from '@reduxjs/toolkit';
 
 const { Title, Text } = Typography;
 
+const imageBaseURL = 'https://qa.x5learn.org/files/thumbs/';
+
 export function ResourcesPage(props) {
   useInjectReducer({ key: sliceKey, reducer: reducer });
   const dispatch = useDispatch();
   const oerID = props.match?.params?.id;
 
   const [oerData, setOERData] = useState<{
-    data: null | any[];
+    data: {
+      date: string;
+      description: string;
+      duration: string;
+      durationInSeconds: number;
+      id: number | string;
+      images: string[];
+      material_id: number | string;
+      mediatype: 'text' | 'video';
+      provider: string;
+      title: string;
+      url: string;
+    } | null;
     loading: boolean;
     error: null | any;
   }>({
@@ -51,20 +65,76 @@ export function ResourcesPage(props) {
   //     loadOERIds();
   //   }
   // }, [data]);
-
+  const { data, loading, error } = oerData;
   return (
     <>
       <Helmet>
-        <title>Playlists Page</title>
-        <meta name="description" content="X5 Learn AI based learning" />
+        <title>{data?.title}</title>
+        <meta name="description" content={data?.description} />
       </Helmet>
       <AppLayout>
-        {oerData.loading && (
-          <Spin spinning={oerData.loading} delay={200}></Spin>
-        )}
-        {oerData.data && (
+        {loading && <Spin spinning={loading} delay={200}></Spin>}
+        {data && (
           <>
-            <Row gutter={[16, 16]}>Row</Row>
+            <Row gutter={[16, 16]}>
+              <Col>
+                {data.mediatype === 'video' && (
+                  <video width="100%" controls>
+                    <source src={data.url} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                )}
+
+                {data.mediatype === 'text' && (
+                  <img
+                    width="100%"
+                    alt={data.title}
+                    src={`${imageBaseURL}/${data?.images[0]}`}
+                  />
+                )}
+              </Col>
+              <Col>
+                <Card
+                  headStyle={{ border: 'none' }}
+                  title={<Title level={2}>{data.title}</Title>}
+                  extra={
+                    <>
+                      <Button
+                        type="primary"
+                        shape="round"
+                        icon={<UploadOutlined />}
+                        size="large"
+                      >
+                        Bookmark
+                      </Button>{' '}
+                      <Button
+                        type="primary"
+                        shape="round"
+                        icon={<UploadOutlined />}
+                        size="large"
+                      >
+                        Add to Playlist
+                      </Button>
+                    </>
+                  }
+                >
+                  <Text strong>By: </Text>
+                  <Text>{data.provider}</Text> {` / `}
+                  <Text strong>Language: </Text>
+                  <Text>{data.mediatype}</Text> {` / `}
+                  <Text strong>Date: </Text>
+                  <Text>
+                    {new Date(data.date).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </Text>
+                  <br />
+                  <p>{data.description}</p>
+                </Card>
+              </Col>
+            </Row>
           </>
         )}
       </AppLayout>

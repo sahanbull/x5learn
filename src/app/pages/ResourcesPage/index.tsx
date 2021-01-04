@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Row, Col, Card, Typography, Button, Progress, Spin } from 'antd';
 import { AppLayout } from 'app/containers/Layout/AppLayout';
@@ -45,10 +45,10 @@ export function ResourcesPage(props) {
     error: null,
   });
 
-  const loadOERIdDetails = async () => {
+  const loadOERIdDetails = async _oerID => {
     setOERData({ data: null, loading: true, error: null });
     try {
-      const oerResult = (await dispatch(fetchOERsByIDsThunk([oerID]))) as any;
+      const oerResult = (await dispatch(fetchOERsByIDsThunk([_oerID]))) as any;
       const resolvedData = await unwrapResult(oerResult);
       setOERData({ data: resolvedData[0], loading: false, error: null });
     } catch (e) {
@@ -57,7 +57,7 @@ export function ResourcesPage(props) {
   };
 
   useEffect(() => {
-    loadOERIdDetails();
+    loadOERIdDetails(oerID);
   }, [dispatch, oerID]);
 
   // useEffect(() => {

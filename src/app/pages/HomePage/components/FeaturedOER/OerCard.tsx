@@ -5,6 +5,7 @@ import Meta from 'antd/lib/card/Meta';
 import styled from 'styled-components';
 import { Link, useHistory, useLocation, useParams } from 'react-router-dom';
 import { ROUTES } from 'routes/routes';
+import { EnrichmentBar } from 'app/components/EnrichmentBar/EnrichmentBar';
 
 const { Text } = Typography;
 
@@ -139,6 +140,7 @@ export function OerCard(props: {
           title={card?.title}
           description={
             <>
+              <EnrichmentBar oerID={card?.id} />
               <Text strong>By: </Text>
               {card?.provider}
               <br />

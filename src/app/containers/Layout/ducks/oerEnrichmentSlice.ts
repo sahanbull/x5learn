@@ -1,6 +1,7 @@
-import { createAsyncThunk } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSelector } from '@reduxjs/toolkit';
 import { createSlice } from 'utils/@reduxjs/toolkit';
 import { fetchMyPlaylistsMenu, fetchWikiEnrichments } from 'app/api/api';
+import { RootState } from 'types';
 
 // The initial state of the GithubRepoForm container
 export const initialState: any = {
@@ -17,24 +18,49 @@ export const fetchOerEnrichmentThunk = createAsyncThunk<any, string>(
   },
 );
 
-const myPlaylistsMenuSlice = createSlice({
+const slice = createSlice({
   name: 'oerEnrichment',
   initialState,
   reducers: {},
   extraReducers: {
     [fetchOerEnrichmentThunk.pending.toString()]: (state: any, action) => {
-      state.data = null;
-      state.loading = true;
+      const oerID = action.meta.arg;
+      const obj = {
+        data: null,
+        loading: true,
+        error: null,
+      };
+      state[oerID] = obj;
     },
     [fetchOerEnrichmentThunk.fulfilled.toString()]: (state: any, action) => {
-      state.loading = false;
-      state.data = action.payload;
+      const oerID = action.meta.arg;
+      const obj = {
+        data: action.payload[0],
+        loading: false,
+        error: null,
+      };
+      state[oerID] = obj;
     },
     [fetchOerEnrichmentThunk.rejected.toString()]: (state: any, action) => {
-      state.loading = false;
-      state.error = action.error;
+      const oerID = action.meta.arg;
+      const obj = {
+        data: null,
+        loading: false,
+        error: action.error,
+      };
+      state[oerID] = obj;
     },
   },
 });
 
-export const { actions, reducer, name: sliceKey } = myPlaylistsMenuSlice;
+export const selectOerEnrichment = createSelector(
+  [
+    (state: RootState) => state[slice.name] || initialState,
+    (_, oerID) => oerID,
+  ],
+  (oerData, oerID) => {
+    return oerData[oerID] || initialState;
+  },
+);
+
+export const { actions, reducer, name: sliceKey } = slice;

@@ -13,8 +13,15 @@ export const initialState: any = {
 export const fetchOerEnrichmentThunk = createAsyncThunk<any, string>(
   'enrichment/fetchOerEnrichment',
   async (oerID, thunkAPI) => {
+    const stateEnrichmentData = (thunkAPI.getState() as RootState)
+      .oerEnrichment[oerID];
+    if (stateEnrichmentData && stateEnrichmentData.data) {
+      return [stateEnrichmentData.data];
+    }
+    // if(!stateEnrichmentData.loading || stateEnrichmentData.error ){
     const data = await fetchWikiEnrichments([oerID]);
     return data;
+    // }
   },
 );
 
@@ -25,12 +32,14 @@ const slice = createSlice({
   extraReducers: {
     [fetchOerEnrichmentThunk.pending.toString()]: (state: any, action) => {
       const oerID = action.meta.arg;
-      const obj = {
+      const obj = state[oerID] || {
         data: null,
         loading: true,
         error: null,
       };
-      state[oerID] = obj;
+      if (!obj.data) {
+        state[oerID] = obj;
+      }
     },
     [fetchOerEnrichmentThunk.fulfilled.toString()]: (state: any, action) => {
       const oerID = action.meta.arg;

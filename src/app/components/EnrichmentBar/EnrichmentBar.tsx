@@ -43,7 +43,7 @@ export const EnrichmentBar = function (props: { oerID }) {
   };
   useEffect(() => {
     fetchEnrichment();
-  }, [props.oerID]);
+  }, []);
   return (
     <div>
       {loading && <Progress percent={100} status="active" showInfo={false} />}

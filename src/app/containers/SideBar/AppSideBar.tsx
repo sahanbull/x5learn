@@ -25,6 +25,8 @@ import { ReactComponent as ProfileSVG } from 'app/containers/ContentPage/assets/
 import { MyPlaylistMenuItems } from './MyPlaylistMenuItems';
 import { useDispatch } from 'react-redux';
 import { fetchMyPlaylistsMenuThunk } from '../Layout/ducks/myPlaylistsMenuSlice';
+import { Link } from 'react-router-dom';
+import { ROUTES } from 'routes/routes';
 
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
@@ -113,7 +115,9 @@ export function AppSideBar(props) {
           <Menu.Divider />
         </Menu>
         <Col flex="auto"></Col>
-        <Button type="primary">New Playlist +</Button>
+        <Link to={`${ROUTES.PLAYLISTS}/create`}>
+          <Button type="primary">New Playlist +</Button>
+        </Link>
         <Col flex="20px"></Col>
       </Row>
     </Sider>

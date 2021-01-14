@@ -20,6 +20,7 @@ import { X5Logo } from 'app/components/Logo/X5Logo';
 import styled from 'styled-components';
 import { HeaderSearchBar } from './HeaderSearchBar';
 import { HeaderProfileWidget } from '../../components/HeaderProfileWidget/HeaderProfileWidget';
+import { Link } from 'react-router-dom';
 
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
@@ -37,7 +38,9 @@ export function AppHeader(props) {
     <StyledHeader className="header">
       <Row align="middle" justify="space-between">
         <Col span={6}>
-          <X5Logo />
+          <Link to={`/`}>
+            <X5Logo />
+          </Link>
         </Col>
         <Col span={12}>
           <HeaderSearchBar />

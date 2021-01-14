@@ -20,7 +20,6 @@ async function fetchAPI(
   if (method === 'POST') {
     requestOptions.data = data;
   }
-  debugger;
   return fetch(`${BASE_URL}${endpoint}`, requestOptions)
     .then(response => response.text())
     .then(result => console.log(result))
@@ -44,7 +43,6 @@ export async function fetchPlaylists(limit, offset) {
   return require('./mock/playlist-24.json');
 }
 export async function fetchFeaturedOERs() {
-  debugger;
   return fetchAPI(`/featured`);
   // const data = await require('./mock/featuredList.json');
   // return data;

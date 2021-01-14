@@ -89,7 +89,6 @@ export function SearchPage() {
             showSizeChanger={false}
             onChange={page => {
               query.set('page', `${page}`);
-              debugger;
               history.push(`${ROUTES.SEARCH}?${query.toString()}`);
             }}
           />

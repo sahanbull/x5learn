@@ -5,7 +5,7 @@ const AUTH_KEY: string = process.env.REACT_APP_AUTH_KEY || '';
 
 var headers = new Headers();
 headers.append('Authorization', AUTH_KEY);
-headers.append('Content-Type', 'application/json');
+// headers.append('Content-Type', 'application/json');
 // headers.append("Access-Control-Request-Headers", '*');
 // headers.append("Access-Control-Request-Method", 'POST, GET, OPTIONS, DELETE');
 
@@ -57,16 +57,19 @@ export async function fetchPlaylistDetails(playlistID) {
   // return require('./mock/playlist-24.json');
 }
 export async function fetchMyPlaylistsMenu(limit?, offset?) {
-  // const qs = queryString.stringify({limit, offset})
-  // debugger
-  // return fetchAPI(`/playlist/?${qs}`);
-  return require('./mock/playlists-menu.json');
+  const qs = queryString.stringify({
+    mode: 'temp_playlists_only',
+  });
+  return fetchAPI(`/playlist/?${qs}`);
+
+  // return require('./mock/playlists-menu.json');
 }
 export async function fetchPlaylists(limit?, offset?) {
   const qs = queryString.stringify({ limit, offset });
   return fetchAPI(`/playlist/?${qs}`);
   // return require('./mock/playlist-24.json');
 }
+
 export async function fetchFeaturedOERs() {
   return fetchAPI(`/featured/`);
   // const data = await require('./mock/featuredList.json');
@@ -93,4 +96,23 @@ export async function fetchSearchOERs({ searchTerm, page }) {
   //https://x5learn.org/api/v1/search/?text=se&page=1
 
   // return require('./mock/search-se.json');
+}
+export async function fetchPlaylistLicenses() {
+  return fetchAPI(`/license/`);
+}
+
+export async function createTempPlaylist(playlist: {
+  title?;
+  description?;
+  license?;
+  temp_title;
+}) {
+  return fetchAPI(
+    `/playlist/`,
+    JSON.stringify({
+      ...playlist,
+      is_temp: true,
+    }),
+    { method: 'POST' },
+  );
 }

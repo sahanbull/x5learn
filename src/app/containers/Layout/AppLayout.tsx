@@ -19,6 +19,10 @@ import {
   sliceKey as oerSliceKey,
   reducer as oerReducer,
 } from './ducks/allOERSlice';
+import {
+  sliceKey as playlistLicenseSliceKey,
+  reducer as playlistLicenseReducer,
+} from './ducks/playlistLicenseSlice';
 const { Header, Content, Sider, Footer } = Layout;
 
 export function AppLayout(props) {
@@ -27,6 +31,10 @@ export function AppLayout(props) {
   useInjectReducer({
     key: oerEnrichmentSliceKey,
     reducer: oerEnrichmentReducer,
+  });
+  useInjectReducer({
+    key: playlistLicenseSliceKey,
+    reducer: playlistLicenseReducer,
   });
 
   return (

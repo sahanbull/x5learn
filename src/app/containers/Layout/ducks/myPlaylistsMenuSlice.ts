@@ -1,6 +1,6 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { createSlice } from 'utils/@reduxjs/toolkit';
-import { fetchMyPlaylistsMenu } from 'app/api/api';
+import { createTempPlaylist, fetchMyPlaylistsMenu } from 'app/api/api';
 
 // The initial state of the GithubRepoForm container
 export const initialState: any = {
@@ -13,6 +13,13 @@ export const fetchMyPlaylistsMenuThunk = createAsyncThunk(
   'playlists/fetchMyPlaylistsMenu',
   async () => {
     const data = await fetchMyPlaylistsMenu(5);
+    return data;
+  },
+);
+export const createTempPlaylistThunk = createAsyncThunk<any, any>(
+  'playlists/createTempPlaylist',
+  async playlist => {
+    const data = await createTempPlaylist(playlist);
     return data;
   },
 );

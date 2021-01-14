@@ -18,6 +18,8 @@ import { ResourcesPage } from './pages/ResourcesPage/Loadable';
 import { SearchPage } from './pages/SearchPage/Loadable';
 import { NotFoundPage } from './containers/NotFoundPage/Loadable';
 import { ROUTES } from 'routes/routes';
+import { CreatePlaylistsPage } from './pages/CreatePlaylistPage/Loadable';
+import { PublishPlaylistPage } from './pages/PublishPlaylistPage/Loadable';
 
 export function App() {
   return (
@@ -34,6 +36,16 @@ export function App() {
         <Route exact path={ROUTES.HOMEPAGE} component={HomePage} />
         <Route exact path={ROUTES.RESOURCES} component={HomePage} />
         <Route exact path={ROUTES.SEARCH} component={SearchPage} />
+        <Route
+          exact
+          path={ROUTES.PLAYLISTS + '/create'}
+          component={CreatePlaylistsPage}
+        />
+        <Route
+          exact
+          path={ROUTES.PLAYLISTS + '/:id/publish'}
+          component={PublishPlaylistPage}
+        />
         <Route
           exact
           path={ROUTES.PLAYLISTS + '/:id'}

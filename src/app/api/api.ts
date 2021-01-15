@@ -3,8 +3,6 @@ import queryString from 'query-string';
 const BASE_URL = process.env.REACT_APP_BASE_URL;
 const AUTH_KEY: string = process.env.REACT_APP_AUTH_KEY || '';
 
-var headers = new Headers();
-headers.append('Authorization', AUTH_KEY);
 // headers.append('Content-Type', 'application/json');
 // headers.append("Access-Control-Request-Headers", '*');
 // headers.append("Access-Control-Request-Method", 'POST, GET, OPTIONS, DELETE');
@@ -18,6 +16,10 @@ async function fetchAPI(
   },
 ) {
   const { method } = options;
+
+  var headers = new Headers();
+  headers.append('Authorization', AUTH_KEY);
+
   const requestOptions = {
     method,
     headers,
@@ -26,6 +28,7 @@ async function fetchAPI(
 
   if (method === 'POST') {
     requestOptions.body = data;
+    headers.append('Content-Type', 'application/json');
   }
 
   const response = await fetch(`${BASE_URL}${endpoint}`, requestOptions);
@@ -64,7 +67,7 @@ export async function fetchMyPlaylistsMenu(limit?, offset?) {
 
   // return require('./mock/playlists-menu.json');
 }
-export async function fetchPlaylists(limit?, offset?) {
+export async function fetchAllMyPlaylists(limit = 5, offset = 0) {
   const qs = queryString.stringify({ limit, offset });
   return fetchAPI(`/playlist/?${qs}`);
   // return require('./mock/playlist-24.json');

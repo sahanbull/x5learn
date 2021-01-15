@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Layout,
   Menu,
@@ -20,9 +20,13 @@ import Icon, {
 import './AppSideBar.less';
 import { ReactComponent as PlayListSVG } from 'app/containers/ContentPage/assets/playlist.svg';
 import { X5MenuTitle } from './X5MenuTitle';
-import { useSelector } from 'react-redux';
-import { sliceKey } from 'app/containers/Layout/ducks/myPlaylistsMenuSlice';
-import { Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchMyPlaylistsMenuThunk,
+  sliceKey,
+} from 'app/containers/Layout/ducks/myPlaylistsMenuSlice';
+import { Link, NavLink } from 'react-router-dom';
+import { ROUTES } from 'routes/routes';
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
 const { Text } = Typography;
@@ -60,7 +64,16 @@ function Error({ error }) {
 
 function NoData({ data }) {
   if (!data || data?.length === 0) {
-    return <Empty description="No Data" />;
+    return (
+      <>
+        <Empty description="No temp playlists found" />
+        <Space align="center" direction="vertical" style={{ width: '100%' }}>
+          <Link to={`${ROUTES.PLAYLISTS_CREATE}`}>
+            <Button type="text">Create new playlist</Button>
+          </Link>
+        </Space>
+      </>
+    );
   }
   return null;
 }
@@ -75,6 +88,14 @@ export function MyPlaylistMenuItems(props) {
   const menuPlaylist = useSelector(state => {
     return state[sliceKey].data;
   });
+
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    if (!menuPlaylist) {
+      dispatch(fetchMyPlaylistsMenuThunk());
+    }
+  }, [menuPlaylist, dispatch]);
 
   return (
     <SubMenu
@@ -91,15 +112,15 @@ export function MyPlaylistMenuItems(props) {
             const { id, title } = playlistItem;
             return (
               <Menu.Item key={id}>
-                <Link to={`/playlist/${id}`}>{title}</Link>
+                <Link to={`${ROUTES.PLAYLISTS}/${id}`}>{title}</Link>
               </Menu.Item>
             );
           })}
-          <Menu.Item key="show-all">
-            <Link to={`/playlist`}>See All</Link>
-          </Menu.Item>
         </>
       )}
+      <Menu.Item key="show-all">
+        <NavLink to={`${ROUTES.MY_PLAYLISTS}`}>See All</NavLink>
+      </Menu.Item>
     </SubMenu>
   );
 }

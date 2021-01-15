@@ -20,6 +20,7 @@ import { NotFoundPage } from './containers/NotFoundPage/Loadable';
 import { ROUTES } from 'routes/routes';
 import { CreatePlaylistsPage } from './pages/CreatePlaylistPage/Loadable';
 import { PublishPlaylistPage } from './pages/PublishPlaylistPage/Loadable';
+import { MyPlaylistsPage } from './pages/MyPlaylistPage/Loadable';
 
 export function App() {
   return (
@@ -36,9 +37,10 @@ export function App() {
         <Route exact path={ROUTES.HOMEPAGE} component={HomePage} />
         <Route exact path={ROUTES.RESOURCES} component={HomePage} />
         <Route exact path={ROUTES.SEARCH} component={SearchPage} />
+        <Route exact path={ROUTES.MY_PLAYLISTS} component={MyPlaylistsPage} />
         <Route
           exact
-          path={ROUTES.PLAYLISTS + '/create'}
+          path={ROUTES.PLAYLISTS_CREATE}
           component={CreatePlaylistsPage}
         />
         <Route

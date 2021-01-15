@@ -13,6 +13,7 @@ export interface RootState {
   githubRepoForm?: GithubRepoFormState;
   featuredOer?: any;
   myPlaylistsMenu?: any;
+  allMyPlaylists?: any;
   searchOer?: any;
   playlistDetail?: any;
   allOERs?: any;

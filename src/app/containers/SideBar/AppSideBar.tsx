@@ -33,12 +33,6 @@ const { Header, Content, Sider } = Layout;
 const { Text } = Typography;
 
 export function AppSideBar(props) {
-  const dispatch = useDispatch();
-
-  useEffect(() => {
-    dispatch(fetchMyPlaylistsMenuThunk());
-  }, [dispatch]);
-
   const rootSubmenuKeys = ['sub1', 'sub2', 'sub4'];
   const [openKeys, setOpenKeys] = useState(['sub1']);
 
@@ -115,7 +109,7 @@ export function AppSideBar(props) {
           <Menu.Divider />
         </Menu>
         <Col flex="auto"></Col>
-        <Link to={`${ROUTES.PLAYLISTS}/create`}>
+        <Link to={`${ROUTES.PLAYLISTS_CREATE}`}>
           <Button type="primary">New Playlist +</Button>
         </Link>
         <Col flex="20px"></Col>

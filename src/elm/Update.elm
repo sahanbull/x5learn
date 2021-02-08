@@ -1547,7 +1547,7 @@ executeSearchAfterUrlChanged : Model -> Url -> ( Model, Cmd Msg )
 executeSearchAfterUrlChanged model url =
     let
         textParam =
-            url.query
+            url.query 
                 |> Maybe.withDefault ""
                 |> String.dropLeft 2
                 -- TODO A much cleaner method is to use Url.Query.parser
@@ -1562,7 +1562,8 @@ executeSearchAfterUrlChanged model url =
                 |> Maybe.withDefault ""
                 |> String.dropLeft 2
                 |> String.split "&"
-                |> List.reverse
+                |> List.tail
+                |> Maybe.withDefault []
                 |> List.head
                 |> Maybe.withDefault ""
                 |> String.split "="
@@ -2121,7 +2122,3 @@ getPlaylistDescription model oerId =
                 
             Just itemData ->
               Just itemData.description
-            
-    
-            
-    

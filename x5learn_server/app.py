@@ -2094,7 +2094,7 @@ def recommendations_from_wikichunk_enrichments(oer_id):
 # new solution - using LAM API (Nantes) - see issue #290
 def recommendations_from_lam_api(oer_id):
     # LAM API base url
-    LAM_API_URL = "http://wp3.x5gon.org"
+    LAM_API_URL = "https://wp3.x5gon.org"
 
     # setup appropriate headers
     HEADERS = {

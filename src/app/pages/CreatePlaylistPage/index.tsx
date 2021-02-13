@@ -53,8 +53,7 @@ export function CreatePlaylistsPage(props) {
                   title={<Title>Create Playlist</Title>}
                   extra={<a href="#">More</a>}
                 >
-                  
-                  <PlaylistFormWidget/>
+                  <PlaylistFormWidget />
                 </Card>
               </Col>
             </Row>

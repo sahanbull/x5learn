@@ -21,6 +21,8 @@ import { useEffect, useState } from 'react';
 import { fetchPlaylistLicensesThunk } from 'app/containers/Layout/ducks/playlistLicenseSlice';
 import { createTempPlaylistThunk, fetchMyPlaylistsMenuThunk } from 'app/containers/Layout/ducks/myPlaylistsMenuSlice';
 import { AsyncThunkAction, unwrapResult } from '@reduxjs/toolkit';
+import { useHistory } from 'react-router-dom';
+import { ROUTES } from 'routes/routes';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -37,6 +39,7 @@ const tailLayout = {
 
 export function PlaylistFormWidget() {
   const [form] = Form.useForm();
+  const history = useHistory()
 
   const { data: licenseData, loading, error } = useSelector(
     (state: RootState) => {
@@ -87,13 +90,13 @@ export function PlaylistFormWidget() {
             createTempPlaylistThunk(newTempPlaylist),
           );
           const createStatus = await unwrapResult(createResult as any);
-          dispatch(fetchMyPlaylistsMenuThunk())
+          await dispatch(fetchMyPlaylistsMenuThunk())
           setCreateStatus({
             createLoading: false,
             createStatus: createResult as any,
             createError: null,
           });
-
+          history.push(`${ROUTES.PLAYLISTS}/temp/${values.temp_title}`)
         } catch (err) {
           debugger;
           message.error('Error creating playlist...');

@@ -68,7 +68,7 @@ function NoData({ data }) {
       <>
         <Empty description="No temp playlists found" />
         <Space align="center" direction="vertical" style={{ width: '100%' }}>
-          <Link to={`${ROUTES.PLAYLISTS_CREATE}`}>
+          <Link to={`${ROUTES.MY_PLAYLISTS_CREATE}`}>
             <Button type="text">Create new playlist</Button>
           </Link>
         </Space>
@@ -111,8 +111,8 @@ export function MyPlaylistMenuItems(props) {
           {menuPlaylist.map(playlistItem => {
             const { id, title } = playlistItem;
             return (
-              <Menu.Item key={id}>
-                <Link to={`${ROUTES.PLAYLISTS}/${id}`}>{title}</Link>
+              <Menu.Item key={title}>
+                <Link to={`${ROUTES.PLAYLISTS}/temp/${title}`}>{title}</Link>
               </Menu.Item>
             );
           })}

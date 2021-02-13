@@ -19,7 +19,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'types';
 import { useEffect, useState } from 'react';
 import { fetchPlaylistLicensesThunk } from 'app/containers/Layout/ducks/playlistLicenseSlice';
-import { createTempPlaylistThunk } from 'app/containers/Layout/ducks/myPlaylistsMenuSlice';
+import { createTempPlaylistThunk, fetchMyPlaylistsMenuThunk } from 'app/containers/Layout/ducks/myPlaylistsMenuSlice';
 import { AsyncThunkAction, unwrapResult } from '@reduxjs/toolkit';
 
 const { Option } = Select;
@@ -76,21 +76,27 @@ export function PlaylistFormWidget() {
           createError: null,
         });
         try {
+          const newTempPlaylist = {
+            parent: 0,
+            is_visible: true,
+            playlist_items: [],
+            title: values.temp_title,
+            ...values,
+          };
           const createResult = await dispatch(
-            createTempPlaylistThunk({ ...values, title: values.temp_title }),
+            createTempPlaylistThunk(newTempPlaylist),
           );
-          const createStatus = await unwrapResult(
-            createResult as any,
-          );
-          debugger;
+          const createStatus = await unwrapResult(createResult as any);
+          dispatch(fetchMyPlaylistsMenuThunk())
           setCreateStatus({
             createLoading: false,
             createStatus: createResult as any,
             createError: null,
           });
+
         } catch (err) {
           debugger;
-          message.error("Error creating playlist...")
+          message.error('Error creating playlist...');
           setCreateStatus({
             createLoading: false,
             createStatus: null,
@@ -152,16 +158,16 @@ export function PlaylistFormWidget() {
       <Row gutter={[16, 16]}>
         <Col span={12}>
           <Form.Item
-            label="Name"
-            name="name"
+            label="Author"
+            name="author"
             rules={[
               {
                 required: true,
-                message: 'Please input your name',
+                message: 'Please input author name',
               },
             ]}
           >
-            <Input placeholder="Your name" />
+            <Input placeholder="Author name" />
           </Form.Item>
         </Col>
         <Col span={12}>

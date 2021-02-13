@@ -2,7 +2,7 @@ export const ROUTES = {
   HOMEPAGE: '/homepage',
   PLAYLISTS: '/playlist',
   MY_PLAYLISTS: '/my-playlists',
-  PLAYLISTS_CREATE: '/playlist/create',
+  MY_PLAYLISTS_CREATE: '/my-playlist/create',
   RESOURCES: '/resource',
   SEARCH: '/search',
 };

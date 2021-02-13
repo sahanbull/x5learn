@@ -40,8 +40,13 @@ export function App() {
         <Route exact path={ROUTES.MY_PLAYLISTS} component={MyPlaylistsPage} />
         <Route
           exact
-          path={ROUTES.PLAYLISTS_CREATE}
+          path={ROUTES.MY_PLAYLISTS_CREATE}
           component={CreatePlaylistsPage}
+        />
+        <Route
+          exact
+          path={ROUTES.PLAYLISTS + '/temp/:id'}
+          component={PublishPlaylistPage}
         />
         <Route
           exact

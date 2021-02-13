@@ -46,7 +46,12 @@ export function AppSideBar(props) {
   };
 
   return (
-    <Sider width={252} className="site-layout-background">
+    <Sider
+      width={252}
+      breakpoint="lg"
+      collapsedWidth="0"
+      className="site-layout-background"
+    >
       <Row
         style={{ flexDirection: 'column', minHeight: '75vh' }}
         justify="space-between"
@@ -109,7 +114,7 @@ export function AppSideBar(props) {
           <Menu.Divider />
         </Menu>
         <Col flex="auto"></Col>
-        <Link to={`${ROUTES.PLAYLISTS_CREATE}`}>
+        <Link to={`${ROUTES.MY_PLAYLISTS_CREATE}`}>
           <Button type="primary">New Playlist +</Button>
         </Link>
         <Col flex="20px"></Col>

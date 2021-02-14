@@ -6,7 +6,7 @@ import {
 } from 'app/containers/Layout/ducks/oerEnrichmentSlice';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Progress } from 'antd';
+import { Collapse, Popover, Progress } from 'antd';
 import { Menu, Dropdown } from 'antd';
 import { EntityDefinitionMenuItem } from './EntityDefinitionMenuItem';
 import { ReactComponent as NotesSVG } from 'app/containers/ContentPage/assets/notes.svg';
@@ -14,6 +14,7 @@ import styled from 'styled-components/macro';
 import { X5MenuTitle } from 'app/containers/SideBar/X5MenuTitle';
 import { fetchEntityDefinitionsByIDsThunk } from 'app/containers/Layout/ducks/allEntityDefinitionsSlice';
 const { SubMenu } = Menu;
+const { Panel } = Collapse;
 
 function expandIcon(props) {
   debugger;
@@ -24,9 +25,9 @@ const StyledChunks = styled.div`
   display: flex;
 `;
 
-const StyledChunk = styled(({ chunk, ...props }) => {
+const StyledChunk = styled(({ chunk, style, className, ...props }) => {
   const menu = (
-    <Menu expandIcon={expandIcon}>
+    <Menu mode="inline">
       {chunk.entities.map(entity => {
         return (
           <SubMenu
@@ -34,16 +35,28 @@ const StyledChunk = styled(({ chunk, ...props }) => {
             // title={<X5MenuTitle icon={<></>}>{entity.title}</X5MenuTitle>}
             title={<>{entity.title}</>}
           >
-           <EntityDefinitionMenuItem entity={entity}/>
+            <EntityDefinitionMenuItem entity={entity} />
           </SubMenu>
         );
       })}
     </Menu>
   );
+  const accordion = (
+    <Collapse accordion={true}>
+      {chunk.entities.map(entity => {
+        return (
+          <Panel key={entity.title} header={entity.title}>
+            <EntityDefinitionMenuItem entity={entity} />
+          </Panel>
+        );
+      })}
+    </Collapse>
+  );
 
   const [isHover, setIsHover] = useState(false);
   const dispatch = useDispatch();
   const mouseOverHandler = event => {
+    event.preventDefault();
     const entityIds = chunk.entities.map(entity => {
       return entity.id;
     });
@@ -51,17 +64,34 @@ const StyledChunk = styled(({ chunk, ...props }) => {
     setIsHover(true);
   };
   const mouseOutHandler = event => {
+    event.preventDefault();
     setIsHover(false);
   };
 
   return (
     <Dropdown overlay={menu}>
       <div
-        {...props}
+        // {...props}
+        style={style}
+        className={className}
         onMouseOver={mouseOverHandler}
         onMouseOut={mouseOutHandler}
       ></div>
     </Dropdown>
+
+    // <Popover content={accordion}>
+    //   <div
+    //     // {...props}
+    //     style={style}
+    //     className={className}
+    //     onMouseOver={mouseOverHandler}
+    //     onMouseOut={mouseOutHandler}
+    //     onClick={event => {
+    //       event.stopPropagation()
+    //       event.preventDefault();
+    //     }}
+    //   ></div>
+    // </Popover>
   );
 })`
   background-color: red;

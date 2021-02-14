@@ -67,7 +67,6 @@ export function ResourcesPage(props) {
   //   }
   // }, [data]);
   const { data, loading, error } = oerData;
-  debugger
   return (
     <>
       <Helmet>

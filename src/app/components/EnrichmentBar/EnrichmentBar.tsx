@@ -8,9 +8,17 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Progress } from 'antd';
 import { Menu, Dropdown } from 'antd';
-
+import { EntityDefinitionMenuItem } from './EntityDefinitionMenuItem';
+import { ReactComponent as NotesSVG } from 'app/containers/ContentPage/assets/notes.svg';
 import styled from 'styled-components/macro';
+import { X5MenuTitle } from 'app/containers/SideBar/X5MenuTitle';
+import { fetchEntityDefinitionsByIDsThunk } from 'app/containers/Layout/ducks/allEntityDefinitionsSlice';
 const { SubMenu } = Menu;
+
+function expandIcon(props) {
+  debugger;
+  return <NotesSVG />;
+}
 
 const StyledChunks = styled.div`
   display: flex;
@@ -18,22 +26,28 @@ const StyledChunks = styled.div`
 
 const StyledChunk = styled(({ chunk, ...props }) => {
   const menu = (
-    <Menu>
+    <Menu expandIcon={expandIcon}>
       {chunk.entities.map(entity => {
         return (
-          <SubMenu key={entity.title} title={entity.title}>
-            <Menu.Item>3rd menu item</Menu.Item>
-
+          <SubMenu
+            key={entity.title}
+            // title={<X5MenuTitle icon={<></>}>{entity.title}</X5MenuTitle>}
+            title={<>{entity.title}</>}
+          >
+           <EntityDefinitionMenuItem entity={entity}/>
           </SubMenu>
         );
       })}
-
     </Menu>
   );
 
   const [isHover, setIsHover] = useState(false);
-
+  const dispatch = useDispatch();
   const mouseOverHandler = event => {
+    const entityIds = chunk.entities.map(entity => {
+      return entity.id;
+    });
+    dispatch(fetchEntityDefinitionsByIDsThunk(entityIds));
     setIsHover(true);
   };
   const mouseOutHandler = event => {
@@ -41,9 +55,9 @@ const StyledChunk = styled(({ chunk, ...props }) => {
   };
 
   return (
-    <Dropdown {...props} style={{}} overlay={menu}>
+    <Dropdown overlay={menu}>
       <div
-        // style={{  flex: chunk.length  }}
+        {...props}
         onMouseOver={mouseOverHandler}
         onMouseOut={mouseOutHandler}
       ></div>
@@ -105,9 +119,6 @@ export const EnrichmentBar = function (props: { oerID }) {
       {loading && <Progress percent={100} status="active" showInfo={false} />}
       {data && (
         <>
-          Chunks Loaded - {data.chunks.length} <br />
-          Clusters Loaded - {data.clusters.length} <br />
-          Mentions Loaded - {Object.keys(data.mentions).length} <br />
           <StyledChunks className={`chunks`}>
             {data.chunks &&
               data.chunks.map(chunk => {

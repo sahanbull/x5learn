@@ -93,6 +93,17 @@ export async function fetchOERs(idArray) {
 
   // return require('./mock/featuredList.json');
 }
+export async function fetchEntityDefinitions(idArray) {
+  if (idArray.length === 0) {
+    return [];
+  }
+  const qs = queryString.stringify({
+    ids: idArray.join(','),
+  });
+  return fetchAPI(`/entity_definitions/?${qs}`);
+
+  // return require('./mock/featuredList.json');
+}
 export async function fetchSearchOERs({ searchTerm, page }) {
   const qs = queryString.stringify({ text: searchTerm, page });
   return fetchAPI(`/search/?${qs}`);

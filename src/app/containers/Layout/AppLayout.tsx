@@ -23,6 +23,10 @@ import {
   sliceKey as playlistLicenseSliceKey,
   reducer as playlistLicenseReducer,
 } from './ducks/playlistLicenseSlice';
+import {
+  sliceKey as entityDefSliceKey,
+  reducer as entityDefReducer,
+} from './ducks/allEntityDefinitionsSlice';
 const { Header, Content, Sider, Footer } = Layout;
 
 export function AppLayout(props) {
@@ -35,6 +39,10 @@ export function AppLayout(props) {
   useInjectReducer({
     key: playlistLicenseSliceKey,
     reducer: playlistLicenseReducer,
+  });
+  useInjectReducer({
+    key: entityDefSliceKey,
+    reducer: entityDefReducer,
   });
 
   return (

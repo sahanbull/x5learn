@@ -13,6 +13,7 @@ import {
 } from './ducks/fetchPlaylistDetailsThunk';
 import { fetchOERsByIDsThunk } from 'app/containers/Layout/ducks/allOERSlice';
 import { Action, AsyncThunkAction, unwrapResult } from '@reduxjs/toolkit';
+import { EnrichmentBar } from 'app/components/EnrichmentBar/EnrichmentBar';
 
 const { Title, Text } = Typography;
 
@@ -66,6 +67,7 @@ export function ResourcesPage(props) {
   //   }
   // }, [data]);
   const { data, loading, error } = oerData;
+  debugger
   return (
     <>
       <Helmet>
@@ -92,6 +94,7 @@ export function ResourcesPage(props) {
                     src={`${imageBaseURL}/${data?.images[0]}`}
                   />
                 )}
+                <EnrichmentBar oerID={data.id} />
               </Col>
               <Col>
                 <Card

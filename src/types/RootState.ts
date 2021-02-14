@@ -19,5 +19,6 @@ export interface RootState {
   allOERs?: any;
   oerEnrichment?: any;
   playlistLicenses?: any;
+  allEntityDefs?: any;
   // [INSERT NEW REDUCER KEY ABOVE] < Needed for generating containers seamlessly
 }

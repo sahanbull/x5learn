@@ -392,6 +392,16 @@ class Playlist_Item(Base):
         self.order = order
         self.data = data
 
+    @property
+    def serialize(self):
+        """Return object data in easily serializable format"""
+        return {
+            'playlist_id': self.playlist_id,
+            'oer_id': self.oer_id,
+            'order': self.order,
+            'data': self.data
+        }
+
 
 class Temp_Playlist(Base):
     __tablename__ = 'x5_oer_repo.temp_playlist'

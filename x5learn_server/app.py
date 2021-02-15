@@ -1899,7 +1899,7 @@ class Temp_Playlist_Single(Resource):
         if temp_playlist is None:
             return {'result': 'Temporary playlist not found'}, 400
 
-        playlist_data = json.loads(temp_playlist['data'])
+        playlist_data = json.loads(temp_playlist.data)
         playlist = Playlist(playlist_data['title'], playlist_data.get('description', ''),
                             playlist_data.get('author', ''), None, playlist_data.get('creator', None),
                             playlist_data.get('parent', None), playlist_data.get('is_visible', True),
@@ -1907,9 +1907,9 @@ class Temp_Playlist_Single(Resource):
 
         playlist_items = []
         for idx, val in enumerate(playlist_data.get('playlist_items', [])):
-            playlist_items.append(Playlist_Item(None, val, playlist_data.get('playlist_items', [])[idx]))
+            playlist_items.append(Playlist_Item(None, val, idx, playlist_data.get('playlist_items', [])[idx]).serialize)
 
-        return {'playlist': playlist, 'playlist_items': playlist_items}, 200
+        return {'playlist': playlist.serialize, 'playlist_items': playlist_items}, 200
 
     @ns_playlist.doc('update_temp_playlist')
     @ns_playlist.expect(m_playlist)

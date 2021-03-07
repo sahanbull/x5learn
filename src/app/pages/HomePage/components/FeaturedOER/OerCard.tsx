@@ -120,13 +120,21 @@ export function OerCard(props: {
       break;
   }
 
+  let imgSrc = `/static/img/thumbnail_unavailable.jpg`
+  if(card?.images[0]){
+    imgSrc = `${imageBaseURL}/${card?.images[0]}`
+  }
+
+  
+
+
   return (
     <Link to={pathToNavigateTo}>
       <Card
         hoverable
         bordered={false}
         style={cardStyle}
-        cover={<img alt="example" src={`${imageBaseURL}/${card?.images[0]}`} />}
+        cover={<img alt="example" src={imgSrc} />}
       >
         <Meta
           avatar={

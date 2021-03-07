@@ -14,7 +14,6 @@ import {
 } from 'antd';
 import { AppLayout } from 'app/containers/Layout/AppLayout';
 import { UploadOutlined } from '@ant-design/icons';
-import { PlaylistFormWidget } from 'app/components/PlaylistForm/PlaylistFormWidget';
 import { RootState } from 'types';
 import { useSelector } from 'react-redux';
 import { MyPlaylistWidget } from './components/__tests__/MyPlaylistWidget';

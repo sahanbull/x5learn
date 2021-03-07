@@ -16,6 +16,7 @@ export interface RootState {
   allMyPlaylists?: any;
   searchOer?: any;
   playlistDetail?: any;
+  tempPlaylistDetail?: any;
   allOERs?: any;
   oerEnrichment?: any;
   playlistLicenses?: any;

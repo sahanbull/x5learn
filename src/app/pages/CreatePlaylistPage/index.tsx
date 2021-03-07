@@ -14,7 +14,7 @@ import {
 } from 'antd';
 import { AppLayout } from 'app/containers/Layout/AppLayout';
 import { UploadOutlined } from '@ant-design/icons';
-import { PlaylistFormWidget } from 'app/components/PlaylistForm/PlaylistFormWidget';
+import { PlaylistCreateFormWidget } from 'app/components/PlaylistForm/PlaylistCreateFormWidget';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -53,7 +53,7 @@ export function CreatePlaylistsPage(props) {
                   title={<Title>Create Playlist</Title>}
                   extra={<a href="#">More</a>}
                 >
-                  <PlaylistFormWidget />
+                  <PlaylistCreateFormWidget />
                 </Card>
               </Col>
             </Row>

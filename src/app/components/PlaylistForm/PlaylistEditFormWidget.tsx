@@ -19,7 +19,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'types';
 import { useEffect, useState } from 'react';
 import { fetchPlaylistLicensesThunk } from 'app/containers/Layout/ducks/playlistLicenseSlice';
-import { createTempPlaylistThunk, fetchMyPlaylistsMenuThunk } from 'app/containers/Layout/ducks/myPlaylistsMenuSlice';
+import {
+  createTempPlaylistThunk,
+  fetchMyPlaylistsMenuThunk,
+} from 'app/containers/Layout/ducks/myPlaylistsMenuSlice';
 import { AsyncThunkAction, unwrapResult } from '@reduxjs/toolkit';
 import { useHistory } from 'react-router-dom';
 import { ROUTES } from 'routes/routes';
@@ -37,15 +40,17 @@ const tailLayout = {
   wrapperCol: { offset: 0, span: 16 },
 };
 
-export function PlaylistFormWidget() {
+export function PlaylistEditFormWidget(props: { formData? }) {
   const [form] = Form.useForm();
-  const history = useHistory()
+  const history = useHistory();
 
   const { data: licenseData, loading, error } = useSelector(
     (state: RootState) => {
       return state.playlistLicenses;
     },
   );
+
+  const { playlist, playlist_items } = props.formData;
 
   const [
     { createStatus, createLoading, createError },
@@ -90,15 +95,14 @@ export function PlaylistFormWidget() {
             createTempPlaylistThunk(newTempPlaylist),
           );
           const createStatus = await unwrapResult(createResult as any);
-          await dispatch(fetchMyPlaylistsMenuThunk())
+          await dispatch(fetchMyPlaylistsMenuThunk());
           setCreateStatus({
             createLoading: false,
             createStatus: createResult as any,
             createError: null,
           });
-          history.push(`${ROUTES.PLAYLISTS}/temp/${values.temp_title}`)
+          history.push(`${ROUTES.PLAYLISTS}/temp/${values.temp_title}`);
         } catch (err) {
-          debugger;
           message.error('Error creating playlist...');
           setCreateStatus({
             createLoading: false,
@@ -121,7 +125,7 @@ export function PlaylistFormWidget() {
               },
             ]}
           >
-            <Input placeholder="Playlist title" />
+            <Input placeholder="Playlist title" defaultValue={playlist.title} />
           </Form.Item>
         </Col>
         <Col span={12}>
@@ -143,6 +147,7 @@ export function PlaylistFormWidget() {
               <Select
                 placeholder="Select License"
                 onChange={onLicenseChange}
+                defaultValue={playlist.license}
                 allowClear
               >
                 {licenseData.map(option => {
@@ -170,7 +175,7 @@ export function PlaylistFormWidget() {
               },
             ]}
           >
-            <Input placeholder="Author name" />
+            <Input placeholder="Author name" defaultValue={playlist.creator} />
           </Form.Item>
         </Col>
         <Col span={12}>
@@ -205,6 +210,7 @@ export function PlaylistFormWidget() {
               rows={4}
               placeholder="Description"
               autoSize={{ minRows: 3, maxRows: 6 }}
+              defaultValue={playlist.description}
             />
           </Form.Item>
         </Col>
@@ -212,7 +218,10 @@ export function PlaylistFormWidget() {
 
       <Form.Item {...tailLayout}>
         <Button type="primary" htmlType="submit" size="large">
-          Create <UploadOutlined />
+          Save <UploadOutlined />
+        </Button>
+        <Button type="primary" htmlType="button" size="large">
+          Publish <UploadOutlined />
         </Button>
         {createLoading && (
           <Progress percent={100} status="active" showInfo={false} />

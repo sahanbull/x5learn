@@ -69,7 +69,7 @@ export function PlaylistsPage(props) {
         {data && (
           <>
             <Row gutter={[16, 16]}>
-              <Col span={16}>
+              <Col span={24}>
                 <Card
                   headStyle={{ border: 'none' }}
                   title={<Title level={2}>{data.title}</Title>}
@@ -96,7 +96,7 @@ export function PlaylistsPage(props) {
                   </Button>
                 </Card>
               </Col>
-              <Col span={8}>
+              {/* <Col span={8}>
                 <Card
                   style={{ backgroundColor: '#00ad57', color: `#ffffff` }}
                   headStyle={{ border: 'none', color: `#ffffff` }}
@@ -124,7 +124,7 @@ export function PlaylistsPage(props) {
                     Undo
                   </Button>
                 </Card>
-              </Col>
+              </Col> */}
             </Row>
             <OerCardList {...oerData} playlistID={playlistID} />
           </>

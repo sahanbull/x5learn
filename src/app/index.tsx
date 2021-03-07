@@ -20,6 +20,7 @@ import { NotFoundPage } from './containers/NotFoundPage/Loadable';
 import { ROUTES } from 'routes/routes';
 import { CreatePlaylistsPage } from './pages/CreatePlaylistPage/Loadable';
 import { PublishPlaylistPage } from './pages/PublishPlaylistPage/Loadable';
+import { EditTempPlaylistPage } from './pages/EditTempPlaylistPage/Loadable';
 import { MyPlaylistsPage } from './pages/MyPlaylistPage/Loadable';
 
 export function App() {
@@ -46,7 +47,7 @@ export function App() {
         <Route
           exact
           path={ROUTES.PLAYLISTS + '/temp/:id'}
-          component={PublishPlaylistPage}
+          component={EditTempPlaylistPage}
         />
         <Route
           exact

@@ -59,6 +59,9 @@ export async function fetchPlaylistDetails(playlistID) {
   return fetchAPI(`/playlist/${playlistID}`);
   // return require('./mock/playlist-24.json');
 }
+export async function fetchTempPlaylistDetails(playlistTitle) {
+  return fetchAPI(`/playlist/${playlistTitle}`);
+}
 export async function fetchMyPlaylistsMenu(limit?, offset?) {
   const qs = queryString.stringify({
     mode: 'temp_playlists_only',

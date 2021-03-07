@@ -14,7 +14,15 @@ import {
 } from 'antd';
 import { AppLayout } from 'app/containers/Layout/AppLayout';
 import { UploadOutlined } from '@ant-design/icons';
+import {
+  fetchTempPlaylistDetailsThunk,
+  sliceKey,
+  reducer,
+} from './ducks/fetchTempPlaylistDetailsThunk';
 import { PlaylistEditFormWidget } from 'app/components/PlaylistForm/PlaylistEditFormWidget';
+import { useInjectReducer } from 'redux-injectors';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from 'types';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -29,15 +37,32 @@ const tailLayout = {
   wrapperCol: { offset: 0, span: 16 },
 };
 
-export function PublishPlaylistPage(props) {
-  const error: null | { msg: object } = null,
-    loading = false,
-    data = { title: '', description: '', oerIds: [], last_updated_at: '' };
+export function EditTempPlaylistPage(props) {
+  useInjectReducer({ key: sliceKey, reducer: reducer });
+  const dispatch = useDispatch();
+  const { data, loading, error } = useSelector((state: RootState) => {
+    return state.tempPlaylistDetail;
+  });
+
+  const [playlistData, setPlaylistData] = useState<{
+    data: null | any[];
+    loading: boolean;
+    error: null | any;
+  }>({
+    data: null,
+    loading: true,
+    error: null,
+  });
+
+  const playlistID = props.match?.params?.id;
+  useEffect(() => {
+    dispatch(fetchTempPlaylistDetailsThunk(playlistID));
+  }, [dispatch, playlistID]);
 
   return (
     <>
       <Helmet>
-        <title>Playlists Page</title>
+        <title>Edit Playlist</title>
         <meta name="description" content="X5 Learn AI based learning" />
       </Helmet>
       <AppLayout>
@@ -50,10 +75,9 @@ export function PublishPlaylistPage(props) {
               <Col span={24}>
                 <Card
                   headStyle={{ border: 'none' }}
-                  title={<Title>Publish Playlist</Title>}
-                  extra={<a href="#">More</a>}
+                  title={<Title>Edit Playlist</Title>}
                 >
-                  <PlaylistEditFormWidget />
+                  <PlaylistEditFormWidget formData={data} />
                 </Card>
               </Col>
             </Row>

@@ -210,7 +210,12 @@ repository = Repository()
 
 @app.route("/")
 def home():
+    ref = request.args.get('ref')
     if current_user.is_authenticated:
+        languages = get_available_languages()
+        localization_dict, lang = get_localization_dict()
+        return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
+    elif ref == "ai4eu":
         languages = get_available_languages()
         localization_dict, lang = get_localization_dict()
         return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)

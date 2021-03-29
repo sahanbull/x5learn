@@ -75,7 +75,7 @@ export function EditTempPlaylistPage(props) {
               <Col span={24}>
                 <Card
                   headStyle={{ border: 'none' }}
-                  title={<Title>Edit Playlist</Title>}
+                  title={<Title>Edit Playlist - {data?.playlist?.title}</Title>}
                 >
                   <PlaylistEditFormWidget formData={data} />
                 </Card>

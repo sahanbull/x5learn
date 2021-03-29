@@ -11,6 +11,7 @@ import {
   Form,
   Input,
   Select,
+  Modal,
   message,
 } from 'antd';
 import { AppLayout } from 'app/containers/Layout/AppLayout';
@@ -26,6 +27,7 @@ import {
 import { AsyncThunkAction, unwrapResult } from '@reduxjs/toolkit';
 import { useHistory } from 'react-router-dom';
 import { ROUTES } from 'routes/routes';
+import { PlaylistPublishFormWidget } from './PlaylistPublishFormWidget';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -72,6 +74,12 @@ export function PlaylistEditFormWidget(props: { formData? }) {
     form.setFieldsValue({ license: value });
   };
 
+  const [isModalVisible, setIsModalVisible] = useState(false);
+
+  const showModal = () => {
+    setIsModalVisible(true);
+  };
+
   return (
     <Form
       {...layout}
@@ -103,7 +111,7 @@ export function PlaylistEditFormWidget(props: { formData? }) {
           });
           history.push(`${ROUTES.PLAYLISTS}/temp/${values.temp_title}`);
         } catch (err) {
-          message.error('Error creating playlist...');
+          message.error('Error saving playlist...');
           setCreateStatus({
             createLoading: false,
             createStatus: null,
@@ -114,105 +122,17 @@ export function PlaylistEditFormWidget(props: { formData? }) {
       initialValues={{ remember: true }}
     >
       <Row gutter={[16, 16]}>
-        <Col span={12}>
-          <Form.Item
-            label="Playlist Title"
-            name="temp_title"
-            rules={[
-              {
-                required: true,
-                message: 'Please input a playlist title',
-              },
-            ]}
-          >
-            <Input placeholder="Playlist title" defaultValue={playlist.title} />
-          </Form.Item>
-        </Col>
-        <Col span={12}>
-          <Form.Item
-            label="License"
-            name="license"
-            rules={[
-              {
-                required: true,
-                message: 'Please input a valid licence',
-              },
-            ]}
-          >
-            {loading && (
-              <Progress percent={100} status="active" showInfo={false} />
-            )}
-            {error && <Text type="danger">Error loading licenses...</Text>}
-            {licenseData && (
-              <Select
-                placeholder="Select License"
-                onChange={onLicenseChange}
-                defaultValue={playlist.license}
-                allowClear
-              >
-                {licenseData.map(option => {
-                  return (
-                    <Option key={option.id} value={option.id}>
-                      {option.description}
-                    </Option>
-                  );
-                })}
-              </Select>
-            )}
-          </Form.Item>
-        </Col>
-      </Row>
-
-      <Row gutter={[16, 16]}>
-        <Col span={12}>
-          <Form.Item
-            label="Author"
-            name="author"
-            rules={[
-              {
-                required: true,
-                message: 'Please input author name',
-              },
-            ]}
-          >
-            <Input placeholder="Author name" defaultValue={playlist.creator} />
-          </Form.Item>
-        </Col>
-        <Col span={12}>
-          <Form.Item
-            label="Surname"
-            name="surname"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your surname',
-              },
-            ]}
-          >
-            <Input placeholder="Your surname" />
-          </Form.Item>
-        </Col>
-      </Row>
-
-      <Row gutter={[16, 16]}>
         <Col span={24}>
           <Form.Item
-            label="Description"
-            name="description"
+            label="Playlist Items"
+            name="playlist_items1"
             rules={[
               {
-                required: true,
-                message: 'Please input a description',
+                required: false,
+                message: 'No items added to playlist',
               },
             ]}
-          >
-            <TextArea
-              rows={4}
-              placeholder="Description"
-              autoSize={{ minRows: 3, maxRows: 6 }}
-              defaultValue={playlist.description}
-            />
-          </Form.Item>
+          ></Form.Item>
         </Col>
       </Row>
 
@@ -220,18 +140,27 @@ export function PlaylistEditFormWidget(props: { formData? }) {
         <Button type="primary" htmlType="submit" size="large">
           Save <UploadOutlined />
         </Button>
-        <Button type="primary" htmlType="button" size="large">
-          Publish <UploadOutlined />
+        <Button
+          type="primary"
+          htmlType="button"
+          size="large"
+          onClick={showModal}
+        >
+          Publish... <UploadOutlined />
         </Button>
         {createLoading && (
           <Progress percent={100} status="active" showInfo={false} />
         )}
         {createError && <Text type="danger">Error creating playlist...</Text>}
-
-        <Button type="text" size="large">
-          Cancel X
-        </Button>
       </Form.Item>
+
+      <>
+        <PlaylistPublishFormWidget
+          visible={isModalVisible}
+          setIsModalVisible={setIsModalVisible}
+          formData={props.formData}
+        />
+      </>
     </Form>
   );
 }

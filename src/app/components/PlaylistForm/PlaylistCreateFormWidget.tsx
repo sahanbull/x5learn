@@ -19,7 +19,10 @@ import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'types';
 import { useEffect, useState } from 'react';
 import { fetchPlaylistLicensesThunk } from 'app/containers/Layout/ducks/playlistLicenseSlice';
-import { createTempPlaylistThunk, fetchMyPlaylistsMenuThunk } from 'app/containers/Layout/ducks/myPlaylistsMenuSlice';
+import {
+  createTempPlaylistThunk,
+  fetchMyPlaylistsMenuThunk,
+} from 'app/containers/Layout/ducks/myPlaylistsMenuSlice';
 import { AsyncThunkAction, unwrapResult } from '@reduxjs/toolkit';
 import { useHistory } from 'react-router-dom';
 import { ROUTES } from 'routes/routes';
@@ -39,7 +42,7 @@ const tailLayout = {
 
 export function PlaylistCreateFormWidget() {
   const [form] = Form.useForm();
-  const history = useHistory()
+  const history = useHistory();
 
   const { data: licenseData, loading, error } = useSelector(
     (state: RootState) => {
@@ -56,16 +59,6 @@ export function PlaylistCreateFormWidget() {
     createError: null,
   });
   const dispatch = useDispatch();
-
-  useEffect(() => {
-    if (!licenseData) {
-      dispatch(fetchPlaylistLicensesThunk());
-    }
-  }, [licenseData, dispatch]);
-
-  const onLicenseChange = (value: string) => {
-    form.setFieldsValue({ license: value });
-  };
 
   return (
     <Form
@@ -90,13 +83,13 @@ export function PlaylistCreateFormWidget() {
             createTempPlaylistThunk(newTempPlaylist),
           );
           const createStatus = await unwrapResult(createResult as any);
-          await dispatch(fetchMyPlaylistsMenuThunk())
+          await dispatch(fetchMyPlaylistsMenuThunk());
           setCreateStatus({
             createLoading: false,
             createStatus: createResult as any,
             createError: null,
           });
-          history.push(`${ROUTES.PLAYLISTS}/temp/${values.temp_title}`)
+          history.push(`${ROUTES.PLAYLISTS}/temp/${values.temp_title}`);
         } catch (err) {
           debugger;
           message.error('Error creating playlist...');
@@ -110,7 +103,7 @@ export function PlaylistCreateFormWidget() {
       initialValues={{ remember: true }}
     >
       <Row gutter={[16, 16]}>
-        <Col span={12}>
+        <Col span={24}>
           <Form.Item
             label="Playlist Title"
             name="temp_title"
@@ -122,90 +115,6 @@ export function PlaylistCreateFormWidget() {
             ]}
           >
             <Input placeholder="Playlist title" />
-          </Form.Item>
-        </Col>
-        <Col span={12}>
-          <Form.Item
-            label="License"
-            name="license"
-            rules={[
-              {
-                required: true,
-                message: 'Please input a valid licence',
-              },
-            ]}
-          >
-            {loading && (
-              <Progress percent={100} status="active" showInfo={false} />
-            )}
-            {error && <Text type="danger">Error loading licenses...</Text>}
-            {licenseData && (
-              <Select
-                placeholder="Select License"
-                onChange={onLicenseChange}
-                allowClear
-              >
-                {licenseData.map(option => {
-                  return (
-                    <Option key={option.id} value={option.id}>
-                      {option.description}
-                    </Option>
-                  );
-                })}
-              </Select>
-            )}
-          </Form.Item>
-        </Col>
-      </Row>
-
-      <Row gutter={[16, 16]}>
-        <Col span={12}>
-          <Form.Item
-            label="Author"
-            name="author"
-            rules={[
-              {
-                required: true,
-                message: 'Please input author name',
-              },
-            ]}
-          >
-            <Input placeholder="Author name" />
-          </Form.Item>
-        </Col>
-        <Col span={12}>
-          <Form.Item
-            label="Surname"
-            name="surname"
-            rules={[
-              {
-                required: true,
-                message: 'Please input your surname',
-              },
-            ]}
-          >
-            <Input placeholder="Your surname" />
-          </Form.Item>
-        </Col>
-      </Row>
-
-      <Row gutter={[16, 16]}>
-        <Col span={24}>
-          <Form.Item
-            label="Description"
-            name="description"
-            rules={[
-              {
-                required: true,
-                message: 'Please input a description',
-              },
-            ]}
-          >
-            <TextArea
-              rows={4}
-              placeholder="Description"
-              autoSize={{ minRows: 3, maxRows: 6 }}
-            />
           </Form.Item>
         </Col>
       </Row>

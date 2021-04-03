@@ -133,3 +133,65 @@ export async function createTempPlaylist(playlist: {
     { method: 'POST' },
   );
 }
+
+export async function deleteTempPlaylist(playlistName) {
+  return fetchAPI(`/playlist/${playlistName}`, JSON.stringify({}), {
+    method: 'DELETE',
+  });
+}
+export async function publishTempPlaylist(
+  temp_title,
+  playlist: {
+    title?;
+    description?;
+    license?;
+    author;
+    playlist_items: Array<number>;
+  },
+) {
+  return fetchAPI(
+    `/playlist/`,
+    JSON.stringify({
+      is_temp: true,
+      parent: 0,
+      license: 0,
+      is_visible: true,
+      temp_title,
+      ...playlist,
+    }),
+    { method: 'POST' },
+  );
+}
+export async function updateTempPlaylist(
+  temp_title,
+  playlist: {
+    title?;
+    description?;
+    license?;
+    author;
+    playlist_items: Array<number>;
+    playlist_item_data;
+  },
+) {
+  return fetchAPI(
+    `/playlist/${temp_title}`,
+    JSON.stringify({
+      is_temp: true,
+      parent: 0,
+      license: 0,
+      is_visible: true,
+      temp_title,
+      ...playlist,
+    }),
+    { method: 'PUT' },
+  );
+}
+export async function addToTempPlaylist(saveData: { playlistName?; oerId }) {
+  return fetchAPI(
+    `/playlist/${saveData.playlistName}`,
+    JSON.stringify({
+      oer_id: saveData.oerId,
+    }),
+    { method: 'POST' },
+  );
+}

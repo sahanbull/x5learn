@@ -1,6 +1,10 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { createSlice } from 'utils/@reduxjs/toolkit';
 import { createTempPlaylist, fetchMyPlaylistsMenu } from 'app/api/api';
+import { reducers as deleteTempPlaylistReducers } from './myPlaylistMenu/deleteTempPlaylist';
+import { reducers as publishTempPlaylistReducers } from './myPlaylistMenu/publishTempPlaylist';
+import { reducers as updateTempPlaylistReducers } from './myPlaylistMenu/updateTempPlaylist';
+import { reducers as addToTempPlaylist } from './myPlaylistMenu/addToTempPlaylist';
 
 // The initial state of the GithubRepoForm container
 export const initialState: any = {
@@ -41,6 +45,10 @@ const myPlaylistsMenuSlice = createSlice({
       state.loading = false;
       state.error = action.error;
     },
+    ...deleteTempPlaylistReducers,
+    ...publishTempPlaylistReducers,
+    ...updateTempPlaylistReducers,
+    ...addToTempPlaylist,
   },
 });
 

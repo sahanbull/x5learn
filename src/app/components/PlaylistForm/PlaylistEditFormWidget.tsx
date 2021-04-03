@@ -15,7 +15,7 @@ import {
   message,
 } from 'antd';
 import { AppLayout } from 'app/containers/Layout/AppLayout';
-import { UploadOutlined } from '@ant-design/icons';
+import { DeleteOutlined, UploadOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'types';
 import { useEffect, useState } from 'react';
@@ -139,6 +139,9 @@ export function PlaylistEditFormWidget(props: { formData? }) {
       <Form.Item {...tailLayout}>
         <Button type="primary" htmlType="submit" size="large">
           Save <UploadOutlined />
+        </Button>
+        <Button type="primary" htmlType="button" size="large">
+          Delete <DeleteOutlined />
         </Button>
         <Button
           type="primary"

@@ -14,6 +14,7 @@ import {
 import { fetchOERsByIDsThunk } from 'app/containers/Layout/ducks/allOERSlice';
 import { Action, AsyncThunkAction, unwrapResult } from '@reduxjs/toolkit';
 import { EnrichmentBar } from 'app/components/EnrichmentBar/EnrichmentBar';
+import { AddToPlaylistButton } from 'app/components/AddToPlaylistButton/AddToPlaylistButton';
 
 const { Title, Text } = Typography;
 
@@ -109,14 +110,7 @@ export function ResourcesPage(props) {
                       >
                         Bookmark
                       </Button>{' '}
-                      <Button
-                        type="primary"
-                        shape="round"
-                        icon={<UploadOutlined />}
-                        size="large"
-                      >
-                        Add to Playlist
-                      </Button>
+                      <AddToPlaylistButton oerId={oerID} />
                     </>
                   }
                 >

@@ -186,11 +186,11 @@ export async function updateTempPlaylist(
     { method: 'PUT' },
   );
 }
-export async function addToTempPlaylist(saveData: { playlistName?; oerId }) {
+export async function addToTempPlaylist(playlistName, oerId) {
   return fetchAPI(
-    `/playlist/${saveData.playlistName}`,
+    `/playlist/${playlistName}`,
     JSON.stringify({
-      oer_id: saveData.oerId,
+      oer_id: oerId,
     }),
     { method: 'POST' },
   );

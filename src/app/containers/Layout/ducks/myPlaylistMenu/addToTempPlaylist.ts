@@ -4,7 +4,8 @@ import { addToTempPlaylist } from 'app/api/api';
 export const addToTempPlaylistThunk = createAsyncThunk<any, any>(
   'playlists/addToTempPlaylist',
   async addData => {
-    const data = await addToTempPlaylist(addData);
+    const { playlistName, oerId } = addData;
+    const data = await addToTempPlaylist(playlistName, oerId);
     return data;
   },
 );

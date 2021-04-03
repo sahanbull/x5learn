@@ -79,7 +79,7 @@ export function PlaylistEditFormWidget(props: { formData? }) {
   const showModal = () => {
     setIsModalVisible(true);
   };
-
+debugger
   return (
     <Form
       {...layout}
@@ -133,6 +133,12 @@ export function PlaylistEditFormWidget(props: { formData? }) {
               },
             ]}
           ></Form.Item>
+
+          {playlist_items && playlist_items.map(item=>{
+            return (
+              <Typography.Text key={item.data}>{item.data}</Typography.Text>
+            )
+          })}
         </Col>
       </Row>
 

@@ -16,6 +16,21 @@ export const reducers = {
     //state.loading = true;
   },
   [addToTempPlaylistThunk.fulfilled.toString()]: (state: any, action) => {
+    const {playlistName, oerId} = action.meta.arg
+    const item = state.data.find(item => {
+
+      if (item.title === playlistName) {
+        const hasOer = item.oerIds.find(currOer=>{
+          return currOer === oerId
+        })
+        if(!hasOer){
+          item.oerIds = [...item.oerIds, oerId]
+        }
+        return true;
+      }
+      return false;
+    });
+
     //state.loading = false;
     //state.data = action.payload;
   },

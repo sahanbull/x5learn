@@ -15,6 +15,11 @@ export const reducers = {
     //state.loading = true;
   },
   [deleteTempPlaylistThunk.fulfilled.toString()]: (state: any, action) => {
+    const filtered = state.data.filter((value, index, arr) => {
+      return value.title !== action.meta.arg;
+    });
+
+    state.data = filtered;
     //state.loading = false;
     //state.data = action.payload;
   },

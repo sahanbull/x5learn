@@ -11,9 +11,10 @@ import {
   Form,
   Input,
   Select,
+  Popconfirm,
 } from 'antd';
 import { AppLayout } from 'app/containers/Layout/AppLayout';
-import { UploadOutlined } from '@ant-design/icons';
+import { DeleteOutlined, UploadOutlined } from '@ant-design/icons';
 import {
   fetchTempPlaylistDetailsThunk,
   sliceKey,
@@ -23,6 +24,7 @@ import { PlaylistEditFormWidget } from 'app/components/PlaylistForm/PlaylistEdit
 import { useInjectReducer } from 'redux-injectors';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'types';
+import { PlaylistDeleteButton } from 'app/components/PlaylistDeleteButton/PlaylistDeleteButton';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -59,6 +61,7 @@ export function EditTempPlaylistPage(props) {
     dispatch(fetchTempPlaylistDetailsThunk(playlistID));
   }, [dispatch, playlistID]);
 
+
   return (
     <>
       <Helmet>
@@ -75,6 +78,11 @@ export function EditTempPlaylistPage(props) {
               <Col span={24}>
                 <Card
                   headStyle={{ border: 'none' }}
+                  extra={
+                    <PlaylistDeleteButton
+                      playlistName={data?.playlist?.title}
+                    />
+                  }
                   title={<Title>Edit Playlist - {data?.playlist?.title}</Title>}
                 >
                   <PlaylistEditFormWidget formData={data} />

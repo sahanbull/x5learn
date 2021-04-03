@@ -91,7 +91,6 @@ export function PlaylistCreateFormWidget() {
           });
           history.push(`${ROUTES.PLAYLISTS}/temp/${values.temp_title}`);
         } catch (err) {
-          debugger;
           message.error('Error creating playlist...');
           setCreateStatus({
             createLoading: false,

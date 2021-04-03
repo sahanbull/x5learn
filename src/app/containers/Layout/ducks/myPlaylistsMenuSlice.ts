@@ -4,7 +4,7 @@ import { createTempPlaylist, fetchMyPlaylistsMenu } from 'app/api/api';
 import { reducers as deleteTempPlaylistReducers } from './myPlaylistMenu/deleteTempPlaylist';
 import { reducers as publishTempPlaylistReducers } from './myPlaylistMenu/publishTempPlaylist';
 import { reducers as updateTempPlaylistReducers } from './myPlaylistMenu/updateTempPlaylist';
-import { reducers as addToTempPlaylist } from './myPlaylistMenu/addToTempPlaylist';
+import { reducers as addToTempPlaylistReducers } from './myPlaylistMenu/addToTempPlaylist';
 
 // The initial state of the GithubRepoForm container
 export const initialState: any = {
@@ -48,7 +48,7 @@ const myPlaylistsMenuSlice = createSlice({
     ...deleteTempPlaylistReducers,
     ...publishTempPlaylistReducers,
     ...updateTempPlaylistReducers,
-    ...addToTempPlaylist,
+    ...addToTempPlaylistReducers,
   },
 });
 

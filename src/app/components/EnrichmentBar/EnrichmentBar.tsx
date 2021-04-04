@@ -135,7 +135,6 @@ export const EnrichmentBar = function (props: { oerID }) {
       fetchOerEnrichmentThunk(props.oerID),
     )) as any;
     const result = await unwrapResult(response);
-    console.log(result);
   };
   useEffect(() => {
     fetchEnrichment();

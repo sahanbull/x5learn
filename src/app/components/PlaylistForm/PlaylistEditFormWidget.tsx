@@ -144,16 +144,6 @@ export function PlaylistEditFormWidget(props: { formData? }) {
     >
       <Row gutter={[16, 16]}>
         <Col span={24}>
-          <Form.Item
-            label="Playlist Items"
-            name="playlist_items1"
-            rules={[
-              {
-                required: false,
-                message: 'No items added to playlist',
-              },
-            ]}
-          ></Form.Item>
           <PlaylistItemSortWidget
             playlist_items={playlist_items}
             onItemsReorder={onItemsReorder}

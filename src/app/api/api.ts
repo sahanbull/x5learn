@@ -40,10 +40,10 @@ async function fetchAPI(
       statusText: jsonResponse,
       ...jsonResponse,
     };
-    console.log('error', err);
+    // console.log('error', err);
     throw err;
   }
-  console.log(jsonResponse);
+  // console.log(jsonResponse);
   return jsonResponse;
 }
 

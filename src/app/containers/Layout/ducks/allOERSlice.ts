@@ -40,7 +40,9 @@ const allOERsSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: {
-    [fetchOERsByIDsThunk.pending.toString()]: (state: any, action) => {},
+    [fetchOERsByIDsThunk.pending.toString()]: (state: any, action) => {
+      state.loading = true
+    },
     [fetchOERsByIDsThunk.fulfilled.toString()]: (state: any, action) => {
       const newOERs: Array<{ id }> = action.payload;
       const stateData = state.data || {};
@@ -48,8 +50,11 @@ const allOERsSlice = createSlice({
         stateData[oer.id] = oer;
       });
       state.data = stateData;
+      state.loading = false
     },
-    [fetchOERsByIDsThunk.rejected.toString()]: (state: any, action) => {},
+    [fetchOERsByIDsThunk.rejected.toString()]: (state: any, action) => {
+      state.loading = false
+    },
   },
 });
 

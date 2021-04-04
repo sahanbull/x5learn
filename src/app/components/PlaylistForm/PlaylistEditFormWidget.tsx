@@ -28,6 +28,7 @@ import { AsyncThunkAction, unwrapResult } from '@reduxjs/toolkit';
 import { useHistory } from 'react-router-dom';
 import { ROUTES } from 'routes/routes';
 import { PlaylistPublishFormWidget } from './PlaylistPublishFormWidget';
+import { PlaylistItemSortWidget } from '../PlaylistItemSortWidget/PlaylistItemSortWidget';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -79,7 +80,7 @@ export function PlaylistEditFormWidget(props: { formData? }) {
   const showModal = () => {
     setIsModalVisible(true);
   };
-debugger
+
   return (
     <Form
       {...layout}
@@ -133,12 +134,7 @@ debugger
               },
             ]}
           ></Form.Item>
-
-          {playlist_items && playlist_items.map(item=>{
-            return (
-              <Typography.Text key={item.data}>{item.data}</Typography.Text>
-            )
-          })}
+          <PlaylistItemSortWidget playlist_items={playlist_items} />
         </Col>
       </Row>
 

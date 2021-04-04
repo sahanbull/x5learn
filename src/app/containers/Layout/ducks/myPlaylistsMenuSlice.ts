@@ -16,7 +16,7 @@ export const initialState: any = {
 export const fetchMyPlaylistsMenuThunk = createAsyncThunk(
   'playlists/fetchMyPlaylistsMenu',
   async () => {
-    const data = await fetchMyPlaylistsMenu(5);
+    const data = await fetchMyPlaylistsMenu();
     return data;
   },
 );

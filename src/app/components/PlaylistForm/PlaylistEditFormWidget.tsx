@@ -84,9 +84,8 @@ export function PlaylistEditFormWidget(props: { formData? }) {
 
   const onItemsReorder = async newOrder => {
     try {
-      debugger;
       const oerIdsArray = newOrder.map(item => {
-        return item.data;
+        return parseInt(item.data);
       });
       const updateOrderCall = (await dispatch(
         updateTempPlaylistThunk({
@@ -163,9 +162,9 @@ export function PlaylistEditFormWidget(props: { formData? }) {
       </Row>
 
       <Form.Item {...tailLayout}>
-        <Button type="primary" htmlType="submit" size="large">
+        {/* <Button type="primary" htmlType="submit" size="large">
           Save <UploadOutlined />
-        </Button>
+        </Button> */}
         <Button
           type="primary"
           htmlType="button"

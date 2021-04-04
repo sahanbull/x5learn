@@ -27,6 +27,7 @@ import {
 import { AsyncThunkAction, unwrapResult } from '@reduxjs/toolkit';
 import { useHistory } from 'react-router-dom';
 import { ROUTES } from 'routes/routes';
+import { publishTempPlaylistThunk } from 'app/containers/Layout/ducks/myPlaylistMenu/publishTempPlaylist';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -77,8 +78,28 @@ export function PlaylistPublishFormWidget(props: {
     form.setFieldsValue({ license: value });
   };
 
-  const handleOk = () => {
-    props.setIsModalVisible(false);
+  const handleOk = async () => {
+    try {
+      const validate = await form.validateFields();
+      const formData = (form as any).getFieldValue();
+      const publishResponse = (await dispatch(
+        publishTempPlaylistThunk({
+          tempTitle: formData.temp_title,
+          playlist_items: playlist_items.map(item => {
+            return parseInt(item.oer_id);
+          }),
+          ...formData,
+          is_temp: false,
+        }),
+      )) as any;
+      const publishResult = await unwrapResult(publishResponse);
+      message.success('Playlist published successfully');
+      history.push(`/playlist/${publishResult}`)
+      await dispatch(fetchMyPlaylistsMenuThunk());
+      props.setIsModalVisible(false);
+    } catch (e) {
+      message.error('Something when wrong when publishing');
+    }
   };
 
   const handleCancel = () => {
@@ -130,13 +151,13 @@ export function PlaylistPublishFormWidget(props: {
             });
           }
         }}
-        initialValues={{ remember: true }}
+        initialValues={{ ...playlist, temp_title: playlist.title }}
       >
         <Row gutter={[16, 16]}>
           <Col span={24}>
             <Form.Item
               label="Playlist Title"
-              name="temp_title"
+              name="title"
               rules={[
                 {
                   required: true,

@@ -152,7 +152,7 @@ export async function publishTempPlaylist(
   return fetchAPI(
     `/playlist/`,
     JSON.stringify({
-      is_temp: true,
+      is_temp: false,
       parent: 0,
       license: 0,
       is_visible: true,

@@ -2,6 +2,7 @@ import { ArrowsAltOutlined } from '@ant-design/icons';
 import { unwrapResult } from '@reduxjs/toolkit';
 import { Table, Typography } from 'antd';
 import { fetchOERsByIDsThunk } from 'app/containers/Layout/ducks/allOERSlice';
+import { updateTempPlaylistThunk } from 'app/containers/Layout/ducks/myPlaylistMenu/updateTempPlaylist';
 import { OerCard } from 'app/pages/HomePage/components/FeaturedOER/OerCard';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -62,22 +63,26 @@ const columns = [
 const SortableItem = SortableElement(props => <tr {...props} />);
 const SortableContainer2 = SortableContainer(props => <tbody {...props} />);
 
-export function PlaylistItemSortWidget({ playlist_items }) {
+export function PlaylistItemSortWidget({ playlist_items, onItemsReorder }) {
   const dispatch = useDispatch();
+  const [{ data, loading, error }, setOERData] = useState({
+    data: null,
+    loading: true,
+    error: null,
+  });
   const loadOERIds = async () => {
-    // setOERData({ data: null, loading: true, error: null });
-
-    const oerIdArray = playlist_items.map((item=>{
-        return item.data
-    }))
+    setOERData({ data: null, loading: true, error: null });
+    const oerIdArray = playlist_items.map(item => {
+      return item.data;
+    });
     try {
       const oerResult = (await dispatch(
         fetchOERsByIDsThunk(oerIdArray),
       )) as any;
       const resolvedData = await unwrapResult(oerResult);
-      //   setOERData({ data: resolvedData, loading: false, error: null });
+      setOERData({ data: resolvedData, loading: false, error: null });
     } catch (e) {
-      //   setOERData({ data: null, loading: false, error: data.payload });
+      setOERData({ data: null, loading: false, error: e });
     }
   };
 
@@ -96,7 +101,10 @@ export function PlaylistItemSortWidget({ playlist_items }) {
         oldIndex,
         newIndex,
       ).filter(el => !!el);
-      console.log('Sorted items: ', newData);
+    //   console.log('Sorted items: ', newData.push, data);
+      if (onItemsReorder) {
+        onItemsReorder(newData);
+      }
       setPlaylistItems(newData);
     }
   };

@@ -29,6 +29,7 @@ import { useHistory } from 'react-router-dom';
 import { ROUTES } from 'routes/routes';
 import { PlaylistPublishFormWidget } from './PlaylistPublishFormWidget';
 import { PlaylistItemSortWidget } from '../PlaylistItemSortWidget/PlaylistItemSortWidget';
+import { updateTempPlaylistThunk } from 'app/containers/Layout/ducks/myPlaylistMenu/updateTempPlaylist';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -79,6 +80,26 @@ export function PlaylistEditFormWidget(props: { formData? }) {
 
   const showModal = () => {
     setIsModalVisible(true);
+  };
+
+  const onItemsReorder = async newOrder => {
+    try {
+      debugger;
+      const oerIdsArray = newOrder.map(item => {
+        return item.data;
+      });
+      const updateOrderCall = (await dispatch(
+        updateTempPlaylistThunk({
+          ...playlist,
+          temp_title: playlist.title,
+          playlist_items: oerIdsArray,
+        }),
+      )) as any;
+      const updateOrderResult = await unwrapResult(updateOrderCall);
+      message.info('Playlist updated');
+    } catch (e) {
+      message.error('Something went wrong when reordering');
+    }
   };
 
   return (
@@ -134,7 +155,10 @@ export function PlaylistEditFormWidget(props: { formData? }) {
               },
             ]}
           ></Form.Item>
-          <PlaylistItemSortWidget playlist_items={playlist_items} />
+          <PlaylistItemSortWidget
+            playlist_items={playlist_items}
+            onItemsReorder={onItemsReorder}
+          />
         </Col>
       </Row>
 

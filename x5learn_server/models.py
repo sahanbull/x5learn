@@ -89,11 +89,13 @@ class WikichunkEnrichment(Base):
     url = Column(String(255), nullable=False)
     data = Column(JSON)
     version = Column(Integer())
+    last_update_at = Column(DateTime())
 
-    def __init__(self, url, data, version):
+    def __init__(self, url, data, version, last_update_at):
         self.url = url
         self.data = data
         self.version = version
+        self.last_update_at = last_update_at
 
     def get_entity_titles(self):
         titles = []

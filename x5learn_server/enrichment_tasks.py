@@ -3,8 +3,10 @@ import sqlalchemy
 
 from x5learn_server.db.database import db_session
 from x5learn_server.models import Oer, WikichunkEnrichment, WikichunkEnrichmentTask, ThumbGenerationTask
+from datetime import datetime, timedelta
 
 CURRENT_ENRICHMENT_VERSION = 1
+ENRICHMENT_VALIDITY_PERIOD_DAYS = 180
 
 
 def push_enrichment_task_if_needed(url, urgency):
@@ -12,8 +14,18 @@ def push_enrichment_task_if_needed(url, urgency):
     enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
 
     # if the enrichment is not present or outdated: push enrichment task
-    if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION):
+    if (enrichment is None) or (enrichment.version != CURRENT_ENRICHMENT_VERSION): 
         push_enrichment_task(url, urgency)
+    elif (enrichment.last_update_at is None):
+        push_enrichment_task(url, urgency)
+    else:
+        current_datetime = datetime.utcnow()
+        enrichment_last_update_datetime = enrichment.last_update_at
+
+        date_diff = current_datetime - enrichment_last_update_datetime
+
+        if (date_diff.days >= ENRICHMENT_VALIDITY_PERIOD_DAYS):
+            push_enrichment_task(url, urgency)
 
 
 def push_enrichment_task(url, priority):
@@ -41,11 +53,12 @@ def save_enrichment(url, data):
     data['oerId'] = oer.id
     enrichment = WikichunkEnrichment.query.filter_by(url=url).first()
     if enrichment is None:
-        enrichment = WikichunkEnrichment(url, data, CURRENT_ENRICHMENT_VERSION)
+        enrichment = WikichunkEnrichment(url, data, CURRENT_ENRICHMENT_VERSION, datetime.utcnow())
         db_session.add(enrichment)
     else:
         enrichment.data = data
         enrichment.version = CURRENT_ENRICHMENT_VERSION
+        enrichment.last_update_at = datetime.utcnow()
     db_session.commit()
 
 

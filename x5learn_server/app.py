@@ -218,7 +218,12 @@ repository = Repository()
 
 @app.route("/")
 def home():
+    ref = request.args.get('ref')
     if current_user.is_authenticated:
+        languages = get_available_languages()
+        localization_dict, lang = get_localization_dict()
+        return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
+    elif ref == "ai4eu":
         languages = get_available_languages()
         localization_dict, lang = get_localization_dict()
         return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
@@ -416,7 +421,7 @@ def api_search():
 
             # add oer to enrichment and check if thumbnail exists
             task_priority = int(1000 / 1) + 1
-            push_enrichment_task(oer.url, task_priority)
+            push_enrichment_task_if_needed(oer.url, task_priority)
             if "thumbnail" not in oer.data:
                 push_thumbnail_generation_task(oer, task_priority)
 
@@ -637,7 +642,7 @@ def do_ingest_oer(material_id):
     oer = Oer(url, convert_x5_material_to_oer_data(material))
     db_session.add(oer)
     db_session.commit()
-    push_enrichment_task(url, 1)
+    push_enrichment_task_if_needed(url, 1)
     return jsonify(
         {'ok': 'Oer with material_id {} CREATED. Enrichment task started. URL = {}'.format(material_id, url)})
 
@@ -773,7 +778,7 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
         oers.append(oer)
 
         task_priority = int(1000 / (index + 1)) + 1
-        push_enrichment_task(url, task_priority)
+        push_enrichment_task_if_needed(url, task_priority)
         # if oer.data["images"] is None or len(oer.data["images"]) == 0:
         if "thumbnail" not in oer.data:
             push_thumbnail_generation_task(oer, task_priority)
@@ -1665,7 +1670,7 @@ class Playlists(Resource):
         else:
             # Declaring and processing params available for request
             parser = reqparse.RequestParser()
-            parser.add_argument('mode')
+            parser.add_argument('mode', default='all', choices=('published_playlists_only', 'temp_playlists_only', 'all'), help='Bad choice')
             parser.add_argument('author')
             parser.add_argument('license', type=int)
             parser.add_argument('sort', default='desc', choices=('asc', 'desc'), help='Bad choice')
@@ -1679,10 +1684,13 @@ class Playlists(Resource):
                 query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
                 result_list = query_object.all()
 
+                total_results = query_object.count()
+
                 playlists = [_convert_temp_playlist_to_playlist(i) for i in result_list]
+
                 return playlists
 
-            else:
+            elif args['mode'] is not None and args['mode'] == "published_playlists_only":
                 # Building and executing query object for Playlists
                 query_object = db_session.query(Playlist)
 
@@ -1693,6 +1701,8 @@ class Playlists(Resource):
                     query_object = query_object.filter(Playlist.license == args['license'])
 
                 query_object = query_object.filter(Playlist.creator == current_user.get_id())
+
+                total_results = query_object.count()
 
                 if (args['sort'] == 'desc'):
                     query_object = query_object.order_by(Playlist.created_at.desc())
@@ -1713,6 +1723,54 @@ class Playlists(Resource):
                     serializable_list = [i.serialize for i in result_list]
 
                 return serializable_list
+
+            else:
+                # Building and executing query object for Playlists
+                query_object = db_session.query(Playlist)
+
+                if (args['author']):
+                    query_object = query_object.filter(Playlist.author == args['author'])
+
+                if (args['license']):
+                    query_object = query_object.filter(Playlist.license == args['license'])
+
+                query_object = query_object.filter(Playlist.creator == current_user.get_id())
+
+                total_results = query_object.count()
+
+                if (args['sort'] == 'desc'):
+                    query_object = query_object.order_by(Playlist.created_at.desc())
+                else:
+                    query_object = query_object.order_by(Playlist.created_at.asc())
+
+                if (args['offset']):
+                    query_object = query_object.offset(args['offset'])
+
+                if (args['limit']):
+                    query_object = query_object.limit(args['limit'])
+
+                playlist_list = query_object.all()
+
+                # Converting result list to JSON friendly format
+                playlists = list()
+                if (playlist_list):
+                    playlists = [i.serialize for i in playlist_list]
+
+                query_object = db_session.query(Temp_Playlist)
+                query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+                result_list = query_object.all()
+
+                temp_playlists = [_convert_temp_playlist_to_playlist(i) for i in result_list]
+
+                return { 
+                    'playlists' : playlists, 
+                    'temp_playlists': temp_playlists,
+                    'metadata' : {
+                        'total': total_results,
+                        'limit': args['limit'] if args['limit'] is not None else total_results,
+                        'offset': args['offset'] if args['offset'] is not None else 1
+                    }
+                }
 
     @ns_playlist.doc('create_playlist')
     @ns_playlist.expect(m_playlist, validate=True)
@@ -1952,20 +2010,20 @@ class Temp_Playlist_Single(Resource):
 
         # updating playlist item data only
         if 'title' not in api.payload.keys():
-            temp_playlist = _set_playlist_item_data(temp_playlist, api.payload['playlist_item_data'])
+            temp_playlist = _set_playlist_item_data(temp_playlist, api.payload['playlist_items'])
         else:
             setattr(temp_playlist, 'title', api.payload['title'])
 
             # converting playlist item data to dictionary
             if 'playlist_item_data' in api.payload:
-                temp_data = api.payload['playlist_item_data']
+                temp_data = api.payload['playlist_items']
                 playlist_item_data = dict()
                 for val in temp_data:
                     playlist_item_data[val['oerId']] = dict()
                     playlist_item_data[val['oerId']]['title'] = val['title']
                     playlist_item_data[val['oerId']]['description'] = val['description']
 
-                api.payload['playlist_item_data'] = playlist_item_data
+                api.payload['playlist_items'] = playlist_item_data
 
             setattr(temp_playlist, 'data', json.dumps(api.payload))
 
@@ -2410,6 +2468,37 @@ def get_available_languages():
         languages.append(record.language)
 
     return languages
+
+# Defining localization resource for API access ==================================
+ns_localization = api.namespace('api/v1/localization', description='Localization')
+
+@ns_localization.route('/')
+class Localization_API(Resource):
+    '''Access localization data supported by the application'''
+
+    @ns_localization.doc('fetch_supported_languages_for_localization')
+    def get(self):
+        '''Fetches supported languages by the application. Languages are returned according to ISO 639-1 standard.'''
+        return get_available_languages()
+
+    @ns_localization.doc('get_localization_dictionary', params={'language': 'Language in ISO 639-1 standard to fetch localization dictionary'})
+    def post(self):
+        '''Given the language get the localization dictionary'''
+
+        # Declaring and processing params available for request
+        parser = reqparse.RequestParser()
+        parser.add_argument('language', required=True)
+        args = parser.parse_args()
+
+        if args['language'] is None:
+            return {'result': 'Language is required'}, 400
+
+        result = get_localization_dict(args['language'])
+
+        if result:
+            return {'dictionary': result[0], 'language': result[1]}, 200
+        else:
+            return {'result': 'Selected language not found.'}, 400
 
 
 if __name__ == '__main__':

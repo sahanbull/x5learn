@@ -485,7 +485,7 @@ update msg ({ nav, userProfileForm, playlistPublishForm, playlistCreateForm } as
                     ( { model | userPlaylists = Just playlists, course = course, playlist = Just updatedPlaylist }, requestOersByIds model oerIds )
 
         RequestLoadUserPlaylists (Err err) ->
-            ( { model | snackbar = createSnackbar model (t model.translations "alerts.lbl_publish_playlist_error") }, Cmd.none )
+            ( { model | snackbar = createSnackbar model (t model.translations "You are not logged in") }, Cmd.none )
 
         RequestCreatePlaylist (Ok _) ->
             ( { model | playlistCreateForm = { playlistCreateForm | saved = True, isClone = False }, playlistCreateFormSubmitted = False }, requestLoadUserPlaylists )

@@ -18,8 +18,11 @@ import Model exposing (..)
 viewPdfViewer : OerUrl -> String -> Element Msg
 viewPdfViewer oerUrl height =
   let
+      httpsURL = 
+        String.replace "http:" "https:" oerUrl
+
       fallbackContent =
-        Html.a [ Attributes.href oerUrl ] [ Html.text oerUrl ]
+        Html.a [ Attributes.href httpsURL ] [ Html.text httpsURL ]
 
       styles =
         [ Attributes.style "width" "100%"
@@ -27,5 +30,5 @@ viewPdfViewer oerUrl height =
         ]
   in
       [ fallbackContent ]
-      |> Html.object ([ Attributes.attribute "data" oerUrl, Attributes.type_ "application/pdf" ] ++ styles)
+      |> Html.object ([ Attributes.attribute "data" httpsURL, Attributes.type_ "application/pdf" ] ++ styles)
       |> html

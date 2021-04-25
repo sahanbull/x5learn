@@ -101,6 +101,7 @@
     "fontfaceobserver": "2.1.0",
     "i18next": "19.8.4",
     "i18next-browser-languagedetector": "6.0.1",
+    "i18next-http-backend": "1.2.1",
     "query-string": "6.13.7",
     "react": "17.0.1",
     "react-app-polyfill": "2.0.0",

@@ -21,6 +21,7 @@ import styled from 'styled-components';
 import { HeaderSearchBar } from './HeaderSearchBar';
 import { HeaderProfileWidget } from '../../components/HeaderProfileWidget/HeaderProfileWidget';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
@@ -34,6 +35,7 @@ const StyledHeader = styled(Header)`
 `;
 
 export function AppHeader(props) {
+  const { t } = useTranslation();
   return (
     <StyledHeader className="header">
       <Row align="middle" justify="space-between">
@@ -46,7 +48,7 @@ export function AppHeader(props) {
           <HeaderSearchBar />
         </Col>
         <Col span={6} style={{ textAlign: 'right' }}>
-          <Button type="link">About</Button>
+          <Button type="link">{t('about_us.lbl_about_us')}</Button>
           <HeaderProfileWidget />
         </Col>
       </Row>

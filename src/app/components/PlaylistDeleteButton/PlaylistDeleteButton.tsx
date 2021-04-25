@@ -41,7 +41,7 @@ export function PlaylistDeleteButton(props) {
   };
 
   const handleCancel = () => {
-    console.log('Clicked cancel button');
+
     setVisible(false);
   };
 

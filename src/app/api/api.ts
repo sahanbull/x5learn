@@ -195,3 +195,11 @@ export async function addToTempPlaylist(playlistName, oerId) {
     { method: 'POST' },
   );
 }
+export async function getSupportedLangs() {
+  return fetchAPI(`/localization/`);
+}
+export async function getTranslations(lang) {
+  return fetchAPI(`/localization/?language=${lang}`, JSON.stringify({}), {
+    method: 'POST',
+  });
+}

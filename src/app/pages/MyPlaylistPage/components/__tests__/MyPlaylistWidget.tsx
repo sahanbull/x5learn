@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Spin, Typography } from 'antd';
+import React, { useEffect, useState } from 'react';
+import { Pagination, Spin, Typography } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'types';
 import { useInjectReducer } from 'redux-injectors';
@@ -10,25 +10,39 @@ import {
 } from '../../ducks/fetchAllMyPlaylistsThunk';
 import { WarningOutlined } from '@ant-design/icons';
 import { PlaylistCardList } from './PlaylistCardList';
-
+import { useHistory, useLocation } from 'react-router';
+import { ROUTES } from 'routes/routes';
 
 const { Text, Title } = Typography;
+
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
 
 export function MyPlaylistWidget(props: {}) {
   useInjectReducer({
     key: sliceKey,
     reducer: reducer,
   });
+  const limit = 10;
+  const query = useQuery();
+  const history = useHistory();
+  const page = query.get('page')?.toString() || '1';
 
-  const { data, loading, error } = useSelector((state: RootState) => {
-    return state.allMyPlaylists || { data, loading: false, error };
+  const { data, loading, error, metadata } = useSelector((state: RootState) => {
+    return state.allMyPlaylists || { data, loading: false, error, metadata };
   });
+
+  const totalItems = metadata?.total || 0;
+  const total_pages = Math.ceil(totalItems / limit);
   const dispatch = useDispatch();
+
+  // const loadPlaylists
+
   useEffect(() => {
-    if (!data) {
-      dispatch(fetchAllMyPlaylistsThunk({}));
-    }
-  });
+    const offset = limit * (+page - 1);
+    dispatch(fetchAllMyPlaylistsThunk({ limit, offset }));
+  }, [page, dispatch]);
 
   return (
     <>
@@ -49,17 +63,18 @@ export function MyPlaylistWidget(props: {}) {
         </Title>
       )}
       <PlaylistCardList data={data} loading={loading} error={error} />
-      {/* {data && (
+      {total_pages > 1 && (
         <Pagination
           defaultCurrent={+page}
-          total={total_pages}
+          disabled={loading}
+          total={totalItems}
           showSizeChanger={false}
           onChange={page => {
             query.set('page', `${page}`);
-            history.push(`${ROUTES.SEARCH}?${query.toString()}`);
+            history.push(`${ROUTES.MY_PLAYLISTS}?${query.toString()}`);
           }}
         />
-      )} */}
+      )}
     </>
   );
 }

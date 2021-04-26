@@ -7,6 +7,7 @@ export const initialState: any = {
   data: null,
   loading: true,
   error: null,
+  metadata: null
 };
 
 export const fetchAllMyPlaylistsThunk = createAsyncThunk<any, any>(
@@ -29,7 +30,8 @@ const fetchAllMyPlaylistsSlice = createSlice({
     },
     [fetchAllMyPlaylistsThunk.fulfilled.toString()]: (state: any, action) => {
       state.loading = false;
-      state.data = action.payload;
+      state.data = action.payload.playlists;
+      state.metadata = action.payload.metadata;
       state.error = undefined;
     },
     [fetchAllMyPlaylistsThunk.rejected.toString()]: (state: any, action) => {

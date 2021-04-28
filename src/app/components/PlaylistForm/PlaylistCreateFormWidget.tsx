@@ -129,12 +129,9 @@ export function PlaylistCreateFormWidget() {
       </Row>
 
       <Form.Item {...tailLayout}>
-        <Button type="primary" htmlType="submit" size="large">
+        <Button type="primary" htmlType="submit" size="large" loading={createLoading}>
           {t('playlist.lbl_create_playlist')} <UploadOutlined />
         </Button>
-        {createLoading && (
-          <Progress percent={100} status="active" showInfo={false} />
-        )}
         {createError && (
           <Text type="danger">
             {t('alerts.lbl_temp_playlist_create_error')}

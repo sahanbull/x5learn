@@ -68,7 +68,10 @@
         "lbl_browser_no_support_html5_video" : "Your browser does not support HTML5 video.",
         "lbl_no_results_were_found_prefix": "No results were found for",
         "lbl_no_results_were_found_suffix": "Please try a different search term",
-        "lbl_url_not_found": "URL not found"
+        "lbl_url_not_found": "URL not found",
+        
+        "lbl_temp_playlist_create_error": "Error creating playlist...",
+        "lbl_validate_playlist_name_required": "Please input a playlist title"
     },
     "inspector": {
         "lbl_no_description": "No description available", 

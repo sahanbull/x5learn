@@ -15,6 +15,7 @@ import {
 import { AppLayout } from 'app/containers/Layout/AppLayout';
 import { UploadOutlined } from '@ant-design/icons';
 import { PlaylistCreateFormWidget } from 'app/components/PlaylistForm/PlaylistCreateFormWidget';
+import { useTranslation } from 'react-i18next';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -30,6 +31,7 @@ const tailLayout = {
 };
 
 export function CreatePlaylistsPage(props) {
+  const {t} = useTranslation()
   const error: null | { msg: object } = null,
     loading = false,
     data = { title: '', description: '', oerIds: [], last_updated_at: '' };
@@ -37,12 +39,12 @@ export function CreatePlaylistsPage(props) {
   return (
     <>
       <Helmet>
-        <title>Playlists Page</title>
+        <title>{t('playlist.lbl_create_playlist')}</title>
         <meta name="description" content="X5 Learn AI based learning" />
       </Helmet>
       <AppLayout>
         {loading && <Spin spinning={loading} delay={200}></Spin>}
-        {error && <div>Something went wrong</div>}
+        {error && <div>{t('alerts.lbl_error_loading')}</div>}
 
         {data && (
           <>
@@ -50,8 +52,7 @@ export function CreatePlaylistsPage(props) {
               <Col span={24}>
                 <Card
                   headStyle={{ border: 'none' }}
-                  title={<Title>Create Playlist</Title>}
-                  extra={<a href="#">More</a>}
+                  title={<Title>{t('playlist.lbl_create_playlist')}</Title>}
                 >
                   <PlaylistCreateFormWidget />
                 </Card>

@@ -26,6 +26,7 @@ import {
 import { AsyncThunkAction, unwrapResult } from '@reduxjs/toolkit';
 import { useHistory } from 'react-router-dom';
 import { ROUTES } from 'routes/routes';
+import { useTranslation } from 'react-i18next';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -42,6 +43,7 @@ const tailLayout = {
 
 export function PlaylistCreateFormWidget() {
   const [form] = Form.useForm();
+  const { t } = useTranslation();
   const history = useHistory();
 
   const { data: licenseData, loading, error } = useSelector(
@@ -89,9 +91,11 @@ export function PlaylistCreateFormWidget() {
             createStatus: createResult as any,
             createError: null,
           });
-          history.push(`${ROUTES.PLAYLISTS}/temp/${values.temp_title}`);
+          history.push(
+            `${ROUTES.PLAYLISTS}/temp/${encodeURI(values.temp_title)}`,
+          );
         } catch (err) {
-          message.error('Error creating playlist...');
+          message.error(t('alerts.lbl_temp_playlist_create_error'));
           setCreateStatus({
             createLoading: false,
             createStatus: null,
@@ -104,32 +108,38 @@ export function PlaylistCreateFormWidget() {
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <Form.Item
-            label="Playlist Title"
+            label={`${t('playlist.lbl_playlist_new')} ${t(
+              'playlist.lbl_playlist_title',
+            )}`}
             name="temp_title"
             rules={[
               {
                 required: true,
-                message: 'Please input a playlist title',
+                message: t('alerts.lbl_validate_playlist_name_required'),
               },
             ]}
           >
-            <Input placeholder="Playlist title" />
+            <Input
+              placeholder={`${t('playlist.lbl_playlist_new')} ${t(
+                'playlist.lbl_playlist_title',
+              )}`}
+            />
           </Form.Item>
         </Col>
       </Row>
 
       <Form.Item {...tailLayout}>
         <Button type="primary" htmlType="submit" size="large">
-          Create <UploadOutlined />
+          {t('playlist.lbl_create_playlist')} <UploadOutlined />
         </Button>
         {createLoading && (
           <Progress percent={100} status="active" showInfo={false} />
         )}
-        {createError && <Text type="danger">Error creating playlist...</Text>}
-
-        <Button type="text" size="large">
-          Cancel X
-        </Button>
+        {createError && (
+          <Text type="danger">
+            {t('alerts.lbl_temp_playlist_create_error')}
+          </Text>
+        )}
       </Form.Item>
     </Form>
   );

@@ -27,10 +27,10 @@ export function App() {
   return (
     <BrowserRouter>
       <Helmet
-        titleTemplate="%s - React Boilerplate"
-        defaultTitle="React Boilerplate"
+        titleTemplate="%s - X5Learn"
+        defaultTitle="X5Learn"
       >
-        <meta name="description" content="A React Boilerplate application" />
+        <meta name="description" content="The AI Powered Learning Platform" />
       </Helmet>
       <Switch>
         <Route exact path={'/'} component={HomePage} />

@@ -4,6 +4,7 @@ import { Table, Typography } from 'antd';
 import { fetchOERsByIDsThunk } from 'app/containers/Layout/ducks/allOERSlice';
 import { updateTempPlaylistThunk } from 'app/containers/Layout/ducks/myPlaylistMenu/updateTempPlaylist';
 import { OerCard } from 'app/pages/HomePage/components/FeaturedOER/OerCard';
+import { OerSortableView } from 'app/pages/HomePage/components/FeaturedOER/OerSortableView';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
@@ -34,7 +35,7 @@ const SortableOerCard = ({ oerId }) => {
   const loading = useSelector((state: RootState) => {
     return state.allOERs.loading;
   });
-  return <OerCard loading={loading} card={cardData} />;
+  return <OerSortableView loading={loading} card={cardData} />;
 };
 
 const columns = [
@@ -42,7 +43,7 @@ const columns = [
     title: 'Name',
     dataIndex: 'data',
     className: 'drag-visible',
-    width: 250,
+    
     render: oerId => {
       return (
         <>
@@ -101,7 +102,7 @@ export function PlaylistItemSortWidget({ playlist_items, onItemsReorder }) {
         oldIndex,
         newIndex,
       ).filter(el => !!el);
-    //   console.log('Sorted items: ', newData.push, data);
+      //   console.log('Sorted items: ', newData.push, data);
       if (onItemsReorder) {
         onItemsReorder(newData);
       }

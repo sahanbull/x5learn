@@ -2015,7 +2015,7 @@ class Temp_Playlist_Single(Resource):
             setattr(temp_playlist, 'title', api.payload['title'])
 
             # converting playlist item data to dictionary
-            if 'playlist_item_data' in api.payload:
+            if 'playlist_items' in api.payload:
                 temp_data = api.payload['playlist_items']
                 playlist_item_data = dict()
                 for val in temp_data:

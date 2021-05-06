@@ -307,7 +307,7 @@ requestUpdatePlaylistItem playlistTitle playlistItem =
     , tracker = Nothing
     , headers = []
     , url = Url.Builder.absolute [ apiRoot, "playlist/" ++ playlistTitle ] []
-    , body = Http.jsonBody <| Encode.object [ ( "playlist_item_data", playlistItemEncoder playlistItem) ] 
+    , body = Http.jsonBody <| Encode.object [ ( "playlist_items", playlistItemEncoder playlistItem) ] 
     , expect = Http.expectString RequestUpdatePlaylistItem
     }
 

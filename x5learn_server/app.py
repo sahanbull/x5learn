@@ -1490,7 +1490,7 @@ def _get_blueprint(playlist, license, items, item_data):
     return base_mapping
 
 
-def _add_published_playlist(title, desc, author, license, creator, parent, is_vis, items):
+def _add_published_playlist(title, desc, author, license, creator, parent, is_vis, items, temp_title):
     # title, description, author, blueprint, creator, parent, is_visible, license
     parent = parent == 0 and parent or None
     playlist = Playlist(title, desc, author, None, creator, parent, is_vis, license)
@@ -1498,7 +1498,7 @@ def _add_published_playlist(title, desc, author, license, creator, parent, is_vi
 
     # get playlist_item_data
     query_object = db_session.query(Temp_Playlist)
-    query_object = query_object.filter(Temp_Playlist.title == title)
+    query_object = query_object.filter(Temp_Playlist.title == temp_title)
     query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
     temp_playlist = query_object.one_or_none()
 
@@ -1564,7 +1564,7 @@ def _create_oer_record_for_playlist(playlist):
         'title': playlist.title,
         'provider': X5LEARN_PROVIDER_NAME,
         'description': playlist.description,
-        'date': playlist.created_at.strftime("%Y-%m-%d"),
+        'date': datetime.now().strftime("%Y-%m-%d"),
         'duration': '',
         'images': [],
         'mediatype': 'playlist',
@@ -1795,7 +1795,8 @@ class Playlists(Resource):
                                                current_user.get_id(),
                                                api.payload['parent'],
                                                api.payload['is_visible'],
-                                               api.payload['playlist_items'])
+                                               api.payload['playlist_items'],
+                                               api.payload['temp_title'])
 
             # adding an entry to the OER table by getting the created material id
             oer = _create_oer_record_for_playlist(playlist)

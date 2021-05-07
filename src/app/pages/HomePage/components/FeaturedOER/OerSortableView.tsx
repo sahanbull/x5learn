@@ -142,7 +142,9 @@ export function OerSortableView(props: {
         </Link>
       </Col>
       <Col flex="auto">
-        <Title level={3}>{card?.title}</Title>
+        <Link to={pathToNavigateTo}>
+          <Title level={3}>{card?.title}</Title>
+        </Link>
         <Text strong>By: </Text>
         {card?.provider}
         <br />

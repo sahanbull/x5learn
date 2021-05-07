@@ -34,7 +34,7 @@ export function ResourcesPage(props) {
       id: number | string;
       images: string[];
       material_id: number | string;
-      mediatype: 'text' | 'video';
+      mediatype: 'text' | 'video' | 'audio';
       provider: string;
       title: string;
       url: string;
@@ -79,21 +79,35 @@ export function ResourcesPage(props) {
         {data && (
           <>
             <Row gutter={[16, 16]}>
-              <Col>
+              <Col flex={'100%'}>
+                {data.mediatype === 'audio'  && (
+                  <audio controls style={{ width: '100%', height: '45vh' }}>
+                    <source src={data.url} type="audio/mpeg" />
+                    Your browser does not support the audio element.
+                  </audio>
+                )}
+
                 {data.mediatype === 'video' && (
-                  <video width="100%" controls>
+                  <video
+                    width="100%"
+                    style={{ width: '100%', height: '45vh' }}
+                    controls
+                  >
                     <source src={data.url} type="video/mp4" />
                     Your browser does not support the video tag.
                   </video>
                 )}
 
                 {data.mediatype === 'text' && (
-                  <img
-                    width="100%"
-                    alt={data.title}
-                    src={`${imageBaseURL}/${data?.images[0]}`}
-                  />
+                  <object
+                    data={data.url}
+                    type="application/pdf"
+                    style={{ width: '100%', height: '45vh' }}
+                  >
+                    Your browser does not support the PDF element.
+                  </object>
                 )}
+
                 <EnrichmentBar oerID={data.id} />
               </Col>
               <Col>

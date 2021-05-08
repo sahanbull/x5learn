@@ -96,6 +96,10 @@ export async function fetchOERs(idArray) {
 
   // return require('./mock/featuredList.json');
 }
+export async function fetchOerNotes(oerID) {
+  const qs = queryString.stringify({ oer_id: oerID });
+  return fetchAPI(`/note/?${qs}`);
+}
 export async function fetchEntityDefinitions(idArray) {
   if (idArray.length === 0) {
     return [];

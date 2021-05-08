@@ -6,17 +6,18 @@ import { AntDesignOutlined, UploadOutlined } from '@ant-design/icons';
 import { OerCardList } from '../HomePage/components/FeaturedOER/OerCardList';
 import { useInjectReducer } from 'redux-injectors';
 import { useDispatch, useSelector } from 'react-redux';
+import { sliceKey, reducer } from './ducks/fetchPlaylistDetailsThunk';
 import {
-  fetchPlaylistDetailsThunk,
-  sliceKey,
-  reducer,
-} from './ducks/fetchPlaylistDetailsThunk';
+  sliceKey as notesKey,
+  reducer as notesReducer,
+} from './ducks/fetchOerNotesThunk';
 import { fetchOERsByIDsThunk } from 'app/containers/Layout/ducks/allOERSlice';
 import { Action, AsyncThunkAction, unwrapResult } from '@reduxjs/toolkit';
 import { EnrichmentBar } from 'app/components/EnrichmentBar/EnrichmentBar';
 import { AddToPlaylistButton } from 'app/components/AddToPlaylistButton/AddToPlaylistButton';
 import Avatar from 'antd/lib/avatar/avatar';
 import { OerIcon } from 'app/components/OerIcon/OerIcon';
+import { NotesWidget } from 'app/components/NotesWidget/NotesWidget';
 
 const { Title, Text } = Typography;
 const { Meta } = Card;
@@ -25,6 +26,7 @@ const imageBaseURL = 'https://qa.x5learn.org/files/thumbs/';
 
 export function ResourcesPage(props) {
   useInjectReducer({ key: sliceKey, reducer: reducer });
+  useInjectReducer({ key: notesKey, reducer: notesReducer });
   const dispatch = useDispatch();
   const oerID = props.match?.params?.id;
 
@@ -165,6 +167,7 @@ export function ResourcesPage(props) {
                     }
                     description={<Col md={18}>{data.description}</Col>}
                   />
+                  <NotesWidget oerID={data?.id} />
                 </Card>
               </Col>
             </Row>

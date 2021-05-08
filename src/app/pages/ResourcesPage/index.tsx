@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Row, Col, Card, Typography, Button, Progress, Spin } from 'antd';
 import { AppLayout } from 'app/containers/Layout/AppLayout';
-import { UploadOutlined } from '@ant-design/icons';
+import { AntDesignOutlined, UploadOutlined } from '@ant-design/icons';
 import { OerCardList } from '../HomePage/components/FeaturedOER/OerCardList';
 import { useInjectReducer } from 'redux-injectors';
 import { useDispatch, useSelector } from 'react-redux';
@@ -15,8 +15,11 @@ import { fetchOERsByIDsThunk } from 'app/containers/Layout/ducks/allOERSlice';
 import { Action, AsyncThunkAction, unwrapResult } from '@reduxjs/toolkit';
 import { EnrichmentBar } from 'app/components/EnrichmentBar/EnrichmentBar';
 import { AddToPlaylistButton } from 'app/components/AddToPlaylistButton/AddToPlaylistButton';
+import Avatar from 'antd/lib/avatar/avatar';
+import { OerIcon } from 'app/components/OerIcon/OerIcon';
 
 const { Title, Text } = Typography;
+const { Meta } = Card;
 
 const imageBaseURL = 'https://qa.x5learn.org/files/thumbs/';
 
@@ -68,6 +71,7 @@ export function ResourcesPage(props) {
   //   }
   // }, [data]);
   const { data, loading, error } = oerData;
+
   return (
     <>
       <Helmet>
@@ -78,9 +82,9 @@ export function ResourcesPage(props) {
         {loading && <Spin spinning={loading} delay={200}></Spin>}
         {data && (
           <>
-            <Row gutter={[16, 16]}>
-              <Col flex={'100%'}>
-                {data.mediatype === 'audio'  && (
+            <Row gutter={[16, 16]} justify="center">
+              <Col flex="90%">
+                {data.mediatype === 'audio' && (
                   <audio controls style={{ width: '100%', height: '45vh' }}>
                     <source src={data.url} type="audio/mpeg" />
                     Your browser does not support the audio element.
@@ -110,6 +114,8 @@ export function ResourcesPage(props) {
 
                 <EnrichmentBar oerID={data.id} />
               </Col>
+            </Row>
+            <Row gutter={[16, 16]}>
               <Col>
                 <Card
                   headStyle={{ border: 'none' }}
@@ -117,7 +123,7 @@ export function ResourcesPage(props) {
                   extra={
                     <>
                       <Button
-                        type="primary"
+                        type="link"
                         shape="round"
                         icon={<UploadOutlined />}
                         size="large"
@@ -128,20 +134,37 @@ export function ResourcesPage(props) {
                     </>
                   }
                 >
-                  <Text strong>By: </Text>
-                  <Text>{data.provider}</Text> {` / `}
-                  <Text strong>Language: </Text>
-                  <Text>{data.mediatype}</Text> {` / `}
-                  <Text strong>Date: </Text>
-                  <Text>
-                    {new Date(data.date).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    })}
-                  </Text>
-                  <br />
-                  <p>{data.description}</p>
+                  <Meta
+                    avatar={
+                      <Avatar
+                        size={{
+                          xs: 24,
+                          sm: 32,
+                          md: 40,
+                          lg: 64,
+                          xl: 80,
+                        }}
+                        icon={<OerIcon mediatype={data?.mediatype} />}
+                      />
+                    }
+                    title={
+                      <>
+                        <Text strong>By: </Text>
+                        <Text>{data.provider}</Text> {` / `}
+                        <Text strong>Language: </Text>
+                        <Text>{data.mediatype}</Text> {` / `}
+                        <Text strong>Date: </Text>
+                        <Text>
+                          {new Date(data.date).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric',
+                          })}
+                        </Text>
+                      </>
+                    }
+                    description={<Col md={18}>{data.description}</Col>}
+                  />
                 </Card>
               </Col>
             </Row>

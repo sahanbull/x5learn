@@ -9,16 +9,25 @@ import { useDispatch, useSelector } from 'react-redux';
 const { Option } = Select;
 const { TextArea } = Input;
 
-export function NotesWidget({ oerID }) {
-  const items = [];
+function useNotes(oerID) {
   const dispatch = useDispatch();
-
-  const { data, loading, error } = useSelector(state => {
+  const data = useSelector(state => {
     return selectOerNotes(state, oerID);
   });
+
   useEffect(() => {
-    dispatch(fetchOerNotesThunk({ oerID }));
+    if (!data?.data) {
+      dispatch(fetchOerNotesThunk({ oerID }));
+    }
   }, []);
+  return data;
+}
+
+export function NotesWidget({ oerID }) {
+  const items = [];
+
+  const { data, loading, error } = useNotes(oerID);
+
   return (
     <>
       <TextArea
@@ -28,7 +37,7 @@ export function NotesWidget({ oerID }) {
       <Select mode="tags" style={{ width: '100%' }} tokenSeparators={[',']}>
         {items}
       </Select>
-      ,
+      data {JSON.stringify(data)}
     </>
   );
 }

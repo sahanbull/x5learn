@@ -65,8 +65,11 @@ export const selectOerNotes = createSelector(
     (_, oerID) => oerID,
   ],
   (oerData, oerID) => {
-    return oerData || initialState;
-    // return oerData[oerID] || initialState;
+    return oerData?.data[oerID] || {
+      data: null,
+      loading: true,
+      error: undefined,
+    };
   },
 );
 

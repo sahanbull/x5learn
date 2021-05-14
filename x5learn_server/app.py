@@ -399,6 +399,12 @@ def api_search():
     """
     text = request.args['text'].lower().strip()
     page = int(request.args['page']) if request.args['page'] is not None else 1
+
+    # include notes of oers returned as search results
+    include_notes = 0
+    if 'include_notes' in request.args.keys():
+        include_notes = int(request.args['include_notes'])
+
     if text == "":  # if empty string, no results
         return jsonify([])
     elif text.startswith(PLAYLIST_PREFIX):  # if its a playlist
@@ -407,6 +413,10 @@ def api_search():
         # get the list of items
         results = get_items_in_playlist(playlist_id)
         oers = [oer.data_and_id() for oer in results]
+
+        # check if notes should be included
+        if include_notes == 1:
+            oers = [_inject_notes(oer) for oer in oers]
 
         return jsonify({
             'oers': oers,
@@ -430,6 +440,10 @@ def api_search():
             results = search_results_from_x5gon_api(text, page)
 
         oers = [oer.data_and_id() for oer in results[0]]
+
+        # check if notes should be included
+        if include_notes == 1:
+            oers = [_inject_notes(oer) for oer in oers]
 
         return jsonify({
             'oers': oers,
@@ -2500,6 +2514,28 @@ class Localization_API(Resource):
             return {'dictionary': result[0], 'language': result[1]}, 200
         else:
             return {'result': 'Selected language not found.'}, 400
+
+
+# function to inject an oer with notes attached to it
+def _inject_notes(oer):
+
+    query_object = db_session.query(Note)
+
+    if (oer['id']):
+        query_object = query_object.filter(Note.oer_id == oer['id'])
+
+    query_object = query_object.filter(Note.user_login_id == current_user.get_id())
+    query_object = query_object.filter(Note.is_deactivated == False)
+    result_list = query_object.all()
+
+    serialized_list = list()
+    if (result_list):
+        serialized_list = [i.serialize for i in result_list]
+
+    oer['notes'] = serialized_list
+
+    return oer
+
 
 
 if __name__ == '__main__':

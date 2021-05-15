@@ -71,7 +71,9 @@
         "lbl_url_not_found": "URL not found",
         
         "lbl_temp_playlist_create_error": "Error creating playlist...",
-        "lbl_validate_playlist_name_required": "Please input a playlist title"
+        "lbl_validate_playlist_name_required": "Please input a playlist title",
+        "lbl_load_playlists_loading": "Loading your playlists...",
+        "lbl_load_playlists_error": "Error loading playlists"
     },
     "inspector": {
         "lbl_no_description": "No description available", 
@@ -172,6 +174,9 @@
         "lbl_playlist_new": "New Playlist",
         "btn_select_license": "Select License",
         "btn_pagination_previous": "Previous",
-        "btn_pagination_next": "Next"
+        "btn_pagination_next": "Next",
+        
+        "lbl_playlist_my_playlists": "My Playlists",
+        "lbl_playlist_see_all": "See All"
     }
 }

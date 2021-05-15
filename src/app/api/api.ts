@@ -26,7 +26,7 @@ async function fetchAPI(
     body: data,
   };
 
-  if (method === 'POST') {
+  if (method !== 'GET') {
     requestOptions.body = data;
     headers.append('Content-Type', 'application/json');
   }

@@ -12,6 +12,7 @@ import { WarningOutlined } from '@ant-design/icons';
 import { PlaylistCardList } from './PlaylistCardList';
 import { useHistory, useLocation } from 'react-router';
 import { ROUTES } from 'routes/routes';
+import { useTranslation } from 'react-i18next';
 
 const { Text, Title } = Typography;
 
@@ -28,6 +29,7 @@ export function MyPlaylistWidget(props: {}) {
   const query = useQuery();
   const history = useHistory();
   const page = query.get('page')?.toString() || '1';
+  const { t } = useTranslation();
 
   const { data, loading, error, metadata } = useSelector((state: RootState) => {
     return state.allMyPlaylists || { data, loading: false, error, metadata };
@@ -49,17 +51,17 @@ export function MyPlaylistWidget(props: {}) {
       {loading && (
         <>
           <Spin spinning={loading} delay={500}></Spin>
-          Loading your playlists...
+          {t('alerts.lbl_load_playlists_loading')}
         </>
       )}
       {error && (
         <>
-          <WarningOutlined /> Something went wrong...{' '}
+          <WarningOutlined /> {t('alerts.lbl_load_playlists_error')}
         </>
       )}
       {data && (
         <Title level={2} type="secondary">
-          My Playlists
+          {t('playlist.lbl_playlist_my_playlists')}
         </Title>
       )}
       <PlaylistCardList data={data} loading={loading} error={error} />

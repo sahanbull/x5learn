@@ -27,6 +27,7 @@ import {
 } from 'app/containers/Layout/ducks/myPlaylistsMenuSlice';
 import { Link, NavLink } from 'react-router-dom';
 import { ROUTES } from 'routes/routes';
+import { useTranslation } from 'react-i18next';
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
 const { Text } = Typography;
@@ -90,6 +91,7 @@ export function MyPlaylistMenuItems(props) {
   });
 
   const dispatch = useDispatch();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (!menuPlaylist) {
@@ -100,7 +102,11 @@ export function MyPlaylistMenuItems(props) {
   return (
     <SubMenu
       {...props}
-      title={<X5MenuTitle icon={<PlayListSVG />}>My Playlists</X5MenuTitle>}
+      title={
+        <X5MenuTitle icon={<PlayListSVG />}>
+          {t('playlist.lbl_playlist_my_playlists')}
+        </X5MenuTitle>
+      }
     >
       {loading && <Loading loading={loading} />}
       {error && <Error error={error} />}
@@ -119,7 +125,9 @@ export function MyPlaylistMenuItems(props) {
         </>
       )}
       <Menu.Item key="show-all">
-        <NavLink to={`${ROUTES.MY_PLAYLISTS}`}>See All</NavLink>
+        <NavLink to={`${ROUTES.MY_PLAYLISTS}`}>
+          {t('playlist.lbl_playlist_see_all')}
+        </NavLink>
       </Menu.Item>
     </SubMenu>
   );

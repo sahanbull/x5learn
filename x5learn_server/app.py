@@ -455,7 +455,19 @@ def api_search():
 @cross_origin()
 @app.route("/api/v1/oers/", methods=['POST'])
 def api_oers():
-    oers = [find_oer_by_id(oer_id) for oer_id in request.get_json()['ids']]
+
+    # include notes of oers returned as search results
+    include_notes = 0
+    jsonData = request.get_json()
+    if 'include_notes' in jsonData.keys():
+        include_notes = int(jsonData['include_notes'])
+
+    oers = [find_oer_by_id(oer_id) for oer_id in jsonData['ids']]
+
+    # check if notes should be included
+    if include_notes == 1:
+        oers = [_inject_notes(oer) for oer in oers]
+
     return jsonify(oers)
 
 

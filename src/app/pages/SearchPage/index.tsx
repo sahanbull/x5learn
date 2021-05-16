@@ -18,6 +18,7 @@ import { useHistory, useLocation, useParams } from 'react-router-dom';
 import { WarningOutlined } from '@ant-design/icons';
 import { Typography } from 'antd';
 import { ROUTES } from 'routes/routes';
+import { useTranslation } from 'react-i18next';
 
 const { Title } = Typography;
 
@@ -30,6 +31,7 @@ export function SearchPage() {
   const dispatch = useDispatch();
   const history = useHistory();
   const query = useQuery();
+  const { t } = useTranslation();
 
   const isSearching = useSelector(state => {
     return state[searchOerSliceKey].loading;
@@ -57,41 +59,56 @@ export function SearchPage() {
     };
     dispatch(fetchSearchOerThunk(searchParams));
   }, [dispatch, page, searchTerm]);
+  debugger;
   return (
     <>
       <Helmet>
-        <title>Home Page</title>
-        <meta name="description" content="X5 Learn AI based learning" />
+        <title>{t('generic.lbl_search')}</title>
       </Helmet>
       <AppLayout>
-        {!searchTerm && <>No Search Term Found</>}
+        {!searchTerm && <>{t('alerts.lbl_search_no_term_found')}</>}
         {isSearching && (
           <>
             <Spin spinning={isSearching} delay={500}></Spin>
-            Searching for {searchTerm}
+            {t('alerts.lbl_searching_for')} {searchTerm}
           </>
         )}
         {isError && (
           <>
-            <WarningOutlined /> Something went wrong searching for {searchTerm}{' '}
+            <WarningOutlined /> {t('alerts.lbl_searching_for_error')}{' '}
+            {searchTerm}{' '}
           </>
         )}
-        {searchResult && (
-          <Title level={2} type="secondary">
-            {total_pages * oers.length} Open Educational Resources Found
-          </Title>
-        )}
-        <SearchOerList />
-        {searchResult && (
-          <Pagination
-            defaultCurrent={+page}
-            total={total_pages}
-            showSizeChanger={false}
-            onChange={page => {
-              query.set('page', `${page}`);
-              history.push(`${ROUTES.SEARCH}?${query.toString()}`);
-            }}
-          />
+
+        {searchTerm && (
+          <>
+            {searchResult && total_pages === 0 && oers?.length === 0 && (
+              <Title level={2} type="secondary">
+                {`${t(
+                  'alerts.lbl_no_results_were_found_prefix',
+                )} ${searchTerm}, ${'alerts.lbl_no_results_were_found_suffix'}`}
+              </Title>
+            )}
+            {searchResult && (
+              <Title level={2} type="secondary">
+                {total_pages * oers?.length}{' '}
+                {t('alerts.lbl_search_result_suffix')}
+              </Title>
+            )}
+            <SearchOerList />
+            <br/>
+            {searchResult && (
+              <Pagination
+                defaultCurrent={+page}
+                total={total_pages}
+                showSizeChanger={false}
+                onChange={page => {
+                  query.set('page', `${page}`);
+                  history.push(`${ROUTES.SEARCH}?${query.toString()}`);
+                }}
+              />
+            )}
+          </>
         )}
       </AppLayout>
     </>

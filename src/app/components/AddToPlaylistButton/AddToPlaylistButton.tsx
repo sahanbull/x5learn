@@ -1,14 +1,20 @@
 import { UploadOutlined } from '@ant-design/icons';
 import { unwrapResult } from '@reduxjs/toolkit';
 import { Button, Dropdown, Menu, message } from 'antd';
+import { SizeType } from 'antd/lib/config-provider/SizeContext';
 import { addToTempPlaylistThunk } from 'app/containers/Layout/ducks/myPlaylistMenu/addToTempPlaylist';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
+
 import { RootState } from 'types';
 
-export function AddToPlaylistButton({ oerId }) {
+export function AddToPlaylistButton({
+  oerId,
+  hideLabel = false,
+  size = 'large',
+}) {
   const dispatch = useDispatch();
-  const {t} = useTranslation()
+  const { t } = useTranslation();
   const { data: tempPlaylists, loading, error } = useSelector(
     (state: RootState) => {
       return state.myPlaylistsMenu;
@@ -16,6 +22,8 @@ export function AddToPlaylistButton({ oerId }) {
   );
 
   const addToPlaylist = async event => {
+    event.preventDefault()
+    // event.stopImmediatePropagation()
     const playlistName = event.target.getAttribute('data-name');
 
     try {
@@ -44,15 +52,18 @@ export function AddToPlaylistButton({ oerId }) {
     </Menu>
   );
 
+  const btnLabel = !hideLabel && t('inspector.btn_add_to_playlist');
+
   return (
     <Dropdown overlay={menu} placement="bottomRight">
       <Button
         type="primary"
         shape="round"
         icon={<UploadOutlined />}
-        size="large"
+        size={size as SizeType}
+        title={t('inspector.btn_add_to_playlist')}
       >
-        {t('inspector.btn_add_to_playlist')}
+        {btnLabel}
       </Button>
     </Dropdown>
   );

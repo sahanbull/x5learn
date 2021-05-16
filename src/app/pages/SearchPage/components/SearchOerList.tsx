@@ -30,7 +30,7 @@ export function SearchOerList() {
 
   return (
     <div>
-      <Title level={4}>{t('oer.search_result', 'Search Result')}</Title>
+      <Title level={4}>{t('alerts.lbl_search_result', 'Search Result')}</Title>
       <OerCardList loading={loading} error={error} data={oers} />
     </div>
   );

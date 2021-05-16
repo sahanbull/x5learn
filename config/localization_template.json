@@ -30,7 +30,7 @@
         "lbl_greeting": "Hey",
         "lbl_website_maintenance_page": "This website is currently undergoing a major update during which the site will be offline. Please check back in a few days.",
 
-        
+
         "lbl_wikipedia": "Wikipedia"
 
     },
@@ -74,7 +74,12 @@
         "lbl_no_results_were_found_suffix": "Please try a different search term",
         "lbl_url_not_found": "URL not found",
         
-
+        
+        "lbl_search_no_term_found": "No Search Term Found",
+        "lbl_searching_for": "Searching for",
+        "lbl_searching_for_error": "Something went wrong searching for",
+        "lbl_search_result_suffix": "resources found",
+        "lbl_search_result": "Search Result",
         "lbl_temp_playlist_create_error": "Error creating playlist...",
         "lbl_validate_playlist_name_required": "Please input a playlist title",
         "lbl_load_playlists_loading": "Loading your playlists...",

@@ -1,5 +1,5 @@
 import React, { ReactComponentElement, ReactElement, useCallback } from 'react';
-import { Card, Skeleton, Typography } from 'antd';
+import { Card, Row, Skeleton, Typography } from 'antd';
 import Avatar from 'antd/lib/avatar/avatar';
 import Meta from 'antd/lib/card/Meta';
 import styled from 'styled-components';
@@ -8,6 +8,7 @@ import { ROUTES } from 'routes/routes';
 import { EnrichmentBar } from 'app/components/EnrichmentBar/EnrichmentBar';
 import { OerIcon } from 'app/components/OerIcon/OerIcon';
 import { useTranslation } from 'react-i18next';
+import { AddToPlaylistButton } from 'app/components/AddToPlaylistButton/AddToPlaylistButton';
 
 const { Text } = Typography;
 
@@ -27,8 +28,6 @@ interface OerDao {
 
 const imageBaseURL = 'https://qa.x5learn.org/files/thumbs/';
 
-
-
 const Duration = styled.span`
   padding: 0px 6px 2px 6px;
   border-radius: 4px;
@@ -41,7 +40,7 @@ const Duration = styled.span`
   letter-spacing: 0.3px;
   text-align: center;
   color: #ffffff;
-  position: absolute;
+  /* position: absolute; */
   top: 8px;
   right: 8px;
 `;
@@ -53,7 +52,7 @@ export function OerCard(props: {
 }) {
   const { loading, card, playlistID } = props;
   const cardStyle = { borderRadius: 8, overflow: 'hidden' };
-  const {t} = useTranslation()
+  const { t } = useTranslation();
   const history = useHistory();
 
   let pathToNavigateTo = `${ROUTES.RESOURCES}/${card?.id}`;
@@ -87,7 +86,7 @@ export function OerCard(props: {
             <Avatar
               shape="circle"
               size={32}
-              icon={<OerIcon mediatype={card?.mediatype}/>}
+              icon={<OerIcon mediatype={card?.mediatype} />}
               style={{ borderRadius: '50%', backgroundColor: '#f7f8f9' }}
             />
           }
@@ -106,7 +105,14 @@ export function OerCard(props: {
             </>
           }
         />
-        <Duration>{card?.duration}</Duration>
+        <Row
+          justify="end"
+          align="top"
+          style={{ position: 'absolute', top: '5px', right: '5px' }}
+        >
+          <AddToPlaylistButton oerId={card?.id} size="small" hideLabel={true} />
+          {card?.duration && <Duration>{card?.duration}</Duration>}
+        </Row>
       </Card>
     </Link>
   );

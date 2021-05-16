@@ -1,6 +1,6 @@
-import { ArrowsAltOutlined } from '@ant-design/icons';
+import { ArrowsAltOutlined, DeleteOutlined } from '@ant-design/icons';
 import { unwrapResult } from '@reduxjs/toolkit';
-import { Table, Typography } from 'antd';
+import { Button, Table, Typography } from 'antd';
 import { fetchOERsByIDsThunk } from 'app/containers/Layout/ducks/allOERSlice';
 import { updateTempPlaylistThunk } from 'app/containers/Layout/ducks/myPlaylistMenu/updateTempPlaylist';
 import { OerCard } from 'app/pages/HomePage/components/FeaturedOER/OerCard';
@@ -38,33 +38,14 @@ const SortableOerCard = ({ oerId }) => {
   return <OerSortableView loading={loading} card={cardData} />;
 };
 
-const columns = [
-  {
-    title: 'Name',
-    dataIndex: 'data',
-    className: 'drag-visible',
-    
-    render: oerId => {
-      return (
-        <>
-          <SortableOerCard oerId={oerId} />
-        </>
-      );
-    },
-  },
-  {
-    title: 'Sort',
-    dataIndex: 'order',
-    // width: 20,
-    className: 'drag-visible',
-    render: () => <DragHandle />,
-  },
-];
-
 const SortableItem = SortableElement(props => <tr {...props} />);
 const SortableContainer2 = SortableContainer(props => <tbody {...props} />);
 
-export function PlaylistItemSortWidget({ playlist_items, onItemsReorder }) {
+export function PlaylistItemSortWidget({
+  playlist_items,
+  onItemsReorder,
+  isUpdating,
+}) {
   const dispatch = useDispatch();
   const [{ data, loading, error }, setOERData] = useState({
     data: null,
@@ -93,7 +74,17 @@ export function PlaylistItemSortWidget({ playlist_items, onItemsReorder }) {
     }
   }, []);
 
+
+
   const [playlistItems, setPlaylistItems] = useState(playlist_items);
+
+  useEffect(() => {
+    if (playlist_items) {
+      setPlaylistItems(playlist_items)
+      // debugger
+    }
+  }, [playlist_items]);
+
   const onSortEnd = ({ oldIndex, newIndex }) => {
     const dataSource = playlistItems;
     if (oldIndex !== newIndex) {
@@ -103,10 +94,23 @@ export function PlaylistItemSortWidget({ playlist_items, onItemsReorder }) {
         newIndex,
       ).filter(el => !!el);
       //   console.log('Sorted items: ', newData.push, data);
+      
       if (onItemsReorder) {
         onItemsReorder(newData);
       }
-      setPlaylistItems(newData);
+      //setPlaylistItems(newData);
+    }
+  };
+
+  const onOERDelete = oerId => {
+    const dataSource = playlistItems;
+
+    const newData = [].concat(dataSource).filter((el: { oer_id }) => {
+      return el.oer_id !== oerId;
+    });
+
+    if (onItemsReorder) {
+      onItemsReorder(newData);
     }
   };
 
@@ -128,6 +132,51 @@ export function PlaylistItemSortWidget({ playlist_items, onItemsReorder }) {
     );
     return <SortableItem index={index} {...restProps} />;
   };
+
+  const columns = [
+    {
+      title: 'Name',
+      dataIndex: 'data',
+      className: 'drag-visible',
+
+      render: oerId => {
+        return (
+          <>
+            <SortableOerCard oerId={oerId} />
+          </>
+        );
+      },
+    },
+    {
+      title: 'Sort',
+      dataIndex: 'order',
+      // width: 20,
+      className: 'drag-visible',
+      render: () => {
+        return !isUpdating ? <DragHandle /> : <></>;
+      },
+    },
+    {
+      title: 'Delete',
+      dataIndex: 'data',
+      width: 100,
+      className: 'drag-visible',
+      render: oerId => {
+        const onItemDelete = () => {
+          onOERDelete(oerId);
+        };
+        return (
+          <Button
+            type="link"
+            onClick={onItemDelete}
+            loading={isUpdating}
+            icon={<DeleteOutlined />}
+          ></Button>
+        );
+      },
+    },
+  ];
+
   return (
     <>
       <Table

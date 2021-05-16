@@ -1,19 +1,29 @@
 import styled from 'styled-components/macro';
 import React from 'react';
-import { Layout, Menu, Breadcrumb, Row, Col, Divider } from 'antd';
+import { Layout, Typography, Menu, Breadcrumb, Row, Col, Divider } from 'antd';
 import { X5Logo } from 'app/components/Logo/X5Logo';
 const { Footer } = Layout;
 
 export const AppFooter = props => {
-  const style = { background: '#000d32', padding: '8px 0' };
+  const style = { background: '#000d32' };
   return (
-    <Footer style={{ ...style, textAlign: 'center' }}>
-      <Divider orientation="left"></Divider>
-      <Row gutter={10}>
-        <Col className="gutter-row" span={8}>
+    <Footer style={{ ...style }}>
+      <Row gutter={[8, 8]}>
+        <Col span={4}>
           <X5Logo white />
         </Col>
-        <Col className="gutter-row" span={4}>
+        <Col span={20}>
+          <Divider
+            orientation="center"
+            style={{ borderTopColor: '#ffffff' }}
+          ></Divider>
+          <p style={{ color: '#ffffff', fontSize: '80%', textAlign: 'center' }}>
+            This project has received funding from the European Union’s Horizon
+            new policy 2020 research and innovation programme under grant
+            agreement No 761758.
+          </p>
+        </Col>
+        {/* <Col className="gutter-row" span={4}>
           <Menu>
             <Menu.ItemGroup key="g1" title="Go-to">
               <Menu.Item key="1">Products</Menu.Item>
@@ -55,7 +65,7 @@ export const AppFooter = props => {
               <Menu.Item key="2">Privacy &amp; Terms</Menu.Item>
             </Menu.ItemGroup>
           </Menu>
-        </Col>
+        </Col> */}
       </Row>
     </Footer>
   );

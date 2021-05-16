@@ -47,9 +47,11 @@ export function AppHeader(props) {
         <Col span={12}>
           <HeaderSearchBar />
         </Col>
-        <Col span={6} style={{ textAlign: 'right' }}>
-          <Button type="link">{t('about_us.lbl_about_us')}</Button>
-          <HeaderProfileWidget />
+        <Col span={6}>
+          <Row align="middle" justify="end">
+            <Button type="link">{t('about_us.lbl_about_us')}</Button>
+            <HeaderProfileWidget />
+          </Row>
         </Col>
       </Row>
     </StyledHeader>

@@ -25,6 +25,7 @@ import { useInjectReducer } from 'redux-injectors';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'types';
 import { PlaylistDeleteButton } from 'app/components/PlaylistDeleteButton/PlaylistDeleteButton';
+import { useTranslation } from 'react-i18next';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -41,38 +42,27 @@ const tailLayout = {
 
 export function EditTempPlaylistPage(props) {
   useInjectReducer({ key: sliceKey, reducer: reducer });
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const { data, loading, error } = useSelector((state: RootState) => {
     return state.tempPlaylistDetail;
   });
-
-  const [playlistData, setPlaylistData] = useState<{
-    data: null | any[];
-    loading: boolean;
-    error: null | any;
-  }>({
-    data: null,
-    loading: true,
-    error: null,
-  });
-
-
 
   const playlistID = props.match?.params?.id;
   useEffect(() => {
     dispatch(fetchTempPlaylistDetailsThunk(playlistID));
   }, [dispatch, playlistID]);
 
-
   return (
     <>
       <Helmet>
-        <title>Edit Playlist</title>
-        <meta name="description" content="X5 Learn AI based learning" />
+        <title>
+          {t('playlist.lbl_playlist_edit') + ` - ${data?.playlist?.title}`}
+        </title>
       </Helmet>
       <AppLayout>
         {loading && <Spin spinning={loading} delay={200}></Spin>}
-        {error && <div>Something went wrong</div>}
+        {error && <div>{t('alerts.lbl_load_playlist_oers_error')}</div>}
 
         {data && (
           <>
@@ -85,7 +75,12 @@ export function EditTempPlaylistPage(props) {
                       playlistName={data?.playlist?.title}
                     />
                   }
-                  title={<Title>Edit Playlist - {data?.playlist?.title}</Title>}
+                  title={
+                    <Title>
+                      {t('playlist.lbl_playlist_edit')} -{' '}
+                      {data?.playlist?.title}
+                    </Title>
+                  }
                 >
                   <PlaylistEditFormWidget formData={data} />
                 </Card>

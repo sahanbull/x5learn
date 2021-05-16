@@ -28,6 +28,7 @@ import { AsyncThunkAction, unwrapResult } from '@reduxjs/toolkit';
 import { useHistory } from 'react-router-dom';
 import { ROUTES } from 'routes/routes';
 import { publishTempPlaylistThunk } from 'app/containers/Layout/ducks/myPlaylistMenu/publishTempPlaylist';
+import { useTranslation } from 'react-i18next';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -49,6 +50,7 @@ export function PlaylistPublishFormWidget(props: {
 }) {
   const [form] = Form.useForm();
   const history = useHistory();
+  const { t } = useTranslation();
 
   const { data: licenseData, loading, error } = useSelector(
     (state: RootState) => {
@@ -56,16 +58,9 @@ export function PlaylistPublishFormWidget(props: {
     },
   );
 
+  const [isLoading, setIsLoading] = useState(false);
   const { playlist, playlist_items } = props.formData;
 
-  const [
-    { createStatus, createLoading, createError },
-    setCreateStatus,
-  ] = useState({
-    createStatus: null,
-    createLoading: false,
-    createError: null,
-  });
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -82,6 +77,7 @@ export function PlaylistPublishFormWidget(props: {
     try {
       const validate = await form.validateFields();
       const formData = (form as any).getFieldValue();
+      setIsLoading(true);
       const publishResponse = (await dispatch(
         publishTempPlaylistThunk({
           tempTitle: formData.temp_title,
@@ -93,12 +89,14 @@ export function PlaylistPublishFormWidget(props: {
         }),
       )) as any;
       const publishResult = await unwrapResult(publishResponse);
-      message.success('Playlist published successfully');
-      history.push(`/playlist/${publishResult}`)
+      message.success(t('alerts.lbl_publish_playlist_success'));
+      history.push(`/playlist/${publishResult}`);
       await dispatch(fetchMyPlaylistsMenuThunk());
+      setIsLoading(false);
       props.setIsModalVisible(false);
     } catch (e) {
-      message.error('Something when wrong when publishing');
+      setIsLoading(false);
+      message.error(t('alerts.lbl_publish_playlist_error'));
     }
   };
 
@@ -108,8 +106,12 @@ export function PlaylistPublishFormWidget(props: {
 
   return (
     <Modal
-      title="Publish Playlist"
+      title={t('playlist.lbl_publish_playlist')}
       visible={props.visible}
+      confirmLoading={isLoading}
+      cancelButtonProps={{ disabled: isLoading }}
+      okText={t('generic.btn_publish')}
+      cancelText={t('generic.btn_cancel')}
       onOk={handleOk}
       onCancel={handleCancel}
     >
@@ -117,56 +119,22 @@ export function PlaylistPublishFormWidget(props: {
         {...layout}
         form={form}
         name="basic"
-        onFinish={async values => {
-          setCreateStatus({
-            createLoading: true,
-            createStatus: null,
-            createError: null,
-          });
-          try {
-            const newTempPlaylist = {
-              parent: 0,
-              is_visible: true,
-              playlist_items: [],
-              title: values.temp_title,
-              ...values,
-            };
-            const createResult = await dispatch(
-              createTempPlaylistThunk(newTempPlaylist),
-            );
-            const createStatus = await unwrapResult(createResult as any);
-            await dispatch(fetchMyPlaylistsMenuThunk());
-            setCreateStatus({
-              createLoading: false,
-              createStatus: createResult as any,
-              createError: null,
-            });
-            history.push(`${ROUTES.PLAYLISTS}/temp/${values.temp_title}`);
-          } catch (err) {
-            message.error('Error publishing playlist...');
-            setCreateStatus({
-              createLoading: false,
-              createStatus: null,
-              createError: null,
-            });
-          }
-        }}
         initialValues={{ ...playlist, temp_title: playlist.title }}
       >
         <Row gutter={[16, 16]}>
           <Col span={24}>
             <Form.Item
-              label="Playlist Title"
+              label={t('playlist.lbl_playlist_title')}
               name="title"
               rules={[
                 {
                   required: true,
-                  message: 'Please input a playlist title',
+                  message: t('alerts.lbl_playlist_title_required_msg'),
                 },
               ]}
             >
               <Input
-                placeholder="Playlist title"
+                placeholder={t('alerts.lbl_playlist_title_input_placeholder')}
                 defaultValue={playlist.title}
               />
             </Form.Item>
@@ -176,39 +144,45 @@ export function PlaylistPublishFormWidget(props: {
         <Row gutter={[16, 16]}>
           <Col span={12}>
             <Form.Item
-              label="Author"
+              label={t('playlist.lbl_playlist_author')}
               name="author"
               rules={[
                 {
                   required: true,
-                  message: 'Please input author name',
+                  message: t('alerts.lbl_playlist_author_required_msg'),
                 },
               ]}
             >
               <Input
-                placeholder="Author name"
+                placeholder={t('alerts.lbl_playlist_author_input_placeholder')}
                 defaultValue={playlist.creator}
               />
             </Form.Item>
           </Col>
           <Col span={12}>
             <Form.Item
-              label="License"
+              label={t('playlist.lbl_playlist_license')}
               name="license"
               rules={[
                 {
                   required: true,
-                  message: 'Please input a valid licence',
+                  message: t('alerts.lbl_playlist_license_required_msg'),
                 },
               ]}
             >
               {loading && (
                 <Progress percent={100} status="active" showInfo={false} />
               )}
-              {error && <Text type="danger">Error loading licenses...</Text>}
+              {error && (
+                <Text type="danger">
+                  {t('alerts.lbl_license_types_load_error')}
+                </Text>
+              )}
               {licenseData && (
                 <Select
-                  placeholder="Select License"
+                  placeholder={t(
+                    'alerts.lbl_playlist_license_input_placeholder',
+                  )}
                   onChange={onLicenseChange}
                   defaultValue={playlist.license}
                   allowClear
@@ -229,18 +203,20 @@ export function PlaylistPublishFormWidget(props: {
         <Row gutter={[16, 16]}>
           <Col span={24}>
             <Form.Item
-              label="Description"
+              label={t('playlist.lbl_playlist_description')}
               name="description"
               rules={[
                 {
                   required: true,
-                  message: 'Please input a description',
+                  message: t('alerts.lbl_playlist_description_required_msg'),
                 },
               ]}
             >
               <TextArea
                 rows={4}
-                placeholder="Description"
+                placeholder={t(
+                  'alerts.lbl_playlist_description_input_placeholder',
+                )}
                 autoSize={{ minRows: 3, maxRows: 6 }}
                 defaultValue={playlist.description}
               />
@@ -248,14 +224,7 @@ export function PlaylistPublishFormWidget(props: {
           </Col>
         </Row>
 
-        <Form.Item {...tailLayout}>
-          {createLoading && (
-            <Progress percent={100} status="active" showInfo={false} />
-          )}
-          {createError && (
-            <Text type="danger">Error publishing playlist...</Text>
-          )}
-        </Form.Item>
+        <Form.Item {...tailLayout}></Form.Item>
       </Form>
     </Modal>
   );

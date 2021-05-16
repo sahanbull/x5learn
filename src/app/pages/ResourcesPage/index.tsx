@@ -18,6 +18,7 @@ import { AddToPlaylistButton } from 'app/components/AddToPlaylistButton/AddToPla
 import Avatar from 'antd/lib/avatar/avatar';
 import { OerIcon } from 'app/components/OerIcon/OerIcon';
 import { NotesWidget } from 'app/components/NotesWidget/NotesWidget';
+import { useTranslation } from 'react-i18next';
 
 const { Title, Text } = Typography;
 const { Meta } = Card;
@@ -27,6 +28,7 @@ const imageBaseURL = 'https://qa.x5learn.org/files/thumbs/';
 export function ResourcesPage(props) {
   useInjectReducer({ key: sliceKey, reducer: reducer });
   useInjectReducer({ key: notesKey, reducer: notesReducer });
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const oerID = props.match?.params?.id;
 
@@ -118,20 +120,20 @@ export function ResourcesPage(props) {
               </Col>
             </Row>
             <Row gutter={[16, 16]}>
-              <Col>
+              <Col span={24}>
                 <Card
                   headStyle={{ border: 'none' }}
                   title={<Title level={2}>{data.title}</Title>}
                   extra={
                     <>
-                      <Button
+                      {/* <Button
                         type="link"
                         shape="round"
                         icon={<UploadOutlined />}
                         size="large"
                       >
                         Bookmark
-                      </Button>{' '}
+                      </Button>{' '} */}
                       <AddToPlaylistButton oerId={oerID} />
                     </>
                   }
@@ -151,11 +153,13 @@ export function ResourcesPage(props) {
                     }
                     title={
                       <>
-                        <Text strong>By: </Text>
+                        <Text strong>
+                          {t('playlist.lbl_playlist_provider')}:{' '}
+                        </Text>
                         <Text>{data.provider}</Text> {` / `}
-                        <Text strong>Language: </Text>
+                        <Text strong>{t('playlist.lbl_playlist_mediatype')}: </Text>
                         <Text>{data.mediatype}</Text> {` / `}
-                        <Text strong>Date: </Text>
+                        <Text strong>{t('playlist.lbl_playlist_date')}: </Text>
                         <Text>
                           {new Date(data.date).toLocaleDateString('en-US', {
                             year: 'numeric',
@@ -165,7 +169,11 @@ export function ResourcesPage(props) {
                         </Text>
                       </>
                     }
-                    description={<Col md={18}>{data.description}</Col>}
+                    description={
+                      <Col md={18}>
+                        {data.description || t('inspector.lbl_no_description')}
+                      </Col>
+                    }
                   />
                   <NotesWidget oerID={data?.id} />
                 </Card>

@@ -1,5 +1,6 @@
 import { Menu, Dropdown, Spin } from 'antd';
 import { selectEntityDefinition } from 'app/containers/Layout/ducks/allEntityDefinitionsSlice';
+import { useTranslation } from 'react-i18next';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useHistory, useLocation } from 'react-router-dom';
@@ -10,6 +11,7 @@ export const EntityDefinitionMenuItem = ({ entity, ...props }) => {
     return selectEntityDefinition(state, entity.id);
   });
   const history = useHistory();
+  const { t } = useTranslation();
   return (
     <>
       {error && <>{error}</>}
@@ -25,7 +27,9 @@ export const EntityDefinitionMenuItem = ({ entity, ...props }) => {
       )}
 
       <Menu.Item {...props} key={'item_search' + entity.title}>
-        <Link to={`${ROUTES.SEARCH}/?q=${entity.title}`}>Search</Link>
+        <Link to={`${ROUTES.SEARCH}/?q=${entity.title}`}>
+          {t('generic.lbl_search')}
+        </Link>
       </Menu.Item>
       <Menu.Item {...props} key={'item_url' + entity.title}>
         <a
@@ -36,7 +40,7 @@ export const EntityDefinitionMenuItem = ({ entity, ...props }) => {
           href={`${entity.url}`}
           target="_blank"
         >
-          Wikipedia
+          {t('generic.lbl_wikipedia')}
         </a>
       </Menu.Item>
     </>

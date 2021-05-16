@@ -28,7 +28,11 @@
         "btn_content_flow_on": "ON",
         "btn_content_flow_off": "OFF",
         "lbl_greeting": "Hey",
-        "lbl_website_maintenance_page": "This website is currently undergoing a major update during which the site will be offline. Please check back in a few days."
+        "lbl_website_maintenance_page": "This website is currently undergoing a major update during which the site will be offline. Please check back in a few days.",
+
+        
+        "lbl_wikipedia": "Wikipedia"
+
     },
     "alerts": {
         "lbl_error_loading": "There was a problem. Please reload the page",
@@ -70,10 +74,28 @@
         "lbl_no_results_were_found_suffix": "Please try a different search term",
         "lbl_url_not_found": "URL not found",
         
+
         "lbl_temp_playlist_create_error": "Error creating playlist...",
         "lbl_validate_playlist_name_required": "Please input a playlist title",
         "lbl_load_playlists_loading": "Loading your playlists...",
-        "lbl_load_playlists_error": "Error loading playlists"
+        "lbl_load_playlists_error": "Error loading playlists",
+        "lbl_load_playlist_error": "Error loading playlist",
+        "lbl_playlist_no_temp_playlists": "No temp playlists found",
+        "lbl_load_playlist_oers_error": "Error loading playlist resources",
+        "lbl_load_playlists_no_oers": "No linked OERs in playlist",
+        "lbl_playlist_update_success": "Playlist updated successfully",
+        "lbl_playlist_update_error": "Something went wrong when updating playlist",
+
+        "lbl_playlist_title_required_msg": "Please input a playlist title",
+        "lbl_playlist_title_input_placeholder": "Playlist title",
+        "lbl_playlist_author_required_msg": "Please input author name",
+        "lbl_playlist_author_input_placeholder": "Author name",
+        "lbl_playlist_license_required_msg": "Please input a valid licence",
+        "lbl_playlist_license_input_placeholder": "Select License",
+        "lbl_playlist_description_required_msg": "Please input a description",
+        "lbl_playlist_description_input_placeholder": "Description",
+        
+        "lbl_playlist_no_playlists": "No playlists found"
     },
     "inspector": {
         "lbl_no_description": "No description available", 
@@ -137,7 +159,7 @@
     "playlist": {
         "lbl_create_playlist": "Create Playlist",
         "lbl_publish_playlist": "Publish Playlist",
-        "lbl_playlist_title": "Title",
+        "lbl_playlist_title": "Playlist Title",
         "lbl_playlist_description": "Description",
         "lbl_playlist_author": "Author",
         "lbl_playlist_license": "License",
@@ -176,7 +198,15 @@
         "btn_pagination_previous": "Previous",
         "btn_pagination_next": "Next",
         
+
         "lbl_playlist_my_playlists": "My Playlists",
+        "lbl_playlist_updated_date": "Updated",
+        "lbl_playlist_oer_material_count": "OER Materials",
+        "lbl_playlist_provider": "By",
+        "lbl_playlist_language": "Language",
+        "lbl_playlist_mediatype": "Type",
+        "lbl_playlist_date": "Date",
+        "lbl_playlist_edit": "Edit Playlist",
         "lbl_playlist_see_all": "See All"
     }
 }

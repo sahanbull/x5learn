@@ -13,12 +13,14 @@ import {
 } from './ducks/fetchPlaylistDetailsThunk';
 import { fetchOERsByIDsThunk } from 'app/containers/Layout/ducks/allOERSlice';
 import { Action, AsyncThunkAction, unwrapResult } from '@reduxjs/toolkit';
+import { useTranslation } from 'react-i18next';
 
 const { Title, Text } = Typography;
 
 export function PlaylistsPage(props) {
   useInjectReducer({ key: sliceKey, reducer: reducer });
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const { data, loading, error } = useSelector((state: any) => {
     return state.playlistDetail;
   });
@@ -59,12 +61,12 @@ export function PlaylistsPage(props) {
   return (
     <>
       <Helmet>
-        <title>Playlists Page</title>
-        <meta name="description" content="X5 Learn AI based learning" />
+        <title>{data?.title}</title>
+        <meta name="description" content={data?.description} />
       </Helmet>
       <AppLayout>
         {loading && <Spin spinning={loading} delay={200}></Spin>}
-        {error && <div>Something went wrong</div>}
+        {error && <div>{t('alerts.lbl_load_playlist_error')}</div>}
         {error && error.msg && error.msg.result}
         {data && (
           <>
@@ -73,12 +75,18 @@ export function PlaylistsPage(props) {
                 <Card
                   headStyle={{ border: 'none' }}
                   title={<Title level={2}>{data.title}</Title>}
-                  extra={<a href="#">More</a>}
+                  extra={<></>}
                 >
                   <p>{data.description}</p>
                   <Text strong>{data.oerIds.length}</Text>
-                  <Text> OER Materials</Text> {` / `}
-                  <Text strong>Updated: </Text>
+                  <Text>
+                    {' '}
+                    {t('playlist.lbl_playlist_oer_material_count')}
+                  </Text>{' '}
+                  {` / `}
+                  <Text strong>
+                    {t('playlist.lbl_playlist_updated_date')}:{' '}
+                  </Text>
                   <Text>
                     {new Date(data.last_updated_at).toLocaleDateString(
                       'en-US',
@@ -86,14 +94,6 @@ export function PlaylistsPage(props) {
                     )}
                   </Text>
                   <br />
-                  <Button
-                    type="primary"
-                    shape="round"
-                    icon={<UploadOutlined />}
-                    size="large"
-                  >
-                    Publish
-                  </Button>
                 </Card>
               </Col>
               {/* <Col span={8}>
@@ -126,6 +126,7 @@ export function PlaylistsPage(props) {
                 </Card>
               </Col> */}
             </Row>
+            <br />
             <OerCardList {...oerData} playlistID={playlistID} />
           </>
         )}

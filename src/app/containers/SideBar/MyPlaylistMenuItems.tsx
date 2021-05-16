@@ -55,22 +55,27 @@ function Loading({ loading, ...props }) {
   return null;
 }
 function Error({ error }) {
+  const { t } = useTranslation();
   if (error) {
     return (
-      <Empty description="An error has occurred" image={<WarningOutlined />} />
+      <Empty
+        description={t('alerts.lbl_load_playlists_loading')}
+        image={<WarningOutlined />}
+      />
     );
   }
   return null;
 }
 
 function NoData({ data }) {
+  const { t } = useTranslation();
   if (!data || data?.length === 0) {
     return (
       <>
-        <Empty description="No temp playlists found" />
+        <Empty description={t('alerts.lbl_playlist_no_temp_playlists')} />
         <Space align="center" direction="vertical" style={{ width: '100%' }}>
           <Link to={`${ROUTES.MY_PLAYLISTS_CREATE}`}>
-            <Button type="text">Create new playlist</Button>
+            <Button type="text">{t('playlist.lbl_create_playlist')}</Button>
           </Link>
         </Space>
       </>

@@ -7,6 +7,7 @@ import { Link, useHistory, useLocation, useParams } from 'react-router-dom';
 import { ROUTES } from 'routes/routes';
 import { EnrichmentBar } from 'app/components/EnrichmentBar/EnrichmentBar';
 import { OerIcon } from 'app/components/OerIcon/OerIcon';
+import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
 
@@ -52,6 +53,7 @@ export function OerCard(props: {
 }) {
   const { loading, card, playlistID } = props;
   const cardStyle = { borderRadius: 8, overflow: 'hidden' };
+  const {t} = useTranslation()
   const history = useHistory();
 
   let pathToNavigateTo = `${ROUTES.RESOURCES}/${card?.id}`;
@@ -93,13 +95,13 @@ export function OerCard(props: {
           description={
             <>
               <EnrichmentBar oerID={card?.id} />
-              <Text strong>By: </Text>
+              <Text strong>{t('playlist.lbl_playlist_provider')}: </Text>
               {card?.provider}
               <br />
-              <Text strong>Type: </Text>
+              <Text strong>{t('playlist.lbl_playlist_mediatype')}: </Text>
               {card?.mediatype}
               <br />
-              <Text strong>Date: </Text>
+              <Text strong>{t('playlist.lbl_playlist_date')}: </Text>
               {card?.date}
             </>
           }

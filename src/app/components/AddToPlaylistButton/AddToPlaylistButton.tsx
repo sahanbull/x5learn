@@ -2,11 +2,13 @@ import { UploadOutlined } from '@ant-design/icons';
 import { unwrapResult } from '@reduxjs/toolkit';
 import { Button, Dropdown, Menu, message } from 'antd';
 import { addToTempPlaylistThunk } from 'app/containers/Layout/ducks/myPlaylistMenu/addToTempPlaylist';
+import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'types';
 
 export function AddToPlaylistButton({ oerId }) {
   const dispatch = useDispatch();
+  const {t} = useTranslation()
   const { data: tempPlaylists, loading, error } = useSelector(
     (state: RootState) => {
       return state.myPlaylistsMenu;
@@ -50,7 +52,7 @@ export function AddToPlaylistButton({ oerId }) {
         icon={<UploadOutlined />}
         size="large"
       >
-        Add to Playlist
+        {t('inspector.btn_add_to_playlist')}
       </Button>
     </Dropdown>
   );

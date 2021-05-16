@@ -3,6 +3,7 @@ import { unwrapResult } from '@reduxjs/toolkit';
 import { Button, Popconfirm } from 'antd';
 import { deleteTempPlaylistThunk } from 'app/containers/Layout/ducks/myPlaylistMenu/deleteTempPlaylist';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDispatch } from 'react-redux';
 import { useHistory } from 'react-router';
 
@@ -12,7 +13,8 @@ export function PlaylistDeleteButton(props) {
   const [confirmLoading, setConfirmLoading] = React.useState(false);
   const [title, setTitle] = React.useState('Confirm Delete');
   const dispatch = useDispatch();
-  const history = useHistory()
+  const history = useHistory();
+  const { t } = useTranslation();
 
   const showPopconfirm = () => {
     setVisible(true);
@@ -33,15 +35,13 @@ export function PlaylistDeleteButton(props) {
 
       return;
     }
-    history.push('/')
+    history.push('/');
     setTitle('Confirm Delete');
     setVisible(false);
     setConfirmLoading(false);
-
   };
 
   const handleCancel = () => {
-
     setVisible(false);
   };
 
@@ -54,7 +54,7 @@ export function PlaylistDeleteButton(props) {
       onCancel={handleCancel}
     >
       <Button type="link" htmlType="button" onClick={showPopconfirm}>
-        Delete <DeleteOutlined />
+        {t('playlist.btn_delete')} <DeleteOutlined />
       </Button>
     </Popconfirm>
   );

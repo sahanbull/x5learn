@@ -2,6 +2,7 @@ import React from 'react';
 import { Row, Col, Empty } from 'antd';
 import { OerCard } from './OerCard';
 import { WarningOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 export function OerCardList(props: {
   loading?: boolean;
@@ -9,6 +10,7 @@ export function OerCardList(props: {
   data?: any[] | null;
   playlistID?: any;
 }) {
+  const { t } = useTranslation();
   const { loading, error, data } = props;
   if (loading) {
     return (
@@ -28,12 +30,15 @@ export function OerCardList(props: {
 
   if (error) {
     return (
-      <Empty description="An error has occurred" image={<WarningOutlined />} />
+      <Empty
+        description={t('alerts.lbl_load_playlist_oers_error')}
+        image={<WarningOutlined />}
+      />
     );
   }
 
   if (!data || data?.length === 0) {
-    return <Empty description="No Data" />;
+    return <Empty description={t('alerts.lbl_load_playlists_no_oers')} />;
   }
 
   return (

@@ -30,6 +30,7 @@ import { ROUTES } from 'routes/routes';
 import { PlaylistPublishFormWidget } from './PlaylistPublishFormWidget';
 import { PlaylistItemSortWidget } from '../PlaylistItemSortWidget/PlaylistItemSortWidget';
 import { updateTempPlaylistThunk } from 'app/containers/Layout/ducks/myPlaylistMenu/updateTempPlaylist';
+import { useTranslation } from 'react-i18next';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -47,6 +48,7 @@ const tailLayout = {
 export function PlaylistEditFormWidget(props: { formData? }) {
   const [form] = Form.useForm();
   const history = useHistory();
+  const { t } = useTranslation();
 
   const { data: licenseData, loading, error } = useSelector(
     (state: RootState) => {
@@ -55,15 +57,6 @@ export function PlaylistEditFormWidget(props: { formData? }) {
   );
 
   const { playlist, playlist_items } = props.formData;
-
-  const [
-    { createStatus, createLoading, createError },
-    setCreateStatus,
-  ] = useState({
-    createStatus: null,
-    createLoading: false,
-    createError: null,
-  });
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -72,11 +65,8 @@ export function PlaylistEditFormWidget(props: { formData? }) {
     }
   }, [licenseData, dispatch]);
 
-  const onLicenseChange = (value: string) => {
-    form.setFieldsValue({ license: value });
-  };
-
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -87,6 +77,7 @@ export function PlaylistEditFormWidget(props: { formData? }) {
       const oerIdsArray = newOrder.map(item => {
         return parseInt(item.data);
       });
+      setIsUpdating(true);
       const updateOrderCall = (await dispatch(
         updateTempPlaylistThunk({
           ...playlist,
@@ -95,9 +86,11 @@ export function PlaylistEditFormWidget(props: { formData? }) {
         }),
       )) as any;
       const updateOrderResult = await unwrapResult(updateOrderCall);
-      message.info('Playlist updated');
+      setIsUpdating(false);
+      message.info(t('alerts.lbl_playlist_update_success'));
     } catch (e) {
-      message.error('Something went wrong when reordering');
+      setIsUpdating(false);
+      message.error(t('alerts.lbl_playlist_update_error'));
     }
   };
 
@@ -106,40 +99,6 @@ export function PlaylistEditFormWidget(props: { formData? }) {
       {...layout}
       form={form}
       name="basic"
-      onFinish={async values => {
-        setCreateStatus({
-          createLoading: true,
-          createStatus: null,
-          createError: null,
-        });
-        try {
-          const newTempPlaylist = {
-            parent: 0,
-            is_visible: true,
-            playlist_items: [],
-            title: values.temp_title,
-            ...values,
-          };
-          const createResult = await dispatch(
-            createTempPlaylistThunk(newTempPlaylist),
-          );
-          const createStatus = await unwrapResult(createResult as any);
-          await dispatch(fetchMyPlaylistsMenuThunk());
-          setCreateStatus({
-            createLoading: false,
-            createStatus: createResult as any,
-            createError: null,
-          });
-          history.push(`${ROUTES.PLAYLISTS}/temp/${values.temp_title}`);
-        } catch (err) {
-          message.error('Error saving playlist...');
-          setCreateStatus({
-            createLoading: false,
-            createStatus: null,
-            createError: null,
-          });
-        }
-      }}
       initialValues={{ remember: true }}
     >
       <Row gutter={[16, 16]}>
@@ -147,6 +106,7 @@ export function PlaylistEditFormWidget(props: { formData? }) {
           <PlaylistItemSortWidget
             playlist_items={playlist_items}
             onItemsReorder={onItemsReorder}
+            isUpdating={isUpdating}
           />
         </Col>
       </Row>
@@ -160,13 +120,10 @@ export function PlaylistEditFormWidget(props: { formData? }) {
           htmlType="button"
           size="large"
           onClick={showModal}
+          disabled={isUpdating}
         >
-          Publish... <UploadOutlined />
+          {t('playlist.lbl_publish_playlist')} <UploadOutlined />
         </Button>
-        {createLoading && (
-          <Progress percent={100} status="active" showInfo={false} />
-        )}
-        {createError && <Text type="danger">Error creating playlist...</Text>}
       </Form.Item>
 
       <>

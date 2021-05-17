@@ -13,6 +13,7 @@ import {
   Select,
   Modal,
   message,
+  Space,
 } from 'antd';
 import { AppLayout } from 'app/containers/Layout/AppLayout';
 import { DeleteOutlined, UploadOutlined } from '@ant-design/icons';
@@ -31,6 +32,7 @@ import { PlaylistPublishFormWidget } from './PlaylistPublishFormWidget';
 import { PlaylistItemSortWidget } from '../PlaylistItemSortWidget/PlaylistItemSortWidget';
 import { updateTempPlaylistThunk } from 'app/containers/Layout/ducks/myPlaylistMenu/updateTempPlaylist';
 import { useTranslation } from 'react-i18next';
+import { optimizeTempPlaylistPathThunk } from 'app/containers/Layout/ducks/myPlaylistMenu/optimizeTempPlaylistPath';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -94,6 +96,28 @@ export function PlaylistEditFormWidget(props: { formData? }) {
     }
   };
 
+  const optimizeLearningPath = async () => {
+    try {
+      setIsUpdating(true);
+      const oerIds = playlist_items.map(oer => {
+        return oer.oer_id;
+      });
+      const optimizeCall = (await dispatch(
+        optimizeTempPlaylistPathThunk({
+          tempPlaylistName: playlist.title,
+          oerIds,
+        }),
+      )) as any;
+      const optimizeResult = await unwrapResult(optimizeCall);
+      setIsUpdating(false);
+      debugger;
+      message.info(t('alerts.lbl_optimize_learning_path_success'));
+    } catch (e) {
+      setIsUpdating(false);
+      message.error(t('alerts.lbl_optimize_learning_path_error'));
+    }
+  };
+
   return (
     <Form
       {...layout}
@@ -109,22 +133,35 @@ export function PlaylistEditFormWidget(props: { formData? }) {
             isUpdating={isUpdating}
           />
         </Col>
-      </Row>
-
-      <Form.Item {...tailLayout}>
-        {/* <Button type="primary" htmlType="submit" size="large">
+        <Col span={24}>
+          <Form.Item {...tailLayout}>
+            {/* <Button type="primary" htmlType="submit" size="large">
           Save <UploadOutlined />
         </Button> */}
-        <Button
-          type="primary"
-          htmlType="button"
-          size="large"
-          onClick={showModal}
-          disabled={isUpdating}
-        >
-          {t('playlist.lbl_publish_playlist')} <UploadOutlined />
-        </Button>
-      </Form.Item>
+            <Space>
+              <Button
+                type="primary"
+                htmlType="button"
+                size="large"
+                onClick={optimizeLearningPath}
+                disabled={isUpdating}
+              >
+                {t('playlist.btn_optimize_learning_path')}
+              </Button>
+
+              <Button
+                type="primary"
+                htmlType="button"
+                size="large"
+                onClick={showModal}
+                disabled={isUpdating}
+              >
+                {t('playlist.lbl_publish_playlist')} <UploadOutlined />
+              </Button>
+            </Space>
+          </Form.Item>
+        </Col>
+      </Row>
 
       <>
         <PlaylistPublishFormWidget

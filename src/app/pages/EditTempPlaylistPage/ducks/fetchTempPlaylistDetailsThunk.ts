@@ -2,6 +2,7 @@ import { createAsyncThunk, isRejectedWithValue } from '@reduxjs/toolkit';
 import { createSlice } from 'utils/@reduxjs/toolkit';
 import { fetchTempPlaylistDetails } from 'app/api/api';
 import { reducers as updateTempPlaylistReducers } from 'app/containers/Layout/ducks/myPlaylistMenu/updateTempPlaylist';
+import { reducers as optimizeTempPlaylistPathReducers } from 'app/containers/Layout/ducks/myPlaylistMenu/optimizeTempPlaylistPath';
 
 // The initial state of the GithubRepoForm container
 export const initialState: any = {
@@ -54,6 +55,7 @@ const fetchTempPlaylistDetailSlice = createSlice({
       state.data = null;
     },
     ...updateTempPlaylistReducers,
+    ...optimizeTempPlaylistPathReducers,
   },
 });
 

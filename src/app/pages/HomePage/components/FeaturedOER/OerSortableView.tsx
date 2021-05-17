@@ -8,6 +8,7 @@ import { ROUTES } from 'routes/routes';
 import { EnrichmentBar } from 'app/components/EnrichmentBar/EnrichmentBar';
 import Title from 'antd/lib/typography/Title';
 import { OerIcon } from 'app/components/OerIcon/OerIcon';
+import { useTranslation } from 'react-i18next';
 
 const { Text } = Typography;
 
@@ -27,7 +28,6 @@ interface OerDao {
 
 const imageBaseURL = 'https://qa.x5learn.org/files/thumbs/';
 
-
 const Duration = styled.span`
   padding: 0px 6px 2px 6px;
   border-radius: 4px;
@@ -41,7 +41,7 @@ const Duration = styled.span`
   text-align: center;
   color: #ffffff;
   position: absolute;
-  top: 8px;
+  top: 4px;
   right: 8px;
 `;
 
@@ -53,6 +53,7 @@ export function OerSortableView(props: {
   const { loading, card, playlistID } = props;
   const cardStyle = { borderRadius: 8, overflow: 'hidden' };
   const history = useHistory();
+  const { t } = useTranslation();
 
   let pathToNavigateTo = `${ROUTES.RESOURCES}/${card?.id}`;
   if (playlistID) {
@@ -73,12 +74,12 @@ export function OerSortableView(props: {
   }
 
   return (
-    <Row>
+    <Row gutter={[16, 16]} align="middle">
       <Col flex={'none'}>
         <Link to={pathToNavigateTo}>
           <Image
-            width={200}
-            height={200}
+            width={120}
+            // height={120}
             src={imgSrc}
             placeholder={true}
             alt={`${card?.title}`}
@@ -89,17 +90,21 @@ export function OerSortableView(props: {
       </Col>
       <Col flex="auto">
         <Link to={pathToNavigateTo}>
-          <Title level={3}>{card?.title}</Title>
+          <Title level={4}>{card?.title}</Title>
         </Link>
-        <Text strong>By: </Text>
+        <Text strong>{t('playlist.lbl_playlist_provider', 'By')}: </Text>
         {card?.provider}
         <br />
-        <Text strong>Type: </Text>
-        <OerIcon mediatype={card?.mediatype}/>
+        <Text strong>{t('playlist.lbl_playlist_mediatype', 'Type')}: </Text>
+        <OerIcon mediatype={card?.mediatype} />
         {card?.mediatype}
-        <br />
-        <Text strong>Date: </Text>
-        {card?.date}
+        {card?.date && (
+          <>
+            {' / '}
+            <Text strong>{t('playlist.lbl_playlist_date', 'Date')}: </Text>
+            {card?.date}
+          </>
+        )}
       </Col>
     </Row>
   );

@@ -199,6 +199,15 @@ export async function addToTempPlaylist(playlistName, oerId) {
     { method: 'POST' },
   );
 }
+export async function optimizeTempPlaylistPath(tempPlaylistName, oerIds) {
+  return fetchAPI(
+    `/course_optimization/${tempPlaylistName}`,
+    JSON.stringify({
+      oerIds,
+    }),
+    { method: 'POST' },
+  );
+}
 export async function getSupportedLangs() {
   return fetchAPI(`/localization/`);
 }

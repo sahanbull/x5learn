@@ -74,7 +74,7 @@
         "lbl_no_results_were_found_suffix": "Please try a different search term",
         "lbl_url_not_found": "URL not found",
         
-        
+        "lbl_optimize_learning_path_error": "There was an error trying to optimize the sequence of items.",
         "lbl_search_no_term_found": "No Search Term Found",
         "lbl_searching_for": "Searching for",
         "lbl_searching_for_error": "Something went wrong searching for",

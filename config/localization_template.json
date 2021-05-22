@@ -102,6 +102,7 @@
         
         "lbl_note_delete_error": "There was an error removing your note",
         "lbl_note_update_error": "There was an error updating your note",
+        "lbl_note_empty_message": "No notes found",
         "lbl_add_note_fail_message": "There was an error addding your note",
         "lbl_playlist_no_playlists": "No playlists found"
     },

@@ -22,6 +22,8 @@ import { HeaderSearchBar } from './HeaderSearchBar';
 import { HeaderProfileWidget } from '../../components/HeaderProfileWidget/HeaderProfileWidget';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { LanguageSwitch } from '../LanguageSwitch';
+import { LanguageSwitcher } from 'app/components/LanguageSwitcher/LanguageSwitcher';
 
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
@@ -49,6 +51,7 @@ export function AppHeader(props) {
         </Col>
         <Col span={6}>
           <Row align="middle" justify="end">
+            <LanguageSwitcher/>
             <Button type="link">{t('about_us.lbl_about_us')}</Button>
             <HeaderProfileWidget />
           </Row>

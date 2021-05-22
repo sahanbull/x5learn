@@ -2,6 +2,9 @@ import { createAsyncThunk, createSelector } from '@reduxjs/toolkit';
 import { createSlice } from 'utils/@reduxjs/toolkit';
 import { fetchOerNotes } from 'app/api/api';
 import { RootState } from 'types';
+import { reducers as addOerNoteReducers } from './addOerNoteThunk';
+import { reducers as deleteOerNoteReducers } from './deleteOerNoteThunk';
+import { reducers as updateOerNoteReducers } from './updateOerNoteThunk';
 
 // The initial state of the GithubRepoForm container
 export const initialState: any = {
@@ -56,6 +59,9 @@ const fetchOerNoteslice = createSlice({
       state.loading = false;
       state.error = undefined;
     },
+    ...addOerNoteReducers,
+    ...deleteOerNoteReducers,
+    ...updateOerNoteReducers,
   },
 });
 

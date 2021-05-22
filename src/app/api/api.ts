@@ -30,7 +30,6 @@ async function fetchAPI(
     requestOptions.body = data;
     headers.append('Content-Type', 'application/json');
   }
-
   const response = await fetch(`${BASE_URL}${endpoint}`, requestOptions);
   const jsonResponse = await response.json();
   if (!response.ok) {
@@ -100,6 +99,34 @@ export async function fetchOerNotes(oerID) {
   const qs = queryString.stringify({ oer_id: oerID });
   return fetchAPI(`/note/?${qs}`);
 }
+
+export async function addOerNote(oerID, note) {
+  return fetchAPI(
+    `/note/`,
+    JSON.stringify({
+      oer_id: oerID,
+      text: note,
+    }),
+    {
+      method: 'POST',
+    },
+  );
+}
+export async function updateOerNote(noteID, note) {
+  const qs = queryString.stringify({ text: note });
+  return fetchAPI(`/note/${noteID}/?${qs}`, JSON.stringify({}), {
+    method: 'PUT',
+  });
+}
+export async function deleteOerNote(noteID) {
+  return fetchAPI(`/note/${noteID}/`, JSON.stringify({}), {
+    method: 'DELETE',
+  });
+}
+export async function getOerNote(noteID) {
+  return fetchAPI(`/note/${noteID}/`);
+}
+
 export async function fetchEntityDefinitions(idArray) {
   if (idArray.length === 0) {
     return [];

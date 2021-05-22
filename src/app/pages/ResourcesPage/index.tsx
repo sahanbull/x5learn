@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Row, Col, Card, Typography, Button, Progress, Spin } from 'antd';
+import { Row, Col, Card, Typography, Button, Progress, Spin, Space } from 'antd';
 import { AppLayout } from 'app/containers/Layout/AppLayout';
 import { AntDesignOutlined, UploadOutlined } from '@ant-design/icons';
 import { OerCardList } from '../HomePage/components/FeaturedOER/OerCardList';
@@ -118,8 +118,6 @@ export function ResourcesPage(props) {
 
                 <EnrichmentBar oerID={data.id} />
               </Col>
-            </Row>
-            <Row gutter={[16, 16]}>
               <Col span={24}>
                 <Card
                   headStyle={{ border: 'none' }}
@@ -138,6 +136,7 @@ export function ResourcesPage(props) {
                     </>
                   }
                 >
+                  <Space direction='vertical' size={40}>
                   <Meta
                     avatar={
                       <Avatar
@@ -176,6 +175,8 @@ export function ResourcesPage(props) {
                     }
                   />
                   <NotesWidget oerID={data?.id} />
+                  </Space>
+
                 </Card>
               </Col>
             </Row>

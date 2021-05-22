@@ -30,7 +30,7 @@
         "lbl_greeting": "Hey",
         "lbl_website_maintenance_page": "This website is currently undergoing a major update during which the site will be offline. Please check back in a few days.",
 
-
+        "lbl_notes_add_a_reaction":"Add a Reaction",
         "lbl_wikipedia": "Wikipedia"
 
     },
@@ -100,6 +100,9 @@
         "lbl_playlist_description_required_msg": "Please input a description",
         "lbl_playlist_description_input_placeholder": "Description",
         
+        "lbl_note_delete_error": "There was an error removing your note",
+        "lbl_note_update_error": "There was an error updating your note",
+        "lbl_add_note_fail_message": "There was an error addding your note",
         "lbl_playlist_no_playlists": "No playlists found"
     },
     "inspector": {

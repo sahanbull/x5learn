@@ -1,4 +1,14 @@
-import { Button, Col, Input, message, Row, Select, Typography } from 'antd';
+import {
+  Button,
+  Col,
+  Empty,
+  Input,
+  message,
+  Row,
+  Select,
+  Space,
+  Typography,
+} from 'antd';
 import {
   fetchOerNotesThunk,
   selectOerNotes,
@@ -216,28 +226,41 @@ export function NotesWidget({ oerID }) {
           </Row>
         </Col>
         <Col span={20}>
-          <TextArea
-            placeholder={t('inspector.lbl_enter_your_notes')}
-            autoSize={{ minRows: 2, maxRows: 6 }}
-            defaultValue={inputText}
-            onChange={({ target: { value } }) => {
-              setInputText(value);
-            }}
-            value={inputText}
-          />
-          <Button
-            type="primary"
-            disabled={!inputText}
-            loading={isAdding}
-            onClick={onAddNoteClick}
-          >
-            {t('playlist.btn_submit')}
-          </Button>
+          <Space direction="vertical" size={5} style={{ width: '100%' }}>
+            <TextArea
+              placeholder={t('inspector.lbl_enter_your_notes')}
+              autoSize={{ minRows: 2, maxRows: 6 }}
+              defaultValue={inputText}
+              onChange={({ target: { value } }) => {
+                setInputText(value);
+              }}
+              value={inputText}
+            />
+            <Button
+              type="primary"
+              disabled={!inputText}
+              loading={isAdding}
+              onClick={onAddNoteClick}
+            >
+              {t('playlist.btn_submit')}
+            </Button>
 
-          {data &&
-            data.map(item => {
-              return <EditableNote key={item.id} note={item} />;
-            })}
+            <Space direction="vertical" size={20} style={{ width: '100%' }}>
+              {!data ||
+                (!data.length && (
+                  <Empty
+                    description={
+                      <span>
+                        {t('alerts.lbl_note_empty_message', 'No notes found')}
+                      </span>
+                    }
+                  />
+                ))}
+              {data?.map(item => {
+                return <EditableNote key={item.id} note={item} />;
+              })}
+            </Space>
+          </Space>
         </Col>
       </Row>
     </>

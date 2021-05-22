@@ -11,6 +11,10 @@ import {
   sliceKey as notesKey,
   reducer as notesReducer,
 } from './ducks/fetchOerNotesThunk';
+import {
+  sliceKey as relatedOersKey,
+  reducer as relatedOersReducer,
+} from './ducks/fetchRelatedOersThunk';
 import { fetchOERsByIDsThunk } from 'app/containers/Layout/ducks/allOERSlice';
 import { Action, AsyncThunkAction, unwrapResult } from '@reduxjs/toolkit';
 import { EnrichmentBar } from 'app/components/EnrichmentBar/EnrichmentBar';
@@ -19,6 +23,7 @@ import Avatar from 'antd/lib/avatar/avatar';
 import { OerIcon } from 'app/components/OerIcon/OerIcon';
 import { NotesWidget } from 'app/components/NotesWidget/NotesWidget';
 import { useTranslation } from 'react-i18next';
+import { RelatedOersWidget } from 'app/components/RelatedOersWidget/RelatedOersWidget';
 
 const { Title, Text } = Typography;
 const { Meta } = Card;
@@ -28,6 +33,7 @@ const imageBaseURL = 'https://qa.x5learn.org/files/thumbs/';
 export function ResourcesPage(props) {
   useInjectReducer({ key: sliceKey, reducer: reducer });
   useInjectReducer({ key: notesKey, reducer: notesReducer });
+  useInjectReducer({ key: relatedOersKey, reducer: relatedOersReducer });
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const oerID = props.match?.params?.id;
@@ -175,6 +181,8 @@ export function ResourcesPage(props) {
                     }
                   />
                   <NotesWidget oerID={data?.id} />
+
+                  <RelatedOersWidget oerID={data?.id}/>
                   </Space>
 
                 </Card>

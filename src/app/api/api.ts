@@ -148,6 +148,10 @@ export async function fetchSearchOERs({ searchTerm, page }) {
 export async function fetchPlaylistLicenses() {
   return fetchAPI(`/license/`);
 }
+export async function fetchRelatedOers(oerID) {
+  const qs = queryString.stringify({ oerId: oerID });
+  return fetchAPI(`/recommendations/?${qs}`);
+}
 
 export async function createTempPlaylist(playlist: {
   title?;

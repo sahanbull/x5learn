@@ -59,7 +59,7 @@ export function SearchPage() {
     };
     dispatch(fetchSearchOerThunk(searchParams));
   }, [dispatch, page, searchTerm]);
-  debugger;
+
   return (
     <>
       <Helmet>

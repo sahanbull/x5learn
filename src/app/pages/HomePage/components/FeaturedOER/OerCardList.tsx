@@ -4,6 +4,11 @@ import { OerCard } from './OerCard';
 import { WarningOutlined } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
+const responsiveColWidths = {
+  xs: { span: 24 },
+  sm: { span: 12 },
+  lg: { span: 8 },
+};
 export function OerCardList(props: {
   loading?: boolean;
   error?: any | null;
@@ -15,13 +20,13 @@ export function OerCardList(props: {
   if (loading) {
     return (
       <Row gutter={16}>
-        <Col span={8}>
+        <Col {...responsiveColWidths}>
           <OerCard loading={true} />
         </Col>
-        <Col span={8}>
+        <Col {...responsiveColWidths}>
           <OerCard loading={true} />
         </Col>
-        <Col span={8}>
+        <Col {...responsiveColWidths}>
           <OerCard loading={true} />
         </Col>
       </Row>
@@ -45,7 +50,7 @@ export function OerCardList(props: {
     <Row gutter={[16, 16]}>
       {data?.map(item => {
         return (
-          <Col key={item.id} span={8}>
+          <Col key={item.id} {...responsiveColWidths}>
             <OerCard card={item} playlistID={props.playlistID} />
           </Col>
         );

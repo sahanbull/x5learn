@@ -138,7 +138,7 @@ export function PlaylistEditFormWidget(props: { formData? }) {
             {/* <Button type="primary" htmlType="submit" size="large">
           Save <UploadOutlined />
         </Button> */}
-            <Space>
+            <Space wrap>
               <Button
                 type="primary"
                 htmlType="button"

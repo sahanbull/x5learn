@@ -44,7 +44,7 @@ export function HeaderSearchBar(props) {
   );
 
   return (
-    <Row align="middle" justify="space-between">
+    <Row align="middle" wrap={false} justify="space-between">
       <Col flex="auto">
         <Search
           onSearch={searchHandler}

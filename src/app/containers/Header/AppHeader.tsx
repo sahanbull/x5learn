@@ -43,18 +43,24 @@ export function AppHeader(props) {
       <Row align="middle" justify="space-between">
         <Col span={6}>
           <Link to={`/`}>
-            <X5Logo />
+            <X5Logo style={{ width: '100%' }} />
           </Link>
         </Col>
         <Col span={12}>
           <HeaderSearchBar />
         </Col>
         <Col span={6}>
-          <Row align="middle" justify="end">
-            <LanguageSwitcher/>
-            <Button type="link">{t('about_us.lbl_about_us')}</Button>
-            <HeaderProfileWidget />
-          </Row>
+          <Menu mode="horizontal">
+            <Menu.Item key="mail">
+              <LanguageSwitcher />
+            </Menu.Item>
+            <Menu.Item key="app">
+              <Button type="link">{t('about_us.lbl_about_us')}</Button>
+            </Menu.Item>
+            <Menu.Item key="profile">
+              <HeaderProfileWidget />
+            </Menu.Item>
+          </Menu>
         </Col>
       </Row>
     </StyledHeader>

@@ -39,6 +39,10 @@ const { Meta } = Card;
 
 const imageBaseURL = 'https://qa.x5learn.org/files/thumbs/';
 
+const responsiveColWidths = {
+  lg: { span: 22 },
+};
+
 export function ResourcesPage(props) {
   useInjectReducer({ key: sliceKey, reducer: reducer });
   useInjectReducer({ key: notesKey, reducer: notesReducer });
@@ -144,7 +148,7 @@ export function ResourcesPage(props) {
                   onPlayLocationChange={onPlayLocationChange}
                 />
               </Col>
-              <Col span={24}>
+              <Col {...responsiveColWidths}>
                 <Card
                   headStyle={{ border: 'none' }}
                   title={<Title level={2}>{data.title}</Title>}
@@ -162,7 +166,11 @@ export function ResourcesPage(props) {
                     </>
                   }
                 >
-                  <Space direction="vertical" size={40}>
+                  <Space
+                    direction="vertical"
+                    size={40}
+                    style={{ width: '100%' }}
+                  >
                     <Meta
                       avatar={
                         <Avatar
@@ -199,7 +207,7 @@ export function ResourcesPage(props) {
                         </>
                       }
                       description={
-                        <Col md={18}>
+                        <Col>
                           {data.description ||
                             t('inspector.lbl_no_description')}
                         </Col>

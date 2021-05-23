@@ -42,7 +42,6 @@ export function LanguageSwitcher() {
   useEffect(() => {
     const lang = cookies.lang || 'EN';
     i18n.changeLanguage(lang);
-    debugger;
   }, [cookies, i18n]);
 
   useEffect(() => {

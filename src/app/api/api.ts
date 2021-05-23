@@ -114,17 +114,17 @@ export async function addOerNote(oerID, note) {
 }
 export async function updateOerNote(noteID, note) {
   const qs = queryString.stringify({ text: note });
-  return fetchAPI(`/note/${noteID}/?${qs}`, JSON.stringify({}), {
+  return fetchAPI(`/note/${noteID}?${qs}`, JSON.stringify({}), {
     method: 'PUT',
   });
 }
 export async function deleteOerNote(noteID) {
-  return fetchAPI(`/note/${noteID}/`, JSON.stringify({}), {
+  return fetchAPI(`/note/${noteID}`, JSON.stringify({}), {
     method: 'DELETE',
   });
 }
 export async function getOerNote(noteID) {
-  return fetchAPI(`/note/${noteID}/`);
+  return fetchAPI(`/note/${noteID}`);
 }
 
 export async function fetchEntityDefinitions(idArray) {

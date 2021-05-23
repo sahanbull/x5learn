@@ -1,6 +1,15 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Row, Col, Card, Typography, Button, Progress, Spin, Space } from 'antd';
+import {
+  Row,
+  Col,
+  Card,
+  Typography,
+  Button,
+  Progress,
+  Spin,
+  Space,
+} from 'antd';
 import { AppLayout } from 'app/containers/Layout/AppLayout';
 import { AntDesignOutlined, UploadOutlined } from '@ant-design/icons';
 import { OerCardList } from '../HomePage/components/FeaturedOER/OerCardList';
@@ -36,6 +45,7 @@ export function ResourcesPage(props) {
   useInjectReducer({ key: relatedOersKey, reducer: relatedOersReducer });
   const { t } = useTranslation();
   const dispatch = useDispatch();
+  const videoRef = useRef<HTMLVideoElement>(null);
   const oerID = props.match?.params?.id;
 
   const [oerData, setOERData] = useState<{
@@ -71,6 +81,11 @@ export function ResourcesPage(props) {
     }
   };
 
+  const onPlayLocationChange = ({ posInSec, duration }) => {
+    if (videoRef?.current) {
+      videoRef.current.currentTime = posInSec;
+    }
+  };
   useEffect(() => {
     loadOERIdDetails(oerID);
   }, [dispatch, oerID]);
@@ -103,6 +118,7 @@ export function ResourcesPage(props) {
 
                 {data.mediatype === 'video' && (
                   <video
+                    ref={videoRef}
                     width="100%"
                     style={{ width: '100%', height: '45vh' }}
                     controls
@@ -122,7 +138,11 @@ export function ResourcesPage(props) {
                   </object>
                 )}
 
-                <EnrichmentBar oerID={data.id} />
+                <EnrichmentBar
+                  oerID={data.id}
+                  oer={data}
+                  onPlayLocationChange={onPlayLocationChange}
+                />
               </Col>
               <Col span={24}>
                 <Card
@@ -142,49 +162,53 @@ export function ResourcesPage(props) {
                     </>
                   }
                 >
-                  <Space direction='vertical' size={40}>
-                  <Meta
-                    avatar={
-                      <Avatar
-                        size={{
-                          xs: 24,
-                          sm: 32,
-                          md: 40,
-                          lg: 64,
-                          xl: 80,
-                        }}
-                        icon={<OerIcon mediatype={data?.mediatype} />}
-                      />
-                    }
-                    title={
-                      <>
-                        <Text strong>
-                          {t('playlist.lbl_playlist_provider')}:{' '}
-                        </Text>
-                        <Text>{data.provider}</Text> {` / `}
-                        <Text strong>{t('playlist.lbl_playlist_mediatype')}: </Text>
-                        <Text>{data.mediatype}</Text> {` / `}
-                        <Text strong>{t('playlist.lbl_playlist_date')}: </Text>
-                        <Text>
-                          {new Date(data.date).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                          })}
-                        </Text>
-                      </>
-                    }
-                    description={
-                      <Col md={18}>
-                        {data.description || t('inspector.lbl_no_description')}
-                      </Col>
-                    }
-                  />
-                  <NotesWidget oerID={data?.id} />
+                  <Space direction="vertical" size={40}>
+                    <Meta
+                      avatar={
+                        <Avatar
+                          size={{
+                            xs: 24,
+                            sm: 32,
+                            md: 40,
+                            lg: 64,
+                            xl: 80,
+                          }}
+                          icon={<OerIcon mediatype={data?.mediatype} />}
+                        />
+                      }
+                      title={
+                        <>
+                          <Text strong>
+                            {t('playlist.lbl_playlist_provider')}:{' '}
+                          </Text>
+                          <Text>{data.provider}</Text> {` / `}
+                          <Text strong>
+                            {t('playlist.lbl_playlist_mediatype')}:{' '}
+                          </Text>
+                          <Text>{data.mediatype}</Text> {` / `}
+                          <Text strong>
+                            {t('playlist.lbl_playlist_date')}:{' '}
+                          </Text>
+                          <Text>
+                            {new Date(data.date).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                            })}
+                          </Text>
+                        </>
+                      }
+                      description={
+                        <Col md={18}>
+                          {data.description ||
+                            t('inspector.lbl_no_description')}
+                        </Col>
+                      }
+                    />
+                    <NotesWidget oerID={data?.id} />
 
-                  <RelatedOersWidget oerID={data?.id}/>
+                    <RelatedOersWidget oerID={data?.id} />
                   </Space>
-
                 </Card>
               </Col>
             </Row>

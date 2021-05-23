@@ -75,18 +75,6 @@ function EditableNote({ note }) {
   };
   const onEditClick = async () => {
     setIsEditing(true);
-
-    try {
-      const deleteResponse = await dispatch(
-        deleteOerNoteThunk({ noteID: id, oerID: oer_id }),
-      );
-      const deleteResult = unwrapResult(deleteResponse as any);
-      message.success(t('alerts.lbl_note_delete_success'));
-    } catch (err) {
-      message.error(t('alerts.lbl_note_delete_error'));
-    } finally {
-      setIsDeleting(false);
-    }
   };
 
   const onEditSuccessClick = async () => {
@@ -219,7 +207,11 @@ export function NotesWidget({ oerID }) {
                 }}
               >
                 {predefinedTextArr.map(item => {
-                  return <Option value={item}>{t(item)}</Option>;
+                  return (
+                    <Option key={item} value={item}>
+                      {t(item)}
+                    </Option>
+                  );
                 })}
               </Select>
             </Col>

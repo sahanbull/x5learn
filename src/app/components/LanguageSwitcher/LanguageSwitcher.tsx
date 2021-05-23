@@ -17,16 +17,16 @@ import { SmileOutlined } from '@ant-design/icons';
 import { addOerNoteThunk } from 'app/pages/ResourcesPage/ducks/addOerNoteThunk';
 import { unwrapResult } from '@reduxjs/toolkit';
 import { getSupportedLangs } from 'app/api/api';
+import { useCookies } from 'react-cookie';
 
 const { Option } = Select;
 
 export function LanguageSwitcher() {
-  const items = [];
   const { t, i18n } = useTranslation();
 
-  const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
   const [supportedLangs, setSupportedLangs] = useState([]);
+  const [cookies, setCookie, removeCookie] = useCookies(['lang']);
 
   const loadLangs = async () => {
     try {
@@ -38,19 +38,24 @@ export function LanguageSwitcher() {
     } finally {
       setIsLoading(false);
     }
-    debugger;
   };
+  useEffect(() => {
+    const lang = cookies.lang || 'EN';
+    i18n.changeLanguage(lang);
+    debugger;
+  }, [cookies, i18n]);
+
   useEffect(() => {
     loadLangs();
   }, []);
 
   const onLangChange = lang => {
-    i18n.changeLanguage(lang)
+    setCookie('lang', lang?.toUpperCase(), { path: '/' });
   };
   return (
     <>
       <Select
-        defaultValue="EN"
+        defaultValue={cookies.lang || 'EN'}
         style={{ width: 60 }}
         loading={isLoading}
         onChange={onLangChange}

@@ -49,6 +49,7 @@ export function HeaderProfileWidget(props) {
         trigger="click"
       >
         <Button
+          style={{ alignItems: 'stretch' }}
           size="large"
           icon={
             <Image preview={false} width={40} src="/static/favicon.ico"></Image>

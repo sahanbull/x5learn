@@ -50,7 +50,7 @@ export function AppHeader(props) {
           <HeaderSearchBar />
         </Col>
         <Col span={6}>
-          <Menu mode="horizontal">
+          <Menu mode="horizontal" style={{ textAlign: 'right' }}>
             <Menu.Item key="mail">
               <LanguageSwitcher />
             </Menu.Item>

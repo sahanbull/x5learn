@@ -216,6 +216,9 @@
         "lbl_playlist_mediatype": "Type",
         "lbl_playlist_date": "Date",
         "lbl_playlist_edit": "Edit Playlist",
-        "lbl_playlist_see_all": "See All"
+        "lbl_playlist_see_all": "See All",
+        "lbl_current_path": "Current Path",
+        "lbl_optimized_path": "Optimized Path",
+
     }
 }

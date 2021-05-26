@@ -41,6 +41,31 @@ const SortableOerCard = ({ oerId }) => {
 const SortableItem = SortableElement(props => <tr {...props} />);
 const SortableContainer2 = SortableContainer(props => <tbody {...props} />);
 
+export const useOerData=(playlist_items)=>{
+  const dispatch = useDispatch();
+  const [oerData, setOERData] = useState({
+    data: null,
+    loading: true,
+    error: null,
+  });
+  const loadOERIds = async () => {
+    setOERData({ data: null, loading: true, error: null });
+    const oerIdArray = playlist_items.map(item => {
+      return item.data;
+    });
+    try {
+      const oerResult = (await dispatch(
+        fetchOERsByIDsThunk(oerIdArray),
+      )) as any;
+      const resolvedData = await unwrapResult(oerResult);
+      setOERData({ data: resolvedData, loading: false, error: null });
+    } catch (e) {
+      setOERData({ data: null, loading: false, error: e });
+    }
+  };
+  return [oerData, loadOERIds];
+}
+
 export function PlaylistItemSortWidget({
   playlist_items,
   onItemsReorder,

@@ -32,7 +32,7 @@ import { PlaylistPublishFormWidget } from './PlaylistPublishFormWidget';
 import { PlaylistItemSortWidget } from '../PlaylistItemSortWidget/PlaylistItemSortWidget';
 import { updateTempPlaylistThunk } from 'app/containers/Layout/ducks/myPlaylistMenu/updateTempPlaylist';
 import { useTranslation } from 'react-i18next';
-import { optimizeTempPlaylistPathThunk } from 'app/containers/Layout/ducks/myPlaylistMenu/optimizeTempPlaylistPath';
+import { PlaylistOptimizeConfirmationWidget } from './PlaylistOptimizeConfirmationWidget';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -68,6 +68,7 @@ export function PlaylistEditFormWidget(props: { formData? }) {
   }, [licenseData, dispatch]);
 
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isOptimizeModalVisible, setIsOptimizeModalVisible] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const showModal = () => {
@@ -97,25 +98,7 @@ export function PlaylistEditFormWidget(props: { formData? }) {
   };
 
   const optimizeLearningPath = async () => {
-    try {
-      setIsUpdating(true);
-      const oerIds = playlist_items.map(oer => {
-        return oer.oer_id;
-      });
-      const optimizeCall = (await dispatch(
-        optimizeTempPlaylistPathThunk({
-          tempPlaylistName: playlist.title,
-          oerIds,
-        }),
-      )) as any;
-      const optimizeResult = await unwrapResult(optimizeCall);
-      setIsUpdating(false);
-      debugger;
-      message.info(t('alerts.lbl_optimize_learning_path_success'));
-    } catch (e) {
-      setIsUpdating(false);
-      message.error(t('alerts.lbl_optimize_learning_path_error'));
-    }
+    setIsOptimizeModalVisible(true);
   };
 
   return (
@@ -164,11 +147,20 @@ export function PlaylistEditFormWidget(props: { formData? }) {
       </Row>
 
       <>
-        <PlaylistPublishFormWidget
-          visible={isModalVisible}
-          setIsModalVisible={setIsModalVisible}
-          formData={props.formData}
-        />
+        {isModalVisible && (
+          <PlaylistPublishFormWidget
+            visible={isModalVisible}
+            setIsModalVisible={setIsModalVisible}
+            formData={props.formData}
+          />
+        )}
+        {isOptimizeModalVisible && (
+          <PlaylistOptimizeConfirmationWidget
+            visible={isOptimizeModalVisible}
+            setIsModalVisible={setIsOptimizeModalVisible}
+            formData={props.formData}
+          />
+        )}
       </>
     </Form>
   );

@@ -79,7 +79,12 @@ export function OerCard(props: {
         hoverable
         bordered={false}
         style={cardStyle}
-        cover={<img alt={`${card?.title}`} src={imgSrc} />}
+        cover={
+          <>
+            <img alt={`${card?.title}`} src={imgSrc} />
+            <EnrichmentBar oerID={card?.id} />
+          </>
+        }
       >
         <Meta
           avatar={
@@ -93,7 +98,6 @@ export function OerCard(props: {
           title={card?.title}
           description={
             <>
-              <EnrichmentBar oerID={card?.id} />
               <Text strong>{t('playlist.lbl_playlist_provider')}: </Text>
               {card?.provider}
               <br />

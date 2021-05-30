@@ -59,22 +59,39 @@ export function RelatedOersWidget({ oerID }) {
         </Col>
         <Col span={20}>
           {!data && <Empty />}
-          {data?.map(item => {
-            const { id, title, images, durationInSeconds, description } = item;
-            let pathToNavigateTo = `${ROUTES.RESOURCES}/${id}`;
-
-            return (
-              <Link key={id} to={pathToNavigateTo}>
-                <Card
-                  hoverable
-                  style={{ width: 240 }}
-                  cover={<img alt={title} src={images[0]} />}
-                >
-                  <Card.Meta title={title} description={description} />
-                </Card>
-              </Link>
-            );
-          })}
+          <Row gutter={[20, 20]}>
+            {data?.map(item => {
+              const {
+                id,
+                title,
+                images,
+                durationInSeconds,
+                description,
+              } = item;
+              let pathToNavigateTo = `${ROUTES.RESOURCES}/${id}`;
+              const imageBaseURL = 'https://qa.x5learn.org/files/thumbs/';
+              let imgSrc = `/static/img/thumbnail_unavailable.jpg`;
+              if (images[0]) {
+                imgSrc = `${imageBaseURL}/${images[0]}`;
+              }
+              return (
+                <Col lg={6} md={12}>
+                  <Link key={id} to={pathToNavigateTo}>
+                    <Card
+                      hoverable
+                      // style={{ width: 240 }}
+                      cover={<img alt={title} src={imgSrc} />}
+                    >
+                      <Card.Meta
+                        title={title}
+                        // description={description}
+                      />
+                    </Card>
+                  </Link>
+                </Col>
+              );
+            })}
+          </Row>
         </Col>
       </Row>
     </>

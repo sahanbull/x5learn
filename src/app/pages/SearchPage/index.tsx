@@ -8,7 +8,7 @@ import { useInjectReducer } from 'redux-injectors';
 import { useDispatch, useSelector } from 'react-redux';
 import { SearchOerList } from './components/SearchOerList';
 import { AppLayout } from 'app/containers/Layout/AppLayout';
-import { Pagination, Spin } from 'antd';
+import { Pagination, Row, Space, Spin } from 'antd';
 import {
   fetchSearchOerThunk,
   sliceKey as searchOerSliceKey,
@@ -96,17 +96,19 @@ export function SearchPage() {
               </Title>
             )}
             <SearchOerList />
-            <br/>
+            <br />
             {searchResult && (
-              <Pagination
-                defaultCurrent={+page}
-                total={total_pages}
-                showSizeChanger={false}
-                onChange={page => {
-                  query.set('page', `${page}`);
-                  history.push(`${ROUTES.SEARCH}?${query.toString()}`);
-                }}
-              />
+              <Row justify="center">
+                <Pagination
+                  defaultCurrent={+page}
+                  total={total_pages}
+                  showSizeChanger={false}
+                  onChange={page => {
+                    query.set('page', `${page}`);
+                    history.push(`${ROUTES.SEARCH}?${query.toString()}`);
+                  }}
+                />
+              </Row>
             )}
           </>
         )}

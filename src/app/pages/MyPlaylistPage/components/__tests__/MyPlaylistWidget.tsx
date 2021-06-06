@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Pagination, Spin, Typography } from 'antd';
+import { Pagination, Row, Spin, Typography } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'types';
 import { useInjectReducer } from 'redux-injectors';
@@ -65,18 +65,22 @@ export function MyPlaylistWidget(props: {}) {
         </Title>
       )}
       <PlaylistCardList data={data} loading={loading} error={error} />
-      {total_pages > 1 && (
-        <Pagination
-          defaultCurrent={+page}
-          disabled={loading}
-          total={totalItems}
-          showSizeChanger={false}
-          onChange={page => {
-            query.set('page', `${page}`);
-            history.push(`${ROUTES.MY_PLAYLISTS}?${query.toString()}`);
-          }}
-        />
-      )}
+      
+        {total_pages > 1 && (
+          <Row justify="center">
+          <Pagination
+            defaultCurrent={+page}
+            disabled={loading}
+            total={totalItems}
+            showSizeChanger={false}
+            onChange={page => {
+              query.set('page', `${page}`);
+              history.push(`${ROUTES.MY_PLAYLISTS}?${query.toString()}`);
+            }}
+          />
+          </Row>
+        )}
+      
     </>
   );
 }

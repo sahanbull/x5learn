@@ -18,6 +18,7 @@ import { NodeIndexOutlined } from '@ant-design/icons';
 const { SubMenu } = Menu;
 const { Panel } = Collapse;
 
+const barHeight = 12;
 const toHHMMSS = function (seconds) {
   if (seconds < 0) {
     seconds = 0;
@@ -150,7 +151,7 @@ const StyledChunk = styled(
 )`
   background-color: #ffffff;
   border: solid 2px #999fb2;
-  height: 8px;
+  height: ${barHeight}px;
   flex: ${props => {
     return props.chunk.length;
   }};
@@ -306,11 +307,23 @@ export const EnrichmentBar = function (props: {
   };
 
   if (data && data.errors) {
-    return <>Error</>;
+    return (
+      <StyledChunks
+        className={`chunks`}
+        style={{ background: '#d9363e24', height: `${barHeight}px` }}
+      ></StyledChunks>
+    );
   }
   return (
     <div>
-      {loading && <Progress percent={100} status="active" showInfo={false} />}
+      {loading && (
+        <Progress
+          percent={100}
+          status="active"
+          showInfo={false}
+          style={{ height: `${barHeight}px` }}
+        />
+      )}
       {data && (
         <>
           <div style={{ position: 'relative' }}>

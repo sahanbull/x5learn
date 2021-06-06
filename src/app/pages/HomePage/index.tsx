@@ -6,6 +6,7 @@ import { RecomendedOerList } from './components/FeaturedOER/RecomendedOerList';
 import { useInjectReducer } from 'redux-injectors';
 import { useDispatch } from 'react-redux';
 import { fetchFeaturedOer, sliceKey, reducer } from './ducks/featuredOerSlice';
+import { Space } from 'antd';
 
 export function HomePage() {
   useInjectReducer({ key: sliceKey, reducer: reducer });
@@ -21,8 +22,10 @@ export function HomePage() {
         <meta name="description" content="X5 Learn AI based learning" />
       </Helmet>
       <AppLayout>
-        <RecomendedOerList />
-        <LatestOerList />
+        <Space size='large' style={{ width : '100%' }} direction='vertical'>
+          <RecomendedOerList />
+          <LatestOerList />
+        </Space>
       </AppLayout>
     </>
   );

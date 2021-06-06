@@ -46,11 +46,9 @@ const OerRow = ({ oerId, mark = false, ...props }) => {
   const cardData = useSelector((state: RootState) => {
     return selectOerByID(state, oerId);
   });
-  debugger;
   const loading = useSelector((state: RootState) => {
     return state.allOERs.loading;
   });
-  debugger;
   return (
     <List.Item>
       <Paragraph ellipsis={{ rows: 2 }} mark={mark}>
@@ -193,7 +191,6 @@ export function PlaylistOptimizeConfirmationWidget(props: {
               itemLayout="horizontal"
               dataSource={optimizedOedIdOrder.map((item, idx) => {
                 const mark = item !== unOptimizedOedIdOrder[idx];
-                debugger;
                 return { oerId: item, mark };
               })}
               renderItem={item => <OerRow {...item} />}

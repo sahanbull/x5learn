@@ -1,5 +1,5 @@
 import React, { ReactComponentElement, ReactElement, useCallback } from 'react';
-import { Card, Row, Skeleton, Typography } from 'antd';
+import { Card, Row, Skeleton, Space, Typography } from 'antd';
 import Avatar from 'antd/lib/avatar/avatar';
 import Meta from 'antd/lib/card/Meta';
 import styled from 'styled-components';
@@ -111,11 +111,17 @@ export function OerCard(props: {
         />
         <Row
           justify="end"
-          align="top"
+          align="middle"
           style={{ position: 'absolute', top: '5px', right: '5px' }}
         >
-          <AddToPlaylistButton oerId={card?.id} size="small" hideLabel={true} />
-          {card?.duration && <Duration>{card?.duration}</Duration>}
+          <Space size={3} align="start">
+            <AddToPlaylistButton
+              oerId={card?.id}
+              size="small"
+              hideLabel={true}
+            />
+            {card?.duration && <Duration>{card?.duration}</Duration>}
+          </Space>
         </Row>
       </Card>
     </Link>

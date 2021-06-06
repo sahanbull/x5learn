@@ -1,3 +1,10 @@
+import {
+  AudioOutlined,
+  FileTextOutlined,
+  VideoCameraAddOutlined,
+  VideoCameraOutlined,
+} from '@ant-design/icons';
+
 const MusicIconSVG = () => (
   <svg
     className="anticon"
@@ -30,8 +37,8 @@ const VideoIconSVG = () => (
   <svg
     className="anticon"
     width="1.25em"
-    height="1.25em"
-    viewBox="0 0 1024 1024"
+    // height="1.25em"
+    viewBox="0 0 900 1500"
   >
     <path
       d="M918.613333 305.066667a42.666667 42.666667 0 0 0-42.666666 0L725.333333 379.306667A128 128 0 0 0 597.333333 256H213.333333a128 128 0 0 0-128 128v256a128 128 0 0 0 128 128h384a128 128 0 0 0 128-123.306667l151.893334 75.946667A42.666667 42.666667 0 0 0 896 725.333333a42.666667 42.666667 0 0 0 22.613333-6.4A42.666667 42.666667 0 0 0 938.666667 682.666667V341.333333a42.666667 42.666667 0 0 0-20.053334-36.266666zM640 640a42.666667 42.666667 0 0 1-42.666667 42.666667H213.333333a42.666667 42.666667 0 0 1-42.666666-42.666667V384a42.666667 42.666667 0 0 1 42.666666-42.666667h384a42.666667 42.666667 0 0 1 42.666667 42.666667z m213.333333-26.453333l-128-64v-75.093334l128-64z"
@@ -41,17 +48,17 @@ const VideoIconSVG = () => (
 );
 
 export function OerIcon({ mediatype }) {
-  let icon = <DocumentIconSVG />;
+  let icon = <FileTextOutlined />;
 
   switch (mediatype) {
     case 'audio':
-      icon = <MusicIconSVG />;
+      icon = <AudioOutlined />;
       break;
     case 'pdf':
-      icon = <DocumentIconSVG />;
+      icon = <FileTextOutlined />;
       break;
     case 'video':
-      icon = <VideoIconSVG />;
+      icon = <VideoCameraOutlined />;
       break;
   }
 

@@ -14,7 +14,7 @@ import { Provider } from 'react-redux';
 import FontFaceObserver from 'fontfaceobserver';
 import * as serviceWorker from 'serviceWorker';
 
-import 'sanitize.css/sanitize.css';
+// import 'sanitize.css/sanitize.css';
 
 // Initialize languages
 import './locales/i18n';

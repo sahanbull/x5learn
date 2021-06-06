@@ -22,7 +22,7 @@ export function AddToPlaylistButton({
   );
 
   const addToPlaylist = async event => {
-    event.preventDefault()
+    event.preventDefault();
     // event.stopImmediatePropagation()
     const playlistName = event.target.getAttribute('data-name');
 
@@ -55,7 +55,7 @@ export function AddToPlaylistButton({
   const btnLabel = !hideLabel && t('inspector.btn_add_to_playlist');
 
   return (
-    <Dropdown overlay={menu} placement="bottomRight">
+    <Dropdown overlay={menu} placement="bottomRight" trigger={['click']}>
       <Button
         type="primary"
         shape="round"

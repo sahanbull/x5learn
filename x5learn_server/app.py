@@ -791,6 +791,8 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     metadata = json.loads(response)['metadata']
     materials = json.loads(response)['rec_materials']
     materials = filter_x5gon_search_results(materials)
+    materials = force_https_for_oers(materials)
+
     # materials = remove_duplicates_from_x5gon_search_results(materials)
     for index, material in enumerate(materials):
         url = material['url']
@@ -883,6 +885,13 @@ def filter_x5gon_search_results(materials):
     # materials = [m for m in materials if m['language'] == 'en']
     return materials
 
+# temporary function to rewrite non http urls as https
+def force_https_for_oers(materials):
+    for m in materials:
+        if m['url'].startswith('http:'):
+            m['url'] = m['url'].replace('http:', 'https:')
+
+    return materials
 
 # def remove_duplicates_from_x5gon_search_results(materials):
 #     enrichments = {}

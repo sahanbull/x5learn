@@ -29,7 +29,6 @@
         "btn_content_flow_off": "OFF",
         "lbl_greeting": "Hey",
         "lbl_website_maintenance_page": "This website is currently undergoing a major update during which the site will be offline. Please check back in a few days.",
-
         "lbl_notes_add_a_reaction":"Add a Reaction",
         "lbl_wikipedia": "Wikipedia"
 
@@ -73,7 +72,6 @@
         "lbl_no_results_were_found_prefix": "No results were found for",
         "lbl_no_results_were_found_suffix": "Please try a different search term",
         "lbl_url_not_found": "URL not found",
-        
         "lbl_optimize_learning_path_error": "There was an error trying to optimize the sequence of items.",
         "lbl_search_no_term_found": "No Search Term Found",
         "lbl_searching_for": "Searching for",
@@ -90,7 +88,6 @@
         "lbl_load_playlists_no_oers": "No linked OERs in playlist",
         "lbl_playlist_update_success": "Playlist updated successfully",
         "lbl_playlist_update_error": "Something went wrong when updating playlist",
-
         "lbl_playlist_title_required_msg": "Please input a playlist title",
         "lbl_playlist_title_input_placeholder": "Playlist title",
         "lbl_playlist_author_required_msg": "Please input author name",
@@ -99,7 +96,6 @@
         "lbl_playlist_license_input_placeholder": "Select License",
         "lbl_playlist_description_required_msg": "Please input a description",
         "lbl_playlist_description_input_placeholder": "Description",
-        
         "lbl_note_delete_error": "There was an error removing your note",
         "lbl_note_update_error": "There was an error updating your note",
         "lbl_note_empty_message": "No notes found",
@@ -206,8 +202,6 @@
         "btn_select_license": "Select License",
         "btn_pagination_previous": "Previous",
         "btn_pagination_next": "Next",
-        
-
         "lbl_playlist_my_playlists": "My Playlists",
         "lbl_playlist_updated_date": "Updated",
         "lbl_playlist_oer_material_count": "OER Materials",
@@ -218,7 +212,6 @@
         "lbl_playlist_edit": "Edit Playlist",
         "lbl_playlist_see_all": "See All",
         "lbl_current_path": "Current Path",
-        "lbl_optimized_path": "Optimized Path",
-
+        "lbl_optimized_path": "Optimized Path"
     }
 }

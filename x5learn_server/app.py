@@ -313,6 +313,14 @@ def api_session():
     return jsonify({'guestUser': 'OK'})
 
 
+@cross_origin()
+@app.route("/playlist/temp/<playlist_id>")
+def playlist_redirect():
+    languages = get_available_languages()
+    localization_dict, lang = get_localization_dict()
+    return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
+
+
 def get_logged_in_user_profile_and_state():
     profile = current_user.user_profile if current_user.user_profile is not None else {
         'email': current_user.email}
@@ -1223,14 +1231,26 @@ class UserApi(Resource):
 class UserHistoryApi(Resource):
     '''Api to fetch user history'''
 
+    @ns_user.doc('get_user_history', params={'sort': 'Sort result set by timestamp (Default: desc)',
+                                           'offset': 'Offset result set by the given number (Default: 0)',
+                                           'limit': 'Limit result set to a specific number of records (Default: None)'})
+
     def get(self):
         '''Get user history'''
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
+            
+        parser = reqparse.RequestParser()
+        parser.add_argument('sort', default='desc', choices=(
+                'asc', 'desc'), help='Bad choice')
+        parser.add_argument('offset', default=0, type=int)
+        parser.add_argument('limit', default=20, type=int)
+        args = parser.parse_args()
 
         # Creating a actions repository for unique data fetch
         actions_repository = ActionsRepository()
-        result_list = actions_repository.get_actions(current_user.get_id(), 1, 'desc', 0, 20)
+        result_list = actions_repository.get_actions(current_user.get_id(), 1, args['sort'],
+                                                         args['offset'], args['limit'])
 
         # Extracting oer ids
         oers = list()
@@ -1238,6 +1258,9 @@ class UserHistoryApi(Resource):
             for i in result_list:
                 temp_action = i.Action.serialize
                 oer_details = repository.get_by_id(Oer, temp_action['params'].get('oerId', 0))
+
+                if oer_details is None:
+                    continue
 
                 oers.append({
                     'oer_id': temp_action['params'].get('oerId', 0),

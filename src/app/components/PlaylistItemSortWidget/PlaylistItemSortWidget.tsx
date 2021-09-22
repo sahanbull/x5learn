@@ -1,4 +1,4 @@
-import { ArrowsAltOutlined, DeleteOutlined } from '@ant-design/icons';
+import { ArrowsAltOutlined, DeleteOutlined, DragOutlined } from '@ant-design/icons';
 import { unwrapResult } from '@reduxjs/toolkit';
 import { Button, Table, Typography } from 'antd';
 import { fetchOERsByIDsThunk } from 'app/containers/Layout/ducks/allOERSlice';
@@ -17,7 +17,7 @@ import { createSelector } from 'reselect';
 import { RootState } from 'types';
 
 const DragHandle = SortableHandle(() => (
-  <ArrowsAltOutlined style={{ cursor: 'grab', color: '#999' }} />
+  <DragOutlined style={{ cursor: 'grab', color: '#1DA57A', fontSize: '30px' }} />
 ));
 
 export const selectAllOers = state => state.allOERs.data;
@@ -195,7 +195,7 @@ export function PlaylistItemSortWidget({
             type="link"
             onClick={onItemDelete}
             loading={isUpdating}
-            icon={<DeleteOutlined />}
+            icon={<DeleteOutlined style={{fontSize: '28px'}} />}
           ></Button>
         );
       },

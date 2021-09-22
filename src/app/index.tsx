@@ -23,6 +23,9 @@ import { PublishPlaylistPage } from './pages/PublishPlaylistPage/Loadable';
 import { EditTempPlaylistPage } from './pages/EditTempPlaylistPage/Loadable';
 import { MyPlaylistsPage } from './pages/MyPlaylistPage/Loadable';
 
+const BASE_URL = process.env.REACT_APP_BASE_URL;
+const REDIRECT_URL = process.env.REACT_APP_REDIRECT_URL;
+
 export function App() {
   return (
     <BrowserRouter>
@@ -63,6 +66,13 @@ export function App() {
           exact
           path={ROUTES.RESOURCES + '/:id'}
           component={ResourcesPage}
+        />
+        <Route
+          path="/logout"
+          component={() => {
+            window.location.href = REDIRECT_URL + '/logout';
+            return null;
+          }}
         />
         <Route component={NotFoundPage} />
       </Switch>

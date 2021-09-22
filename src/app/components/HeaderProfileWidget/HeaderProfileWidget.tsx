@@ -43,7 +43,7 @@ export function HeaderProfileWidget(props) {
           <>
             <Link href="#">My Profile</Link>
             <br />
-            <Link href="#">Logout</Link>
+            <Link href="/logout">Logout</Link>
           </>
         }
         trigger="click"

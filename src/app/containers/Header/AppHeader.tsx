@@ -28,6 +28,8 @@ import { LanguageSwitcher } from 'app/components/LanguageSwitcher/LanguageSwitch
 const { SubMenu } = Menu;
 const { Header, Content, Sider } = Layout;
 
+const REDIRECT_URL = process.env.REACT_APP_REDIRECT_URL;
+
 const StyledHeader = styled(Header)`
   box-shadow: 0 2px 8px 0 rgba(0, 19, 77, 0.16);
   z-index: 50;
@@ -35,6 +37,10 @@ const StyledHeader = styled(Header)`
   /* display: flex;
   align-items: center; */
 `;
+
+const redirectToAboutUsPage = () => {
+  window.location.href = REDIRECT_URL + 'about';
+};
 
 export function AppHeader(props) {
   const { t } = useTranslation();
@@ -55,7 +61,7 @@ export function AppHeader(props) {
               <LanguageSwitcher />
             </Menu.Item>
             <Menu.Item key="app">
-              <Button type="link">{t('about_us.lbl_about_us')}</Button>
+              <Button onClick={redirectToAboutUsPage} type="link">{t('about_us.lbl_about_us')}</Button>
             </Menu.Item>
             <Menu.Item key="profile">
               <HeaderProfileWidget />

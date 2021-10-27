@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, render_template, request, redirect, flash
+from flask_wtf import Form, RecaptchaField
 from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required, \
     forms, RegisterForm, ResetPasswordForm, roles_required
@@ -84,6 +85,7 @@ class ExtendedRegisterForm(RegisterForm):
     password = forms.PasswordField('Password', \
                                    [forms.validators.Regexp(regex='[A-Za-z0-9@#$%^&+=]{8,}',
                                                             message="Invalid password")])
+    recaptcha = RecaptchaField()
     password_confirm = False
 
 
@@ -103,6 +105,11 @@ app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = MAIL_USERNAME
 app.config['MAIL_PASSWORD'] = MAIL_PASS
 app.config['MAIL_DEFAULT_SENDER'] = MAIL_SENDER
+
+app.config['RECAPTCHA_USE_SSL'] = False
+app.config['RECAPTCHA_PUBLIC_KEY'] ='6LdeiPkcAAAAAO2fOEugV8kdHVTfiXSLxDe2yjK6'
+app.config['RECAPTCHA_PRIVATE_KEY'] ='6LdeiPkcAAAAAMmBGzwnXSTo0gkecoAi_T59__Jp'
+app.config['RECAPTCHA_OPTIONS'] = {'theme':'black'}
 
 mail.init_app(app)
 

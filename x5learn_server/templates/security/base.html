@@ -150,6 +150,10 @@
         border: 1px solid #ddd;
       }
 
+      .g-recaptcha > div {
+        margin:auto;
+      }
+
     </style>
     <title>{% block title %}{{ title|default }}{% endblock title %}</title>
 
@@ -160,6 +164,7 @@
       {%- block styles %}
       {%- endblock styles %}
     {%- endblock head %}
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   </head>
   <body{% block body_attribs %}{% endblock body_attribs %}>
     {% block body -%}

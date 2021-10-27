@@ -27,6 +27,7 @@
       {% if register_user_form.password_confirm %}
         {{ render_field_with_errors(register_user_form.password_confirm, placeholder='Password') }}
       {% endif %}
+      {{ render_field_with_errors(register_user_form.recaptcha) }}
       {{ render_field(register_user_form.submit) }}
     </form>
     <p class="centernote">Already a member? <a href="/login">Log in.</a></p>

@@ -14,6 +14,9 @@ import { GlobalStyle } from '../styles/global-styles';
 
 import { HomePage } from './pages/HomePage/Loadable';
 import { PlaylistsPage } from './pages/PlaylistsPage/Loadable';
+import { ProfilePage } from './pages/ProfilePage/Loadable';
+import { NotesPage } from './pages/NotesPage/Loadable';
+import { HistoryPage } from './pages/HistoryPage/Loadable';
 import { ResourcesPage } from './pages/ResourcesPage/Loadable';
 import { SearchPage } from './pages/SearchPage/Loadable';
 import { NotFoundPage } from './containers/NotFoundPage/Loadable';
@@ -29,10 +32,7 @@ const REDIRECT_URL = process.env.REACT_APP_REDIRECT_URL;
 export function App() {
   return (
     <BrowserRouter>
-      <Helmet
-        titleTemplate="%s - X5Learn"
-        defaultTitle="X5Learn"
-      >
+      <Helmet titleTemplate="%s - X5Learn" defaultTitle="X5Learn">
         <meta name="description" content="The AI Powered Learning Platform" />
       </Helmet>
       <Switch>
@@ -47,6 +47,9 @@ export function App() {
           path={ROUTES.MY_PLAYLISTS_CREATE}
           component={CreatePlaylistsPage}
         />
+        <Route exact path={ROUTES.PROFILE_PAGE} component={ProfilePage} />
+        <Route exact path={ROUTES.NOTES_PAGE} component={NotesPage} />
+        <Route exact path={ROUTES.HISTORY_PAGE} component={HistoryPage} />
         <Route
           exact
           path={ROUTES.PLAYLISTS + '/temp/:id'}

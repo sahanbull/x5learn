@@ -247,3 +247,9 @@ export async function getTranslations(lang) {
     method: 'POST',
   });
 }
+
+export async function updateProfile(values) {
+  return fetchAPI(`/save_user_profile/`, JSON.stringify(values), {
+    method: 'POST',
+  });
+}

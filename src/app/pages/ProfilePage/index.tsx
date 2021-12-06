@@ -11,7 +11,7 @@ import {
 } from 'app/containers/Layout/ducks/loggedInUserDetailsSlice';
 import { useTranslation } from 'react-i18next';
 import { Image } from 'antd';
-import { Form, Input, Checkbox, Switch } from 'antd';
+import { Form, Input, Switch } from 'antd';
 import {
   updateProfileThunk,
   sliceKey as updateProfileSliceKey,
@@ -41,7 +41,7 @@ export function ProfilePage() {
     lastName: '',
     loaded: false,
   });
-  const [isEdit, setIsEdit] = useState(false);
+  const [isDirty, setIsDirty] = useState(false);
 
   useEffect(() => {
     if (loggedInUser && loggedInUser.userProfile) {
@@ -71,7 +71,7 @@ export function ProfilePage() {
     values.email = loggedInUser.userProfile.email;
     await dispatch(updateProfileThunk(values));
     await dispatch(fetchLoggedInUserDetailsThunk());
-    setIsEdit(false);
+    setIsDirty(false);
   };
 
   return (
@@ -80,11 +80,6 @@ export function ProfilePage() {
         <title>{fullName}</title>
       </Helmet>
       <AppLayout className="profile-page">
-        {!isEdit && (
-          <button style={{ float: 'right' }} onClick={() => setIsEdit(true)}>
-            Edit
-          </button>
-        )}
         <div style={{ padding: '25px' }}>
           <h2>My profile</h2>
           <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -105,6 +100,7 @@ export function ProfilePage() {
                 name="profileDetails"
                 initialValues={initialValues}
                 onFinish={onFinish}
+                onValuesChange={() => setIsDirty(true)}
                 wrapperCol={{ span: 16 }}
                 autoComplete="off"
               >
@@ -118,7 +114,7 @@ export function ProfilePage() {
                     },
                   ]}
                 >
-                  <Input disabled={!isEdit} />
+                  <Input />
                 </Form.Item>
 
                 <Form.Item
@@ -128,7 +124,7 @@ export function ProfilePage() {
                     { required: true, message: 'Please input your last name!' },
                   ]}
                 >
-                  <Input disabled={!isEdit} />
+                  <Input />
                 </Form.Item>
 
                 <Form.Item
@@ -136,14 +132,14 @@ export function ProfilePage() {
                   valuePropName="checked"
                   label="Allow X5GON to collect data about my activity on this site for research"
                 >
-                  <Switch disabled={!isEdit} />
+                  <Switch />
                 </Form.Item>
 
                 <Form.Item>
                   <Button
                     type="primary"
                     htmlType="submit"
-                    disabled={!isEdit || isSaving}
+                    disabled={!isDirty || isSaving}
                     loading={isSaving}
                   >
                     Save

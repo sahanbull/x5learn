@@ -1,39 +1,25 @@
+
 import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import {
-  Layout,
-  Menu,
-  Breadcrumb,
-  Input,
-  Space,
-  Button,
-  Row,
-  Col,
-  Form,
-  Popover,
-  Image,
-  Typography,
-} from 'antd';
-import {
-  UserOutlined,
-  LaptopOutlined,
-  AppstoreOutlined,
-} from '@ant-design/icons';
-
-import styled from 'styled-components';
-import Column from 'antd/lib/table/Column';
+import { useSelector } from 'react-redux';
+import { Button, Popover, Image, Typography } from 'antd';
 import { sliceKey as loggedInUserDetailsSliceKey } from 'app/containers/Layout/ducks/loggedInUserDetailsSlice';
+import { Link } from 'react-router-dom';
 
-const { Title, Link, Text } = Typography;
-const { SubMenu } = Menu;
-const { Header, Content, Sider } = Layout;
-const { Search } = Input;
+const { Text } = Typography;
 
 export function HeaderProfileWidget(props) {
-  const loggedInUser = useSelector(state => state[loggedInUserDetailsSliceKey].loggedInUser);
+  const loggedInUser = useSelector(
+    state => state[loggedInUserDetailsSliceKey].loggedInUser,
+  );
   let fullName = 'Please add your name';
-  if (loggedInUser && loggedInUser.userProfile && (loggedInUser.userProfile.firstName || loggedInUser.userProfile.lastName)) {
-    fullName = `${loggedInUser.userProfile.firstName || ''} ${loggedInUser.userProfile.lastName || ''}`;
+  if (
+    loggedInUser &&
+    loggedInUser.userProfile &&
+    (loggedInUser.userProfile.firstName || loggedInUser.userProfile.lastName)
+  ) {
+    fullName = `${loggedInUser.userProfile.firstName || ''} ${
+      loggedInUser.userProfile.lastName || ''
+    }`;
   }
   return (
     <>
@@ -43,14 +29,18 @@ export function HeaderProfileWidget(props) {
           <>
             <Text strong>{fullName}</Text>
             <br />
-            <Text>{loggedInUser && loggedInUser.userProfile ? loggedInUser.userProfile.email : ''}</Text>
+            <Text>
+              {loggedInUser && loggedInUser.userProfile
+                ? loggedInUser.userProfile.email
+                : ''}
+            </Text>
           </>
         }
         content={
           <>
-            <Link href="/profile">My Profile</Link>
+            <Link to="/profile">My Profile</Link>
             <br />
-            <Link href="/logout">Logout</Link>
+            <Link to="/logout">Logout</Link>
           </>
         }
         trigger="click"

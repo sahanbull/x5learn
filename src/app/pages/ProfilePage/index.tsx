@@ -11,12 +11,14 @@ import {
 } from 'app/containers/Layout/ducks/loggedInUserDetailsSlice';
 import { useTranslation } from 'react-i18next';
 import { Image } from 'antd';
-import { Form, Input, Switch } from 'antd';
+import { Form, Input, Switch, Typography } from 'antd';
 import {
   updateProfileThunk,
   sliceKey as updateProfileSliceKey,
   reducer as updateProfileReducer,
 } from './ducks/ProfilePageSlice';
+
+const { Text } = Typography;
 
 export function ProfilePage() {
   const dispatch = useDispatch();
@@ -34,6 +36,7 @@ export function ProfilePage() {
     state => state[loggedInUserDetailsSliceKey].loggedInUser,
   );
   const isSaving = useSelector(state => state[updateProfileSliceKey].loading);
+  const error = useSelector(state => state[updateProfileSliceKey].error);
 
   const [initialValues, setInitialValues] = useState({
     isDataCollectionConsent: false,
@@ -134,7 +137,11 @@ export function ProfilePage() {
                 >
                   <Switch />
                 </Form.Item>
-
+                {!isDirty && error && (
+                  <Text type="danger">
+                    Something went wrong. Please try again.
+                  </Text>
+                )}
                 <Form.Item>
                   <Button
                     type="primary"

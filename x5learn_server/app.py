@@ -1,4 +1,5 @@
 from flask import Flask, jsonify, render_template, request, redirect, flash
+from flask_wtf import Form, RecaptchaField
 from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required, \
     forms, RegisterForm, ResetPasswordForm, roles_required
@@ -84,6 +85,7 @@ class ExtendedRegisterForm(RegisterForm):
     password = forms.PasswordField('Password', \
                                    [forms.validators.Regexp(regex='[A-Za-z0-9@#$%^&+=]{8,}',
                                                             message="Invalid password")])
+    recaptcha = RecaptchaField()
     password_confirm = False
 
 
@@ -103,6 +105,11 @@ app.config['MAIL_USE_SSL'] = True
 app.config['MAIL_USERNAME'] = MAIL_USERNAME
 app.config['MAIL_PASSWORD'] = MAIL_PASS
 app.config['MAIL_DEFAULT_SENDER'] = MAIL_SENDER
+
+app.config['RECAPTCHA_USE_SSL'] = False
+app.config['RECAPTCHA_PUBLIC_KEY'] ='6LdeiPkcAAAAAO2fOEugV8kdHVTfiXSLxDe2yjK6'
+app.config['RECAPTCHA_PRIVATE_KEY'] ='6LdeiPkcAAAAAMmBGzwnXSTo0gkecoAi_T59__Jp'
+app.config['RECAPTCHA_OPTIONS'] = {'theme':'black'}
 
 mail.init_app(app)
 
@@ -311,14 +318,6 @@ def api_session():
         resp = get_logged_in_user_profile_and_state()
         return resp
     return jsonify({'guestUser': 'OK'})
-
-
-@cross_origin()
-@app.route("/playlist/temp/<playlist_id>")
-def playlist_redirect():
-    languages = get_available_languages()
-    localization_dict, lang = get_localization_dict()
-    return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
 
 
 def get_logged_in_user_profile_and_state():
@@ -799,8 +798,6 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
     metadata = json.loads(response)['metadata']
     materials = json.loads(response)['rec_materials']
     materials = filter_x5gon_search_results(materials)
-    materials = force_https_for_oers(materials)
-
     # materials = remove_duplicates_from_x5gon_search_results(materials)
     for index, material in enumerate(materials):
         url = material['url']
@@ -893,13 +890,6 @@ def filter_x5gon_search_results(materials):
     # materials = [m for m in materials if m['language'] == 'en']
     return materials
 
-# temporary function to rewrite non http urls as https
-def force_https_for_oers(materials):
-    for m in materials:
-        if m['url'].startswith('http:'):
-            m['url'] = m['url'].replace('http:', 'https:')
-
-    return materials
 
 # def remove_duplicates_from_x5gon_search_results(materials):
 #     enrichments = {}
@@ -1231,26 +1221,23 @@ class UserApi(Resource):
 class UserHistoryApi(Resource):
     '''Api to fetch user history'''
 
-    @ns_user.doc('get_user_history', params={'sort': 'Sort result set by timestamp (Default: desc)',
-                                           'offset': 'Offset result set by the given number (Default: 0)',
-                                           'limit': 'Limit result set to a specific number of records (Default: None)'})
-
     def get(self):
         '''Get user history'''
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
-            
+
+        # Declaring and processing params available for request
         parser = reqparse.RequestParser()
         parser.add_argument('sort', default='desc', choices=(
-                'asc', 'desc'), help='Bad choice')
+            'asc', 'desc'), help='Bad choice')
         parser.add_argument('offset', default=0, type=int)
         parser.add_argument('limit', default=20, type=int)
         args = parser.parse_args()
 
         # Creating a actions repository for unique data fetch
         actions_repository = ActionsRepository()
-        result_list = actions_repository.get_actions(current_user.get_id(), 1, args['sort'],
-                                                         args['offset'], args['limit'])
+        result_list = actions_repository.get_actions(current_user.get_id(), 1, args['sort'], args['offset'], args['limit'])
+        total = actions_repository.get_action_count(current_user.get_id(), 1)
 
         # Extracting oer ids
         oers = list()
@@ -1259,16 +1246,13 @@ class UserHistoryApi(Resource):
                 temp_action = i.Action.serialize
                 oer_details = repository.get_by_id(Oer, temp_action['params'].get('oerId', 0))
 
-                if oer_details is None:
-                    continue
-
                 oers.append({
                     'oer_id': temp_action['params'].get('oerId', 0),
                     'last_accessed': temp_action['created_at'],
                     'title': oer_details.data.get('title', ' - ')
                 })
 
-        return {'oers': oers}, 200
+        return {'oers': oers, 'meta': {'current': args['offset'] + 1, 'total': total, 'sort': args['sort']}}, 200
 
 
 # Defining user resource for API access

@@ -592,6 +592,20 @@ class ActionsRepository(Repository):
         return query_object.all()
 
 
+    def get_action_count(self, user_login_id, action_type_id=None):
+        query_object = self._db_session.query(
+            Action, ActionType).join(ActionType)
+
+        if (action_type_id):
+            query_object = query_object.filter(
+                Action.action_type_id == action_type_id)
+
+        query_object = query_object.filter(
+            Action.user_login_id == user_login_id)
+
+        return query_object.count()
+
+
 class UserRepository(Repository):
 
     def forget_user(self, user, user_login_id):

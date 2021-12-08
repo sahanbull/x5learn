@@ -1226,9 +1226,18 @@ class UserHistoryApi(Resource):
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
 
+        # Declaring and processing params available for request
+        parser = reqparse.RequestParser()
+        parser.add_argument('sort', default='desc', choices=(
+            'asc', 'desc'), help='Bad choice')
+        parser.add_argument('offset', default=0, type=int)
+        parser.add_argument('limit', default=20, type=int)
+        args = parser.parse_args()
+
         # Creating a actions repository for unique data fetch
         actions_repository = ActionsRepository()
-        result_list = actions_repository.get_actions(current_user.get_id(), 1, 'desc', 0, 20)
+        result_list = actions_repository.get_actions(current_user.get_id(), 1, args['sort'], args['offset'], args['limit'])
+        total = actions_repository.get_action_count(current_user.get_id(), 1)
 
         # Extracting oer ids
         oers = list()
@@ -1243,7 +1252,7 @@ class UserHistoryApi(Resource):
                     'title': oer_details.data.get('title', ' - ')
                 })
 
-        return {'oers': oers}, 200
+        return {'oers': oers, 'meta': {'current': args['offset'] + 1, 'total': total, 'sort': args['sort']}}, 200
 
 
 # Defining user resource for API access

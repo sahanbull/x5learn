@@ -247,3 +247,14 @@ export async function getTranslations(lang) {
     method: 'POST',
   });
 }
+
+export async function updateProfile(values) {
+  return fetchAPI(`/save_user_profile/`, JSON.stringify(values), {
+    method: 'POST',
+  });
+}
+
+export async function getUserHistory(sort = 'asc', limit = 10, offset = 0) {
+  const qs = queryString.stringify({ sort, limit, offset });
+  return fetchAPI(`/user/history?${qs}`);
+}

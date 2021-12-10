@@ -23,5 +23,8 @@ export interface RootState {
   allEntityDefs?: any;
   oerNotes?: any;
   relatedOers?: any;
+  loggedInUserDetails?: any;
+  profilePage?: any;
+  historyPage?: any;
   // [INSERT NEW REDUCER KEY ABOVE] < Needed for generating containers seamlessly
 }

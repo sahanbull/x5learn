@@ -1,6 +1,12 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Layout } from 'antd';
+import { useDispatch, useSelector } from 'react-redux';
 
+import {
+  sliceKey as loggedInUserDetailsSliceKey,
+  reducer as loggedInUserDetailsReducer,
+  fetchLoggedInUserDetailsThunk,
+} from './ducks/loggedInUserDetailsSlice';
 import {
   sliceKey as playlistMenuSliceKey,
   reducer as playlistMenuReducer,
@@ -30,6 +36,8 @@ import {
 const { Header, Content, Sider, Footer } = Layout;
 
 export function AppLayout(props) {
+  const dispatch = useDispatch();
+  useInjectReducer({ key: loggedInUserDetailsSliceKey, reducer: loggedInUserDetailsReducer });
   useInjectReducer({ key: playlistMenuSliceKey, reducer: playlistMenuReducer });
   useInjectReducer({ key: oerSliceKey, reducer: oerReducer });
   useInjectReducer({
@@ -44,7 +52,9 @@ export function AppLayout(props) {
     key: entityDefSliceKey,
     reducer: entityDefReducer,
   });
-
+  useEffect(() => {
+    dispatch(fetchLoggedInUserDetailsThunk());
+  }, [dispatch]);
   return (
     <Layout>
       <AppHeader></AppHeader>

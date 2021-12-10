@@ -1,49 +1,46 @@
+
 import React from 'react';
-import {
-  Layout,
-  Menu,
-  Breadcrumb,
-  Input,
-  Space,
-  Button,
-  Row,
-  Col,
-  Form,
-  Popover,
-  Image,
-  Typography,
-} from 'antd';
-import {
-  UserOutlined,
-  LaptopOutlined,
-  AppstoreOutlined,
-} from '@ant-design/icons';
+import { useSelector } from 'react-redux';
+import { Button, Popover, Image, Typography } from 'antd';
+import { sliceKey as loggedInUserDetailsSliceKey } from 'app/containers/Layout/ducks/loggedInUserDetailsSlice';
+import { Link } from 'react-router-dom';
 
-import styled from 'styled-components';
-import Column from 'antd/lib/table/Column';
-
-const { Title, Link, Text } = Typography;
-const { SubMenu } = Menu;
-const { Header, Content, Sider } = Layout;
-const { Search } = Input;
+const { Text } = Typography;
 
 export function HeaderProfileWidget(props) {
+  const loggedInUser = useSelector(
+    state => state[loggedInUserDetailsSliceKey].loggedInUser,
+  );
+  let fullName = 'Please add your name';
+  if (
+    loggedInUser &&
+    loggedInUser.userProfile &&
+    (loggedInUser.userProfile.firstName || loggedInUser.userProfile.lastName)
+  ) {
+    fullName = `${loggedInUser.userProfile.firstName || ''} ${
+      loggedInUser.userProfile.lastName || ''
+    }`;
+  }
   return (
     <>
       <Popover
         placement="bottomLeft"
         title={
           <>
-            <Text strong>Name Surname</Text>
+            <Text strong>{fullName}</Text>
             <br />
-            <Text>name.surname@email.si</Text>
+            <Text>
+              {loggedInUser && loggedInUser.userProfile
+                ? loggedInUser.userProfile.email
+                : ''}
+            </Text>
           </>
         }
         content={
           <>
-            <Link href="#">My Profile</Link>
+            <Link to="/profile">My Profile</Link>
             <br />
-            <Link href="/logout">Logout</Link>
+            <Link to="/logout">Logout</Link>
           </>
         }
         trigger="click"

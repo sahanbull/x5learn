@@ -25,5 +25,6 @@ export interface RootState {
   relatedOers?: any;
   loggedInUserDetails?: any;
   profilePage?: any;
+  historyPage?: any;
   // [INSERT NEW REDUCER KEY ABOVE] < Needed for generating containers seamlessly
 }

@@ -50,8 +50,15 @@ export function OerCardList(props: {
     <Row gutter={[16, 16]}>
       {data?.map(item => {
         return (
-          <Col key={item.id} {...responsiveColWidths}>
-            <OerCard card={item} playlistID={props.playlistID} />
+          <Col
+            key={`${item.id}-${item.last_accessed}`}
+            {...responsiveColWidths}
+          >
+            <OerCard
+              card={item}
+              playlistID={props.playlistID}
+              loading={item.loading}
+            />
           </Col>
         );
       })}

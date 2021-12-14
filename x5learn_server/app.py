@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from dateutil import parser
 from sqlalchemy import or_, and_, cast, Integer
 from sqlalchemy.orm.attributes import flag_modified
-from flask_restplus import Api, Resource, fields, reqparse
+from flask_restplus import Api, Resource, fields, reqparse, cors
 from flask_cors import CORS, cross_origin
 import wikipedia
 import base64
@@ -1065,6 +1065,8 @@ def shutdown_session(exception=None):
 # Defining api for X5Learn to access various resources
 api = Api(app, title='X5Learn API', version=LATEST_API_VERSION, doc='/apidoc/',
           description='An API to access resources related to X5Learn web application')
+
+api.decorators=[cors.crossdomain(origin='*')]
 
 ns_info = api.namespace(
     'api/latest/info', description='Information relating to the API')

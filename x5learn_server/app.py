@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from dateutil import parser
 from sqlalchemy import or_, and_, cast, Integer
 from sqlalchemy.orm.attributes import flag_modified
-from flask_restplus import Api, Resource, fields, reqparse, cors
+from flask_restplus import Api, Resource, fields, reqparse
 from flask_cors import CORS, cross_origin
 import wikipedia
 import base64
@@ -40,7 +40,7 @@ from x5learn_server.course_optimization import optimize_course
 # Create app
 app = Flask(__name__)
 
-cors = CORS(app, resources={r'/*': {'origins': '*'}})
+cors = CORS(app)
 app.config['CORS_ALLOW_HEADERS'] = '*'
 app.config['CORS_EXPOSE_HEADERS'] = '*' 
 app.config['CORS_SUPPORTS_CREDENTIALS'] = True
@@ -1066,8 +1066,6 @@ def shutdown_session(exception=None):
 api = Api(app, title='X5Learn API', version=LATEST_API_VERSION, doc='/apidoc/',
           description='An API to access resources related to X5Learn web application')
 
-api.decorators=[cors.crossdomain(origin='*')]
-
 ns_info = api.namespace(
     'api/latest/info', description='Information relating to the API')
 
@@ -1232,7 +1230,7 @@ class UserHistoryApi(Resource):
         parser.add_argument('sort', default='desc', choices=(
             'asc', 'desc'), help='Bad choice')
         parser.add_argument('offset', default=0, type=int)
-        parser.add_argument('limit', default=20, type=int)
+        parser.add_argument('limit', default=12, type=int)
         args = parser.parse_args()
 
         # Creating a actions repository for unique data fetch
@@ -1253,7 +1251,7 @@ class UserHistoryApi(Resource):
                     'title': oer_details.data.get('title', ' - ')
                 })
 
-        return {'oers': oers, 'meta': {'current': args['offset'] + 1, 'total': total, 'sort': args['sort']}}, 200
+        return {'oers': oers, 'meta': {'current': args['offset'], 'total': total, 'sort': args['sort']}}, 200
 
 
 # Defining user resource for API access
@@ -1356,8 +1354,8 @@ class NotesList(Resource):
             parser = reqparse.RequestParser()
             parser.add_argument('oer_id', type=int)
             parser.add_argument('sort', default='desc', choices=('asc', 'desc'), help='Bad choice')
-            parser.add_argument('offset', type=int)
-            parser.add_argument('limit', type=int)
+            parser.add_argument('offset', default=0, type=int)
+            parser.add_argument('limit',  default=12, type=int)
             args = parser.parse_args()
 
             # Building and executing query object
@@ -1382,12 +1380,18 @@ class NotesList(Resource):
 
             result_list = query_object.all()
 
+            # Get total results
+            query_object = db_session.query(Note)
+            query_object = query_object.filter(Note.user_login_id == current_user.get_id())
+            query_object = query_object.filter(Note.is_deactivated == False)
+            total = query_object.count()
+
             # Converting result list to JSON friendly format
             serializable_list = list()
             if (result_list):
                 serializable_list = [i.serialize for i in result_list]
 
-            return serializable_list
+            return {'notes': serializable_list, 'meta': {'current': args['offset'], 'total': total, 'sort': args['sort']}} 
 
     @ns_notes.doc('create_note')
     @ns_notes.expect(m_note, validate=True)

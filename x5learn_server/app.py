@@ -39,9 +39,8 @@ from x5learn_server.course_optimization import optimize_course
 
 # Create app
 app = Flask(__name__)
-CORS(app)
 
-cors = CORS(app)
+cors = CORS(app, resources={r'/*': {'origins': '*'}})
 app.config['CORS_ALLOW_HEADERS'] = '*'
 app.config['CORS_EXPOSE_HEADERS'] = '*' 
 app.config['CORS_SUPPORTS_CREDENTIALS'] = True

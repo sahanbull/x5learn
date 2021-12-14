@@ -16,8 +16,30 @@ import {
 } from 'app/containers/Layout/ducks/allOERSlice';
 import { OerCardList } from '../HomePage/components/FeaturedOER/OerCardList';
 import { Pagination, Row } from 'antd';
+import { Table, Tag, Space } from 'antd';
+import { OerSortableView } from '../HomePage/components/FeaturedOER/OerSortableView';
 
 const PAGE_LIMIT = 10;
+
+const columns = [
+  {
+    title: 'Oer',
+    key: 'oer',
+    render: (text, record) => (
+      <OerSortableView loading={record.loading} card={record} />
+    ),
+  },
+  {
+    title: 'Note',
+    dataIndex: 'text',
+    key: 'text',
+  },
+  {
+    title: 'Last Updated',
+    dataIndex: 'last_updated_at',
+    key: 'last_updated_at',
+  },
+];
 
 export function NotesPage() {
   const dispatch = useDispatch();
@@ -32,7 +54,7 @@ export function NotesPage() {
     reducer: oerReducer,
   });
 
-  const historyList = useSelector(state => state[sliceKey].oers);
+  const notesList = useSelector(state => state[sliceKey].oers);
   const total = useSelector(state => state[sliceKey].total);
   const loading = useSelector(state => state[sliceKey].loading);
   const error = useSelector(state => state[sliceKey].error);
@@ -46,26 +68,26 @@ export function NotesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // useEffect(() => {
-  //   if (historyList && historyList.length > 0) {
-  //     const oerIdArray = historyList.map((oer: { oer_id: any }) => oer.oer_id);
-  //     dispatch(fetchOERsByIDsThunk(oerIdArray));
-  //   }
-  // }, [dispatch, historyList]);
+  useEffect(() => {
+    if (notesList && notesList.length > 0) {
+      const oerIdArray = notesList.map((oer: { oer_id: any }) => oer.oer_id);
+      dispatch(fetchOERsByIDsThunk(oerIdArray));
+    }
+  }, [dispatch, notesList]);
 
-  let historyOerList = [];
-  // if (historyList && historyList.length > 0) {
-  //   historyOerList = historyList.map(history => {
-  //     if (allOers && allOers[history.oer_id]) {
-  //       return {
-  //         ...allOers[history.oer_id],
-  //         last_accessed: history.last_accessed,
-  //       };
-  //     } else {
-  //       return { ...history, loading: true };
-  //     }
-  //   });
-  // }
+  let notesOerList = [];
+  if (notesList && notesList.length > 0) {
+    notesOerList = notesList.map(note => {
+      if (allOers && allOers[note.oer_id]) {
+        return {
+          ...allOers[note.oer_id],
+          ...note,
+        };
+      } else {
+        return { ...note, loading: true };
+      }
+    });
+  }
   return (
     <>
       <Helmet>
@@ -74,7 +96,8 @@ export function NotesPage() {
       <AppLayout className="profile-page">
         <div style={{ padding: '25px' }}>
           <h2>Notes</h2>
-          {/* <OerCardList loading={loading} error={error} data={historyOerList} /> */}
+          <Table columns={columns} dataSource={notesOerList} />
+          {/* <OerCardList loading={loading} error={error} data={notesOerList} /> */}
         </div>
         <Row justify="center">
           <Pagination

@@ -36,7 +36,7 @@ const getUserHistorySlice = createSlice({
     [getUserHistoryThunk.fulfilled.toString()]: (state: any, action) => {
       state.loading = false;
       state.oers = action.payload.oers;
-      state.currentOffset = action.meta.arg.offset;
+      state.currentOffset = action.meta.current - 1;
       state.total = action.payload.meta.total;
     },
     [getUserHistoryThunk.rejected.toString()]: (state: any, action) => {

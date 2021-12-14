@@ -1,22 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { AppLayout } from 'app/containers/Layout/AppLayout';
 import { useInjectReducer } from 'redux-injectors';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
-import {
-  getNotesListThunk,
-  sliceKey,
-  reducer,
-} from './ducks/NotesPageSlice';
+import { getNotesListThunk, sliceKey, reducer } from './ducks/NotesPageSlice';
 import {
   fetchOERsByIDsThunk,
   sliceKey as oerSliceKey,
   reducer as oerReducer,
 } from 'app/containers/Layout/ducks/allOERSlice';
-import { OerCardList } from '../HomePage/components/FeaturedOER/OerCardList';
-import { Pagination, Row } from 'antd';
-import { Table, Tag, Space } from 'antd';
+import { Pagination, Row, Table } from 'antd';
 import { OerSortableView } from '../HomePage/components/FeaturedOER/OerSortableView';
 
 const PAGE_LIMIT = 10;
@@ -38,6 +32,17 @@ const columns = [
     title: 'Last Updated',
     dataIndex: 'last_updated_at',
     key: 'last_updated_at',
+    render: lastUpdated => (
+      <p>
+        {new Date(lastUpdated).toLocaleString('en-GB', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        })}
+      </p>
+    ),
   },
 ];
 
@@ -63,7 +68,7 @@ export function NotesPage() {
 
   useEffect(() => {
     dispatch(
-      getNotesListThunk({ sort: 'asc', limit: PAGE_LIMIT, offset: currentOffset }),
+      getNotesListThunk({ sort: 'desc', limit: PAGE_LIMIT, offset: currentOffset }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -96,8 +101,11 @@ export function NotesPage() {
       <AppLayout className="profile-page">
         <div style={{ padding: '25px' }}>
           <h2>Notes</h2>
-          <Table columns={columns} dataSource={notesOerList} />
-          {/* <OerCardList loading={loading} error={error} data={notesOerList} /> */}
+          <Table
+            columns={columns}
+            dataSource={notesOerList}
+            pagination={false}
+          />
         </div>
         <Row justify="center">
           <Pagination
@@ -108,7 +116,7 @@ export function NotesPage() {
             onChange={page => {
               dispatch(
                 getNotesListThunk({
-                  sort: 'asc',
+                  sort: 'desc',
                   limit: PAGE_LIMIT,
                   offset: PAGE_LIMIT * (page - 1),
                 }),

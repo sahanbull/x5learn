@@ -34,8 +34,8 @@ const getNotesListSlice = createSlice({
     },
     [getNotesListThunk.fulfilled.toString()]: (state: any, action) => {
       state.loading = false;
-      state.oers = action.payload.oers;
-      state.currentOffset = action.meta.arg.offset;
+      state.oers = action.payload;
+      state.currentOffset = action.meta.current - 1;
       state.total = action.payload.meta.total;
     },
     [getNotesListThunk.rejected.toString()]: (state: any, action) => {

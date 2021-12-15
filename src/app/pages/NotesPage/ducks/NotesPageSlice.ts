@@ -3,7 +3,7 @@ import { createSlice } from 'utils/@reduxjs/toolkit';
 import { getNotesList } from 'app/api/api';
 
 export const initialState: any = {
-  oers: [],
+  notes: [],
   loading: false,
   error: null,
   currentOffset: 0,
@@ -28,13 +28,13 @@ const getNotesListSlice = createSlice({
   reducers: {},
   extraReducers: {
     [getNotesListThunk.pending.toString()]: (state: any, action) => {
-      state.oers = [];
+      state.notes = [];
       state.loading = true;
       state.error = null;
     },
     [getNotesListThunk.fulfilled.toString()]: (state: any, action) => {
       state.loading = false;
-      state.oers = action.payload;
+      state.notes = action.payload.notes;
       state.currentOffset = action.meta.current - 1;
       state.total = action.payload.meta.total;
     },

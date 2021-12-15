@@ -59,7 +59,7 @@ export function NotesPage() {
     reducer: oerReducer,
   });
 
-  const notesList = useSelector(state => state[sliceKey].oers);
+  const notesList = useSelector(state => state[sliceKey].notes);
   const total = useSelector(state => state[sliceKey].total);
   const loading = useSelector(state => state[sliceKey].loading);
   const error = useSelector(state => state[sliceKey].error);

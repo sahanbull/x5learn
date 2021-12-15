@@ -86,10 +86,7 @@ export function ProfilePage() {
         <div style={{ padding: '25px' }}>
           <h2>My profile</h2>
           <div style={{ display: 'flex', alignItems: 'center' }}>
-            <Image
-              width={150}
-              src="https://www.kindpng.com/picc/m/24-248253_user-profile-default-image-png-clipart-png-download.png"
-            />
+            <Image width={150} src="/static/img/profile.png" />
             <div style={{ marginLeft: '25px' }}>
               <h3>{fullName}</h3>
               {loggedInUser && loggedInUser.userProfile && (

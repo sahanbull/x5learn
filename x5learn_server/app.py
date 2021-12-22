@@ -1,3 +1,4 @@
+from sqlalchemy.sql.expression import false, true
 from flask import Flask, jsonify, render_template, request, redirect, flash
 from flask_wtf import Form, RecaptchaField
 from flask_mail import Mail, Message
@@ -580,9 +581,9 @@ def api_save_user_profile():
     if current_user.is_authenticated:
         current_user.user_profile = request.get_json()
         db_session.commit()
-        return 'OK'
+        return jsonify(true)
     else:
-        return 'Error', 403
+        return jsonify(false), 403
 
 
 @cross_origin()
@@ -1344,7 +1345,8 @@ class NotesList(Resource):
     @ns_notes.doc('list_notes', params={'oer_id': 'Filter by material id',
                                         'sort': 'Sort results (Default: desc)',
                                         'offset': 'Offset results',
-                                        'limit': 'Limit results'})
+                                        'limit': 'Limit results',
+                                        'pagination': 'If meta data for pagination should be returned'})
     def get(self):
         '''Fetches multiple notes from database based on params'''
         if not current_user.is_authenticated:
@@ -1356,6 +1358,7 @@ class NotesList(Resource):
             parser.add_argument('sort', default='desc', choices=('asc', 'desc'), help='Bad choice')
             parser.add_argument('offset', default=0, type=int)
             parser.add_argument('limit',  default=12, type=int)
+            parser.add_argument('pagination',  default='false')
             args = parser.parse_args()
 
             # Building and executing query object
@@ -1391,7 +1394,11 @@ class NotesList(Resource):
             if (result_list):
                 serializable_list = [i.serialize for i in result_list]
 
-            return {'notes': serializable_list, 'meta': {'current': args['offset'], 'total': total, 'sort': args['sort']}} 
+            if (args['pagination'] == 'true'):
+                return {'notes': serializable_list, 'meta': {'current': args['offset'], 'total': total, 'sort': args['sort']}}
+            else:
+                return serializable_list
+
 
     @ns_notes.doc('create_note')
     @ns_notes.expect(m_note, validate=True)

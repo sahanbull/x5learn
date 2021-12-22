@@ -1,4 +1,3 @@
-from sqlalchemy.sql.expression import false, true
 from flask import Flask, jsonify, render_template, request, redirect, flash
 from flask_wtf import Form, RecaptchaField
 from flask_mail import Mail, Message
@@ -581,9 +580,9 @@ def api_save_user_profile():
     if current_user.is_authenticated:
         current_user.user_profile = request.get_json()
         db_session.commit()
-        return jsonify(true)
+        return jsonify(True)
     else:
-        return jsonify(false), 403
+        return jsonify(False), 403
 
 
 @cross_origin()

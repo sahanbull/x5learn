@@ -22,9 +22,11 @@ const updateProfileSlice = createSlice({
   extraReducers: {
     [updateProfileThunk.pending.toString()]: (state: any, action) => {
       state.loading = true;
+      state.error = null;
     },
     [updateProfileThunk.fulfilled.toString()]: (state: any, action) => {
       state.loading = false;
+      state.error = null;
     },
     [updateProfileThunk.rejected.toString()]: (state: any, action) => {
       state.loading = false;

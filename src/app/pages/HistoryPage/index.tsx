@@ -17,7 +17,7 @@ import {
 import { OerCardList } from '../HomePage/components/FeaturedOER/OerCardList';
 import { Pagination, Row } from 'antd';
 
-const PAGE_LIMIT = 10;
+const PAGE_LIMIT = 12;
 
 export function HistoryPage() {
   const dispatch = useDispatch();

@@ -136,7 +136,7 @@ export function ResourcesPage(props) {
                   <object
                     data={data.url}
                     type="application/pdf"
-                    style={{ width: '100%', height: '45vh' }}
+                    style={{ width: '100%', height: '80vh' }}
                   >
                     Your browser does not support the PDF element.
                   </object>

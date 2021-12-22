@@ -254,12 +254,12 @@ export async function updateProfile(values) {
   });
 }
 
-export async function getUserHistory(sort = 'asc', limit = 10, offset = 0) {
+export async function getUserHistory(sort = 'asc', limit = 12, offset = 0) {
   const qs = queryString.stringify({ sort, limit, offset });
   return fetchAPI(`/user/history?${qs}`);
 }
 
-export async function getNotesList(sort = 'desc', limit = 10, offset = 0) {
+export async function getNotesList(sort = 'desc', limit = 12, offset = 0) {
   const qs = queryString.stringify({ sort, limit, offset });
   return fetchAPI(`/note?${qs}`);
 }

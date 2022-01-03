@@ -65,6 +65,7 @@ export function ResourcesPage(props) {
       provider: string;
       title: string;
       url: string;
+      translations: any;
     } | null;
     loading: boolean;
     error: null | any;
@@ -128,6 +129,18 @@ export function ResourcesPage(props) {
                     controls
                   >
                     <source src={data.url} type="video/mp4" />
+                    {data.translations &&
+                      Object.keys(data.translations).map((key, index) => {
+                        return (
+                          <track
+                            key={index}
+                            label={key}
+                            kind="subtitles"
+                            srcLang={key}
+                            src={`data:,${data.translations[key]}`}
+                          ></track>
+                        );
+                      })}
                     Your browser does not support the video tag.
                   </video>
                 )}
@@ -136,7 +149,7 @@ export function ResourcesPage(props) {
                   <object
                     data={data.url}
                     type="application/pdf"
-                    style={{ width: '100%', height: '45vh' }}
+                    style={{ width: '100%', height: '80vh' }}
                   >
                     Your browser does not support the PDF element.
                   </object>

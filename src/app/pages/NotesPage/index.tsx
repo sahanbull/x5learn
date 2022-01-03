@@ -13,7 +13,7 @@ import {
 import { Pagination, Row, Table } from 'antd';
 import { OerSortableView } from '../HomePage/components/FeaturedOER/OerSortableView';
 
-const PAGE_LIMIT = 10;
+const PAGE_LIMIT = 12;
 
 const columns = [
   {

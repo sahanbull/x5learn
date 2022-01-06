@@ -48,7 +48,7 @@ const Duration = styled.span`
 
 export function OerSortableView(props: {
   loading?: boolean;
-  card?: any;
+  card?: OerDao;
   playlistID?: any;
   notesView?: boolean;
 }) {

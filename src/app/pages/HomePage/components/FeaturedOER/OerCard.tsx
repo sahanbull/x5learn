@@ -24,6 +24,7 @@ interface OerDao {
   provider: string;
   title: string;
   url: string;
+  translations?: any;
 }
 
 const imageBaseURL = 'https://qa.x5learn.org/files/thumbs/';
@@ -52,6 +53,14 @@ export function OerCard(props: {
 }) {
   const { loading, card, playlistID } = props;
   const cardStyle = { borderRadius: 8, overflow: 'hidden' };
+  const subTitleStyle = {
+    position: 'absolute' as 'absolute',
+    fontSize: '12px',
+    padding: '8px',
+    background: 'black',
+    color: 'white',
+    opacity: 0.6,
+  };
   const { t } = useTranslation();
   const history = useHistory();
 
@@ -81,6 +90,12 @@ export function OerCard(props: {
         style={cardStyle}
         cover={
           <>
+            {card?.translations &&
+              Object.keys(card.translations).length > 0 && (
+                <p style={subTitleStyle}>
+                  {`Subtitles: ${Object.keys(card.translations).join(' ')}`}
+                </p>
+              )}
             <img alt={`${card?.title}`} src={imgSrc} />
             <EnrichmentBar oerID={card?.id} />
           </>

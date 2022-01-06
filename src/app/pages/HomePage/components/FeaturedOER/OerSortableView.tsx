@@ -24,6 +24,7 @@ interface OerDao {
   provider: string;
   title: string;
   url: string;
+  text?: string;
 }
 
 const imageBaseURL = 'https://qa.x5learn.org/files/thumbs/';
@@ -47,10 +48,11 @@ const Duration = styled.span`
 
 export function OerSortableView(props: {
   loading?: boolean;
-  card?: OerDao;
+  card?: any;
   playlistID?: any;
+  notesView?: boolean;
 }) {
-  const { loading, card, playlistID } = props;
+  const { loading, card, playlistID, notesView } = props;
   const cardStyle = { borderRadius: 8, overflow: 'hidden' };
   const history = useHistory();
   const { t } = useTranslation();
@@ -72,7 +74,6 @@ export function OerSortableView(props: {
   if (card?.images[0]) {
     imgSrc = `${imageBaseURL}/${card?.images[0]}`;
   }
-
   return (
     <>
       <Space align="center">
@@ -93,26 +94,38 @@ export function OerSortableView(props: {
         </Link>
 
         <div>
-          <Link to={pathToNavigateTo}>
-            <Title level={5}>{card?.title}</Title>
-          </Link>
-
-          <Text strong>{t('playlist.lbl_playlist_provider', 'By')}: </Text>
-          {card?.provider}
-          <br />
-
-          <Space direction="horizontal" align="center">
-            <Text strong>{t('playlist.lbl_playlist_mediatype', 'Type')}: </Text>
-            <OerIcon mediatype={card?.mediatype} />
-
-            <span>{card?.mediatype}</span>
-          </Space>
-
-          {card?.date && (
+          {notesView && (
             <>
-              {' / '}
-              <Text strong>{t('playlist.lbl_playlist_date', 'Date')}: </Text>
-              {card?.date}
+              <Link to={pathToNavigateTo}>
+                <Title level={5}>{card?.text}</Title>
+              </Link>
+              {card?.title}
+            </>
+          )}
+          {!notesView && (
+            <>
+              <Link to={pathToNavigateTo}>
+                <Title level={5}>{card?.title}</Title>
+              </Link>
+
+              <Text strong>{t('playlist.lbl_playlist_provider', 'By')}: </Text>
+              {card?.provider}
+              <br />
+
+              <Space direction="horizontal" align="center">
+                <Text strong>{t('playlist.lbl_playlist_mediatype', 'Type')}: </Text>
+                <OerIcon mediatype={card?.mediatype} />
+
+                <span>{card?.mediatype}</span>
+              </Space>
+
+              {card?.date && (
+                <>
+                  {' / '}
+                  <Text strong>{t('playlist.lbl_playlist_date', 'Date')}: </Text>
+                  {card?.date}
+                </>
+              )}
             </>
           )}
         </div>

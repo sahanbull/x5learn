@@ -17,16 +17,15 @@ const PAGE_LIMIT = 12;
 
 const columns = [
   {
-    title: 'Oer',
+    title: 'OER',
     key: 'oer',
     render: (text, record) => (
-      <OerSortableView loading={record.loading} card={record} />
+      <OerSortableView
+        loading={record.loading}
+        card={record}
+        notesView={true}
+      />
     ),
-  },
-  {
-    title: 'Note',
-    dataIndex: 'text',
-    key: 'text',
   },
   {
     title: 'Last Updated',

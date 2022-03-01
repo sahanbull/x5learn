@@ -55,7 +55,7 @@ export function LanguageSwitcher() {
     <>
       <Select
         defaultValue={cookies.lang || 'EN'}
-        style={{ width: 60 }}
+        style={{ width: 70 }}
         loading={isLoading}
         onChange={onLangChange}
       >

@@ -80,6 +80,7 @@ const StyledChunk = styled(
     );
 
     const [isHover, setIsHover] = useState(false);
+    const [dropdownPositionTop, setDropdownPositionTop] = useState(false);
     const dispatch = useDispatch();
     const mouseOverHandler = event => {
       if (onMouseOver) {
@@ -100,6 +101,8 @@ const StyledChunk = styled(
       setIsHover(false);
     };
     const mouseMoveHandler = event => {
+      const position = window.innerHeight - event.clientY < 250 ? true : false;
+      setDropdownPositionTop(position);
       if (onMouseMove) {
         onMouseMove(event);
       }
@@ -119,7 +122,10 @@ const StyledChunk = styled(
     };
 
     return (
-      <Dropdown overlay={menu}>
+      <Dropdown
+        overlay={menu}
+        placement={dropdownPositionTop ? 'topLeft' : undefined}
+      >
         <div
           // {...props}
           style={style}

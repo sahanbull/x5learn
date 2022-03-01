@@ -17,6 +17,7 @@ import Title from 'antd/lib/typography/Title';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
+import Picker from 'emoji-picker-react';
 import {
   BugOutlined,
   CheckOutlined,
@@ -30,6 +31,7 @@ import { addOerNoteThunk } from 'app/pages/ResourcesPage/ducks/addOerNoteThunk';
 import { unwrapResult } from '@reduxjs/toolkit';
 import { deleteOerNoteThunk } from 'app/pages/ResourcesPage/ducks/deleteOerNoteThunk';
 import { updateOerNoteThunk } from 'app/pages/ResourcesPage/ducks/updateOerNoteThunk';
+import { getByDisplayValue } from '@testing-library/react';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -148,6 +150,7 @@ export function NotesWidget({ oerID }) {
     isAdding: false,
     isAddingError: false,
   });
+  const [openEmijiPicker, setOpenEmijiPicker] = useState(false);
   const predefinedTextArr = [
     'inspector.btn_material_rating_inspiring',
     'inspector.btn_material_rating_outstanding',
@@ -186,6 +189,11 @@ export function NotesWidget({ oerID }) {
     addNoteToOer(inputText, oerID);
   };
 
+  const onEmojiClick = (event, emojiObject) => {
+    setInputText(inputText + emojiObject.emoji);
+    setOpenEmijiPicker(false);
+  };
+
   return (
     <>
       <Row justify="center">
@@ -195,15 +203,27 @@ export function NotesWidget({ oerID }) {
               <Title level={4}>{t('inspector.lbl_notes')}</Title>
             </Col>
             <Col>
-              <Button icon={<SmileOutlined />} />
+              <Button
+                icon={<SmileOutlined />}
+                onClick={() => setOpenEmijiPicker(!openEmijiPicker)}
+              />
+              {openEmijiPicker && (
+                <Picker
+                  onEmojiClick={onEmojiClick}
+                  pickerStyle={{
+                    position: 'absolute',
+                    zIndex: '1000',
+                    left: '-50px',
+                  }}
+                  disableSkinTonePicker={true}
+                />
+              )}
               <Select
                 value={t('generic.lbl_notes_add_a_reaction', 'Add a Reaction')}
                 // style={{ width: 120 }}
                 bordered={false}
                 onSelect={item => {
-                  setInputText(value => {
-                    return `${value} ${t(String(item).toString())}`;
-                  });
+                  addNoteToOer(`${t(String(item).toString())}`, oerID);
                 }}
               >
                 {predefinedTextArr.map(item => {

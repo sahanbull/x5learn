@@ -99,9 +99,18 @@ function EditableNote({ note }) {
     setIsEditing(false);
   };
 
+  const noteStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    border: '1px solid lightgray',
+    borderRadius: '5px',
+    padding: '5px',
+  };
+
   return (
     <Col>
-      <span hidden={!isEditing}>
+      <span style={noteStyle} hidden={!isEditing}>
         <TextArea
           placeholder={t('inspector.lbl_enter_your_notes')}
           autoSize={{ minRows: 2, maxRows: 6 }}
@@ -111,30 +120,34 @@ function EditableNote({ note }) {
           }}
           value={editedText}
         />
-        <Button
-          onClick={onEditSuccessClick}
-          loading={isSaving}
-          icon={<CheckOutlined />}
-        ></Button>
-        <Button
-          onClick={onEditCancelClick}
-          loading={isSaving}
-          icon={<CloseOutlined />}
-        ></Button>
+        <div style={{ minWidth: '65px' }}>
+          <Button
+            onClick={onEditSuccessClick}
+            loading={isSaving}
+            icon={<CheckOutlined />}
+          ></Button>
+          <Button
+            onClick={onEditCancelClick}
+            loading={isSaving}
+            icon={<CloseOutlined />}
+          ></Button>
+        </div>
       </span>
-      <span hidden={isEditing}>
+      <span style={noteStyle} hidden={isEditing}>
         <span>{text}</span>
-        <Button
-          onClick={onEditClick}
-          loading={isEditing}
-          hidden={isDeleting}
-          icon={<EditOutlined />}
-        ></Button>
-        <Button
-          onClick={onDeleteClick}
-          loading={isDeleting}
-          icon={<DeleteOutlined />}
-        ></Button>
+        <div style={{ minWidth: '65px' }}>
+          <Button
+            onClick={onEditClick}
+            loading={isEditing}
+            hidden={isDeleting}
+            icon={<EditOutlined />}
+          ></Button>
+          <Button
+            onClick={onDeleteClick}
+            loading={isDeleting}
+            icon={<DeleteOutlined />}
+          ></Button>
+        </div>
       </span>
     </Col>
   );
@@ -268,6 +281,7 @@ export function NotesWidget({ oerID }) {
                     }
                   />
                 ))}
+              <br />
               {data?.map(item => {
                 return <EditableNote key={item.id} note={item} />;
               })}

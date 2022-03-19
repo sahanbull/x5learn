@@ -32,7 +32,9 @@ import { unwrapResult } from '@reduxjs/toolkit';
 import { deleteOerNoteThunk } from 'app/pages/ResourcesPage/ducks/deleteOerNoteThunk';
 import { updateOerNoteThunk } from 'app/pages/ResourcesPage/ducks/updateOerNoteThunk';
 import { getByDisplayValue } from '@testing-library/react';
+import { Pagination } from 'antd';
 
+const PAGE_LIMIT = 10;
 const { Option } = Select;
 const { TextArea } = Input;
 const { Paragraph } = Typography;
@@ -158,6 +160,7 @@ export function NotesWidget({ oerID }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const [inputText, setInputText] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const { data, loading, error } = useNotes(oerID);
   const [{ isAdding, isAddingError }, setIsAddingState] = useState({
     isAdding: false,
@@ -206,6 +209,10 @@ export function NotesWidget({ oerID }) {
     setInputText(inputText + emojiObject.emoji);
     setOpenEmijiPicker(false);
   };
+
+  const notesPageData = data
+    ? data.slice((currentPage - 1) * PAGE_LIMIT, currentPage * PAGE_LIMIT)
+    : [];
 
   return (
     <>
@@ -282,9 +289,18 @@ export function NotesWidget({ oerID }) {
                   />
                 ))}
               <br />
-              {data?.map(item => {
+              {notesPageData?.map(item => {
                 return <EditableNote key={item.id} note={item} />;
               })}
+              <Pagination
+                defaultCurrent={1}
+                pageSize={PAGE_LIMIT}
+                total={data ? data.length : 0}
+                showSizeChanger={false}
+                onChange={page => {
+                  setCurrentPage(page);
+                }}
+              />
             </Space>
           </Space>
         </Col>

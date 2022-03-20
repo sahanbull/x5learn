@@ -11,7 +11,12 @@ export const initialState: any = {
 
 export const fetchSearchOerThunk = createAsyncThunk(
   'playlists/fetchSearchOer',
-  async (searchParams: { searchTerm: any; page: any }) => {
+  async (searchParams: {
+    searchTerm: any;
+    page: any;
+    type: any;
+    language: any;
+  }) => {
     const data = await fetchSearchOERs(searchParams);
     return data;
   },

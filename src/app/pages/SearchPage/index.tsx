@@ -51,14 +51,18 @@ export function SearchPage() {
 
   const searchTerm: string = query.get('q')?.toString() || '';
   const page = query.get('page')?.toString() || '1';
+  const type: string = query.get('type')?.toString() || 'all';
+  const language: string = query.get('language')?.toString() || 'all';
 
   useEffect(() => {
     const searchParams = {
       searchTerm,
       page,
+      type,
+      language,
     };
     dispatch(fetchSearchOerThunk(searchParams));
-  }, [dispatch, page, searchTerm]);
+  }, [dispatch, page, searchTerm, type, language]);
 
   return (
     <>

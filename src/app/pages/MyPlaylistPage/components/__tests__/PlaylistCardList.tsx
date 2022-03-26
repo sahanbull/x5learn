@@ -2,7 +2,6 @@ import React from 'react';
 import { Row, Col, Empty } from 'antd';
 import { PlaylistCard } from './PlaylistCard';
 import { WarningOutlined } from '@ant-design/icons';
-import { OerCardList } from 'app/pages/HomePage/components/FeaturedOER/OerCardList';
 
 export function PlaylistCardList(props: {
   loading?: boolean;
@@ -39,10 +38,10 @@ export function PlaylistCardList(props: {
 
   return (
     <Row gutter={[16, 16]}>
-      {data?.map(item => {
+      {data?.map((item, index) => {
         return (
-          <Col key={item.id} span={8}>
-            <PlaylistCard playlist={item}/>
+          <Col key={`${index}${item.id}`} span={8}>
+            <PlaylistCard playlist={item} />
           </Col>
         );
       })}

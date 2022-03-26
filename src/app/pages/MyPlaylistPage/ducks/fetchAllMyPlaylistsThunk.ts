@@ -7,7 +7,8 @@ export const initialState: any = {
   data: null,
   loading: true,
   error: null,
-  metadata: null
+  metadata: null,
+  temp_playlists: [],
 };
 
 export const fetchAllMyPlaylistsThunk = createAsyncThunk<any, any>(
@@ -25,12 +26,14 @@ const fetchAllMyPlaylistsSlice = createSlice({
   extraReducers: {
     [fetchAllMyPlaylistsThunk.pending.toString()]: (state: any, action) => {
       state.data = null;
+      state.temp_playlists = [];
       state.loading = true;
       state.error = undefined;
     },
     [fetchAllMyPlaylistsThunk.fulfilled.toString()]: (state: any, action) => {
       state.loading = false;
       state.data = action.payload.playlists;
+      state.temp_playlists = action.payload.temp_playlists;
       state.metadata = action.payload.metadata;
       state.error = undefined;
     },
@@ -38,6 +41,7 @@ const fetchAllMyPlaylistsSlice = createSlice({
       state.loading = false;
       state.error = action.error;
       state.data = null;
+      state.temp_playlists = [];
     },
   },
 });

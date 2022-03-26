@@ -40,7 +40,7 @@ export function LanguageSwitcher() {
     }
   };
   useEffect(() => {
-    const lang = cookies.lang || 'EN';
+    const lang = cookies.lang || 'en';
     i18n.changeLanguage(lang);
   }, [cookies, i18n]);
 
@@ -49,12 +49,12 @@ export function LanguageSwitcher() {
   }, []);
 
   const onLangChange = lang => {
-    setCookie('lang', lang?.toUpperCase(), { path: '/' });
+    setCookie('lang', lang, { path: '/' });
   };
   return (
     <>
       <Select
-        defaultValue={cookies.lang || 'EN'}
+        defaultValue={cookies.lang || 'en'}
         style={{ width: 70 }}
         loading={isLoading}
         onChange={onLangChange}

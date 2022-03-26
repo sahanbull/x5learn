@@ -91,7 +91,10 @@ export function HeaderSearchBar(props) {
           <Col flex="auto">
             <p style={{ position: 'absolute', left: '10px' }}>Type:</p>
             <Select
-              defaultValue={query.get('type')?.toString().toLocaleLowerCase()}
+              defaultValue={
+                query.get('type')?.toString().toLocaleLowerCase() ||
+                defaultTypes[0]
+              }
               style={{ width: '20vw' }}
               loading={false}
               onChange={value => {
@@ -110,10 +113,10 @@ export function HeaderSearchBar(props) {
           <Col flex="auto">
             <p style={{ position: 'absolute', left: '10px' }}>Language:</p>
             <Select
-              defaultValue={query
-                .get('language')
-                ?.toString()
-                .toLocaleLowerCase()}
+              defaultValue={
+                query.get('language')?.toString().toLocaleLowerCase() ||
+                defaultLanguages[0]
+              }
               style={{ width: '20vw' }}
               loading={false}
               onChange={value => {

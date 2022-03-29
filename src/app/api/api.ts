@@ -138,8 +138,22 @@ export async function fetchEntityDefinitions(idArray) {
 
   // return require('./mock/featuredList.json');
 }
-export async function fetchSearchOERs({ searchTerm, page, type, language }) {
-  const qs = queryString.stringify({ text: searchTerm, page, type, language });
+export async function fetchSearchOERs({
+  searchTerm,
+  page,
+  types,
+  languages,
+  provider,
+  licenses,
+}) {
+  const qs = queryString.stringify({
+    text: searchTerm,
+    page,
+    types,
+    languages,
+    provider,
+    licenses,
+  });
   return fetchAPI(`/search/?${qs}`);
   //https://x5learn.org/api/v1/search/?text=se&page=1
 

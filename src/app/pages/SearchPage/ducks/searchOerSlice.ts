@@ -14,8 +14,10 @@ export const fetchSearchOerThunk = createAsyncThunk(
   async (searchParams: {
     searchTerm: any;
     page: any;
-    type: any;
-    language: any;
+    types: any;
+    languages: any;
+    licenses: any;
+    provider: any;
   }) => {
     const data = await fetchSearchOERs(searchParams);
     return data;

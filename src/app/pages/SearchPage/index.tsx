@@ -51,18 +51,22 @@ export function SearchPage() {
 
   const searchTerm: string = query.get('q')?.toString() || '';
   const page = query.get('page')?.toString() || '1';
-  const type: string = query.get('type')?.toString() || 'all';
-  const language: string = query.get('language')?.toString() || 'all';
+  const types: string = query.get('type')?.toString() || '';
+  const languages: string = query.get('language')?.toString() || '';
+  const licenses: string = query.get('license')?.toString() || '';
+  const provider: string = query.get('provider')?.toString() || '';
 
   useEffect(() => {
     const searchParams = {
       searchTerm,
       page,
-      type,
-      language,
+      types,
+      languages,
+      licenses,
+      provider,
     };
     dispatch(fetchSearchOerThunk(searchParams));
-  }, [dispatch, page, searchTerm, type, language]);
+  }, [dispatch, page, searchTerm, types, languages, licenses, provider]);
 
   return (
     <>

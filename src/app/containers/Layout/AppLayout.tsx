@@ -58,7 +58,11 @@ export function AppLayout(props) {
   return (
     <Layout>
       <AppHeader></AppHeader>
-      <Layout>
+      <Layout
+        style={{
+          minHeight: 'calc(100vh - 197px)',
+        }}
+      >
         <AppSideBar />
         <Layout>
           {/* <AppBreadcrumb /> */}

@@ -39,7 +39,7 @@ const StyledHeader = styled(Header)`
 `;
 
 const redirectToAboutUsPage = () => {
-  window.location.href = REDIRECT_URL + 'about';
+  window.location.href = '/about';
 };
 
 export function AppHeader(props) {

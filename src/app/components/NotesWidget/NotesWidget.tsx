@@ -17,6 +17,7 @@ import Title from 'antd/lib/typography/Title';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
+import Picker from 'emoji-picker-react';
 import {
   BugOutlined,
   CheckOutlined,
@@ -30,7 +31,10 @@ import { addOerNoteThunk } from 'app/pages/ResourcesPage/ducks/addOerNoteThunk';
 import { unwrapResult } from '@reduxjs/toolkit';
 import { deleteOerNoteThunk } from 'app/pages/ResourcesPage/ducks/deleteOerNoteThunk';
 import { updateOerNoteThunk } from 'app/pages/ResourcesPage/ducks/updateOerNoteThunk';
+import { getByDisplayValue } from '@testing-library/react';
+import { Pagination } from 'antd';
 
+const PAGE_LIMIT = 10;
 const { Option } = Select;
 const { TextArea } = Input;
 const { Paragraph } = Typography;
@@ -97,9 +101,18 @@ function EditableNote({ note }) {
     setIsEditing(false);
   };
 
+  const noteStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    border: '1px solid lightgray',
+    borderRadius: '5px',
+    padding: '5px',
+  };
+
   return (
     <Col>
-      <span hidden={!isEditing}>
+      <span style={noteStyle} hidden={!isEditing}>
         <TextArea
           placeholder={t('inspector.lbl_enter_your_notes')}
           autoSize={{ minRows: 2, maxRows: 6 }}
@@ -109,30 +122,34 @@ function EditableNote({ note }) {
           }}
           value={editedText}
         />
-        <Button
-          onClick={onEditSuccessClick}
-          loading={isSaving}
-          icon={<CheckOutlined />}
-        ></Button>
-        <Button
-          onClick={onEditCancelClick}
-          loading={isSaving}
-          icon={<CloseOutlined />}
-        ></Button>
+        <div style={{ minWidth: '65px' }}>
+          <Button
+            onClick={onEditSuccessClick}
+            loading={isSaving}
+            icon={<CheckOutlined />}
+          ></Button>
+          <Button
+            onClick={onEditCancelClick}
+            loading={isSaving}
+            icon={<CloseOutlined />}
+          ></Button>
+        </div>
       </span>
-      <span hidden={isEditing}>
+      <span style={noteStyle} hidden={isEditing}>
         <span>{text}</span>
-        <Button
-          onClick={onEditClick}
-          loading={isEditing}
-          hidden={isDeleting}
-          icon={<EditOutlined />}
-        ></Button>
-        <Button
-          onClick={onDeleteClick}
-          loading={isDeleting}
-          icon={<DeleteOutlined />}
-        ></Button>
+        <div style={{ minWidth: '65px' }}>
+          <Button
+            onClick={onEditClick}
+            loading={isEditing}
+            hidden={isDeleting}
+            icon={<EditOutlined />}
+          ></Button>
+          <Button
+            onClick={onDeleteClick}
+            loading={isDeleting}
+            icon={<DeleteOutlined />}
+          ></Button>
+        </div>
       </span>
     </Col>
   );
@@ -143,11 +160,13 @@ export function NotesWidget({ oerID }) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const [inputText, setInputText] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const { data, loading, error } = useNotes(oerID);
   const [{ isAdding, isAddingError }, setIsAddingState] = useState({
     isAdding: false,
     isAddingError: false,
   });
+  const [openEmijiPicker, setOpenEmijiPicker] = useState(false);
   const predefinedTextArr = [
     'inspector.btn_material_rating_inspiring',
     'inspector.btn_material_rating_outstanding',
@@ -186,6 +205,15 @@ export function NotesWidget({ oerID }) {
     addNoteToOer(inputText, oerID);
   };
 
+  const onEmojiClick = (event, emojiObject) => {
+    setInputText(inputText + emojiObject.emoji);
+    setOpenEmijiPicker(false);
+  };
+
+  const notesPageData = data
+    ? data.slice((currentPage - 1) * PAGE_LIMIT, currentPage * PAGE_LIMIT)
+    : [];
+
   return (
     <>
       <Row justify="center">
@@ -195,15 +223,27 @@ export function NotesWidget({ oerID }) {
               <Title level={4}>{t('inspector.lbl_notes')}</Title>
             </Col>
             <Col>
-              <Button icon={<SmileOutlined />} />
+              <Button
+                icon={<SmileOutlined />}
+                onClick={() => setOpenEmijiPicker(!openEmijiPicker)}
+              />
+              {openEmijiPicker && (
+                <Picker
+                  onEmojiClick={onEmojiClick}
+                  pickerStyle={{
+                    position: 'absolute',
+                    zIndex: '1000',
+                    left: '-50px',
+                  }}
+                  disableSkinTonePicker={true}
+                />
+              )}
               <Select
                 value={t('generic.lbl_notes_add_a_reaction', 'Add a Reaction')}
                 // style={{ width: 120 }}
                 bordered={false}
                 onSelect={item => {
-                  setInputText(value => {
-                    return `${value} ${t(String(item).toString())}`;
-                  });
+                  addNoteToOer(`${t(String(item).toString())}`, oerID);
                 }}
               >
                 {predefinedTextArr.map(item => {
@@ -248,9 +288,19 @@ export function NotesWidget({ oerID }) {
                     }
                   />
                 ))}
-              {data?.map(item => {
+              <br />
+              {notesPageData?.map(item => {
                 return <EditableNote key={item.id} note={item} />;
               })}
+              <Pagination
+                defaultCurrent={1}
+                pageSize={PAGE_LIMIT}
+                total={data ? data.length : 0}
+                showSizeChanger={false}
+                onChange={page => {
+                  setCurrentPage(page);
+                }}
+              />
             </Space>
           </Space>
         </Col>

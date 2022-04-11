@@ -1,55 +1,32 @@
-import React, {
-  ReactComponentElement,
-  ReactElement,
-  useCallback,
-  useEffect,
-} from 'react';
-import { Card, Skeleton, Spin, Typography } from 'antd';
-import Avatar from 'antd/lib/avatar/avatar';
+import React from 'react';
+import { Card, Skeleton, Typography } from 'antd';
 import Meta from 'antd/lib/card/Meta';
-import styled from 'styled-components';
-import { Link, useHistory, useLocation, useParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { ROUTES } from 'routes/routes';
-import { EnrichmentBar } from 'app/components/EnrichmentBar/EnrichmentBar';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from 'types';
-import { useInjectReducer } from 'redux-injectors';
-import {
-  sliceKey,
-  reducer,
-  fetchAllMyPlaylistsThunk,
-} from '../../ducks/fetchAllMyPlaylistsThunk';
-import { WarningOutlined } from '@ant-design/icons';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 const cardStyle = { borderRadius: 8, overflow: 'hidden' };
 
 export function PlaylistCard(props: { playlist?; loading?: boolean }) {
   const { loading, playlist } = props;
 
   let pathToNavigateTo = `${ROUTES.PLAYLISTS}/${playlist?.id}`;
-
-
+  if (!playlist?.id) {
+    pathToNavigateTo = `${ROUTES.PLAYLISTS}/temp/${playlist?.title}`;
+  }
 
   if (loading) {
     return (
-
       <Card style={cardStyle}>
         <Skeleton active></Skeleton>
       </Card>
     );
   }
- 
   return (
     <Link to={pathToNavigateTo}>
-      <Card
-        hoverable
-        bordered={false}
-        style={cardStyle}
-        
-      >
+      <Card hoverable bordered={false} style={cardStyle}>
         <Meta
-         title={playlist?.title}
+          title={playlist?.title}
           description={
             <>
               <Text strong>Author: </Text>
@@ -65,6 +42,5 @@ export function PlaylistCard(props: { playlist?; loading?: boolean }) {
         />
       </Card>
     </Link>
-
   );
 }

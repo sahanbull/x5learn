@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Pagination, Row, Spin, Typography } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'types';
@@ -14,7 +14,7 @@ import { useHistory, useLocation } from 'react-router';
 import { ROUTES } from 'routes/routes';
 import { useTranslation } from 'react-i18next';
 
-const { Text, Title } = Typography;
+const { Title } = Typography;
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -31,9 +31,19 @@ export function MyPlaylistWidget(props: {}) {
   const page = query.get('page')?.toString() || '1';
   const { t } = useTranslation();
 
-  const { data, loading, error, metadata } = useSelector((state: RootState) => {
-    return state.allMyPlaylists || { data, loading: false, error, metadata };
-  });
+  const { data, temp_playlists, loading, error, metadata } = useSelector(
+    (state: RootState) => {
+      return (
+        state.allMyPlaylists || {
+          data,
+          loading: false,
+          error,
+          metadata,
+          temp_playlists,
+        }
+      );
+    },
+  );
 
   const totalItems = metadata?.total || 0;
   const total_pages = Math.ceil(totalItems / limit);
@@ -65,9 +75,16 @@ export function MyPlaylistWidget(props: {}) {
         </Title>
       )}
       <PlaylistCardList data={data} loading={loading} error={error} />
-      
-        {total_pages > 1 && (
-          <Row justify="center">
+      <br />
+      {temp_playlists && (
+        <Title level={2} type="secondary">
+          Temp Playlists
+        </Title>
+      )}
+      <PlaylistCardList data={temp_playlists} loading={loading} error={error} />
+      <br />
+      {total_pages > 1 && (
+        <Row justify="center">
           <Pagination
             defaultCurrent={+page}
             disabled={loading}
@@ -78,9 +95,8 @@ export function MyPlaylistWidget(props: {}) {
               history.push(`${ROUTES.MY_PLAYLISTS}?${query.toString()}`);
             }}
           />
-          </Row>
-        )}
-      
+        </Row>
+      )}
     </>
   );
 }

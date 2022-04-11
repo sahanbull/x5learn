@@ -98,6 +98,7 @@
     "@reduxjs/toolkit": "1.5.0",
     "antd": "4.15.4",
     "craco-antd": "1.19.0",
+    "emoji-picker-react": "3.5.1",
     "fontfaceobserver": "2.1.0",
     "i18next": "19.8.4",
     "i18next-browser-languagedetector": "6.0.1",

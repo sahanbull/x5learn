@@ -51,14 +51,22 @@ export function SearchPage() {
 
   const searchTerm: string = query.get('q')?.toString() || '';
   const page = query.get('page')?.toString() || '1';
+  const types: string = query.get('type')?.toString() || '';
+  const languages: string = query.get('language')?.toString() || '';
+  const licenses: string = query.get('license')?.toString() || '';
+  const provider: string = query.get('provider')?.toString() || '';
 
   useEffect(() => {
     const searchParams = {
       searchTerm,
       page,
+      types,
+      languages,
+      licenses,
+      provider,
     };
     dispatch(fetchSearchOerThunk(searchParams));
-  }, [dispatch, page, searchTerm]);
+  }, [dispatch, page, searchTerm, types, languages, licenses, provider]);
 
   return (
     <>

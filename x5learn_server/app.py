@@ -311,6 +311,14 @@ def playlist_download(playlist_id):
     return render_template('download.html', playlist_name=playlist.title, playlist_blueprint=playlist_blueprint)
 
 @cross_origin()
+@app.route("/playlist/temp/<playlist_id>")
+def playlist_reload(playlist_id):
+    languages = get_available_languages()
+    localization_dict, lang = get_localization_dict()
+    return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
+
+
+@cross_origin()
 @app.route("/api/v1/session/", methods=['GET'])
 def api_session():
     if current_user.is_authenticated:
@@ -404,7 +412,25 @@ def api_search():
 
     """
     text = request.args['text'].lower().strip()
-    page = int(request.args['page']) if request.args['page'] is not None else 1
+    page = 1
+    if 'page' in request.args.keys():
+        page = int(request.args['page'])
+
+    types = "mp4,ogg,webm,video,mov,mp3,pdf"
+    if 'types' in request.args.keys():
+        types = request.args['types']
+
+    licenses = None
+    if 'licenses' in request.args.keys():
+        licenses = request.args['licenses']
+
+    languages = None
+    if 'languages' in request.args.keys():
+        languages = request.args['languages']
+
+    provider = None
+    if 'provider' in request.args.keys():
+        provider = request.args['provider']
 
     # include notes of oers returned as search results
     include_notes = 0
@@ -423,6 +449,8 @@ def api_search():
         # check if notes should be included
         if include_notes == 1:
             oers = [_inject_notes(oer) for oer in oers]
+
+        oers = [_non_https_to_https(oer) for oer in oers]
 
         return jsonify({
             'oers': oers,
@@ -443,13 +471,15 @@ def api_search():
 
             results = [] if oer is None else ([oer], 1)
         except ValueError:
-            results = search_results_from_x5gon_api(text, page)
+            results = search_results_from_x5gon_api(text, page, types, licenses, languages, provider)
 
         oers = [oer.data_and_id() for oer in results[0]]
 
         # check if notes should be included
         if include_notes == 1:
             oers = [_inject_notes(oer) for oer in oers]
+
+        oers = [_non_https_to_https(oer) for oer in oers]
 
         return jsonify({
             'oers': oers,
@@ -473,6 +503,8 @@ def api_oers():
     # check if notes should be included
     if include_notes == 1:
         oers = [_inject_notes(oer) for oer in oers]
+
+    oers = [_non_https_to_https(oer) for oer in oers]
 
     return jsonify(oers)
 
@@ -580,9 +612,9 @@ def api_save_user_profile():
     if current_user.is_authenticated:
         current_user.user_profile = request.get_json()
         db_session.commit()
-        return json.dumps(True)
+        return jsonify(True)
     else:
-        return json.dumps(False), 403
+        return jsonify(False), 403
 
 
 @cross_origin()
@@ -755,11 +787,11 @@ def ingest_thumb_generation_result():
     return 'OK'
 
 
-def search_results_from_x5gon_api(text, page):
+def search_results_from_x5gon_api(text, page, types, licenses, languages, provider):
     text = urllib.parse.quote(text)
     if is_special_search_key_for_lab_study(text):
         return frozen_search_results_for_lab_study(text)
-    return search_results_from_x5gon_api_pages(text, page, [])
+    return search_results_from_x5gon_api_pages(text, page, [], types, licenses, languages, provider)
 
 
 def remove_duplicates_from_x5gon_search_results(materials):
@@ -786,13 +818,25 @@ def remove_duplicates_from_x5gon_search_results(materials):
 
 # This function is called recursively
 # until the number of search results hits a certain minimum or stops increasing
-def search_results_from_x5gon_api_pages(text, page_number, oers):
+def search_results_from_x5gon_api_pages(text, page_number, oers, types, licenses, languages, provider):
     # print('X5GON search page_number', page_number)
+    search_string = '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=' + types + '&text=' + text + '&page=' + str(
+            page_number)
+
+    if (licenses is not None):
+        search_string += '&licenses=' + licenses
+
+    if (languages is not None):
+        search_string += '&languages=' + languages
+
+    if (provider is not None):
+        search_string += '&provider=' + provider
+
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request(
         'GET',
-        '/api/v1/search/?url=https://platform.x5gon.org/materialUrl&type=mp4,ogg,webm,video,mov,mp3,pdf&text=' + text + '&page=' + str(
-            page_number))
+        search_string
+        )
     response = conn.getresponse().read().decode("utf-8")
     metadata = json.loads(response)['metadata']
     materials = json.loads(response)['rec_materials']
@@ -821,16 +865,18 @@ def search_results_from_x5gon_api_pages(text, page_number, oers):
         return oers, metadata['total_pages']
     if len(oers) >= MAX_SEARCH_RESULTS:
         return oers, metadata['total_pages']
-    return search_results_from_x5gon_api_pages(text, page_number + 1, oers)
+    return search_results_from_x5gon_api_pages(text, page_number + 1, oers, types, licenses, languages, provider)
 
 
 def retrieve_oer_or_create_from_x5gon_material(material):
     url = material['url']
     oer = Oer.query.filter_by(url=url).first()
+
     if oer is None:
         oer = Oer(url, convert_x5_material_to_oer_data(material))
         db_session.add(oer)
         db_session.commit()
+
     # Fix a problem with videolectures lacking duration info
     if oer.data['mediatype'] in SUPPORTED_VIDEO_FORMATS and oer.data['duration'] == '' and (
             'durationInSeconds' not in oer.data):
@@ -844,14 +890,19 @@ def retrieve_oer_or_create_from_x5gon_material(material):
         new_data = json.loads(json.dumps(oer.data))
         new_data['provider'] = " - "
         oer.data = new_data
-    push_enrichment_task_if_needed(url, 1)
 
+    push_enrichment_task_if_needed(url, 1)
     return oer
 
 
 def inject_duration(oer):
     seconds = os.popen(
         'ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 ' + oer.url).read().strip()
+    
+    #check if string
+    if isinstance(seconds, str):
+        seconds = 0
+
     seconds = int(float(seconds))
     duration = str(int(seconds / 60)) + ':' + str(seconds % 60).zfill(2)
     print('inject_duration: ', duration)
@@ -2269,7 +2320,7 @@ def recommendations_from_lam_api(oer_id):
     for material in materials:
         # print(material['material_id'], material['weight'], material['type'])
         # stop once we have enough items
-        if len(oers) > 4:
+        if len(oers) > 3:
             break
         # include only supported media formats
         if material['type'] not in SUPPORTED_FILE_FORMATS:
@@ -2575,6 +2626,12 @@ def _inject_notes(oer):
 
     return oer
 
+
+# Fix oers that are non-https to https
+def _non_https_to_https(oer):
+    if ("http:" in oer['url']):
+        oer['url'] = oer['url'].replace("http:", "https:")
+    return oer
 
 
 if __name__ == '__main__':

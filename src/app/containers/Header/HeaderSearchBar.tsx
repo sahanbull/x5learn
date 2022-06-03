@@ -117,8 +117,9 @@ export function HeaderSearchBar(props) {
               mode="multiple"
               placeholder="Please select"
               defaultValue={
-                query.get('type')?.toString().toLocaleLowerCase().split(',') ||
-                []
+                query.get('type')
+                  ? query.get('type')?.toString().toLocaleLowerCase().split(',')
+                  : []
               }
               style={{ width: '20vw' }}
               loading={false}
@@ -142,11 +143,9 @@ export function HeaderSearchBar(props) {
               mode="multiple"
               placeholder="Please select"
               defaultValue={
-                query
-                  .get('licenses')
-                  ?.toString()
-                  .toLocaleLowerCase()
-                  .split(',') || []
+                query.get('licenses')
+                  ? query.get('type')?.toString().toLocaleLowerCase().split(',')
+                  : []
               }
               style={{ width: '20vw' }}
               loading={false}
@@ -169,11 +168,9 @@ export function HeaderSearchBar(props) {
               mode="multiple"
               placeholder="Please select"
               defaultValue={
-                query
-                  .get('language')
-                  ?.toString()
-                  .toLocaleLowerCase()
-                  .split(',') || []
+                query.get('language')
+                  ? query.get('type')?.toString().toLocaleLowerCase().split(',')
+                  : []
               }
               style={{ width: '20vw' }}
               loading={false}

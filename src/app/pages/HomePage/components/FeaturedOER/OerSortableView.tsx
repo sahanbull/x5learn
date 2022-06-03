@@ -27,7 +27,7 @@ interface OerDao {
   text?: string;
 }
 
-const imageBaseURL = 'https://qa.x5learn.org/files/thumbs/';
+const imageBaseURL = process.env.REACT_APP_IMAGE_BASE_URL;
 
 const Duration = styled.span`
   padding: 0px 6px 2px 6px;

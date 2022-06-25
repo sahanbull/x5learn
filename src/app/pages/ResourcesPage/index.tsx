@@ -37,8 +37,6 @@ import { RelatedOersWidget } from 'app/components/RelatedOersWidget/RelatedOersW
 const { Title, Text } = Typography;
 const { Meta } = Card;
 
-const imageBaseURL = 'https://qa.x5learn.org/files/thumbs/';
-
 const responsiveColWidths = {
   lg: { span: 22 },
 };

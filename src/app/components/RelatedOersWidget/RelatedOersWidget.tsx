@@ -69,7 +69,7 @@ export function RelatedOersWidget({ oerID }) {
                 description,
               } = item;
               let pathToNavigateTo = `${ROUTES.RESOURCES}/${id}`;
-              const imageBaseURL = 'https://qa.x5learn.org/files/thumbs/';
+              const imageBaseURL = process.env.REACT_APP_IMAGE_BASE_URL;
               let imgSrc = `/static/img/thumbnail_unavailable.jpg`;
               if (images[0]) {
                 imgSrc = `${imageBaseURL}/${images[0]}`;

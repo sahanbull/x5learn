@@ -1,9 +1,10 @@
 from flask import Flask, jsonify, render_template, request, redirect, flash
-from flask_wtf import Form, RecaptchaField, BooleanField, validators
+from flask_wtf import Form, RecaptchaField
 from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required, \
     forms, RegisterForm, ResetPasswordForm, roles_required
 from flask_sqlalchemy import SQLAlchemy
+from wtforms import BooleanField, validators
 import json
 import os  # apologies
 import requests

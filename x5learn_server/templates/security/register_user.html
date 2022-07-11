@@ -27,6 +27,8 @@
       {% if register_user_form.password_confirm %}
         {{ render_field_with_errors(register_user_form.password_confirm, placeholder='Password') }}
       {% endif %}
+      <p>{{ register_user_form.privacy_policy }} <small>I agree to the <a href="/privacy_policy" target="_blank">Cookie & Privacy Policy</a>.</small></p>
+      <p>{{ register_user_form.terms_and_conditions }}  <small>I agree to the  <a href="/terms_of_use" target="_blank">Terms of Use</a>.</small></p>
       {{ render_field_with_errors(register_user_form.recaptcha) }}
       {{ render_field(register_user_form.submit) }}
     </form>

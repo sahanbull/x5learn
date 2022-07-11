@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, render_template, request, redirect, flash
-from flask_wtf import Form, RecaptchaField
+from flask_wtf import Form, RecaptchaField, BooleanField, validators
 from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required, \
     forms, RegisterForm, ResetPasswordForm, roles_required
@@ -59,6 +59,10 @@ app.config['SECURITY_REGISTER_URL'] = '/signup'
 app.config['SECURITY_SEND_REGISTER_EMAIL'] = True
 app.config['SECURITY_CONFIRMABLE'] = True
 app.config['SECURITY_POST_REGISTER_VIEW'] = '/verify_email'
+
+# redirect to data collection page after login
+app.config['SECURITY_POST_LOGIN_VIEW'] = '/data_collection'
+
 app.config['SECURITY_POST_CONFIRM_VIEW'] = '/confirmed_email' 
 app.config['SECURITY_UNAUTHORIZED_VIEW'] = '/unauthorized'
 
@@ -86,6 +90,9 @@ class ExtendedRegisterForm(RegisterForm):
                                                             message="Invalid password")])
     recaptcha = RecaptchaField()
     password_confirm = False
+
+    privacy_policy = BooleanField('privacy_policy', [validators.DataRequired(message="Please read and agree to the privacy policy.")])
+    terms_and_conditions = BooleanField('term_and_conditions', [validators.DataRequired(message="Please read and agree to the terms and conditions.")])
 
 
 class ExtendedResetPasswordForm(ResetPasswordForm):
@@ -286,6 +293,64 @@ def profile():
     languages = get_available_languages()
     localization_dict, lang = get_localization_dict()
     return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
+
+
+# Added new route to data collection consent page for users who has not set preference
+@cross_origin()
+@app.route("/data_collection")
+def data_collection(): 
+    current_user.last_login_at = current_user.current_login_at
+    current_user.current_login_at = datetime.now()
+    db_session.commit()
+
+    if current_user.user_profile is None:
+        return render_template('data_collection.html')
+
+    profile = current_user.user_profile
+
+    if profile.get('isDataCollectionConsent') is None:
+        return render_template('data_collection.html')
+
+    # If data collection is off the user will be prompted every other day at login
+    if (profile.get('isDataCollectionConsent') == False):
+
+        if current_user.last_login_at is None:
+            return render_template('data_collection.html')
+
+        last_data_collection_prompt_datetime = current_user.last_login_at
+        datediff = datetime.now() - last_data_collection_prompt_datetime
+
+        if datediff.days > DATA_COLL_PROMPT_INTERVAL:
+            return render_template('data_collection.html')
+    
+    return redirect("/")
+
+# route to privacy policy page
+@cross_origin()
+@app.route("/privacy_policy")
+def privacy_policy():
+    return render_template('info.html', subpage="privacy_policy")
+
+# route to terms page
+@cross_origin()
+@app.route("/terms_of_use")
+def terms_of_use():
+    return render_template('info.html', subpage="terms_of_use")
+
+# Saves preference in user profile for data collection consent
+@cross_origin()
+@app.route("/data_collection", methods=['POST'])
+def submit_data_collection():
+
+    allow_data_collection = False
+
+    if "allow_data_collection" in request.form and request.form['allow_data_collection'] == "on":
+        allow_data_collection = True
+
+    current_user.user_profile = {'isDataCollectionConsent': allow_data_collection}
+    db_session.commit()
+    return redirect("/")
+
 
 @cross_origin()
 @app.route("/publish_playlist")

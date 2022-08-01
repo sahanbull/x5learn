@@ -516,7 +516,7 @@ def api_search():
         if include_notes == 1:
             oers = [_inject_notes(oer) for oer in oers]
 
-        oers = [_non_https_to_https(oer) for oer in oers]
+        # oers = [_non_https_to_https(oer) for oer in oers]
 
         return jsonify({
             'oers': oers,
@@ -545,7 +545,7 @@ def api_search():
         if include_notes == 1:
             oers = [_inject_notes(oer) for oer in oers]
 
-        oers = [_non_https_to_https(oer) for oer in oers]
+        # oers = [_non_https_to_https(oer) for oer in oers]
 
         return jsonify({
             'oers': oers,
@@ -570,7 +570,7 @@ def api_oers():
     if include_notes == 1:
         oers = [_inject_notes(oer) for oer in oers]
 
-    oers = [_non_https_to_https(oer) for oer in oers]
+    # oers = [_non_https_to_https(oer) for oer in oers]
 
     return jsonify(oers)
 

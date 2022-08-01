@@ -895,8 +895,11 @@ def search_results_from_x5gon_api_pages(text, page_number, oers, types, licenses
     if (languages is not None):
         search_string += '&languages=' + languages
 
-    if (provider is not None):
-        search_string += '&provider=' + provider
+    # if (provider is not None):
+    # search_string += '&provider_ids=' + provider
+
+    # forcing provider to videolectures only
+    search_string += '&provider_ids=1'
 
     conn = http.client.HTTPSConnection("platform.x5gon.org")
     conn.request(

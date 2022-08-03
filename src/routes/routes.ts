@@ -8,4 +8,5 @@ export const ROUTES = {
   PROFILE_PAGE: '/profile',
   NOTES_PAGE: '/notes',
   HISTORY_PAGE: '/history',
+  LOGOUT: '/logout',
 };

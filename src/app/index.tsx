@@ -70,6 +70,14 @@ export function App() {
           path={ROUTES.RESOURCES + '/:id'}
           component={ResourcesPage}
         />
+        <Route
+          exact
+          path={ROUTES.LOGOUT}
+          component={() => {
+            window.location.href = '/';
+            return null;
+          }}
+        />
         <Route component={NotFoundPage} />
       </Switch>
       <GlobalStyle />

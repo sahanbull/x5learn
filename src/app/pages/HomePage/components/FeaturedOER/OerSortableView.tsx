@@ -25,6 +25,7 @@ interface OerDao {
   title: string;
   url: string;
   text?: string;
+  oer_id?: string;
 }
 
 const imageBaseURL = process.env.REACT_APP_IMAGE_BASE_URL;
@@ -58,6 +59,9 @@ export function OerSortableView(props: {
   const { t } = useTranslation();
 
   let pathToNavigateTo = `${ROUTES.RESOURCES}/${card?.id}`;
+  if (notesView) {
+    pathToNavigateTo = `${ROUTES.RESOURCES}/${card?.oer_id}`;
+  }
   if (playlistID) {
     pathToNavigateTo += `?playlist=${playlistID}`;
   }

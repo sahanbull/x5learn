@@ -100,12 +100,12 @@ export function HeaderSearchBar(props) {
             onClick={() => setShowAdvansedOptions(!showAdvansedOptions)}
           />
         </Col>
-        <Col flex="40px">
+        {/* <Col flex="40px">
           <Button
             size="large"
             icon={<AppstoreOutlined style={{ fontSize: '16px' }} />}
           />
-        </Col>
+        </Col> */}
       </Row>
       {showAdvansedOptions && (
         <Row

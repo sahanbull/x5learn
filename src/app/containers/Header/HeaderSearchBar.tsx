@@ -106,7 +106,9 @@ export function HeaderSearchBar(props) {
                     our Connect service. The material search functionality is
                     cross- lingual and functions as a content discovery engine.
                   </p>
-                  <a href="#">Try it yourself</a>
+                  <a href="https://discovery.x5gon.org" target="blank">
+                    Try it yourself
+                  </a>
                 </div>
               }
               trigger="hover"

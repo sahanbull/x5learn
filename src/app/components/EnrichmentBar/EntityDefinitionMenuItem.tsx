@@ -31,7 +31,9 @@ export const EntityDefinitionMenuItem = ({ entity, ...props }) => {
                 input and annotates it with links to relevant Wikipedia
                 concepts.
               </p>
-              <a href="#">Try it yourself</a>
+              <a href="https://wikifier.org" target="blank">
+                Try it yourself
+              </a>
             </div>
           }
           trigger="hover"

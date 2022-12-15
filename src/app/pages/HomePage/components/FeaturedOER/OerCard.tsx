@@ -125,7 +125,12 @@ export function OerCard(props: {
                         translations. Your text is processed within seconds and
                         has quality is comparable with Google Translate.
                       </p>
-                      <a href="#">Try it yourself</a>
+                      <a
+                        href="https://ttp.mllp.upv.es/X5gon/realtime-mt.html"
+                        target="blank"
+                      >
+                        Try it yourself
+                      </a>
                     </div>
                   }
                   trigger="hover"

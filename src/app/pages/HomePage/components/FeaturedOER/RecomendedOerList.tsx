@@ -39,7 +39,9 @@ export function RecomendedOerList() {
                 across different sites,languages, modalities such as video,
                 documents and textbooks.
               </p>
-              <a href="#">Try it yourself</a>
+              <a href="http://x5learn.org" target="blank">
+                Try it yourself
+              </a>
             </div>
           }
           trigger="hover"

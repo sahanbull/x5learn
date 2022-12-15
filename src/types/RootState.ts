@@ -27,5 +27,6 @@ export interface RootState {
   profilePage?: any;
   historyPage?: any;
   notesPage?: any;
+  header?: any;
   // [INSERT NEW REDUCER KEY ABOVE] < Needed for generating containers seamlessly
 }

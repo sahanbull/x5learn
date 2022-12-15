@@ -1,5 +1,6 @@
 import React, { ReactComponentElement, ReactElement, useCallback } from 'react';
-import { Card, Row, Skeleton, Space, Typography } from 'antd';
+import { Card, Row, Skeleton, Space, Typography, Popover } from 'antd';
+import { AppstoreOutlined } from '@ant-design/icons';
 import Avatar from 'antd/lib/avatar/avatar';
 import Meta from 'antd/lib/card/Meta';
 import styled from 'styled-components';
@@ -9,6 +10,8 @@ import { EnrichmentBar } from 'app/components/EnrichmentBar/EnrichmentBar';
 import { OerIcon } from 'app/components/OerIcon/OerIcon';
 import { useTranslation } from 'react-i18next';
 import { AddToPlaylistButton } from 'app/components/AddToPlaylistButton/AddToPlaylistButton';
+import { useSelector } from 'react-redux';
+import { selectUnveilAi } from 'app/containers/Header/HeaderSlice';
 
 const { Text } = Typography;
 
@@ -51,8 +54,12 @@ export function OerCard(props: {
   card?: OerDao;
   playlistID?: any;
 }) {
+  const unveilAi = useSelector(selectUnveilAi);
   const { loading, card, playlistID } = props;
-  const cardStyle = { borderRadius: 8, overflow: 'hidden' };
+  const cardStyle = {
+    borderRadius: 8,
+    overflow: 'hidden',
+  };
   const subTitleStyle = {
     position: 'absolute' as 'absolute',
     fontSize: '12px',
@@ -61,6 +68,12 @@ export function OerCard(props: {
     color: 'white',
     opacity: 0.6,
   };
+
+  const unveilAiSubtitleStyle = {
+    ...subTitleStyle,
+    border: '2px solid red',
+  };
+
   const { t } = useTranslation();
   const history = useHistory();
 
@@ -90,11 +103,37 @@ export function OerCard(props: {
         style={cardStyle}
         cover={
           <>
-            {card?.translations &&
+            {!unveilAi &&
+              card?.translations &&
               Object.keys(card.translations).length > 0 && (
                 <p style={subTitleStyle}>
                   {`Subtitles: ${Object.keys(card.translations).join(' ')}`}
                 </p>
+              )}
+            {unveilAi &&
+              card?.translations &&
+              Object.keys(card.translations).length > 0 && (
+                <Popover
+                  title=""
+                  content={
+                    <div style={{ maxWidth: '400px' }}>
+                      <p>
+                        X5GON&#39;s Translate not just translates, but also
+                        transcribes any type of content from videos to
+                        textbooks. Using cutting-edge machine learning software,
+                        our service provides results that come close to human
+                        translations. Your text is processed within seconds and
+                        has quality is comparable with Google Translate.
+                      </p>
+                      <a href="#">Try it yourself</a>
+                    </div>
+                  }
+                  trigger="hover"
+                >
+                  <p style={unveilAiSubtitleStyle}>
+                    {`Subtitles: ${Object.keys(card.translations).join(' ')}`}
+                  </p>
+                </Popover>
               )}
             <img alt={`${card?.title}`} src={imgSrc} />
             <EnrichmentBar oerID={card?.id} />

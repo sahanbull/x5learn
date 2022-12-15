@@ -1,15 +1,24 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Input, Button, Row, Col, Select } from 'antd';
+import { Input, Button, Row, Col, Select, Popover } from 'antd';
 import {
   AppstoreOutlined,
   CaretDownOutlined,
-  CaretUpOutlined
+  CaretUpOutlined,
 } from '@ant-design/icons';
 
 import './HeaderSearchBar.less';
 import { useHistory, useLocation } from 'react-router-dom';
 import { ROUTES } from 'routes/routes';
 import queryString from 'query-string';
+
+import {
+  changeUnveilAi,
+  selectUnveilAi,
+  unveilAiSliceKey,
+  reducer,
+} from './HeaderSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { useInjectReducer } from 'utils/redux-injectors';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -42,8 +51,13 @@ function useQuery() {
 }
 
 export function HeaderSearchBar(props) {
+  const dispatch = useDispatch();
   let history = useHistory();
   let query = useQuery();
+
+  useInjectReducer({ key: unveilAiSliceKey, reducer: reducer });
+
+  const unveilAi = useSelector(selectUnveilAi);
 
   const [showAdvansedOptions, setShowAdvansedOptions] = useState(false);
   const [type, setType] = useState(stringArray);
@@ -68,8 +82,12 @@ export function HeaderSearchBar(props) {
 
   useEffect(() => {
     setType(query.get('type')?.toString().toLocaleLowerCase().split(',') || []);
-    setLanguage(query.get('language')?.toString().toLocaleLowerCase().split(',') || []);
-    setLicenses(query.get('licenses')?.toString().toLocaleLowerCase().split(',') || []);
+    setLanguage(
+      query.get('language')?.toString().toLocaleLowerCase().split(',') || [],
+    );
+    setLicenses(
+      query.get('licenses')?.toString().toLocaleLowerCase().split(',') || [],
+    );
     setProvider(query.get('provider')?.toString().toLocaleLowerCase() || '');
   }, [history]);
 
@@ -77,15 +95,48 @@ export function HeaderSearchBar(props) {
     <>
       <Row align="middle" wrap={false} justify="space-between">
         <Col flex="auto">
-          <Search
-            onSearch={searchHandler}
-            style={{ display: 'block' }}
-            placeholder="Search"
-            allowClear
-            defaultValue={query.get('q')?.toString()}
-            // enterButton="Search"
-            size="large"
-          />
+          {unveilAi ? (
+            <Popover
+              title=""
+              content={
+                <div style={{ maxWidth: '400px' }}>
+                  <p>
+                    The material search enables anyone to search through the
+                    indexed OER materials that are connected to our network via
+                    our Connect service. The material search functionality is
+                    cross- lingual and functions as a content discovery engine.
+                  </p>
+                  <a href="#">Try it yourself</a>
+                </div>
+              }
+              trigger="hover"
+            >
+              <Search
+                onSearch={searchHandler}
+                style={{
+                  display: 'block',
+                  border: '2px solid red',
+                }}
+                placeholder="Search"
+                allowClear
+                defaultValue={query.get('q')?.toString()}
+                // enterButton="Search"
+                size="large"
+              />
+            </Popover>
+          ) : (
+            <Search
+              onSearch={searchHandler}
+              style={{
+                display: 'block',
+              }}
+              placeholder="Search"
+              allowClear
+              defaultValue={query.get('q')?.toString()}
+              // enterButton="Search"
+              size="large"
+            />
+          )}
         </Col>
         <Col flex="40px">
           <Button
@@ -100,12 +151,16 @@ export function HeaderSearchBar(props) {
             onClick={() => setShowAdvansedOptions(!showAdvansedOptions)}
           />
         </Col>
-        {/* <Col flex="40px">
+        <Col flex="40px">
           <Button
             size="large"
             icon={<AppstoreOutlined style={{ fontSize: '16px' }} />}
+            danger={unveilAi}
+            onClick={() => {
+              dispatch(changeUnveilAi(!unveilAi));
+            }}
           />
-        </Col> */}
+        </Col>
       </Row>
       {showAdvansedOptions && (
         <Row

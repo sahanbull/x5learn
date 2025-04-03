@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, render_template, request, redirect, flash
+from flask import Flask, jsonify, render_template, request, redirect, flash, current_app
 from flask_wtf import Form, RecaptchaField
 from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required, \

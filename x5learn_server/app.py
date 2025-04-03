@@ -117,6 +117,8 @@ class LoginForm(BaseLoginForm):
         # First, run the base validation
         if not super().validate(**kwargs):
             return False
+        
+        self.user = getattr(self, "user", None)
 
         # Check user and password
         self.user = self.user or self._get_user()

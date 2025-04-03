@@ -2,7 +2,7 @@ from flask import Flask, jsonify, render_template, request, redirect, flash
 from flask_wtf import Form, RecaptchaField
 from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required, \
-    forms, RegisterForm, ResetPasswordForm, roles_required
+    forms, RegisterForm, ResetPasswordForm, roles_required, LoginForm as BaseLoginForm
 from flask_sqlalchemy import SQLAlchemy
 from wtforms import BooleanField, validators
 import json
@@ -41,7 +41,12 @@ from x5learn_server.course_optimization import optimize_course
 # Create app
 app = Flask(__name__)
 
-cors = CORS(app)
+cors = CORS(app,
+     resources={r"/*": {"origins": "*"}},
+     supports_credentials=True,
+     allow_headers="*",
+     expose_headers="*")
+
 app.config['CORS_ALLOW_HEADERS'] = '*'
 app.config['CORS_EXPOSE_HEADERS'] = '*' 
 app.config['CORS_SUPPORTS_CREDENTIALS'] = True
@@ -100,10 +105,16 @@ class ExtendedResetPasswordForm(ResetPasswordForm):
     password = forms.PasswordField('Password', \
                                    [forms.validators.Regexp(regex='[A-Za-z0-9@#$%^&+=]{8,}',
                                                             message="Invalid password")])
+    
+class LoginForm(BaseLoginForm):
+    def validate(self, **kwargs):
+        return super().validate(**kwargs)
 
 
 security = Security(app, user_datastore, confirm_register_form=ExtendedRegisterForm, \
                     reset_password_form=ExtendedResetPasswordForm)
+
+app.config['SECURITY_LOGIN_FORM'] = LoginForm
 
 # Setup Flask-Mail Server
 app.config['MAIL_SERVER'] = MAIL_SERVER
@@ -140,7 +151,6 @@ VIDEO_PLAY_REPORTING_INTERVAL = 10
 
 # Path to localization template used to update localization keys
 LOCALIZATION_TEMPLATE = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'config/localization_template.json'))
-
 
 # create database when starting the app
 @app.before_first_request
@@ -232,6 +242,7 @@ repository = Repository()
 
 @app.route("/")
 def home():
+    print('c1')
     ref = request.args.get('ref')
     if current_user.is_authenticated:
         languages = get_available_languages()
@@ -2704,4 +2715,7 @@ def _non_https_to_https(oer):
 
 
 if __name__ == '__main__':
-    app.run()
+    port = os.getenv("PORT")
+    if port is None:
+        port = 5000
+    app.run(port=port)

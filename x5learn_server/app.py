@@ -111,10 +111,8 @@ class LoginForm(BaseLoginForm):
         return super().validate(**kwargs)
 
 
-security = Security(app, user_datastore, confirm_register_form=ExtendedRegisterForm, \
+security = Security(app, user_datastore, login_form=LoginForm, confirm_register_form=ExtendedRegisterForm, \
                     reset_password_form=ExtendedResetPasswordForm)
-
-app.config['SECURITY_LOGIN_FORM'] = LoginForm
 
 # Setup Flask-Mail Server
 app.config['MAIL_SERVER'] = MAIL_SERVER

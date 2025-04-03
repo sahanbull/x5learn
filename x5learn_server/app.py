@@ -3,6 +3,7 @@ from flask_wtf import Form, RecaptchaField
 from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required, \
     forms, RegisterForm, ResetPasswordForm, roles_required, LoginForm as BaseLoginForm
+from flask_security.utils import verify_and_update_password
 from flask_sqlalchemy import SQLAlchemy
 from wtforms import BooleanField, validators
 import json
@@ -113,7 +114,22 @@ BaseLoginForm.validate = patched_validate
 
 class LoginForm(BaseLoginForm):
     def validate(self, **kwargs):
-        return super().validate(**kwargs)
+        # First, run the base validation
+        if not super().validate(**kwargs):
+            return False
+
+        # Check user and password
+        self.user = self.user or self._get_user()
+
+        if self.user is None:
+            self.email.errors.append("Invalid email or password")
+            return False
+
+        if not verify_and_update_password(self.password.data, self.user):
+            self.email.errors.append("Invalid email or password")
+            return False
+
+        return True
 
 
 security = Security(app, user_datastore, login_form=LoginForm, confirm_register_form=ExtendedRegisterForm, \

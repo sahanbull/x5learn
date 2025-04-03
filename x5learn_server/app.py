@@ -2,7 +2,7 @@ from flask import Flask, jsonify, render_template, request, redirect, flash
 from flask_wtf import Form, RecaptchaField
 from flask_mail import Mail, Message
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required, \
-    forms, RegisterForm, ResetPasswordForm, roles_required, LoginForm as BaseLoginForm, _datastore
+    forms, RegisterForm, ResetPasswordForm, roles_required, LoginForm as BaseLoginForm
 from flask_security.utils import verify_and_update_password
 from flask_sqlalchemy import SQLAlchemy
 from wtforms import BooleanField, validators
@@ -118,10 +118,7 @@ class LoginForm(BaseLoginForm):
         if not super().validate(**kwargs):
             return False
         
-        self.user = getattr(self, "user", None)
-
-        if not self.user:
-            self.user = _datastore.find_user(email=self.email.data)
+        self.user = current_app.extensions['security'].datastore.find_user(email=self.email.data)
 
         if self.user is None:
             self.email.errors.append("Invalid email or password")

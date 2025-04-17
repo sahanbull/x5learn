@@ -11,9 +11,9 @@ setup(
     author_email='',
     description='',
     install_requires=[
-        'Flask>=1.0.2',
+        'Flask==1.1.4',
         'Flask-Security>=3.0.0',
-        'SQLAlchemy>=1.3.1',
+        'SQLAlchemy==1.4.49',
         'python-dateutil',
         'Werkzeug==0.16.1',
         'psycopg2>=2.7.6.1',
@@ -21,7 +21,7 @@ setup(
         'fuzzywuzzy>=0.17.0',
         'flask_sqlalchemy',
         'langdetect',
-        'flask-restplus',
+        'flask-restplus==0.13.0',
         'pytest',
         'pytest-flask',
         'wikipedia',
@@ -29,6 +29,8 @@ setup(
         'PythonVideoConverter',
         'wget',
         'preview_generator',
-        'flask-cors'
+        'flask-cors',
+        'markupsafe==2.0.1',
+        'dotenv'
     ]
 )

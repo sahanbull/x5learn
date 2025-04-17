@@ -22,7 +22,7 @@ def get_or_create_db(db_engine_uri):
     global Base
 
     if engine is None:
-        engine = create_engine(db_engine_uri, convert_unicode=True)
+        engine = create_engine(db_engine_uri)
         db_session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
 
         Base = declarative_base()

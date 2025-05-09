@@ -605,6 +605,46 @@ def api_oers():
 
 
 @cross_origin()
+@app.route("/api/v1/oer/", methods=['POST'])
+def api_create_oer():
+    """ this function creates a new OER object in the database
+
+    Args:
+        None
+
+    Returns:
+        Oer: the created OER object
+    """
+    jsonData = request.get_json()
+    url = jsonData['url']
+    material_id = jsonData['material_id']
+
+    # check if the OER already exists
+    oer = find_oer_by_material_id(material_id)
+    if oer is not None:
+        return jsonify(oer.data_and_id())
+    
+    oer = find_oer_by_url(url)
+    if oer is not None:
+        return jsonify(oer.data_and_id())
+
+    # create a new OER object
+    oer = Oer()
+    oer.url = url
+    oer.data_type = jsonData['type']
+    oer.data = jsonData['data']
+    db_session.add(oer)
+    db_session.commit()
+
+    # push enrichment task for the new OER
+    if jsonData['type'] != "youtube":
+        # if the OER is not a youtube video, push enrichment task
+        push_enrichment_task_if_needed(url, 1)
+
+    return jsonify(oer.data_and_id())
+
+
+@cross_origin()
 @app.route("/api/v1/video_usages/", methods=['GET'])
 def api_video_usages():
     actions = Action.query.filter(Action.user_login_id == current_user.get_id(),
@@ -1651,6 +1691,17 @@ m_playlist = api.model('Playlist', {
                               description="Boolean flag to identify if the playlist is temporary or published"),
     'temp_title': fields.String(required=False, max_length=255,
                                 description='Original title of the playlist in case title is changed at publish')
+
+})
+
+m_youtube_item = api.model('YoutubeItem', {
+    'url': fields.String(required=True, description='The url of the youtube video'),
+    'title': fields.String(required=True, max_length=255, description='The title of the playlist'),
+    'description': fields.String(required=False,
+                                 description='An extensive description describing the contents of the playlist'),
+    'thumbnail_url': fields.String(required=True, description='The thumbnail url of the youtube video'),
+    'duration': fields.String(required=True, description='The duration of the youtube video'),
+    'date': fields.String(required=True, description='The date of the youtube video')
 })
 
 
@@ -1855,6 +1906,38 @@ def _set_playlist_item_data(playlist, playlist_item_data):
     return playlist
 
 
+# function to create a new oer for a youtube video
+def _create_oer_for_youtube_video(youtube_url, title, description, thumbnail_url, date, duration) -> int:
+
+    # let's extract the video id from the url
+    if 'youtu.be' in youtube_url:
+        video_id = youtube_url.split('/')[-1].split('?')[0]
+    elif 'youtube.com' in youtube_url:
+        video_id = youtube_url.split('v=')[1].split('&')[0]
+
+    if not video_id:
+        return False
+
+    temp_data = {
+        "url": youtube_url,
+        "material_id": video_id,
+        "title": title,
+        "provider": "youtube",
+        "description": description,
+        "date": date,
+        "duration": duration,
+        "images": [thumbnail_url],
+        "mediatype": "video"
+    }
+
+    oer = Oer(youtube_url, temp_data, 'youtube')
+
+    repository.add(oer)
+
+    return oer.id
+
+
+
 @ns_playlist.route('/')
 class Playlists(Resource):
     '''Create, fetch and delete playlists'''
@@ -2022,6 +2105,7 @@ class Playlists(Resource):
                                              api.payload['parent'])
 
             return {'result': 'Playlist successfully created.'}, 201
+
 
     @ns_playlist.doc('delete_playlist', params={'id': 'Delete published playlist by id',
                                                 'title': 'Delete temporary playlist by title'})
@@ -2210,7 +2294,7 @@ class Temp_Playlist_Single(Resource):
 
         if temp_playlist is None:
             return {'result': 'Temporary playlist not found'}, 400
-
+        
         # updating playlist item data only
         if 'title' not in api.payload.keys():
             temp_playlist = _set_playlist_item_data(temp_playlist, api.payload['playlist_items'])
@@ -2250,6 +2334,32 @@ class Temp_Playlist_Single(Resource):
 
         repository.delete(temp_playlist)
         return {'result': 'Temporary playlist successfully deleted'}, 201
+
+
+@ns_playlist.route('/<string:title>/yt_items')
+@ns_playlist.response(404, 'Temporary playlist not found')
+@ns_playlist.param('title', 'The temporary playlist identifier')
+class Temp_Playlist_Youtube_Items(Resource):
+
+    @ns_playlist.doc('update_temp_playlist_items')
+    @ns_playlist.expect(m_youtube_item, validate=True)
+    def post(self, title):
+        '''Add youtube video to temporary playlist'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+
+        item = api.payload
+        id = _create_oer_for_youtube_video(item['url'], item['title'], item['description'], item['thumbnail_url'], item['date'], item['duration'])
+
+        if not id:
+            return {'result': 'Youtube item not created. Invalid details found'}, 400
+
+        try:
+            result = _add_oer_to_playlist(title, id)
+
+            return {'result': 'Youtube video successfully added to playlist'}, 201
+        except Exception as err:
+            return {'result': 'An error occurred. Error - ' + str(err)}, 400
 
 
 # Defining license resource for API access ==================================
@@ -2436,6 +2546,9 @@ def recommendations_from_lam_api(oer_id):
 
 def find_oer_by_material_id(material_id):
     return Oer.query.filter(Oer.data['material_id'].astext == str(material_id)).order_by(Oer.id.desc()).first()
+
+def find_oer_by_url(url):
+    return Oer.query.filter(Oer.url == url).order_by(Oer.id.desc()).first()
 
 @app.route("/admin/localization", methods=['GET'])
 @login_required

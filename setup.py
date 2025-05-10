@@ -31,6 +31,8 @@ setup(
         'preview_generator',
         'flask-cors',
         'markupsafe==2.0.1',
-        'dotenv'
+        'dotenv',
+        'google-api-python-client==2.169.0',
+        'isodate'
     ]
 )

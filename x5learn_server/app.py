@@ -20,6 +20,9 @@ from flask_restplus import Api, Resource, fields, reqparse
 from flask_cors import CORS, cross_origin
 import wikipedia
 import base64
+from googleapiclient.discovery import build
+import isodate
+
 
 # instantiate the user management db classes
 # NOTE WHEN PEP8'ING MODULE IMPORTS WILL MOVE TO THE TOP AND CAUSE EXCEPTION
@@ -1696,12 +1699,12 @@ m_playlist = api.model('Playlist', {
 
 m_youtube_item = api.model('YoutubeItem', {
     'url': fields.String(required=True, description='The url of the youtube video'),
-    'title': fields.String(required=True, max_length=255, description='The title of the playlist'),
+    'title': fields.String(required=False, max_length=255, description='The title of the playlist'),
     'description': fields.String(required=False,
                                  description='An extensive description describing the contents of the playlist'),
-    'thumbnail_url': fields.String(required=True, description='The thumbnail url of the youtube video'),
-    'duration': fields.String(required=True, description='The duration of the youtube video'),
-    'date': fields.String(required=True, description='The date of the youtube video')
+    'thumbnail_url': fields.String(required=False, description='The thumbnail url of the youtube video'),
+    'duration': fields.String(required=False, description='The duration of the youtube video'),
+    'date': fields.String(required=False, description='The date of the youtube video')
 })
 
 
@@ -1905,21 +1908,65 @@ def _set_playlist_item_data(playlist, playlist_item_data):
     playlist.data = json.dumps(existing_data)
     return playlist
 
+# isodate conversion to 00:00:00 format
+def _format_iso8601_duration(iso_duration):
+    duration = isodate.parse_duration(iso_duration)
+    total_seconds = int(duration.total_seconds())
+    hours, remainder = divmod(total_seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    return f"{hours:02}:{minutes:02}:{seconds:02}"
+
 
 # function to create a new oer for a youtube video
-def _create_oer_for_youtube_video(youtube_url, title, description, thumbnail_url, date, duration) -> int:
+def _create_oer_for_youtube_video(item) -> int:
 
     # let's extract the video id from the url
-    if 'youtu.be' in youtube_url:
-        video_id = youtube_url.split('/')[-1].split('?')[0]
-    elif 'youtube.com' in youtube_url:
-        video_id = youtube_url.split('v=')[1].split('&')[0]
+    if 'youtu.be' in item["url"]:
+        video_id = item["url"].split('/')[-1].split('?')[0]
+    elif 'youtube.com' in item["url"]:
+        video_id = item["url"].split('v=')[1].split('&')[0]
 
     if not video_id:
         return False
+    
+    if "title" not in item:
+        # let's first get the google api key from the environment
+        google_api_key = os.getenv('GOOGLE_API_KEY')
+        youtube = build('youtube', 'v3', developerKey=google_api_key)
+
+        request = youtube.videos().list(
+            part="snippet,contentDetails",
+            id=video_id
+        )
+
+        response = request.execute()
+
+        if not response['items']:
+            return False
+        
+        temp_item = response['items'][0]
+        snippet = temp_item['snippet']
+        content_details = temp_item['contentDetails']
+
+
+        # let's try to get the title from the youtube api
+        title = snippet["title"]
+        description = snippet["description"]
+        thumbnail_url = snippet['thumbnails']['high']['url']
+        duration = _format_iso8601_duration(content_details['duration'])
+        date = snippet['publishedAt'].split('T')[0]
+
+    else:
+
+        title = item["title"]
+        description = item.get("description", "")
+        thumbnail_url = item.get("thumbnail_url", "")
+        duration = item.get("duration", "00:00:00")
+        date = item.get("date", None)
+
 
     temp_data = {
-        "url": youtube_url,
+        "url": item["url"],
         "material_id": video_id,
         "title": title,
         "provider": "youtube",
@@ -1930,7 +1977,7 @@ def _create_oer_for_youtube_video(youtube_url, title, description, thumbnail_url
         "mediatype": "video"
     }
 
-    oer = Oer(youtube_url, temp_data, 'youtube')
+    oer = Oer(item["url"], temp_data, 'youtube')
 
     repository.add(oer)
 
@@ -1938,8 +1985,10 @@ def _create_oer_for_youtube_video(youtube_url, title, description, thumbnail_url
 
 
 
+
 @ns_playlist.route('/')
 class Playlists(Resource):
+    
     '''Create, fetch and delete playlists'''
 
     @ns_playlist.doc('list_playlists', params={'mode': 'Filter by playlist type',
@@ -2341,7 +2390,7 @@ class Temp_Playlist_Single(Resource):
 @ns_playlist.param('title', 'The temporary playlist identifier')
 class Temp_Playlist_Youtube_Items(Resource):
 
-    @ns_playlist.doc('update_temp_playlist_items')
+    @ns_playlist.doc('add_youtube_video_to_temp_playlist')
     @ns_playlist.expect(m_youtube_item, validate=True)
     def post(self, title):
         '''Add youtube video to temporary playlist'''
@@ -2349,7 +2398,7 @@ class Temp_Playlist_Youtube_Items(Resource):
             return {'result': 'User not logged in'}, 401
 
         item = api.payload
-        id = _create_oer_for_youtube_video(item['url'], item['title'], item['description'], item['thumbnail_url'], item['date'], item['duration'])
+        id = _create_oer_for_youtube_video(item)
 
         if not id:
             return {'result': 'Youtube item not created. Invalid details found'}, 400

@@ -1445,6 +1445,27 @@ class UserHistoryApi(Resource):
 
         return {'oers': oers, 'meta': {'current': args['offset'], 'total': total, 'sort': args['sort']}}, 200
 
+@ns_user.route('/api_token')
+class UserApiToken(Resource):
+
+    @ns_user.doc('fetch_user_api_key')
+    def get(self):
+        '''Fetch the currently logged in user api key'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+        
+        if current_user.api_key is None:
+            return {'result': 'User api key not found'}, 400
+        
+        print('User api key:', current_user.api_key)
+
+        # lets first base64 encode the api key
+        api_key = base64.b64encode(current_user.api_key)
+        api_key = api_key.decode('utf-8')
+
+        
+        return {'api_key': str(api_key)}, 200
+
 
 # Defining user resource for API access
 ns_definition = api.namespace('api/v1/definition', description='Definitions')
@@ -2864,7 +2885,6 @@ class Localization_API(Resource):
             return {'dictionary': result[0], 'language': result[1]}, 200
         else:
             return {'result': 'Selected language not found.'}, 400
-
 
 # function to inject an oer with notes attached to it
 def _inject_notes(oer):

@@ -33,6 +33,11 @@ import { OerIcon } from 'app/components/OerIcon/OerIcon';
 import { NotesWidget } from 'app/components/NotesWidget/NotesWidget';
 import { useTranslation } from 'react-i18next';
 import { RelatedOersWidget } from 'app/components/RelatedOersWidget/RelatedOersWidget';
+import ReactPlayer from 'react-player';
+import { useLocation } from 'react-router-dom';
+import axios from 'axios';
+import { ROUTES } from 'routes/routes';
+
 
 const { Title, Text } = Typography;
 const { Meta } = Card;
@@ -49,6 +54,77 @@ export function ResourcesPage(props) {
   const dispatch = useDispatch();
   const videoRef = useRef<HTMLVideoElement>(null);
   const oerID = props.match?.params?.id;
+
+
+  const query = useQuery();
+  function useQuery() {
+    return new URLSearchParams(useLocation().search);
+  }
+  const [playlistItems, setPlaylistItems] = useState([]);
+  const mode = query.get('mode');
+  const tempPlaylistName = query.get('title');
+  const currentOerId = props.match?.params?.id;
+  console.log('tempPlaylistName', tempPlaylistName);
+  console.log('mode', mode);
+
+
+  useEffect(() => {
+    const fetchPlaylist = async () => {
+      try {
+        const { data } = await axios.get(`/api/v1/playlist/${tempPlaylistName}`);
+        setPlaylistItems(data.playlist_items || []);
+        console.log('Fetched playlist data:', data);
+      } catch (error) {
+        console.error('Error fetching playlist:', error);
+      }
+    };
+
+    if (mode === 'temp_playlist' && tempPlaylistName) {
+      fetchPlaylist();
+    }
+  }, [mode, tempPlaylistName]);
+
+  const handleNext = () => {
+    console.log('handleNext called');
+    const currentIndex = playlistItems.findIndex(
+      item => String(item.oer_id) === String(currentOerId)
+    );
+  
+    const nextItem = playlistItems[currentIndex + 1];
+    console.log('nextItem:', nextItem);
+  
+    if (nextItem) {
+      let pathToNavigateTo = `${ROUTES.RESOURCES}/${nextItem.oer_id}`;
+  
+      // Append query params if in temp playlist mode
+      if (mode === 'temp_playlist' && tempPlaylistName) {
+        pathToNavigateTo += `?mode=temp_playlist&title=${encodeURIComponent(tempPlaylistName)}`;
+      }
+  
+      props.history.push(pathToNavigateTo);
+    }
+  };
+
+  const handlePrevious = () => {
+    console.log('handlePrevious called');
+    const currentIndex = playlistItems.findIndex(
+      item => String(item.oer_id) === String(currentOerId)
+    );
+  
+    const previousItem = playlistItems[currentIndex - 1];
+    console.log('previousItem:', previousItem);
+  
+    if (previousItem) {
+      let pathToNavigateTo = `${ROUTES.RESOURCES}/${previousItem.oer_id}`;
+  
+      if (mode === 'temp_playlist' && tempPlaylistName) {
+        pathToNavigateTo += `?mode=temp_playlist&title=${encodeURIComponent(tempPlaylistName)}`;
+      }
+  
+      props.history.push(pathToNavigateTo);
+    }
+  };
+  
 
   const [oerData, setOERData] = useState<{
     data: {
@@ -99,6 +175,24 @@ export function ResourcesPage(props) {
   //   }
   // }, [data]);
   const { data, loading, error } = oerData;
+  useEffect(() => {
+    if (data) {
+      console.log('OER Data Loaded:', {
+        date: data.date,
+        description: data.description,
+        duration: data.duration,
+        durationInSeconds: data.durationInSeconds,
+        id: data.id,
+        images: data.images,
+        material_id: data.material_id,
+        mediatype: data.mediatype,
+        provider: data.provider,
+        title: data.title,
+        url: data.url,
+        translations: data.translations,
+      });
+    }
+  }, [data]);
 
   return (
     <>
@@ -120,28 +214,75 @@ export function ResourcesPage(props) {
                 )}
 
                 {data.mediatype === 'video' && (
-                  <video
-                    ref={videoRef}
-                    width="100%"
-                    style={{ width: '100%', height: '45vh' }}
-                    controls
-                  >
-                    <source src={data.url} type="video/mp4" />
-                    {data.translations &&
-                      Object.keys(data.translations).map((key, index) => {
-                        return (
-                          <track
-                            key={index}
-                            label={key}
-                            kind="subtitles"
-                            srcLang={key}
-                            src={`data:,${data.translations[key]}`}
-                          ></track>
-                        );
-                      })}
-                    Your browser does not support the video tag.
-                  </video>
+                  <>
+                    {ReactPlayer.canPlay(data.url) ? (
+                      <ReactPlayer
+                        url={data.url}
+                        controls
+                        width="100%"
+                        height="45vh"
+                        config={{
+                          file: {
+                            attributes: {
+                              ref: videoRef,
+                            },
+                            tracks: data.translations
+                              ? Object.keys(data.translations).map(key => ({
+                                  kind: 'subtitles',
+                                  src: `data:,${data.translations[key]}`,
+                                  srcLang: key,
+                                  label: key,
+                                  default: false,
+                                }))
+                              : [],
+                          },
+                        }}
+                      />
+                    ) : (
+                      <video
+                        ref={videoRef}
+                        width="100%"
+                        style={{ width: '100%', height: '45vh' }}
+                        controls
+                      >
+                        <source src={data.url} type="video/mp4" />
+                        {data.translations &&
+                          Object.keys(data.translations).map((key, index) => (
+                            <track
+                              key={index}
+                              label={key}
+                              kind="subtitles"
+                              srcLang={key}
+                              src={`data:,${data.translations[key]}`}
+                            />
+                          ))}
+                        Your browser does not support the video tag.
+                      </video>
+                    )}
+                  </>
                 )}
+
+                <Space>
+                  <Button
+                    type="default"
+                    onClick={handlePrevious}
+                    disabled={
+                      playlistItems.findIndex(item => String(item.oer_id) === String(currentOerId)) === 0
+                    }
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    type="primary"
+                    onClick={handleNext}
+                    disabled={
+                      playlistItems.findIndex(item => String(item.oer_id) === String(currentOerId)) ===
+                      playlistItems.length - 1
+                    }
+                  >
+                    Next
+                  </Button>
+                </Space>
 
                 {data.mediatype === 'text' && (
                   <object
@@ -162,21 +303,24 @@ export function ResourcesPage(props) {
               <Col {...responsiveColWidths}>
                 <Card
                   headStyle={{ border: 'none' }}
-                  title={<Title level={2}>{data.title}</Title>}
-                  extra={
+                  title={
                     <>
-                      {/* <Button
-                        type="link"
-                        shape="round"
-                        icon={<UploadOutlined />}
-                        size="large"
-                      >
-                        Bookmark
-                      </Button>{' '} */}
-                      <AddToPlaylistButton oerId={oerID} />
+                      <Title level={2}>{data.title}</Title>
+                      {mode === 'temp_playlist' && tempPlaylistName && (
+                        <Button
+                          type="link"
+                          onClick={() =>
+                            props.history.push(`${ROUTES.PLAYLISTS}/temp/${encodeURIComponent(tempPlaylistName)}`)
+                          }
+                          style={{ padding: 0, marginTop: 8 }}
+                        >
+                          Go Back To Playlist
+                        </Button>
+                      )}
                     </>
                   }
                 >
+
                   <Space
                     direction="vertical"
                     size={40}

@@ -21,13 +21,15 @@ const DragHandle = SortableHandle(() => (
 ));
 
 export const selectAllOers = state => state.allOERs.data;
+
 export const selectOerByID = createSelector(
   [selectAllOers, (_, oerId) => oerId],
   (oers, oerId) => {
     return oers && oers[oerId];
   },
 );
-const SortableOerCard = ({ oerId }) => {
+
+const SortableOerCard = ({ oerId,tempPlaylistName}) => {
   const cardData = useSelector((state: RootState) => {
     return selectOerByID(state, oerId);
   });
@@ -35,7 +37,11 @@ const SortableOerCard = ({ oerId }) => {
   const loading = useSelector((state: RootState) => {
     return state.allOERs.loading;
   });
-  return <OerSortableView loading={loading} card={cardData} />;
+  return  <OerSortableView
+  loading={loading}
+  card={cardData}
+  tempPlaylistName={tempPlaylistName} // Pass the prop down
+/>;
 };
 
 const SortableItem = SortableElement(props => <tr {...props} />);
@@ -43,6 +49,7 @@ const SortableContainer2 = SortableContainer(props => <tbody {...props} />);
 
 export const useOerData=(playlist_items)=>{
   const dispatch = useDispatch();
+  
   const [oerData, setOERData] = useState({
     data: null,
     loading: true,
@@ -70,6 +77,7 @@ export function PlaylistItemSortWidget({
   playlist_items,
   onItemsReorder,
   isUpdating,
+  tempPlaylistName,
 }) {
   const dispatch = useDispatch();
   const [{ data, loading, error }, setOERData] = useState({
@@ -106,7 +114,7 @@ export function PlaylistItemSortWidget({
   useEffect(() => {
     if (playlist_items) {
       setPlaylistItems(playlist_items)
-      // debugger
+      console.log('Playlist items: ', playlist_items);
     }
   }, [playlist_items]);
 
@@ -167,7 +175,7 @@ export function PlaylistItemSortWidget({
       render: oerId => {
         return (
           <>
-            <SortableOerCard oerId={oerId} />
+            <SortableOerCard oerId={oerId} tempPlaylistName={tempPlaylistName} />
           </>
         );
       },

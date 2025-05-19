@@ -1,5 +1,6 @@
 import styled from 'styled-components/macro';
 import { Helmet } from 'react-helmet-async';
+import axios from 'axios';
 import {
   Row,
   Col,
@@ -51,6 +52,112 @@ export function PlaylistEditFormWidget(props: { formData? }) {
   const [form] = Form.useForm();
   const history = useHistory();
   const { t } = useTranslation();
+  const [isAddYTModalVisible, setIsAddYTModalVisible] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isOptimizeModalVisible, setIsOptimizeModalVisible] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const { playlist } = props.formData;
+  const [items, setItems] = useState(props.formData.playlist_items || []);
+  const dispatch = useDispatch();
+  const path = window.location.pathname;
+  const tempPlaylistName = path.substring(path.lastIndexOf('/') + 1);
+
+  const addYTvideo = () => {
+    setIsAddYTModalVisible(true);
+  };
+
+  const YOUTUBE_API_KEY = 'AIzaSyCuzC9mi7rmUDIRTQamTWmNnkRfyY2Dt90';
+  const handleUrlChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    form.setFieldsValue({ url }); // set URL immediately
+    const videoIdMatch = url.match(
+      /(?:youtube\.com\/.*v=|youtu\.be\/)([^&?/]+)/
+    );
+    if (videoIdMatch && videoIdMatch[1]) {
+      const videoId = videoIdMatch[1];
+
+      try {
+        const response = await axios.get(
+          `https://www.googleapis.com/youtube/v3/videos`,
+          {
+            params: {
+              part: 'snippet,contentDetails',
+              id: videoId,
+              key: YOUTUBE_API_KEY,
+            },
+          }
+        );
+
+        const video = response.data.items[0];
+        if (video) {
+          const snippet = video.snippet;
+          const duration = video.contentDetails.duration; // ISO 8601 format
+
+          form.setFieldsValue({
+            title: snippet.title,
+            description: snippet.description,
+            thumbnail_url: snippet.thumbnails?.default?.url,
+            date: snippet.publishedAt?.split('T')[0], // e.g., 2023-10-05
+            duration: duration, // You can parse ISO duration to HH:MM:SS if needed
+          });
+        } else {
+          message.error('No video data found for this URL');
+        }
+      } catch (error) {
+        console.error(error);
+        message.error('Failed to fetch video data');
+      }
+    }
+  };
+
+  const formatISODuration = (isoDuration: string): string => {
+    const matches = isoDuration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+    if (!matches) return '00:00:00';
+
+    const hours = parseInt(matches[1] || '0', 10);
+    const minutes = parseInt(matches[2] || '0', 10);
+    const seconds = parseInt(matches[3] || '0', 10);
+    const padded = (num: number) => num.toString().padStart(2, '0');
+    return `${padded(hours)}:${padded(minutes)}:${padded(seconds)}`;
+  };
+
+  const saveYTVideo = async () => {
+    try {
+      const values = await form.validateFields();
+      const payload = {
+        url: values.url,
+        title: values.title,
+        description: values.description,
+        thumbnail_url: values.thumbnail_url,
+        date: values.date,
+        duration: formatISODuration(values.duration),
+      };
+  
+      const response = await axios.post(
+        `/api/v1/playlist/${tempPlaylistName}/yt_items`,
+        payload,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+  
+      const newItem = response.data;
+      setItems(prevItems => [...prevItems, newItem]);
+  
+      message.success('YouTube video added successfully');
+      setIsAddYTModalVisible(false);
+      form.resetFields();
+    } catch (error: any) {
+      if (error.response) {
+        console.error('Error response:', error.response);
+      } else {
+        console.error('Validation or request error:', error);
+      }
+      message.error('Failed to add YouTube video');
+    }
+  };
 
   const { data: licenseData, loading, error } = useSelector(
     (state: RootState) => {
@@ -58,18 +165,11 @@ export function PlaylistEditFormWidget(props: { formData? }) {
     },
   );
 
-  const { playlist, playlist_items } = props.formData;
-  const dispatch = useDispatch();
-
   useEffect(() => {
     if (!licenseData) {
       dispatch(fetchPlaylistLicensesThunk());
     }
   }, [licenseData, dispatch]);
-
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [isOptimizeModalVisible, setIsOptimizeModalVisible] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
 
   const showModal = () => {
     setIsModalVisible(true);
@@ -101,6 +201,7 @@ export function PlaylistEditFormWidget(props: { formData? }) {
     setIsOptimizeModalVisible(true);
   };
 
+ 
   return (
     <Form
       {...layout}
@@ -111,9 +212,10 @@ export function PlaylistEditFormWidget(props: { formData? }) {
       <Row gutter={[16, 16]}>
         <Col span={24}>
           <PlaylistItemSortWidget
-            playlist_items={playlist_items}
+            playlist_items={items}
             onItemsReorder={onItemsReorder}
             isUpdating={isUpdating}
+            tempPlaylistName={tempPlaylistName}
           />
         </Col>
         <Col span={24}>
@@ -122,7 +224,7 @@ export function PlaylistEditFormWidget(props: { formData? }) {
           Save <UploadOutlined />
         </Button> */}
             <Space wrap>
-              <Button
+             {/* <Button
                 type="primary"
                 htmlType="button"
                 size="large"
@@ -130,6 +232,16 @@ export function PlaylistEditFormWidget(props: { formData? }) {
                 disabled={isUpdating}
               >
                 {t('playlist.btn_optimize_learning_path')}
+              </Button>*/}
+
+              <Button
+                type="primary"
+                htmlType="button"
+                size="large"
+                onClick={addYTvideo}
+                disabled={isUpdating}
+              >
+                {t('Add youTube video to playlist')}
               </Button>
 
               <Button
@@ -154,6 +266,40 @@ export function PlaylistEditFormWidget(props: { formData? }) {
             formData={props.formData}
           />
         )}
+
+        <Modal
+          visible={isAddYTModalVisible}
+          title={t('Add YouTube Video')}
+          onCancel={() => setIsAddYTModalVisible(false)}
+          onOk={() => {saveYTVideo();}}
+          okText="Add Video"
+        >
+          <Form layout="vertical" form={form}>
+            <Form.Item
+              name="url"
+              label="YouTube URL"
+              rules={[{ required: true, message: 'Please input the video URL' }]}
+            >
+              <Input onChange={handleUrlChange} />
+         </Form.Item>
+            <Form.Item name="title" label="Title">
+              <Input />
+            </Form.Item>
+            <Form.Item name="description" label="Description">
+              <TextArea rows={3} />
+            </Form.Item>
+            <Form.Item name="thumbnail_url" label="Thumbnail URL">
+              <Input />
+            </Form.Item>
+            <Form.Item name="date" label="Upload Date">
+              <Input placeholder="e.g., 2019-10-07" />
+            </Form.Item>
+            <Form.Item name="duration" label="Duration">
+              <Input placeholder="e.g., 24:39" />
+            </Form.Item>
+          </Form>
+        </Modal>
+        
         {isOptimizeModalVisible && (
           <PlaylistOptimizeConfirmationWidget
             visible={isOptimizeModalVisible}
@@ -164,4 +310,5 @@ export function PlaylistEditFormWidget(props: { formData? }) {
       </>
     </Form>
   );
+  
 }

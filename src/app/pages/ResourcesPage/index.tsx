@@ -67,7 +67,6 @@ export function ResourcesPage(props) {
   console.log('tempPlaylistName', tempPlaylistName);
   console.log('mode', mode);
 
-
   useEffect(() => {
     const fetchPlaylist = async () => {
       try {

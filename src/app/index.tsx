@@ -8,7 +8,7 @@
 
 import * as React from 'react';
 import { Helmet } from 'react-helmet-async';
-import { Switch, Route, BrowserRouter } from 'react-router-dom';
+import { Switch, Route, BrowserRouter,useLocation,useHistory} from 'react-router-dom';
 
 import { GlobalStyle } from '../styles/global-styles';
 
@@ -25,9 +25,43 @@ import { CreatePlaylistsPage } from './pages/CreatePlaylistPage/Loadable';
 import { PublishPlaylistPage } from './pages/PublishPlaylistPage/Loadable';
 import { EditTempPlaylistPage } from './pages/EditTempPlaylistPage/Loadable';
 import { MyPlaylistsPage } from './pages/MyPlaylistPage/Loadable';
+import { useEffect } from 'react';
 
 const BASE_URL = process.env.REACT_APP_BASE_URL;
 const REDIRECT_URL = process.env.REACT_APP_REDIRECT_URL;
+
+
+const AuthValidator = () => {
+  const location = useLocation();
+  const history = useHistory();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('http://127.0.0.1:5000/api/v1/user/api_token', {
+          method: 'GET',
+          headers: {
+            accept: 'application/json',
+          },
+          credentials: 'include', 
+        });
+
+        if (res.status === 401) {
+          history.push(ROUTES.LOGOUT);
+        }
+      } catch (error) {
+        console.error('Token check failed', error);
+        history.push(ROUTES.LOGOUT);
+      }
+    };
+
+    checkAuth();
+  }, [location, history]);
+
+  return null;
+};
+
+
 
 export function App() {
   return (
@@ -35,6 +69,7 @@ export function App() {
       <Helmet titleTemplate="%s - X5Learn" defaultTitle="X5Learn">
         <meta name="description" content="The AI Powered Learning Platform" />
       </Helmet>
+        <AuthValidator />
       <Switch>
         <Route exact path={'/'} component={HomePage} />
         <Route exact path={ROUTES.HOMEPAGE} component={HomePage} />

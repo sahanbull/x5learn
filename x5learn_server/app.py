@@ -22,6 +22,8 @@ import wikipedia
 import base64
 from googleapiclient.discovery import build
 import isodate
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 
 
 # instantiate the user management db classes
@@ -44,6 +46,8 @@ from x5learn_server.course_optimization import optimize_course
 
 # Create app
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
 
 cors = CORS(app,
      resources={r"/*": {"origins": "*"}},
@@ -57,7 +61,7 @@ app.config['CORS_SUPPORTS_CREDENTIALS'] = True
 
 mail = Mail()
 
-app.config['SERVER_NAME'] = SERVER_NAME
+# app.config['SERVER_NAME'] = SERVER_NAME
 app.config['DEBUG'] = False
 app.config['SECRET_KEY'] = PASSWORD_SECRET
 app.config['SECURITY_PASSWORD_HASH'] = "bcrypt"

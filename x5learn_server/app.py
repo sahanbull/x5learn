@@ -2915,6 +2915,14 @@ def _inject_notes(oer):
     return oer
 
 
+@app.route("/debug_headers")
+def debug_headers():
+    return jsonify({
+        "request.host": request.host,
+        "request.url_root": request.url_root,
+        "headers": dict(request.headers)
+    })
+
 # Fix oers that are non-https to https
 def _non_https_to_https(oer):
     if ("http:" in oer['url']):

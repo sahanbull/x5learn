@@ -1,7 +1,9 @@
 # database related configs
 import os
+from dotenv import load_dotenv
 
-print(os.environ)
+# Load environment variables from .env file
+load_dotenv()
 
 db_host = os.environ["X5LEARN_DB_HOST"]
 db_user = os.environ["X5LEARN_DB_USERNAME"]

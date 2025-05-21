@@ -17,6 +17,9 @@ from preview_generator.manager import PreviewManager
 from wand.image import Image
 import wget
 import urllib
+from dotenv import load_dotenv
+
+load_dotenv()
 
 API_ROOT = os.environ.get("FLASK_API_ROOT")
 

@@ -2,6 +2,7 @@ import argparse
 import requests
 import json
 import os
+from dotenv import load_dotenv
 
 # Recommended usage:
 # nohup python ingest_oer_loop.py 1 105000 >ingest_oer_loop.out &
@@ -9,6 +10,8 @@ import os
 # This writes the output to a separate file ingest_oer_loop.out
 
 # NB the FLASK_API_ROOT environment variable needs to be set. Consider source .env
+
+load_dotenv()
 
 
 API_URL = os.environ["FLASK_API_ROOT"]

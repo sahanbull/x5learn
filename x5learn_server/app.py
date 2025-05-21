@@ -62,6 +62,7 @@ app.config['DEBUG'] = False
 app.config['SECRET_KEY'] = PASSWORD_SECRET
 app.config['SECURITY_PASSWORD_HASH'] = "bcrypt"
 app.config['SECURITY_PASSWORD_SALT'] = PASSWORD_SECRET
+app.config["SESSION_COOKIE_DOMAIN"] = ".x5learn.org"
 
 # user registration configs
 app.config['SECURITY_REGISTERABLE'] = True

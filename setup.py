@@ -13,6 +13,7 @@ setup(
     install_requires=[
         'Flask==1.1.4',
         'Flask-Security>=3.0.0',
+        'Flask-Mail>=0.9.1',
         'SQLAlchemy==1.4.49',
         'python-dateutil',
         'Werkzeug==0.16.1',

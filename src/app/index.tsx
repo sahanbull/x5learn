@@ -38,7 +38,7 @@ const AuthValidator = () => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch('http://127.0.0.1:5000/api/v1/user/api_token', {
+        const res = await fetch(`${process.env.REACT_APP_BASE_URL}/user/api_token`, {
           method: 'GET',
           headers: {
             accept: 'application/json',

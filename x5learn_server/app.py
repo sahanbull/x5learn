@@ -2915,7 +2915,5 @@ def _non_https_to_https(oer):
 
 
 if __name__ == '__main__':
-    port = os.getenv("PORT")
-    if port is None:
-        port = 5000
+    port = os.getenv("PORT", 5000)
     app.run(port=port)

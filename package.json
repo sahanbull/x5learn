@@ -5,7 +5,7 @@
   "main": "app.js",
   "scripts": {
     "setup:mkdir": "mkdir -p x5learn_server/static/dist",
-    "setup:apt-get": "apt-get install zlib1g-dev libjpeg-dev python3-pythonmagick inkscape xvfb poppler-utils libfile-mimeinfo-perl qpdf libimage-exiftool-perl webp ffmpeg libreoffice",
+    "setup:apt-get": "sudo apt-get install zlib1g-dev libjpeg-dev python3-pythonmagick inkscape xvfb poppler-utils libfile-mimeinfo-perl qpdf libimage-exiftool-perl webp ffmpeg libreoffice",
     "setup": "npm run setup:mkdir && npm run setup:apt-get",
     "build:uncompressed:rm": "rimraf x5learn_server/static/dist/**",
     "build:uncompressed": "npm run build:uncompressed:rm",

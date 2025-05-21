@@ -57,7 +57,7 @@ app.config['CORS_SUPPORTS_CREDENTIALS'] = True
 
 mail = Mail()
 
-# app.config['SERVER_NAME'] = SERVER_NAME
+app.config['SERVER_NAME'] = SERVER_NAME
 app.config['DEBUG'] = False
 app.config['SECRET_KEY'] = PASSWORD_SECRET
 app.config['SECURITY_PASSWORD_HASH'] = "bcrypt"

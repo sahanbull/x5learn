@@ -48,7 +48,7 @@ export function AppHeader(props) {
     <StyledHeader className="header">
       <Row align="middle" justify="space-between">
         <Col span={6}>
-          <Link to={`/`}>
+          <Link to={`/my-playlists`}>
             <X5Logo style={{ width: '100%' }} />
           </Link>
         </Col>

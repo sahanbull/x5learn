@@ -9,4 +9,5 @@ export const ROUTES = {
   NOTES_PAGE: '/notes',
   HISTORY_PAGE: '/history',
   LOGOUT: '/logout',
+  PLAYLIST_DETAIL: (id) => `/playlist/${id}`,
 };

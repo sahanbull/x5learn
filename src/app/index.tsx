@@ -109,7 +109,7 @@ export function App() {
           exact
           path={ROUTES.LOGOUT}
           component={() => {
-            window.location.href = '/';
+            window.location.href = '/logout';
             return null;
           }}
         />

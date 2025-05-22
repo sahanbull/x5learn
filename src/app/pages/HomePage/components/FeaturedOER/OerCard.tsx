@@ -78,8 +78,10 @@ export function OerCard(props: {
   }
 
   let imgSrc = `/static/img/thumbnail_unavailable.jpg`;
-  if (card?.images[0]) {
-    imgSrc = `${imageBaseURL}/${card?.images[0]}`;
+  if (card?.images?.[0]) {
+    imgSrc = card.images[0].startsWith('http')
+      ? card.images[0]
+      : `${imageBaseURL}/${card.images[0]}`;
   }
 
   return (

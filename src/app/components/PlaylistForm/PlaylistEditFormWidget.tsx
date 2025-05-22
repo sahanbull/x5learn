@@ -17,7 +17,7 @@ import {
   Space,
 } from 'antd';
 import { AppLayout } from 'app/containers/Layout/AppLayout';
-import { DeleteOutlined, UploadOutlined } from '@ant-design/icons';
+import { DeleteOutlined, UploadOutlined ,PlusOutlined} from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from 'types';
 import { useEffect, useState } from 'react';
@@ -149,6 +149,7 @@ export function PlaylistEditFormWidget(props: { formData? }) {
       message.success('YouTube video added successfully');
       setIsAddYTModalVisible(false);
       form.resetFields();
+      window.location.reload();
     } catch (error: any) {
       if (error.response) {
         console.error('Error response:', error.response);
@@ -210,7 +211,36 @@ export function PlaylistEditFormWidget(props: { formData? }) {
       initialValues={{ remember: true }}
     >
       <Row gutter={[16, 16]}>
+
+    <Col span={24}>
+  <Row justify="end">
+    <Space>
+      <Button
+        type="primary"
+        htmlType="button"
+        size="large"
+        icon={<PlusOutlined />}
+        onClick={addYTvideo}
+        disabled={isUpdating}
+      >
+        {t('Add youTube video to playlist')}
+      </Button>
+
+      <Button
+        type="primary"
+        htmlType="button"
+        size="large"
+        onClick={showModal}
+        disabled={isUpdating}
+      >
+        {t('playlist.lbl_publish_playlist')} <UploadOutlined />
+      </Button>
+    </Space>
+  </Row>
+</Col>
+
         <Col span={24}>
+        
           <PlaylistItemSortWidget
             playlist_items={items}
             onItemsReorder={onItemsReorder}
@@ -234,25 +264,9 @@ export function PlaylistEditFormWidget(props: { formData? }) {
                 {t('playlist.btn_optimize_learning_path')}
               </Button>*/}
 
-              <Button
-                type="primary"
-                htmlType="button"
-                size="large"
-                onClick={addYTvideo}
-                disabled={isUpdating}
-              >
-                {t('Add youTube video to playlist')}
-              </Button>
+            
 
-              <Button
-                type="primary"
-                htmlType="button"
-                size="large"
-                onClick={showModal}
-                disabled={isUpdating}
-              >
-                {t('playlist.lbl_publish_playlist')} <UploadOutlined />
-              </Button>
+              
             </Space>
           </Form.Item>
         </Col>

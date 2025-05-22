@@ -14,6 +14,8 @@ import {
 import { fetchOERsByIDsThunk } from 'app/containers/Layout/ducks/allOERSlice';
 import { Action, AsyncThunkAction, unwrapResult } from '@reduxjs/toolkit';
 import { useTranslation } from 'react-i18next';
+import { message } from 'antd';
+import { ShareAltOutlined } from '@ant-design/icons';
 
 const { Title, Text } = Typography;
 
@@ -75,7 +77,18 @@ export function PlaylistsPage(props) {
                 <Card
                   headStyle={{ border: 'none' }}
                   title={<Title level={2}>{data.title}</Title>}
-                  extra={<></>}
+                  extra={
+  <Button
+  type="default"
+  icon={<ShareAltOutlined />}
+  onClick={() => {
+    navigator.clipboard.writeText(window.location.href);
+    message.success('Link copied to clipboard!');
+  }}
+>
+  {t('Share')}
+</Button>
+}
                 >
                   <p>{data.description}</p>
                   <Text strong>{data.oerIds.length}</Text>

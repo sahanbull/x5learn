@@ -53,7 +53,7 @@ export function AppHeader(props) {
           </Link>
         </Col>
         <Col span={12}>
-          <HeaderSearchBar />
+          {/* <HeaderSearchBar /> */}
         </Col>
         <Col span={6}>
           <Menu mode="horizontal" style={{ textAlign: 'right' }}>

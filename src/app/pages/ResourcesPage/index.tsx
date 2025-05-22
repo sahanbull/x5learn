@@ -38,7 +38,6 @@ import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { ROUTES } from 'routes/routes';
 
-
 const { Title, Text } = Typography;
 const { Meta } = Card;
 
@@ -54,7 +53,6 @@ export function ResourcesPage(props) {
   const dispatch = useDispatch();
   const videoRef = useRef<HTMLVideoElement>(null);
   const oerID = props.match?.params?.id;
-
 
   const query = useQuery();
   function useQuery() {
@@ -123,7 +121,6 @@ export function ResourcesPage(props) {
       props.history.push(pathToNavigateTo);
     }
   };
-  
 
   const [oerData, setOERData] = useState<{
     data: {
@@ -261,25 +258,28 @@ export function ResourcesPage(props) {
                   </>
                 )}
 
-                <Space>
+                <Space style={{ width: '100%' , marginTop: 16 }} size={16}>
                   <Button
+                    block
                     type="default"
                     onClick={handlePrevious}
                     disabled={
                       playlistItems.findIndex(item => String(item.oer_id) === String(currentOerId)) === 0
                     }
+                    style={{ flex: 1 }}
                   >
-                    Previous
+                    ← Previous
                   </Button>
                   <Button
+                    block
                     type="primary"
                     onClick={handleNext}
                     disabled={
-                      playlistItems.findIndex(item => String(item.oer_id) === String(currentOerId)) ===
-                      playlistItems.length - 1
+                      playlistItems.findIndex(item => String(item.oer_id) === String(currentOerId)) === playlistItems.length - 1
                     }
+                    style={{ flex: 1 }}
                   >
-                    Next
+                    Next →
                   </Button>
                 </Space>
 
@@ -369,7 +369,7 @@ export function ResourcesPage(props) {
                     />
                     <NotesWidget oerID={data?.id} />
 
-                    <RelatedOersWidget oerID={data?.id} />
+                    {/* <RelatedOersWidget oerID={data?.id} /> */}
                   </Space>
                 </Card>
               </Col>

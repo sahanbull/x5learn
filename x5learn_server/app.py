@@ -22,6 +22,8 @@ import wikipedia
 import base64
 from googleapiclient.discovery import build
 import isodate
+from werkzeug.middleware.proxy_fix import ProxyFix
+
 
 
 # instantiate the user management db classes
@@ -44,6 +46,8 @@ from x5learn_server.course_optimization import optimize_course
 
 # Create app
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
 
 cors = CORS(app,
      resources={r"/*": {"origins": "*"}},
@@ -57,11 +61,15 @@ app.config['CORS_SUPPORTS_CREDENTIALS'] = True
 
 mail = Mail()
 
-app.config['SERVER_NAME'] = SERVER_NAME
+# app.config['SERVER_NAME'] = SERVER_NAME
 app.config['DEBUG'] = False
 app.config['SECRET_KEY'] = PASSWORD_SECRET
 app.config['SECURITY_PASSWORD_HASH'] = "bcrypt"
 app.config['SECURITY_PASSWORD_SALT'] = PASSWORD_SECRET
+app.config["SESSION_COOKIE_DOMAIN"] = ".x5learn.org"
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
 
 # user registration configs
 app.config['SECURITY_REGISTERABLE'] = True
@@ -2906,6 +2914,14 @@ def _inject_notes(oer):
 
     return oer
 
+
+@app.route("/debug_headers")
+def debug_headers():
+    return jsonify({
+        "request.host": request.host,
+        "request.url_root": request.url_root,
+        "headers": dict(request.headers)
+    })
 
 # Fix oers that are non-https to https
 def _non_https_to_https(oer):

@@ -66,7 +66,6 @@ app.config['DEBUG'] = False
 app.config['SECRET_KEY'] = PASSWORD_SECRET
 app.config['SECURITY_PASSWORD_HASH'] = "bcrypt"
 app.config['SECURITY_PASSWORD_SALT'] = PASSWORD_SECRET
-app.config["SESSION_COOKIE_DOMAIN"] = ".x5learn.org"
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
@@ -100,6 +99,9 @@ user_datastore = SQLAlchemySessionUserDatastore(db_session,
 app.config["SQLALCHEMY_DATABASE_URI"] = DB_ENGINE_URI
 db = SQLAlchemy(app)
 
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db_session.remove()
 
 # Setup password policy by extending flask security forms
 class ExtendedRegisterForm(RegisterForm):
@@ -126,18 +128,24 @@ BaseLoginForm.validate = patched_validate
 class LoginForm(BaseLoginForm):
     def validate(self, **kwargs):
         # First, run the base validation
+
+        print("comes here 2")
         if not super().validate(**kwargs):
+            print(self.errors)
             return False
         
         self.user = current_app.extensions['security'].datastore.find_user(email=self.email.data)
+        print("comes here 1")
 
         if self.user is None:
-            self.email.errors.append("Invalid email or password")
+            self.email.errors.append("Invalid user")
             return False
 
         if not verify_and_update_password(self.password.data, self.user):
-            self.email.errors.append("Invalid email or password")
+            self.password.errors.append("Invalid email or password")
             return False
+
+        print("comes here")
 
         return True
 
@@ -271,7 +279,6 @@ repository = Repository()
 
 @app.route("/")
 def home():
-    print('c1')
     ref = request.args.get('ref')
     if current_user.is_authenticated:
         languages = get_available_languages()
@@ -408,6 +415,18 @@ def new_playlist():
     languages = get_available_languages()
     localization_dict, lang = get_localization_dict()
     return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
+
+
+# if a user directly access a playlist, we should forward them to the react app and it will handle the url
+@cross_origin()
+@app.route("/playlist/<playlist_id>")
+def playlist_redirect(playlist_id):
+    print("c")
+
+    languages = get_available_languages()
+    localization_dict, lang = get_localization_dict()
+    return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
+
 
 @cross_origin()
 @app.route("/playlist/download/<playlist_id>")
@@ -766,6 +785,10 @@ def api_save_user_profile():
 @cross_origin()
 @app.route("/api/v1/wikichunk_enrichments/", methods=['POST'])
 def api_wikichunk_enrichments():
+
+    # temporary blocked
+    return jsonify([])
+
     enrichments = []
     for oer_id in request.get_json()['ids']:
         enrichment = find_enrichment_by_oer_id(oer_id)

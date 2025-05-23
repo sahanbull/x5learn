@@ -22,7 +22,12 @@ def get_or_create_db(db_engine_uri):
     global Base
 
     if engine is None:
-        engine = create_engine(db_engine_uri)
+        engine = create_engine(db_engine_uri,
+                pool_size=10,
+                max_overflow=20,
+                pool_timeout=30,
+                pool_recycle=1800)
+        
         db_session = scoped_session(sessionmaker(autocommit=False, autoflush=False, bind=engine))
 
         Base = declarative_base()

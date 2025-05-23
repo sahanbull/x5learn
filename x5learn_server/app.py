@@ -69,6 +69,11 @@ app.config['SECURITY_PASSWORD_SALT'] = PASSWORD_SECRET
 app.config['SESSION_COOKIE_SECURE'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
+if os.getenv('FLASK_ENV') == 'development':
+    app.config['SESSION_COOKIE_DOMAIN'] = None
+else:
+    app.config['SESSION_COOKIE_DOMAIN'] = '.x5learn.org'
+
 
 # user registration configs
 app.config['SECURITY_REGISTERABLE'] = True

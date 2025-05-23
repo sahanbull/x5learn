@@ -48,9 +48,15 @@ from x5learn_server.course_optimization import optimize_course
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
+cors_origins = {"origins": ["https://x5learn.org"]}
+
+if os.getenv('FLASK_ENV') == 'development':
+    cors_origins = {"origins": ["http://localhost:3000", "http://localhost:5000", "http://localhost"]}
+
+
 
 cors = CORS(app,
-     resources={r"/*": {"origins": "*"}},
+     resources={r"/*": cors_origins},
      supports_credentials=True,
      allow_headers="*",
      expose_headers="*")
@@ -289,12 +295,8 @@ def home():
         languages = get_available_languages()
         localization_dict, lang = get_localization_dict()
         return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
-    elif ref == "ai4eu":
-        languages = get_available_languages()
-        localization_dict, lang = get_localization_dict()
-        return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
     else:
-        return render_template('about.html', is_user_logged_in=current_user.is_authenticated)
+        return redirect("/about")
 
 
 @app.route("/verify_email")
@@ -313,10 +315,20 @@ def about():
 
 
 @app.route("/logout")
-# @login_required
 def logout():
     logout_user()
     return redirect("/")
+
+
+@app.errorhandler(404)
+def page_not_found(e):
+    if current_user.is_authenticated:
+        languages = get_available_languages()
+        localization_dict, lang = get_localization_dict()
+        return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)
+    else:
+        return redirect("/about")
+
 
 @cross_origin()
 @app.route("/featured")
@@ -423,11 +435,10 @@ def new_playlist():
 
 
 # if a user directly access a playlist, we should forward them to the react app and it will handle the url
-@cross_origin()
 @app.route("/playlist/<playlist_id>")
+@login_required
 def playlist_redirect(playlist_id):
-    print("c")
-
+    print("should not come here")
     languages = get_available_languages()
     localization_dict, lang = get_localization_dict()
     return render_template('home.html', lang=lang, localization_dict=localization_dict, languages=languages)

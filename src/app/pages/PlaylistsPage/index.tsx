@@ -78,17 +78,17 @@ export function PlaylistsPage(props) {
                   headStyle={{ border: 'none' }}
                   title={<Title level={2}>{data.title}</Title>}
                   extra={
-  <Button
-  type="default"
-  icon={<ShareAltOutlined />}
-  onClick={() => {
-    navigator.clipboard.writeText(window.location.href);
-    message.success('Link copied to clipboard!');
-  }}
->
-  {t('Share')}
-</Button>
-}
+                      <Button
+                      type="default"
+                      icon={<ShareAltOutlined />}
+                      onClick={() => {
+                        navigator.clipboard.writeText(window.location.href);
+                        message.success('Link copied to clipboard!');
+                      }}
+                    >
+                      {t('Share')}
+                    </Button>
+                    }
                 >
                   <p>{data.description}</p>
                   <Text strong>{data.oerIds.length}</Text>

@@ -17,6 +17,35 @@ export function OerCardList(props: {
 }) {
   const { t } = useTranslation();
   const { loading, error, data } = props;
+
+
+   const handleCardClick = async (item: any) => {
+    try {
+      const payload = {
+        action_type_id: 4,
+        params: JSON.stringify({ oer_id: item.id }),
+        is_bundled: false,
+        action_type_ids: [4],
+        params_list: [JSON.stringify({ oer_id: item.id })],
+      };
+      
+      await fetch(`${process.env.REACT_APP_BASE_URL}/action/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+        credentials: 'include',
+      });
+
+      console.log(`Action logged for item ID: ${item.id}`);
+    } catch (err) {
+      console.error('Failed to log action', err);
+    }
+  };
+
+
   if (loading) {
     return (
       <Row gutter={16}>
@@ -58,6 +87,7 @@ export function OerCardList(props: {
               card={item}
               playlistID={props.playlistID}
               loading={item.loading}
+              onClick={() => handleCardClick(item)}
             />
           </Col>
         );

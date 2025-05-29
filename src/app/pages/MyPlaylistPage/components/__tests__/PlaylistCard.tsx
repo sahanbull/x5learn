@@ -7,8 +7,12 @@ import { ROUTES } from 'routes/routes';
 const { Text } = Typography;
 const cardStyle = { borderRadius: 8, overflow: 'hidden' };
 
-export function PlaylistCard(props: { playlist?; loading?: boolean }) {
-  const { loading, playlist } = props;
+export function PlaylistCard(props: {
+  playlist?: any;
+  loading?: boolean;
+  onClick?: () => void;
+}) {
+  const { loading, playlist,onClick  } = props;
 
   let pathToNavigateTo = `${ROUTES.PLAYLISTS}/${playlist?.id}`;
   if (!playlist?.id) {
@@ -24,7 +28,7 @@ export function PlaylistCard(props: { playlist?; loading?: boolean }) {
   }
   return (
     <Link to={pathToNavigateTo}>
-      <Card hoverable bordered={false} style={cardStyle}>
+      <Card hoverable bordered={false} style={cardStyle}  onClick={onClick}>
         <Meta
           title={playlist?.title}
           description={

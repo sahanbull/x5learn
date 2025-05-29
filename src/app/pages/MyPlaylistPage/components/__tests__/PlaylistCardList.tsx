@@ -8,8 +8,9 @@ export function PlaylistCardList(props: {
   error?: any | null;
   data?: any[] | null;
   playlistID?: any;
+  onCardClick?: (item: any) => void;
 }) {
-  const { loading, error, data } = props;
+  const { loading, error, data ,onCardClick } = props;
   if (loading) {
     return (
       <Row gutter={16}>
@@ -41,7 +42,8 @@ export function PlaylistCardList(props: {
       {data?.map((item, index) => {
         return (
           <Col key={`${index}${item.id}`} span={8}>
-            <PlaylistCard playlist={item} />
+            <PlaylistCard playlist={item}
+             onClick={() => onCardClick?.(item)} />
           </Col>
         );
       })}

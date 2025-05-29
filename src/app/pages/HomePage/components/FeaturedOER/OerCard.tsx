@@ -50,6 +50,7 @@ export function OerCard(props: {
   loading?: boolean;
   card?: OerDao;
   playlistID?: any;
+  onClick?: () => void;
 }) {
   const { loading, card, playlistID } = props;
   const cardStyle = { borderRadius: 8, overflow: 'hidden' };
@@ -85,7 +86,11 @@ export function OerCard(props: {
   }
 
   return (
-    <Link to={pathToNavigateTo}>
+    <Link to={pathToNavigateTo}
+      onClick={() => {
+        props.onClick?.();
+      }}
+      >
       <Card
         hoverable
         bordered={false}

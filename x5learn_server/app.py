@@ -1484,6 +1484,9 @@ class UserHistoryApi(Resource):
                 temp_action = i.Action.serialize
                 oer_details = repository.get_by_id(Oer, temp_action['params'].get('oerId', 0))
 
+                if not oer_details:
+                    continue
+
                 oers.append({
                     'oer_id': temp_action['params'].get('oerId', 0),
                     'last_accessed': temp_action['created_at'],

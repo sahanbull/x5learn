@@ -316,6 +316,27 @@ export function ResourcesPage(props) {
                           Go Back To Playlist
                         </Button>
                       )}
+                      
+                       {mode == null && tempPlaylistName == null && (() => {
+                          const params = new URLSearchParams(window.location.search);
+                          const playlistId = params.get('playlist');
+
+                          if (playlistId) {
+                            return (
+                              <Button
+                                type="link"
+                                onClick={() =>
+                                  props.history.push(`${ROUTES.PLAYLISTS}/${playlistId}`)
+                                }
+                                style={{ padding: 0, marginTop: 8 }}
+                              >
+                                Go Back To Playlist
+                              </Button>
+                            );
+                          }
+
+                          return null;
+                        })()}
                     </>
                   }
                 >

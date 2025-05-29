@@ -51,6 +51,33 @@ export function MyPlaylistWidget(props: {}) {
 
   // const loadPlaylists
 
+  const handleCardClick = async (item: any) => {
+    try {
+      const payload = {
+        action_type_id: 1,
+        params: JSON.stringify({ oer_id: item.id }),
+        is_bundled: false,
+        action_type_ids: [1],
+        params_list: [JSON.stringify({ oer_id: item.id })],
+      };
+
+      await fetch(`${process.env.REACT_APP_BASE_URL}/action/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+        credentials: 'include',
+      });
+
+      console.log(`Action logged for item ID: ${item.id}`);
+    } catch (err) {
+      console.error('Failed to log action', err);
+    }
+  };
+
+
   useEffect(() => {
     const offset = limit * (+page - 1);
     dispatch(fetchAllMyPlaylistsThunk({ limit, offset }));
@@ -74,14 +101,14 @@ export function MyPlaylistWidget(props: {}) {
           {t('playlist.lbl_playlist_my_playlists')}
         </Title>
       )}
-      <PlaylistCardList data={data} loading={loading} error={error} />
+      <PlaylistCardList data={data} loading={loading} error={error} onCardClick={handleCardClick}/>
       <br />
       {temp_playlists && (
         <Title level={2} type="secondary">
           Temp Playlists
         </Title>
       )}
-      <PlaylistCardList data={temp_playlists} loading={loading} error={error} />
+      <PlaylistCardList data={temp_playlists} loading={loading} error={error} onCardClick={handleCardClick}/>
       <br />
       {total_pages > 1 && (
         <Row justify="center">

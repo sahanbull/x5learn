@@ -1,5 +1,5 @@
 export const ROUTES = {
-  HOMEPAGE: '/homepage',
+  HOMEPAGE: '/my-playlists',
   PLAYLISTS: '/playlist',
   MY_PLAYLISTS: '/my-playlists',
   MY_PLAYLISTS_CREATE: '/my-playlist/create',

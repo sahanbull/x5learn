@@ -15,10 +15,9 @@ export const getUserHistoryThunk = createAsyncThunk<any, any>(
   'historyPage/getUserHistory',
   async options => {
     const data = await getUserHistory(
-      options.sort,
-      options.limit,
-      options.offset,
-    );
+    options.limit,
+    options.offset,
+  );
     return data;
   },
 );

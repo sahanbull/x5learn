@@ -41,8 +41,8 @@ export function HistoryPage() {
 
   useEffect(() => {
     dispatch(
-      getUserHistoryThunk({ sort: 'asc', limit: PAGE_LIMIT, offset: currentOffset }),
-    );
+  getUserHistoryThunk({ limit: PAGE_LIMIT, offset: currentOffset }),
+);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -85,7 +85,6 @@ export function HistoryPage() {
             onChange={page => {
               dispatch(
                 getUserHistoryThunk({
-                  sort: 'asc',
                   limit: PAGE_LIMIT,
                   offset: PAGE_LIMIT * (page - 1),
                 }),

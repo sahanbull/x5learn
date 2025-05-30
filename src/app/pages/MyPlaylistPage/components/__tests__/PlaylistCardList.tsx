@@ -8,9 +8,9 @@ export function PlaylistCardList(props: {
   error?: any | null;
   data?: any[] | null;
   playlistID?: any;
-  onCardClick?: (item: any) => void;
+  
 }) {
-  const { loading, error, data ,onCardClick } = props;
+  const { loading, error, data  } = props;
   if (loading) {
     return (
       <Row gutter={16}>
@@ -43,7 +43,7 @@ export function PlaylistCardList(props: {
         return (
           <Col key={`${index}${item.id}`} span={8}>
             <PlaylistCard playlist={item}
-             onClick={() => onCardClick?.(item)} />
+             />
           </Col>
         );
       })}

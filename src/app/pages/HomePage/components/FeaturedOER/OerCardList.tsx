@@ -22,10 +22,10 @@ export function OerCardList(props: {
    const handleCardClick = async (item: any) => {
     try {
       const payload = {
-        action_type_id: 4,
+        action_type_id: 1,
         params: JSON.stringify({ oer_id: item.id }),
         is_bundled: false,
-        action_type_ids: [4],
+        action_type_ids: [1],
         params_list: [JSON.stringify({ oer_id: item.id })],
       };
       

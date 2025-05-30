@@ -57,8 +57,8 @@ export function MyPlaylistWidget(props: {}) {
         action_type_id: 1,
         params: JSON.stringify({ oer_id: item.id }),
         is_bundled: false,
-        action_type_ids: [1],
-        params_list: [JSON.stringify({ oer_id: item.id })],
+        // action_type_ids: [1],
+        // params_list: [JSON.stringify({ oer_id: item.id })],
       };
 
       await fetch(`${process.env.REACT_APP_BASE_URL}/action/`, {
@@ -101,14 +101,14 @@ export function MyPlaylistWidget(props: {}) {
           {t('playlist.lbl_playlist_my_playlists')}
         </Title>
       )}
-      <PlaylistCardList data={data} loading={loading} error={error} onCardClick={handleCardClick}/>
+      <PlaylistCardList data={data} loading={loading} error={error} />
       <br />
       {temp_playlists && (
         <Title level={2} type="secondary">
           Temp Playlists
         </Title>
       )}
-      <PlaylistCardList data={temp_playlists} loading={loading} error={error} onCardClick={handleCardClick}/>
+      <PlaylistCardList data={temp_playlists} loading={loading} error={error} />
       <br />
       {total_pages > 1 && (
         <Row justify="center">

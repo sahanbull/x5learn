@@ -269,12 +269,11 @@ export async function updateProfile(values) {
 }
 
 export async function getUserHistory(
-  sort = 'asc',
   limit = 12,
   offset = 0,
   pagination = true,
 ) {
-  const qs = queryString.stringify({ sort, limit, offset, pagination });
+  const qs = queryString.stringify({ limit, offset, pagination });
   return fetchAPI(`/user/history?${qs}`);
 }
 

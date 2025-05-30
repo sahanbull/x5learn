@@ -269,7 +269,6 @@ export async function updateProfile(values) {
 }
 
 export async function getUserHistory(
-
   limit = 12,
   offset = 0,
   pagination = true,

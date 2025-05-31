@@ -34,6 +34,7 @@ setup(
         'markupsafe==2.0.1',
         'dotenv',
         'google-api-python-client==2.169.0',
-        'isodate'
+        'isodate',
+        'email_validator'
     ]
 )

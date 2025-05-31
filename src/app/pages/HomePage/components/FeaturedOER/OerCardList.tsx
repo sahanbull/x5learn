@@ -23,10 +23,10 @@ export function OerCardList(props: {
     try {
       const payload = {
         action_type_id: 1,
-        params: JSON.stringify({ oer_id: item.id }),
+        params: JSON.stringify({ oerId: item.id }),
         is_bundled: false,
-        action_type_ids: [1],
-        params_list: [JSON.stringify({ oer_id: item.id })],
+        // action_type_ids: [1],
+        // params_list: [JSON.stringify({ oer_id: item.id })],
       };
       
       await fetch(`${process.env.REACT_APP_BASE_URL}/action/`, {

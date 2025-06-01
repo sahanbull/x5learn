@@ -61,6 +61,7 @@ export function ResourcesPage(props) {
   const [playlistItems, setPlaylistItems] = useState([]);
   const mode = query.get('mode');
   const tempPlaylistName = query.get('title');
+  const [oerIds, setOerIds] = useState([]);
   const currentOerId = props.match?.params?.id;
   console.log('tempPlaylistName', tempPlaylistName);
   console.log('mode', mode);
@@ -70,14 +71,47 @@ export function ResourcesPage(props) {
       try {
         const { data } = await axios.get(`/api/v1/playlist/${tempPlaylistName}`);
         setPlaylistItems(data.playlist_items || []);
-        console.log('Fetched playlist data:', data);
+        console.log('Fetched playlist data:', playlistItems);
       } catch (error) {
         console.error('Error fetching playlist:', error);
       }
     };
 
+
+    const fetchPublishedPlaylist = async () => {
+      try {
+        const params = new URLSearchParams(window.location.search);
+        const playlistId = params.get('playlist');
+
+        if (!playlistId) {
+          console.warn('No playlist ID found in URL.');
+          return;
+        }
+
+        const { data } = await axios.get(`/api/v1/playlist/${playlistId}`);
+        console.log('Fetched published playlist data:', data);
+
+        const extractedOerIds = Array.isArray(data.oerIds) ? data.oerIds : [];
+
+        // Convert to expected format
+        const formattedOerIds = extractedOerIds.map((id, index) => ({
+          playlist_id: null,
+          oer_id: id,
+          order: index,
+          data: id
+        }));
+
+        setPlaylistItems(formattedOerIds);
+        console.log('Formatted OER IDs:', formattedOerIds);
+      } catch (error) {
+        console.error('Error fetching published playlist:', error);
+      }
+    };
+
     if (mode === 'temp_playlist' && tempPlaylistName) {
       fetchPlaylist();
+    } else if (!mode && !tempPlaylistName) {
+      fetchPublishedPlaylist();
     }
   }, [mode, tempPlaylistName]);
 
@@ -281,31 +315,8 @@ export function ResourcesPage(props) {
                   >
                     Next →
                   </Button>
-                </Space>
-
-                {data.mediatype === 'text' && (
-                  <object
-                    data={data.url}
-                    type="application/pdf"
-                    style={{ width: '100%', height: '80vh' }}
-                  >
-                    Your browser does not support the PDF element.
-                  </object>
-                )}
-
-                <EnrichmentBar
-                  oerID={data.id}
-                  oer={data}
-                  onPlayLocationChange={onPlayLocationChange}
-                />
-              </Col>
-              <Col {...responsiveColWidths}>
-                <Card
-                  headStyle={{ border: 'none' }}
-                  title={
-                    <>
-                      <Title level={2}>{data.title}</Title>
-                      {mode === 'temp_playlist' && tempPlaylistName && (
+               <br/>
+                 {mode === 'temp_playlist' && tempPlaylistName && (
                         <Button
                           type="link"
                           onClick={() =>
@@ -337,6 +348,32 @@ export function ResourcesPage(props) {
 
                           return null;
                         })()}
+
+                </Space>
+
+                {data.mediatype === 'text' && (
+                  <object
+                    data={data.url}
+                    type="application/pdf"
+                    style={{ width: '100%', height: '80vh' }}
+                  >
+                    Your browser does not support the PDF element.
+                  </object>
+                )}
+
+                <EnrichmentBar
+                  oerID={data.id}
+                  oer={data}
+                  onPlayLocationChange={onPlayLocationChange}
+                />
+              </Col>
+              <Col {...responsiveColWidths}>
+                <Card
+                  headStyle={{ border: 'none' }}
+                  title={
+                    <>
+                      <Title level={2}>{data.title}</Title>
+                     
                     </>
                   }
                 >
@@ -359,33 +396,43 @@ export function ResourcesPage(props) {
                           icon={<OerIcon mediatype={data?.mediatype} />}
                         />
                       }
-                      title={
-                        <>
+                       title={
+                        <div style={{ marginBottom: 0 }}>
                           <Text strong>
-                            {t('playlist.lbl_playlist_provider')}:{' '}
-                          </Text>
-                          <Text>{data.provider}</Text> {` / `}
-                          <Text strong>
-                            {t('playlist.lbl_playlist_mediatype')}:{' '}
-                          </Text>
-                          <Text>{data.mediatype}</Text> {` / `}
-                          <Text strong>
-                            {t('playlist.lbl_playlist_date')}:{' '}
+                            {t('playlist.lbl_playlist_provider').charAt(0).toUpperCase() + t('playlist.lbl_playlist_provider').slice(1)}:{" "}
                           </Text>
                           <Text>
-                            {new Date(data.date).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
+                            {data.provider?.charAt(0).toUpperCase() + data.provider?.slice(1)}
+                          </Text>{" / "}
+                          <Text strong>
+                            {t('playlist.lbl_playlist_mediatype').charAt(0).toUpperCase() + t('playlist.lbl_playlist_mediatype').slice(1)}:{" "}
+                          </Text>
+                          <Text>
+                            {data.mediatype?.charAt(0).toUpperCase() + data.mediatype?.slice(1)}
+                          </Text>{" / "}
+                          <Text strong>
+                            {t('playlist.lbl_playlist_date').charAt(0).toUpperCase() + t('playlist.lbl_playlist_date').slice(1)}:{" "}
+                          </Text>
+                          <Text>
+                            {new Date(data.date).toLocaleDateString("en-US", {
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
                             })}
                           </Text>
-                        </>
+                        </div>
                       }
                       description={
-                        <Col>
-                          {data.description ||
-                            t('inspector.lbl_no_description')}
-                        </Col>
+                        <div
+                          style={{
+                            marginTop: 0,
+                            paddingTop: 0,
+                            textAlign: 'justify',
+                            lineHeight: '1.2', 
+                          }}
+                        >
+                          {data.description || t('inspector.lbl_no_description')}
+                        </div>
                       }
                     />
                     <NotesWidget oerID={data?.id} />

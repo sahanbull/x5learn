@@ -2482,6 +2482,55 @@ class Temp_Playlist_Youtube_Items(Resource):
             return {'result': 'An error occurred. Error - ' + str(err)}, 400
 
 
+@ns_playlist.route('/<string:title>/yt_items/<int:oer_id>')
+@ns_playlist.response(404, 'Temporary playlist not found')
+@ns_playlist.param('title', 'The temporary playlist identifier')
+@ns_playlist.param('oer_id', 'Oer Id of the youtube item to be updated')
+class Temp_Playlist_Youtube_Item_Update(Resource):
+    def put(self, title, oer_id):
+        '''Update a single youtube item in temporary playlist'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+        
+        # let's first get the temporary playlist
+        temp_playlist_repo = TempPlaylistRepository()
+        temp_playlist = temp_playlist_repo.get_by_title(title, current_user.get_id())
+
+        if temp_playlist is None:
+            return {'result': 'Temporary playlist not found'}, 400
+        
+        # let's load the playlist item data from json and iterate and match by oerid
+        temp_data = json.loads(temp_playlist.data)
+
+        if 'playlist_items' not in temp_data:
+            return {'result': 'No playlist item data found'}, 400
+        
+        for item in temp_data['playlist_items']:
+            print(item, str(oer_id), "check")
+            if str(item) == str(oer_id):
+
+                # let's first fetch the oer
+                oer = repository.get_by_id(Oer, oer_id)
+                if oer is None:
+                    return {'result': 'OER not found'}, 400
+                
+                print("comes here")
+
+                oer_data = json.loads(oer.data)
+                
+                oer_data['title'] = api.payload.get('title', oer_data['title'])
+                oer_data['description'] = api.payload.get('title', oer_data['title'])
+
+                # to enfore the data change let's json dump it
+                oer.data = json.dumps(oer_data)
+
+                # let's update the oer in the database
+                repository.update()
+                break
+
+        return {'result': 'Playlist item successfully updated'}, 200
+
+
 # Defining license resource for API access ==================================
 ns_license = api.namespace('api/v1/license', description='license')
 

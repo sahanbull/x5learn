@@ -2520,6 +2520,8 @@ class Temp_Playlist_Youtube_Item_Update(Resource):
                 oer_data['description'] = api.payload.get('description', oer_data['description'])
 
                 # to enfore the data change let's json dump it
+                oer.data = json.dumps(oer_data)
+                repository.update()
                 oer.data = json.loads(json.dumps(oer_data))
 
                 # let's update the oer in the database

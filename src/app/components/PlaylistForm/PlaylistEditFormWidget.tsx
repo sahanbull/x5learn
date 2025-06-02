@@ -160,6 +160,30 @@ export function PlaylistEditFormWidget(props: { formData? }) {
     }
   };
 
+  const handleCardClick = async (item: any) => {
+    try {
+      const payload = {
+        action_type_id: 1,
+        params: JSON.stringify({ oerId: item.id }),
+        is_bundled: false,
+      };
+      await fetch(`${process.env.REACT_APP_BASE_URL}/action/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify(payload),
+        credentials: 'include',
+      });
+
+      console.log(`Action logged for item ID: ${item.id}`);
+    } catch (err) {
+      console.error('Failed to log action', err);
+    }
+  };
+
+
   const { data: licenseData, loading, error } = useSelector(
     (state: RootState) => {
       return state.playlistLicenses;
@@ -213,39 +237,39 @@ export function PlaylistEditFormWidget(props: { formData? }) {
       <Row gutter={[16, 16]}>
 
     <Col span={24}>
-  <Row justify="end">
-    <Space>
-      <Button
-        type="primary"
-        htmlType="button"
-        size="large"
-        icon={<PlusOutlined />}
-        onClick={addYTvideo}
-        disabled={isUpdating}
-      >
-        {t('Add youTube video to playlist')}
-      </Button>
+          <Row justify="end">
+            <Space>
+              <Button
+                type="primary"
+                htmlType="button"
+                size="large"
+                icon={<PlusOutlined />}
+                onClick={addYTvideo}
+                disabled={isUpdating}
+              >
+                {t('Add youTube video to playlist')}
+              </Button>
 
-      <Button
-        type="primary"
-        htmlType="button"
-        size="large"
-        onClick={showModal}
-        disabled={isUpdating}
-      >
-        {t('playlist.lbl_publish_playlist')} <UploadOutlined />
-      </Button>
-    </Space>
-  </Row>
-</Col>
+              <Button
+                type="primary"
+                htmlType="button"
+                size="large"
+                onClick={showModal}
+                disabled={isUpdating}
+              >
+                {t('playlist.lbl_publish_playlist')} <UploadOutlined />
+              </Button>
+            </Space>
+          </Row>
+        </Col>
 
         <Col span={24}>
-        
           <PlaylistItemSortWidget
             playlist_items={items}
             onItemsReorder={onItemsReorder}
             isUpdating={isUpdating}
             tempPlaylistName={tempPlaylistName}
+            onItemClick={handleCardClick}
           />
         </Col>
         <Col span={24}>

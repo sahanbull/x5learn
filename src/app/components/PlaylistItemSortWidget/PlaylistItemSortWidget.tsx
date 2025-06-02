@@ -15,7 +15,11 @@ import {
 } from 'react-sortable-hoc';
 import { createSelector } from 'reselect';
 import { RootState } from 'types';
+import { Modal , Input} from 'antd';
+import axios from 'axios';
 
+
+const { TextArea } = Input;
 const DragHandle = SortableHandle(() => (
   <DragOutlined style={{ cursor: 'grab', color: '#1DA57A', fontSize: '30px' }} />
 ));
@@ -29,7 +33,7 @@ export const selectOerByID = createSelector(
   },
 );
 
-const SortableOerCard = ({ oerId,tempPlaylistName}) => {
+const SortableOerCard = ({ oerId, tempPlaylistName }) => {
   const cardData = useSelector((state: RootState) => {
     return selectOerByID(state, oerId);
   });
@@ -37,63 +41,44 @@ const SortableOerCard = ({ oerId,tempPlaylistName}) => {
   const loading = useSelector((state: RootState) => {
     return state.allOERs.loading;
   });
-  return  <OerSortableView
-  loading={loading}
-  card={cardData}
-  tempPlaylistName={tempPlaylistName} // Pass the prop down
-/>;
+
+  return (
+    <OerSortableView
+      loading={loading}
+      card={cardData}
+      tempPlaylistName={tempPlaylistName} 
+      onClick={() => onClick && onClick(oerId)} // call with oerId or other data
+    />
+  );
 };
 
 const SortableItem = SortableElement(props => <tr {...props} />);
 const SortableContainer2 = SortableContainer(props => <tbody {...props} />);
-
-export const useOerData=(playlist_items)=>{
-  const dispatch = useDispatch();
-  
-  const [oerData, setOERData] = useState({
-    data: null,
-    loading: true,
-    error: null,
-  });
-  const loadOERIds = async () => {
-    setOERData({ data: null, loading: true, error: null });
-    const oerIdArray = playlist_items.map(item => {
-      return item.data;
-    });
-    try {
-      const oerResult = (await dispatch(
-        fetchOERsByIDsThunk(oerIdArray),
-      )) as any;
-      const resolvedData = await unwrapResult(oerResult);
-      setOERData({ data: resolvedData, loading: false, error: null });
-    } catch (e) {
-      setOERData({ data: null, loading: false, error: e });
-    }
-  };
-  return [oerData, loadOERIds];
-}
 
 export function PlaylistItemSortWidget({
   playlist_items,
   onItemsReorder,
   isUpdating,
   tempPlaylistName,
+  onItemClick,
 }) {
   const dispatch = useDispatch();
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedOerId, setSelectedOerId] = useState(null);
+  const [modalData, setModalData] = useState({ title: '', description: '' });
+  const [modalLoading, setModalLoading] = useState(false);
+  const allOers = useSelector(selectAllOers);
   const [{ data, loading, error }, setOERData] = useState({
     data: null,
     loading: true,
     error: null,
   });
+
   const loadOERIds = async () => {
     setOERData({ data: null, loading: true, error: null });
-    const oerIdArray = playlist_items.map(item => {
-      return item.data;
-    });
+    const oerIdArray = playlist_items.map(item => item.data);
     try {
-      const oerResult = (await dispatch(
-        fetchOERsByIDsThunk(oerIdArray),
-      )) as any;
+      const oerResult = (await dispatch(fetchOERsByIDsThunk(oerIdArray))) as any;
       const resolvedData = await unwrapResult(oerResult);
       setOERData({ data: resolvedData, loading: false, error: null });
     } catch (e) {
@@ -101,46 +86,41 @@ export function PlaylistItemSortWidget({
     }
   };
 
+  // Reload OER data when playlist_items changes
   useEffect(() => {
     if (playlist_items) {
       loadOERIds();
     }
-  }, []);
+  }, [playlist_items]);
 
-
-
+  // Keep local state synced with props
   const [playlistItems, setPlaylistItems] = useState(playlist_items);
+ ;
 
   useEffect(() => {
     if (playlist_items) {
-      setPlaylistItems(playlist_items)
-      console.log('Playlist items: ', playlist_items);
+      setPlaylistItems(playlist_items);
+      console.log('Playlist items updated:', playlist_items);
     }
   }, [playlist_items]);
 
   const onSortEnd = ({ oldIndex, newIndex }) => {
-    const dataSource = playlistItems;
     if (oldIndex !== newIndex) {
-      const newData = arrayMove(
-        [].concat(dataSource),
-        oldIndex,
-        newIndex,
-      ).filter(el => !!el);
-      //   console.log('Sorted items: ', newData.push, data);
-      
+      const newData = arrayMove([...playlistItems], oldIndex, newIndex).filter(Boolean);
+
+      // Update local state so UI reflects new order immediately
+      setPlaylistItems(newData);
+
       if (onItemsReorder) {
         onItemsReorder(newData);
       }
-      //setPlaylistItems(newData);
     }
   };
 
   const onOERDelete = oerId => {
-    const dataSource = playlistItems;
+    const newData = playlistItems.filter(el => el.oer_id !== oerId);
 
-    const newData = [].concat(dataSource).filter((el: { oer_id }) => {
-      return el.oer_id !== oerId;
-    });
+    setPlaylistItems(newData);
 
     if (onItemsReorder) {
       onItemsReorder(newData);
@@ -158,12 +138,80 @@ export function PlaylistItemSortWidget({
   );
 
   const DraggableBodyRow = ({ className, style, ...restProps }) => {
-    const dataSource = playlistItems;
-    // function findIndex base on Table rowKey props and should always be a right array index
-    const index = dataSource.findIndex(
+    // Find the index for sortable element by matching unique 'order' field
+    const index = playlistItems.findIndex(
       x => x.order === restProps['data-row-key'],
     );
     return <SortableItem index={index} {...restProps} />;
+  };
+
+  
+  const showModal = (oerId) => {
+    setSelectedOerId(oerId);
+    const oer = allOers[oerId];
+
+    if (oer) {
+      setModalData({
+        title: oer.title || '',
+        description: oer.description || '',
+      });
+    } else {
+      setModalData({ title: '', description: '' });
+    }
+
+    setIsModalVisible(true);
+  };
+
+
+
+
+
+
+const handleOk = async () => {
+    if (!selectedOerId) return;
+
+    setModalLoading(true);
+
+    try {
+      const playlistName = tempPlaylistName;
+      const oerId = selectedOerId;
+
+      const url = `${process.env.REACT_APP_BASE_URL}/playlist/${encodeURIComponent(playlistName)}/yt_items/${encodeURIComponent(oerId)}`;
+
+      const payload = {
+        title: modalData.title,
+        description: modalData.description,
+      };
+
+      const response = await axios.put(url, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        withCredentials: true, // same as fetch's 'credentials: include'
+      });
+
+      console.log(`OER ${oerId} updated successfully`, response.data);
+
+      setIsModalVisible(false);
+
+      // Optionally update UI state
+    } catch (err) {
+      console.error('Failed to update OER', err);
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+
+
+
+
+
+ 
+
+  const handleCancel = () => {
+    setIsModalVisible(false);
   };
 
   const columns = [
@@ -171,42 +219,38 @@ export function PlaylistItemSortWidget({
       title: 'Name',
       dataIndex: 'data',
       className: 'drag-visible',
-
-      render: oerId => {
-        return (
-          <>
-            <SortableOerCard oerId={oerId} tempPlaylistName={tempPlaylistName} />
-          </>
-        );
-      },
+      render: oerId => (
+        <SortableOerCard oerId={oerId} tempPlaylistName={tempPlaylistName} onClick={onItemClick} />
+      ),
     },
     {
       title: 'Sort',
       dataIndex: 'order',
-      // width: 20,
       className: 'drag-visible',
-      render: () => {
-        return !isUpdating ? <DragHandle /> : <></>;
-      },
+      render: () => (!isUpdating ? <DragHandle /> : null),
     },
     {
       title: 'Delete',
       dataIndex: 'data',
       width: 100,
       className: 'drag-visible',
-      render: oerId => {
-        const onItemDelete = () => {
-          onOERDelete(oerId);
-        };
-        return (
-          <Button
-            type="link"
-            onClick={onItemDelete}
-            loading={isUpdating}
-            icon={<DeleteOutlined style={{fontSize: '28px'}} />}
-          ></Button>
-        );
-      },
+      render: oerId => (
+        <Button
+          type="link"
+          onClick={() => onOERDelete(oerId)}
+          loading={isUpdating}
+          icon={<DeleteOutlined style={{ fontSize: '28px' }} />}
+        />
+      ),
+    },
+    {
+      title: 'Edit',
+      dataIndex: 'data',
+      render: (oerId) => (
+        <Button type="primary" onClick={() => showModal(oerId)}>
+          Edit
+        </Button>
+      ),
     },
   ];
 
@@ -224,6 +268,27 @@ export function PlaylistItemSortWidget({
           },
         }}
       />
+
+     <Modal
+        title="Edit OER"
+        visible={isModalVisible}
+        onOk={handleOk}
+        onCancel={handleCancel}
+        confirmLoading={modalLoading}
+      >
+        <Input
+          value={modalData.title}
+          onChange={(e) => setModalData({ ...modalData, title: e.target.value })}
+          placeholder="Title"
+          style={{ marginBottom: '1rem' }}
+        />
+        <TextArea
+          value={modalData.description}
+          onChange={(e) => setModalData({ ...modalData, description: e.target.value })}
+          placeholder="Description"
+          autoSize={{ minRows: 3 }}
+        />
+    </Modal>
     </>
   );
 }

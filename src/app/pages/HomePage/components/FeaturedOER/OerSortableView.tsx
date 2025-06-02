@@ -53,8 +53,9 @@ export function OerSortableView(props: {
   playlistID?: any;
   notesView?: boolean;
   tempPlaylistName?: string;
+  onClick?: () => void;
 }) {
-  const { loading, card, playlistID, notesView, tempPlaylistName } = props;
+   const { loading, card, playlistID, notesView, tempPlaylistName, onClick } = props;
   const cardStyle = { borderRadius: 8, overflow: 'hidden' };
   const history = useHistory();
   const { t } = useTranslation();
@@ -108,6 +109,7 @@ export function OerSortableView(props: {
         <Link
           to={pathToNavigateTo}
           style={{ position: 'relative', display: 'grid' }}
+           onClick={onClick}
         >
           <Image
             width={120}

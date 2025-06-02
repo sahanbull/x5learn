@@ -258,51 +258,50 @@ export function NotesWidget({ oerID }) {
           </Row>
         </Col>
         <Col span={20}>
-  <Space direction="vertical" size={5} style={{ width: '100%' }}>
-    <TextArea
-      style={{ width: '100%' }} // <-- This ensures full width
-      placeholder={t('inspector.lbl_enter_your_notes')}
-      autoSize={{ minRows: 2, maxRows: 6 }}
-      defaultValue={inputText}
-      onChange={({ target: { value } }) => setInputText(value)}
-      value={inputText}
-    />
-    <Button
-      type="primary"
-      disabled={!inputText}
-      loading={isAdding}
-      onClick={onAddNoteClick}
-      style={{ width: '100%' }} // Optional: full-width button
-    >
-      {t('playlist.btn_submit')}
-    </Button>
+          <Space direction="vertical" size={5} style={{ width: '100%' }}>
+            <TextArea
+              style={{ width: '100%' }} 
+              placeholder={t('inspector.lbl_enter_your_notes')}
+              autoSize={{ minRows: 2, maxRows: 6 }}
+              defaultValue={inputText}
+              onChange={({ target: { value } }) => setInputText(value)}
+              value={inputText}
+            />
+            <Button
+              type="primary"
+              disabled={!inputText}
+              loading={isAdding}
+              onClick={onAddNoteClick}
+              style={{ width: '100%' }} 
+            >
+              {t('playlist.btn_submit')}
+            </Button>
 
-    <Space direction="vertical" size={20} style={{ width: '100%' }}>
-      {!data ||
-        (!data.length && (
-          <Empty
-            description={
-              <span>
-                {t('alerts.lbl_note_empty_message', 'No notes found')}
-              </span>
-            }
-          />
-        ))}
-      <br />
-      {notesPageData?.map(item => (
-        <EditableNote key={item.id} note={item} />
-      ))}
-      <Pagination
-        defaultCurrent={1}
-        pageSize={PAGE_LIMIT}
-        total={data ? data.length : 0}
-        showSizeChanger={false}
-        onChange={page => setCurrentPage(page)}
-      />
-    </Space>
-  </Space>
-</Col>
-
+            <Space direction="vertical" size={20} style={{ width: '100%' }}>
+              {!data ||
+                (!data.length && (
+                  <Empty
+                    description={
+                      <span>
+                        {t('alerts.lbl_note_empty_message', 'No notes found')}
+                      </span>
+                    }
+                  />
+                ))}
+              <br />
+              {notesPageData?.map(item => (
+                <EditableNote key={item.id} note={item} />
+              ))}
+              <Pagination
+                defaultCurrent={1}
+                pageSize={PAGE_LIMIT}
+                total={data ? data.length : 0}
+                showSizeChanger={false}
+                onChange={page => setCurrentPage(page)}
+              />
+            </Space>
+          </Space>
+        </Col>
       </Row>
     </>
   );

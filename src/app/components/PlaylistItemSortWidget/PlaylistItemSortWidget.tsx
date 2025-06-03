@@ -188,14 +188,13 @@ const handleOk = async () => {
           'Content-Type': 'application/json',
           Accept: 'application/json',
         },
-        withCredentials: true, // same as fetch's 'credentials: include'
+        withCredentials: true, 
       });
 
       console.log(`OER ${oerId} updated successfully`, response.data);
 
       setIsModalVisible(false);
 
-      // Optionally update UI state
     } catch (err) {
       console.error('Failed to update OER', err);
     } finally {

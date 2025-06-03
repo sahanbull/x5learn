@@ -2513,16 +2513,16 @@ class Temp_Playlist_Youtube_Item_Update(Resource):
                 oer = repository.get_by_id(Oer, oer_id)
                 if oer is None:
                     return {'result': 'OER not found'}, 400
-                
-                print("comes here")
 
-                oer_data = json.loads(oer.data)
+                oer_data = oer.data
                 
                 oer_data['title'] = api.payload.get('title', oer_data['title'])
-                oer_data['description'] = api.payload.get('title', oer_data['title'])
+                oer_data['description'] = api.payload.get('description', oer_data['description'])
 
                 # to enfore the data change let's json dump it
                 oer.data = json.dumps(oer_data)
+                repository.update()
+                oer.data = json.loads(json.dumps(oer_data))
 
                 # let's update the oer in the database
                 repository.update()

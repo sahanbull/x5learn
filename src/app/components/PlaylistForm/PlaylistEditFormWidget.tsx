@@ -34,6 +34,8 @@ import { PlaylistItemSortWidget } from '../PlaylistItemSortWidget/PlaylistItemSo
 import { updateTempPlaylistThunk } from 'app/containers/Layout/ducks/myPlaylistMenu/updateTempPlaylist';
 import { useTranslation } from 'react-i18next';
 import { PlaylistOptimizeConfirmationWidget } from './PlaylistOptimizeConfirmationWidget';
+import { PlayCircleOutlined } from '@ant-design/icons';
+import { Tooltip } from 'antd';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -61,6 +63,15 @@ export function PlaylistEditFormWidget(props: { formData? }) {
   const dispatch = useDispatch();
   const path = window.location.pathname;
   const tempPlaylistName = path.substring(path.lastIndexOf('/') + 1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchBtn, setShowSearchBtn] = useState(false);
+  const [hoveredVideo, setHoveredVideo] = useState<string | null>(null);
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const [nextPageToken, setNextPageToken] = useState<string | null>(null);
+const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+
 
   const addYTvideo = () => {
     setIsAddYTModalVisible(true);
@@ -226,7 +237,93 @@ export function PlaylistEditFormWidget(props: { formData? }) {
     setIsOptimizeModalVisible(true);
   };
 
+  const handleYTSearch = async (isLoadMore = false) => {
+  if (!searchQuery.trim()) return;
+
+  const API_KEY = YOUTUBE_API_KEY;
+  const encodedQuery = encodeURIComponent(searchQuery);
+  const pageParam = isLoadMore && nextPageToken ? `&pageToken=${nextPageToken}` : '';
+  const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodedQuery}${pageParam}&key=${API_KEY}`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (isLoadMore) {
+      setSearchResults((prev) => [...prev, ...data.items]);
+    } else {
+      setSearchResults(data.items || []);
+    }
+
+    setNextPageToken(data.nextPageToken || null);
+  } catch (err) {
+    console.error('YouTube Search Error:', err);
+  }
+};
+
+
+  const handleVideoSelect = async (videoId: string) => {
+  if (selectedVideoId === videoId) {
+    // Remove selected video
+    setSelectedVideoId(null);
+    form.resetFields();
+    return;
+  }
+
+  const API_KEY = YOUTUBE_API_KEY;
+  const url = `https://www.googleapis.com/youtube/v3/videos?part=snippet,contentDetails&id=${videoId}&key=${API_KEY}`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    const video = data.items[0];
+
+    if (video) {
+      const { title, description, thumbnails, publishedAt } = video.snippet;
+      const durationISO = video.contentDetails.duration;
+      const duration = parseISODuration(durationISO);
+
+      form.setFieldsValue({
+        url: `https://www.youtube.com/watch?v=${videoId}`,
+        title,
+        description,
+        thumbnail_url: thumbnails.medium.url,
+        date: publishedAt.slice(0, 10),
+        duration,
+      });
+
+      setSelectedVideoId(videoId); // Mark as selected
+      message.success('Video added!');
+    }
+  } catch (err) {
+    console.error('Failed to fetch video details:', err);
+  }
+};
  
+const parseISODuration = (iso) => {
+  const match = iso.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+  const [, hours, minutes, seconds] = match.map((v) => parseInt(v || '0', 10));
+  const totalMinutes = hours * 60 + minutes;
+  return `${totalMinutes}:${seconds.toString().padStart(2, '0')}`;
+};
+
+  const previewVideo = (videoId) => {
+  Modal.info({
+    title: 'Video Preview',
+    width: 800,
+    content: (
+      <iframe
+        width="100%"
+        height="400"
+        src={`https://www.youtube.com/embed/${videoId}`}
+        frameBorder="0"
+        allowFullScreen
+      />
+    ),
+  });
+};
+
+
   return (
     <Form
       {...layout}
@@ -311,8 +408,133 @@ export function PlaylistEditFormWidget(props: { formData? }) {
           onCancel={() => setIsAddYTModalVisible(false)}
           onOk={() => {saveYTVideo();}}
           okText="Add Video"
+           width={1500}
         >
+          
           <Form layout="vertical" form={form}>
+
+
+            {/* Search Input */}
+                <Form.Item label="Search in YouTube">
+                  <Input
+                    placeholder="Search for a video"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowSearchBtn(!!e.target.value);
+                    }}
+                    onPressEnter={handleYTSearch}
+                  />
+                  {showSearchBtn && (
+                    <Button onClick={handleYTSearch} style={{ marginTop: '8px' }}>
+                      Search
+                    </Button>
+                  )}
+                </Form.Item>
+
+                {/* Search Results */}
+               <Row gutter={[16, 16]}>
+  {searchResults.map((video) => {
+    const { videoId } = video.id;
+    const { title, description, thumbnails } = video.snippet;
+    const isSelected = selectedVideoId === videoId;
+
+    return (
+      <Col xs={24} sm={12} md={8} lg={8} xl={6} key={videoId}>
+        <Card
+          hoverable
+          style={{
+            border: isSelected ? '2px solid #1890ff' : '1px solid #f0f0f0',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            height: '100%',
+          }}
+          cover={
+            <div style={{ position: 'relative' }}>
+              <img
+                src={thumbnails.medium.url}
+                alt="thumbnail"
+                style={{ width: '100%', height: '150px', objectFit: 'cover', cursor: 'pointer' }}
+                onClick={() => previewVideo(videoId)}
+              />
+              <Button
+                type="primary"
+                shape="circle"
+                icon={<PlayCircleOutlined />}
+                size="small"
+                onClick={() => previewVideo(videoId)}
+                style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  background: 'rgba(0,0,0,0.6)',
+                  border: 'none',
+                }}
+              />
+            </div>
+          }
+          actions={[
+            isSelected ? (
+              <Tooltip title="Remove Video">
+                <Button
+                  type="text"
+                  danger
+                  icon="✖"
+                  onClick={() => handleVideoSelect(videoId)}
+                />
+              </Tooltip>
+            ) : (
+              <Tooltip title="Add Video">
+                <Button
+                  shape="circle"
+                  icon={<PlusOutlined />}
+                  onClick={() => handleVideoSelect(videoId)}
+                />
+              </Tooltip>
+            ),
+          ]}
+        >
+          <Card.Meta
+            title={<div style={{ fontSize: '14px', fontWeight: 600 }}>{title}</div>}
+            description={
+              <div
+                style={{
+                  fontSize: '12px',
+                  color: '#555',
+                  maxHeight: '3em',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+                title={description}
+              >
+                {description}
+              </div>
+            }
+          />
+        </Card>
+      </Col>
+    );
+  })}
+</Row>
+
+{nextPageToken && (
+  <div style={{ textAlign: 'center', marginTop: '16px' }}>
+    <Button
+      loading={isLoadingMore}
+      onClick={async () => {
+        setIsLoadingMore(true);
+        await handleYTSearch(true); // load more flag
+        setIsLoadingMore(false);
+      }}
+    >
+      Load More
+    </Button>
+  </div>
+)}
+
+
+
             <Form.Item
               name="url"
               label="YouTube URL"

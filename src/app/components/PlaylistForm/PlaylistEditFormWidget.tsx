@@ -550,7 +550,7 @@ const previewVideo = (videoId) => {
             <Form.Item name="date" label="Upload Date">
               <Input placeholder="e.g., 2019-10-07" />
             </Form.Item>
-            <Form.Item name="duration" label="Duration">
+            <Form.Item name="duration" label="Duration" style={{ display: 'none' }}>
             <Input />
           </Form.Item>
           </Form>

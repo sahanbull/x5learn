@@ -261,7 +261,6 @@ const [isLoadingMore, setIsLoadingMore] = useState(false);
   }
 };
 
-
   const handleVideoSelect = async (videoId: string) => {
   if (selectedVideoId === videoId) {
     // Remove selected video
@@ -289,7 +288,7 @@ const [isLoadingMore, setIsLoadingMore] = useState(false);
         description,
         thumbnail_url: thumbnails.medium.url,
         date: publishedAt.slice(0, 10),
-        duration,
+       duration: durationISO,
       });
 
       setSelectedVideoId(videoId); // Mark as selected
@@ -307,7 +306,7 @@ const parseISODuration = (iso) => {
   return `${totalMinutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-  const previewVideo = (videoId) => {
+const previewVideo = (videoId) => {
   Modal.info({
     title: 'Video Preview',
     width: 800,
@@ -385,9 +384,6 @@ const parseISODuration = (iso) => {
                 {t('playlist.btn_optimize_learning_path')}
               </Button>*/}
 
-            
-
-              
             </Space>
           </Form.Item>
         </Col>
@@ -434,104 +430,104 @@ const parseISODuration = (iso) => {
 
                 {/* Search Results */}
                <Row gutter={[16, 16]}>
-  {searchResults.map((video) => {
-    const { videoId } = video.id;
-    const { title, description, thumbnails } = video.snippet;
-    const isSelected = selectedVideoId === videoId;
+                  {searchResults.map((video) => {
+                    const { videoId } = video.id;
+                    const { title, description, thumbnails } = video.snippet;
+                    const isSelected = selectedVideoId === videoId;
 
-    return (
-      <Col xs={24} sm={12} md={8} lg={8} xl={6} key={videoId}>
-        <Card
-          hoverable
-          style={{
-            border: isSelected ? '2px solid #1890ff' : '1px solid #f0f0f0',
-            borderRadius: '8px',
-            overflow: 'hidden',
-            height: '100%',
-          }}
-          cover={
-            <div style={{ position: 'relative' }}>
-              <img
-                src={thumbnails.medium.url}
-                alt="thumbnail"
-                style={{ width: '100%', height: '150px', objectFit: 'cover', cursor: 'pointer' }}
-                onClick={() => previewVideo(videoId)}
-              />
-              <Button
-                type="primary"
-                shape="circle"
-                icon={<PlayCircleOutlined />}
-                size="small"
-                onClick={() => previewVideo(videoId)}
-                style={{
-                  position: 'absolute',
-                  top: '50%',
-                  left: '50%',
-                  transform: 'translate(-50%, -50%)',
-                  background: 'rgba(0,0,0,0.6)',
-                  border: 'none',
-                }}
-              />
-            </div>
-          }
-          actions={[
-            isSelected ? (
-              <Tooltip title="Remove Video">
-                <Button
-                  type="text"
-                  danger
-                  icon="✖"
-                  onClick={() => handleVideoSelect(videoId)}
-                />
-              </Tooltip>
-            ) : (
-              <Tooltip title="Add Video">
-                <Button
-                  shape="circle"
-                  icon={<PlusOutlined />}
-                  onClick={() => handleVideoSelect(videoId)}
-                />
-              </Tooltip>
-            ),
-          ]}
-        >
-          <Card.Meta
-            title={<div style={{ fontSize: '14px', fontWeight: 600 }}>{title}</div>}
-            description={
-              <div
-                style={{
-                  fontSize: '12px',
-                  color: '#555',
-                  maxHeight: '3em',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                }}
-                title={description}
-              >
-                {description}
-              </div>
-            }
-          />
-        </Card>
-      </Col>
-    );
-  })}
-</Row>
+                    return (
+                      <Col xs={24} sm={12} md={8} lg={8} xl={6} key={videoId}>
+                        <Card
+                          hoverable
+                          style={{
+                            border: isSelected ? '2px solid #1890ff' : '1px solid #f0f0f0',
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                            height: '100%',
+                          }}
+                          cover={
+                            <div style={{ position: 'relative' }}>
+                              <img
+                                src={thumbnails.medium.url}
+                                alt="thumbnail"
+                                style={{ width: '100%', height: '150px', objectFit: 'cover', cursor: 'pointer' }}
+                                onClick={() => previewVideo(videoId)}
+                              />
+                              <Button
+                                type="primary"
+                                shape="circle"
+                                icon={<PlayCircleOutlined />}
+                                size="small"
+                                onClick={() => previewVideo(videoId)}
+                                style={{
+                                  position: 'absolute',
+                                  top: '50%',
+                                  left: '50%',
+                                  transform: 'translate(-50%, -50%)',
+                                  background: 'rgba(0,0,0,0.6)',
+                                  border: 'none',
+                                }}
+                              />
+                            </div>
+                          }
+                          actions={[
+                            isSelected ? (
+                              <Tooltip title="Remove Video">
+                                <Button
+                                  type="text"
+                                  danger
+                                  icon="✖"
+                                  onClick={() => handleVideoSelect(videoId)}
+                                />
+                              </Tooltip>
+                            ) : (
+                              <Tooltip title="Add Video">
+                                <Button
+                                  shape="circle"
+                                  icon={<PlusOutlined />}
+                                  onClick={() => handleVideoSelect(videoId)}
+                                />
+                              </Tooltip>
+                            ),
+                          ]}
+                        >
+                          <Card.Meta
+                            title={<div style={{ fontSize: '14px', fontWeight: 600 }}>{title}</div>}
+                            description={
+                              <div
+                                style={{
+                                  fontSize: '12px',
+                                  color: '#555',
+                                  maxHeight: '3em',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                }}
+                                title={description}
+                              >
+                                {description}
+                              </div>
+                            }
+                          />
+                        </Card>
+                      </Col>
+                    );
+                  })}
+                </Row>
 
-{nextPageToken && (
-  <div style={{ textAlign: 'center', marginTop: '16px' }}>
-    <Button
-      loading={isLoadingMore}
-      onClick={async () => {
-        setIsLoadingMore(true);
-        await handleYTSearch(true); // load more flag
-        setIsLoadingMore(false);
-      }}
-    >
-      Load More
-    </Button>
-  </div>
-)}
+                {nextPageToken && (
+                  <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                    <Button
+                      loading={isLoadingMore}
+                      onClick={async () => {
+                        setIsLoadingMore(true);
+                        await handleYTSearch(true); // load more flag
+                        setIsLoadingMore(false);
+                      }}
+                    >
+                      Load More
+                    </Button>
+                  </div>
+                )}
 
 
 
@@ -555,8 +551,8 @@ const parseISODuration = (iso) => {
               <Input placeholder="e.g., 2019-10-07" />
             </Form.Item>
             <Form.Item name="duration" label="Duration">
-              <Input placeholder="e.g., 24:39" />
-            </Form.Item>
+            <Input />
+          </Form.Item>
           </Form>
         </Modal>
         

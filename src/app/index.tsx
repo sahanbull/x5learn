@@ -71,7 +71,8 @@ export function App() {
       </Helmet>
         <AuthValidator />
       <Switch>
-        <Route exact path={'/'} component={HomePage} />
+        <Route exact path={''} component={MyPlaylistsPage} />
+        <Route exact path={'/'} component={MyPlaylistsPage} />
         <Route exact path={ROUTES.HOMEPAGE} component={HomePage} />
         <Route exact path={ROUTES.HOMEPAGE} component={HomePage} />
         <Route exact path={ROUTES.RESOURCES} component={HomePage} />

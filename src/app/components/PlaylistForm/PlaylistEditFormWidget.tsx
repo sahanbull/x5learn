@@ -75,6 +75,12 @@ const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   const addYTvideo = () => {
     setIsAddYTModalVisible(true);
+     setSearchQuery('');
+    setSearchResults([]);
+    setNextPageToken(null);
+    setSelectedVideoId(null);
+    form.resetFields();
+    setIsAddYTModalVisible(true);
   };
 
   const YOUTUBE_API_KEY = 'AIzaSyCuzC9mi7rmUDIRTQamTWmNnkRfyY2Dt90';
@@ -246,15 +252,19 @@ const [isLoadingMore, setIsLoadingMore] = useState(false);
   const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=8&q=${encodedQuery}${pageParam}&key=${API_KEY}`;
 
   try {
+    if (!isLoadMore) {
+      setSearchResults([]); // clear old results before new search
+      setNextPageToken(null); // reset pagination
+    }
+
     const res = await fetch(url);
     const data = await res.json();
 
-    if (isLoadMore) {
-      setSearchResults((prev) => [...prev, ...data.items]);
-    } else {
-      setSearchResults(data.items || []);
-    }
-
+  setSearchResults((prev) => {
+    const existingIds = new Set(prev.map(v => v.id.videoId));
+    const newItems = data.items.filter(v => !existingIds.has(v.id.videoId));
+    return isLoadMore ? [...prev, ...newItems] : newItems;
+  });
     setNextPageToken(data.nextPageToken || null);
   } catch (err) {
     console.error('YouTube Search Error:', err);
@@ -416,13 +426,21 @@ const previewVideo = (videoId) => {
                     placeholder="Search for a video"
                     value={searchQuery}
                     onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setShowSearchBtn(!!e.target.value);
+                      const value = e.target.value;
+                      setSearchQuery(value);
+                      setShowSearchBtn(!!value);
+                      if (!value) {
+                        setSearchResults([]); // clear when input is cleared
+                        setNextPageToken(null);
+                      }
                     }}
-                    onPressEnter={handleYTSearch}
+                    onPressEnter={() => handleYTSearch(false)}
                   />
                   {showSearchBtn && (
-                    <Button onClick={handleYTSearch} style={{ marginTop: '8px' }}>
+                    <Button
+                      onClick={() => handleYTSearch(false)}  // Pass false explicitly
+                      style={{ marginTop: '8px' }}
+                    >
                       Search
                     </Button>
                   )}

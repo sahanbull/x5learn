@@ -11,10 +11,8 @@ import { Menu, Dropdown } from 'antd';
 import { EntityDefinitionMenuItem } from './EntityDefinitionMenuItem';
 import { ReactComponent as NotesSVG } from 'app/containers/ContentPage/assets/notes.svg';
 import styled from 'styled-components/macro';
-import { X5MenuTitle } from 'app/containers/SideBar/X5MenuTitle';
 import { fetchEntityDefinitionsByIDsThunk } from 'app/containers/Layout/ducks/allEntityDefinitionsSlice';
-import { OerCard } from 'app/pages/HomePage/components/FeaturedOER/OerCard';
-import { NodeIndexOutlined } from '@ant-design/icons';
+import { selectUnveilAi } from 'app/containers/Header/HeaderSlice';
 const { SubMenu } = Menu;
 const { Panel } = Collapse;
 
@@ -52,32 +50,54 @@ const StyledChunk = styled(
     onMouseUp,
     ...props
   }) => {
+    const unveilAi = useSelector(selectUnveilAi);
+
     const menu = (
-      <Menu mode="inline">
+      <Menu
+        mode="inline"
+        style={{
+          border: unveilAi ? '2px solid red' : 'none',
+        }}
+      >
         {chunk.entities.map(entity => {
           return (
-            <SubMenu
-              key={entity.title}
-              // title={<X5MenuTitle icon={<></>}>{entity.title}</X5MenuTitle>}
-              title={<>{entity.title}</>}
-            >
+            <SubMenu key={entity.title} title={<>{entity.title}</>}>
               <EntityDefinitionMenuItem entity={entity} />
             </SubMenu>
           );
         })}
       </Menu>
     );
-    const accordion = (
-      <Collapse accordion={true}>
-        {chunk.entities.map(entity => {
-          return (
-            <Panel key={entity.title} header={entity.title}>
-              <EntityDefinitionMenuItem entity={entity} />
-            </Panel>
-          );
-        })}
-      </Collapse>
-    );
+    // const accordion = (
+    //   <Collapse accordion={true}>
+    //     {chunk.entities.map(entity => {
+    //       return (
+    //         <Panel key={entity.title} header={entity.title}>
+    //           {unveilAi ? (
+    //             <Popover
+    //               title=""
+    //               content={
+    //                 <div style={{ maxWidth: '400px' }}>
+    //                   <p>
+    //                     The JSI Wikifier is a web service that takes a text
+    //                     document as input and annotates it with links to
+    //                     relevant Wikipedia concepts.
+    //                   </p>
+    //                   <a href="#">Try it yourself</a>
+    //                 </div>
+    //               }
+    //               trigger="hover"
+    //             >
+    //               <EntityDefinitionMenuItem entity={entity} />
+    //             </Popover>
+    //           ) : (
+    //             <EntityDefinitionMenuItem entity={entity} />
+    //           )}
+    //         </Panel>
+    //       );
+    //     })}
+    //   </Collapse>
+    // );
 
     const [isHover, setIsHover] = useState(false);
     const [dropdownPositionTop, setDropdownPositionTop] = useState(false);

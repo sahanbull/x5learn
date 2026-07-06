@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-PYTHON_PATH="/home/ucl/anaconda3/envs/x5learn/bin/"
-
-$PYTHON_PATH/pip install -e .
+source /venv/bin/activate
+pip install -e .
 
 yarn setup
 npm run build
@@ -14,4 +13,5 @@ mkdir -p x5learn_server/static/dist
 cp -r uncompressed/* x5learn_server/static/dist
 cp -r assets/img x5learn_server/static/dist/img
 
-sudo supervisorctl reload x5learn
+cd x5learn_server
+flask run

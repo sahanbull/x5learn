@@ -1,11 +1,14 @@
-from flask import Flask, jsonify, render_template, request, redirect, flash, current_app
+from uuid import uuid4
+from flask import Flask, jsonify, render_template, request, redirect, flash, current_app, abort, url_for, session
 from flask_wtf import Form, RecaptchaField
-from flask_mail import Mail, Message
+from flask_mailman import Mail, EmailMessage
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required, \
-    forms, RegisterForm, ResetPasswordForm, roles_required, LoginForm as BaseLoginForm
+    forms, RegisterForm, ResetPasswordForm, roles_required, login_user, LoginForm as BaseLoginForm
 from flask_security.utils import verify_and_update_password
 from flask_sqlalchemy import SQLAlchemy
-from wtforms import BooleanField, validators
+from wtforms import PasswordField, BooleanField
+from wtforms.validators import Regexp, DataRequired
+from flask_wtf import RecaptchaField
 import json
 import os  # apologies
 import requests
@@ -16,15 +19,23 @@ from datetime import datetime, timedelta
 from dateutil import parser
 from sqlalchemy import or_, and_, cast, Integer
 from sqlalchemy.orm.attributes import flag_modified
-from flask_restplus import Api, Resource, fields, reqparse
+from flask_restx import Api, Resource, fields, reqparse, Namespace
 from flask_cors import CORS, cross_origin
 import wikipedia
 import base64
 from googleapiclient.discovery import build
 import isodate
 from werkzeug.middleware.proxy_fix import ProxyFix
-
-
+from flask_babel import Babel
+from x5learn_server.ms_auth import (
+    build_auth_url,
+    acquire_token_by_code,
+    _build_cache,
+    _save_cache,
+    OIDC_SCOPES,
+    API_SCOPES,
+)
+import msal
 
 # instantiate the user management db classes
 # NOTE WHEN PEP8'ING MODULE IMPORTS WILL MOVE TO THE TOP AND CAUSE EXCEPTION
@@ -44,14 +55,123 @@ from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push
 from x5learn_server.lab_study import frozen_search_results_for_lab_study, is_special_search_key_for_lab_study
 from x5learn_server.course_optimization import optimize_course
 
+user_datastore = SQLAlchemySessionUserDatastore(db_session,
+                                                UserLogin, Role)
+for u in db_session.query(UserLogin).filter(UserLogin.fs_uniquifier.is_(None)):
+    u.fs_uniquifier = str(uuid4())
+db_session.commit()
+
+def initiate_action_types_table():
+    # TODO Define a comprehensive set of actions and keep it in sync with the frontend
+    # BTW in case a reset is needed: https://stackoverflow.com/a/5342503/2237986
+    action_type = ActionType.query.filter_by(id=1).first()
+    if action_type is None:
+        action_type = ActionType('OER card opened')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=2).first()
+    if action_type is None:
+        action_type = ActionType('OER marked as favorite (no longer in use)')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=3).first()
+    if action_type is None:
+        action_type = ActionType('OER unmarked as favorite (no longer in use)')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=4).first()
+    if action_type is None:
+        action_type = ActionType('Video played')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=5).first()
+    if action_type is None:
+        action_type = ActionType('Video paused')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=6).first()
+    if action_type is None:
+        action_type = ActionType('Video seeked')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=7).first()
+    if action_type is None:
+        action_type = ActionType('ContentFlow setting changed')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=8).first()
+    if action_type is None:
+        action_type = ActionType('Feedback on OER content')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=9).first()
+    if action_type is None:
+        action_type = ActionType('Video still playing')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=10).first()
+    if action_type is None:
+        action_type = ActionType('OverviewType selected')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=11).first()
+    if action_type is None:
+        action_type = ActionType('ToggleExplainer')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=12).first()
+    if action_type is None:
+        action_type = ActionType('OpenExplanationPopup')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=13).first()
+    if action_type is None:
+        action_type = ActionType('TriggerSearch')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=14).first()
+    if action_type is None:
+        action_type = ActionType('UrlChanged')
+        db_session.add(action_type)
+        db_session.commit()
+
+# create database when starting the app
+def initiate_login_db():
+    from x5learn_server.db.database import initiate_login_table_and_admin_profile
+    initiate_login_table_and_admin_profile(user_datastore)
+    initiate_action_types_table()
+    # cleanup_enrichment_errors()
+
+babel = Babel()
+
 # Create app
-app = Flask(__name__)
-app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+def create_app():
+    app = Flask(__name__)
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
+
+    with app.app_context():
+        initiate_login_db()
+
+    # Minimal config
+    app.config.setdefault("BABEL_DEFAULT_LOCALE", "en")
+    app.config.setdefault("BABEL_DEFAULT_TIMEZONE", "UTC")
+
+    # For Flask-Babel >= 3, pass a locale selector (or use request headers)
+    def get_locale():
+        # You can inspect request headers/cookies here if you support multiple locales
+        return "en"
+
+    babel.init_app(app, locale_selector=get_locale)
+
+    return app
+
+app = create_app()
+
 
 cors_origins = {"origins": ["https://x5learn.org"]}
 
 if os.getenv('FLASK_ENV') == 'development':
-    cors_origins = {"origins": ["http://localhost:3000", "http://localhost:5000", "http://localhost"]}
+    cors_origins = {"origins": ["http://localhost:3000", "http://localhost:5000", "http://localhost", "http://127.0.0.1:5000"]}
 
 
 
@@ -65,15 +185,17 @@ app.config['CORS_ALLOW_HEADERS'] = '*'
 app.config['CORS_EXPOSE_HEADERS'] = '*' 
 app.config['CORS_SUPPORTS_CREDENTIALS'] = True
 
-mail = Mail()
+mail = Mail(app)
 
-# app.config['SERVER_NAME'] = SERVER_NAME
+app.config['SERVER_NAME'] = SERVER_NAME
 app.config['DEBUG'] = False
 app.config['SECRET_KEY'] = PASSWORD_SECRET
 app.config['SECURITY_PASSWORD_HASH'] = "bcrypt"
 app.config['SECURITY_PASSWORD_SALT'] = PASSWORD_SECRET
-app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_SECURE'] = False
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['REMEMBER_COOKIE_SECURE'] = False
+app.config['REMEMBER_COOKIE_SAMESITE'] = 'Lax'
 
 if os.getenv('FLASK_ENV') == 'development':
     app.config['SESSION_COOKIE_DOMAIN'] = None
@@ -103,8 +225,7 @@ app.config['SECURITY_RECOVERABLE'] = True
 app.config['SECURITY_RESET_URL'] = '/recover'
 
 # Setup Flask-Security
-user_datastore = SQLAlchemySessionUserDatastore(db_session,
-                                                UserLogin, Role)
+
 
 # Setup SQLAlchemy
 app.config["SQLALCHEMY_DATABASE_URI"] = DB_ENGINE_URI
@@ -117,19 +238,27 @@ def shutdown_session(exception=None):
 # Setup password policy by extending flask security forms
 class ExtendedRegisterForm(RegisterForm):
     password = forms.PasswordField('Password', \
-                                   [forms.validators.Regexp(regex='[A-Za-z0-9@#$%^&+=]{8,}',
-                                                            message="Invalid password")])
+                                   validators=[
+                                        Regexp(
+                                            regex=r'[A-Za-z0-9@#$%^&+=]{8,}',
+                                            message="Invalid password"
+                                        )
+                                    ])
     recaptcha = RecaptchaField()
     password_confirm = False
 
-    privacy_policy = BooleanField('privacy_policy', [validators.DataRequired(message="Please read and agree to the privacy policy.")])
-    terms_and_conditions = BooleanField('term_and_conditions', [validators.DataRequired(message="Please read and agree to the terms and conditions.")])
+    privacy_policy = BooleanField('privacy_policy', validators=[DataRequired(message="Please read and agree to the privacy policy.")])
+    terms_and_conditions = BooleanField('term_and_conditions', validators=[DataRequired(message="Please read and agree to the terms and conditions.")])
 
 
 class ExtendedResetPasswordForm(ResetPasswordForm):
     password = forms.PasswordField('Password', \
-                                   [forms.validators.Regexp(regex='[A-Za-z0-9@#$%^&+=]{8,}',
-                                                            message="Invalid password")])
+                                    validators=[
+                                        Regexp(
+                                            regex=r'[A-Za-z0-9@#$%^&+=]{8,}',
+                                            message="Invalid password"
+                                        )
+                                    ])
 
 def patched_validate(self, **kwargs):
     return super(BaseLoginForm, self).validate(**kwargs)
@@ -200,13 +329,7 @@ VIDEO_PLAY_REPORTING_INTERVAL = 10
 # Path to localization template used to update localization keys
 LOCALIZATION_TEMPLATE = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'config/localization_template.json'))
 
-# create database when starting the app
-@app.before_first_request
-def initiate_login_db():
-    from x5learn_server.db.database import initiate_login_table_and_admin_profile
-    initiate_login_table_and_admin_profile(user_datastore)
-    initiate_action_types_table()
-    # cleanup_enrichment_errors()
+
 
 
 # setting unauthorized callback
@@ -479,14 +602,14 @@ def get_logged_in_user_profile_and_state():
 
 # Look at actions to determine whether ContentFlow is enabled or disabled
 def is_contentflow_enabled():
-    action = Action.query.filter(Action.user_login_id == current_user.get_id(),
+    action = Action.query.filter(Action.user_login_id == current_user.get_old_id(),
                                  Action.action_type_id.in_([7])).order_by(Action.id.desc()).first()
     return True if action is None else action.params['enable']
 
 
 # Look at actions to determine the OverviewType setting
 def get_overview_type_setting():
-    action = Action.query.filter(Action.user_login_id == current_user.get_id(),
+    action = Action.query.filter(Action.user_login_id == current_user.get_old_id(),
                                  Action.action_type_id.in_([10])).order_by(Action.id.desc()).first()
     return 'thumbnail' if action is None else action.params['selectedMode']
 
@@ -693,7 +816,7 @@ def api_create_oer():
 @cross_origin()
 @app.route("/api/v1/video_usages/", methods=['GET'])
 def api_video_usages():
-    actions = Action.query.filter(Action.user_login_id == current_user.get_id(),
+    actions = Action.query.filter(Action.user_login_id == current_user.get_old_id(),
                                   Action.action_type_id.in_([4, 5, 6, 9])).order_by(Action.id).all()
     positions_per_oer = defaultdict(list)
     for action in actions:
@@ -718,9 +841,9 @@ def api_course_optimization(playlist_title):
 @cross_origin()
 @app.route("/api/v1/load_course/", methods=['POST'])
 def api_load_course():
-    course = Course.query.filter(Course.user_login_id == current_user.get_id()).order_by(Course.id.desc()).first()
+    course = Course.query.filter(Course.user_login_id == current_user.get_old_id()).order_by(Course.id.desc()).first()
     if course is None:
-        user_login_id = current_user.get_id()  # Assuming that guests cannot use this feature
+        user_login_id = current_user.get_old_id()  # Assuming that guests cannot use this feature
         course = Course(user_login_id, {'items': []})
     else:
         # remove OERs that don't exist anymore
@@ -732,7 +855,7 @@ def api_load_course():
 @app.route("/api/v1/save_course/", methods=['POST'])
 def api_save_course():
     items = request.get_json()['items']
-    user_login_id = current_user.get_id()  # Assuming that guests cannot use this feature
+    user_login_id = current_user.get_old_id()  # Assuming that guests cannot use this feature
     course = Course(user_login_id, {'items': items})
     db_session.add(course)
     db_session.commit()
@@ -744,7 +867,7 @@ def api_save_course():
 def api_save_ui_logged_events_batch():
     client_time = request.get_json()['clientTime']
     text = request.get_json()['text']
-    user_login_id = current_user.get_id()  # Assuming that guests cannot use this feature
+    user_login_id = current_user.get_old_id()  # Assuming that guests cannot use this feature
     batch = UiLogBatch(user_login_id, client_time, text)
     db_session.add(batch)
     db_session.commit()
@@ -780,7 +903,7 @@ def api_featured():
 def api_resource_feedback():
     oer_id = request.get_json()['oerId']
     text = request.get_json()['text']
-    user_login_id = current_user.get_id()  # Assuming we are never going to allow feedback from logged-out users
+    user_login_id = current_user.get_old_id()  # Assuming we are never going to allow feedback from logged-out users
     feedback = ResourceFeedback(user_login_id, oer_id, text)
     db_session.add(feedback)
     db_session.commit()
@@ -971,6 +1094,56 @@ def ingest_thumb_generation_result():
 
     return 'OK'
 
+@app.route("/login/azure")
+def login_azure():
+    return redirect(build_auth_url())
+
+@app.route("/auth/azure/callback", methods=["GET", "POST"])
+def azure_callback():
+    code = request.values.get("code")
+    if not code:
+        abort(400, "Missing code")
+
+    print("USING acquire_token_by_code FROM:", acquire_token_by_code.__module__, acquire_token_by_code)
+    print("API_SCOPES seen in route:", API_SCOPES)
+
+    result = acquire_token_by_code(code)
+
+    if "error" in result:
+        abort(401, result.get("error_description"))
+
+    claims = result.get("id_token_claims", {}) or {}
+    oid = claims.get("oid")
+    email = claims.get("preferred_username") or claims.get("email")
+    name = claims.get("name")
+
+    user = None
+    if oid:
+        user = db_session.query(UserLogin).filter_by(azure_oid=oid).first()
+    if not user and email:
+        user = db_session.query(UserLogin).filter_by(email=email).first()
+
+    if not user:
+        user = UserLogin(
+            email=email or f"{oid}@example.invalid",
+            active=True,
+            confirmed_at=datetime.utcnow(),
+            azure_oid=oid,
+            current_login_at=datetime.utcnow(),
+            login_count=1,
+        )
+        db_session.add(user)
+    else:
+        user.last_login_at = user.current_login_at
+        user.current_login_at = datetime.utcnow()
+        user.login_count = (user.login_count or 0) + 1
+        if not user.azure_oid and oid:
+            user.azure_oid = oid
+    db_session.commit()
+
+    login_user(user, remember=True)
+    session["ms_tokens"] = result
+    return redirect(url_for("home"))
 
 def search_results_from_x5gon_api(text, page, types, licenses, languages, provider):
     text = urllib.parse.quote(text)
@@ -1358,7 +1531,7 @@ class ActionList(Resource):
 
             # Creating a actions repository for unique data fetch
             actions_repository = ActionsRepository()
-            result_list = actions_repository.get_actions(current_user.get_id(), args['action_type_id'], args['sort'],
+            result_list = actions_repository.get_actions(current_user.get_old_id(), args['action_type_id'], args['sort'],
                                                          args['offset'], args['limit'])
 
             # Eliminating actions without a material id
@@ -1407,7 +1580,7 @@ class ActionList(Resource):
             count = 0
             for idx, val in enumerate(api.payload['action_type_ids']):
                 action = Action(val, json.loads(
-                    api.payload['params_list'][idx]), current_user.get_id())
+                    api.payload['params_list'][idx]), current_user.get_old_id())
                 repository.add(action)
                 count = count + 1
             return {'result': 'Actions logged. No of Actions - {}'.format(count)}, 201
@@ -1416,7 +1589,7 @@ class ActionList(Resource):
                 return {'result': 'Action type id is required'}, 400
             else:
                 action = Action(api.payload['action_type_id'], json.loads(
-                    api.payload['params']), current_user.get_id())
+                    api.payload['params']), current_user.get_old_id())
                 repository.add(action)
                 return {'result': 'Action logged'}, 201
 
@@ -1434,7 +1607,7 @@ class UserApi(Resource):
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
         else:
-            id = current_user.get_id()
+            id = current_user.get_old_id()
             user = repository.get_by_id(UserLogin, id)
 
             # Creating a user repository for unique action
@@ -1444,10 +1617,21 @@ class UserApi(Resource):
             # Sending confirmation mail
             if user.email:
                 try:
-                    msg = Message("x5Learn Account Deleted", sender=MAIL_SENDER, recipients=[user.email])
-                    msg.body = "Your account and related data has been deleted."
-                    msg.html = render_template('/security/email/base_message.html', user=user, app_name=MAIL_SENDER,
-                                               message=msg.body)
+                    html_body = render_template(
+                        '/security/email/base_message.html',
+                        user=user,
+                        app_name=MAIL_SENDER,
+                        message=body_text
+                    )
+                    
+                    msg = EmailMessage(
+                        subject="x5Learn Account Deleted",
+                        body="Your account and related data has been deleted.",
+                        to=[user.email],
+                        from_email=MAIL_SENDER,
+                        html=html_body
+                    )
+
                     mail.send(msg)
                 except Exception:
                     return {'result': 'Mail server not configured'}, 400
@@ -1474,8 +1658,8 @@ class UserHistoryApi(Resource):
 
         # Creating a actions repository for unique data fetch
         actions_repository = ActionsRepository()
-        result_list = actions_repository.get_actions(current_user.get_id(), 1, args['sort'], args['offset'], args['limit'])
-        total = actions_repository.get_action_count(current_user.get_id(), 1)
+        result_list = actions_repository.get_actions(current_user.get_old_id(), 1, args['sort'], args['offset'], args['limit'])
+        total = actions_repository.get_action_count(current_user.get_old_id(), 1)
 
         # Extracting oer ids
         oers = list()
@@ -1629,7 +1813,7 @@ class NotesList(Resource):
             if (args['oer_id']):
                 query_object = query_object.filter(Note.oer_id == args['oer_id'])
 
-            query_object = query_object.filter(Note.user_login_id == current_user.get_id())
+            query_object = query_object.filter(Note.user_login_id == current_user.get_old_id())
             query_object = query_object.filter(Note.is_deactivated == False)
 
             if (args['sort'] == 'desc'):
@@ -1647,7 +1831,7 @@ class NotesList(Resource):
 
             # Get total results
             query_object = db_session.query(Note)
-            query_object = query_object.filter(Note.user_login_id == current_user.get_id())
+            query_object = query_object.filter(Note.user_login_id == current_user.get_old_id())
             query_object = query_object.filter(Note.is_deactivated == False)
             total = query_object.count()
 
@@ -1671,7 +1855,7 @@ class NotesList(Resource):
         elif not api.payload['text'] or not api.payload['oer_id']:
             return {'result': 'Material id and text params cannot be empty'}, 400
         else:
-            note = Note(api.payload['oer_id'], api.payload['text'], current_user.get_id(), False)
+            note = Note(api.payload['oer_id'], api.payload['text'], current_user.get_old_id(), False)
             db_session.add(note)
             db_session.commit()
             return {'result': 'Note added'}, 201
@@ -1691,7 +1875,7 @@ class Notes(Resource):
 
         query_object = db_session.query(Note)
         query_object = query_object.filter(Note.id == id)
-        query_object = query_object.filter(Note.user_login_id == current_user.get_id())
+        query_object = query_object.filter(Note.user_login_id == current_user.get_old_id())
         query_object = query_object.filter(Note.is_deactivated == False)
         note = query_object.one_or_none()
 
@@ -1713,7 +1897,7 @@ class Notes(Resource):
 
         query_object = db_session.query(Note)
         query_object = query_object.filter(Note.id == id)
-        query_object = query_object.filter(Note.user_login_id == current_user.get_id())
+        query_object = query_object.filter(Note.user_login_id == current_user.get_old_id())
         query_object = query_object.filter(Note.is_deactivated == False)
         note = query_object.one_or_none()
 
@@ -1732,7 +1916,7 @@ class Notes(Resource):
 
         query_object = db_session.query(Note)
         query_object = query_object.filter(Note.id == id)
-        query_object = query_object.filter(Note.user_login_id == current_user.get_id())
+        query_object = query_object.filter(Note.user_login_id == current_user.get_old_id())
         query_object = query_object.filter(Note.is_deactivated == False)
         note = query_object.one_or_none()
 
@@ -1826,7 +2010,7 @@ def _add_published_playlist(title, desc, author, license, creator, parent, is_vi
     # get playlist_item_data
     query_object = db_session.query(Temp_Playlist)
     query_object = query_object.filter(Temp_Playlist.title == temp_title)
-    query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+    query_object = query_object.filter(Temp_Playlist.creator == current_user.get_old_id())
     temp_playlist = query_object.one_or_none()
 
     item_data = dict()
@@ -1870,7 +2054,7 @@ def _add_temporary_playlist(title, license, creator, parent):
 
 
 def _update_temporary_playlist_items(title, oerIds):
-    existing_playlist = repository.get(Temp_Playlist, None, {'title': title, 'creator': current_user.get_id()})
+    existing_playlist = repository.get(Temp_Playlist, None, {'title': title, 'creator': current_user.get_old_id()})
 
     if (existing_playlist is not None and existing_playlist[0] is not None):
         data = json.loads(existing_playlist[0].data)
@@ -1904,10 +2088,22 @@ def _create_oer_record_for_playlist(playlist):
 def _send_confirmation_email_for_published_playlist(user, title, url):
     if user.email:
         try:
-            msg = Message("{} Playlist Published".format(title), sender=MAIL_SENDER, recipients=[user.email])
-            msg.html = render_template('/security/email/published_playlist_message.html', user=user,
-                                       app_name=MAIL_SENDER,
-                                       title=title, url=url)
+            html_body = render_template(
+                '/security/email/published_playlist_message.html',
+                user=user,
+                app_name=MAIL_SENDER,
+                title=title,
+                url=url
+            )
+
+            msg = EmailMessage(
+                subject="{} Playlist Published".format(title),
+                body="",                # optional plain-text fallback (can leave empty)
+                html=html_body,         # ✅ HTML body
+                from_email=MAIL_SENDER, # sender
+                to=[user.email]         # recipients
+            )
+
             mail.send(msg)
         except Exception:
             return {'result': 'Mail server not configured'}, 400
@@ -1937,7 +2133,7 @@ def _convert_temp_playlist_to_playlist(temp_playlist):
 def _add_oer_to_playlist(title, oer_id):
     query_object = db_session.query(Temp_Playlist)
     query_object = query_object.filter(Temp_Playlist.title == title)
-    query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+    query_object = query_object.filter(Temp_Playlist.creator == current_user.get_old_id())
     temp_playlist = query_object.one_or_none()
 
     # getting oer to set title and description
@@ -2086,7 +2282,7 @@ class Playlists(Resource):
             if args['mode'] is not None and args['mode'] == "temp_playlists_only":
                 # Building and executing query object for Temp Playlists
                 query_object = db_session.query(Temp_Playlist)
-                query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+                query_object = query_object.filter(Temp_Playlist.creator == current_user.get_old_id())
                 result_list = query_object.all()
 
                 total_results = query_object.count()
@@ -2105,7 +2301,7 @@ class Playlists(Resource):
                 if (args['license']):
                     query_object = query_object.filter(Playlist.license == args['license'])
 
-                query_object = query_object.filter(Playlist.creator == current_user.get_id())
+                query_object = query_object.filter(Playlist.creator == current_user.get_old_id())
 
                 total_results = query_object.count()
 
@@ -2139,7 +2335,7 @@ class Playlists(Resource):
                 if (args['license']):
                     query_object = query_object.filter(Playlist.license == args['license'])
 
-                query_object = query_object.filter(Playlist.creator == current_user.get_id())
+                query_object = query_object.filter(Playlist.creator == current_user.get_old_id())
 
                 total_results = query_object.count()
 
@@ -2162,7 +2358,7 @@ class Playlists(Resource):
                     playlists = [i.serialize for i in playlist_list]
 
                 query_object = db_session.query(Temp_Playlist)
-                query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+                query_object = query_object.filter(Temp_Playlist.creator == current_user.get_old_id())
                 result_list = query_object.all()
 
                 temp_playlists = [_convert_temp_playlist_to_playlist(i) for i in result_list]
@@ -2197,7 +2393,7 @@ class Playlists(Resource):
                                                api.payload['description'],
                                                api.payload['author'],
                                                _DEFAULT_LICENSE,
-                                               current_user.get_id(),
+                                               current_user.get_old_id(),
                                                api.payload['parent'],
                                                api.payload['is_visible'],
                                                api.payload['playlist_items'],
@@ -2209,10 +2405,10 @@ class Playlists(Resource):
 
             # Deleting temp version of playlist after creating a temp_playlist repo
             temp_playlist_repo = TempPlaylistRepository()
-            temp_playlist_repo.delete_by_title(api.payload['temp_title'], current_user.get_id())
+            temp_playlist_repo.delete_by_title(api.payload['temp_title'], current_user.get_old_id())
 
             # sending confirmation email to the creator with playslist metadata and url for playlist
-            user = repository.get_by_id(UserLogin, current_user.get_id())
+            user = repository.get_by_id(UserLogin, current_user.get_old_id())
             _send_confirmation_email_for_published_playlist(user, playlist.title, oer.url)
 
             return playlist.id
@@ -2221,7 +2417,7 @@ class Playlists(Resource):
         else:
             result = _add_temporary_playlist(api.payload['title'],
                                              _DEFAULT_LICENSE,
-                                             current_user.get_id(),
+                                             current_user.get_old_id(),
                                              api.payload['parent'])
 
             return {'result': 'Playlist successfully created.'}, 201
@@ -2235,7 +2431,7 @@ class Playlists(Resource):
             return {'result': 'User not logged in'}, 401
 
         if api.payload['id'] != None:
-            playlist = repository.get_by_id(Playlist, api.payload['id'], current_user.get_id())
+            playlist = repository.get_by_id(Playlist, api.payload['id'], current_user.get_old_id())
             if playlist != None:
                 playlist_items = repository.get(Playlist_Item, None, {'playlist_id': playlist.id})
                 for item in playlist_items:
@@ -2246,7 +2442,7 @@ class Playlists(Resource):
 
         if api.payload['title'] != None:
             temp_playlist = repository.get(Temp_Playlist, None,
-                                           {'title': api.payload['title'], 'creator': current_user.get_id()})
+                                           {'title': api.payload['title'], 'creator': current_user.get_old_id()})
             if temp_playlist != None:
                 repository.delete(temp_playlist)
 
@@ -2290,7 +2486,7 @@ class Playlist_Single(Resource):
         if len(api.payload['playlist_items']) != len(api.payload['playlist_items_order']):
             return {'result': 'One or more arguments for playlist items were found missing.'}, 400
 
-        playlist = repository.get_by_id(Playlist, id, current_user.get_id())
+        playlist = repository.get_by_id(Playlist, id, current_user.get_old_id())
         playlist_items = repository.get(Playlist, None, {'playlist_id': id})
 
         if playlist is None:
@@ -2382,7 +2578,7 @@ class Temp_Playlist_Single(Resource):
 
         query_object = db_session.query(Temp_Playlist)
         query_object = query_object.filter(Temp_Playlist.title == title)
-        query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+        query_object = query_object.filter(Temp_Playlist.creator == current_user.get_old_id())
         temp_playlist = query_object.one_or_none()
 
         if temp_playlist is None:
@@ -2409,7 +2605,7 @@ class Temp_Playlist_Single(Resource):
 
         query_object = db_session.query(Temp_Playlist)
         query_object = query_object.filter(Temp_Playlist.title == title)
-        query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+        query_object = query_object.filter(Temp_Playlist.creator == current_user.get_old_id())
         temp_playlist = query_object.one_or_none()
 
         if temp_playlist is None:
@@ -2446,7 +2642,7 @@ class Temp_Playlist_Single(Resource):
 
         query_object = db_session.query(Temp_Playlist)
         query_object = query_object.filter(Temp_Playlist.title == title)
-        query_object = query_object.filter(Temp_Playlist.creator == current_user.get_id())
+        query_object = query_object.filter(Temp_Playlist.creator == current_user.get_old_id())
         temp_playlist = query_object.one_or_none()
 
         if temp_playlist is None:
@@ -2494,7 +2690,7 @@ class Temp_Playlist_Youtube_Item_Update(Resource):
         
         # let's first get the temporary playlist
         temp_playlist_repo = TempPlaylistRepository()
-        temp_playlist = temp_playlist_repo.get_by_title(title, current_user.get_id())
+        temp_playlist = temp_playlist_repo.get_by_title(title, current_user.get_old_id())
 
         if temp_playlist is None:
             return {'result': 'Temporary playlist not found'}, 400
@@ -2549,80 +2745,6 @@ class LicenseTypes(Resource):
             licenses = [i.serialize for i in result_list]
             return licenses
 
-
-def initiate_action_types_table():
-    # TODO Define a comprehensive set of actions and keep it in sync with the frontend
-    # BTW in case a reset is needed: https://stackoverflow.com/a/5342503/2237986
-    action_type = ActionType.query.filter_by(id=1).first()
-    if action_type is None:
-        action_type = ActionType('OER card opened')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=2).first()
-    if action_type is None:
-        action_type = ActionType('OER marked as favorite (no longer in use)')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=3).first()
-    if action_type is None:
-        action_type = ActionType('OER unmarked as favorite (no longer in use)')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=4).first()
-    if action_type is None:
-        action_type = ActionType('Video played')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=5).first()
-    if action_type is None:
-        action_type = ActionType('Video paused')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=6).first()
-    if action_type is None:
-        action_type = ActionType('Video seeked')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=7).first()
-    if action_type is None:
-        action_type = ActionType('ContentFlow setting changed')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=8).first()
-    if action_type is None:
-        action_type = ActionType('Feedback on OER content')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=9).first()
-    if action_type is None:
-        action_type = ActionType('Video still playing')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=10).first()
-    if action_type is None:
-        action_type = ActionType('OverviewType selected')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=11).first()
-    if action_type is None:
-        action_type = ActionType('ToggleExplainer')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=12).first()
-    if action_type is None:
-        action_type = ActionType('OpenExplanationPopup')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=13).first()
-    if action_type is None:
-        action_type = ActionType('TriggerSearch')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=14).first()
-    if action_type is None:
-        action_type = ActionType('UrlChanged')
-        db_session.add(action_type)
-        db_session.commit()
 
 
 def find_enrichment_by_oer_id(oer_id):
@@ -2993,7 +3115,7 @@ def _inject_notes(oer):
     if (oer['id']):
         query_object = query_object.filter(Note.oer_id == oer['id'])
 
-    query_object = query_object.filter(Note.user_login_id == current_user.get_id())
+    query_object = query_object.filter(Note.user_login_id == current_user.get_old_id())
     query_object = query_object.filter(Note.is_deactivated == False)
     result_list = query_object.all()
 

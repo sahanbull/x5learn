@@ -1,3 +1,4 @@
+from uuid import uuid4
 from x5learn_server.db.database import Base, get_or_create_db
 from x5learn_server._config import DB_ENGINE_URI
 from flask_security import UserMixin, RoleMixin
@@ -42,6 +43,20 @@ class UserLogin(Base, UserMixin):
                          backref=backref('user_login', lazy='dynamic'))
     user_profile = Column(JSON())
     user = relationship('User', uselist=False, backref='user_login')
+    fs_uniquifier = Column(String(255), unique=True, nullable=False, default=lambda: str(uuid4()))
+    azure_oid = Column(String(64), unique=True, nullable=True)
+
+    def get_id(self):
+        return str(self.fs_uniquifier)
+    
+    def get_old_id(self):
+        return str(self.id)
+
+    @property
+    def is_active(self):
+        return bool(self.active)
+
+    
 
 
 # I suspect that the User table is obsolete
@@ -52,6 +67,7 @@ class User(Base):
     frontend_state = Column(JSON())
     user_login_id = Column(Integer, ForeignKey('user_login.id'))
     is_content_creator = Column(Boolean())
+    fs_uniquifier = Column(String(255), unique=True, nullable=False, default=lambda: str(uuid4()))
 
 
 class Oer(Base):

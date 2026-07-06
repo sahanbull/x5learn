@@ -13,27 +13,16 @@ COPY app app/
 RUN yarn build:cra
 
 
-FROM rackspacedot/python37
+FROM python:3.12.2
 
 RUN apt-get update -y && apt-get install -y exiftool
 
 WORKDIR /home/ucl/x5learn
-
-COPY ./requirements.txt requirements.txt
-
-RUN pip install -r requirements.txt
-
-
-
-COPY test-integration test-integration/
 COPY ./setup.py setup.py
 COPY x5learn_server x5learn_server/
-#RUN pip install -e .
+COPY uncompressed x5learn_server/static/dist
+COPY assets/img x5learn_server/static/dist/img
+RUN pip install -e .
+EXPOSE 8000
 
-
-COPY ./init-docker.sh init-docker.sh
-#cp -r uncompressed/* x5learn_server/static/dist
-#cp -r assets/img x5learn_server/static/dist/img
-
-#RUN ./init-docker.sh
-
+CMD ["python", "app.py"]

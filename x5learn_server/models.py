@@ -45,6 +45,7 @@ class UserLogin(Base, UserMixin):
     user = relationship('User', uselist=False, backref='user_login')
     fs_uniquifier = Column(String(255), unique=True, nullable=False, default=lambda: str(uuid4()))
     azure_oid = Column(String(64), unique=True, nullable=True)
+    google_sub = Column(String(64), unique=True, nullable=True)
 
     def get_id(self):
         return str(self.fs_uniquifier)

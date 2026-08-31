@@ -23,7 +23,7 @@ setup(
 
         # ORM + DB
         "SQLAlchemy>=2.0.0",
-        "psycopg2>=2.9.0",
+        "psycopg2-binary>=2.9.0",
 
         # Auth + Crypto
         "bcrypt>=4.0.1",
@@ -32,12 +32,17 @@ setup(
         # Utilities
         "python-dateutil",
         "isodate",
-        "dotenv",
+        "python-dotenv>=1.0",
+        "requests>=2.31",
         "fuzzywuzzy>=0.17.0",
         "langdetect",
         "wikipedia",
         "wget",
         "preview_generator",
+        "Wand>=0.6",
+        "Pillow>=10.0",
+        "beautifulsoup4>=4.12",
+        "flask-babel>=4.0",
 
         # API layer (flask-restplus is dead → move to flask-restx)
         "flask-restx>=1.3.0",  # actively maintained fork of flask-restplus

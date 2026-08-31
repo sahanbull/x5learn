@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base, scoped_session, sessionmaker
 
 from x5learn_server._config import ADMIN_EMAIL, ADMIN_PASSWORD, ADMIN_ROLE_NAME, ROLES
 

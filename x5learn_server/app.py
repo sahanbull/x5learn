@@ -1,14 +1,13 @@
 from uuid import uuid4
 from flask import Flask, jsonify, render_template, request, redirect, flash, current_app, abort, url_for, session
-from flask_wtf import Form, RecaptchaField
+from flask_wtf import RecaptchaField
 from flask_mailman import Mail, EmailMessage
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required, \
     forms, RegisterForm, ResetPasswordForm, roles_required, login_user, LoginForm as BaseLoginForm
 from flask_security.utils import verify_and_update_password
 from flask_sqlalchemy import SQLAlchemy
-from wtforms import PasswordField, BooleanField
+from wtforms import BooleanField
 from wtforms.validators import Regexp, DataRequired
-from flask_wtf import RecaptchaField
 import json
 import os  # apologies
 import requests
@@ -36,6 +35,7 @@ from x5learn_server.ms_auth import (
     API_SCOPES,
 )
 import msal
+from x5learn_server.google_auth import build_google_auth_url, acquire_google_identity
 
 # instantiate the user management db classes
 # NOTE WHEN PEP8'ING MODULE IMPORTS WILL MOVE TO THE TOP AND CAUSE EXCEPTION
@@ -54,6 +54,8 @@ from x5learn_server.enrichment_tasks import push_enrichment_task_if_needed, push
     push_thumbnail_generation_task
 from x5learn_server.lab_study import frozen_search_results_for_lab_study, is_special_search_key_for_lab_study
 from x5learn_server.course_optimization import optimize_course
+
+DATA_COLL_PROMPT_INTERVAL = 2
 
 user_datastore = SQLAlchemySessionUserDatastore(db_session,
                                                 UserLogin, Role)
@@ -1142,7 +1144,47 @@ def azure_callback():
     db_session.commit()
 
     login_user(user, remember=True)
-    session["ms_tokens"] = result
+    return redirect(url_for("home"))
+
+@app.route("/login/google")
+def login_google():
+    return redirect(build_google_auth_url())
+
+@app.route("/auth/google/callback")
+def google_callback():
+    try:
+        claims = acquire_google_identity(request.url)
+    except Exception as e:
+        abort(401, str(e))
+
+    sub = claims.get("sub")
+    email = claims.get("email")
+
+    user = None
+    if sub:
+        user = db_session.query(UserLogin).filter_by(google_sub=sub).first()
+    if not user and email:
+        user = db_session.query(UserLogin).filter_by(email=email).first()
+
+    if not user:
+        user = UserLogin(
+            email=email or f"{sub}@example.invalid",
+            active=True,
+            confirmed_at=datetime.utcnow(),
+            google_sub=sub,
+            current_login_at=datetime.utcnow(),
+            login_count=1,
+        )
+        db_session.add(user)
+    else:
+        user.last_login_at = user.current_login_at
+        user.current_login_at = datetime.utcnow()
+        user.login_count = (user.login_count or 0) + 1
+        if not user.google_sub and sub:
+            user.google_sub = sub
+    db_session.commit()
+
+    login_user(user, remember=True)
     return redirect(url_for("home"))
 
 def search_results_from_x5gon_api(text, page, types, licenses, languages, provider):
@@ -1617,6 +1659,7 @@ class UserApi(Resource):
             # Sending confirmation mail
             if user.email:
                 try:
+                    body_text = "Your account and related data has been deleted."
                     html_body = render_template(
                         '/security/email/base_message.html',
                         user=user,
@@ -1626,7 +1669,7 @@ class UserApi(Resource):
                     
                     msg = EmailMessage(
                         subject="x5Learn Account Deleted",
-                        body="Your account and related data has been deleted.",
+                        body=body_text,
                         to=[user.email],
                         from_email=MAIL_SENDER,
                         html=html_body

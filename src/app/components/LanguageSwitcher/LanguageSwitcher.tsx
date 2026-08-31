@@ -25,7 +25,7 @@ export function LanguageSwitcher() {
   const { t, i18n } = useTranslation();
 
   const [isLoading, setIsLoading] = useState(false);
-  const [supportedLangs, setSupportedLangs] = useState([]);
+  const [supportedLangs, setSupportedLangs] = useState<any[]>([]);
   const [cookies, setCookie, removeCookie] = useCookies(['lang']);
 
   const loadLangs = async () => {

@@ -33,7 +33,7 @@ export const selectOerByID = createSelector(
   },
 );
 
-const SortableOerCard = ({ oerId, tempPlaylistName }) => {
+const SortableOerCard = ({ oerId, tempPlaylistName, onClick }) => {
   const cardData = useSelector((state: RootState) => {
     return selectOerByID(state, oerId);
   });
@@ -68,7 +68,11 @@ export function PlaylistItemSortWidget({
   const [modalData, setModalData] = useState({ title: '', description: '' });
   const [modalLoading, setModalLoading] = useState(false);
   const allOers = useSelector(selectAllOers);
-  const [{ data, loading, error }, setOERData] = useState({
+  const [{ data, loading, error }, setOERData] = useState<{
+    data: any;
+    loading: boolean;
+    error: any;
+  }>({
     data: null,
     loading: true,
     error: null,

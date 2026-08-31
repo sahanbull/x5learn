@@ -83,7 +83,7 @@ export function PlaylistOptimizeConfirmationWidget(props: {
       return oer.oer_id;
     }),
   );
-  const [optimizedOedIdOrder, setOptimizedOedIdOrder] = useState([]);
+  const [optimizedOedIdOrder, setOptimizedOedIdOrder] = useState<any[]>([]);
 
   const optimizeLearningPath = async () => {
     try {

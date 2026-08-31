@@ -64,7 +64,7 @@ export function PlaylistEditFormWidget(props: { formData? }) {
   const path = window.location.pathname;
   const tempPlaylistName = path.substring(path.lastIndexOf('/') + 1);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [showSearchBtn, setShowSearchBtn] = useState(false);
   const [hoveredVideo, setHoveredVideo] = useState<string | null>(null);
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);

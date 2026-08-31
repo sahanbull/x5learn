@@ -1,19 +1,20 @@
-package-lock.json
-
 __pycache__
 
-# Elm / JavaScript binaries
+# JavaScript dependencies
 node_modules/
-elm-stuff/
 
 # Compiled frontend assets
 x5learn_server/static/dist/
+x5learn_server/static/
+x5learn_server/asset-manifest.json
 
 # OSX temporary files
 .DS_Store
 
 # Developer environment variables
 .env
+.env.local
+.env.*.local
 
 x5learn.egg-info
 

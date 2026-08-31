@@ -6,8 +6,7 @@ import argparse
 from datetime import datetime
 
 from sqlalchemy import DateTime, create_engine, Column, Integer, String, JSON
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base, sessionmaker
 
 # For relative imports to work in Python 3.6
 sys.path.append(os.path.dirname(os.path.realpath(__file__)))

@@ -3,11 +3,10 @@
 source /venv/bin/activate
 pip install -e .
 
-yarn setup
-npm run build
-
-yarn build:craco
-yarn deploy:craco
+npm install --legacy-peer-deps
+npm run setup
+npm run build:craco
+npm run deploy:craco
 
 mkdir -p x5learn_server/static/dist
 cp -r uncompressed/* x5learn_server/static/dist

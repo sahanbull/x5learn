@@ -58,10 +58,10 @@ export function ResourcesPage(props) {
   function useQuery() {
     return new URLSearchParams(useLocation().search);
   }
-  const [playlistItems, setPlaylistItems] = useState([]);
+  const [playlistItems, setPlaylistItems] = useState<any[]>([]);
   const mode = query.get('mode');
   const tempPlaylistName = query.get('title');
-  const [oerIds, setOerIds] = useState([]);
+  const [oerIds, setOerIds] = useState<any[]>([]);
   const currentOerId = props.match?.params?.id;
   console.log('tempPlaylistName', tempPlaylistName);
   console.log('mode', mode);

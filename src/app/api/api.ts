@@ -24,6 +24,7 @@ async function fetchAPI(
     method,
     headers,
     body: data,
+    credentials: 'include' as RequestCredentials,
   };
 
   if (method !== 'GET') {

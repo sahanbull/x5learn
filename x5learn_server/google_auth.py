@@ -25,12 +25,13 @@ GOOGLE_CLIENT_CONFIG = {
 }
 
 
-def _build_flow():
+def _build_flow(code_verifier=None):
     """Return a configured OAuth Flow bound to our callback route."""
     return Flow.from_client_config(
         GOOGLE_CLIENT_CONFIG,
         scopes=GOOGLE_SCOPES,
         redirect_uri=url_for("google_callback", _external=True),
+        code_verifier=code_verifier,
     )
 
 
@@ -42,8 +43,10 @@ def build_google_auth_url():
         include_granted_scopes="true",
         prompt="select_account",
     )
-    # Only the small opaque state string is kept in the session, not any tokens.
+    # Google now enforces PKCE, so the auto-generated verifier must survive
+    # into the callback request (a fresh Flow instance) via the session.
     session["google_oauth_state"] = state
+    session["google_oauth_code_verifier"] = flow.code_verifier
     return auth_url
 
 
@@ -52,7 +55,7 @@ def acquire_google_identity(authorization_response_url):
     Exchange the authorization response for tokens and return the verified
     ID token claims (sub, email, name, ...).
     """
-    flow = _build_flow()
+    flow = _build_flow(code_verifier=session.get("google_oauth_code_verifier"))
     flow.state = session.get("google_oauth_state")
     flow.fetch_token(authorization_response=authorization_response_url)
 

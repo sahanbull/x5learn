@@ -5,6 +5,39 @@ import { WarningOutlined } from '@ant-design/icons';
 import { PlaylistCard } from './PlaylistCard';
 import './PlaylistCardList.less';
 
+function getPlaylistItemCount(item: any): number {
+  // Prefer an exact count supplied by the backend.
+  const backendCount =
+    item?.playlist_item_count ??
+    item?.playlistItemCount ??
+    item?.item_count;
+
+  if (
+    backendCount !== undefined &&
+    backendCount !== null &&
+    Number.isFinite(Number(backendCount))
+  ) {
+    return Number(backendCount);
+  }
+
+  // This normally contains every resource ID in the playlist.
+  if (Array.isArray(item?.oerIds)) {
+    return item.oerIds.length;
+  }
+
+  // Used by some temporary-playlist responses.
+  if (Array.isArray(item?.playlist_items)) {
+    return item.playlist_items.length;
+  }
+
+  // Fallback because this array can contain partially loaded details.
+  if (Array.isArray(item?.playlistItemData)) {
+    return item.playlistItemData.length;
+  }
+
+  return 0;
+}
+
 export function PlaylistCardList(props: {
   loading?: boolean;
   error?: any | null;
@@ -15,16 +48,16 @@ export function PlaylistCardList(props: {
 
   if (loading) {
     return (
-      <Row gutter={16}>
-        <Col span={8}>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={12} lg={8}>
           <PlaylistCard loading />
         </Col>
 
-        <Col span={8}>
+        <Col xs={24} sm={12} lg={8}>
           <PlaylistCard loading />
         </Col>
 
-        <Col span={8}>
+        <Col xs={24} sm={12} lg={8}>
           <PlaylistCard loading />
         </Col>
       </Row>
@@ -47,16 +80,20 @@ export function PlaylistCardList(props: {
   return (
     <Row gutter={[16, 16]}>
       {data.map((item, index) => {
-        const playlistItemCount = Array.isArray(item.playlistItemData)
-          ? item.playlistItemData.length
-          : 0;
+        const playlistItemCount = getPlaylistItemCount(item);
 
         return (
-          <Col key={`${index}-${item.id || item.title}`} span={8}>
+          <Col
+            key={`${item.id ?? item.title ?? 'playlist'}-${index}`}
+            xs={24}
+            sm={12}
+            lg={8}
+          >
             <div className="playlist-card-wrapper">
               <span
                 className="playlist-card-item-count"
                 title={`${playlistItemCount} playlist items`}
+                aria-label={`${playlistItemCount} playlist items`}
               >
                 {playlistItemCount}
               </span>

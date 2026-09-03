@@ -29,8 +29,6 @@ from flask_babel import Babel
 from x5learn_server.ms_auth import (
     build_auth_url,
     acquire_token_by_code,
-    _build_cache,
-    _save_cache,
     OIDC_SCOPES,
     API_SCOPES,
 )

@@ -21,17 +21,13 @@ print("API_SCOPES =", API_SCOPES)
 # Internal helpers for MSAL token management
 # ----------------------------------------------------
 def _build_cache():
-    """Build an in-session token cache."""
-    cache = msal.SerializableTokenCache()
-    if session.get("msal_cache"):
-        cache.deserialize(session["msal_cache"])
-    return cache
+    """Build a request-scoped token cache.
 
-
-def _save_cache(cache):
-    """Persist the cache back to the session if it changed."""
-    if cache.has_state_changed:
-        session["msal_cache"] = cache.serialize()
+    The cache is never persisted: serialized MSAL tokens are several KB and
+    would overflow the 4093-byte Flask cookie session.
+    """
+    session.pop("msal_cache", None)
+    return msal.SerializableTokenCache()
 
 
 def _build_msal_app(cache=None):
@@ -74,5 +70,4 @@ def acquire_token_by_code(auth_code):
         scopes=API_SCOPES,  # [] if sign-in only
         redirect_uri=url_for("azure_callback", _external=True),
     )
-    _save_cache(cache)
     return result

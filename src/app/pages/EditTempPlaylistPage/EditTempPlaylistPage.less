@@ -58,8 +58,31 @@
   }
 
   .ant-card-body {
-    padding: 30px 28px 34px;
+  max-height: calc(100vh - 210px);
+  padding: 30px 28px 34px;
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  scrollbar-width: thin;
+  scrollbar-color: #cbd2df transparent;
+
+  &::-webkit-scrollbar {
+    width: 7px;
   }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd2df;
+    border-radius: 10px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #aeb8c9;
+  }
+}
 
   .ant-form-item-label > label {
     color: #3c4659;
@@ -161,4 +184,26 @@
   .x5-edit-temp-playlist-heading h2.ant-typography {
     font-size: 21px;
   }
+}
+
+.x5-playlist-sticky-actions {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+
+  margin: -30px -28px 24px;
+  padding: 14px 28px;
+
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid #e8ecf3;
+
+  box-shadow: 0 4px 14px rgba(35, 48, 79, 0.06);
+
+  backdrop-filter: blur(8px);
+}
+
+.x5-playlist-sticky-actions-inner {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }

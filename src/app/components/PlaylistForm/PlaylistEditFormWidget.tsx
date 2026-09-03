@@ -61,6 +61,47 @@ const tailLayout = {
   wrapperCol: { offset: 0, span: 16 },
 };
 
+const StickyPlaylistActions = styled(Col)`
+  position: sticky !important;
+  top: 0;
+  z-index: 50;
+
+  margin-bottom: 22px;
+  padding: 14px 0 !important;
+
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid #e8ecf3;
+  box-shadow: 0 6px 16px rgba(35, 48, 79, 0.06);
+  backdrop-filter: blur(8px);
+
+  > .ant-row {
+    padding: 0 2px;
+  }
+
+  .ant-space {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  @media (max-width: 767px) {
+    padding: 12px 0 !important;
+
+    > .ant-row {
+      justify-content: flex-start;
+    }
+
+    .ant-space {
+      width: 100%;
+      justify-content: flex-start;
+    }
+
+    .ant-btn {
+      flex: 1 1 auto;
+    }
+  }
+`;
+
 const YouTubeModalTitle = styled.div`
   padding: 3px 0;
 
@@ -1150,7 +1191,7 @@ export function PlaylistEditFormWidget(props: { formData? }) {
     >
       <Row gutter={[16, 16]}>
 
-    <Col span={24}>
+        <StickyPlaylistActions span={24}>
           <Row justify="end">
             <Space>
               <Button
@@ -1185,7 +1226,7 @@ export function PlaylistEditFormWidget(props: { formData? }) {
               </Button>
             </Space>
           </Row>
-        </Col>
+        </StickyPlaylistActions>
 
         <Col span={24}>
           <PlaylistItemSortWidget

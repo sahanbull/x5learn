@@ -57,10 +57,6 @@ export function MyPlaylistWidget(props: {}) {
 
   const totalItems = metadata?.total || 0;
   const totalPages = Math.ceil(totalItems / PAGE_SIZE);
-  const publishedCount = Array.isArray(data) ? data.length : 0;
-  const temporaryCount = Array.isArray(tempPlaylists)
-    ? tempPlaylists.length
-    : 0;
 
   const handleCardClick = async (item: any) => {
     try {
@@ -91,27 +87,21 @@ export function MyPlaylistWidget(props: {}) {
     dispatch(fetchAllMyPlaylistsThunk({ limit: PAGE_SIZE, offset }));
   }, [currentPage, dispatch]);
 
-  // Keep the existing action logger available for PlaylistCardList integration.
   void handleCardClick;
 
   return (
     <main className="x5-playlist-widget">
       <header className="x5-playlist-header">
-        <div>
-          <Text className="x5-playlist-eyebrow">Your library</Text>
+        <div className="x5-playlist-header-content">
+          <Text className="x5-playlist-eyebrow">Your Library</Text>
+
           <Title level={1}>My Playlists</Title>
+
           <Paragraph>
-            View your published content and continue working on temporary
-            playlists.
+            Manage your published playlists and continue working on content
+            that is still under development.
           </Paragraph>
         </div>
-
-        {!loading && !error && (
-          <div className="x5-playlist-total" aria-label={`${totalItems} playlists`}>
-            <strong>{totalItems}</strong>
-            <span>{totalItems === 1 ? 'playlist' : 'playlists'}</span>
-          </div>
-        )}
       </header>
 
       {loading && (
@@ -134,22 +124,29 @@ export function MyPlaylistWidget(props: {}) {
       <section className="x5-playlist-section">
         <div className="x5-playlist-section-heading">
           <div>
-            <Title level={2}>My Published Playlists</Title>
-            <Text>Playlists currently available in your library.</Text>
+            <Title level={2}>Published Playlists</Title>
+            <Text>
+              Content that is currently published and available in your
+              library.
+            </Text>
           </div>
-          {!loading && <span className="x5-playlist-count">{publishedCount}</span>}
         </div>
 
-        <PlaylistCardList data={data} loading={loading} error={error} />
+        <PlaylistCardList
+          data={data}
+          loading={loading}
+          error={error}
+        />
       </section>
 
       <section className="x5-playlist-section">
         <div className="x5-playlist-section-heading">
           <div>
-            <Title level={2}>Playlists Under Development</Title>
-            <Text>Playlists that are still being prepared.</Text>
+            <Title level={2}>Under Development</Title>
+            <Text>
+              Continue editing playlists that have not been published yet.
+            </Text>
           </div>
-          {!loading && <span className="x5-playlist-count">{temporaryCount}</span>}
         </div>
 
         <PlaylistCardList
@@ -169,7 +166,9 @@ export function MyPlaylistWidget(props: {}) {
             showSizeChanger={false}
             onChange={nextPage => {
               query.set('page', `${nextPage}`);
-              history.push(`${ROUTES.MY_PLAYLISTS}?${query.toString()}`);
+              history.push(
+                `${ROUTES.MY_PLAYLISTS}?${query.toString()}`,
+              );
             }}
           />
         </Row>

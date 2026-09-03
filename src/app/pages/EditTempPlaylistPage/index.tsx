@@ -1,47 +1,29 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import {
-  Row,
-  Col,
-  Card,
-  Typography,
-  Button,
-  Progress,
-  Spin,
-  Form,
-  Input,
-  Select,
-  Popconfirm,
-} from 'antd';
+import { Alert, Card, Col, Row, Spin, Typography } from 'antd';
+import { WarningOutlined } from '@ant-design/icons';
+import { useInjectReducer } from 'redux-injectors';
+import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
+
+import { PlaylistDeleteButton } from 'app/components/PlaylistDeleteButton/PlaylistDeleteButton';
+import { PlaylistEditFormWidget } from 'app/components/PlaylistForm/PlaylistEditFormWidget';
 import { AppLayout } from 'app/containers/Layout/AppLayout';
-import { DeleteOutlined, UploadOutlined } from '@ant-design/icons';
+import { RootState } from 'types';
+
 import {
   fetchTempPlaylistDetailsThunk,
   sliceKey,
   reducer,
 } from './ducks/fetchTempPlaylistDetailsThunk';
-import { PlaylistEditFormWidget } from 'app/components/PlaylistForm/PlaylistEditFormWidget';
-import { useInjectReducer } from 'redux-injectors';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from 'types';
-import { PlaylistDeleteButton } from 'app/components/PlaylistDeleteButton/PlaylistDeleteButton';
-import { useTranslation } from 'react-i18next';
 
-const { Option } = Select;
-const { TextArea } = Input;
-const { Title, Text } = Typography;
+import './EditTempPlaylistPage.less';
 
-const layout = {
-  labelCol: { span: 24 },
-  wrapperCol: { span: 24 },
-};
-
-const tailLayout = {
-  wrapperCol: { offset: 0, span: 16 },
-};
+const { Text, Title } = Typography;
 
 export function EditTempPlaylistPage(props) {
-  useInjectReducer({ key: sliceKey, reducer: reducer });
+  useInjectReducer({ key: sliceKey, reducer });
+
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const { data, loading, error } = useSelector((state: RootState) => {
@@ -49,6 +31,7 @@ export function EditTempPlaylistPage(props) {
   });
 
   const playlistID = props.match?.params?.id;
+
   useEffect(() => {
     dispatch(fetchTempPlaylistDetailsThunk(playlistID));
   }, [dispatch, playlistID]);
@@ -60,34 +43,52 @@ export function EditTempPlaylistPage(props) {
           {t('playlist.lbl_playlist_edit') + ` - ${data?.playlist?.title}`}
         </title>
       </Helmet>
-      <AppLayout>
-        {loading && <Spin spinning={loading} delay={200}></Spin>}
-        {error && <div>{t('alerts.lbl_load_playlist_oers_error')}</div>}
 
-        {data && (
-          <>
+      <AppLayout>
+        <main className="x5-edit-temp-playlist-page">
+          {loading && (
+            <div className="x5-edit-temp-playlist-loading" role="status">
+              <Spin spinning delay={200} size="large" />
+              <Text>Loading playlist...</Text>
+            </div>
+          )}
+
+          {error && (
+            <Alert
+              className="x5-edit-temp-playlist-alert"
+              type="error"
+              showIcon
+              icon={<WarningOutlined />}
+              message={t('alerts.lbl_load_playlist_oers_error')}
+            />
+          )}
+
+          {data && (
             <Row gutter={[16, 16]}>
               <Col span={24}>
                 <Card
-                  headStyle={{ border: 'none' }}
+                  className="x5-edit-temp-playlist-card"
                   extra={
                     <PlaylistDeleteButton
                       playlistName={data?.playlist?.title}
                     />
                   }
                   title={
-                    <Title>
-                      {t('playlist.lbl_playlist_edit')} -{' '}
-                      {data?.playlist?.title}
-                    </Title>
+                    <div className="x5-edit-temp-playlist-heading">
+                      <Text>Playlist workspace</Text>
+                      <Title level={2}>
+                        {t('playlist.lbl_playlist_edit')} -{' '}
+                        {data?.playlist?.title}
+                      </Title>
+                    </div>
                   }
                 >
                   <PlaylistEditFormWidget formData={data} />
                 </Card>
               </Col>
             </Row>
-          </>
-        )}
+          )}
+        </main>
       </AppLayout>
     </>
   );

@@ -1,20 +1,31 @@
 import React, { useEffect } from 'react';
-import { Pagination, Row, Spin, Typography } from 'antd';
+import {
+  Alert,
+  Pagination,
+  Row,
+  Spin,
+  Typography,
+} from 'antd';
+import { WarningOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from 'types';
+import { useHistory, useLocation } from 'react-router';
 import { useInjectReducer } from 'redux-injectors';
+
+import { ROUTES } from 'routes/routes';
+import { RootState } from 'types';
+
 import {
   sliceKey,
   reducer,
   fetchAllMyPlaylistsThunk,
 } from '../../ducks/fetchAllMyPlaylistsThunk';
-import { WarningOutlined } from '@ant-design/icons';
 import { PlaylistCardList } from './PlaylistCardList';
-import { useHistory, useLocation } from 'react-router';
-import { ROUTES } from 'routes/routes';
 import { useTranslation } from 'react-i18next';
 
-const { Title } = Typography;
+import './MyPlaylistWidget.less';
+
+const { Paragraph, Text, Title } = Typography;
+const PAGE_SIZE = 10;
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -23,33 +34,33 @@ function useQuery() {
 export function MyPlaylistWidget(props: {}) {
   useInjectReducer({
     key: sliceKey,
-    reducer: reducer,
+    reducer,
   });
-  const limit = 10;
+
   const query = useQuery();
   const history = useHistory();
-  const page = query.get('page')?.toString() || '1';
+  const dispatch = useDispatch();
   const { t } = useTranslation();
 
-  const { data, temp_playlists, loading, error, metadata } = useSelector(
-    (state: RootState) => {
-      return (
-        state.allMyPlaylists || {
-          data,
-          loading: false,
-          error,
-          metadata,
-          temp_playlists,
-        }
-      );
-    },
+  const requestedPage = Number(query.get('page'));
+  const currentPage = requestedPage > 0 ? requestedPage : 1;
+
+  const playlistState = useSelector(
+    (state: RootState) => state.allMyPlaylists,
   );
 
-  const totalItems = metadata?.total || 0;
-  const total_pages = Math.ceil(totalItems / limit);
-  const dispatch = useDispatch();
+  const data = playlistState?.data;
+  const tempPlaylists = playlistState?.temp_playlists;
+  const loading = playlistState?.loading || false;
+  const error = playlistState?.error;
+  const metadata = playlistState?.metadata;
 
-  // const loadPlaylists
+  const totalItems = metadata?.total || 0;
+  const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+  const publishedCount = Array.isArray(data) ? data.length : 0;
+  const temporaryCount = Array.isArray(tempPlaylists)
+    ? tempPlaylists.length
+    : 0;
 
   const handleCardClick = async (item: any) => {
     try {
@@ -57,8 +68,6 @@ export function MyPlaylistWidget(props: {}) {
         action_type_id: 1,
         params: JSON.stringify({ oer_id: item.id }),
         is_bundled: false,
-        // action_type_ids: [1],
-        // params_list: [JSON.stringify({ oer_id: item.id })],
       };
 
       await fetch(`${process.env.REACT_APP_BASE_URL}/action/`, {
@@ -77,53 +86,94 @@ export function MyPlaylistWidget(props: {}) {
     }
   };
 
-
   useEffect(() => {
-    const offset = limit * (+page - 1);
-    dispatch(fetchAllMyPlaylistsThunk({ limit, offset }));
-  }, [page, dispatch]);
+    const offset = PAGE_SIZE * (currentPage - 1);
+    dispatch(fetchAllMyPlaylistsThunk({ limit: PAGE_SIZE, offset }));
+  }, [currentPage, dispatch]);
+
+  // Keep the existing action logger available for PlaylistCardList integration.
+  void handleCardClick;
 
   return (
-    <>
+    <main className="x5-playlist-widget">
+      <header className="x5-playlist-header">
+        <div>
+          <Text className="x5-playlist-eyebrow">Your library</Text>
+          <Title level={1}>My Playlists</Title>
+          <Paragraph>
+            View your published content and continue working on temporary
+            playlists.
+          </Paragraph>
+        </div>
+
+        {!loading && !error && (
+          <div className="x5-playlist-total" aria-label={`${totalItems} playlists`}>
+            <strong>{totalItems}</strong>
+            <span>{totalItems === 1 ? 'playlist' : 'playlists'}</span>
+          </div>
+        )}
+      </header>
+
       {loading && (
-        <>
-          <Spin spinning={loading} delay={500}></Spin>
-          {t('alerts.lbl_load_playlists_loading')}
-        </>
+        <div className="x5-playlist-feedback" role="status">
+          <Spin spinning delay={500} />
+          <Text>{t('alerts.lbl_load_playlists_loading')}</Text>
+        </div>
       )}
+
       {error && (
-        <>
-          <WarningOutlined /> {t('alerts.lbl_load_playlists_error')}
-        </>
+        <Alert
+          className="x5-playlist-alert"
+          type="error"
+          showIcon
+          icon={<WarningOutlined />}
+          message={t('alerts.lbl_load_playlists_error')}
+        />
       )}
-      {data && (
-        <Title level={2} type="secondary">
-          {t('playlist.lbl_playlist_my_playlists')}
-        </Title>
-      )}
-      <PlaylistCardList data={data} loading={loading} error={error} />
-      <br />
-      {temp_playlists && (
-        <Title level={2} type="secondary">
-          Temp Playlists
-        </Title>
-      )}
-      <PlaylistCardList data={temp_playlists} loading={loading} error={error} />
-      <br />
-      {total_pages > 1 && (
-        <Row justify="center">
+
+      <section className="x5-playlist-section">
+        <div className="x5-playlist-section-heading">
+          <div>
+            <Title level={2}>My Published Playlists</Title>
+            <Text>Playlists currently available in your library.</Text>
+          </div>
+          {!loading && <span className="x5-playlist-count">{publishedCount}</span>}
+        </div>
+
+        <PlaylistCardList data={data} loading={loading} error={error} />
+      </section>
+
+      <section className="x5-playlist-section">
+        <div className="x5-playlist-section-heading">
+          <div>
+            <Title level={2}>Playlists Under Development</Title>
+            <Text>Playlists that are still being prepared.</Text>
+          </div>
+          {!loading && <span className="x5-playlist-count">{temporaryCount}</span>}
+        </div>
+
+        <PlaylistCardList
+          data={tempPlaylists}
+          loading={loading}
+          error={error}
+        />
+      </section>
+
+      {totalPages > 1 && (
+        <Row className="x5-playlist-pagination" justify="center">
           <Pagination
-            defaultCurrent={+page}
+            current={currentPage}
+            pageSize={PAGE_SIZE}
             disabled={loading}
             total={totalItems}
             showSizeChanger={false}
-            onChange={page => {
-              query.set('page', `${page}`);
+            onChange={nextPage => {
+              query.set('page', `${nextPage}`);
               history.push(`${ROUTES.MY_PLAYLISTS}?${query.toString()}`);
             }}
           />
         </Row>
       )}
-    </>
+    </main>
   );
 }

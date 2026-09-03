@@ -1,0 +1,91 @@
+.x5-oer-card-grid {
+  .x5-oer-card-shell {
+    height: 100%;
+  }
+
+  .x5-oer-card-shell .ant-card {
+    height: 100%;
+    overflow: hidden;
+    background: #ffffff;
+    border: 1px solid #dfe5ed;
+    border-radius: 13px;
+    box-shadow: 0 4px 14px rgba(35, 48, 79, 0.07);
+    transition: border-color 0.18s ease, box-shadow 0.18s ease,
+      transform 0.18s ease;
+  }
+
+  .x5-oer-card-shell .ant-card:hover {
+    border-color: #bfcbe3;
+    box-shadow: 0 9px 24px rgba(35, 48, 79, 0.13);
+    transform: translateY(-2px);
+  }
+
+  // The fixed 142px height is approximately 60% of a typical 230–240px cover.
+  .x5-oer-card-shell .ant-card-cover {
+    height: 142px;
+    overflow: hidden;
+    background: #eef1f5;
+    border-bottom: 1px solid #e5e9ef;
+  }
+
+  .x5-oer-card-shell .ant-card-cover .ant-image {
+    width: 100% !important;
+    height: 142px !important;
+  }
+
+  .x5-oer-card-shell .ant-card-cover img,
+  .x5-oer-card-shell .ant-card-cover .ant-image-img {
+    display: block;
+    width: 100% !important;
+    height: 142px !important;
+    object-fit: cover;
+    image-rendering: auto;
+    filter: contrast(1.03) saturate(1.03);
+    transition: transform 0.25s ease;
+  }
+
+  .x5-oer-card-shell .ant-card:hover .ant-card-cover img {
+    transform: scale(1.025);
+  }
+
+  .x5-oer-card-shell .ant-card-body {
+    padding: 14px 15px 16px;
+  }
+
+  .x5-oer-card-shell .ant-card-meta-title,
+  .x5-oer-card-shell .ant-card-head-title,
+  .x5-oer-card-shell h4,
+  .x5-oer-card-shell h5 {
+    display: -webkit-box;
+    margin-bottom: 7px;
+    overflow: hidden;
+    color: #273142;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.45;
+    white-space: normal;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .x5-oer-card-shell .ant-card-meta-description,
+  .x5-oer-card-shell .ant-typography-secondary {
+    color: #7a8497;
+    font-size: 12px;
+    line-height: 1.55;
+  }
+
+  .x5-oer-card-shell .ant-card-actions {
+    background: #fbfcfe;
+    border-top-color: #e8ecf2;
+  }
+
+  @media (max-width: 575px) {
+    .x5-oer-card-shell .ant-card-cover,
+    .x5-oer-card-shell .ant-card-cover .ant-image,
+    .x5-oer-card-shell .ant-card-cover img,
+    .x5-oer-card-shell .ant-card-cover .ant-image-img {
+      height: 168px !important;
+    }
+  }
+}

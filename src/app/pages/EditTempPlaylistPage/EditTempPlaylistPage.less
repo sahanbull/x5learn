@@ -1,0 +1,164 @@
+.x5-edit-temp-playlist-page {
+  width: 100%;
+  max-width: 1280px;
+  min-height: 70vh;
+  margin: 0 auto;
+  padding: 28px 30px 42px;
+}
+
+.x5-edit-temp-playlist-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  min-height: 240px;
+  background: #ffffff;
+  border: 1px solid #e8ecf3;
+  border-radius: 16px;
+  box-shadow: 0 8px 28px rgba(35, 48, 79, 0.05);
+
+  .ant-typography {
+    margin: 0;
+    color: #667085;
+  }
+}
+
+.x5-edit-temp-playlist-alert.ant-alert {
+  margin-bottom: 18px;
+  border-radius: 12px;
+}
+
+.x5-edit-temp-playlist-card.ant-card {
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #e5eaf2;
+  border-radius: 18px;
+  box-shadow: 0 14px 38px rgba(35, 48, 79, 0.07);
+
+  .ant-card-head {
+    min-height: 92px;
+    padding: 0 28px;
+    background: linear-gradient(135deg, #f7f9ff 0%, #fbfcff 60%, #f7f5ff 100%);
+    border-bottom: 1px solid #e9edf5;
+  }
+
+  .ant-card-head-wrapper {
+    align-items: center;
+    gap: 20px;
+  }
+
+  .ant-card-head-title {
+    padding: 20px 0;
+    overflow: visible;
+    white-space: normal;
+  }
+
+  .ant-card-extra {
+    padding: 20px 0;
+  }
+
+  .ant-card-body {
+    padding: 30px 28px 34px;
+  }
+
+  .ant-form-item-label > label {
+    color: #3c4659;
+    font-weight: 600;
+  }
+
+  .ant-input,
+  .ant-select-selector {
+    border-color: #dfe4ec;
+    border-radius: 9px !important;
+    box-shadow: none !important;
+    transition: border-color 180ms ease, box-shadow 180ms ease;
+  }
+
+  .ant-input {
+    min-height: 40px;
+  }
+
+  textarea.ant-input {
+    min-height: 110px;
+  }
+
+  .ant-select-single:not(.ant-select-customize-input) .ant-select-selector {
+    height: 40px;
+
+    .ant-select-selection-item,
+    .ant-select-selection-placeholder {
+      line-height: 38px;
+    }
+  }
+
+  .ant-input:hover,
+  .ant-select:not(.ant-select-disabled):hover .ant-select-selector {
+    border-color: #9db0df;
+  }
+
+  .ant-input:focus,
+  .ant-input-focused,
+  .ant-select-focused:not(.ant-select-disabled) .ant-select-selector {
+    border-color: #5575cc;
+    box-shadow: 0 0 0 3px rgba(49, 87, 200, 0.11) !important;
+  }
+
+  .ant-btn {
+    min-height: 38px;
+    border-radius: 9px;
+    font-weight: 600;
+  }
+}
+
+.x5-edit-temp-playlist-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  > .ant-typography:first-child {
+    color: #3157c8;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.9px;
+    text-transform: uppercase;
+  }
+
+  h2.ant-typography {
+    margin: 0;
+    color: #202939;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+  }
+}
+
+@media (max-width: 767px) {
+  .x5-edit-temp-playlist-page {
+    padding: 18px 14px 30px;
+  }
+
+  .x5-edit-temp-playlist-card.ant-card {
+    .ant-card-head {
+      padding: 0 18px;
+    }
+
+    .ant-card-head-wrapper {
+      align-items: flex-start;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .ant-card-extra {
+      width: 100%;
+      padding: 0 0 18px;
+    }
+
+    .ant-card-body {
+      padding: 22px 18px 26px;
+    }
+  }
+
+  .x5-edit-temp-playlist-heading h2.ant-typography {
+    font-size: 21px;
+  }
+}

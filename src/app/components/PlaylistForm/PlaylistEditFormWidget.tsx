@@ -738,10 +738,13 @@ export function PlaylistEditFormWidget(props: { formData? }) {
 
   const getYouTubeVideoId = (url: string) => {
     const match = url.match(
-      /(?:youtube\.com\/(?:.*[?&]v=|shorts\/|embed\/)|youtu\.be\/)([^&?/]+)/,
+      /(?:youtube\.com\/(?:.*[?&]v=|shorts\/|embed\/|live\/)|youtu\.be\/)([^&?/#]+)/,
     );
     return match?.[1] || null;
   };
+
+  const getYouTubeThumbnailUrl = (videoId: string) =>
+    `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
 
   const buildYouTubeUrlWithStartTime = (
     url: string,
@@ -848,11 +851,16 @@ export function PlaylistEditFormWidget(props: { formData? }) {
     try {
       const values = await form.validateFields();
       const startFrom = Number(values.start_from || 0);
+      const videoId = selectedVideoId || getYouTubeVideoId(values.url);
+      const thumbnailUrl =
+        selectedVideoThumbnail ||
+        values.thumbnail_url ||
+        (videoId ? getYouTubeThumbnailUrl(videoId) : '');
       const payload = {
         url: buildYouTubeUrlWithStartTime(values.url, startFrom),
         title: values.title,
         description: values.description,
-        thumbnail_url: values.thumbnail_url,
+        thumbnail_url: thumbnailUrl,
         date: values.date,
         duration: formatISODuration(values.duration),
         start_from: startFrom,
@@ -955,9 +963,24 @@ export function PlaylistEditFormWidget(props: { formData? }) {
   };
 
   const handleYTSearch = async (isLoadMore = false) => {
-    if (!searchQuery.trim()) return;
+    const trimmedQuery = searchQuery.trim();
+    if (!trimmedQuery) return;
 
-    const encodedQuery = encodeURIComponent(searchQuery.trim());
+    const pastedVideoId = getYouTubeVideoId(trimmedQuery);
+    if (pastedVideoId) {
+      setIsSearching(true);
+      setSearchResults([]);
+      setNextPageToken(null);
+
+      try {
+        await handleVideoSelect(pastedVideoId);
+      } finally {
+        setIsSearching(false);
+      }
+      return;
+    }
+
+    const encodedQuery = encodeURIComponent(trimmedQuery);
     const pageParam =
       isLoadMore && nextPageToken ? `&pageToken=${nextPageToken}` : '';
     const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=9&q=${encodedQuery}${pageParam}&key=${YOUTUBE_API_KEY}`;
@@ -1315,8 +1338,8 @@ export function PlaylistEditFormWidget(props: { formData? }) {
                   <div className="youtube-search-heading">
                     <h3>Find a video</h3>
                     <p>
-                      Search YouTube, preview any result, then select the video
-                      you want to add.
+                      Search YouTube to browse videos, or paste a YouTube link
+                      to load that video's details directly.
                     </p>
                   </div>
 
@@ -1326,7 +1349,7 @@ export function PlaylistEditFormWidget(props: { formData? }) {
                       size="large"
                       allowClear
                       prefix={<SearchOutlined />}
-                      placeholder="Search YouTube videos"
+                      placeholder="Search YouTube or paste a video link"
                       value={searchQuery}
                       onChange={event => {
                         const value = event.target.value;
@@ -1336,18 +1359,43 @@ export function PlaylistEditFormWidget(props: { formData? }) {
                           setNextPageToken(null);
                         }
                       }}
+                      onPaste={event => {
+                        const pastedValue = event.clipboardData
+                          .getData('text')
+                          .trim();
+                        const pastedVideoId = getYouTubeVideoId(pastedValue);
+
+                        if (!pastedVideoId) return;
+
+                        event.preventDefault();
+                        setSearchQuery(pastedValue);
+                        setSearchResults([]);
+                        setNextPageToken(null);
+                        setIsSearching(true);
+                        handleVideoSelect(pastedVideoId).finally(() =>
+                          setIsSearching(false),
+                        );
+                      }}
                       onPressEnter={() => handleYTSearch(false)}
                     />
                     <Button
                       className="youtube-search-button"
                       type="primary"
                       size="large"
-                      icon={<SearchOutlined />}
+                      icon={
+                        getYouTubeVideoId(searchQuery) ? (
+                          <LinkOutlined />
+                        ) : (
+                          <SearchOutlined />
+                        )
+                      }
                       loading={isSearching}
                       disabled={!searchQuery.trim()}
                       onClick={() => handleYTSearch(false)}
                     >
-                      Search
+                      {getYouTubeVideoId(searchQuery)
+                        ? 'Load Video'
+                        : 'Search'}
                     </Button>
                   </div>
                 </div>

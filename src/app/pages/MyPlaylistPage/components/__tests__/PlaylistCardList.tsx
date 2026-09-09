@@ -6,33 +6,46 @@ import { PlaylistCard } from './PlaylistCard';
 import './PlaylistCardList.less';
 
 function getPlaylistItemCount(item: any): number {
-  // Prefer an exact count supplied by the backend.
+  // Prefer complete item-ID arrays because they represent the actual playlist.
+  const exactItemArrays = [
+    item?.oer_ids,
+    item?.oerIds,
+    item?.playlist_items,
+    item?.playlistItems,
+  ];
+
+  const exactItems = exactItemArrays.find(value => Array.isArray(value));
+
+  if (exactItems) {
+    return exactItems.filter(
+      playlistItem => playlistItem !== null && playlistItem !== undefined,
+    ).length;
+  }
+
+  // Use a backend count when the response does not include complete item IDs.
   const backendCount =
     item?.playlist_item_count ??
     item?.playlistItemCount ??
-    item?.item_count;
+    item?.item_count ??
+    item?.items_count ??
+    item?.oer_count;
 
-  if (
-    backendCount !== undefined &&
-    backendCount !== null &&
-    Number.isFinite(Number(backendCount))
-  ) {
-    return Number(backendCount);
+  const parsedCount = Number(backendCount);
+
+  if (Number.isFinite(parsedCount) && parsedCount >= 0) {
+    return parsedCount;
   }
 
-  // This normally contains every resource ID in the playlist.
-  if (Array.isArray(item?.oerIds)) {
-    return item.oerIds.length;
-  }
+  // Final fallback for responses containing loaded item details.
+  const itemDetails =
+    item?.playlist_item_data ??
+    item?.playlistItemData ??
+    item?.items;
 
-  // Used by some temporary-playlist responses.
-  if (Array.isArray(item?.playlist_items)) {
-    return item.playlist_items.length;
-  }
-
-  // Fallback because this array can contain partially loaded details.
-  if (Array.isArray(item?.playlistItemData)) {
-    return item.playlistItemData.length;
+  if (Array.isArray(itemDetails)) {
+    return itemDetails.filter(
+      playlistItem => playlistItem !== null && playlistItem !== undefined,
+    ).length;
   }
 
   return 0;

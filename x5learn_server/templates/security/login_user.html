@@ -2,23 +2,428 @@
 {% from "security/_macros.html" import render_field_with_errors, render_field %}
 
 {% block content %}
-  <div class="centerblock">
-    {% include "security/_messages.html" %}
-    <h1>{{ _('Login') }}</h1>
-    <form action="{{ url_for_security('login') }}" method="POST" name="login_user_form">
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background:
+      radial-gradient(
+        circle at top left,
+        rgba(34, 197, 94, 0.08),
+        transparent 32%
+      ),
+      #f5f7f6;
+  }
+
+  .modern-login-page {
+    --primary: #16a34a;
+    --primary-dark: #15803d;
+    --primary-light: rgba(22, 163, 74, 0.12);
+    --text: #172033;
+    --muted: #667085;
+    --border: #dfe3e6;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 30px 20px;
+    font-family:
+      Inter,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+  }
+
+  .login-container {
+    width: 100%;
+    max-width: 500px;
+    padding: 48px;
+    background: #ffffff;
+    border: 1px solid rgba(221, 226, 224, 0.9);
+    border-radius: 22px;
+    box-shadow:
+      0 24px 65px rgba(16, 24, 40, 0.1),
+      0 6px 18px rgba(16, 24, 40, 0.05);
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 11px;
+    margin-bottom: 32px;
+  }
+
+  .brand-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 43px;
+    height: 43px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #22c55e, #15803d);
+    border-radius: 12px;
+    box-shadow: 0 7px 16px rgba(22, 163, 74, 0.22);
+    font-size: 15px;
+    font-weight: 800;
+  }
+
+  .brand-name {
+    margin: 0;
+    color: var(--text);
+    font-size: 21px;
+    font-weight: 750;
+    letter-spacing: -0.4px;
+  }
+
+  .login-heading {
+    margin-bottom: 30px;
+    text-align: center;
+  }
+
+  .login-heading h1 {
+    margin: 0 0 10px;
+    color: var(--text);
+    font-size: 30px;
+    font-weight: 750;
+    line-height: 1.25;
+    letter-spacing: -0.7px;
+  }
+
+  .login-heading p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  .login-messages {
+    margin-bottom: 18px;
+  }
+
+  /* Flask-Security form fields */
+
+  .login-form p,
+  .login-form .form-group {
+    margin: 0 0 18px;
+  }
+
+  .login-form label {
+    display: block;
+    margin-bottom: 7px;
+    color: #344054;
+    font-size: 13px;
+    font-weight: 650;
+  }
+
+  .login-form input[type="text"],
+  .login-form input[type="email"],
+  .login-form input[type="password"] {
+    width: 100%;
+    min-height: 49px;
+    padding: 11px 14px;
+    color: var(--text);
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    outline: none;
+    font: inherit;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .login-form input[type="text"]:hover,
+  .login-form input[type="email"]:hover,
+  .login-form input[type="password"]:hover {
+    border-color: #aeb8b2;
+  }
+
+  .login-form input[type="text"]:focus,
+  .login-form input[type="email"]:focus,
+  .login-form input[type="password"]:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-light);
+  }
+
+  .login-form input::placeholder {
+    color: #98a2b3;
+  }
+
+  .login-form input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0 8px 0 0;
+    accent-color: var(--primary);
+    vertical-align: -3px;
+  }
+
+  .login-form input[type="checkbox"] + label {
+    display: inline;
+    color: var(--muted);
+    font-weight: 500;
+  }
+
+  /* Green login button */
+
+  .login-form input[type="submit"] {
+    width: 100%;
+    min-height: 49px;
+    margin-top: 5px;
+    padding: 11px 18px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #22c55e, #15803d);
+    border: none;
+    border-radius: 11px;
+    box-shadow: 0 8px 18px rgba(22, 163, 74, 0.24);
+    cursor: pointer;
+    font: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .login-form input[type="submit"]:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 11px 23px rgba(22, 163, 74, 0.3);
+  }
+
+  .login-form input[type="submit"]:active {
+    transform: translateY(0);
+  }
+
+  .login-form input[type="submit"]:focus {
+    outline: 3px solid var(--primary-light);
+    outline-offset: 2px;
+  }
+
+  .login-form ul {
+    margin: 7px 0 0;
+    padding-left: 18px;
+    color: #d92d20;
+    font-size: 13px;
+  }
+
+  .login-divider {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin: 27px 0 20px;
+    color: #98a2b3;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  .login-divider::before,
+  .login-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: #e4e7ec;
+  }
+
+  .social-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .social-login-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    min-height: 47px;
+    padding: 10px 13px;
+    color: #344054;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    font-size: 14px;
+    font-weight: 650;
+    text-decoration: none;
+    transition:
+      transform 0.2s ease,
+      border-color 0.2s ease,
+      background-color 0.2s ease,
+      box-shadow 0.2s ease;
+  }
+
+  .social-login-button:hover {
+    color: #1d2939;
+    background: #f8faf9;
+    border-color: #adb8b1;
+    box-shadow: 0 5px 14px rgba(16, 24, 40, 0.07);
+    text-decoration: none;
+    transform: translateY(-1px);
+  }
+
+  .social-login-button:focus {
+    outline: 3px solid var(--primary-light);
+    outline-offset: 2px;
+  }
+
+  .social-login-icon {
+    width: 19px;
+    height: 19px;
+    flex-shrink: 0;
+  }
+
+  .login-footer {
+    margin: 27px 0 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.9;
+    text-align: center;
+  }
+
+  .login-footer a {
+    color: var(--primary-dark);
+    font-weight: 650;
+    text-decoration: none;
+  }
+
+  .login-footer a:hover {
+    text-decoration: underline;
+  }
+
+  @media (max-width: 520px) {
+    .modern-login-page {
+      align-items: flex-start;
+      padding: 16px;
+    }
+
+    .login-container {
+      padding: 38px 24px;
+      border-radius: 18px;
+    }
+
+    .login-heading h1 {
+      font-size: 27px;
+    }
+
+    .social-buttons {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="modern-login-page">
+  <main class="login-container">
+
+    <div class="brand">
+      <div class="brand-mark">X5</div>
+      <p class="brand-name">X5Learn</p>
+    </div>
+
+    <div class="login-messages">
+      {% include "security/_messages.html" %}
+    </div>
+
+    <div class="login-heading">
+      <h1>{{ _('Welcome back') }}</h1>
+      <p>Sign in to continue to your X5Learn account.</p>
+    </div>
+
+    <form
+      class="login-form"
+      action="{{ url_for_security('login') }}"
+      method="POST"
+      name="login_user_form"
+    >
       {{ login_user_form.hidden_tag() }}
-      {{ render_field_with_errors(login_user_form.email, autofocus=true, placeholder='Email or username') }}
-      {{ render_field_with_errors(login_user_form.password, placeholder='Password') }}
+
+      {{ render_field_with_errors(
+        login_user_form.email,
+        autofocus=true,
+        autocomplete='username',
+        placeholder='Email or username'
+      ) }}
+
+      {{ render_field_with_errors(
+        login_user_form.password,
+        autocomplete='current-password',
+        placeholder='Enter your password'
+      ) }}
+
       {{ render_field_with_errors(login_user_form.remember) }}
       {{ render_field(login_user_form.submit) }}
-      <a class="btn btn-secondary" href="{{ url_for('login_azure') }}">
-        Sign in with Microsoft
-      </a>
-      <br><br>
-      <a class="btn btn-secondary" href="{{ url_for('login_google') }}">
-        Sign in with Google
-      </a>
     </form>
-    <p class="centernote">New to X5Learn? <a href="/signup">Create an account.</a> <br><br> <a href="/recover">Forgot Password</a></p>
-  </div>
+
+    <div class="login-divider">
+      <span>Or sign in with</span>
+    </div>
+
+    <div class="social-buttons">
+      <a
+        class="social-login-button"
+        href="{{ url_for('login_azure') }}"
+        aria-label="Sign in with Microsoft"
+      >
+        <svg
+          class="social-login-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path fill="#F25022" d="M1 1h10v10H1z"/>
+          <path fill="#7FBA00" d="M13 1h10v10H13z"/>
+          <path fill="#00A4EF" d="M1 13h10v10H1z"/>
+          <path fill="#FFB900" d="M13 13h10v10H13z"/>
+        </svg>
+
+        <span>Microsoft</span>
+      </a>
+
+      <a
+        class="social-login-button"
+        href="{{ url_for('login_google') }}"
+        aria-label="Sign in with Google"
+      >
+        <svg
+          class="social-login-icon"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            fill="#4285F4"
+            d="M21.6 12.23c0-.71-.06-1.4-.18-2.07H12v3.92h5.38a4.6 4.6 0 0 1-2 3.02v2.54h3.24c1.9-1.75 2.98-4.33 2.98-7.41z"
+          />
+          <path
+            fill="#34A853"
+            d="M12 22c2.7 0 4.97-.9 6.62-2.43l-3.24-2.54c-.9.6-2.05.96-3.38.96-2.61 0-4.82-1.76-5.61-4.13H3.05v2.62A10 10 0 0 0 12 22z"
+          />
+          <path
+            fill="#FBBC05"
+            d="M6.39 13.86A6 6 0 0 1 6.08 12c0-.65.11-1.28.31-1.86V7.52H3.05A10 10 0 0 0 2 12c0 1.61.38 3.14 1.05 4.48l3.34-2.62z"
+          />
+          <path
+            fill="#EA4335"
+            d="M12 6.01c1.47 0 2.79.51 3.83 1.5l2.87-2.88A9.64 9.64 0 0 0 12 2a10 10 0 0 0-8.95 5.52l3.34 2.62C7.18 7.77 9.39 6.01 12 6.01z"
+          />
+        </svg>
+
+        <span>Google</span>
+      </a>
+    </div>
+
+    <p class="login-footer">
+      New to X5Learn?
+      <a href="/signup">Create an account</a>
+
+      <br>
+
+      <a href="/recover">Forgot your password?</a>
+    </p>
+
+  </main>
+</div>
 {% endblock %}

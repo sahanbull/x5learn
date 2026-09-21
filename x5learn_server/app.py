@@ -2003,6 +2003,23 @@ m_youtube_item = api.model('YoutubeItem', {
     'date': fields.String(required=False, description='The date of the youtube video')
 })
 
+m_pdf_item = api.model('PdfItem', {
+    'url': fields.String(required=True, description='The url of the pdf file'),
+    'title': fields.String(required=False, max_length=255, description='The title of the pdf file'),
+    'description': fields.String(required=False,
+                                 description='An extensive description describing the contents of the pdf file'),
+    'thumbnail_url': fields.String(required=False, description='The thumbnail url of the pdf file'),
+    'date': fields.String(required=False, description='The date of the pdf file'),
+    'page': fields.Integer(required=False, description='The page number of the pdf file to open by default')
+})
+
+m_pdf_item_update = api.model('PdfItemUpdate', {
+    'title': fields.String(required=False, max_length=255, description='The title of the pdf file'),
+    'description': fields.String(required=False,
+                                 description='An extensive description describing the contents of the pdf file'),
+    'page': fields.Integer(required=False, description='The page number of the pdf file to open by default')
+})
+
 
 def _get_blueprint(playlist, license, items, item_data):
     url = _create_playlist_url(playlist['id'])
@@ -2292,6 +2309,62 @@ def _create_oer_for_youtube_video(item) -> int:
     return oer.id
 
 
+# function to create a new oer for pdf files
+
+def _create_oer_for_pdf(item) -> int:
+    pdf_url = item["url"]
+    title = item.get("title", "")
+    description = item.get("description", "")
+    thumbnail_url = item.get("thumbnail_url", "")
+    date = item.get("date", None)
+    page = item.get("page", None)
+
+    temp_data = {
+        "url": pdf_url,
+        "material_id": None,
+        "title": title,
+        "provider": "n/a",
+        "description": description,
+        "date": date,
+        "duration": None,
+        "images": [thumbnail_url],
+        "mediatype": "pdf",
+        "page": page
+    }
+
+    oer = Oer(pdf_url, temp_data, 'pdf')
+
+    repository.add(oer)
+
+    return oer.id
+
+def _remove_oer_from_playlist(title, oer_id) -> int:
+    # Implement the logic to remove the OER from the playlist
+    # This is a placeholder implementation and should be replaced with actual logic
+    playlist = db_session.query(Temp_Playlist).filter(Temp_Playlist.title == title).first()
+    if not playlist:
+        raise Exception("Temporary playlist not found")
+
+    oer = db_session.query(Oer).filter(Oer.id == oer_id).first()
+    if not oer:
+        raise Exception("OER not found")
+
+    temp_data = json.loads(playlist.data)
+
+
+    # Assuming there is a relationship between Temp_Playlist and Oer
+    print(temp_data)
+    if oer_id in temp_data.get('playlist_items', []):
+        temp_data['playlist_items'].remove(oer_id)
+
+        if 'playlist_item_data' in temp_data and str(oer_id) in temp_data['playlist_item_data']:
+            del temp_data['playlist_item_data'][str(oer_id)]
+        
+        playlist.data = json.dumps(temp_data)
+        db_session.commit()
+        return oer_id
+    else:
+        raise Exception("OER not found in the specified playlist")
 
 
 @ns_playlist.route('/')
@@ -2724,6 +2797,7 @@ class Temp_Playlist_Youtube_Items(Resource):
 @ns_playlist.param('title', 'The temporary playlist identifier')
 @ns_playlist.param('oer_id', 'Oer Id of the youtube item to be updated')
 class Temp_Playlist_Youtube_Item_Update(Resource):
+    @ns_playlist.doc('update_youtube_item_in_temp_playlist')
     def put(self, title, oer_id):
         '''Update a single youtube item in temporary playlist'''
         if not current_user.is_authenticated:
@@ -2743,7 +2817,6 @@ class Temp_Playlist_Youtube_Item_Update(Resource):
             return {'result': 'No playlist item data found'}, 400
         
         for item in temp_data['playlist_items']:
-            print(item, str(oer_id), "check")
             if str(item) == str(oer_id):
 
                 # let's first fetch the oer
@@ -2766,6 +2839,112 @@ class Temp_Playlist_Youtube_Item_Update(Resource):
                 break
 
         return {'result': 'Playlist item successfully updated'}, 200
+
+    def delete(self, title, oer_id):
+        '''Delete a single item from temporary playlist'''
+        try:
+            result = _remove_oer_from_playlist(title, oer_id)
+            return {'result': 'Playlist item successfully removed from playlist'}, 200
+        except Exception as err:
+            return {'result': 'An error occurred. Error - ' + str(err)}, 400
+
+
+@ns_playlist.route('/<string:title>/pdf_items')
+@ns_playlist.response(404, 'Temporary playlist not found')
+@ns_playlist.param('title', 'The temporary playlist identifier')
+class Temp_Playlist_Pdf_Items(Resource):
+    @ns_playlist.doc('add_pdf_to_temp_playlist')
+    @ns_playlist.expect(m_pdf_item, validate=True)
+    def post(self, title):
+        '''Add a single PDF item to temporary playlist'''
+        # let's first get the temporary playlist
+        temp_playlist_repo = TempPlaylistRepository()
+        temp_playlist = temp_playlist_repo.get_by_title(title, current_user.get_old_id())
+
+        if temp_playlist is None:
+            return {'result': 'Temporary playlist not found'}, 400
+
+        # let's create an oer for pdf file
+        item = api.payload
+        id = _create_oer_for_pdf(item)
+
+        if not id:
+            return {'result': 'PDF item not created. Invalid details found'}, 400
+
+        try:
+            result = _add_oer_to_playlist(title, id)
+
+            return {'result': 'PDF item successfully added to playlist'}, 201
+        except Exception as err:
+            return {'result': 'An error occurred. Error - ' + str(err)}, 400
+
+@ns_playlist.route('/<string:title>/pdf_items/<int:oer_id>')
+@ns_playlist.response(404, 'Temporary playlist or PDF item not found')
+@ns_playlist.param('title', 'The temporary playlist identifier')
+@ns_playlist.param('oer_id', 'The PDF item identifier')
+class Temp_Playlist_Pdf_Item_Update(Resource):
+
+
+    @ns_playlist.doc('update_pdf_in_temp_playlist')
+    @ns_playlist.expect(m_pdf_item_update, validate=True)
+    def put(self, title, oer_id):
+        '''Update a single PDF item in temporary playlist'''
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+        
+        # let's first get the temporary playlist
+        temp_playlist_repo = TempPlaylistRepository()
+        temp_playlist = temp_playlist_repo.get_by_title(title, current_user.get_old_id())
+
+        if temp_playlist is None:
+            return {'result': 'Temporary playlist not found'}, 400
+
+        # let's load the playlist item data from json and iterate and match by oerid
+        temp_data = json.loads(temp_playlist.data)
+
+        if 'playlist_items' not in temp_data:
+            return {'result': 'No playlist item data found'}, 400
+
+        for item in temp_data['playlist_items']:
+            if str(item) == str(oer_id):
+
+                # let's first fetch the oer
+                oer = repository.get_by_id(Oer, oer_id)
+                if oer is None:
+                    return {'result': 'OER not found'}, 400
+
+                oer_data = dict(oer.data)
+                for field in ('title', 'description', 'page'):
+                    if field in api.payload:
+                        oer_data[field] = api.payload[field]
+                oer.data = oer_data
+
+                # Keep the playlist's copied metadata in sync with supplied changes.
+                item_data = temp_data.setdefault('playlist_item_data', {}).setdefault(
+                    str(oer_id), {
+                        'title': oer_data.get('title', ''),
+                        'description': oer_data.get('description', '')
+                    })
+                for field in ('title', 'description'):
+                    if field in api.payload:
+                        item_data[field] = api.payload[field]
+                temp_playlist.data = json.dumps(temp_data)
+
+                # Save the OER and playlist together in a single transaction.
+                repository.update()
+                return {'result': 'Playlist item successfully updated'}, 200
+
+        return {'result': 'PDF item not found in temporary playlist'}, 404
+
+
+    @ns_playlist.doc('remove_pdf_from_temp_playlist')
+    def delete(self, title, oer_id):
+        '''Delete a single item from temporary playlist'''
+        try:
+            result = _remove_oer_from_playlist(title, oer_id)
+            return {'result': 'Playlist item successfully removed from playlist'}, 200
+        except Exception as err:
+            return {'result': 'An error occurred. Error - ' + str(err)}, 400
 
 
 # Defining license resource for API access ==================================

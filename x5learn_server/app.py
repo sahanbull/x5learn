@@ -2077,7 +2077,11 @@ def _add_published_playlist(title, desc, author, license, creator, parent, is_vi
 
     count = 0
     for idx, val in enumerate(items):
-        playlist_item_data = item_data[str(val)]
+        if str(val) not in item_data:
+            playlist_item_data = {}
+        else:
+            playlist_item_data = item_data[str(val)]
+
         playlist_item = Playlist_Item(playlist.id, val, idx, playlist_item_data)
         playlist_item = repository.add(playlist_item)
         count = count + 1
@@ -2802,6 +2806,12 @@ class Temp_Playlist_Youtube_Item_Update(Resource):
         '''Update a single youtube item in temporary playlist'''
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
+
+        # title is url encoded, so let's decode it
+        title = urllib.parse.unquote(title)
+
+        print(title, "temp-playlist-name")
+
         
         # let's first get the temporary playlist
         temp_playlist_repo = TempPlaylistRepository()
@@ -2824,21 +2834,28 @@ class Temp_Playlist_Youtube_Item_Update(Resource):
                 if oer is None:
                     return {'result': 'OER not found'}, 400
 
-                oer_data = oer.data
-                
-                oer_data['title'] = api.payload.get('title', oer_data['title'])
-                oer_data['description'] = api.payload.get('description', oer_data['description'])
+                oer_data = dict(oer.data)
+                for field in ('title', 'description'):
+                    if field in api.payload:
+                        oer_data[field] = api.payload[field]
+                oer.data = oer_data
 
-                # to enfore the data change let's json dump it
-                oer.data = json.dumps(oer_data)
+                # Keep the playlist's copied metadata in sync with supplied changes.
+                item_data = temp_data.setdefault('playlist_item_data', {}).setdefault(
+                    str(oer_id), {
+                        'title': oer_data.get('title', ''),
+                        'description': oer_data.get('description', '')
+                    })
+                for field in ('title', 'description'):
+                    if field in api.payload:
+                        item_data[field] = api.payload[field]
+                temp_playlist.data = json.dumps(temp_data)
+
+                # Save the OER and playlist together in a single transaction.
                 repository.update()
-                oer.data = json.loads(json.dumps(oer_data))
+                return {'result': 'Playlist item successfully updated'}, 200
 
-                # let's update the oer in the database
-                repository.update()
-                break
-
-        return {'result': 'Playlist item successfully updated'}, 200
+        return {'result': 'Youtube item not found in temporary playlist'}, 404
 
     def delete(self, title, oer_id):
         '''Delete a single item from temporary playlist'''

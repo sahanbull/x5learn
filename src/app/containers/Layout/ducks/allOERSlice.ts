@@ -38,7 +38,13 @@ export const fetchOERsByIDsThunk = createAsyncThunk<
 const allOERsSlice = createSlice({
   name: 'allOERs',
   initialState,
-  reducers: {},
+  reducers: {
+    invalidateOER: (state, action) => {
+      if (state.data) {
+        delete state.data[action.payload];
+      }
+    },
+  },
   extraReducers: {
     [fetchOERsByIDsThunk.pending.toString()]: (state: any, action) => {
       state.loading = true

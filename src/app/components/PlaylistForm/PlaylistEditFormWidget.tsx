@@ -47,6 +47,7 @@ import { PlaylistItemSortWidget } from '../PlaylistItemSortWidget/PlaylistItemSo
 import { updateTempPlaylistThunk } from 'app/containers/Layout/ducks/myPlaylistMenu/updateTempPlaylist';
 import { useTranslation } from 'react-i18next';
 import { PlaylistOptimizeConfirmationWidget } from './PlaylistOptimizeConfirmationWidget';
+import { fetchTempPlaylistDetailsThunk } from 'app/pages/EditTempPlaylistPage/ducks/fetchTempPlaylistDetailsThunk';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -61,43 +62,55 @@ const tailLayout = {
   wrapperCol: { offset: 0, span: 16 },
 };
 
-const StickyPlaylistActions = styled(Col)`
-  position: sticky !important;
-  top: 0;
-  z-index: 50;
+const PlaylistActions = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 6px;
+  padding: 18px;
+  background: #f7f9fc;
+  border: 1px solid #e5eaf2;
+  border-radius: 14px;
 
-  margin-bottom: 22px;
-  padding: 14px 0 !important;
-
-  background: rgba(255, 255, 255, 0.96);
-  border-bottom: 1px solid #e8ecf3;
-  box-shadow: 0 6px 16px rgba(35, 48, 79, 0.06);
-  backdrop-filter: blur(8px);
-
-  > .ant-row {
-    padding: 0 2px;
-  }
-
-  .ant-space {
+  .playlist-add-actions {
     display: flex;
     flex-wrap: wrap;
-    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .ant-btn {
+    height: auto;
+    min-height: 42px;
+    padding: 9px 16px;
+    white-space: normal;
+  }
+
+  > .ant-btn-primary {
+    margin-left: auto;
   }
 
   @media (max-width: 767px) {
-    padding: 12px 0 !important;
+    align-items: stretch;
+    flex-direction: column;
+    gap: 12px;
+    padding: 14px;
 
-    > .ant-row {
-      justify-content: flex-start;
+    .playlist-add-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .ant-space {
+    > .ant-btn-primary {
       width: 100%;
-      justify-content: flex-start;
+      margin-left: 0;
     }
+  }
 
-    .ant-btn {
-      flex: 1 1 auto;
+  @media (max-width: 420px) {
+    .playlist-add-actions {
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 `;
@@ -651,18 +664,6 @@ const isPublicHttpUrl = (value: string) => {
   }
 };
 
-// Temporary client-side API. Replace this function with axios.post when the
-// PDF endpoint is available; the modal and payload can remain unchanged.
-const savePDFToDummyAPI = async (payload: any) => {
-  await new Promise(resolve => window.setTimeout(resolve, 600));
-  return {
-    data: {
-      id: `temporary-pdf-${Date.now()}`,
-      ...payload,
-    },
-  };
-};
-
 export function PlaylistEditFormWidget(props: { formData? }) {
   const [form] = Form.useForm();
   const [pdfForm] = Form.useForm();
@@ -1184,24 +1185,26 @@ export function PlaylistEditFormWidget(props: { formData? }) {
         url: buildPDFUrlWithStartingPage(values.pdf_url, startingPage),
         title: values.pdf_title.trim(),
         description: values.pdf_description?.trim() || '',
-        start_page: startingPage,
-        mediatype: 'pdf',
-        provider: 'X5Learn',
-        playlist: tempPlaylistName,
+        page: startingPage,
       };
 
       setIsSavingPDF(true);
-      const response = await savePDFToDummyAPI(payload);
-      console.log('Dummy PDF API response:', response.data);
-      message.success('PDF saved successfully (temporary API)');
+      await axios.post(
+        `${process.env.REACT_APP_BASE_URL}/playlist/${encodeURIComponent(playlist.title)}/pdf_items`,
+        payload,
+        { withCredentials: true },
+      );
+      message.success('PDF added to playlist');
       closePDFModal();
     } catch (error: any) {
       if (error?.errorFields) return;
       console.error('Unable to save PDF:', error);
       message.error('Unable to save the PDF');
+      return;
     } finally {
       setIsSavingPDF(false);
     }
+    dispatch(fetchTempPlaylistDetailsThunk(tempPlaylistName));
   };
 
 
@@ -1214,18 +1217,17 @@ export function PlaylistEditFormWidget(props: { formData? }) {
     >
       <Row gutter={[16, 16]}>
 
-        <StickyPlaylistActions span={24}>
-          <Row justify="end">
-            <Space>
+        <Col span={24}>
+          <PlaylistActions>
+            <div className="playlist-add-actions">
               <Button
-                type="primary"
                 htmlType="button"
                 size="large"
-                icon={<PlusOutlined />}
+                icon={<PlayCircleOutlined />}
                 onClick={addYTvideo}
                 disabled={isUpdating}
               >
-                {t('Add youTube video to playlist')}
+                {t('Add YouTube video')}
               </Button>
 
               <Button
@@ -1235,21 +1237,21 @@ export function PlaylistEditFormWidget(props: { formData? }) {
                 onClick={addPDF}
                 disabled={isUpdating}
               >
-                {t('Add PDF to playlist')}
+                {t('Add PDF')}
               </Button>
-
+            </div>
               <Button
                 type="primary"
                 htmlType="button"
                 size="large"
+                icon={<UploadOutlined />}
                 onClick={showModal}
                 disabled={isUpdating}
               >
-                {t('playlist.lbl_publish_playlist')} <UploadOutlined />
+                {t('playlist.lbl_publish_playlist')}
               </Button>
-            </Space>
-          </Row>
-        </StickyPlaylistActions>
+          </PlaylistActions>
+        </Col>
 
         <Col span={24}>
           <PlaylistItemSortWidget
@@ -1258,6 +1260,9 @@ export function PlaylistEditFormWidget(props: { formData? }) {
             isUpdating={isUpdating}
             tempPlaylistName={tempPlaylistName}
             onItemClick={handleCardClick}
+            onItemUpdated={() => {
+              dispatch(fetchTempPlaylistDetailsThunk(tempPlaylistName));
+            }}
           />
         </Col>
         <Col span={24}>

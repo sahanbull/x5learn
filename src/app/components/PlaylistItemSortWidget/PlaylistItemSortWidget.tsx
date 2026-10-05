@@ -1,7 +1,10 @@
 import { ArrowsAltOutlined, DeleteOutlined, DragOutlined } from '@ant-design/icons';
 import { unwrapResult } from '@reduxjs/toolkit';
 import { Button, Table, Typography } from 'antd';
-import { fetchOERsByIDsThunk } from 'app/containers/Layout/ducks/allOERSlice';
+import {
+  actions as allOERActions,
+  fetchOERsByIDsThunk,
+} from 'app/containers/Layout/ducks/allOERSlice';
 import { updateTempPlaylistThunk } from 'app/containers/Layout/ducks/myPlaylistMenu/updateTempPlaylist';
 import { OerCard } from 'app/pages/HomePage/components/FeaturedOER/OerCard';
 import { OerSortableView } from 'app/pages/HomePage/components/FeaturedOER/OerSortableView';
@@ -61,6 +64,7 @@ export function PlaylistItemSortWidget({
   isUpdating,
   tempPlaylistName,
   onItemClick,
+  onItemUpdated,
 }) {
   const dispatch = useDispatch();
   const [isModalVisible, setIsModalVisible] = useState(false);
@@ -197,13 +201,17 @@ const handleOk = async () => {
 
       console.log(`OER ${oerId} updated successfully`, response.data);
 
+      // The playlist reload must fetch this item's data instead of reusing it.
+      dispatch(allOERActions.invalidateOER(oerId));
       setIsModalVisible(false);
 
     } catch (err) {
       console.error('Failed to update OER', err);
+      return;
     } finally {
       setModalLoading(false);
     }
+    onItemUpdated();
   };
 
 

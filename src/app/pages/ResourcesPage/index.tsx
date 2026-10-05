@@ -518,7 +518,7 @@ export function ResourcesPage(props) {
       id: number | string;
       images: string[];
       material_id: number | string;
-      mediatype: 'text' | 'video' | 'audio';
+      mediatype: 'text' | 'pdf' | 'video' | 'audio';
       provider: string;
       title: string;
       url: string;
@@ -736,13 +736,16 @@ export function ResourcesPage(props) {
                   </>
                 )}
 
-                {data.mediatype === 'text' && (
+                {(data.mediatype === 'text' || data.mediatype === 'pdf') && (
                   <object
                     data={data.url}
                     type="application/pdf"
+                    aria-label={data.title || 'PDF viewer'}
                     style={{ width: '100%', height: '80vh' }}
                   >
-                    Your browser does not support the PDF element.
+                    <a href={data.url} target="_blank" rel="noopener noreferrer">
+                      Open PDF
+                    </a>
                   </object>
                 )}
                 </div>

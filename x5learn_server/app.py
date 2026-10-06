@@ -2073,7 +2073,9 @@ def _add_published_playlist(title, desc, author, license, creator, parent, is_vi
 
     item_data = dict()
     temp_playlist_data = json.loads(temp_playlist.data)
-    item_data = temp_playlist_data["playlist_item_data"]
+
+    if "playlist_item_data" in temp_playlist_data:
+        item_data = temp_playlist_data["playlist_item_data"]
 
     count = 0
     for idx, val in enumerate(items):

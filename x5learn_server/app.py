@@ -75,10 +75,6 @@ def _record_action(action_type, params, user=None, commit=True):
     db_session.add(action)
     if commit:
         db_session.commit()
-<<<<<<< HEAD
-    return action
-
-=======
     action_type = ActionType.query.filter_by(id=15).first()
     if action_type is None:
         action_type = ActionType('UserLoggedIn')
@@ -94,7 +90,6 @@ def _record_action(action_type, params, user=None, commit=True):
         action_type = ActionType('PDFOpened')
         db_session.add(action_type)
         db_session.commit()
->>>>>>> b589b40 (Add bulk action logging and enhance ActionType initialization)
 
 # create database when starting the app
 def initiate_login_db():

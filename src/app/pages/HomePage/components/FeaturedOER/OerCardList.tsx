@@ -25,28 +25,6 @@ export function OerCardList(props: {
   const { t } = useTranslation();
   const { loading, error, data, playlistID } = props;
 
-  const handleCardClick = async (item: any) => {
-    try {
-      const payload = {
-        action_type_id: 1,
-        params: JSON.stringify({ oerId: item.id }),
-        is_bundled: false,
-      };
-
-      await fetch(`${process.env.REACT_APP_BASE_URL}/action/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify(payload),
-        credentials: 'include',
-      });
-    } catch (clickError) {
-      console.error('Failed to log action', clickError);
-    }
-  };
-
   if (loading) {
     return (
       <Row className="x5-oer-card-grid" gutter={[20, 20]}>
@@ -86,7 +64,6 @@ export function OerCardList(props: {
               card={item}
               playlistID={playlistID}
               loading={item.loading}
-              onClick={() => handleCardClick(item)}
             />
           </div>
         </Col>

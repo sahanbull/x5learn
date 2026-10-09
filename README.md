@@ -1,5 +1,7 @@
 # X5Learn
 
+See [user action logging](docs/action-logging.md) for event IDs, params, and verification.
+
 Experimental web frontend for X5GON project. www.x5gon.org
 
 ## Install

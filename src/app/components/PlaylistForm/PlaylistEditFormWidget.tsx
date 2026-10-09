@@ -897,30 +897,6 @@ export function PlaylistEditFormWidget(props: { formData? }) {
     }
   };
 
-  const handleCardClick = async (item: any) => {
-    try {
-      const payload = {
-        action_type_id: 1,
-        params: JSON.stringify({ oerId: item.id }),
-        is_bundled: false,
-      };
-      await fetch(`${process.env.REACT_APP_BASE_URL}/action/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify(payload),
-        credentials: 'include',
-      });
-
-      console.log(`Action logged for item ID: ${item.id}`);
-    } catch (err) {
-      console.error('Failed to log action', err);
-    }
-  };
-
-
   const { data: licenseData, loading, error } = useSelector(
     (state: RootState) => {
       return state.playlistLicenses;
@@ -1259,7 +1235,7 @@ export function PlaylistEditFormWidget(props: { formData? }) {
             onItemsReorder={onItemsReorder}
             isUpdating={isUpdating}
             tempPlaylistName={tempPlaylistName}
-            onItemClick={handleCardClick}
+            onItemClick={() => {}}
             onItemUpdated={() => {
               dispatch(fetchTempPlaylistDetailsThunk(tempPlaylistName));
             }}

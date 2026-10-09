@@ -51,6 +51,14 @@ export async function fetchLoggedInUserDetail() {
   return fetchAPI(`/session/`);
   // return require('./mock/loggedInUserDetail.json');
 }
+export async function postAction(payload: {
+  action_type_id: number;
+  params: string;
+  is_bundled: boolean;
+}) {
+  return fetchAPI('/action/', JSON.stringify(payload), { method: 'POST' });
+}
+
 export async function fetchAction() {
   return fetchAPI(`/action/`);
   // return require('./mock/loggedInUserDetail.json');

@@ -29,6 +29,8 @@ import {
   reducer,
 } from './ducks/fetchPlaylistDetailsThunk';
 
+import { ActionTypes, logAction, playlistContext } from 'app/api/actionLogging';
+
 import './PlaylistsPage.less';
 
 const { Paragraph, Text, Title } = Typography;
@@ -56,7 +58,17 @@ export function PlaylistsPage(props) {
   const oerCount = Array.isArray(data?.oerIds) ? data.oerIds.length : 0;
 
   useEffect(() => {
-    dispatch(fetchPlaylistDetailsThunk(playlistID));
+    let active = true;
+    const openPlaylist = async () => {
+      const result = (await dispatch(fetchPlaylistDetailsThunk(playlistID))) as any;
+      if (active && fetchPlaylistDetailsThunk.fulfilled.match(result)) {
+        void logAction(ActionTypes.PLAYLIST_OPENED, playlistContext(playlistID));
+      }
+    };
+    void openPlaylist();
+    return () => {
+      active = false;
+    };
   }, [dispatch, playlistID]);
 
   useEffect(() => {
@@ -87,6 +99,10 @@ export function PlaylistsPage(props) {
   const handleShare = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
+      void logAction(ActionTypes.PLAYLIST_SHARE_LINK_COPIED, {
+        ...playlistContext(playlistID),
+        url: window.location.href,
+      });
       message.success('Link copied to clipboard!');
     } catch (shareError) {
       message.error('Unable to copy the playlist link');

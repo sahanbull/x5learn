@@ -17,6 +17,8 @@ import {
   reducer,
 } from './ducks/fetchTempPlaylistDetailsThunk';
 
+import { ActionTypes, logAction, playlistContext } from 'app/api/actionLogging';
+
 import './EditTempPlaylistPage.less';
 
 const { Text, Title } = Typography;
@@ -33,7 +35,17 @@ export function EditTempPlaylistPage(props) {
   const playlistID = props.match?.params?.id;
 
   useEffect(() => {
-    dispatch(fetchTempPlaylistDetailsThunk(playlistID));
+    let active = true;
+    const openPlaylist = async () => {
+      const result = (await dispatch(fetchTempPlaylistDetailsThunk(playlistID))) as any;
+      if (active && fetchTempPlaylistDetailsThunk.fulfilled.match(result)) {
+        void logAction(ActionTypes.PLAYLIST_OPENED, playlistContext(null, playlistID));
+      }
+    };
+    void openPlaylist();
+    return () => {
+      active = false;
+    };
   }, [dispatch, playlistID]);
 
   return (

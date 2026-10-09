@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import {
   Row,
@@ -36,6 +36,8 @@ import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { ROUTES } from 'routes/routes';
 import styled from 'styled-components/macro';
+import { ActionTypes, logAction, playlistContext } from 'app/api/actionLogging';
+import { VideoPlaybackTracker } from 'app/components/VideoPlaybackTracker';
 
 const { Title, Text } = Typography;
 
@@ -380,6 +382,7 @@ export function ResourcesPage(props) {
   const { t } = useTranslation();
   const dispatch = useDispatch();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const playerRef = useRef<ReactPlayer>(null);
   const oerID = props.match?.params?.id;
 
   const query = useQuery();
@@ -456,7 +459,13 @@ export function ResourcesPage(props) {
     const nextItem = playlistItems[currentIndex + 1];
     console.log('nextItem:', nextItem);
   
-    if (nextItem) {
+    if (currentIndex >= 0 && nextItem) {
+      void logAction(ActionTypes.PLAYLIST_ITEM_SKIPPED, {
+        ...playlistContext(publishedPlaylistId, tempPlaylistName),
+        oer_id: Number(currentOerId),
+        from: Number(currentOerId),
+        to: Number(nextItem.oer_id),
+      });
       let pathToNavigateTo = `${ROUTES.RESOURCES}/${nextItem.oer_id}`;
   
       // Append query params if in temp playlist mode
@@ -482,6 +491,12 @@ export function ResourcesPage(props) {
     console.log('previousItem:', previousItem);
   
     if (previousItem) {
+      void logAction(ActionTypes.PLAYLIST_ITEM_PREVIOUS, {
+        ...playlistContext(publishedPlaylistId, tempPlaylistName),
+        oer_id: Number(currentOerId),
+        from: Number(currentOerId),
+        to: Number(previousItem.oer_id),
+      });
       let pathToNavigateTo = `${ROUTES.RESOURCES}/${previousItem.oer_id}`;
   
       if (mode === 'temp_playlist' && tempPlaylistName) {
@@ -532,25 +547,40 @@ export function ResourcesPage(props) {
     error: null,
   });
 
-  const loadOERIdDetails = async _oerID => {
+  const loadOERIdDetails = async (_oerID, isActive: () => boolean) => {
     setOERData({ data: null, loading: true, error: null });
     try {
       const oerResult = (await dispatch(fetchOERsByIDsThunk([_oerID]))) as any;
       const resolvedData = await unwrapResult(oerResult);
+      if (!isActive()) return;
       setOERData({ data: resolvedData[0], loading: false, error: null });
+      if (resolvedData[0]) {
+        void logAction(ActionTypes.OER_OPENED, {
+          ...playlistContext(publishedPlaylistId, tempPlaylistName),
+          oer_id: Number(_oerID),
+        });
+      }
     } catch (e) {
-      setOERData({ data: null, loading: false, error: e });
+      if (isActive()) setOERData({ data: null, loading: false, error: e });
     }
   };
 
-  const onPlayLocationChange = ({ posInSec, duration }) => {
-    if (videoRef?.current) {
+  const onPlayLocationChange = ({ posInSec }) => {
+    if (ReactPlayer.canPlay(data?.url || '')) {
+      if (isYouTubeVideo) tracker.seek(posInSec);
+      playerRef.current?.seekTo(posInSec, 'seconds');
+    } else if (videoRef.current) {
+      tracker.beginSeek();
       videoRef.current.currentTime = posInSec;
     }
   };
   useEffect(() => {
-    loadOERIdDetails(oerID);
-  }, [dispatch, oerID]);
+    let active = true;
+    void loadOERIdDetails(oerID, () => active);
+    return () => {
+      active = false;
+    };
+  }, [dispatch, oerID, publishedPlaylistId, tempPlaylistName]);
 
   // useEffect(() => {
   //   if (data) {
@@ -565,6 +595,19 @@ export function ResourcesPage(props) {
   const playbackUrl = isYouTubeVideo
     ? getYouTubePlaybackUrl(data?.url)
     : data?.url || '';
+  const tracker = useMemo(
+    () =>
+      new VideoPlaybackTracker({
+        ...playlistContext(publishedPlaylistId, tempPlaylistName),
+        oer_id: Number(oerID),
+      }),
+    [oerID, publishedPlaylistId, tempPlaylistName],
+  );
+  const getPlayerTime = () => playerRef.current?.getCurrentTime() || 0;
+  useEffect(() => {
+    tracker.setStartPosition(videoStartTime);
+  }, [tracker, videoStartTime]);
+
   useEffect(() => {
     if (data) {
       console.log('OER Data Loaded:', {
@@ -675,7 +718,17 @@ export function ResourcesPage(props) {
                     {ReactPlayer.canPlay(data.url) ? (
                       <ReactPlayer
                         key={`${data.id}-${videoStartTime}`}
+                        ref={playerRef}
                         url={playbackUrl}
+                        progressInterval={250}
+                        onPlay={() => tracker.play(getPlayerTime(), isYouTubeVideo)}
+                        onPause={() => tracker.pause(getPlayerTime(), isYouTubeVideo)}
+                        onSeek={seconds => tracker.seek(seconds)}
+                        onProgress={({ playedSeconds }) =>
+                          tracker.progress(playedSeconds, isYouTubeVideo)
+                        }
+                        onPlaybackRateChange={rate => tracker.setRate(rate)}
+                        onEnded={() => tracker.end(getPlayerTime())}
                         controls
                         width="100%"
                         height="45vh"
@@ -693,7 +746,9 @@ export function ResourcesPage(props) {
                           },
                           file: {
                             attributes: {
-                              ref: videoRef,
+                              onSeeking: () => tracker.beginSeek(),
+                              onTimeUpdate: event =>
+                                tracker.progress(event.currentTarget.currentTime),
                             },
                             tracks: data.translations
                               ? Object.keys(data.translations).map(key => ({
@@ -713,6 +768,17 @@ export function ResourcesPage(props) {
                         width="100%"
                         style={{ width: '100%', height: '45vh' }}
                         controls
+                        onPlay={event => tracker.play(event.currentTarget.currentTime)}
+                        onPause={event => tracker.pause(event.currentTarget.currentTime)}
+                        onTimeUpdate={event =>
+                          tracker.progress(event.currentTarget.currentTime)
+                        }
+                        onSeeking={() => tracker.beginSeek()}
+                        onSeeked={event => tracker.seek(event.currentTarget.currentTime)}
+                        onRateChange={event =>
+                          tracker.setRate(event.currentTarget.playbackRate)
+                        }
+                        onEnded={event => tracker.end(event.currentTarget.currentTime)}
                         onLoadedMetadata={() => {
                           if (videoRef.current && videoStartTime > 0) {
                             videoRef.current.currentTime = videoStartTime;

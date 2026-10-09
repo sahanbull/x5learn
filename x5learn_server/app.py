@@ -5,6 +5,8 @@ from flask_mailman import Mail, EmailMessage
 from flask_security import Security, SQLAlchemySessionUserDatastore, current_user, logout_user, login_required, \
     forms, RegisterForm, ResetPasswordForm, roles_required, login_user, LoginForm as BaseLoginForm
 from flask_security.utils import verify_and_update_password
+from flask_security.signals import user_authenticated
+from x5learn_server.action_logging import ActionTypes, seed_action_types, parse_action_payload
 from flask_sqlalchemy import SQLAlchemy
 from wtforms import BooleanField
 from wtforms.validators import Regexp, DataRequired
@@ -62,78 +64,19 @@ for u in db_session.query(UserLogin).filter(UserLogin.fs_uniquifier.is_(None)):
 db_session.commit()
 
 def initiate_action_types_table():
-    # TODO Define a comprehensive set of actions and keep it in sync with the frontend
-    # BTW in case a reset is needed: https://stackoverflow.com/a/5342503/2237986
-    action_type = ActionType.query.filter_by(id=1).first()
-    if action_type is None:
-        action_type = ActionType('OER card opened')
-        db_session.add(action_type)
+    seed_action_types(db_session, ActionType)
+
+
+def _record_action(action_type, params, user=None, commit=True):
+    actor = user if user is not None else current_user
+    if not actor.is_authenticated:
+        return
+    action = Action(int(action_type), params, actor.get_old_id())
+    db_session.add(action)
+    if commit:
         db_session.commit()
-    action_type = ActionType.query.filter_by(id=2).first()
-    if action_type is None:
-        action_type = ActionType('OER marked as favorite (no longer in use)')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=3).first()
-    if action_type is None:
-        action_type = ActionType('OER unmarked as favorite (no longer in use)')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=4).first()
-    if action_type is None:
-        action_type = ActionType('Video played')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=5).first()
-    if action_type is None:
-        action_type = ActionType('Video paused')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=6).first()
-    if action_type is None:
-        action_type = ActionType('Video seeked')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=7).first()
-    if action_type is None:
-        action_type = ActionType('ContentFlow setting changed')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=8).first()
-    if action_type is None:
-        action_type = ActionType('Feedback on OER content')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=9).first()
-    if action_type is None:
-        action_type = ActionType('Video still playing')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=10).first()
-    if action_type is None:
-        action_type = ActionType('OverviewType selected')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=11).first()
-    if action_type is None:
-        action_type = ActionType('ToggleExplainer')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=12).first()
-    if action_type is None:
-        action_type = ActionType('OpenExplanationPopup')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=13).first()
-    if action_type is None:
-        action_type = ActionType('TriggerSearch')
-        db_session.add(action_type)
-        db_session.commit()
-    action_type = ActionType.query.filter_by(id=14).first()
-    if action_type is None:
-        action_type = ActionType('UrlChanged')
-        db_session.add(action_type)
-        db_session.commit()
+    return action
+
 
 # create database when starting the app
 def initiate_login_db():
@@ -292,6 +235,14 @@ class LoginForm(BaseLoginForm):
 
 security = Security(app, user_datastore, login_form=LoginForm, confirm_register_form=ExtendedRegisterForm, \
                     reset_password_form=ExtendedResetPasswordForm)
+
+@user_authenticated.connect_via(app)
+def log_user_login(sender, user, authn_via=None, **kwargs):
+    _record_action(ActionTypes.USER_LOGIN, {
+        'user_id': int(user.get_old_id()),
+        'authn_via': authn_via or [],
+    }, user=user)
+
 
 # Setup Flask-Mail Server
 app.config['MAIL_SERVER'] = MAIL_SERVER
@@ -1596,10 +1547,10 @@ class ActionList(Resource):
                     tempObject = i.Action.serialize
                     tempObject['action_type'] = i.ActionType.description
 
-                    temp_list = i.Action.params
+                    temp_list = i.Action.params or {}
                     if 'oer_id' in temp_list:
                         temp_oer = repository.get_by_id(Oer, temp_list['oer_id'])
-                        if temp_oer.data:
+                        if temp_oer is not None and temp_oer.data:
                             if 'title' in temp_oer.data:
                                 tempObject['params']['title'] = temp_oer.data['title']
 
@@ -1614,24 +1565,17 @@ class ActionList(Resource):
         if not current_user.is_authenticated:
             return {'result': 'User not logged in'}, 401
 
+        try:
+            entries = parse_action_payload(api.payload)
+        except ValueError as error:
+            return {'result': str(error)}, 400
+
+        for action_type, params in entries:
+            _record_action(action_type, params, commit=False)
+        db_session.commit()
         if api.payload.get('is_bundled', False):
-            if len(api.payload['action_type_ids']) != len(api.payload['params_list']):
-                return {'result': 'One or more arguments were found missing.'}, 400
-            count = 0
-            for idx, val in enumerate(api.payload['action_type_ids']):
-                action = Action(val, json.loads(
-                    api.payload['params_list'][idx]), current_user.get_old_id())
-                repository.add(action)
-                count = count + 1
-            return {'result': 'Actions logged. No of Actions - {}'.format(count)}, 201
-        else:
-            if not api.payload['action_type_id']:
-                return {'result': 'Action type id is required'}, 400
-            else:
-                action = Action(api.payload['action_type_id'], json.loads(
-                    api.payload['params']), current_user.get_old_id())
-                repository.add(action)
-                return {'result': 'Action logged'}, 201
+            return {'result': 'Actions logged. No of Actions - {}'.format(len(entries))}, 201
+        return {'result': 'Action logged'}, 201
 
 
 # Defining user resource for API access
@@ -1898,6 +1842,10 @@ class NotesList(Resource):
         else:
             note = Note(api.payload['oer_id'], api.payload['text'], current_user.get_old_id(), False)
             db_session.add(note)
+            db_session.flush()
+            _record_action(ActionTypes.NOTE_ADDED, {
+                'oer_id': note.oer_id, 'note_id': note.id,
+            }, commit=False)
             db_session.commit()
             return {'result': 'Note added'}, 201
 
@@ -2112,7 +2060,15 @@ def _add_temporary_playlist(title, license, creator, parent):
         "playlist_items": items
     }
     temp_playlist = Temp_Playlist(title, creator, json.dumps(payload))
-    temp_playlist = repository.add(temp_playlist)
+    db_session.add(temp_playlist)
+    _record_action(ActionTypes.TEMP_PLAYLIST_CREATED, {
+        'playlist_type': 'temporary', 'temp_title': title, 'parent': parent,
+    }, commit=False)
+    for oer_id in items:
+        _record_action(ActionTypes.PLAYLIST_ITEM_ADDED, {
+            'playlist_type': 'temporary', 'temp_title': title, 'oer_id': oer_id,
+        }, commit=False)
+    db_session.commit()
 
     return {'result': 'Temporary playlist with {} items created'.format(count)}
 
@@ -2216,6 +2172,9 @@ def _add_oer_to_playlist(title, oer_id):
         }
 
         temp_playlist.data = json.dumps(temp_data)
+        _record_action(ActionTypes.PLAYLIST_ITEM_ADDED, {
+            'playlist_type': 'temporary', 'temp_title': title, 'oer_id': oer_id,
+        }, commit=False)
         repository.update()
     else:
         return False
@@ -2527,6 +2486,12 @@ class Playlists(Resource):
             temp_playlist_repo = TempPlaylistRepository()
             temp_playlist_repo.delete_by_title(api.payload['temp_title'], current_user.get_old_id())
 
+            _record_action(ActionTypes.PLAYLIST_PUBLISHED, {
+                'playlist_type': 'published', 'playlist_id': playlist.id,
+                'temp_title': api.payload['temp_title'],
+                'oer_ids': api.payload['playlist_items'],
+            })
+
             # sending confirmation email to the creator with playslist metadata and url for playlist
             user = repository.get_by_id(UserLogin, current_user.get_old_id())
             _send_confirmation_email_for_published_playlist(user, playlist.title, oer.url)
@@ -2607,7 +2572,9 @@ class Playlist_Single(Resource):
             return {'result': 'One or more arguments for playlist items were found missing.'}, 400
 
         playlist = repository.get_by_id(Playlist, id, current_user.get_old_id())
-        playlist_items = repository.get(Playlist, None, {'playlist_id': id})
+        playlist_items = repository.get(Playlist_Item, None, {'playlist_id': id})
+        remaining_items = [str(item.oer_id) for item in playlist_items]
+        existing_item_data = {str(item.oer_id): item.data for item in playlist_items}
 
         if playlist is None:
             return {'result': 'Playlist not found'}, 400
@@ -2625,7 +2592,14 @@ class Playlist_Single(Resource):
 
         count = 0
         for idx, val in enumerate(api.payload['playlist_items']):
-            playlist_item = Playlist_Item(playlist.id, val, api.payload['playlist_items_order'][idx])
+            playlist_item = Playlist_Item(playlist.id, val, api.payload['playlist_items_order'][idx],
+                                          existing_item_data.get(str(val), {}))
+            if str(val) in remaining_items:
+                remaining_items.remove(str(val))
+            else:
+                _record_action(ActionTypes.PLAYLIST_ITEM_ADDED, {
+                    'playlist_type': 'published', 'playlist_id': playlist.id, 'oer_id': val,
+                }, commit=False)
             playlist_item = repository.add(playlist_item)
             count = count + 1
 
@@ -2731,6 +2705,8 @@ class Temp_Playlist_Single(Resource):
         if temp_playlist is None:
             return {'result': 'Temporary playlist not found'}, 400
         
+        previous_items = json.loads(temp_playlist.data).get('playlist_items', [])
+
         # updating playlist item data only
         if 'title' not in api.payload.keys():
             temp_playlist = _set_playlist_item_data(temp_playlist, api.payload['playlist_items'])
@@ -2749,6 +2725,15 @@ class Temp_Playlist_Single(Resource):
                 api.payload['playlist_items'] = playlist_item_data
 
             setattr(temp_playlist, 'data', json.dumps(api.payload))
+            remaining_items = list(map(str, previous_items))
+            for oer_id in api.payload.get('playlist_items', []):
+                if str(oer_id) in remaining_items:
+                    remaining_items.remove(str(oer_id))
+                else:
+                    _record_action(ActionTypes.PLAYLIST_ITEM_ADDED, {
+                        'playlist_type': 'temporary', 'temp_title': temp_playlist.title,
+                        'oer_id': int(oer_id),
+                    }, commit=False)
 
         repository.update()
 

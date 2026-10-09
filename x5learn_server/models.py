@@ -542,6 +542,16 @@ class Repository:
         self._db_session.commit()
         return item
 
+    def add_all(self, items):
+        """Add records in one transaction, rolling back if the batch fails."""
+        try:
+            self._db_session.add_all(items)
+            self._db_session.commit()
+        except Exception:
+            self._db_session.rollback()
+            raise
+        return items
+
     def update(self):
         """syncs modified records with the relevant database records.
 

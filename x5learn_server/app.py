@@ -75,8 +75,26 @@ def _record_action(action_type, params, user=None, commit=True):
     db_session.add(action)
     if commit:
         db_session.commit()
+<<<<<<< HEAD
     return action
 
+=======
+    action_type = ActionType.query.filter_by(id=15).first()
+    if action_type is None:
+        action_type = ActionType('UserLoggedIn')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=16).first()
+    if action_type is None:
+        action_type = ActionType('UserLoggedOut')
+        db_session.add(action_type)
+        db_session.commit()
+    action_type = ActionType.query.filter_by(id=17).first()
+    if action_type is None:
+        action_type = ActionType('PDFOpened')
+        db_session.add(action_type)
+        db_session.commit()
+>>>>>>> b589b40 (Add bulk action logging and enhance ActionType initialization)
 
 # create database when starting the app
 def initiate_login_db():
@@ -1495,6 +1513,55 @@ m_action = api.model('Action', {
 })
 
 
+m_bulk_action = api.model('BulkAction', {
+    'action_type_ids': fields.List(fields.Integer, required=True,
+                                  description='A non-empty list of action type ids'),
+    'params_list': fields.List(fields.String, required=True,
+                              description='JSON params for each corresponding action type id')
+})
+
+
+def log_bulk_actions(payload, user_login_id):
+    """Validate and log a batch of actions in a single transaction."""
+    if not isinstance(payload, dict):
+        return {'result': 'A JSON object is required'}, 400
+    action_type_ids = payload.get('action_type_ids')
+    params_list = payload.get('params_list')
+    if (not isinstance(action_type_ids, list) or not action_type_ids
+            or not isinstance(params_list, list)
+            or len(action_type_ids) != len(params_list)):
+        return {'result': 'Non-empty action_type_ids and matching params_list are required'}, 400
+
+    actions = []
+    for action_type_id, params in zip(action_type_ids, params_list):
+        if (isinstance(action_type_id, bool)
+                or not isinstance(action_type_id, int) or action_type_id <= 0):
+            return {'result': 'Each action type id must be a positive integer'}, 400
+        try:
+            parsed_params = json.loads(params)
+        except (TypeError, ValueError):
+            return {'result': 'Each params entry must be a valid JSON object string'}, 400
+        if not isinstance(parsed_params, dict):
+            return {'result': 'Each params entry must be a valid JSON object string'}, 400
+        actions.append(Action(action_type_id, parsed_params, user_login_id))
+
+    repository.add_all(actions)
+    return {'result': 'Actions logged. No of Actions - {}'.format(len(actions))}, 201
+
+
+@ns_action.route('/bulk/')
+class BulkActionList(Resource):
+    """Log multiple actions for the authenticated user."""
+
+    @ns_action.doc('log_bulk_actions', validate=True)
+    @ns_action.expect(m_bulk_action)
+    def post(self):
+        """Log a batch of actions to the database."""
+        if not current_user.is_authenticated:
+            return {'result': 'User not logged in'}, 401
+        return log_bulk_actions(api.payload, current_user.get_old_id())
+
+
 @ns_action.route('/')
 class ActionList(Resource):
     '''Shows a list of all actions, and lets you POST to add new actions'''
@@ -1574,8 +1641,17 @@ class ActionList(Resource):
             _record_action(action_type, params, commit=False)
         db_session.commit()
         if api.payload.get('is_bundled', False):
-            return {'result': 'Actions logged. No of Actions - {}'.format(len(entries))}, 201
-        return {'result': 'Action logged'}, 201
+            return log_bulk_actions(api.payload, current_user.get_old_id())
+        else:
+            if not api.payload['action_type_id']:
+                return {'result': 'Action type id is required'}, 400
+            else:
+                action = Action(api.payload['action_type_id'], json.loads(
+                    api.payload['params']), current_user.get_old_id())
+                repository.add(action)
+                return {'result': 'Action logged'}, 201
+
+    
 
 
 # Defining user resource for API access

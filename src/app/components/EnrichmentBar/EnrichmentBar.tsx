@@ -15,6 +15,7 @@ import { X5MenuTitle } from 'app/containers/SideBar/X5MenuTitle';
 import { fetchEntityDefinitionsByIDsThunk } from 'app/containers/Layout/ducks/allEntityDefinitionsSlice';
 import { OerCard } from 'app/pages/HomePage/components/FeaturedOER/OerCard';
 import { NodeIndexOutlined } from '@ant-design/icons';
+import { ActionTypes, logAction } from 'app/api/actionLogging';
 const { SubMenu } = Menu;
 const { Panel } = Collapse;
 
@@ -52,8 +53,22 @@ const StyledChunk = styled(
     onMouseUp,
     ...props
   }) => {
+    const [openKeys, setOpenKeys] = useState<string[]>([]);
     const menu = (
-      <Menu mode="inline">
+      <Menu
+        mode="inline"
+        openKeys={openKeys}
+        onOpenChange={keys => {
+          const nextKeys = keys.map(String);
+          nextKeys.filter(key => !openKeys.includes(key)).forEach(text => {
+            void logAction(ActionTypes.OPEN_EXPLANATION_POPUP, {
+              text,
+              isFromSearchField: false,
+            });
+          });
+          setOpenKeys(nextKeys);
+        }}
+      >
         {chunk.entities.map(entity => {
           return (
             <SubMenu

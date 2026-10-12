@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useHistory, useLocation } from 'react-router-dom';
 import { ROUTES } from 'routes/routes';
+import { ActionTypes, logAction } from 'app/api/actionLogging';
 
 export const EntityDefinitionMenuItem = ({ entity, ...props }) => {
   const { data, loading, error } = useSelector(state => {
@@ -27,7 +28,12 @@ export const EntityDefinitionMenuItem = ({ entity, ...props }) => {
       )}
 
       <Menu.Item {...props} key={'item_search' + entity.title}>
-        <Link to={`${ROUTES.SEARCH}/?q=${entity.title}`}>
+        <Link
+          to={`${ROUTES.SEARCH}/?q=${entity.title}`}
+          onClick={() => {
+            void logAction(ActionTypes.TRIGGER_SEARCH, { text: entity.title });
+          }}
+        >
           {t('generic.lbl_search')}
         </Link>
       </Menu.Item>

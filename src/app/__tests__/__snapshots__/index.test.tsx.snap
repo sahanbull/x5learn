@@ -3,16 +3,18 @@
 exports[`<App /> should render and match the snapshot 1`] = `
 <BrowserRouter>
   <Helmet
-    defaultTitle="React Boilerplate"
+    defaultTitle="X5Learn"
     defer={true}
     encodeSpecialCharacters={true}
-    titleTemplate="%s - React Boilerplate"
+    titleTemplate="%s - X5Learn"
   >
     <meta
-      content="A React Boilerplate application"
+      content="The AI Powered Learning Platform"
       name="description"
     />
   </Helmet>
+  <AuthValidator />
+  <ActionLoggingObserver />
   <Switch>
     <Route
       component={[Function]}
@@ -21,8 +23,78 @@ exports[`<App /> should render and match the snapshot 1`] = `
     />
     <Route
       component={[Function]}
+      exact={true}
+      path="/homepage"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/homepage"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/resource"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/search"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/my-playlists"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/my-playlist/create"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/profile"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/notes"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/history"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/playlist/temp/:id"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/playlist/:id/publish"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/playlist/:id"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/resource/:id"
+    />
+    <Route
+      component={[Function]}
+      exact={true}
+      path="/logout"
+    />
+    <Route
+      component={[Function]}
     />
   </Switch>
-  <UNDEFINED />
+  <Memo(l) />
 </BrowserRouter>
 `;

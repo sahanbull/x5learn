@@ -11,6 +11,8 @@ export class VideoPlaybackTracker {
   private rate = 1;
   private seekFrom: number | null = null;
   private initialTarget: number | null = null;
+  private reportedAt = 0;
+  private reportedPosition = 0;
 
   constructor(
     private context: Record<string, unknown>,
@@ -30,6 +32,7 @@ export class VideoPlaybackTracker {
   }
 
   play(position: number, detectSeek = false) {
+    if (!Number.isFinite(position) || position < 0) return;
     if (this.initialTarget !== null) {
       this.initialize(position);
       this.initialTarget = null;
@@ -37,20 +40,23 @@ export class VideoPlaybackTracker {
     this.progress(position, detectSeek);
     if (!this.playing) {
       this.playing = true;
+      this.reportedAt = this.now();
+      this.reportedPosition = position;
       this.log(ActionTypes.VIDEO_PLAYED, {
         ...this.context,
-        time: position,
+        positionInSeconds: position,
       });
     }
   }
 
   pause(position: number, detectSeek = false) {
+    if (!Number.isFinite(position) || position < 0) return;
     this.progress(position, detectSeek);
     if (this.playing) {
       this.playing = false;
       this.log(ActionTypes.VIDEO_PAUSED, {
         ...this.context,
-        time: position,
+        positionInSeconds: position,
       });
     }
   }
@@ -69,6 +75,7 @@ export class VideoPlaybackTracker {
   }
 
   seek(position: number) {
+    if (!Number.isFinite(position) || position < 0) return;
     const from = this.seekFrom ?? this.position;
     const initialSeek =
       this.initialTarget !== null &&
@@ -76,9 +83,12 @@ export class VideoPlaybackTracker {
     this.initialTarget = null;
     this.seekFrom = null;
     this.initialize(position);
+    this.reportedAt = this.now();
+    this.reportedPosition = position;
     if (!initialSeek && Math.abs(position - from) > 0.01) {
       this.log(ActionTypes.VIDEO_SEEKED, {
         ...this.context,
+        positionInSeconds: position,
         from,
         to: position,
       });
@@ -86,7 +96,8 @@ export class VideoPlaybackTracker {
   }
 
   progress(position: number, detectSeek = false) {
-    if (this.seekFrom !== null || !Number.isFinite(position)) return;
+    if (this.seekFrom !== null || !Number.isFinite(position) || position < 0)
+      return;
     if (this.initialTarget !== null) {
       if (Math.abs(position - this.initialTarget) < 1) {
         this.initialTarget = null;
@@ -107,5 +118,17 @@ export class VideoPlaybackTracker {
       return;
     }
     this.initialize(position);
+    if (
+      this.playing &&
+      this.now() - this.reportedAt >= 10000 &&
+      position > this.reportedPosition
+    ) {
+      this.reportedAt = this.now();
+      this.reportedPosition = position;
+      this.log(ActionTypes.VIDEO_STILL_PLAYING, {
+        ...this.context,
+        positionInSeconds: position,
+      });
+    }
   }
 }

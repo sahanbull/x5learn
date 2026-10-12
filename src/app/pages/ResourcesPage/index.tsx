@@ -36,7 +36,12 @@ import { useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { ROUTES } from 'routes/routes';
 import styled from 'styled-components/macro';
-import { ActionTypes, logAction, playlistContext } from 'app/api/actionLogging';
+import {
+  ActionTypes,
+  logAction,
+  logActions,
+  playlistContext,
+} from 'app/api/actionLogging';
 import { VideoPlaybackTracker } from 'app/components/VideoPlaybackTracker';
 
 const { Title, Text } = Typography;
@@ -555,10 +560,18 @@ export function ResourcesPage(props) {
       if (!isActive()) return;
       setOERData({ data: resolvedData[0], loading: false, error: null });
       if (resolvedData[0]) {
-        void logAction(ActionTypes.OER_OPENED, {
+        const params = {
           ...playlistContext(publishedPlaylistId, tempPlaylistName),
           oer_id: Number(_oerID),
-        });
+        };
+        if (['text', 'pdf'].includes(resolvedData[0].mediatype)) {
+          void logActions([
+            { actionType: ActionTypes.OER_OPENED, params },
+            { actionType: ActionTypes.PDF_OPENED, params },
+          ]);
+        } else {
+          void logAction(ActionTypes.OER_OPENED, params);
+        }
       }
     } catch (e) {
       if (isActive()) setOERData({ data: null, loading: false, error: e });

@@ -1,87 +1,94 @@
-# User action logging
+# Frontend action logging
 
-Actions are stored in the existing `action` table with `action_type_id`,
-`params` (a JSON object), a UTC `created_at`, and `user_login_id`.
-The server supplies `user_login_id` from the authenticated session; callers
-cannot choose the actor. Guest actions are not stored.
+The frontend calls the existing action APIs using session credentials. These
+changes do not modify backend code, register action types, or migrate stored logs.
 
-The application fills missing action types at startup using explicit IDs.
-Existing IDs 1–14 and their historical descriptions are preserved. Restart
-the Flask application to register IDs 15–23; no schema migration is required.
+The supplied API catalog is used for resource opens (1), video play (4),
+pause (5), seek (6), continuing playback (9), ContentFlow changes (7), feedback
+(8), explainer toggles (11), explanation popups (13), URL changes (14), login
+(15), logout (16), and PDF opens (17). The duplicate IDs 10 and 12 in the
+supplied table are not used by new frontend events.
 
-| Requested event | ID | Description | Params |
-| --- | --- | --- | --- |
-| Successful login | 15 | User logged in | `user_id`, `authn_via` |
-| Playlist opened | 16 | Playlist opened | Playlist context |
-| Video/resource opened | 1 | OER card opened | `oer_id`, playlist context |
-| Playback started/resumed | 4 | Video played | `oer_id`, `time`, playlist context |
-| Playback paused | 5 | Video paused | `oer_id`, `time`, playlist context |
-| Video seeked | 6 | Video seeked | `oer_id`, `from`, `to`, playlist context |
-| Next button pressed | 17 | Playlist item skipped | `oer_id`, `from`, `to`, playlist context |
-| Previous button pressed | 18 | Previous playlist item opened | `oer_id`, `from`, `to`, playlist context |
-| Note saved | 19 | Note added | `oer_id`, `note_id` |
-| Temporary playlist created | 20 | Temporary playlist created | `temp_title`, `parent`, `playlist_type` |
-| Item added | 21 | Item added to playlist | `oer_id`, playlist context |
-| Playlist published | 22 | Playlist published | `playlist_id`, `temp_title`, `oer_ids`, `playlist_type` |
-| Share link copied | 23 | Playlist share link copied | `url`, playlist context |
+Video, resource, and PDF requests use `oerId`. Playback events include
+`positionInSeconds` with fractional precision. Seek events also retain
+`from` and `to` in seconds. Feedback params use `OER id` and `user feedback`.
+The shared helpers accept internal `oer_id` values and serialize them to these
+API keys.
 
-Playlist context is `{"playlist_type":"published","playlist_id":7}` or
-`{"playlist_type":"temporary","temp_title":"My playlist"}`. Temporary playlists
-are identified by their title and authenticated creator because they have no
-numeric ID. Resources opened outside a playlist omit playlist context.
+Native video uses seeking/seeked callbacks. YouTube is sampled every 250 ms
+because this ReactPlayer version has no user-seek callback. Jumps outside
+normal elapsed playback plus a one-second tolerance generate seek events;
+very small YouTube seeks within that tolerance cannot be distinguished
+reliably from playback. Initial configured start positions do not count as
+user seeks. Duplicate callbacks and invalid playback positions are ignored.
 
-Seek `from` and `to` are seconds. Next/previous `from` and `to` are OER item
-IDs. Playback `time` is seconds. Note text is not copied into action params.
+Continuing playback is logged at most once every 10 seconds while the position
+advances. Paused and stalled playback do not emit heartbeats. Resource and PDF
+open events are sent together through the bulk helper when opening the PDF
+viewer. URL changes and explanation menu opens use the supplied IDs. Logout
+logs ID 16 before redirecting to the existing logout URL; an offline request
+can delay that redirect by at most two seconds.
 
-Login events come from Flask-Security's successful authentication signal,
-including password, Microsoft and Google login. Refreshing pages and loading
-session details do not generate login events. Successful note and playlist
-mutations are recorded on the server, including additions through YouTube/PDF
-import, bulk temporary playlist updates and published playlist updates.
+ContentFlow, explainer toggle, and feedback events are available through the
+shared helpers; the current React UI has no controls for those settings or
+feedback. Existing server login and mutation behavior is unchanged.
 
-Playlist and resource opens are recorded after the page successfully loads;
-direct links and next/previous resource navigation are covered. Background
-playlist metadata requests do not generate playlist-open events. Share events
-are recorded only after clipboard copying succeeds. Logging requests use
-session credentials and failures do not interrupt navigation or playback.
+## IDs not supplied in the catalog
 
-Native video uses seeking/seeked events and its last observed playback position.
-YouTube does not expose a user-seek callback through this ReactPlayer version:
-the player is sampled every 250 ms, and timeline jumps exceeding normal
-elapsed playback plus a one-second tolerance are logged. The source position
-is the most recent sample; very small YouTube seeks within the tolerance
-cannot be distinguished reliably from normal playback. Configured initial
-start positions do not count as user seeks.
+The supplied table reserves 16 for logout and 17 for PDF open. Playlist-open
+and playlist-skip logging therefore cannot reuse those IDs. Search submission
+also has no ID in that table. Configure these frontend environment variables
+with IDs already supported by the target backend to enable those events:
 
-## API examples
+- `REACT_APP_ACTION_TYPE_PLAYLIST_OPENED`
+- `REACT_APP_ACTION_TYPE_PLAYLIST_ITEM_SKIPPED`
+- `REACT_APP_ACTION_TYPE_TRIGGER_SEARCH`
 
-POST `/api/v1/action/`:
+Unconfigured events are skipped; the frontend does not invent new action IDs.
+Existing previous-item, note, playlist mutation, and share IDs 18–23 are retained.
+Playlist params include the published ID or temporary title as before.
+
+## API usage
+
+Single actions use POST `/api/v1/action/`:
 
 ```json
 {
-  "action_type_id": 6,
-  "params": "{\"oer_id\":12,\"playlist_type\":\"published\",\"playlist_id\":7,\"from\":5,\"to\":40}",
+  "action_type_id": 5,
+  "params": "{\"oerId\":12,\"positionInSeconds\":3.976099}",
   "is_bundled": false
 }
 ```
 
-`params` is a JSON-encoded **string** in the request and a JSON object in the
-database. Bundles use matching `action_type_ids` and `params_list` arrays.
-The entire bundle is validated before any row is added, and stored in one
-transaction. Invalid IDs, malformed params, or mismatched bundles return 400;
-anonymous requests return 401. Legacy `oerId` is normalized to `oer_id`.
+Multiple actions use the provided POST `/api/v1/action/bulk/`:
 
-GET `/api/v1/action/?action_type_id=6` returns the current user's seek events.
-The existing history endpoint continues to use action type 1.
+```json
+{
+  "action_type_ids": [1, 2],
+  "params_list": ["{\"oer_id\":42}", "{}"]
+}
+```
+
+The client sends matching arrays with JSON-encoded strings, without requiring
+`is_bundled` for the bulk endpoint:
+
+```ts
+await logActions([
+  { actionType: ActionTypes.OER_OPENED, params: { oerId: 42 } },
+  { actionType: ActionTypes.PDF_OPENED, params: { oerId: 42 } },
+]);
+```
+
+Logging failures are caught so playback and navigation can continue. Anonymous
+401 responses are ignored. The target API must already expose the supplied bulk
+endpoint and catalog; this frontend change does not add them to the local server.
 
 ## Verification
 
 ```powershell
 $env:CI = 'true'
-node node_modules/react-scripts/bin/react-scripts.js test --watchAll=false --runInBand --watchman=false --runTestsByPath src/app/api/actionLogging.test.ts src/app/components/VideoPlaybackTracker.test.ts src/app/pages/actionLogging.test.tsx
-.venv\Scripts\python.exe -m pytest test-unit/test_action_logging.py -q -p no:cacheprovider
+node node_modules/react-scripts/bin/react-scripts.js test --watchAll=false --runInBand --watchman=false --runTestsByPath src/app/api/actionLogging.test.ts src/app/api/actionBulkApi.test.ts src/app/components/VideoPlaybackTracker.test.ts src/app/components/ActionLoggingObserver.test.tsx src/app/components/LogoutRedirect.test.tsx src/app/pages/actionLogging.test.tsx src/app/__tests__/index.test.tsx
 npm run checkTs
 ```
 
-The isolated backend tests do not import the application or connect to its
-configured database.
+Rebuild the frontend to activate these changes.

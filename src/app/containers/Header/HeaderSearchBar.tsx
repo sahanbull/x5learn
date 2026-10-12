@@ -10,6 +10,7 @@ import './HeaderSearchBar.less';
 import { useHistory, useLocation } from 'react-router-dom';
 import { ROUTES } from 'routes/routes';
 import queryString from 'query-string';
+import { ActionTypes, logAction } from 'app/api/actionLogging';
 
 const { Search } = Input;
 const { Option } = Select;
@@ -53,6 +54,7 @@ export function HeaderSearchBar(props) {
 
   const searchHandler = useCallback(
     inputText => {
+      void logAction(ActionTypes.TRIGGER_SEARCH, { text: inputText });
       setShowAdvansedOptions(false);
       const qs = queryString.stringify({
         q: inputText,

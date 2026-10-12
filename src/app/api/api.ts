@@ -59,6 +59,13 @@ export async function postAction(payload: {
   return fetchAPI('/action/', JSON.stringify(payload), { method: 'POST' });
 }
 
+export async function postActionsBulk(payload: {
+  action_type_ids: number[];
+  params_list: string[];
+}) {
+  return fetchAPI('/action/bulk/', JSON.stringify(payload), { method: 'POST' });
+}
+
 export async function fetchAction() {
   return fetchAPI(`/action/`);
   // return require('./mock/loggedInUserDetail.json');

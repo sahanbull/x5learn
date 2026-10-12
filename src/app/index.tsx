@@ -26,6 +26,8 @@ import { PublishPlaylistPage } from './pages/PublishPlaylistPage/Loadable';
 import { EditTempPlaylistPage } from './pages/EditTempPlaylistPage/Loadable';
 import { MyPlaylistsPage } from './pages/MyPlaylistPage/Loadable';
 import { useEffect } from 'react';
+import { ActionLoggingObserver } from './components/ActionLoggingObserver';
+import { LogoutRedirect } from './components/LogoutRedirect';
 
 const BASE_URL = process.env.REACT_APP_BASE_URL;
 const REDIRECT_URL = process.env.REACT_APP_REDIRECT_URL;
@@ -70,6 +72,7 @@ export function App() {
         <meta name="description" content="The AI Powered Learning Platform" />
       </Helmet>
         <AuthValidator />
+        <ActionLoggingObserver />
       <Switch>
         <Route exact path={'/'} component={MyPlaylistsPage} />
         <Route exact path={ROUTES.HOMEPAGE} component={HomePage} />
@@ -108,10 +111,7 @@ export function App() {
         <Route
           exact
           path={ROUTES.LOGOUT}
-          component={() => {
-            window.location.href = '/logout';
-            return null;
-          }}
+          component={LogoutRedirect}
         />
         <Route component={NotFoundPage} />
       </Switch>

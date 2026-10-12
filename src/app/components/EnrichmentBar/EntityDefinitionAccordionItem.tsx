@@ -4,6 +4,7 @@ import { selectEntityDefinition } from 'app/containers/Layout/ducks/allEntityDef
 import { useDispatch, useSelector } from 'react-redux';
 import { Link, useHistory, useLocation } from 'react-router-dom';
 import { ROUTES } from 'routes/routes';
+import { ActionTypes, logAction } from 'app/api/actionLogging';
 
 export const EntityDefinitionAccordionItem = ({ entity, ...props }) => {
   const { data, loading, error } = useSelector(state => {
@@ -29,7 +30,14 @@ export const EntityDefinitionAccordionItem = ({ entity, ...props }) => {
         </a>
       </div>
       <div>
-        <Link to={`${ROUTES.SEARCH}/?q=${entity.title}`}>Search</Link>
+        <Link
+          to={`${ROUTES.SEARCH}/?q=${entity.title}`}
+          onClick={() => {
+            void logAction(ActionTypes.TRIGGER_SEARCH, { text: entity.title });
+          }}
+        >
+          Search
+        </Link>
       </div>
     </>
   );

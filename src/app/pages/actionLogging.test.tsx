@@ -6,7 +6,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
 import ReactPlayer from 'react-player';
-import { ActionTypes, logAction } from 'app/api/actionLogging';
+import { ActionTypes, logAction, logActions } from 'app/api/actionLogging';
 import { ResourcesPage } from './ResourcesPage';
 import { PlaylistsPage } from './PlaylistsPage';
 import { ROUTES } from 'routes/routes';
@@ -22,7 +22,14 @@ jest.mock('react-i18next', () => ({
 jest.mock('axios', () => ({ get: jest.fn() }));
 jest.mock('app/api/actionLogging', () => ({
   ...jest.requireActual('app/api/actionLogging'),
+  // This fixture represents existing custom IDs configured for a target API.
+  ActionTypes: {
+    ...jest.requireActual('app/api/actionLogging').ActionTypes,
+    PLAYLIST_OPENED: 101,
+    PLAYLIST_ITEM_SKIPPED: 102,
+  },
   logAction: jest.fn(),
+  logActions: jest.fn(),
 }));
 jest.mock('app/containers/Layout/AppLayout', () => ({
   AppLayout: ({ children }) => children,
@@ -157,7 +164,7 @@ it('logs direct resource opens and next/previous item IDs with playlist context'
     oer_id: 12,
     playlist_type: 'published',
     playlist_id: 7,
-    time: 0,
+    positionInSeconds: 0,
   });
 });
 
@@ -178,13 +185,32 @@ it('records native video play, pause and exact seek endpoints', async () => {
   fireEvent.seeked(video);
   expect(log).toHaveBeenCalledWith(ActionTypes.VIDEO_PAUSED, {
     oer_id: 12,
-    time: 5,
+    positionInSeconds: 5,
   });
   expect(log).toHaveBeenCalledWith(ActionTypes.VIDEO_SEEKED, {
     oer_id: 12,
+    positionInSeconds: 40,
     from: 5,
     to: 40,
   });
+});
+
+it('logs resource and PDF opens together through the bulk helper', async () => {
+  dispatch.mockImplementation(async () => ({
+    type: 'fulfilled',
+    payload: [
+      { ...resource, mediatype: 'pdf', url: 'https://example.org/file.pdf' },
+    ],
+  }));
+  const view = renderResource('');
+  await waitFor(() =>
+    expect(view.container.querySelector('object')).not.toBeNull(),
+  );
+  expect(logActions).toHaveBeenCalledTimes(1);
+  expect(logActions).toHaveBeenCalledWith([
+    { actionType: ActionTypes.OER_OPENED, params: { oer_id: 12 } },
+    { actionType: ActionTypes.PDF_OPENED, params: { oer_id: 12 } },
+  ]);
 });
 
 it('preserves temporary playlist context and URL encoding when navigating', async () => {
